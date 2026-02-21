@@ -36,6 +36,9 @@ class FileLoader:
         ):
             raise LookupError(f"Package not allowed: {ref.package}")
 
+        if not ref.package:
+            raise LookupError(f"ResourceRef package cannot be None or Empty: {ref}")
+
         # 1) plugin/module package
         text = self._try_package(ref.package, ref.path, exts=exts, encoding=encoding)
         if text is not None:

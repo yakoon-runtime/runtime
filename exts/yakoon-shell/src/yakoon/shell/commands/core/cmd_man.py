@@ -164,10 +164,6 @@ class CmdMan(Command):
         # 1) Collect GLOBAL commands from all controllers (system-wide available)
         globals_by_key: dict[str, object] = {}
         for ctrl in controller_service.all():
-            # Only include controllers that are listed/visible in this context
-            if not controller_service.is_listed(ctrl.id):
-                continue
-
             for cmd in command_service.for_man_entries(ctrl.id, session, mode=mode):
                 if cmd.scope == CommandScope.GLOBAL:
                     globals_by_key[cmd.key] = cmd

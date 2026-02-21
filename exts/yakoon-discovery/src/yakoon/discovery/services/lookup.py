@@ -43,4 +43,4 @@ class LookupResolverService:
             return f"lookup --token {token}"
 
         # 3 nichts
-        return "lookup --token"  # oder None, je nach UX
+        return "lookup --token"

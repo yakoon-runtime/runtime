@@ -27,9 +27,6 @@ views:
     blocks:
       - type: text
         text: "{{ data.query }}"
-
-      - type: text
-        text: ---
      
       - type: text
         text: "Versuch’s mit einem anderen Begriff oder nutze `man --internal`."
