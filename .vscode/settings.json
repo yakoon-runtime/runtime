@@ -3,17 +3,21 @@
   "python.analysis.autoSearchPaths": true,
   "python.analysis.useLibraryCodeForTypes": true,
   "python.analysis.extraPaths": [
-    "packages/yakoon-core-base/src",
-    "packages/yakoon-core-compose/src",
-    "packages/yakoon-core-platform/src",
-    "packages/yakoon-core-workflow/src",
-    "packages/yakoon-host-console/src",
-    "packages/yakoon-host-kivy/src",
-    "plugins/yakoon-auth/src",
-    "plugins/yakoon-discovery/src",
-    "plugins/yakoon-crm/src",
-    "plugins/yakoon-shell/src",
-    "plugins/yakoon-office/src",
+    // platform
+    "platform/yakoon-core-base/src",
+    "platform/yakoon-core-compose/src",
+    "platform/yakoon-core-platform/src",
+    // apps
+    "apps/yakoon-crm/src",
+    "apps/yakoon-office/src",
+    // exts
+    "exts/yakoon-auth/src",
+    "exts/yakoon-discovery/src",
+    "exts/yakoon-shell/src",
+    "exts/yakoon-workflow/src",
+    // hosts
+    "hosts/yakoon-host-console/src",
+    "hosts/yakoon-host-kivy/src",
   ],
   "editor.formatOnSave": true,
   "[python]": {

@@ -1,7 +1,24 @@
 cd ..
+
+# platform
 pip install \
-  -e packages/yakoon-core-base \
-  -e packages/yakoon-core-compose \
-  -e packages/yakoon-core-platform \
-  -e packages/yakoon-host-console \
-  -e packages/yakoon-host-kivy
+  -e platform/yakoon-core-base \
+  -e platform/yakoon-core-compose \
+  -e platform/yakoon-core-platform \
+
+# hosts
+pip install \
+  -e hosts/yakoon-host-console \
+  -e hosts/yakoon-host-kivy
+
+# extensions
+pip install \
+  -e exts/yakoon-auth \
+  -e exts/yakoon-discovery \
+  -e exts/yakoon-shell \
+  -e exts/yakoon-workflow \
+
+# apps
+pip install \
+  -e apps/yakoon-crm \
+  -e apps/yakoon-office \
