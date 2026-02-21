@@ -8,7 +8,6 @@ from yakoon.base import ports
 from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.view import ViewSpec
 from yakoon.platform.runtime.render.context import RenderContext
-from yakoon.platform.runtime.render.section import RenderSection
 
 
 class RendererService:
@@ -55,9 +54,8 @@ class RendererService:
             )
 
         # render only selected (recursively for all strings)
-        section = RenderSection(section_key, data)
         engine = self._services.get(ports.RenderEngine)
-        rendered_selected = await engine.render_any(selected, section=section)
+        rendered_selected = await engine.render_any(selected, context=data)
 
         minimal: dict[str, Any] = {
             "kind": "command_view",
