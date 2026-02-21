@@ -13,6 +13,7 @@ from yakoon.discovery.models.discovery import (
     NoMatch,
     Resolved,
 )
+from yakoon.discovery.models.parser import LookupIndex
 from yakoon.discovery.ports import DiscoveryStrategy
 
 
@@ -36,96 +37,130 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         self._lookup_filename = lookup_filename
 
     async def discover(self, session: Session, request: Request) -> DiscoveryResult:
-        line = request.raw
-        head, tail = _split(line)
-
-        token = head
+        token, tail = self._parse_token(request)
         if not token:
             return NoMatch()
 
-        active_id = session.get_active_controller()
-        if not active_id:
+        owner_ids = self._resolve_owner_ids(session)
+        if not owner_ids:
             return NoMatch()
 
-        controllers = self._services.get(ports.ControllerCatalogService)
-        commands = self._services.get(ports.CommandCatalogService)
-        loader = self._services.get(ports.FileLoader)
-        parser = self._services.get(disc_ports.LookupParser)
+        all_alias: list[Capability] = []
+        all_tags: list[Capability] = []
 
-        # Resolve-space via CommandInfo (plugin-safe)
+        for owner_id in owner_ids:
+            text = self._load_lookup_text(session, owner_id)
+            if not text:
+                continue
+
+            idx = self._parse_index(text)
+            if not idx:
+                continue
+
+            visible = self._visible_keys(session, owner_id)
+            alias_caps, tag_caps = self._match_owner(
+                owner_id=owner_id,
+                token=token,
+                tail=tail,
+                idx=idx,
+                visible=visible,
+            )
+            all_alias.extend(alias_caps)
+            all_tags.extend(tag_caps)
+
+        if len(all_alias) == 1:
+            return Resolved(capability=all_alias[0])
+        if len(all_alias) > 1:
+            return Candidates(items=all_alias)
+        if all_tags:
+            return Candidates(items=all_tags)
+        return NoMatch()
+
+    def _parse_token(self, request: Request) -> tuple[str, str]:
+        head, tail = _split(request.raw)
+        return head, tail
+
+    def _resolve_owner_ids(self, session: Session) -> list[str]:
+        active_id = session.get_active_controller()
+        if not active_id:
+            return []
+
+        commands = self._services.get(ports.CommandCatalogService)
         resolve_space = commands.for_resolve(active_id)
 
-        # Deterministic owner order as they appear in resolve-space
         owner_ids: list[str] = []
-        seen_owner: set[str] = set()
+        seen: set[str] = set()
         for ci in resolve_space:
-            if ci.controller_id in seen_owner:
+            if ci.controller_id in seen:
                 continue
-            seen_owner.add(ci.controller_id)
+            seen.add(ci.controller_id)
             owner_ids.append(ci.controller_id)
+        return owner_ids
+
+    def _load_lookup_text(self, session: Session, owner_id: str) -> str | None:
+        controllers = self._services.get(ports.ControllerCatalogService)
+        loader = self._services.get(ports.FileLoader)
+
+        ctrl = controllers.get(owner_id)
+        if not ctrl or not ctrl.resources or not ctrl.resources.lookup:
+            return None
+
+        ref = resolve_resource(
+            ctrl.resources,
+            i18n_root=ctrl.resources.lookup,
+            lang=session.lang,
+            key=self._lookup_filename,
+        )
+
+        try:
+            return loader.load_text(ref)
+        except LookupError:
+            return None
+
+    def _parse_index(self, text: str):
+        parser = self._services.get(disc_ports.LookupParser)
+        idx = parser.parse(text)
+        if not idx or not getattr(idx, "commands", None):
+            return None
+        return idx
+
+    def _visible_keys(self, session: Session, owner_id: str) -> set[str]:
+        commands = self._services.get(ports.CommandCatalogService)
+        return {c.key for c in commands.for_controller_visible(owner_id, session)}
+
+    def _match_owner(
+        self,
+        *,
+        owner_id: str,
+        token: str,
+        tail: str,
+        idx: LookupIndex,
+        visible: set[str],
+    ) -> tuple[list[Capability], list[Capability]]:
 
         alias_caps: list[Capability] = []
         tag_caps: list[Capability] = []
 
-        for owner_id in owner_ids:
-            ctrl = controllers.get(owner_id)
-            if not ctrl or not ctrl.resources or not ctrl.resources.lookup:
-                continue
-
-            # Load lookup index (no local cache; caching belongs to loader)
-            resources = ctrl.resources
-            ref = resolve_resource(
-                resources,
-                i18n_root=resources.lookup,
-                lang=session.lang,
-                key=self._lookup_filename,
-            )
-
-            try:
-                text = loader.load_text(ref)
-            except LookupError:
-                continue
-
-            idx = parser.parse(text)
-            if not idx or not getattr(idx, "commands", None):
-                continue
-
-            # Visible keys for that defining controller (no local cache)
-            visible = {
-                c.key for c in commands.for_controller_visible(owner_id, session)
-            }
-
-            for command_key, entry in idx.commands.items():
-                if command_key not in visible:
-                    continue
-
-                if token in entry.aliases:
-                    alias_caps.append(
-                        Capability(
-                            command_key=command_key + tail,
-                            controller_id=owner_id,
-                            score=1.0,
-                            reason="alias",
-                        )
+        for key in idx.alias_index.get(token, []):
+            if key in visible:
+                alias_caps.append(
+                    Capability(
+                        command_key=key + tail,
+                        controller_id=owner_id,
+                        score=1.0,
+                        reason="alias",
                     )
+                )
 
-                if token in entry.tags:
-                    tag_caps.append(
-                        Capability(
-                            command_key=command_key + tail,
-                            controller_id=owner_id,
-                            score=0.7,
-                            reason="tag",
-                        )
+        for key in idx.tag_index.get(token, []):
+            if key in visible:
+                tag_caps.append(
+                    Capability(
+                        command_key=key + tail,
+                        controller_id=owner_id,
+                        score=0.7,
+                        reason="tag",
                     )
+                )
 
-        if len(alias_caps) == 1:
-            return Resolved(capability=alias_caps[0])
-
-        if len(alias_caps) > 1:
-            return Candidates(items=alias_caps)
-
-        if tag_caps:
-            return Candidates(items=tag_caps)
-
-        return NoMatch()
+        return alias_caps, tag_caps

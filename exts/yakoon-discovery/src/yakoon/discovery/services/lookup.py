@@ -25,7 +25,7 @@ class LookupResolverService:
             return result.capability.command_key
 
         # 2 mehrere
-        if isinstance(result, Candidates):
+        if isinstance(result, Candidates) and result.items:
             payload = LookupCandidatesPayload(
                 query=query,
                 candidates=[
@@ -42,5 +42,4 @@ class LookupResolverService:
             token = store.put(payload)
             return f"lookup --token {token}"
 
-        # 3 nichts
-        return "lookup --token"
+        return None
