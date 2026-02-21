@@ -69,6 +69,15 @@ class ServiceDirectory:
         """Creates a new ServiceDirectory with this directory as parent."""
         return ServiceDirectory(parent=self, allow_override=allow_override)
 
+    def has(self, key: type[T]) -> bool:
+        if key in self._services:
+            return True
+        if key in self._factories:
+            return True
+        if self._parent:
+            return self._parent.has(key)
+        return False
+
     def get(self, key: type[T]) -> T:
         """Retrieves the service for a given key.
 

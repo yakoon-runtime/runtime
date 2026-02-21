@@ -2,11 +2,34 @@ kind: command_view
 
 views:
 
-  show:
+  choose:
     role: info
-    title: 
+    title: "Meintest du …?"
     blocks:
       - type: text
-        text: Nachsehen.....
+        text: "{{ data.query }}"
 
-inputs: {}
+      - type: text
+        text: ---
+
+      - type: text
+        text: |
+          {% for c in data.candidates %}
+          - {{ c.command_key }} ({{ c.controller_id }}) score={{ c.score }} reason={{ c.reason }}
+          {% endfor %}
+
+      - type: text
+        text: "Tipp: Verfeinere deine Eingabe oder tippe den gewünschten Befehl direkt."
+
+  not_found:
+    role: warning
+    title: "Nichts gefunden"
+    blocks:
+      - type: text
+        text: "{{ data.query }}"
+
+      - type: text
+        text: ---
+     
+      - type: text
+        text: "Versuch’s mit einem anderen Begriff oder nutze `man --internal`."

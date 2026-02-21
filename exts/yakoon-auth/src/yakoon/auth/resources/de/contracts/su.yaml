@@ -7,14 +7,14 @@ views:
     role: info
     blocks:
       - type: text
-        text: su {{section.data.user}}
+        text: su d{{user}}
 
   failed:
     title: 
     role: error
     blocks:
       - type: text
-        text: "No! Reason: {{section.data.reason}}"  
+        text: "No! Reason: {{data.reason}}"  
 
 inputs: 
 

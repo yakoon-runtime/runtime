@@ -1,21 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
 import yaml
 
-
-@dataclass(frozen=True, slots=True)
-class LookupEntry:
-    aliases: list[str]
-    tags: list[str]
-
-
-@dataclass(frozen=True, slots=True)
-class LookupIndex:
-    # command_key -> entry
-    commands: dict[str, LookupEntry]
+from yakoon.discovery.models.parser import LookupEntry, LookupIndex
 
 
 def _norm_list(value: Any) -> list[str]:
@@ -30,6 +19,7 @@ def _norm_list(value: Any) -> list[str]:
 
 
 class LookupParser:
+
     def parse(self, text: str) -> LookupIndex:
         raw = yaml.safe_load(text) or {}
         if not isinstance(raw, dict):

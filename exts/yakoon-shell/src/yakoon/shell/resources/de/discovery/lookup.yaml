@@ -2,10 +2,10 @@ kind: command_lookup
 
 commands:
 
-  shell:version:
+  version:
     aliases: ["version", "ver"]
     tags: ["info", "system"]
 
-  shell:man:
-    aliases: ["man", "hilfe"]
-    tags: ["docs"]
+  man:
+    aliases: ["man", "hilfe", "ver" ]
+    tags: ["docs", "ver"]

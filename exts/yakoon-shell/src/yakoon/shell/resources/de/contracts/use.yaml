@@ -8,20 +8,20 @@ views:
     blocks:
       - type: text
         text: > 
-          {{ section.data.controllers | map(attribute='id') | join('  ') }}
+          {{ data.controllers | map(attribute='id') | join('  ') }}
 
   name_not_found:
     role: error
     title: 
     blocks:
       - type: text
-        text: Das Programm "{{section.data.name}}" wurde nicht gefunden.
+        text: Das Programm "{{data.name}}" wurde nicht gefunden.
 
   already_in_shell:
     role: info
     title: 
     blocks:
       - type: text
-        text: Programm "{{section.data.controller.id}}" ist bereits aktiv.
+        text: Programm "{{data.controller.id}}" ist bereits aktiv.
 
 inputs: {}

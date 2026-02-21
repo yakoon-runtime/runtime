@@ -1,6 +1,25 @@
-- default workflow prompt
-- Guard anpassen - workflow
 
+
+## Neue Block-Typen implementieren
+
+- type: spacer   -> Linie
+
+list (strukturierte items, nicht string)
+command_list (key + description)
+  items:
+    - key: "man"
+      description: "Zeigt Manual für Befehle"
+    - key: "use <prg>"
+      description: "Startet ein Programm"
+    - key: "version"
+      description: "Zeigt Systeminformationen"
+
+Tables rendern....
+- type: table
+  columns:
+    - key
+    - description
+  rows: "{{ data.commands }}"
 
 ==================
 # ✅ NEXT STEPS #

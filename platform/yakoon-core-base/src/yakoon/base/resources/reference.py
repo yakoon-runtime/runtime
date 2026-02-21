@@ -61,7 +61,7 @@ class ResourceReferences:
     workflows: str | None = "resources/workflows/"
 
     # Lookup / discovery docs (yaml)
-    lookup: str | None = None
+    lookup: str | None = "resources/{lang}/discovery/"
 
     def clone(self) -> ResourceReferences:
         """Return a copy of this ResourceReferences."""

@@ -25,6 +25,7 @@ class PermissionService:
             "shell:quit|rx",
             "shell:su|rx",
             "auth:su|rx",
+            "auth:whoami|rx",
             "crm-customer:customer-create|rx",
             "crm-customer:wf:crm.customer.store|rx",
             "crm-customer:wf:crm.customer.validate|rx",

@@ -138,15 +138,17 @@ class Engine:
             # Resolve command within the single active controller context (+ groups)
             result = await self._find_matching_command(controller_id, request)
             if not result:
+                resolver = self.services.get(ports.LookupResolverService)
+                result = await resolver.resolve(session, request)
+                if result:
+                    request = Request(result)
+                    result = await self._find_matching_command(controller_id, request)
+
+            if not result:
                 raise CmdNotFound(f"{request.command}")
-                # if request.command != "lookup" and not di.batch_id:
-                #    return self.dispatch(
-                #        session, di=DispatchInput(f"lookup {request.raw}")
-                #    )
-                # else:
-                #    raise CmdNotFound(f"{request.command}")
 
             resolved_controller, command = result
+
             if not resolved_controller:
                 raise RuntimeError("Controller missing in result")
             if not command:

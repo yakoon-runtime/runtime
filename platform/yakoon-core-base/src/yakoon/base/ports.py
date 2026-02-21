@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Mapping, Sequence
 
+    from yakoon.base.commands.request import Request
     from yakoon.base.models.account import Account, AuthResult
     from yakoon.base.models.catalog import CommandInfo, ControllerInfo
     from yakoon.base.models.command import CommandKind
@@ -25,7 +26,10 @@ if TYPE_CHECKING:
     from yakoon.base.resources.reference import ResourceRef
     from yakoon.base.runtime.session.session import Session
     from yakoon.platform.runtime.render.context import RenderContext
-    from yakoon.platform.runtime.render.section import RenderSection
+
+
+class LookupResolverService(Protocol):
+    async def resolve(self, session: Session, request: Request) -> str | None: ...
 
 
 class WorkflowPublic(Protocol):
@@ -268,8 +272,8 @@ class FileLoader(Protocol):
 
 class RenderEngine(Protocol):
 
-    async def render_str(self, template_str: str, *, section: RenderSection) -> str: ...
-    async def render_any(self, obj: Any, *, section: RenderSection) -> Any: ...
+    async def render_str(self, template_str: str, *, context: dict) -> str: ...
+    async def render_any(self, obj: Any, *, context: dict) -> Any: ...
 
 
 class PresenterViews(Protocol):

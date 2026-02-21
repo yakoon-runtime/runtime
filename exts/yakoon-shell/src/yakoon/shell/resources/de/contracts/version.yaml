@@ -8,11 +8,11 @@ views:
     blocks:
       - type: kv
         items:
-        - ["Platform Version", "{{ section.data.version  }}"]
-        - ["Python", "{{ section.data.python }}"]
-        - ["Hostname", "{{ section.data.hostname }}"]
-        - ["Uptime", "{{ section.data.uptime }}"]
-        - ["Time (UTC)", "{{ section.data.time }}"]
+        - ["Platform Version", "{{ data.version  }}"]
+        - ["Python", "{{ data.python }}"]
+        - ["Hostname", "{{ data.hostname }}"]
+        - ["Uptime", "{{ data.uptime }}"]
+        - ["Time (UTC)", "{{ data.time }}"]
     meta:
       code: "shell.version.show"
 

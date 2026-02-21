@@ -7,7 +7,7 @@ views:
     role: info
     blocks:
       - type: text
-        text: {{section.data.user}}
+        text: "{{data.user}}"
 
   show_hint:
     title: 

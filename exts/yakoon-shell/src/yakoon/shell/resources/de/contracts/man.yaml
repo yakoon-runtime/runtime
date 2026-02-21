@@ -8,15 +8,15 @@ views:
     blocks:
       - type: text
         text: >  
-          {%- if section.data.mode == "shell" -%}
+          {%- if data.mode == "shell" -%}
           Commands: {{ "\n" }}
-          {{ section.data.shell_commands | map(attribute='key') | join('  ') }}
+          {{ data.shell_commands | map(attribute='key') | join('  ') }}
           {{ "\n" -}}
           Available programs: {{ "\n" }}
-          {{ section.data.controllers | map(attribute='id') | join('  ') }}          
-          {%- elif section.data.mode == "program" -%}
+          {{ data.controllers | map(attribute='id') | join('  ') }}          
+          {%- elif data.mode == "program" -%}
           Commands:
-          {{ section.data.commands | map(attribute='key') | join('  ') }}
+          {{ data.commands | map(attribute='key') | join('  ') }}
           {% endif %}
 
   no_manual_entry:
@@ -24,7 +24,7 @@ views:
     title: 
     blocks:
       - type: text
-        text: No manual entry for {{section.data.command_key}}
+        text: No manual entry for {{data.command_key}}
 
   man_page:
     role: info
