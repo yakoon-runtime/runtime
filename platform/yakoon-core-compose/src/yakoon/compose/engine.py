@@ -23,6 +23,7 @@ from yakoon.platform.services.catalog import (
 )
 from yakoon.platform.services.dialog import DialogService
 from yakoon.platform.services.input import InputService
+from yakoon.platform.services.lookup import NoLookupResolverService
 from yakoon.platform.services.namespace import NamespaceService
 from yakoon.platform.services.perm import PermissionService
 from yakoon.platform.services.policy import PolicyService
@@ -38,7 +39,6 @@ from yakoon.platform.stores.memory.account import InMemoryAccountStore
 
 
 def compose_engine(*, plugin_modules: list[str]) -> Engine:
-
     directory = ControllerDirectory()
 
     bootstrap = ServiceDirectory()
@@ -48,8 +48,11 @@ def compose_engine(*, plugin_modules: list[str]) -> Engine:
 
     controllers: list[BaseController] = []
     for lp in loaded:
+        # export.public_services are registered globally (root service directory)
         for port_type in lp.export.public_services:
             bootstrap.register_static(port_type, lp.services.get(port_type))
+
+        # controllers are instantiated and connected to the plugin's service directory
         for controller_type in lp.export.controllers:
             ctrl = controller_type()
             ctrl.connect_services(lp.services)
@@ -60,25 +63,23 @@ def compose_engine(*, plugin_modules: list[str]) -> Engine:
     stores = _compose_stores()
     command_catalog = _compose_command_catalog(directory)
     controller_catalog = _compose_controller_catalog(directory)
-    templates = _compose_resource_references(directory)
-    commands = _compose_commands(directory)
+    commands = _compose_commands(bootstrap, directory)
 
     _compose_services(
         bootstrap,
         stores,
         controller_catalog,
         command_catalog,
-        templates,
     )
 
     _compose_permission_roles(bootstrap)
     _compose_policies(bootstrap)
 
+    commands.validate()
     return Engine(directory, bootstrap, commands)
 
 
 def _compose_permission_roles(services: ServiceDirectory):
-
     permissions = services.get(ports.PermissionService)
     permissions.register_role(
         "admin",
@@ -102,10 +103,15 @@ def _compose_policies(services: ServiceDirectory):
     policy.register_policies(
         [
             FieldPolicy(
-                key="customer.first_name", type=FieldType.STRING, required=False
+                key="customer.first_name",
+                type=FieldType.STRING,
+                required=False,
             ),
             FieldPolicy(
-                key="customer.age", hint="mit hint", type=FieldType.INT, required=False
+                key="customer.age",
+                hint="mit hint",
+                type=FieldType.INT,
+                required=False,
             ),
             FieldPolicy(
                 key="auth.password",
@@ -118,43 +124,42 @@ def _compose_policies(services: ServiceDirectory):
 
 
 def _compose_controller_catalog(directory: ControllerDirectory) -> ControllerCatalog:
-
-    controllers_list = []
+    controllers_list: list[ControllerInfo] = []
     for controller in directory.get_all():
-        controller_info = ControllerInfo(
-            controller.id,
-            controller.is_shell,
-            controller.is_activatable,
-            controller.is_listed,
-            controller.resources.clone(),
+        controllers_list.append(
+            ControllerInfo(
+                controller.id,
+                controller.is_shell,
+                controller.is_activatable,
+                controller.is_listed,
+                controller.resources.clone(),
+            )
         )
-        controllers_list.append(controller_info)
-
     return ControllerCatalog(controllers_list)
 
 
 def _compose_command_catalog(directory: ControllerDirectory) -> CommandCatalog:
-
-    command_list = []
+    command_list: list[CommandInfo] = []
     for controller in directory.get_all():
         for sets in controller.commandsets:
             for command in sets.commands():
-                command_info = CommandInfo(
-                    command.key,
-                    command.kind,
-                    command.scope,
-                    command.visibility,
-                    sets.group,
-                    controller.id,
+                command_list.append(
+                    CommandInfo(
+                        command.key,
+                        command.kind,
+                        command.scope,
+                        command.visibility,
+                        controller.id,
+                        sets.group,
+                    )
                 )
-                command_list.append(command_info)
-
     return CommandCatalog(command_list)
 
 
-def _compose_commands(directory: ControllerDirectory) -> CommandDirectory:
-
-    commands = CommandDirectory()
+def _compose_commands(
+    services: ServiceDirectory, directory: ControllerDirectory
+) -> CommandDirectory:
+    commands = CommandDirectory(services)
     for controller in directory.get_all():
         router = CommandRouter(
             controller.id,
@@ -162,11 +167,9 @@ def _compose_commands(directory: ControllerDirectory) -> CommandDirectory:
             controller.is_listed,
             controller.is_activatable,
         )
-
         router.register(controller.id, controller.commandsets)
         commands.register(controller.id, router)
 
-    commands.validate()
     return commands
 
 
@@ -175,9 +178,9 @@ def _compose_services(
     stores: StoreRegistry,
     controller_catalog: ControllerCatalog,
     command_catalog: CommandCatalog,
-    resources: list[ResourceReferences],
 ) -> ServiceDirectory:
 
+    # core platform services
     services.register_static(ports.AuditLogService, AuditLogService())
     services.register_static(ports.NamespaceService, NamespaceService())
     services.register_static(ports.SessionService, SessionService(stores.sessions))
@@ -199,18 +202,27 @@ def _compose_services(
     services.register_static(ports.RendererService, RendererService(services))
     services.register_static(ports.RenderEngine, JinjaRenderer())
 
+    # optional lookup feature (can be overridden by plugin export.public_services)
+    if not services.has(ports.LookupResolverService):
+        services.register_static(ports.LookupResolverService, NoLookupResolverService())
+
+    # counters / sharding
     services.register_static(
         ports.ShardedCounterService,
         ShardedCounterService(ShardAllocator(stores.counters)),
     )
 
+    # catalogs (info-only surface)
     services.register_static(
-        ports.ControllerCatalogService, ControllerCatalogService(controller_catalog)
+        ports.ControllerCatalogService,
+        ControllerCatalogService(controller_catalog),
+    )
+    services.register_static(
+        ports.CommandCatalogService,
+        CommandCatalogService(services, command_catalog),
     )
 
-    services.register_static(
-        ports.CommandCatalogService, CommandCatalogService(services, command_catalog)
-    )
+    services.get(ports.CommandCatalogService).build()
 
     return services
 
@@ -218,7 +230,6 @@ def _compose_services(
 def _compose_resource_references(
     directory: ControllerDirectory,
 ) -> list[ResourceReferences]:
-
     resources: list[ResourceReferences] = []
     for controller in directory.get_all():
         resources.append(controller.resources)
@@ -226,6 +237,4 @@ def _compose_resource_references(
 
 
 def _compose_stores() -> StoreRegistry:
-
-    stores = create_system_stores("memory", db_path="db/gateway.sqlite3.db")
-    return stores
+    return create_system_stores("memory", db_path="db/gateway.sqlite3.db")

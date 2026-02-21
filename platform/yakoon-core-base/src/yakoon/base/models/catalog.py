@@ -14,8 +14,8 @@ class CommandInfo:
     kind: CommandKind
     scope: CommandScope
     visibility: CommandVisibility
-    category: str
     controller_id: str
+    category: str
 
 
 @dataclass(frozen=True, slots=True)

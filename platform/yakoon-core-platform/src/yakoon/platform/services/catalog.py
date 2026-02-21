@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 from collections.abc import Iterable, Sequence
 
+from yakoon.base import ports
 from yakoon.base.commands.command import CommandKind, CommandVisibility
 from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.catalog import CommandInfo, ControllerInfo
+from yakoon.base.models.command import CommandScope
 from yakoon.base.models.perm import Permission
 from yakoon.base.ports import PermissionService
 from yakoon.base.runtime.session.session import Session
@@ -19,32 +23,105 @@ class CommandCatalog:
 
 class CommandCatalogService:
 
-    __slots__ = ("_services", "_by_controller")
-
     def __init__(self, services: ServiceDirectory, catalog: CommandCatalog):
         self._services = services
+        self._catalog = catalog
+        self._by_controller: dict[str, list[CommandInfo]] = {}
+        self._global: tuple[CommandInfo, ...] = ()
+        self._built = False
+
+    def build(self) -> None:
+        if self._built:
+            return
+
         by_controller: dict[str, list[CommandInfo]] = {}
-        for c in catalog.all():
+        global_cmds: dict[str, CommandInfo] = {}
+
+        controllers = self._services.get(ports.ControllerCatalogService)
+
+        for c in self._catalog.all():
             if not c.controller_id:
-                raise RuntimeError("Controller id cannot be none or empty.")
+                raise RuntimeError("CommandInfo.controller_id cannot be empty.")
+
             by_controller.setdefault(c.controller_id, []).append(c)
 
-        # stabile Ordnung
-        for _, items in by_controller.items():
+            if c.scope == CommandScope.GLOBAL:
+                prev = global_cmds.get(c.key)
+                if prev:
+                    raise ValueError(
+                        f"GLOBAL command key conflict: '{c.key}' "
+                        f"({prev.controller_id} vs {c.controller_id})"
+                    )
+                global_cmds[c.key] = c
+
+            if c.scope == CommandScope.SHELL:
+                if not controllers.is_shell(c.controller_id):
+                    raise ValueError(
+                        f"SHELL scoped command '{c.key}' must belong to shell controller "
+                        f"(found in '{c.controller_id}')"
+                    )
+
+        for items in by_controller.values():
             items.sort(key=lambda x: x.key)
 
+        self._global = tuple(sorted(global_cmds.values(), key=lambda x: x.key))
         self._by_controller = by_controller
+        self._built = True
+
+    def _ensure_built(self) -> None:
+        if not self._built:
+            raise RuntimeError("CommandCatalogService.build() was not called.")
+
+    def all(self) -> tuple[CommandInfo, ...]:
+        self._ensure_built()
+        out: list[CommandInfo] = []
+        for cid in sorted(self._by_controller.keys()):
+            out.extend(self._by_controller[cid])
+        return tuple(out)
+
+    def for_resolve(
+        self,
+        active_controller_id: str,
+    ) -> tuple[CommandInfo, ...]:
+        """
+        Deterministic resolve order using only CommandInfo:
+          1) active controller CONTROLLER
+          2) active controller SHELL (only if active controller is shell)
+          3) GLOBAL across all controllers (unique by key)
+        """
+        self._ensure_built()
+
+        controllers = self._services.get(ports.ControllerCatalogService)
+        ctrl = controllers.get(active_controller_id)
+        is_shell = bool(ctrl and ctrl.is_shell)
+
+        out: list[CommandInfo] = []
+
+        # 1) active controller CONTROLLER
+        for c in self._by_controller.get(active_controller_id, ()):
+            if c.scope == CommandScope.CONTROLLER:
+                out.append(c)
+
+        # 2) active controller SHELL
+        if is_shell:
+            for c in self._by_controller.get(active_controller_id, ()):
+                if c.scope == CommandScope.SHELL:
+                    out.append(c)
+
+        # 3) globals
+        out.extend(self._global)
+
+        return tuple(out)
 
     def for_controller(self, controller_id: str) -> Sequence[CommandInfo]:
+        self._ensure_built()
         return tuple(self._by_controller.get(controller_id, ()))
-
-    def keys_for_controller(self, controller_id: str) -> Sequence[str]:
-        return tuple(c.key for c in self.for_controller(controller_id))
 
     def for_controller_visible(
         self, controller_id: str, session: Session
     ) -> Sequence[CommandInfo]:
-        out = []
+        self._ensure_built()
+        out: list[CommandInfo] = []
         perm_service = self._services.get(PermissionService)
         for cmd in self.for_controller(controller_id):
             fq_key = Permission.fq_key(controller_id, cmd.key)
@@ -59,7 +136,8 @@ class CommandCatalogService:
         mode: str,
         kind_filter: CommandKind | None = None,
     ) -> Sequence[CommandInfo]:
-        out = []
+        self._ensure_built()
+        out: list[CommandInfo] = []
         allowed = self._allowed_visibilities(mode)
         for cmd in self.for_controller_visible(controller_id, session):
             if cmd.visibility not in allowed:
@@ -68,6 +146,17 @@ class CommandCatalogService:
                 continue
             out.append(cmd)
         return out
+
+    def resolve_info(
+        self,
+        active_controller_id: str,
+        command_key: str,
+    ) -> CommandInfo | None:
+        key = command_key.strip()
+        for ci in self.for_resolve(active_controller_id):
+            if ci.key == key:
+                return ci
+        return None
 
     def _allowed_visibilities(self, mode: str) -> set[CommandVisibility]:
         if mode == "default":
@@ -97,8 +186,6 @@ class ControllerCatalogService:
     Read-only snapshot about controller metadata.
     No controller instance, no directory references.
     """
-
-    __slots__ = ("_by_id",)
 
     def __init__(self, catalog: ControllerCatalog):
         by_id: dict[str, ControllerInfo] = {}

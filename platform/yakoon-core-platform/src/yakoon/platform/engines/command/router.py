@@ -3,7 +3,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.models.command import CommandScope
+from yakoon.base import ports
+from yakoon.base.directories.service import ServiceDirectory
 
 if TYPE_CHECKING:
     from yakoon.base.commands.command import Command
@@ -12,15 +13,14 @@ if TYPE_CHECKING:
 
 class CommandDirectory:
     """
-    Resolves commands by key and active controller using CommandScope.
+    Engine-only.
+    Holds real command types per controller and materializes Command instances.
 
-    Responsibilities:
-      - Deterministic routing
-      - Scope enforcement
-      - Global conflict detection
+    Uses CommandCatalogService for resolve ordering (CommandInfo only).
     """
 
-    def __init__(self) -> None:
+    def __init__(self, services: ServiceDirectory) -> None:
+        self._services = services
         self._routers: dict[str, CommandRouter] = {}
         self._shell_id: str | None = None
 
@@ -38,102 +38,71 @@ class CommandDirectory:
                 )
             self._shell_id = controller_id
 
-    def find(
-        self,
-        active_controller_id: str,
-        command_key: str,
-    ) -> tuple[str, Command] | None:
-        """
-        Resolve a command key according to CommandScope rules.
+    def find(self, active_controller_id: str, key: str) -> tuple[str, Command] | None:
+        catalog = self._services.get(ports.CommandCatalogService)
 
-        Returns:
-            (owner_controller_id, Command instance)
-            or None if not found.
-        """
-
-        key = command_key.strip()
-
-        active_router = self._routers.get(active_controller_id)
-        if not active_router:
+        ci = catalog.resolve_info(active_controller_id, key)
+        if not ci:
             return None
 
-        # ----------------------------------------
-        # 1) Try active controller first
-        # ----------------------------------------
+        router = self._routers.get(ci.controller_id)
+        if not router:
+            return None
 
-        cmd_type = active_router.get_type(key)
-        if cmd_type:
-            scope = getattr(cmd_type, "scope", CommandScope.CONTROLLER)
+        cmd_type = router.get_type(ci.key)
+        if not cmd_type:
+            return None
 
-            if scope == CommandScope.CONTROLLER:
-                return active_controller_id, cmd_type()
-
-            if scope == CommandScope.SHELL:
-                if active_router.is_shell:
-                    return active_controller_id, cmd_type()
-
-            if scope == CommandScope.GLOBAL:
-                return active_controller_id, cmd_type()
-
-        # ----------------------------------------
-        # 2) Global fallback (search all routers)
-        # ----------------------------------------
-
-        global_hits: list[tuple[str, type[Command]]] = []
-
-        for owner_id, router in self._routers.items():
-            cmd_type = router.get_type(key)
-            if not cmd_type:
-                continue
-
-            scope = getattr(cmd_type, "scope", CommandScope.CONTROLLER)
-            if scope == CommandScope.GLOBAL:
-                global_hits.append((owner_id, cmd_type))
-
-        if len(global_hits) == 1:
-            owner_id, cmd_type = global_hits[0]
-            return owner_id, cmd_type()
-
-        if len(global_hits) > 1:
-            raise ValueError(f"Duplicate GLOBAL command key detected: '{key}'")
-
-        # ----------------------------------------
-        # Not found
-        # ----------------------------------------
-
-        return None
+        return ci.controller_id, cmd_type()
 
     def validate(self) -> None:
         """
-        Validate global/shell scope invariants.
-        Call once after all routers are registered.
+        Validate router-level invariants + cross-check against CommandCatalogService.
+
+        Ensures:
+        - at most one shell controller
+        - for every CommandInfo there exists a real command type in the router
+        - (optional) no real command exists without a CommandInfo entry
         """
+        # 1) only one shell controller
+        shell_ids = [cid for cid, r in self._routers.items() if r.is_shell]
+        if len(shell_ids) > 1:
+            raise ValueError(f"Multiple shell controllers detected: {shell_ids}")
 
-        global_keys: dict[str, str] = {}
-        shell_keys: dict[str, str] = {}
+        # 2) cross-check CommandInfo -> real command type
+        catalog = self._services.get(ports.CommandCatalogService)
+        # ensure it's built; either call build() here or require compose to do it
+        # I'd rather be strict:
+        # catalog.build()  # if you prefer validate() to be self-sufficient
 
-        for controller_id, router in self._routers.items():
-            for key, cmd_type in router.all_types().items():
-                scope = getattr(cmd_type, "scope", CommandScope.CONTROLLER)
+        missing: list[str] = []
+        for ci in catalog.all():  # should be stable list of CommandInfo
+            router = self._routers.get(ci.controller_id)
+            if not router:
+                missing.append(f"{ci.controller_id}:{ci.key} (router missing)")
+                continue
+            if not router.get_type(ci.key):
+                missing.append(f"{ci.controller_id}:{ci.key} (command type missing)")
 
-                if scope == CommandScope.GLOBAL:
-                    if key in global_keys:
-                        raise ValueError(
-                            f"GLOBAL command key conflict: '{key}' "
-                            f"({global_keys[key]} vs {controller_id})"
-                        )
-                    global_keys[key] = controller_id
+        if missing:
+            raise ValueError(
+                "CommandCatalog/CommandDirectory mismatch. Missing command types:\n"
+                + "\n".join(missing)
+            )
 
-                if scope == CommandScope.SHELL:
-                    if controller_id != self._shell_id:
-                        raise ValueError(
-                            f"SHELL scoped command '{key}' must belong to "
-                            f"shell controller (found in '{controller_id}')"
-                        )
+        # 3) OPTIONAL: real command types must also exist as CommandInfo
+        info_keys = {(ci.controller_id, ci.key) for ci in catalog.all()}
+        extra: list[str] = []
+        for owner_id, router in self._routers.items():
+            for key in router.all_types().keys():
+                if (owner_id, key) not in info_keys:
+                    extra.append(f"{owner_id}:{key}")
 
-                    if key in shell_keys:
-                        raise ValueError(f"Duplicate SHELL command key: '{key}'")
-                    shell_keys[key] = controller_id
+        if extra:
+            raise ValueError(
+                "CommandDirectory contains commands not present in CommandCatalog:\n"
+                + "\n".join(extra)
+            )
 
 
 class CommandRouter:
@@ -162,7 +131,3 @@ class CommandRouter:
 
     def all_types(self) -> dict[str, type[Command]]:
         return self._by_key
-
-    def instantiate(self, key: str) -> Command | None:
-        t = self.get_type(key)
-        return t() if t else None
