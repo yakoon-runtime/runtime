@@ -14,14 +14,14 @@ class CommandInfo:
     kind: CommandKind
     scope: CommandScope
     visibility: CommandVisibility
-    category: str | None = None
-    controller_id: str | None = None
+    category: str
+    controller_id: str
 
 
 @dataclass(frozen=True, slots=True)
 class ControllerInfo:
     id: str
-    is_shell: bool = False
-    is_activatable: bool = False
-    is_listed: bool = True
-    resources: ResourceReferences | None = None
+    is_shell: bool
+    is_activatable: bool
+    is_listed: bool
+    resources: ResourceReferences
