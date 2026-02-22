@@ -16,6 +16,7 @@ from yakoon.base.models.message import (
     MessageSpec,
     RuleBlock,
     SpacerBlock,
+    TableBlock,
     TextBlock,
 )
 from yakoon.base.models.view import ViewFieldDef, ViewFormDef, ViewSpec
@@ -344,6 +345,38 @@ class ViewSpecService:
             return ListBlock(
                 type="list", items=[self._parse_list_item(x) for x in items_raw]
             )
+
+        if t == "table":
+            headers = b.get("headers")
+            if headers is not None:
+                if not isinstance(headers, list) or not all(
+                    isinstance(x, str) for x in headers
+                ):
+                    raise ViewSpecValidationError(
+                        "TableBlock.headers must be list[str] or null"
+                    )
+
+            rows = b.get("rows", [])
+            if not isinstance(rows, list):
+                raise ViewSpecValidationError("TableBlock.rows must be a list")
+
+            parsed_rows: list[list[str]] = []
+            for r in rows:
+                if not isinstance(r, list) or not all(isinstance(x, str) for x in r):
+                    raise ViewSpecValidationError("Each table row must be list[str]")
+                parsed_rows.append(r)
+
+            width = (
+                len(headers)
+                if headers is not None
+                else (len(parsed_rows[0]) if parsed_rows else 0)
+            )
+            if headers is not None and any(len(r) != len(headers) for r in parsed_rows):
+                raise ViewSpecValidationError("All rows must match headers length")
+            if headers is None and any(len(r) != width for r in parsed_rows):
+                raise ViewSpecValidationError("All rows must have equal length")
+
+            return TableBlock(type="table", headers=headers, rows=parsed_rows)
 
         if t == "kv":
             items = b.get("items", [])

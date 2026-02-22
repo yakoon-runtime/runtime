@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Literal
 
 Role = Literal["info", "success", "warning", "error", "help"]
@@ -149,7 +149,22 @@ class KvBlock:
     items: list[tuple[str, Any]]
 
 
-Block = TextBlock | ListBlock | KvBlock | SpacerBlock | RuleBlock
+@dataclass(frozen=True, slots=True)
+class TableBlock:
+    """
+    - type: table
+    headers: ["Command", "Controller", "Score", "Reason"]
+    rows:
+        - ["man", "system", "0.92", "alias match"]
+        - ["use", "shell", "0.61", "tag match"]
+    """
+
+    type: Literal["table"]
+    headers: list[str] | None = None
+    rows: list[list[str]] = field(default_factory=list)
+
+
+Block = TextBlock | ListBlock | KvBlock | TableBlock | SpacerBlock | RuleBlock
 
 
 @dataclass(frozen=True, slots=True)
