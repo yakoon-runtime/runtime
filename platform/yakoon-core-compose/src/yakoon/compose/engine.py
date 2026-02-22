@@ -21,6 +21,7 @@ from yakoon.platform.services.catalog import (
     ControllerCatalogService,
 )
 from yakoon.platform.services.dialog import DialogService
+from yakoon.platform.services.file import FileLoader
 from yakoon.platform.services.input import InputService
 from yakoon.platform.services.lookup import NoLookupResolverService
 from yakoon.platform.services.namespace import NamespaceService
@@ -31,7 +32,6 @@ from yakoon.platform.services.queue import CommandQueueService
 from yakoon.platform.services.render import RendererService
 from yakoon.platform.services.session import SessionService
 from yakoon.platform.services.shard import ShardAllocator, ShardedCounterService
-from yakoon.platform.services.template import FileLoader
 from yakoon.platform.services.viewspec import ViewSpecService
 from yakoon.platform.stores.factory import create_system_stores
 from yakoon.platform.stores.memory.account import InMemoryAccountStore

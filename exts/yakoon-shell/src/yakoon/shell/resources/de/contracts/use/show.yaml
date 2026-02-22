@@ -1,0 +1,9 @@
+kind: state
+
+state:
+  role: info
+  title: "Commands"
+  blocks:
+    - type: text
+      text: > 
+        {{ data.controllers | map(attribute='id') | join('  ') }}

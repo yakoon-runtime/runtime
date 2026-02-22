@@ -1,0 +1,7 @@
+kind: state
+
+state:
+  role: info
+  title: "Commands"
+  fields:
+    - { var: auth.user, policy: system:string, title: "Username" } 

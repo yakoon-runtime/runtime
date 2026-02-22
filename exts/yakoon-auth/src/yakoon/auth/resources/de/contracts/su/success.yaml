@@ -1,0 +1,8 @@
+kind: state
+
+state:
+  role: info
+  title: "Commands"
+  blocks:
+    - type: text
+      text: su {{data.user}}

@@ -1,0 +1,9 @@
+kind: state
+
+state:
+  role: info
+  title: "Commands"
+  fields:
+    - { var: var_a, policy: customer.age, title: "Zahl", required: true }
+    - { var: var_b, policy: system:string, title: "Text" } 
+

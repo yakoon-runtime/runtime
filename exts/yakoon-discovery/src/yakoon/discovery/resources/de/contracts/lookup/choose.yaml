@@ -1,0 +1,29 @@
+kind: state
+
+state:
+  role: info
+  title: "Meintest du …?"
+  blocks:
+    - type: text
+      text: "{{ data.query }}"
+
+    - type: rule
+      style: strong
+
+    - type: list
+      items:
+        {% for c in data.candidates %}
+        - head:
+            - { type: code, code: "{{ c['command_key'] }}" }
+            - { type: text, text: " (" }
+            - { type: text, text: "{{ c['controller_id'] }}" }
+            - { type: text, text: ")" }
+          blocks:
+            - type: kv
+              items:
+                - ["score", "{{ c['score'] }}"]
+                - ["reason", "{{ c['reason'] }}"]
+        {% endfor %}
+
+    - type: text
+      text: "Tipp: Verfeinere deine Eingabe oder tippe den gewünschten Befehl direkt."

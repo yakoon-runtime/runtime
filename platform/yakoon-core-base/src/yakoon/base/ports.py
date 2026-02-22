@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from yakoon.base.models.command import CommandKind
     from yakoon.base.models.input import DispatchInput
     from yakoon.base.models.key import Key
-    from yakoon.base.models.message import MessageSpec
     from yakoon.base.models.ns import Namespace
     from yakoon.base.models.policy import (
         FieldPolicy,
@@ -249,11 +248,7 @@ class SessionService(Protocol):
 
 
 class RendererService(Protocol):
-    async def render_text(self, ctx: RenderContext, key: str, **data) -> str: ...
-    async def render_view(self, ctx: RenderContext, key: str, **data) -> ViewSpec: ...
-    async def render_spec(
-        self, ctx: RenderContext, key: str, **data
-    ) -> MessageSpec: ...
+    async def render_view(self, ctx: RenderContext, state: str, **data) -> ViewSpec: ...
 
 
 class NamespaceService(Protocol):
@@ -287,11 +282,11 @@ class RenderEngine(Protocol):
 
 
 class PresenterViews(Protocol):
-    async def emit(self, section_key: str, **data) -> None: ...
+    async def emit(self, state: str, **data) -> None: ...
 
 
 class PresenterInputs(Protocol):
-    async def ask(self, section_key: str, **data) -> PromptResult: ...
+    async def ask(self, state: str, **data) -> PromptResult: ...
 
 
 class PresenterService(Protocol):

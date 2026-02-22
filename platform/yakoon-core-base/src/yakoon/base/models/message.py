@@ -109,29 +109,19 @@ class SpacerBlock:
 
 
 @dataclass(frozen=True, slots=True)
+class ListItem:
+    """
+    A list item that can contain nested blocks (UI container).
+    """
+
+    head: str | list[Inline] = ""
+    blocks: list[Block] | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ListBlock:
-    """
-    A list block.
-
-    Each list item may be:
-        - a plain string
-        - or a list of inline nodes
-
-    Usage (simple):
-        - type: list
-          items:
-            - "version - show system info"
-            - "man - show help"
-
-    Usage (inline items):
-        - type: list
-          items:
-            - - { type: "code", code: "man" }
-              - { type: "text", text: " - show help" }
-    """
-
     type: Literal["list"]
-    items: list[str | list[Inline]]
+    items: list[ListItem]
 
 
 @dataclass(frozen=True, slots=True)

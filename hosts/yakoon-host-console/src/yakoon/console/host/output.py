@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from yakoon.base.models.message import Block, Inline
 from yakoon.base.models.view import MessageSpec, ViewSpec  # pfade anpassen
 
 
@@ -33,44 +34,62 @@ class ConsoleOutput:
 
     def _render_message(self, msg: MessageSpec) -> str:
         lines: list[str] = []
+        # title etc...
+        self._render_blocks(lines, msg.blocks or [], indent=0)
+        return "\n".join(lines).rstrip()
 
-        if msg.title:
-            lines.append(str(msg.title))
-            lines.append("")
+    def _render_blocks(
+        self, lines: list[str], blocks: list[Block], *, indent: int
+    ) -> None:
+        pad = " " * indent
 
-        for block in msg.blocks or []:
+        for block in blocks:
             t = getattr(block, "type", None)
 
             if t == "text":
-                lines.append(str(getattr(block, "text", "")))
+                lines.append(pad + self._render_textish(block.text))
                 lines.append("")
 
             elif t == "list":
-                for item in getattr(block, "items", []) or []:
-                    lines.append(f"- {item}")
+                for item in block.items:
+                    lines.append(pad + "- " + self._render_textish(item.head))
+                    if item.blocks:
+                        self._render_blocks(lines, item.blocks, indent=indent + 2)
                 lines.append("")
 
             elif t == "kv":
-                items = getattr(block, "items", []) or []
-                for k, v in items:
-                    lines.append(f"{k}: {v}")
+                for k, v in block.items:
+                    lines.append(pad + f"{k}: {v}")
                 lines.append("")
 
             elif t == "rule":
-                style = getattr(block, "style", "normal")
-                if style == "subtle":
-                    lines.append("-" * 79)
-
-                elif style == "normal":
-                    lines.append("=" * 79)
-
-                elif style == "strong":
-                    lines.append("=" * 79)
-                    lines.append("=" * 79)
+                lines.append(pad + ("-" * 40))
+                lines.append("")
 
             elif t == "spacer":
-                size = getattr(block, "size", 1)
-                for _ in range(size):
+                for _ in range(block.size):
                     lines.append("")
 
-        return "\n".join(lines).rstrip()
+    def _render_textish(self, value: str | list[Inline]) -> str:
+        if isinstance(value, str):
+            return value
+
+        parts: list[str] = []
+        for inl in value:
+            t = getattr(inl, "type", None)
+
+            if t == "text":
+                parts.append(getattr(inl, "text", ""))
+
+            elif t == "code":
+                parts.append(f"`{getattr(inl, 'code', '')}`")
+
+            elif t == "link":
+                text = getattr(inl, "text", "")
+                href = getattr(inl, "href", "")
+                parts.append(f"{text} ({href})")
+
+            else:
+                parts.append("")
+
+        return "".join(parts)

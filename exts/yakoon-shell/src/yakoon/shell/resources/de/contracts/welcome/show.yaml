@@ -1,0 +1,20 @@
+kind: state
+
+state:
+  role: info
+  title: "Commands"
+  blocks:
+  - type: text
+    text: |
+      ''    ''    '''''    ''   ''    ''''''    ''''''    '''    ''
+      '    '    '     '   ''  ''    '      '  '      '   '  '   ''
+        '  '     '     '   '''''     '      '  '      '   '   '  ''
+        ''      '''''''   ''  ''    '      '  '      '   '    ''''
+        ''      '     '   ''   ''    ''''''    ''''''    '     '''
+  - type: text
+    text: "Was du jetzt tun kannst:"
+  - type: list
+    items:
+      - "man              - Zeigt Manual für Befehle"
+      - "use <prg>        - Startet ein Programm"
+      - "version          - Zeigt Systeminformationen"

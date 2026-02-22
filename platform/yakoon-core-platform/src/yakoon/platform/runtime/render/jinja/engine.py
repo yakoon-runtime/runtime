@@ -24,8 +24,7 @@ class JinjaRenderer:
         register_filters(self.env)
 
     async def render_str(self, template_str: str, *, context: dict) -> str:
-        ctx = {"data": context}
-        return self.env.from_string(template_str).render(**ctx)
+        return self.env.from_string(template_str).render(**context)
 
     async def render_any(self, obj: Any, *, context: dict) -> Any:
         if obj is None:

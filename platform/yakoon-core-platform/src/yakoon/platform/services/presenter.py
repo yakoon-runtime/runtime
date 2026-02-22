@@ -18,8 +18,8 @@ class PresenterInputs:
         self._renderer = services.get(ports.RendererService)
         self._inputs = services.get(ports.InputService)
 
-    async def ask(self, section_key: str, **data) -> PromptResult:
-        view = await self._renderer.render_view(self._ctx, section_key, **data)
+    async def ask(self, state: str, **data) -> PromptResult:
+        view = await self._renderer.render_view(self._ctx, state, **data)
         await self._session.emit(view)
         return await self._inputs.ask_view(self._session, view)
 
@@ -33,8 +33,8 @@ class PresenterViews:
         self._session = session
         self._renderer = services.get(ports.RendererService)
 
-    async def emit(self, section_key: str, **data) -> None:
-        view = await self._renderer.render_view(self._ctx, section_key, **data)
+    async def emit(self, state: str, **data) -> None:
+        view = await self._renderer.render_view(self._ctx, state, **data)
         await self._session.emit(view)
 
 

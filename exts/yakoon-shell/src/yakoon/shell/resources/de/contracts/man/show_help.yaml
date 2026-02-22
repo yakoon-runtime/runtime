@@ -1,0 +1,44 @@
+kind: state
+
+state:
+  role: info
+  title: "Commands"
+  blocks:
+      {% if data.mode == "shell" %}
+
+      - type: text
+        text: "Commands"
+
+      - type: list
+        items:
+          {% for c in data.shell_commands %}
+          - head:
+              - { type: code, code: "{{ c.key }}" }
+          {% endfor %}
+
+      - type: rule
+        style: subtle
+
+      - type: text
+        text: "Available programs"
+
+      - type: list
+        items:
+          {% for p in data.controllers %}
+          - head:
+              - { type: code, code: "{{ p.id }}" }
+          {% endfor %}
+
+      {% elif data.mode == "program" %}
+
+      - type: text
+        text: "Commands"
+
+      - type: list
+        items:
+          {% for c in data.commands %}
+          - head:
+              - { type: code, code: "{{ c.key }}" }
+          {% endfor %}
+
+      {% endif %}

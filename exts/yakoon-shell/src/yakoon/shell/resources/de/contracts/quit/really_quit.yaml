@@ -1,0 +1,11 @@
+kind: state
+
+state:
+  role: info
+  title: "Commands"
+  fields:
+    - var: quit 
+      policy: system:bool
+      title: "Wirklich beenden? (Ja/Nein):"
+      required: true
+  
