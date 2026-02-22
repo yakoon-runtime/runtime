@@ -86,7 +86,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
             return []
 
         commands = self._services.get(ports.CommandCatalogService)
-        resolve_space = commands.for_resolve(active_id)
+        resolve_space = commands.for_resolve_context(active_id)
 
         owner_ids: list[str] = []
         seen: set[str] = set()

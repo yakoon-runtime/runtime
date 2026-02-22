@@ -19,11 +19,11 @@ class Engine:
 
     def __init__(
         self,
-        directory: ControllerDirectory,
+        controllers: ControllerDirectory,
         services: ServiceDirectory,
         commands: CommandDirectory,
     ):
-        self._directory = directory
+        self._controllers = controllers
         self._services = services
         self._commands = commands
         self._active_tasks: dict[str, asyncio.Task] = {}  # TODO: cleanup
@@ -38,19 +38,20 @@ class Engine:
         return self._session_locks.setdefault(skey, asyncio.Lock())
 
     async def _find_matching_command(
-        self, active_router_id, request: Request
+        self, controller_id, request: Request
     ) -> tuple[BaseController | None, Command | None] | None:
 
-        find = self._commands.find
-        result: tuple[str, Command] | None = find(active_router_id, request.command)
+        result: tuple[str, Command] | None = self._commands.find(
+            controller_id, request.command
+        )
         if result and isinstance(result, tuple):
-            active_router_id, command = result
-            return self._directory.get(active_router_id), command
+            controller_id, command = result
+            return self._controllers.get(controller_id), command
 
     async def dispatch(self, session: Session, di: DispatchInput) -> Session:
 
         skey = str(session.key)
-        shell = self._directory.find_shell()
+        shell = self._controllers.find_shell()
         if not shell:
             raise RuntimeError("Shell was not found.")
         if not session.get_active_controller():
@@ -123,7 +124,7 @@ class Engine:
 
         # Active controller is the single routing context (S1)
         controller_id = session.get_active_controller()
-        controller = self._directory.get(controller_id) if controller_id else None
+        controller = self._controllers.get(controller_id) if controller_id else None
         if not controller:
             await session.emit(v_error("Kein aktiver Controller gesetzt."))
             return

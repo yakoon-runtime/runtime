@@ -4,11 +4,10 @@ from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.catalog import CommandInfo, ControllerInfo
 from yakoon.base.models.fields import FieldType
 from yakoon.base.models.policy import FieldPolicy
-from yakoon.base.resources.reference import ResourceReferences
 from yakoon.base.stores.base.registry import StoreRegistry
 from yakoon.platform.directories.controller import ControllerDirectory
 from yakoon.platform.engines.command.engine import Engine
-from yakoon.platform.engines.command.router import CommandDirectory, CommandRouter
+from yakoon.platform.engines.command.router import CommandDirectory
 from yakoon.platform.plugins.manager import PluginManager
 from yakoon.platform.plugins.registry import PluginRegistry
 from yakoon.platform.runtime.render.jinja.engine import JinjaRenderer
@@ -76,6 +75,7 @@ def compose_engine(*, plugin_modules: list[str]) -> Engine:
     _compose_policies(bootstrap)
 
     commands.validate()
+
     return Engine(directory, bootstrap, commands)
 
 
@@ -161,14 +161,7 @@ def _compose_commands(
 ) -> CommandDirectory:
     commands = CommandDirectory(services)
     for controller in directory.get_all():
-        router = CommandRouter(
-            controller.id,
-            controller.is_shell,
-            controller.is_listed,
-            controller.is_activatable,
-        )
-        router.register(controller.id, controller.commandsets)
-        commands.register(controller.id, router)
+        commands.register(controller.id, controller.commandsets)
 
     return commands
 
@@ -225,15 +218,6 @@ def _compose_services(
     services.get(ports.CommandCatalogService).build()
 
     return services
-
-
-def _compose_resource_references(
-    directory: ControllerDirectory,
-) -> list[ResourceReferences]:
-    resources: list[ResourceReferences] = []
-    for controller in directory.get_all():
-        resources.append(controller.resources)
-    return resources
 
 
 def _compose_stores() -> StoreRegistry:

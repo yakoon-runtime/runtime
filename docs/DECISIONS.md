@@ -43,7 +43,7 @@ Apps sind jetzt:
 **Command-Suche in CommandCatalogService ausgelagert**
 Resolve-Logik vollständig aus `CommandDirectory` entfernt.
 `CommandCatalogService` enthält nun:
-  * `for_resolve(...)`
+  * `for_resolve_context(...)`
   * `for_controller(...)`
   * `for_controller_visible(...)`
   * `for_man_entries(...)`

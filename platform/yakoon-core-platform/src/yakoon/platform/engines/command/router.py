@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from yakoon.base import ports
@@ -13,76 +13,105 @@ if TYPE_CHECKING:
 
 class CommandDirectory:
     """
-    Engine-only.
-    Holds real command types per controller and materializes Command instances.
+    Engine-only command type registry.
 
-    Uses CommandCatalogService for resolve ordering (CommandInfo only).
+    Holds real command types per controller and materializes Command instances.
+    Resolve semantics (scope/order) live in CommandCatalogService (CommandInfo-only).
+
+    Internal structure:
+        controller_id -> (command_key -> CommandType)
     """
 
     def __init__(self, services: ServiceDirectory) -> None:
         self._services = services
-        self._routers: dict[str, CommandRouter] = {}
-        self._shell_id: str | None = None
+        self._types: dict[str, dict[str, type[Command]]] = {}
 
-    def register(self, controller_id: str, router: CommandRouter) -> None:
-        if controller_id in self._routers:
-            raise ValueError(f"Duplicate controller router: {controller_id}")
+    # ---------------------------------------------------------------------
+    # Registration
+    # ---------------------------------------------------------------------
 
-        self._routers[controller_id] = router
+    def register(
+        self,
+        controller_id: str,
+        commandsets: Sequence[type[CommandSet]],
+    ) -> None:
+        """
+        Register all command types for a controller.
+        No metadata, no scope logic — only type registration.
 
-        if router.is_shell:
-            if self._shell_id is not None:
-                raise ValueError(
-                    f"Multiple shell controllers detected: "
-                    f"{self._shell_id} and {controller_id}"
-                )
-            self._shell_id = controller_id
+        Raises:
+            ValueError on duplicate command keys within the controller.
+        """
+        by_key = self._types.setdefault(controller_id, {})
 
-    def find(self, active_controller_id: str, key: str) -> tuple[str, Command] | None:
+        for cs_type in commandsets:
+            for cmd_type in cs_type.commands():
+                key = cmd_type.key
+                if key in by_key:
+                    raise ValueError(
+                        f"Duplicate command key in controller '{controller_id}': '{key}'"
+                    )
+                by_key[key] = cmd_type
+
+    def all_types_for(self, controller_id: str) -> Mapping[str, type[Command]]:
+        return self._types.get(controller_id, {})
+
+    def get_type(self, controller_id: str, key: str) -> type[Command] | None:
+        return self._types.get(controller_id, {}).get(key)
+
+    # ---------------------------------------------------------------------
+    # Resolve + materialize
+    # ---------------------------------------------------------------------
+
+    def find(self, controller_id: str, command_key: str) -> tuple[str, Command] | None:
+        """
+        Resolve a command within a controller context and materialize it.
+
+        NOTE:
+            The input controller_id is the *resolve context*.
+            The returned owner_id is the *defining controller* of the resolved command
+            (can differ due to GLOBAL/SHELL scope rules handled by CommandCatalogService).
+        """
+        key = command_key.strip()
+        if not key:
+            return None
+
         catalog = self._services.get(ports.CommandCatalogService)
 
-        ci = catalog.resolve_info(active_controller_id, key)
+        # resolve_info() decides WHICH defining controller owns that command (CommandInfo.controller_id)
+        ci = catalog.resolve_info(controller_id, key)
         if not ci:
             return None
 
-        router = self._routers.get(ci.controller_id)
-        if not router:
-            return None
-
-        cmd_type = router.get_type(ci.key)
+        owner_id = ci.controller_id
+        cmd_type = self.get_type(owner_id, ci.key)
         if not cmd_type:
+            # Catalog says it exists, but we have no type -> composition mismatch
             return None
 
-        return ci.controller_id, cmd_type()
+        return owner_id, cmd_type()
+
+    # ---------------------------------------------------------------------
+    # Validation
+    # ---------------------------------------------------------------------
 
     def validate(self) -> None:
         """
-        Validate router-level invariants + cross-check against CommandCatalogService.
+        Validate registry-level integrity + cross-check against CommandCatalogService.
 
         Ensures:
-        - at most one shell controller
-        - for every CommandInfo there exists a real command type in the router
-        - (optional) no real command exists without a CommandInfo entry
+          - every CommandInfo has a corresponding real command type
+          - optionally, no real type exists without a CommandInfo (prevents "ghost commands")
         """
-        # 1) only one shell controller
-        shell_ids = [cid for cid, r in self._routers.items() if r.is_shell]
-        if len(shell_ids) > 1:
-            raise ValueError(f"Multiple shell controllers detected: {shell_ids}")
-
-        # 2) cross-check CommandInfo -> real command type
         catalog = self._services.get(ports.CommandCatalogService)
-        # ensure it's built; either call build() here or require compose to do it
-        # I'd rather be strict:
-        # catalog.build()  # if you prefer validate() to be self-sufficient
 
         missing: list[str] = []
-        for ci in catalog.all():  # should be stable list of CommandInfo
-            router = self._routers.get(ci.controller_id)
-            if not router:
-                missing.append(f"{ci.controller_id}:{ci.key} (router missing)")
+        for ci in catalog.all():
+            if ci.controller_id not in self._types:
+                missing.append(f"{ci.controller_id}:{ci.key} (controller missing)")
                 continue
-            if not router.get_type(ci.key):
-                missing.append(f"{ci.controller_id}:{ci.key} (command type missing)")
+            if ci.key not in self._types[ci.controller_id]:
+                missing.append(f"{ci.controller_id}:{ci.key} (type missing)")
 
         if missing:
             raise ValueError(
@@ -90,11 +119,11 @@ class CommandDirectory:
                 + "\n".join(missing)
             )
 
-        # 3) OPTIONAL: real command types must also exist as CommandInfo
+        # Optional reverse check: types without infos
         info_keys = {(ci.controller_id, ci.key) for ci in catalog.all()}
         extra: list[str] = []
-        for owner_id, router in self._routers.items():
-            for key in router.all_types().keys():
+        for owner_id, by_key in self._types.items():
+            for key in by_key.keys():
                 if (owner_id, key) not in info_keys:
                     extra.append(f"{owner_id}:{key}")
 
@@ -103,31 +132,3 @@ class CommandDirectory:
                 "CommandDirectory contains commands not present in CommandCatalog:\n"
                 + "\n".join(extra)
             )
-
-
-class CommandRouter:
-
-    def __init__(
-        self, controller_id: str, is_shell: bool, is_listed: bool, is_activatable: bool
-    ):
-        self.controller_id = controller_id
-        self.is_shell = is_shell
-        self.is_listed = is_listed
-        self.is_activatable = is_activatable
-        self._by_key: dict[str, type[Command]] = {}
-
-    def register(self, owner_id: str, commandsets: Sequence[type[CommandSet]]) -> None:
-        for cs_type in commandsets:
-            for cmd_type in cs_type.commands():
-                key = cmd_type.key
-                if key in self._by_key:
-                    raise ValueError(
-                        f"Duplicate command key in controller '{owner_id}': {key}"
-                    )
-                self._by_key[key] = cmd_type
-
-    def get_type(self, key: str) -> type[Command] | None:
-        return self._by_key.get(key)
-
-    def all_types(self) -> dict[str, type[Command]]:
-        return self._by_key

@@ -79,9 +79,9 @@ class CommandCatalogService:
             out.extend(self._by_controller[cid])
         return tuple(out)
 
-    def for_resolve(
+    def for_resolve_context(
         self,
-        active_controller_id: str,
+        controller_id: str,
     ) -> tuple[CommandInfo, ...]:
         """
         Deterministic resolve order using only CommandInfo:
@@ -91,20 +91,20 @@ class CommandCatalogService:
         """
         self._ensure_built()
 
-        controllers = self._services.get(ports.ControllerCatalogService)
-        ctrl = controllers.get(active_controller_id)
-        is_shell = bool(ctrl and ctrl.is_shell)
+        controller_infos = self._services.get(ports.ControllerCatalogService)
+        controller = controller_infos.get(controller_id)
+        is_shell = bool(controller and controller.is_shell)
 
         out: list[CommandInfo] = []
 
         # 1) active controller CONTROLLER
-        for c in self._by_controller.get(active_controller_id, ()):
+        for c in self._by_controller.get(controller_id, ()):
             if c.scope == CommandScope.CONTROLLER:
                 out.append(c)
 
         # 2) active controller SHELL
         if is_shell:
-            for c in self._by_controller.get(active_controller_id, ()):
+            for c in self._by_controller.get(controller_id, ()):
                 if c.scope == CommandScope.SHELL:
                     out.append(c)
 
@@ -149,11 +149,11 @@ class CommandCatalogService:
 
     def resolve_info(
         self,
-        active_controller_id: str,
+        controller_id: str,
         command_key: str,
     ) -> CommandInfo | None:
         key = command_key.strip()
-        for ci in self.for_resolve(active_controller_id):
+        for ci in self.for_resolve_context(controller_id):
             if ci.key == key:
                 return ci
         return None

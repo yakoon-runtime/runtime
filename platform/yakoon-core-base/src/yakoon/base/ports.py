@@ -203,9 +203,9 @@ class CommandCatalogService(Protocol):
     def for_controller_visible(
         self, controller_id: str, session: Session
     ) -> Sequence[CommandInfo]: ...
-    def for_resolve(
+    def for_resolve_context(
         self,
-        active_controller_id: str,
+        controller_id: str,
     ) -> tuple[CommandInfo, ...]: ...
     def for_man_entries(
         self,
@@ -216,7 +216,7 @@ class CommandCatalogService(Protocol):
     ) -> Sequence[CommandInfo]: ...
     def resolve_info(
         self,
-        active_controller_id: str,
+        controller_id: str,
         command_key: str,
     ) -> CommandInfo | None: ...
 
