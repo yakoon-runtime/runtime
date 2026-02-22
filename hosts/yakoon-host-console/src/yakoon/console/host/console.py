@@ -1,9 +1,10 @@
 # yakoon/console/host.py
 import asyncio
+from collections.abc import Awaitable, Callable
 
 from yakoon.base.models.view import ViewSpec
 from yakoon.base.utils.input import safe_input, safe_input_secret
-from yakoon.platform.hosts.adapter import HostAdapter
+from yakoon.platform.hosts.adapter import FormInput, HostAdapter, InputEvent, TextInput
 
 
 class ConsoleHost(HostAdapter):
@@ -14,7 +15,7 @@ class ConsoleHost(HostAdapter):
     - only collects input from view.input and submits values
     """
 
-    def __init__(self, submit):
+    def __init__(self, submit: Callable[[InputEvent], Awaitable[None]]):
         self._submit = submit
         self._lock = asyncio.Lock()
 
@@ -27,7 +28,7 @@ class ConsoleHost(HostAdapter):
 
         fields = input_def.fields or {}
         if not isinstance(fields, dict) or not fields:
-            await self._submit({})
+            await self._submit(FormInput({}))
             return
 
         values: dict[str, object] = {}
@@ -52,14 +53,14 @@ class ConsoleHost(HostAdapter):
 
             values[key] = value
 
-        await self._submit(values)
+        await self._submit(FormInput(values))
 
     async def on_ready(self, *, ps1: str) -> None:
         async with self._lock:
             text = await safe_input(ps1=ps1)
 
         if text.strip():
-            await self._submit(text)
+            await self._submit(TextInput(text))
 
     async def on_idle(self) -> None:
         return

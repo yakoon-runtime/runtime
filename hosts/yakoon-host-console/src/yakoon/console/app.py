@@ -5,6 +5,7 @@ from yakoon.base.models.key import Key
 from yakoon.compose.engine import compose_engine
 from yakoon.console.host.console import ConsoleHost
 from yakoon.console.host.output import ConsoleOutput
+from yakoon.platform.hosts.adapter import FormInput, InputEvent, TextInput
 from yakoon.platform.hosts.runner import Runner
 
 
@@ -33,13 +34,12 @@ async def run_console() -> None:
 
     runner: Runner | None = None
 
-    async def submit(payload) -> None:
-
-        if isinstance(payload, dict):
-            await runner.on_input_submit(payload)
-            return
-
-        await runner.on_user_input(str(payload))
+    async def submit(event: InputEvent) -> None:
+        assert runner is not None
+        if isinstance(event, FormInput):
+            await runner.on_input_submit(event.data)
+        elif isinstance(event, TextInput):
+            await runner.on_user_input(event.value)
 
     try:
         host = ConsoleHost(submit=submit)

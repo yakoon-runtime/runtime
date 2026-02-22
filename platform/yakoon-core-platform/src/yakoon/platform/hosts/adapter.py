@@ -1,8 +1,22 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Protocol
 
 from yakoon.base.models.view import ViewSpec
+
+
+@dataclass(frozen=True)
+class TextInput:
+    value: str
+
+
+@dataclass(frozen=True)
+class FormInput:
+    data: dict[str, object]
+
+
+InputEvent = TextInput | FormInput
 
 
 class HostAdapter(Protocol):
@@ -14,8 +28,6 @@ class HostAdapter(Protocol):
     """
 
     async def on_view(self, *, ps1: str, view: ViewSpec) -> None: ...
-    async def on_input_submit(self, values: list) -> None: ...
-
     async def on_ready(self, *, ps1: str) -> None: ...
     async def on_idle(self) -> None: ...
     async def on_exit(self) -> None: ...
