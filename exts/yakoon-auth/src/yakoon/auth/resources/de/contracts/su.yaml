@@ -7,7 +7,7 @@ views:
     role: info
     blocks:
       - type: text
-        text: su d{{user}}
+        text: su {{data.user}}
 
   failed:
     title: 
