@@ -6,8 +6,22 @@
 > 2. Orchestrierung: Engine orchestriert, Host entscheidet über Lifecycle (Signal).
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
+## 26-02-22
+**State-based Template Architecture**
+Die bisherige Template-Struktur basierte auf:
+- kind: command_view
+- mehreren Sections (views, inputs)
+- section_key Auswahl im Renderer
+- YAML-first Parsing mit nachgelagerter Jinja-Verarbeitung
+  - Diese war nicht möglich, sobald Jinja-Direktiven verwendet wurden.
+Diese Struktur führte zu: 
+- erhöhter Komplexität im Renderer, 
+- mehrfach-Pfaden im ViewSpecService
+- impliziten Zuständen innerhalb einer Datei
+- unnötigen Sonderfällen vermischter Semantik zwischen View und State
+Daher wurde entschieden, dass eine Datei genau einen Zuständ hält.
 
-## 2026-02-20
+## 2026-02-21
 **Workflow als Plugin entkoppelt**
 * WF-Commands (`wf.start`, `wf.input`, etc.) wurden aus der Shell entfernt.
 * Workflow ist nun ein eigenständiges Modul/Plugin.
@@ -16,7 +30,7 @@
 * WF kann optional geladen werden (Vorbereitung für NoWorkflow-Plugin).
 Workflow ist jetzt ein Feature, kein Systemkern.
 
-## 2026-02-20
+## 2026-02-21
 **Plattform-Struktur neu geschnitten**
 Projektstruktur getrennt:
 * `platform` → Kern (Engine, Directories, Services, Policies)
@@ -49,7 +63,6 @@ Resolve-Logik vollständig aus `CommandDirectory` entfernt.
   * `for_man_entries(...)`
 * Scope-Regeln (CONTROLLER, SHELL, GLOBAL) sind zentralisiert.
 * `CommandDirectory` materialisiert nur noch Commands.
-
 
 ## 2026-02-20
 **Dispatch-System neu modelliert**
