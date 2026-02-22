@@ -7,6 +7,49 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## 2026-02-20
+**Workflow als Plugin entkoppelt**
+* WF-Commands (`wf.start`, `wf.input`, etc.) wurden aus der Shell entfernt.
+* Workflow ist nun ein eigenständiges Modul/Plugin.
+* Die Plattform kennt Workflow nicht mehr als Core-Bestandteil.
+* Engine greift ausschließlich über definierte Ports (`WorkflowInternal`, Public Contracts) zu.
+* WF kann optional geladen werden (Vorbereitung für NoWorkflow-Plugin).
+Workflow ist jetzt ein Feature, kein Systemkern.
+
+## 2026-02-20
+**Plattform-Struktur neu geschnitten**
+Projektstruktur getrennt:
+* `platform` → Kern (Engine, Directories, Services, Policies)
+* `exts` → Plattform-erweiternde Module (z.B. workflow, discovery)
+* `apps` → Fachanwendungen (crm, office)
+* `posts` → Infrastruktur-/Host-Integration
+Apps sind jetzt:
+* `crm`
+* `office`
+
+## 2026-02-21
+**Discovery & Lookup eingeführt**
+* Discovery-Strategie-Mechanismus implementiert.
+* Lookup ersetzt festen Alias-Mechanismus vollständig.
+* Alias & Tags sind jetzt:
+  * Multilingual
+  * YAML-basiert
+  * Plugin-fähig
+* Lookup läuft über `LookupResolverService`.
+* Kein Lookup-Command-Roundtrip mehr notwendig.
+* UI-Darstellung bei Mehrdeutigkeit über separates Command gelöst.
+
+## 2026-02-21
+**Command-Suche in CommandCatalogService ausgelagert**
+Resolve-Logik vollständig aus `CommandDirectory` entfernt.
+`CommandCatalogService` enthält nun:
+  * `for_resolve(...)`
+  * `for_controller(...)`
+  * `for_controller_visible(...)`
+  * `for_man_entries(...)`
+* Scope-Regeln (CONTROLLER, SHELL, GLOBAL) sind zentralisiert.
+* `CommandDirectory` materialisiert nur noch Commands.
+
 
 ## 2026-02-20
 **Dispatch-System neu modelliert**
