@@ -1,11 +1,18 @@
 # yakoon/platform/services/view.py
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, cast
 
 import yaml
 
-from yakoon.base.models.message import KvBlock, ListBlock, MessageSpec, TextBlock
+from yakoon.base.models.message import (
+    KvBlock,
+    ListBlock,
+    MessageSpec,
+    RuleBlock,
+    SpacerBlock,
+    TextBlock,
+)
 from yakoon.base.models.view import (
     ViewFieldDef,
     ViewFormDef,
@@ -495,6 +502,7 @@ class ViewSpecService:
                 raise ViewSpecValidationError("Each block must be a mapping")
             t = b.get("type")
 
+            # text
             if t == "text":
                 text = b.get("text", "")
                 if not isinstance(text, str):
@@ -503,6 +511,7 @@ class ViewSpecService:
                     )
                 blocks.append(TextBlock(type="text", text=text))
 
+            # list
             elif t == "list":
                 items = b.get("items", [])
                 if not isinstance(items, list) or not all(
@@ -513,6 +522,31 @@ class ViewSpecService:
                     )
                 blocks.append(ListBlock(type="list", items=items))
 
+            # rule
+            elif t == "rule":
+                style = b.get("style", "normal")
+                if not isinstance(style, str):
+                    raise ViewSpecValidationError("RuleBlock.style must be a string")
+
+                if style not in {"subtle", "normal", "strong"}:
+                    raise ViewSpecValidationError(
+                        f"Invalid rule style: {style!r}. "
+                        "Expected one of: subtle, normal, strong."
+                    )
+
+                style = cast(Literal["subtle", "normal", "strong"], style)
+                blocks.append(RuleBlock(type="rule", style=style))
+
+            # spaces
+            elif t == "spacer":
+                size = b.get("size", 1)
+                if not isinstance(size, int) or size < 0:
+                    raise ViewSpecValidationError(
+                        "SpacerBlock.size must be a non-negative integer"
+                    )
+                blocks.append(SpacerBlock(type="spacer", size=size))
+
+            # kv
             elif t == "kv":
                 items = b.get("items", [])
                 if not isinstance(items, list):

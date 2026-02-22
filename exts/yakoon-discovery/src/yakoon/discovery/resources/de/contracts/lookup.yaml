@@ -9,8 +9,8 @@ views:
       - type: text
         text: "{{ data.query }}"
 
-      - type: text
-        text: ---
+      - type: rule
+        style: strong
 
       - type: text
         text: |

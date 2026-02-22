@@ -82,6 +82,33 @@ class TextBlock:
 
 
 @dataclass(frozen=True, slots=True)
+class RuleBlock:
+    """
+    A horizontal rule (visual separator line).
+
+    YAML:
+        - type: rule
+    """
+
+    type: Literal["rule"]
+    style: Literal["subtle", "normal", "strong"] = "normal"
+
+
+@dataclass(frozen=True, slots=True)
+class SpacerBlock:
+    """
+    Vertical spacing.
+
+    YAML:
+        - type: spacer
+          size: 1   # optional, default = 1 blank line
+    """
+
+    type: Literal["spacer"]
+    size: int = 1
+
+
+@dataclass(frozen=True, slots=True)
 class ListBlock:
     """
     A list block.
@@ -132,7 +159,7 @@ class KvBlock:
     items: list[tuple[str, Any]]
 
 
-Block = TextBlock | ListBlock | KvBlock
+Block = TextBlock | ListBlock | KvBlock | SpacerBlock | RuleBlock
 
 
 @dataclass(frozen=True, slots=True)

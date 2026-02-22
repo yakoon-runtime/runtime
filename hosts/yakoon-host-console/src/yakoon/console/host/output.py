@@ -56,4 +56,21 @@ class ConsoleOutput:
                     lines.append(f"{k}: {v}")
                 lines.append("")
 
+            elif t == "rule":
+                style = getattr(block, "style", "normal")
+                if style == "subtle":
+                    lines.append("-" * 79)
+
+                elif style == "normal":
+                    lines.append("=" * 79)
+
+                elif style == "strong":
+                    lines.append("=" * 79)
+                    lines.append("=" * 79)
+
+            elif t == "spacer":
+                size = getattr(block, "size", 1)
+                for _ in range(size):
+                    lines.append("")
+
         return "\n".join(lines).rstrip()
