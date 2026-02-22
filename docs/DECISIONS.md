@@ -6,6 +6,7 @@
 > 2. Orchestrierung: Engine orchestriert, Host entscheidet über Lifecycle (Signal).
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
+
 ## 26-02-22
 **State-based Template Architecture**
 Die bisherige Template-Struktur basierte auf:
@@ -20,6 +21,23 @@ Diese Struktur führte zu:
 - impliziten Zuständen innerhalb einer Datei
 - unnötigen Sonderfällen vermischter Semantik zwischen View und State
 Daher wurde entschieden, dass eine Datei genau einen Zuständ hält.
+Vorteile:
+- Dramatische Reduktion der Komplexität im Renderer
+- Nur noch ein Parserpfad
+- Keine Section-Magie
+- Keine partielle YAML-Manipulation
+- Keine Sonderfälle
+- Zustände sind explizit im Filesystem sichtbar
+- Caching wird trivial
+- Testbarkeit steigt
+- Architektur wird klarer und ehrlicher
+
+kind: state
+state:
+  role: info
+  title: ...
+  blocks: [...]
+  fields: [...]
 
 ## 2026-02-21
 **Workflow als Plugin entkoppelt**
