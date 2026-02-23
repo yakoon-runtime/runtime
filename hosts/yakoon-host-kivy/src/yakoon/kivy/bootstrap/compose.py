@@ -2,14 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from yakoon.auth.controller import AuthCoreController
 from yakoon.compose.engine import compose_engine
 from yakoon.kivy.bootstrap.dispatcher import ContextDispatcher
 from yakoon.kivy.controllers.app_controller import AppController
+from yakoon.kivy.host.runner import SessionRunner
 from yakoon.kivy.pages.app_root_page import AppRootPage
-from yakoon.kivy.runtime.runner import SessionRunner
-from yakoon.platform.directories.controller import ControllerDirectory
-from yakoon.shell.controller import ShellCoreController
 
 
 @dataclass
@@ -22,13 +19,19 @@ class KivyComposition:
 
 
 def compose_kivy_app() -> KivyComposition:
-
+    # Analog zur ConsoleApp: compose_engine(plugin_modules=[...])
     engine = compose_engine(
-        controllers=ControllerDirectory(
-            controllers=[ShellCoreController(), AuthCoreController()]
-        )
+        plugin_modules=[
+            "yakoon.shell",
+            "yakoon.auth",
+            "yakoon.discovery",
+            "yakoon.crm",
+            "yakoon.office",
+            "yakoon.workflow",
+        ]
     )
 
+    # Engine-Loop fürs UI (SessionService.get_or_create, etc.)
     runner = SessionRunner(engine)
     runner.start()
 
@@ -38,6 +41,7 @@ def compose_kivy_app() -> KivyComposition:
     controller = AppController(root, dispatcher, runner)
     dispatcher.set_handler(controller.dispatch_context)
 
+    # Startet den ersten Tab (erstellt Session+Output im TabsController)
     controller.new_chat_tab(select=True)
 
     return KivyComposition(

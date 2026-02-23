@@ -1,6 +1,9 @@
 from kivy.clock import Clock
 from yakoon.base.ports import PermissionService, SessionService
-from yakoon.kivy.runtime.output.output import KivyOutput, SessionBoundKivyOutput
+from yakoon.kivy.host.host import KivyHost
+from yakoon.kivy.host.runner import SessionRunner
+from yakoon.kivy.host.thread import TabRunnerThread
+from yakoon.kivy.runtime.output.output import KivyOutput
 from yakoon.kivy.states.state_provider import UIStateProvider
 from yakoon.kivy.states.tab_state import TabRuntime, TabState
 from yakoon.kivy.widgets.chat.chat_widget import ChatWidget
@@ -8,7 +11,9 @@ from yakoon.kivy.widgets.chat.chat_widget import ChatWidget
 
 class TabsController:
 
-    def __init__(self, dispatcher, runner, app_root, navigator, state: TabState):
+    def __init__(
+        self, dispatcher, runner: SessionRunner, app_root, navigator, state: TabState
+    ):
 
         self.dispatcher = dispatcher
         self.runner = runner
@@ -74,8 +79,11 @@ class TabsController:
         if tab_id not in self.state.pages:
             return
 
+        runtime = self.state.runtimes.pop(tab_id, None)
+        if runtime and runtime.runner_thread:
+            runtime.runner_thread.stop()
+
         self.state.pages.pop(tab_id, None)
-        self.state.runtimes.pop(tab_id, None)
         self.state.tabs = [t for t in self.state.tabs if t["id"] != tab_id]
 
         if self.state.active_tab_id == tab_id:
@@ -100,13 +108,28 @@ class TabsController:
     def _on_session_ready(self, tab_id: str, task):
         session = task.result()
 
-        self.state.runtimes[tab_id] = TabRuntime(tab_id=tab_id, session=session)
-
         output = KivyOutput(
-            on_context=self.dispatcher, ui_state_provider=UIStateProvider(session)
+            session=session,
+            on_context=self.dispatcher,
+            ui_state_provider=UIStateProvider(session),
         )
+        session.bind_io(output)
 
-        session.bind_io(SessionBoundKivyOutput(session, output))
+        # Pro Tab: eigener Host + eigener RunnerThread
+        host = KivyHost(
+            submit=lambda _evt: None
+        )  # submit wird im TabRunnerThread injiziert
+        runner_thread = TabRunnerThread(
+            engine=self.runner.engine, session=session, host=host, inits=[]
+        )
+        runner_thread.start()
+
+        self.state.runtimes[tab_id] = TabRuntime(
+            tab_id=tab_id,
+            session=session,
+            host=host,
+            runner_thread=runner_thread,
+        )
 
     def on_chat_submit(self, text: str):
         tab_id = self.state.active_tab_id
@@ -114,4 +137,8 @@ class TabsController:
         if not runtime:
             return
 
-        self.runner.enqueue(runtime.session, text)
+        loop = runtime.runner_thread.loop if runtime.runner_thread else None
+        if not loop:
+            return
+
+        runtime.host.deliver_text(loop=loop, text=text)

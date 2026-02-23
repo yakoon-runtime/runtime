@@ -9,7 +9,7 @@ class ChatWidget(BoxLayout):
 
         super().__init__(**kw)
         self.on_submit = on_submit
-        self._scroll_trigger = Clock.create_trigger(self._scroll_to_bottom, 0)
+        self._scroll_trigger = Clock.create_trigger(self._restore_scroll_if_needed, 0)
 
         self._data = []
         self.runner = None
@@ -19,36 +19,66 @@ class ChatWidget(BoxLayout):
     def prompt(self):
         return self.ids.prompt
 
-    def _is_near_bottom(self):
-        return self.ids.rv.scroll_y <= 0.02
-
-    def _scroll_to_bottom(self, _dt):
-        rv = self.ids.rv
-
-        # Wenn Inhalt kleiner als Viewport ist: nicht "scrollen" (verhindert Bounce)
-        lm = rv.layout_manager
-        if not lm:
-            return
-        if lm.height <= rv.height:
-            return
-
-        rv.scroll_y = 0
+    def _restore_scroll_if_needed(self, *_):
+        self.ids.rv.scroll_y = 1.0
 
     def apply_context(self, ctx):
 
-        # Output anzeigen
-        if ctx.envelope.text:
-            self.append_message(ctx.envelope.text)
+        view = ctx.envelope
+
+        msg = getattr(view, "message", None)
+        input_def = getattr(view, "input", None)
+
+        if msg:
+            self.render(view)
 
         ui = ctx.ui_state_provider()
         self.ids.prompt.prefix = ui.prompt_prefix
         self.ids.prompt.secret = ui.prompt_secret
 
+        # --- Assist Logic ---
+        prompt = self.ids.prompt
+
+        if input_def:
+            # Wenn Fehler, zeige Fehlermeldung
+            if msg and getattr(msg, "role", None) == "error":
+                prompt.assist_text = self._extract_text(msg)
+                prompt.assist_state = "error"
+            else:
+                # Frage anzeigen
+                fields = input_def.fields or {}
+                if fields:
+                    first_key = next(iter(fields.keys()))
+                    first = fields[first_key]
+                    label = getattr(first, "title", None) or first_key
+                else:
+                    label = getattr(input_def, "title", None) or ""
+                prompt.assist_text = label
+                prompt.assist_state = "question"
+        else:
+            prompt.assist_text = ""
+            prompt.assist_state = "idle"
+
+    def _extract_text(self, message):
+        blocks = getattr(message, "blocks", []) or []
+        texts = []
+        for b in blocks:
+            t = getattr(b, "text", None)
+            if t:
+                texts.append(str(t))
+        return "\n".join(texts)
+
+    def render(self, view) -> None:
+        if hasattr(view, "message") and view.message is not None:
+            self.append_message(str(view.message))
+        else:
+            self.append_message(str(view))
+
     def append_message(self, text: str):
 
         if not text.endswith("\n"):
             text += "\n"
-        self._data.append({"text": text})
+        self._data.insert(0, {"text": text})
         self.ids.rv.data = self._data
 
         # kein schedule_once scroll_y=0 mehr

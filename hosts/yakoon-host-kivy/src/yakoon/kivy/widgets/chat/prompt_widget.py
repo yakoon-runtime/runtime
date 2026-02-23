@@ -2,7 +2,12 @@ from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.factory import Factory
 from kivy.metrics import dp
-from kivy.properties import BooleanProperty, NumericProperty, StringProperty
+from kivy.properties import (
+    BooleanProperty,
+    NumericProperty,
+    OptionProperty,
+    StringProperty,
+)
 from kivy.uix.boxlayout import BoxLayout
 
 
@@ -12,6 +17,9 @@ class PromptWidget(BoxLayout):
     prefix = StringProperty("shell$")  # wird später von Session gesetzt
     secret = BooleanProperty(False)
     multiline = BooleanProperty(True)
+
+    assist_text = StringProperty("")
+    assist_state = OptionProperty("idle", options=("idle", "question", "error"))
 
     min_h = NumericProperty(dp(44))  # 1 Zeile
     max_h = NumericProperty(dp(160))

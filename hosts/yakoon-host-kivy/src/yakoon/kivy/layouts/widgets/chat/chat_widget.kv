@@ -5,6 +5,13 @@
     orientation: "vertical"
     spacing: dp(theme.pad_sm)
 
+    PromptWidget:
+        id: prompt
+        hint: "shell$ "
+        height: dp(44)
+        size_hint_y: None
+        on_submit: root.submit(args[1])
+
     YkPanel:
         orientation: "vertical"
         RecycleView:
@@ -22,9 +29,3 @@
                 spacing: dp(4)
                 padding: dp(theme.pad), dp(theme.pad)
 
-    PromptWidget:
-        id: prompt
-        hint: "shell$ "
-        height: dp(44)
-        size_hint_y: None
-        on_submit: root.submit(args[1])

@@ -15,21 +15,33 @@ from yakoon.kivy.bootstrap.compose import compose_kivy_app  # noqa: E402
 
 
 class YakoonKivyApp(App):
-
     title = "Yakoon"
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._composition = None
 
     def build(self):
         self._load_environment()
-        return compose_kivy_app().root
+        self._composition = compose_kivy_app()
+        return self._composition.root
+
+    def on_stop(self):
+        # sauber runterfahren
+        comp = self._composition
+        if comp is not None:
+            try:
+                comp.runner.stop()
+            except Exception:
+                # UI shutdown soll nicht crashen
+                pass
 
     def _load_environment(self):
-
         BASE = Path(__file__).resolve().parent
         self._load_fonts(BASE)
         self._load_layouts(BASE)
 
     def _load_fonts(self, base_folder: str):
-
         FONTS = base_folder / "assets" / "fonts"
 
         LabelBase.register(
@@ -44,7 +56,6 @@ class YakoonKivyApp(App):
         )
 
     def _load_layouts(self, base_folder: str) -> None:
-
         LAYOUTS = base_folder / "layouts"
 
         def _sorted_kv(folder: Path) -> list[Path]:

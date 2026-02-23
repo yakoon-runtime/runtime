@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from kivy.clock import Clock
+
 
 class ContextDispatcher:
 
@@ -13,4 +15,5 @@ class ContextDispatcher:
 
     def __call__(self, ctx) -> None:
         if self._handler:
-            self._handler(ctx)
+            Clock.schedule_once(lambda _dt: self._handler(ctx), 0)
+            # self._handler(ctx)
