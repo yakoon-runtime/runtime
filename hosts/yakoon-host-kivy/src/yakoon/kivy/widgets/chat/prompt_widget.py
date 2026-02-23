@@ -29,13 +29,7 @@ class PromptWidget(BoxLayout):
         self.register_event_type("on_submit")
 
     def on_kv_post(self, base_widget):
-        ti = self.input
-        ti.bind(text=lambda *_: self._schedule_adjust())
-        ti.bind(minimum_height=lambda *_: self._schedule_adjust())
-        ti.bind(width=lambda *_: self._schedule_adjust())
-
         Window.bind(on_key_down=self._on_window_key_down)
-        self._schedule_adjust()
 
     @property
     def input(self):
@@ -43,20 +37,6 @@ class PromptWidget(BoxLayout):
 
     def focus_input(self):
         Clock.schedule_once(lambda _dt: setattr(self.input, "focus", True), 0)
-
-    def _schedule_adjust(self):
-        Clock.schedule_once(lambda _dt: self._adjust_height(), 0)
-
-    def _adjust_height(self):
-        ti = self.input
-        # chrome = dp(16)  # padding/border vom Surface
-        # target = ti.minimum_height + chrome
-        target = self.input.minimum_height + dp(16)
-        self.height = max(self.min_h, min(self.max_h, target))
-
-        if self.height >= self.max_h:
-            # nach unten scrollen (wenn voll)
-            ti.scroll_y = 0
 
     def _submit_internal(self):
         text = (self.input.text or "").strip()

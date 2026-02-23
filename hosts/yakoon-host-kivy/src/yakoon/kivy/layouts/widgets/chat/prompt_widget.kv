@@ -3,7 +3,9 @@
 #:import StencilView kivy.uix.stencilview.StencilView
 
 <PromptWidget>:
+    # wächst mit Inhalt (Prompt + Assistenz-Label)
     size_hint_y: None
+    height: root_layout.minimum_height + dp(12)
 
     StencilView:
         YkInputSurface:
@@ -12,25 +14,61 @@
             size: self.parent.size
 
             BoxLayout:
-                orientation: "horizontal"
-                spacing: dp(6)
+                id: root_layout
+                orientation: "vertical"
+                spacing: dp(4)
+                size_hint_y: None
+                height: self.minimum_height
 
-                Label:
-                    id: prefix
-                    text: root.prefix
-                    size_hint_x: None
-                    width: self.texture_size[0]
-                    color: theme.muted
-                    font_name: theme.font_mono
-                    valign: "middle"
-                    text_size: None, self.height
+                # Zeile 1: shell$ + Eingabe
+                BoxLayout:
+                    id: input_row
+                    orientation: "horizontal"
+                    spacing: dp(6)
+                    size_hint_y: None
+                    height: max(prefix.texture_size[1], input.height)
 
-                YkPrompt:
-                    id: input
-                    multiline: True
-                    size_hint_y: 1
-                    size_hint_x: 1
-                    # wichtig: keine hint_text mehr
-                    hint_text: ""
-                    password: root.secret
-                    background_color: 0,0,0,0
+                    Label:
+                        id: prefix
+                        text: root.prefix
+                        size_hint_x: None
+                        width: self.texture_size[0]
+                        color: theme.muted
+                        font_name: theme.font_mono
+                        valign: "middle"
+                        text_size: None, self.height
+
+                    YkPrompt:
+                        id: input
+                        multiline: True
+                        size_hint_x: 1
+                        size_hint_y: None
+                        height: self.minimum_height
+                        # wichtig: keine hint_text mehr
+                        hint_text: ""
+                        password: root.secret
+                        background_color: 0,0,0,0
+
+                # Zeile 2: Assistent
+                BoxLayout:
+                    orientation: "horizontal"
+                    spacing: dp(6)
+                    size_hint_y: None
+                    height: 0 if not root.assist_text else assist.texture_size[1]
+
+                    Widget:
+                        size_hint_x: None
+                        width: prefix.width
+
+                    Label:
+                        id: assist
+                        opacity: 0 if not root.assist_text else 1
+                        text: root.assist_text
+                        size_hint_x: 1
+                        size_hint_y: None
+                        height: 0 if not root.assist_text else self.texture_size[1]
+                        color: theme.muted
+                        font_name: theme.font_mono
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.width, None

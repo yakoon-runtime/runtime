@@ -4,6 +4,7 @@ from yakoon.base import ports
 from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.prompt import PromptResult
 from yakoon.base.models.resource import ResourceRef
+from yakoon.base.models.view import ViewSpec
 from yakoon.base.runtime.session import Session
 from yakoon.platform.runtime.render.context import RenderContext
 
@@ -21,7 +22,12 @@ class PresenterInputs:
     async def ask(self, state: str, **data) -> PromptResult:
         view = await self._renderer.render_view(self._ctx, state, **data)
         await self._session.emit(view)
-        return await self._inputs.ask_view(self._session, view)
+        result = await self._inputs.ask_view(self._session, view)
+        await self.close()
+        return result
+
+    async def close(self):
+        await self._session.emit(ViewSpec(kind="view", input=None, message=None))
 
 
 class PresenterViews:
