@@ -18,6 +18,12 @@ class DefaultTheme(EventDispatcher):
     muted = ListProperty([0.70, 0.70, 0.75, 1])
     accent = ListProperty([0.30, 0.58, 0.95, 1])
 
+    # states
+    info = ListProperty([0.45, 0.75, 0.95, 1])  # kühles Blau/Cyan
+    warning = ListProperty([0.95, 0.70, 0.20, 1])  # gelb/orange
+    error = ListProperty([0.90, 0.30, 0.30, 1])  # rot
+    success = ListProperty([0.30, 0.75, 0.45, 1])  # grün
+
     # Metrics
     radius = NumericProperty(14)
     pad = NumericProperty(10)

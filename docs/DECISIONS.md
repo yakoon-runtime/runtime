@@ -7,6 +7,13 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## 26-02-23
+**GUI host & Eingabe lifecyle**
+Eingaben (offene Prompts) werden durch ein immer quitiert. Somit können Hosts ihr Frontend 
+entsprechend anpassen oder aufräumarbeiten erledigen. Dazu schickt die Platform 
+an die Sessionausgabe ein: 
+- `ViewSpec(kind="view", input=None, message=None)'`
+
 ## 26-02-22
 **State-based Template Architecture**
 Die bisherige Template-Struktur basierte auf:

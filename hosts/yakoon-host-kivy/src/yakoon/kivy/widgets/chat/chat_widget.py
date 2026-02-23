@@ -29,9 +29,6 @@ class ChatWidget(BoxLayout):
         msg = getattr(view, "message", None)
         input_def = getattr(view, "input", None)
 
-        if msg:
-            self.render(view)
-
         ui = ctx.ui_state_provider()
         self.ids.prompt.prefix = ui.prompt_prefix
         self.ids.prompt.secret = ui.prompt_secret
@@ -39,25 +36,28 @@ class ChatWidget(BoxLayout):
         # --- Assist Logic ---
         prompt = self.ids.prompt
 
+        # Wenn Fehler, zeige Fehlermeldung
+        if msg and getattr(msg, "role", None) == "error":
+            prompt.assist_text = self._extract_text(msg)
+            prompt.assist_state = "error"
+            return
+
+        # Frage anzeigen
         if input_def:
-            # Wenn Fehler, zeige Fehlermeldung
-            if msg and getattr(msg, "role", None) == "error":
-                prompt.assist_text = self._extract_text(msg)
-                prompt.assist_state = "error"
+            fields = input_def.fields or {}
+            if fields:
+                first_key = next(iter(fields.keys()))
+                first = fields[first_key]
+                label = getattr(first, "title", None) or first_key
             else:
-                # Frage anzeigen
-                fields = input_def.fields or {}
-                if fields:
-                    first_key = next(iter(fields.keys()))
-                    first = fields[first_key]
-                    label = getattr(first, "title", None) or first_key
-                else:
-                    label = getattr(input_def, "title", None) or ""
-                prompt.assist_text = label
-                prompt.assist_state = "question"
-        else:
-            prompt.assist_text = ""
-            prompt.assist_state = "idle"
+                label = getattr(input_def, "title", None) or ""
+            prompt.assist_text = label
+            prompt.assist_state = "question"
+            return
+
+        prompt.assist_text = ""
+        prompt.assist_state = "idle"
+        self.render(view)
 
     def _extract_text(self, message):
         blocks = getattr(message, "blocks", []) or []
@@ -70,8 +70,6 @@ class ChatWidget(BoxLayout):
 
     def render(self, view) -> None:
         if hasattr(view, "message") and view.message is not None:
-            self.append_message(str(view.message))
-        else:
             self.append_message(str(view))
 
     def append_message(self, text: str):
