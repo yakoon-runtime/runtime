@@ -8,6 +8,30 @@
 --
 
 ## 26-02-23
+**input_mode wird fester Bestandteil von ViewFormDef**
+input_mode: Literal["prompt", "form"] = "prompt"
+Zwei Validierungsstrategien im InputService:
+Der InputService delegiert abhängig vom input_mode:
+**prompt**
+- Feldweise Abfrage
+- Sofortvalidierung pro Feld
+- Kein Fortschreiten bei Fehler
+**form**
+- Batchvalidierung
+- Fehler pro Feld
+- Grundlage für zukünftigen FormBlock
+**Hosts können:**
+- dem Contract folgen (auto)
+- Prompt-Modus erzwingen
+- Form-Modus erzwingen
+
+## 26-02-23
+**Steaming in Output**
+Die Platform unterstützt nun auch Streaming per Default. Der Host entscheidet dabei, 
+indem er Streaming in der Session erlaubt oder ablehnt. Somit entseht ein interaktives
+Gefühl beim Benutzer.
+
+## 26-02-23
 **GUI host & Eingabe lifecyle**
 Eingaben (offene Prompts) werden durch ein immer quitiert. Somit können Hosts ihr Frontend 
 entsprechend anpassen oder aufräumarbeiten erledigen. Dazu schickt die Platform 
