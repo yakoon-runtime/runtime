@@ -1,4 +1,5 @@
 from kivy.clock import Clock
+from yakoon.base.models.stream import OutputStreamPolicy
 from yakoon.base.ports import PermissionService, SessionService
 from yakoon.kivy.host.host import KivyHost
 from yakoon.kivy.host.runner import SessionRunner
@@ -114,6 +115,7 @@ class TabsController:
             ui_state_provider=UIStateProvider(session),
         )
         session.bind_io(output)
+        session.set_output_stream_policy(OutputStreamPolicy(enabled=True))
 
         # Pro Tab: eigener Host + eigener RunnerThread
         host = KivyHost(

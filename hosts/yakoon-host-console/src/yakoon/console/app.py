@@ -28,6 +28,7 @@ async def run_console() -> None:
     )
 
     session.bind_io(ConsoleOutput())
+    # session.set_output_stream_policy(OutputStreamPolicy(enabled=True))
 
     permissions = engine.services.get(ports.PermissionService)
     permissions.set_bootstrap_permissions(session)

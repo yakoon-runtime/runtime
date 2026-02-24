@@ -14,6 +14,7 @@ class ChatWidget(BoxLayout):
         self._data = []
         self.runner = None
         self.session = None
+        self._by_id = {}
 
     @property
     def prompt(self):
@@ -69,8 +70,45 @@ class ChatWidget(BoxLayout):
         return "\n".join(texts)
 
     def render(self, view) -> None:
-        if hasattr(view, "message") and view.message is not None:
-            self.append_message(str(view))
+        msg = getattr(view, "message", None)
+        if msg is None:
+            return
+
+        vid = getattr(view, "id", None)
+        mode = getattr(view, "mode", None)
+
+        text = self._render_message_only(view)  # gleich unten
+
+        if vid and mode == "replace" and vid in self._by_id:
+            idx = self._by_id[vid]
+            self._data[idx]["text"] = text
+            self.ids.rv.data = list(self._data)
+            self.ids.rv.refresh_from_data()
+            self._scroll_trigger()
+            return
+
+        # neu anlegen
+        self._data.insert(0, {"text": text})
+        # indices verschieben
+        for k in list(self._by_id.keys()):
+            self._by_id[k] += 1
+        if vid:
+            self._by_id[vid] = 0
+
+        self.ids.rv.data = self._data
+        self._scroll_trigger()
+
+    def _render_message_only(self, view) -> str:
+        msg = getattr(view, "message", None)
+        if msg is None:
+            return ""
+
+        blocks = getattr(msg, "blocks", []) or []
+        parts = []
+        for b in blocks:
+            if getattr(b, "type", None) == "text":
+                parts.append(str(getattr(b, "text", "")))
+        return "\n".join([p for p in parts if p]).rstrip()
 
     def append_message(self, text: str):
 
