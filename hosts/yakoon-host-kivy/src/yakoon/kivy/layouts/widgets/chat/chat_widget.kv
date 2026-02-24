@@ -12,11 +12,17 @@
         size_hint_y: None
         on_submit: root.submit(args[1])
 
+    ChatLiveArea:
+        id: live
+        size_hint_y: None
+        #height: self.minimum_height #height
+        height: self.height
+
     YkPanel:
         orientation: "vertical"
         RecycleView:
             id: rv
-            viewclass: "ChatRow"
+            viewclass: "ChatMessageRow"   # ==> Hier legen wir die viewclass fest.
             scroll_type: ['bars', 'content']
             bar_width: dp(6)
 

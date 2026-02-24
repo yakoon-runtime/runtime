@@ -19,7 +19,7 @@ class KivyComposition:
 
 
 def compose_kivy_app() -> KivyComposition:
-    # Analog zur ConsoleApp: compose_engine(plugin_modules=[...])
+
     engine = compose_engine(
         plugin_modules=[
             "yakoon.shell",
@@ -31,7 +31,6 @@ def compose_kivy_app() -> KivyComposition:
         ]
     )
 
-    # Engine-Loop fürs UI (SessionService.get_or_create, etc.)
     runner = SessionRunner(engine)
     runner.start()
 

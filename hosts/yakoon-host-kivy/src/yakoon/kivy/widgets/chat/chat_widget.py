@@ -1,6 +1,8 @@
 from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.uix.boxlayout import BoxLayout
+from yakoon.kivy.models.mount import RenderMount
+from yakoon.kivy.services.render import ChatRenderService
 
 
 class ChatWidget(BoxLayout):
@@ -14,7 +16,11 @@ class ChatWidget(BoxLayout):
         self._data = []
         self.runner = None
         self.session = None
+
+        self._render = ChatRenderService()
+        self._history = []
         self._by_id = {}
+        self._live_vid: str | None = None
 
     @property
     def prompt(self):
@@ -70,60 +76,38 @@ class ChatWidget(BoxLayout):
         return "\n".join(texts)
 
     def render(self, view) -> None:
-        msg = getattr(view, "message", None)
-        if msg is None:
-            return
+        mounts = self._render.render(view)
+        for m in mounts:
+            if m.target == "live":
+                self._apply_live(m)
+            else:
+                self._apply_history(m)
+        self._scroll_trigger()
 
-        vid = getattr(view, "id", None)
-        mode = getattr(view, "mode", None)
+    def _apply_live(self, m: RenderMount) -> None:
+        if m.op == "set_live":
+            self._live_vid = m.vid
+            self.ids.live.set_view(m.payload)
+        elif m.op == "clear_live":
+            if self._live_vid == m.vid:
+                self._live_vid = None
+                self.ids.live.clear()
 
-        text = self._render_message_only(view)  # gleich unten
-
-        if vid and mode == "replace" and vid in self._by_id:
-            idx = self._by_id[vid]
-            self._data[idx]["text"] = text
-            self.ids.rv.data = list(self._data)
+    def _apply_history(self, m: RenderMount) -> None:
+        if m.op == "append_history":
+            self._history.insert(0, m.payload)
+            # shift indices
+            for k in list(self._by_id.keys()):
+                self._by_id[k] += 1
+            if m.vid:
+                self._by_id[m.vid] = 0
+            self.ids.rv.data = list(self._history)
             self.ids.rv.refresh_from_data()
-            self._scroll_trigger()
-            return
-
-        # neu anlegen
-        self._data.insert(0, {"text": text})
-        # indices verschieben
-        for k in list(self._by_id.keys()):
-            self._by_id[k] += 1
-        if vid:
-            self._by_id[vid] = 0
-
-        self.ids.rv.data = self._data
-        self._scroll_trigger()
-
-    def _render_message_only(self, view) -> str:
-        msg = getattr(view, "message", None)
-        if msg is None:
-            return ""
-
-        blocks = getattr(msg, "blocks", []) or []
-        parts = []
-        for b in blocks:
-            if getattr(b, "type", None) == "text":
-                parts.append(str(getattr(b, "text", "")))
-        return "\n".join([p for p in parts if p]).rstrip()
-
-    def append_message(self, text: str):
-
-        if not text.endswith("\n"):
-            text += "\n"
-        self._data.insert(0, {"text": text})
-        self.ids.rv.data = self._data
-
-        # kein schedule_once scroll_y=0 mehr
-        self._scroll_trigger()
 
     def submit(self, text: str):
 
         # echo
-        self.append_message(f"> **{self.ids.prompt.prefix}** '{text}'")
+        # self.append_message(f"> **{self.ids.prompt.prefix}** '{text}'")
         # self.append_message(f"{text}")
 
         if self.on_submit:
