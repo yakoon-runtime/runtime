@@ -207,3 +207,4 @@ class MessageSpec:
     title: str | None
     blocks: list[Block]
     meta: dict[str, Any] | None = None
+    stream: Literal["none", "delta", "final"] = "none"

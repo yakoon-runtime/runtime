@@ -78,7 +78,7 @@ class OutputStreamService:
 
         tokens = re.findall(r"\S+|\s+", str(full_text))
         if not tokens:
-            out = self._clone_view_with_text(view, vid, "", text_idx)
+            out = self._clone_view_with_text(view, vid, "", text_idx, stream="final")
             await session.emit(out)
             return
 
@@ -86,12 +86,16 @@ class OutputStreamService:
         for pos in range(0, len(tokens), chunk_tokens):
             acc.extend(tokens[pos : pos + chunk_tokens])
             partial = "".join(acc)
-            out = self._clone_view_with_text(view, vid, partial, text_idx)
+            out = self._clone_view_with_text(
+                view, vid, partial, text_idx, stream="delta"
+            )
             await session.emit(out)
             await asyncio.sleep(interval)
 
         # ensure final state
-        out = self._clone_view_with_text(view, vid, str(full_text), text_idx)
+        out = self._clone_view_with_text(
+            view, vid, str(full_text), text_idx, stream="final"
+        )
         await session.emit(out)
 
     def _effective(
@@ -138,7 +142,13 @@ class OutputStreamService:
         return None, None
 
     def _clone_view_with_text(
-        self, view: ViewSpec, vid: str, text: str, idx: int
+        self,
+        view: ViewSpec,
+        vid: str,
+        text: str,
+        idx: int,
+        *,
+        stream: str,
     ) -> ViewSpec:
         # ViewSpec ist bei euch dataclass => replace ist der richtige Weg.
         msg = view.message
@@ -165,7 +175,7 @@ class OutputStreamService:
         blocks[idx] = nb
 
         # MessageSpec ist dataclass
-        msg2 = replace(msg, blocks=blocks)
+        msg2 = replace(msg, blocks=blocks, stream=stream)
 
         # ViewSpec ist dataclass
         return replace(view, id=vid, mode="replace", message=msg2)
