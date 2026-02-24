@@ -39,5 +39,9 @@ class OutputStreamPolicy:
     """
 
     enabled: bool = False
+
+    # range: 0.025–0.035
     interval: float = 0.03  # ~30fps
-    chunk_tokens: int = 2  # words/whitespace chunks per tick
+
+    # range: 3–5
+    chunk_tokens: int = 4  # words/whitespace chunks per tick
