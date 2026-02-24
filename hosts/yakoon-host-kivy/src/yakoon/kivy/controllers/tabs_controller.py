@@ -115,7 +115,7 @@ class TabsController:
             ui_state_provider=UIStateProvider(session),
         )
         session.bind_io(output)
-        session.set_output_stream_policy(OutputStreamPolicy(enabled=True))
+        session.set_output_stream_policy(OutputStreamPolicy(enabled=False))
 
         # Pro Tab: eigener Host + eigener RunnerThread
         host = KivyHost(
