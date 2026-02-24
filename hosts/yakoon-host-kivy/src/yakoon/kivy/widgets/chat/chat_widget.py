@@ -135,5 +135,19 @@ class ChatWidget(BoxLayout):
     def focus_prompt(self):
         self.ids.prompt.focus_input()
 
+    def set_assist(self, text: str, state: str = "question") -> None:
+        def _apply(_dt):
+            self.ids.prompt.assist_text = text or ""
+            self.ids.prompt.assist_state = state if text else "idle"
+
+        Clock.schedule_once(_apply, 0)
+
+    def clear_assist(self) -> None:
+        def _apply(_dt):
+            self.ids.prompt.assist_text = ""
+            self.ids.prompt.assist_state = "idle"
+
+        Clock.schedule_once(_apply, 0)
+
 
 Factory.register("ChatWidget", cls=ChatWidget)

@@ -2,20 +2,42 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Awaitable, Callable
+from typing import Protocol
 
 from yakoon.base.models.view import ViewSpec
 from yakoon.platform.hosts.adapter import FormInput, HostAdapter, InputEvent, TextInput
+
+
+class HostUI(Protocol):
+    """Host-lokale UI-API (nicht Engine!), thread-safe zu implementieren."""
+
+    def set_assist(self, text: str, state: str = "question") -> None: ...
+    def clear_assist(self) -> None: ...
+
+
+class NullHostUI:
+    def set_assist(self, text: str, state: str = "question") -> None:
+        return
+
+    def clear_assist(self) -> None:
+        return
 
 
 class KivyHost(HostAdapter):
     """Minimaler HostAdapter für Kivy.
 
     - Text-Input: Runner ruft on_ready(); UI liefert Text via deliver_text() (thread-safe).
-    - Form-Input: aktuell minimal als auto-submit {} (bis Form-UI verdrahtet ist).
+    - Form-Input: Prompt-basiert feldweise; UI wird via HostUI informiert.
     """
 
-    def __init__(self, *, submit: Callable[[InputEvent], Awaitable[None]]):
+    def __init__(
+        self,
+        *,
+        submit: Callable[[InputEvent], Awaitable[None]],
+        ui: HostUI | None = None,
+    ):
         self._submit = submit
+        self._ui: HostUI = ui or NullHostUI()
         self._pending_text: asyncio.Future[str] | None = None
         self._lock = asyncio.Lock()
 
@@ -28,6 +50,7 @@ class KivyHost(HostAdapter):
     async def on_view(self, *, ps1: str, view: ViewSpec) -> None:
         input_def = view.input
         if not input_def:
+            self._ui.clear_assist()
             return
 
         if input_def.kind != "form":
@@ -35,18 +58,31 @@ class KivyHost(HostAdapter):
 
         fields = input_def.fields or {}
         if not fields:
+            self._ui.clear_assist()
             await self._submit(FormInput({}))
             return
 
-        # Minimal: wir nehmen an, es gibt genau 1 Feld
-        field_name = next(iter(fields.keys()))
+        # Engine prompt-mode => exactly one field should be present
+        if input_def.input_mode == "prompt":
+            field_name = next(iter(fields.keys()))
+            fd = fields[field_name]
+            title = getattr(fd, "title", None) or field_name
+            self._ui.set_assist(title, state="question")
 
-        loop = asyncio.get_running_loop()
-        async with self._lock:
-            self._pending_text = loop.create_future()
+            loop = asyncio.get_running_loop()
+            async with self._lock:
+                self._pending_text = loop.create_future()
+            text = (await self._pending_text).strip()
 
-        text = (await self._pending_text).strip()
-        await self._submit(FormInput({field_name: text}))
+            self._ui.clear_assist()
+            await self._submit(FormInput({field_name: text}))
+            return
+
+        # Batch form-mode (later when FormBlock exists)
+        # For now, either raise or fallback to prompt behavior.
+        raise RuntimeError(
+            "input_mode='form' not supported by Kivy host yet (needs FormBlock UI)"
+        )
 
     async def on_ready(self, *, ps1: str) -> None:
         loop = asyncio.get_running_loop()

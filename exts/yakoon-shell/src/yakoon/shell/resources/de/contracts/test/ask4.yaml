@@ -3,6 +3,8 @@ kind: state
 state:
   role: info
   title: "Commands"
+  input_mode: prompt
+
   fields:
     - { var: var_a, policy: customer.age, title: "Zahl (1 von 2)", required: true }
     - { var: var_b, policy: system:string, title: "Text (2 von 2)" } 

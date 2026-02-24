@@ -118,9 +118,9 @@ class TabsController:
         session.set_output_stream_policy(OutputStreamPolicy(enabled=False))
 
         # Pro Tab: eigener Host + eigener RunnerThread
-        host = KivyHost(
-            submit=lambda _evt: None
-        )  # submit wird im TabRunnerThread injiziert
+        page = self.state.pages[tab_id]  # das ChatWidget für diesen Tab
+        host = KivyHost(submit=lambda _evt: None, ui=page)
+
         runner_thread = TabRunnerThread(
             engine=self.runner.engine, session=session, host=host, inits=[]
         )

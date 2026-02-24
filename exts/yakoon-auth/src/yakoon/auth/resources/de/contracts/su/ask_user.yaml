@@ -3,5 +3,7 @@ kind: state
 state:
   role: info
   title: "Commands"
+  input_mode: prompt
+
   fields:
     - { var: auth.user, policy: system:string, title: "Username" } 

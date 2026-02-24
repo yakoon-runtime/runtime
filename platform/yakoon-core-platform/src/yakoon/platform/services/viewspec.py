@@ -130,11 +130,22 @@ class ViewSpecService:
         if fields_raw is not None:
             if not isinstance(fields_raw, list) or not fields_raw:
                 raise ViewSpecValidationError("fields must be a non-empty list or null")
-            input_def = self._parse_fields(fields_raw, title=title)
+
+            input_mode = state.get("input_mode", "prompt")
+            if input_mode is None:
+                input_mode = "prompt"
+            if not isinstance(input_mode, str) or input_mode not in ("prompt", "form"):
+                raise ViewSpecValidationError("input_mode must be 'prompt' or 'form'")
+
+            input_def = self._parse_fields(
+                fields_raw, title=title, input_mode=input_mode
+            )
 
         return message, input_def
 
-    def _parse_fields(self, fields_raw: list[Any], *, title: str | None) -> ViewFormDef:
+    def _parse_fields(
+        self, fields_raw: list[Any], *, title: str | None, input_mode: str
+    ) -> ViewFormDef:
         # Minimal, deterministic form_id for now.
         # Later you can pass base_id from renderer: f"{command_key}.{state}"
         form_id = "form"
@@ -186,6 +197,7 @@ class ViewSpecService:
             kind="form",
             form_id=form_id,
             fields=fields,
+            input_mode=cast(Literal["prompt", "form"], input_mode),
             title=title,
             meta=meta,
         )

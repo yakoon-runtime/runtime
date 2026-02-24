@@ -3,5 +3,7 @@ kind: state
 state:
   role: info
   title: "Commands"
+  input_mode: prompt
+
   fields:
       - { key: the_key, var: result, policy: system:string, title: "Bemerkung" } 

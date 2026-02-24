@@ -18,6 +18,10 @@ class DefaultTheme(EventDispatcher):
     muted = ListProperty([0.70, 0.70, 0.75, 1])
     accent = ListProperty([0.30, 0.58, 0.95, 1])
 
+    # Amber = rgba => (1.0, 0.69, 0.0, 1.0)
+    # phosphoriger = rgba => (1.0, 0.75, 0.25, 1.0)
+    # Dunkler = rgba => (0.85, 0.55, 0.0, 1.0)
+
     # states
     info = ListProperty([0.45, 0.75, 0.95, 1])  # kühles Blau/Cyan
     warning = ListProperty([0.95, 0.70, 0.20, 1])  # gelb/orange

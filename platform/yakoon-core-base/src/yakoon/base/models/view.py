@@ -53,9 +53,11 @@ class ViewFormDef:
     form_id: str
     fields: dict[str, ViewFieldDef]
 
+    input_mode: Literal["prompt", "form"] = "prompt"
+
     title: str | None = None
-    step_key: str | None = None  # optional: helpful in workflows
-    batch_id: str | None = None  # optional: helpful in workflows
+    step_key: str | None = None
+    batch_id: str | None = None
     meta: dict[str, Any] | None = None
 
 

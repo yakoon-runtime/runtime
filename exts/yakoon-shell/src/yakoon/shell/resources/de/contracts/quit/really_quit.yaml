@@ -3,6 +3,8 @@ kind: state
 state:
   role: info
   title: "Commands"
+  input_mode: prompt
+  
   fields:
     - var: quit 
       policy: system:bool
