@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.models.message import Block, Inline
+from yakoon.base.models.message import Block
 from yakoon.base.models.view import MessageSpec, ViewSpec  # pfade anpassen
 
 
@@ -70,26 +70,29 @@ class ConsoleOutput:
                 for _ in range(block.size):
                     lines.append("")
 
-    def _render_textish(self, value: str | list[Inline]) -> str:
+    def _render_textish(self, value) -> str:
+        if value is None:
+            return ""
+
         if isinstance(value, str):
             return value
 
-        parts: list[str] = []
-        for inl in value:
-            t = getattr(inl, "type", None)
+        # Inline-Liste?
+        if isinstance(value, list):
+            parts: list[str] = []
+            for inl in value:
+                t = getattr(inl, "type", None)
+                if t == "text":
+                    parts.append(getattr(inl, "text", ""))
+                elif t == "code":
+                    parts.append(f"`{getattr(inl, 'code', '')}`")
+                elif t == "link":
+                    text = getattr(inl, "text", "")
+                    href = getattr(inl, "href", "")
+                    parts.append(f"{text} ({href})")
+                else:
+                    parts.append("")
+            return "".join(parts)
 
-            if t == "text":
-                parts.append(getattr(inl, "text", ""))
-
-            elif t == "code":
-                parts.append(f"`{getattr(inl, 'code', '')}`")
-
-            elif t == "link":
-                text = getattr(inl, "text", "")
-                href = getattr(inl, "href", "")
-                parts.append(f"{text} ({href})")
-
-            else:
-                parts.append("")
-
-        return "".join(parts)
+        # Fallback: int/float/bool/… => stringifizieren
+        return str(value)
