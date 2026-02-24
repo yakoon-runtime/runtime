@@ -4,6 +4,7 @@ from yakoon.base import ports
 from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.prompt import PromptResult
 from yakoon.base.models.resource import ResourceRef
+from yakoon.base.models.stream import OutputStreaming
 from yakoon.base.models.view import ViewSpec
 from yakoon.base.runtime.session import Session
 from yakoon.platform.runtime.render.context import RenderContext
@@ -38,10 +39,13 @@ class PresenterViews:
         self._ctx = ctx
         self._session = session
         self._renderer = services.get(ports.RendererService)
+        self._streams = services.get(ports.OutputStreamService)
 
-    async def emit(self, state: str, **data) -> None:
+    async def emit(
+        self, state: str, *, stream: OutputStreaming | None = None, **data
+    ) -> None:
         view = await self._renderer.render_view(self._ctx, state, **data)
-        await self._session.emit(view)
+        await self._streams.emit(self._session, view, override=stream)
 
 
 class Presenter:

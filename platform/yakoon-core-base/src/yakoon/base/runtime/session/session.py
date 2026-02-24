@@ -6,10 +6,14 @@ from typing import TYPE_CHECKING, Any
 
 from yakoon.base.models.key import Key
 from yakoon.base.models.perm import PermissionSet
+from yakoon.base.models.stream import OutputStreamPolicy
 from yakoon.base.models.view import ViewSpec
 
 if TYPE_CHECKING:
     from yakoon.base.ports import IO
+
+
+_OUTPUT_STREAM_POLICY_KEY = "output_stream_policy"
 
 
 @dataclass
@@ -19,7 +23,7 @@ class SessionState:
     account_key: str | None = None
     username: str | None = None
     last_active: datetime | None = None
-    lang: str | None = "de"
+    lang: str = "de"
     data: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict:
@@ -129,6 +133,19 @@ class Session:
     async def emit(self, payload: ViewSpec) -> None:
         view = self._ensure_view(payload)
         await self._runtime.io.view(view)
+
+    # ----------------------------
+    # Steaming output
+    # ----------------------------
+
+    def set_output_stream_policy(self, policy: OutputStreamPolicy) -> None:
+        self._runtime.meta[_OUTPUT_STREAM_POLICY_KEY] = policy
+
+    def get_output_stream_policy(self) -> OutputStreamPolicy:
+        pol = self._runtime.meta.get(_OUTPUT_STREAM_POLICY_KEY)
+        if isinstance(pol, OutputStreamPolicy):
+            return pol
+        return OutputStreamPolicy()
 
     # ----------------------------
     # Strict View output

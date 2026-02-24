@@ -4,6 +4,8 @@ import asyncio
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Protocol
 
+from yakoon.base.models.stream import OutputStreaming
+
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Mapping, Sequence
 
@@ -281,8 +283,26 @@ class RenderEngine(Protocol):
     async def render_any(self, obj: Any, *, context: dict) -> Any: ...
 
 
+class OutputStreamService(Protocol):
+
+    async def emit(
+        self,
+        session: Session,
+        view: ViewSpec,
+        *,
+        override: OutputStreaming | None = None,
+    ) -> None: ...
+
+
 class PresenterViews(Protocol):
-    async def emit(self, state: str, **data) -> None: ...
+
+    async def emit(
+        self,
+        state: str,
+        *,
+        stream: OutputStreaming | None = None,
+        **data,
+    ) -> None: ...
 
 
 class PresenterInputs(Protocol):

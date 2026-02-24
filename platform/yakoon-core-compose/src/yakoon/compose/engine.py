@@ -32,6 +32,7 @@ from yakoon.platform.services.queue import CommandQueueService
 from yakoon.platform.services.render import RendererService
 from yakoon.platform.services.session import SessionService
 from yakoon.platform.services.shard import ShardAllocator, ShardedCounterService
+from yakoon.platform.services.stream import OutputStreamService
 from yakoon.platform.services.viewspec import ViewSpecService
 from yakoon.platform.stores.factory import create_system_stores
 from yakoon.platform.stores.memory.account import InMemoryAccountStore
@@ -194,6 +195,7 @@ def _compose_services(
     services.register_static(ports.FileLoader, FileLoader())
     services.register_static(ports.RendererService, RendererService(services))
     services.register_static(ports.RenderEngine, JinjaRenderer())
+    services.register_static(ports.OutputStreamService, OutputStreamService())
 
     # optional lookup feature (can be overridden by plugin export.public_services)
     if not services.has(ports.LookupResolverService):
