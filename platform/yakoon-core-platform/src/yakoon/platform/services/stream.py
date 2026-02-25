@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from dataclasses import dataclass, is_dataclass, replace
+from dataclasses import dataclass, replace
 from typing import Any
 from uuid import uuid4
 
@@ -50,22 +50,18 @@ class OutputStreamService:
         override: OutputStreaming | None = None,
     ) -> None:
         policy = session.get_output_stream_policy()
-
         eff = self._effective(policy, override)
 
+        # no streaming → send full view once
         if not eff.enabled:
             await session.emit(view)
             return
 
         msg = getattr(view, "message", None)
         blocks = getattr(msg, "blocks", None) if msg else None
-        blocks = blocks or []
-        if not blocks:
-            await session.emit(view)
-            return
+        blocks = list(blocks or [])
 
-        text_idx, full_text = self._find_first_text_block(blocks)
-        if text_idx is None or full_text is None:
+        if not blocks:
             await session.emit(view)
             return
 
@@ -76,27 +72,45 @@ class OutputStreamService:
 
         vid = eff.id or view.id or f"stream:{uuid4().hex}"
 
-        tokens = re.findall(r"\S+|\s+", str(full_text))
-        if not tokens:
-            out = self._clone_view_with_text(view, vid, "", text_idx, stream="final")
-            await session.emit(out)
-            return
+        built: list[Any] = []
 
-        acc: list[str] = []
-        for pos in range(0, len(tokens), chunk_tokens):
-            acc.extend(tokens[pos : pos + chunk_tokens])
-            partial = "".join(acc)
-            out = self._clone_view_with_text(
-                view, vid, partial, text_idx, stream="delta"
-            )
-            await session.emit(out)
-            await asyncio.sleep(interval)
+        async def emit_snapshot(extra_block=None, stream="delta"):
+            out_blocks = list(built)
+            if extra_block is not None:
+                out_blocks.append(extra_block)
 
-        # ensure final state
-        out = self._clone_view_with_text(
-            view, vid, str(full_text), text_idx, stream="final"
-        )
-        await session.emit(out)
+            msg2 = replace(msg, blocks=out_blocks, stream=stream)
+            out = replace(view, id=vid, mode="replace", message=msg2)
+            await session.emit(out)
+
+        merged = self._merge_consecutive_text_blocks(blocks)
+        for block in merged:  # blocks:
+            text = getattr(block, "text", None)
+
+            # ---- TEXT BLOCK ----
+            if isinstance(text, str):
+                tokens = re.findall(r"\S+|\s+", text)
+                acc: list[str] = []
+
+                for pos in range(0, len(tokens), chunk_tokens):
+                    acc.extend(tokens[pos : pos + chunk_tokens])
+                    partial = "".join(acc)
+
+                    partial_block = replace(block, text=partial)
+                    await emit_snapshot(extra_block=partial_block, stream="delta")
+                    await asyncio.sleep(interval)
+
+                # commit final text block
+                built.append(block)
+                await emit_snapshot(stream="delta")
+
+            # ---- NON-TEXT BLOCK ----
+            else:
+                built.append(block)
+                await emit_snapshot(stream="delta")
+
+        # final state (no duplication of blocks)
+        await emit_snapshot(stream="final")
 
     def _effective(
         self,
@@ -132,50 +146,35 @@ class OutputStreamService:
             chunk_tokens=chunk_tokens,
         )
 
-    def _find_first_text_block(
-        self, blocks: list[Any]
-    ) -> tuple[int | None, str | None]:
-        for i, b in enumerate(blocks):
-            t = getattr(b, "text", None)
-            if t is not None:
-                return i, str(t)
-        return None, None
+    def _can_merge(self, a, b):
+        return (
+            getattr(a, "type", None) == "text"
+            and getattr(b, "type", None) == "text"
+            and getattr(a, "style", None) == getattr(b, "style", None)
+        )
 
-    def _clone_view_with_text(
-        self,
-        view: ViewSpec,
-        vid: str,
-        text: str,
-        idx: int,
-        *,
-        stream: str,
-    ) -> ViewSpec:
-        # ViewSpec ist bei euch dataclass => replace ist der richtige Weg.
-        msg = view.message
-        if msg is None:
-            return replace(view, id=vid, mode="replace")
+    def _merge_consecutive_text_blocks(self, blocks: list):
+        merged = []
+        buffer = None
 
-        blocks = list(msg.blocks or [])
-        if idx >= len(blocks):
-            return replace(view, id=vid, mode="replace")
+        for b in blocks:
+            if buffer is not None and self._can_merge(buffer, b):
+                # merge text
+                merged_text = str(getattr(buffer, "text", "")) + str(
+                    getattr(b, "text", "")
+                )
+                buffer = replace(buffer, text=merged_text)
+            else:
+                if buffer is not None:
+                    merged.append(buffer)
+                    buffer = None
 
-        b = blocks[idx]
+                if getattr(b, "text", None) is not None:
+                    buffer = b
+                else:
+                    merged.append(b)
 
-        # TextBlock ist bei euch ebenfalls dataclass -> replace
-        if is_dataclass(b):
-            nb = replace(b, text=text)
-        else:
-            # extrem unwahrscheinlich bei euch, aber als Sicherung ok
-            try:
-                b.text = text
-                nb = b
-            except Exception:
-                nb = b
+        if buffer is not None:
+            merged.append(buffer)
 
-        blocks[idx] = nb
-
-        # MessageSpec ist dataclass
-        msg2 = replace(msg, blocks=blocks, stream=stream)
-
-        # ViewSpec ist dataclass
-        return replace(view, id=vid, mode="replace", message=msg2)
+        return merged
