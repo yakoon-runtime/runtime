@@ -6,6 +6,7 @@ from kivy.uix.label import Label
 
 
 class TextBlockWidget(Label):
+
     def __init__(self, **kw):
         super().__init__(**kw)
         self.halign = "left"

@@ -78,7 +78,8 @@ class TextBlock:
     """
 
     type: Literal["text"]
-    text: str | list[Inline]
+    text: str | list[Inline] = ""
+    id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -92,6 +93,7 @@ class RuleBlock:
 
     type: Literal["rule"]
     style: Literal["subtle", "normal", "strong"] = "normal"
+    id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,6 +108,7 @@ class SpacerBlock:
 
     type: Literal["spacer"]
     size: int = 1
+    id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,6 +125,7 @@ class ListItem:
 class ListBlock:
     type: Literal["list"]
     items: list[ListItem]
+    id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -147,6 +151,7 @@ class KvBlock:
 
     type: Literal["kv"]
     items: list[tuple[str, Any]]
+    id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -162,6 +167,7 @@ class TableBlock:
     type: Literal["table"]
     headers: list[str] | None = None
     rows: list[list[str]] = field(default_factory=list)
+    id: str | None = None
 
 
 Block = TextBlock | ListBlock | KvBlock | TableBlock | SpacerBlock | RuleBlock

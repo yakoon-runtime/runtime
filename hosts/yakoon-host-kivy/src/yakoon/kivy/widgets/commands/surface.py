@@ -76,39 +76,46 @@ class CommandSurface(BoxLayout):
         vid = getattr(view, "id", None)
         mode = getattr(view, "mode", None)
 
-        # in-place update for streaming / replace
-        if (
-            mode == "replace"
-            and vid
-            and self._active is not None
-            and self._active_vid == vid
+        # ensure we have an active container for this stream/view
+        if self._active is None or (
+            vid and self._active_vid != vid and mode in ("patch", "replace")
         ):
+            # rotate old active to prev
+            if self._active is not None:
+                if self._prev is not None:
+                    try:
+                        self._prev.dispose()
+                    except Exception:
+                        pass
+                self._prev = self._active
+
+            self._active = CommandMessage()
+            self._active_vid = vid
+
+            # rebuild stack (max 2)
+            stack = self.ids.stack
+            stack.clear_widgets()
+            stack.add_widget(self._active)
+            if self._prev is not None:
+                stack.add_widget(self._prev)
+
+        # ---- PATCH STREAMING ----
+        if mode == "patch":
+            patch = getattr(view, "patch", None)
+            if patch is not None:
+                self._active.apply_patch(patch)
+            self._scroll_trigger()
+            return
+
+        # ---- NORMAL FULL VIEW ----
+        # in-place update for replace on same vid
+        if mode == "replace" and vid and self._active_vid == vid:
             self._active.set_view(view)
             self._scroll_trigger()
             return
 
-        # rotate old active to prev
-        if self._active is not None:
-            if self._prev is not None:
-                try:
-                    self._prev.dispose()
-                except Exception:
-                    pass
-            self._prev = self._active
-
-        # new active
-        active = CommandMessage()
-        active.set_view(view)
-        self._active = active
-        self._active_vid = vid
-
-        # rebuild stack (max 2)
-        stack = self.ids.stack
-        stack.clear_widgets()
-        stack.add_widget(self._active)
-        if self._prev is not None:
-            stack.add_widget(self._prev)
-
+        # fallback: treat as new full view (no vid or different semantics)
+        self._active.set_view(view)
         self._scroll_trigger()
 
     def submit(self, text: str):

@@ -344,10 +344,11 @@ class ViewSpecService:
             raise ViewSpecValidationError("Each block must be a mapping")
 
         t = b.get("type")
+        bid = b.get("id")
 
         if t == "text":
             return TextBlock(
-                type="text", text=self._parse_text_content(b.get("text", ""))
+                type="text", id=bid, text=self._parse_text_content(b.get("text", ""))
             )
 
         if t == "list":
@@ -355,7 +356,7 @@ class ViewSpecService:
             if not isinstance(items_raw, list):
                 raise ViewSpecValidationError("ListBlock.items must be a list")
             return ListBlock(
-                type="list", items=[self._parse_list_item(x) for x in items_raw]
+                type="list", id=bid, items=[self._parse_list_item(x) for x in items_raw]
             )
 
         if t == "table":
@@ -388,7 +389,7 @@ class ViewSpecService:
             if headers is None and any(len(r) != width for r in parsed_rows):
                 raise ViewSpecValidationError("All rows must have equal length")
 
-            return TableBlock(type="table", headers=headers, rows=parsed_rows)
+            return TableBlock(type="table", id=bid, headers=headers, rows=parsed_rows)
 
         if t == "kv":
             items = b.get("items", [])
@@ -402,10 +403,12 @@ class ViewSpecService:
                     )
                 k, v = entry
                 pairs.append((str(k), v))
-            return KvBlock(type="kv", items=pairs)
+            return KvBlock(type="kv", id=bid, items=pairs)
 
         if t == "rule":
-            return RuleBlock(type="rule", style=self._parse_rule_style(b.get("style")))
+            return RuleBlock(
+                type="rule", id=bid, style=self._parse_rule_style(b.get("style"))
+            )
 
         if t == "spacer":
             size = b.get("size", 1)
@@ -413,6 +416,6 @@ class ViewSpecService:
                 raise ViewSpecValidationError(
                     "SpacerBlock.size must be a non-negative integer"
                 )
-            return SpacerBlock(type="spacer", size=size)
+            return SpacerBlock(type="spacer", id=bid, size=size)
 
         raise ViewSpecValidationError(f"Unknown block type: {t!r}")

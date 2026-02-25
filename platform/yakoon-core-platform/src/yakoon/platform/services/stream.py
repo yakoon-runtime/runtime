@@ -4,10 +4,15 @@ import asyncio
 import re
 from dataclasses import dataclass, replace
 from typing import Any
-from uuid import uuid4
 
 from yakoon.base.models.stream import OutputStreaming, OutputStreamPolicy
-from yakoon.base.models.view import ViewSpec
+from yakoon.base.models.view import (
+    PatchAppendBlock,
+    PatchAppendText,
+    PatchReset,
+    PatchSpec,
+    ViewSpec,
+)
 from yakoon.base.runtime.session.session import Session  # ggf. Pfad anpassen
 
 
@@ -52,15 +57,13 @@ class OutputStreamService:
         policy = session.get_output_stream_policy()
         eff = self._effective(policy, override)
 
-        # no streaming → send full view once
+        # streaming disabled -> emit full view once
         if not eff.enabled:
             await session.emit(view)
             return
 
-        msg = getattr(view, "message", None)
-        blocks = getattr(msg, "blocks", None) if msg else None
-        blocks = list(blocks or [])
-
+        msg = getattr(view, "message", None) if view else None
+        blocks = list(getattr(msg, "blocks", None) or []) if msg else []
         if not blocks:
             await session.emit(view)
             return
@@ -70,47 +73,84 @@ class OutputStreamService:
             int(eff.chunk_tokens), self.MIN_CHUNK_TOKENS, self.MAX_CHUNK_TOKENS
         )
 
-        vid = eff.id or view.id or f"stream:{uuid4().hex}"
+        # stable view id for whole stream
+        vid = eff.id or view.id or f"v:{id(view)}"
 
-        built: list[Any] = []
+        def emit_patch(ops, *, final: bool = False):
+            return session.emit(
+                replace(
+                    view,
+                    id=vid,
+                    mode="patch",
+                    patch=PatchSpec(ops=ops, final=final),
+                )
+            )
 
-        async def emit_snapshot(extra_block=None, stream="delta"):
-            out_blocks = list(built)
-            if extra_block is not None:
-                out_blocks.append(extra_block)
+        def ensure_id(b: Any, idx: int) -> Any:
+            bid = getattr(b, "id", None)
+            if bid:
+                idx = bid
+            #    return b
+            # stable enough; bound to view id + index
+            return replace(b, id=f"{vid}:b{idx}")
 
-            msg2 = replace(msg, blocks=out_blocks, stream=stream)
-            out = replace(view, id=vid, mode="replace", message=msg2)
-            await session.emit(out)
+        def can_merge_text(active_style: Any, b: Any) -> bool:
+            return (
+                getattr(b, "type", None) == "text"
+                and isinstance(getattr(b, "text", None), str)
+                and getattr(b, "style", None) == active_style
+            )
 
-        merged = self._merge_consecutive_text_blocks(blocks)
-        for block in merged:  # blocks:
+        # reset stream in host container
+        await emit_patch([PatchReset()], final=False)
+
+        active_text_id: str | None = None
+        active_style: Any = None
+
+        for idx, block in enumerate(blocks):
+            block = ensure_id(block, idx)
+            btype = getattr(block, "type", None)
             text = getattr(block, "text", None)
 
-            # ---- TEXT BLOCK ----
-            if isinstance(text, str):
-                tokens = re.findall(r"\S+|\s+", text)
-                acc: list[str] = []
+            # TEXT (string) -> stream via append_text to a known block_id
+            if btype == "text" and isinstance(text, str):
+                bstyle = getattr(block, "style", None)
 
+                starting_new = (active_text_id is None) or (
+                    not can_merge_text(active_style, block)
+                )
+
+                if starting_new:
+                    # open an empty text container in the host
+                    empty = replace(block, text="")
+                    await emit_patch([PatchAppendBlock(block=empty)], final=False)
+                    active_text_id = getattr(empty, "id", None)
+                    active_style = bstyle
+                    prefix = ""
+                else:
+                    # continue same text block, separate paragraphs/items
+                    prefix = "\n" if (text and not text.startswith("\n")) else ""
+
+                # stream the content in chunks
+                tokens = re.findall(r"\S+|\s+", prefix + text)
+                # active_text_id must exist because we opened empty above
+                tid = active_text_id or getattr(block, "id", "")
                 for pos in range(0, len(tokens), chunk_tokens):
-                    acc.extend(tokens[pos : pos + chunk_tokens])
-                    partial = "".join(acc)
-
-                    partial_block = replace(block, text=partial)
-                    await emit_snapshot(extra_block=partial_block, stream="delta")
+                    chunk = "".join(tokens[pos : pos + chunk_tokens])
+                    await emit_patch(
+                        [PatchAppendText(block_id=tid, text=chunk)], final=False
+                    )
                     await asyncio.sleep(interval)
 
-                # commit final text block
-                built.append(block)
-                await emit_snapshot(stream="delta")
+                continue
 
-            # ---- NON-TEXT BLOCK ----
-            else:
-                built.append(block)
-                await emit_snapshot(stream="delta")
+            # NON-TEXT -> append once
+            active_text_id = None
+            active_style = None
+            await emit_patch([PatchAppendBlock(block=block)], final=False)
 
-        # final state (no duplication of blocks)
-        await emit_snapshot(stream="final")
+        # final marker
+        await emit_patch([], final=True)
 
     def _effective(
         self,
@@ -145,36 +185,3 @@ class OutputStreamService:
             interval=interval,
             chunk_tokens=chunk_tokens,
         )
-
-    def _can_merge(self, a, b):
-        return (
-            getattr(a, "type", None) == "text"
-            and getattr(b, "type", None) == "text"
-            and getattr(a, "style", None) == getattr(b, "style", None)
-        )
-
-    def _merge_consecutive_text_blocks(self, blocks: list):
-        merged = []
-        buffer = None
-
-        for b in blocks:
-            if buffer is not None and self._can_merge(buffer, b):
-                # merge text
-                merged_text = str(getattr(buffer, "text", "")) + str(
-                    getattr(b, "text", "")
-                )
-                buffer = replace(buffer, text=merged_text)
-            else:
-                if buffer is not None:
-                    merged.append(buffer)
-                    buffer = None
-
-                if getattr(b, "text", None) is not None:
-                    buffer = b
-                else:
-                    merged.append(b)
-
-        if buffer is not None:
-            merged.append(buffer)
-
-        return merged

@@ -7,14 +7,40 @@ state:
   blocks:
     - type: text
       text: | 
-        'man'
+        Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
+        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
+        justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum
 
-        options:
-        - man (normal)
-        - man --all
-        - man --internal
+    - type: rule
+      style: normal
 
+    - type: text
+      text: | 
+        1. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
+        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
+    - type: text
+      text: | 
+        2. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
+        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
+    - type: text
+      text: | 
+        3. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
+        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
+    - type: text
+      text: | 
+        4. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
+        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
+    - type: text
+      text: | 
+        5. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
+        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
 
+    - type: spacer
+      size: 1
 
+    - type: text
+      text: | 
+        Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
+        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
 
 
