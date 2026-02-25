@@ -10,4 +10,4 @@ from yakoon.kivy.widgets.blocks.ruler import RulerBlockWidget
 @dataclass(slots=True)
 class RulerBlockRenderer:
     def render(self, block: Any) -> Widget:
-        return RulerBlockWidget()
+        return RulerBlockWidget(style=getattr(block, "style", "normal"))

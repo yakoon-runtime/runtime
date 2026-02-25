@@ -7,7 +7,7 @@ from yakoon.kivy.host.thread import TabRunnerThread
 from yakoon.kivy.runtime.output.output import KivyOutput
 from yakoon.kivy.states.state_provider import UIStateProvider
 from yakoon.kivy.states.tab_state import TabRuntime, TabState
-from yakoon.kivy.widgets.chat.chat_widget import ChatWidget
+from yakoon.kivy.widgets.commands.surface import CommandSurface
 
 
 class TabsController:
@@ -27,7 +27,7 @@ class TabsController:
         tab_id = f"chat-{self.state.counter}"
         title = "chat" if self.state.counter == 1 else f"chat {self.state.counter}"
 
-        page = ChatWidget(self.on_chat_submit)
+        page = CommandSurface(self.on_chat_submit)
         self.state.tabs.append({"id": tab_id, "title": title})
         self.state.pages[tab_id] = page
 
@@ -115,7 +115,7 @@ class TabsController:
             ui_state_provider=UIStateProvider(session),
         )
         session.bind_io(output)
-        session.set_output_stream_policy(OutputStreamPolicy(enabled=False))
+        session.set_output_stream_policy(OutputStreamPolicy(enabled=True))
 
         # Pro Tab: eigener Host + eigener RunnerThread
         page = self.state.pages[tab_id]  # das ChatWidget für diesen Tab

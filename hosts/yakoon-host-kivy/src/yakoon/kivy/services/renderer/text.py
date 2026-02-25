@@ -13,4 +13,5 @@ class TextBlockRenderer:
     def render(self, block: Any) -> Widget:
         w = TextBlockWidget()
         w.text = str(getattr(block, "text", "") or "")
+        w.text = ">> - " + w.text
         return w

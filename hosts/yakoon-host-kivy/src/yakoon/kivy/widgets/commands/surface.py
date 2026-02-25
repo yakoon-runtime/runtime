@@ -1,11 +1,10 @@
 from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.uix.boxlayout import BoxLayout
-from yakoon.kivy.models.mount import RenderMount
-from yakoon.kivy.services.render import ChatRenderService
+from yakoon.kivy.widgets.commands.message import CommandMessage
 
 
-class ChatWidget(BoxLayout):
+class CommandSurface(BoxLayout):
 
     def __init__(self, on_submit, **kw):
 
@@ -13,21 +12,19 @@ class ChatWidget(BoxLayout):
         self.on_submit = on_submit
         self._scroll_trigger = Clock.create_trigger(self._restore_scroll_if_needed, 0)
 
-        self._data = []
         self.runner = None
         self.session = None
 
-        self._render = ChatRenderService()
-        self._history = []
-        self._by_id = {}
-        self._live_vid: str | None = None
+        self._active: CommandMessage | None = None
+        self._prev: CommandMessage | None = None
+        self._active_vid: str | None = None
 
     @property
     def prompt(self):
         return self.ids.prompt
 
     def _restore_scroll_if_needed(self, *_):
-        self.ids.rv.scroll_y = 1.0
+        self.ids.scroll.scroll_y = 1.0
 
     def apply_context(self, ctx):
 
@@ -76,33 +73,43 @@ class ChatWidget(BoxLayout):
         return "\n".join(texts)
 
     def render(self, view) -> None:
-        mounts = self._render.render(view)
-        for m in mounts:
-            if m.target == "live":
-                self._apply_live(m)
-            else:
-                self._apply_history(m)
+        vid = getattr(view, "id", None)
+        mode = getattr(view, "mode", None)
+
+        # in-place update for streaming / replace
+        if (
+            mode == "replace"
+            and vid
+            and self._active is not None
+            and self._active_vid == vid
+        ):
+            self._active.set_view(view)
+            self._scroll_trigger()
+            return
+
+        # rotate old active to prev
+        if self._active is not None:
+            if self._prev is not None:
+                try:
+                    self._prev.dispose()
+                except Exception:
+                    pass
+            self._prev = self._active
+
+        # new active
+        active = CommandMessage()
+        active.set_view(view)
+        self._active = active
+        self._active_vid = vid
+
+        # rebuild stack (max 2)
+        stack = self.ids.stack
+        stack.clear_widgets()
+        stack.add_widget(self._active)
+        if self._prev is not None:
+            stack.add_widget(self._prev)
+
         self._scroll_trigger()
-
-    def _apply_live(self, m: RenderMount) -> None:
-        if m.op == "set_live":
-            self._live_vid = m.vid
-            self.ids.live.set_view(m.payload)
-        elif m.op == "clear_live":
-            if self._live_vid == m.vid:
-                self._live_vid = None
-                self.ids.live.clear()
-
-    def _apply_history(self, m: RenderMount) -> None:
-        if m.op == "append_history":
-            self._history.insert(0, m.payload)
-            # shift indices
-            for k in list(self._by_id.keys()):
-                self._by_id[k] += 1
-            if m.vid:
-                self._by_id[m.vid] = 0
-            self.ids.rv.data = list(self._history)
-            self.ids.rv.refresh_from_data()
 
     def submit(self, text: str):
 
@@ -134,4 +141,4 @@ class ChatWidget(BoxLayout):
         Clock.schedule_once(_apply, 0)
 
 
-Factory.register("ChatWidget", cls=ChatWidget)
+Factory.register("CommandSurface", cls=CommandSurface)

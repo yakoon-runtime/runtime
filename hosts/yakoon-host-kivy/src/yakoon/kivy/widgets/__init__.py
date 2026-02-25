@@ -1,19 +1,14 @@
-from .chat import (
-    ChatLiveArea,
-    ChatMessageRow,
-    ChatMessageWidget,
-    ChatRow,
-    ChatWidget,
-    PromptWidget,
+from .commands import (
+    CommandMessage,
+    CommandPromptBar,
+    CommandSurface,
 )
-from .tab import TabCard
+from .tabs import TabBar, TabCard
 
 __all__ = [
-    "ChatRow",
-    "ChatWidget",
-    "PromptWidget",
+    "CommandPromptBar",
+    "CommandSurface",
+    "CommandMessage",
     "TabCard",
-    "ChatMessageWidget",
-    "ChatLiveArea",
-    "ChatMessageRow",
+    "TabBar",
 ]

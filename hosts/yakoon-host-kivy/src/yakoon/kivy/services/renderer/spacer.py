@@ -12,7 +12,7 @@ class SpacerBlockRenderer:
     default_height_dp: float = 12
 
     def render(self, block: Any) -> Widget:
-        h = getattr(block, "height", None)
+        h = getattr(block, "size", None)
         try:
             height_dp = float(h) if h is not None else self.default_height_dp
         except Exception:

@@ -11,7 +11,7 @@ from kivy.properties import (
 from kivy.uix.boxlayout import BoxLayout
 
 
-class PromptWidget(BoxLayout):
+class CommandPromptBar(BoxLayout):
 
     # hint = StringProperty("shell$ ")
     prefix = StringProperty("shell$")  # wird später von Session gesetzt
@@ -78,4 +78,4 @@ class PromptWidget(BoxLayout):
         return True
 
 
-Factory.register("PromptWidget", cls=PromptWidget)
+Factory.register("CommandPromptBar", cls=CommandPromptBar)
