@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from yakoon.compose.engine import compose_engine
 from yakoon.kivy.bootstrap.dispatcher import ContextDispatcher
 from yakoon.kivy.controllers.app_controller import AppController
-from yakoon.kivy.host.runner import SessionRunner
 from yakoon.kivy.pages.app_root_page import AppRootPage
+from yakoon.kivy.runner import SessionRunner
 
 
 @dataclass

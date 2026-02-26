@@ -4,7 +4,7 @@ import asyncio
 import threading
 from typing import Any
 
-from yakoon.kivy.host.host import KivyHost
+from yakoon.kivy.host import KivyHost
 from yakoon.platform.hosts.adapter import FormInput, InputEvent, TextInput
 from yakoon.platform.hosts.runner import Runner
 

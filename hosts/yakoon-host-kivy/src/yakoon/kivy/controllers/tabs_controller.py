@@ -1,12 +1,12 @@
 from kivy.clock import Clock
 from yakoon.base.models.stream import OutputStreamPolicy
 from yakoon.base.ports import PermissionService, SessionService
-from yakoon.kivy.host.host import KivyHost
-from yakoon.kivy.host.runner import SessionRunner
-from yakoon.kivy.host.thread import TabRunnerThread
+from yakoon.kivy.host import KivyHost
+from yakoon.kivy.runner import SessionRunner
 from yakoon.kivy.runtime.output.output import KivyOutput
 from yakoon.kivy.states.state_provider import UIStateProvider
 from yakoon.kivy.states.tab_state import TabRuntime, TabState
+from yakoon.kivy.thread import TabRunnerThread
 from yakoon.kivy.widgets.commands.surface import CommandSurface
 
 
