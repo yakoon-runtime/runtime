@@ -24,6 +24,7 @@ class CommandSurface(BoxLayout):
         return self.ids.prompt
 
     def _restore_scroll_if_needed(self, *_):
+        pass
         self.ids.scroll.scroll_y = 1.0
 
     def apply_context(self, ctx):

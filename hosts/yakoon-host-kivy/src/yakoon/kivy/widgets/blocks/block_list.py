@@ -3,7 +3,7 @@ from typing import Any
 
 from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
-from yakoon.kivy.widgets.blocks.text import TextBlockWidget
+from yakoon.kivy.widgets.blocks.block_text import TextBlockWidget
 
 
 def _inline_to_str(x: Any) -> str:
@@ -38,6 +38,7 @@ class ListWidget(BoxLayout):
         self._indent_step = int(indent_step)
         self._indent_level = int(indent_level)
         self.padding = (dp(self._indent_level), 0, 0, 0)
+        self.size_hint_x = 1
 
     def append_child(self, child):
         # propagate current level to list items (helps nested lists)
@@ -58,6 +59,7 @@ class ListItemWidget(BoxLayout):
         self._level_indent = 0
         self._indent_step = 18
         self._indent_left = indent_left
+        self.size_hint_x = 1
 
         self.bind(minimum_height=self.setter("height"))
 

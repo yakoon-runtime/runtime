@@ -4,6 +4,11 @@ from kivy.config import Config
 
 Config.set("kivy", "exit_on_escape", "0")
 
+Config.set("graphics", "width", "1200")
+Config.set("graphics", "height", "800")
+Config.set("graphics", "resizable", "1")
+
+
 from kivy.app import App  # noqa: E402
 from kivy.core.text import LabelBase  # noqa: E402
 from kivy.lang import Builder  # noqa: E402
@@ -83,8 +88,5 @@ class YakoonKivyApp(App):
 
 
 if __name__ == "__main__":
-    from kivy.core.window import Window
-
-    Window.size = (1200, 800)
 
     YakoonKivyApp().run()
