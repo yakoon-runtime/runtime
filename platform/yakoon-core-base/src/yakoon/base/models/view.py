@@ -29,7 +29,8 @@ class PatchAppendText:
 class PatchAppendChild:
     op: Literal["append_child"] = "append_child"
     block_id: str = ""
-    items: list[str] = field(default_factory=list)
+    parent_id: str = ""
+    block: Block | None = None
 
 
 PatchOp = PatchReset | PatchAppendBlock | PatchAppendText | PatchAppendChild

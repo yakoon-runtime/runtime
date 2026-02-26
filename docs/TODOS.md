@@ -1,3 +1,25 @@
+kind: state
+state:
+  role: info
+  title: "Test – Inline Head"
+
+  blocks:
+    - type: list
+      id: inline_list
+      items:
+        - 
+          - type: code
+            code: "cmd_a"
+          - type: text
+            text: " (controller_a)"
+        - 
+          - type: code
+            code: "cmd_b"
+          - type: text
+            text: " (controller_b)"
+
+            
+
 
 
 ## Neue Block-Typen implementieren

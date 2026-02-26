@@ -83,4 +83,8 @@ class YakoonKivyApp(App):
 
 
 if __name__ == "__main__":
+    from kivy.core.window import Window
+
+    Window.size = (1200, 800)
+
     YakoonKivyApp().run()

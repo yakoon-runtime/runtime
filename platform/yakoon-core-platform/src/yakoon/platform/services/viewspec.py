@@ -12,7 +12,7 @@ from yakoon.base.models.message import (
     InlineText,
     KvBlock,
     ListBlock,
-    ListItem,
+    ListItemBlock,
     MessageSpec,
     RuleBlock,
     SpacerBlock,
@@ -314,47 +314,76 @@ class ViewSpecService:
             )
         return cast(RuleStyle, value)
 
-    def _parse_list_item(self, node: Any) -> ListItem:
+    def _validate_block_id(self, bid: Any) -> str | None:
+        if bid is None:
+            return None
+        if not isinstance(bid, str) or not bid:
+            raise ViewSpecValidationError("Block.id must be a non-empty string or null")
+        return bid
+
+    def _parse_list_item(self, node: Any) -> ListItemBlock:
         if isinstance(node, str):
-            return ListItem(head=node, blocks=None)
+            return ListItemBlock(type="list_item", head=node, blocks=None, id=None)
 
         if isinstance(node, list):
             head = [self._parse_inline(x) for x in node]
-            return ListItem(head=head, blocks=None)
+            return ListItemBlock(type="list_item", head=head, blocks=None, id=None)
 
         if not isinstance(node, dict):
             raise ViewSpecValidationError(
                 "List item must be string, inline-list, or mapping"
             )
 
+        iid = self._validate_block_id(node.get("id"))
+        if iid is not None and not isinstance(iid, str):
+            raise ViewSpecValidationError("ListItem.id must be a string or null")
+
         head = self._parse_text_content(node.get("head", ""))
 
         blocks_raw = node.get("blocks")
         if blocks_raw is None:
-            return ListItem(head=head, blocks=None)
+            return ListItemBlock(type="list_item", head=head, blocks=None, id=iid)
 
         if not isinstance(blocks_raw, list):
-            raise ViewSpecValidationError("ListItem.blocks must be a list or null")
+            raise ViewSpecValidationError("ListItemBlock.blocks must be a list or null")
 
         nested = [self._parse_block(b) for b in blocks_raw]
-        return ListItem(head=head, blocks=nested)
+        return ListItemBlock(type="list_item", head=head, blocks=nested, id=iid)
 
     def _parse_block(self, b: Any) -> Block:
         if not isinstance(b, dict):
             raise ViewSpecValidationError("Each block must be a mapping")
 
         t = b.get("type")
-        bid = b.get("id")
+        bid = self._validate_block_id(b.get("id"))
 
         if t == "text":
             return TextBlock(
                 type="text", id=bid, text=self._parse_text_content(b.get("text", ""))
             )
 
+        if t == "list_item":
+            # list_item as standalone block (useful for streaming / append_child)
+            head = self._parse_text_content(b.get("head", ""))
+
+            blocks_raw = b.get("blocks")
+            if blocks_raw is None:
+                return ListItemBlock(type="list_item", id=bid, head=head, blocks=None)
+
+            if not isinstance(blocks_raw, list):
+                raise ViewSpecValidationError(
+                    "ListItemBlock.blocks must be a list or null"
+                )
+
+            nested = [self._parse_block(x) for x in blocks_raw]
+            return ListItemBlock(type="list_item", id=bid, head=head, blocks=nested)
+
         if t == "list":
             items_raw = b.get("items", [])
             if not isinstance(items_raw, list):
-                raise ViewSpecValidationError("ListBlock.items must be a list")
+                raise ViewSpecValidationError(
+                    "ListBlock.items (field 'items') must be a list"
+                )
             return ListBlock(
                 type="list", id=bid, items=[self._parse_list_item(x) for x in items_raw]
             )

@@ -112,19 +112,18 @@ class SpacerBlock:
 
 
 @dataclass(frozen=True, slots=True)
-class ListItem:
-    """
-    A list item that can contain nested blocks (UI container).
-    """
-
+class ListItemBlock:
+    type: Literal["list_item"] = "list_item"
     head: str | list[Inline] = ""
     blocks: list[Block] | None = None
+    id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class ListBlock:
-    type: Literal["list"]
-    items: list[ListItem]
+    type: Literal["list"] = "list"
+    items: list[ListItemBlock] = field(default_factory=list)
+    ordered: bool = False
     id: str | None = None
 
 
@@ -170,7 +169,15 @@ class TableBlock:
     id: str | None = None
 
 
-Block = TextBlock | ListBlock | KvBlock | TableBlock | SpacerBlock | RuleBlock
+Block = (
+    TextBlock
+    | SpacerBlock
+    | RuleBlock
+    | ListBlock
+    | ListItemBlock
+    | KvBlock
+    | TableBlock
+)
 
 
 @dataclass(frozen=True, slots=True)

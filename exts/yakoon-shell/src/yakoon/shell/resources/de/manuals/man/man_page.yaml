@@ -11,28 +11,46 @@ state:
         invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
         justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum
 
+        Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
+        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
+        justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum
+
+    - type: list
+      items:
+        - head: "Stet clita kasd gubergren, no sea"
+          blocks:
+            - type: list
+              items:
+                - head: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor  aaaa"
+                  blocks:
+                    - type: list
+                      items:
+                        - "noch tiefer A"
+
+        - head: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+          blocks:
+            - type: list
+              items:
+                - head: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor  bbb"
+                  blocks:
+                    - type: list
+                      items:
+                        - "noch tiefer B Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+
+    - type: list
+      items:
+        - "Zweiter Punkt - sadipscing elitr, sed diam nonumy eirmod tempor "
+        - "Dritter Punkt - amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+        - "Vierter PUnkt - pscing elitr, sed diam nonumy eirmod tempor"
+        - "Zweiter Punkt - Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+
+
     - type: rule
       style: normal
 
     - type: text
       text: | 
         1. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
-        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
-    - type: text
-      text: | 
-        2. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
-        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
-    - type: text
-      text: | 
-        3. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
-        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
-    - type: text
-      text: | 
-        4. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
-        invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
-    - type: text
-      text: | 
-        5. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
         invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
 
     - type: spacer
@@ -43,4 +61,25 @@ state:
         Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
         invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et 
 
+    - type: spacer
+      size: 1
 
+    - type: text
+      id: intro
+      text: "Das ist meine Aufzählung:"
+
+    - type: list
+      id: my_list
+      items:
+        - "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor"
+        - "Zweiter Punkt - Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+        - "Dritter Punkt - Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+        - "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor"
+        - "Zweiter Punkt - Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+        - "Dritter Punkt - Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+        - "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor"
+        - "Zweiter Punkt - Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+        - "Dritter Punkt - Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+        - "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor"
+        - "Zweiter Punkt - Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "
+        - "Dritter Punkt - Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor "

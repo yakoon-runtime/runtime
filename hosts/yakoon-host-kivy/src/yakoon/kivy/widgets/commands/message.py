@@ -63,7 +63,6 @@ class CommandMessage(BoxLayout):
                 b = getattr(op, "block", None)
                 if b is None:
                     continue
-                print(b)
                 bid = getattr(b, "id", None)
                 if not bid:
                     # IDs sind bei euch jetzt Pflicht -> wenn doch None, skip statt crash
@@ -86,16 +85,46 @@ class CommandMessage(BoxLayout):
                 w.text = (w.text or "") + chunk
 
             elif kind == "append_child":
-                # später
-                bid = getattr(op, "block_id", None)
-                row = getattr(op, "row", None)
-                w = self._widgets_by_id.get(bid) if bid else None
-                if (
-                    w is not None
-                    and hasattr(w, "append_child")
-                    and callable(w.append_child)
-                ):
-                    w.append_child(row)
+                # Generic container streaming:
+                # op.parent_id (preferred) OR op.block_id (legacy) identifies the parent widget
+                # op.block (preferred) OR op.child/row (legacy) is the child block to render+append
+                parent_id = getattr(op, "parent_id", None) or getattr(
+                    op, "block_id", None
+                )
+                child_block = (
+                    getattr(op, "block", None)
+                    or getattr(op, "child", None)
+                    or getattr(op, "row", None)
+                )
+
+                if not parent_id or child_block is None:
+                    continue
+
+                parent = self._widgets_by_id.get(parent_id)
+                if parent is None:
+                    continue
+
+                child_widget = self._registry.render(child_block)
+
+                # register child id (critical for append_text later)
+                child_id = getattr(child_block, "id", None)
+                if child_id:
+                    self._widgets_by_id[child_id] = child_widget
+
+                    # list_item: also register "<id>.head" to the bullet TextBlockWidget
+                    if getattr(child_block, "type", None) == "list_item":
+                        if hasattr(child_widget, "children") and child_widget.children:
+                            bullet = child_widget.children[-1]  # first added
+                            self._widgets_by_id[f"{child_id}.head"] = bullet
+
+                # attach to parent
+                if hasattr(parent, "append_child") and callable(parent.append_child):
+                    parent.append_child(child_widget)
+                elif hasattr(parent, "add_widget") and callable(parent.add_widget):
+                    parent.add_widget(child_widget)
+                else:
+                    # parent is not a container
+                    continue
 
     def dispose(self) -> None:
         pass
