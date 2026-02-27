@@ -5,4 +5,4 @@ state:
   title: "Commands"
   blocks:
     - type: text
-      text: su {{data.user}}
+      text: su {{user}}

@@ -19,11 +19,22 @@ class RendererService:
 
         # 1) render full template text (Jinja)
         engine = self._services.get(ports.RenderEngine)
-        payload = {
-            "data": data,
-            "meta": {"state": state, "resource": ctx.resource.path},
-        }
-        rendered_text = await engine.render_str(source, context=payload)
+
+        # reserved namespaces owned by the platform
+        meta = {"state": state, "resource": ctx.resource.path}
+
+        reserved = {"_meta"}  # later: _host, _ui, _env, _i18n ...?
+        collisions = reserved.intersection(data.keys())
+        if collisions:
+            raise KeyError(
+                f"Template context keys reserved by platform: {sorted(collisions)}. "
+                "Please rename your payload fields."
+            )
+
+        context = dict(data)
+        context["_meta"] = meta
+
+        rendered_text = await engine.render_str(source, context=context)
 
         # 2) validate YAML root early (nice error messages)
         raw = yaml.safe_load(rendered_text)

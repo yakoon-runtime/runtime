@@ -5,14 +5,14 @@ state:
   title: "Meintest du …?"
   blocks:
     - type: text
-      text: "{{ data.query }}"
+      text: "{{ query }}"
 
     - type: rule
       style: strong
 
     - type: list
       items:
-        {% for c in data.candidates %}
+        {% for c in candidates %}
         - head:
             - { type: code, code: "{{ c['command_key'] }}" }
             - { type: text, text: " (" }

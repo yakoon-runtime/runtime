@@ -5,7 +5,7 @@ state:
   title: "Nichts gefunden"
   blocks:
     - type: text
-      text: "{{ data.query }}"
+      text: "{{ query }}"
     
     - type: text
       text: "Versuch’s mit einem anderen Begriff oder nutze `man --internal`."

@@ -5,4 +5,4 @@ state:
   title: "Commands"
   blocks:
     - type: text
-      text: "Abgelehnt! Grund: {{data.reason}}"  
+      text: "Abgelehnt! Grund: {{reason}}"  

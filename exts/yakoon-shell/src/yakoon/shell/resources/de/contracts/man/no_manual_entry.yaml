@@ -5,4 +5,4 @@ state:
   title: "Commands"
   blocks:
     - type: text
-      text: No manual entry for {{data.command_key}}
+      text: No manual entry for {{command_key}}

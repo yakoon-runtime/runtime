@@ -4,14 +4,14 @@ state:
   role: info
   title: "Commands"
   blocks:
-      {% if data.mode == "shell" %}
+      {% if mode == "shell" %}
 
       - type: text
         text: "Commands"
 
       - type: list
         items:
-          {% for c in data.shell_commands %}
+          {% for c in shell_commands %}
           - head:
               - { type: code, code: "{{ c.key }}" }
           {% endfor %}
@@ -24,19 +24,19 @@ state:
 
       - type: list
         items:
-          {% for p in data.controllers %}
+          {% for p in controllers %}
           - head:
               - { type: code, code: "{{ p.id }}" }
           {% endfor %}
 
-      {% elif data.mode == "program" %}
+      {% elif mode == "program" %}
 
       - type: text
         text: "Commands"
 
       - type: list
         items:
-          {% for c in data.commands %}
+          {% for c in commands %}
           - head:
               - { type: code, code: "{{ c.key }}" }
           {% endfor %}

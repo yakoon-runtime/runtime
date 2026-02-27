@@ -6,4 +6,4 @@ state:
   blocks:
     - type: text
       text: > 
-        {{ data.controllers | map(attribute='id') | join('  ') }}
+        {{ controllers | map(attribute='id') | join('  ') }}
