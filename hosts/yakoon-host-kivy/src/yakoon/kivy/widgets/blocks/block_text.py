@@ -55,6 +55,6 @@ class TextBlockRenderer:
 
     def render(self, block: TextBlockLike) -> Widget:
         w = TextBlockWidget()
-        w.text = block.text
+        w.text = str(block.text)
         w._reflow()  # ensures correct height on first render
         return w
