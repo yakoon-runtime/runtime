@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from yakoon.kivy.widgets.blocks.block import BlockRenderer
+from yakoon.kivy.widgets.blocks.block_kv import KvBlockRenderer, KvItemBlockRenderer
 from yakoon.kivy.widgets.blocks.block_list import (
     ListBlockRenderer,
     ListItemBlockRenderer,
@@ -20,6 +21,8 @@ class BlockRendererRegistry:
             "rule": RulerBlockRenderer(),
             "list": ListBlockRenderer(self),
             "list_item": ListItemBlockRenderer(self),
+            "kv": KvBlockRenderer(self),
+            "kv_item": KvItemBlockRenderer(self),
         }
 
     def render(self, block):

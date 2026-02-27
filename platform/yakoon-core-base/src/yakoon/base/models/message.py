@@ -123,33 +123,23 @@ class ListItemBlock:
 class ListBlock:
     type: Literal["list"] = "list"
     items: list[ListItemBlock] = field(default_factory=list)
-    ordered: bool = False
+    id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class KvItemBlock:
+    # kv_item = single key/value row; value may contain text or nested blocks
+    type: Literal["kv_item"] = "kv_item"
+    key: str = ""
+    value: str | list[Any] | None = None
     id: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class KvBlock:
-    """
-    An ordered key–value block.
-
-    Represents structured key–value pairs where order matters.
-
-    Each item is a (key, value) tuple.
-    Values are rendered strings (no nested structure).
-
-    Usage (YAML):
-        - type: kv
-          items:
-            - ["Platform Version", "v0.4.1"]
-            - ["Python", "3.13.11"]
-
-    Console example:
-        Platform Version : v0.4.1
-        Python           : 3.13.11
-    """
-
-    type: Literal["kv"]
-    items: list[tuple[str, Any]]
+    # kv = 2-column key/value container (modern UI layout, value streamable)
+    type: Literal["kv"] = "kv"
+    items: list[KvItemBlock] = field(default_factory=list)
     id: str | None = None
 
 

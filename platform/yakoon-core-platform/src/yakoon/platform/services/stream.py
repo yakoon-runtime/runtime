@@ -259,6 +259,75 @@ class OutputStreamService:
                 continue
 
             # -----------------------------
+            # KV streaming
+            # -----------------------------
+            if btype == "kv":
+                empty_kv = replace(block, items=[])
+                await emit_patch([PatchAppendBlock(block=empty_kv)], final=False)
+
+                kv_id = getattr(empty_kv, "id", None)
+                if not isinstance(kv_id, str) or not kv_id:
+                    kv_id = getattr(block, "id", "")
+
+                items = list(getattr(block, "items", None) or [])
+                for j, item_raw in enumerate(items):
+                    item = ensure_item_id(item_raw, kv_id, j)
+
+                    key = str(getattr(item, "key", "") or "")
+                    value = getattr(item, "value", None)
+
+                    # append empty kv_item first
+                    if isinstance(value, str):
+                        empty_item = replace(item, key=key, value="")
+                    else:
+                        empty_item = replace(item, key=key, value=[])
+
+                    await emit_patch(
+                        [PatchAppendChild(parent_id=kv_id, block=empty_item)],
+                        final=False,
+                    )
+
+                    item_id = getattr(empty_item, "id", None)
+                    if not isinstance(item_id, str) or not item_id:
+                        continue
+
+                    value_id = f"{item_id}.value"
+
+                    # stream string value
+                    if isinstance(value, str) and value:
+                        for chunk in iter_chunks(
+                            value, min_size=min_size, max_size=max_size
+                        ):
+                            await emit_patch(
+                                [PatchAppendText(block_id=value_id, text=chunk)],
+                                final=False,
+                            )
+                            await asyncio.sleep(pause_for_chunk(chunk))
+
+                    # nested blocks snapshot
+                    nested = getattr(item, "blocks", None)
+                    if nested:
+                        for k, child_raw in enumerate(nested):
+                            child = ensure_id(child_raw, f"{item_id}:{k}")
+                            await emit_patch(
+                                [PatchAppendChild(parent_id=item_id, block=child)],
+                                final=False,
+                            )
+
+                    # value as blocks (future-proof)
+                    if isinstance(value, list):
+                        for k, child_raw in enumerate(value):
+                            child = ensure_id(child_raw, f"{item_id}:{k}")
+                            await emit_patch(
+                                [PatchAppendChild(parent_id=item_id, block=child)],
+                                final=False,
+                            )
+
+                active_text_id = None
+                active_style = None
+                continue
+
+            # -----------------------------
             # TEXT streaming (merge adjacent same-style blocks)
             # -----------------------------
             text = getattr(block, "text", None)

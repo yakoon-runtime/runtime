@@ -11,6 +11,7 @@ from yakoon.base.models.message import (
     InlineLink,
     InlineText,
     KvBlock,
+    KvItemBlock,
     ListBlock,
     ListItemBlock,
     MessageSpec,
@@ -387,6 +388,31 @@ class ViewSpecService:
             return ListBlock(
                 type="list", id=bid, items=[self._parse_list_item(x) for x in items_raw]
             )
+
+        if t == "kv":
+            items_raw = b.get("items", [])
+            if not isinstance(items_raw, list):
+                raise ViewSpecValidationError("KvBlock.items must be a list")
+
+            parsed_items: list[KvItemBlock] = []
+
+            for entry in items_raw:
+                if not isinstance(entry, list) or len(entry) != 2:
+                    raise ViewSpecValidationError(
+                        "Each kv item must be a [key, value] list"
+                    )
+
+                key, value = entry
+
+                parsed_items.append(
+                    KvItemBlock(
+                        key=str(key),
+                        value=value,
+                        id=None,
+                    )
+                )
+
+            return KvBlock(type="kv", id=bid, items=parsed_items)
 
         if t == "table":
             headers = b.get("headers")

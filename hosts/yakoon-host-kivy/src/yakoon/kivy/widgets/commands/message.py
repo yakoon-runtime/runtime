@@ -68,27 +68,41 @@ class CommandMessage(BoxLayout):
 
         # Not a container -> ignore (or raise if you want strict mode)
 
-    def _maybe_register_list_item_aliases(
-        self, item_block: Any, item_widget: Any
-    ) -> None:
+    def _maybe_register_stream_aliases(self, block: Any, widget: Any) -> None:
         """
-        For list_item blocks we support streaming the head via append_text to "<item_id>.head".
-        We alias that ID to the bullet TextBlockWidget.
+        Register alias targets for streaming sub-parts.
+
+        - list_item: "<id>.head"
+        - kv_item:   "<id>.value"
         """
-        if getattr(item_block, "type", None) != "list_item":
+        btype = getattr(block, "type", None)
+        bid = getattr(block, "id", None)
+
+        if not isinstance(bid, str) or not bid:
             return
 
-        item_id = getattr(item_block, "id", None)
-        if not isinstance(item_id, str) or not item_id:
+        # -----------------------------
+        # list_item -> head alias
+        # -----------------------------
+        if btype == "list_item":
+            children = getattr(widget, "children", None)
+            if not children:
+                return
+
+            # ListItemWidget: bullet is last child (Kivy reverse order)
+            bullet = children[-1]
+            self._register(f"{bid}.head", bullet)
             return
 
-        # ListItemWidget adds bullet first. Kivy stores children in reverse order.
-        children = getattr(item_widget, "children", None)
-        if not children:
+        # -----------------------------
+        # kv_item -> value alias
+        # -----------------------------
+        if btype == "kv_item":
+            # KvItemWidget should expose value_widget()
+            getter = getattr(widget, "value_widget", None)
+            if callable(getter):
+                self._register(f"{bid}.value", getter())
             return
-
-        bullet = children[-1]
-        self._register(f"{item_id}.head", bullet)
 
     # ---------- Non-stream rendering (full view) ----------
 
@@ -164,7 +178,7 @@ class CommandMessage(BoxLayout):
                 child_id = getattr(child_block, "id", None)
                 if isinstance(child_id, str) and child_id:
                     self._register(child_id, child_widget)
-                    self._maybe_register_list_item_aliases(child_block, child_widget)
+                    self._maybe_register_stream_aliases(child_block, child_widget)
 
                 self._attach_child(parent, child_widget)
                 continue
