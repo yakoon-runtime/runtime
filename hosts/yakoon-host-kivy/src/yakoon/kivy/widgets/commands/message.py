@@ -85,13 +85,10 @@ class CommandMessage(BoxLayout):
         # list_item -> head alias
         # -----------------------------
         if btype == "list_item":
-            children = getattr(widget, "children", None)
-            if not children:
-                return
-
-            # ListItemWidget: bullet is last child (Kivy reverse order)
-            bullet = children[-1]
-            self._register(f"{bid}.head", bullet)
+            ids = getattr(widget, "ids", None)
+            head = ids.get("head_label") if isinstance(ids, dict) else None
+            if head is not None:
+                self._register(f"{bid}.head", head)
             return
 
         # -----------------------------
@@ -150,12 +147,12 @@ class CommandMessage(BoxLayout):
             if kind == "append_text":
                 target_id = getattr(op, "block_id", None)
                 chunk = getattr(op, "text", "") or ""
-                w = self._lookup(target_id)
-                if w is None:
-                    continue
 
-                # Expect TextBlockWidget-like API
-                w.text = (getattr(w, "text", "") or "") + chunk
+                w = self._lookup(target_id)
+                append = getattr(w, "append_text", None)
+                if callable(append):
+                    append(chunk)
+
                 continue
 
             if kind == "append_child":
@@ -172,6 +169,14 @@ class CommandMessage(BoxLayout):
                 parent = self._lookup(parent_id)
                 if parent is None or child_block is None:
                     continue
+
+                if parent is None:
+                    print(
+                        "MISSING PARENT",
+                        parent_id,
+                        "known:",
+                        list(self._widgets_by_id.keys())[:20],
+                    )
 
                 child_widget = self._render_block(child_block)
 
