@@ -111,6 +111,7 @@ class ViewSpecService:
         if title is not None and not isinstance(title, str):
             raise ViewSpecValidationError("title must be a string or null")
 
+        error_kind = state.get("error_kind", None)
         blocks_raw = state.get("blocks")
         message: MessageSpec | None = None
         if blocks_raw is not None:
@@ -119,6 +120,7 @@ class ViewSpecService:
             blocks = [self._parse_block(b) for b in blocks_raw]
             message = MessageSpec(
                 kind="message",
+                error_kind=error_kind,
                 role=cast(Role, role),
                 title=title,
                 blocks=blocks,

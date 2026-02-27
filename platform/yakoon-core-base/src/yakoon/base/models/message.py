@@ -211,3 +211,4 @@ class MessageSpec:
     blocks: list[Block]
     meta: dict[str, Any] | None = None
     stream: Literal["none", "delta", "final"] = "none"
+    error_kind: Literal["validation", "system"] | None = None

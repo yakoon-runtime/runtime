@@ -236,4 +236,9 @@ class InputService:
         # stable order: field errors first, then form-level
         for key, msgs in errors.items():
             for msg in msgs:
-                await session.emit(v_error(f"[{key}] {msg}"))
+                await session.emit(
+                    v_error(
+                        f"[{key}] {msg}",
+                        error_kind="validation",
+                    )
+                )

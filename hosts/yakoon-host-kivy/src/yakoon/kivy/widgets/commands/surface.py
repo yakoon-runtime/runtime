@@ -42,8 +42,9 @@ class CommandSurface(BoxLayout):
 
         # Wenn Fehler, zeige Fehlermeldung
         if msg and getattr(msg, "role", None) == "error":
-            prompt.assist_text = self._extract_text(msg)
-            prompt.assist_state = "error"
+            if getattr(msg, "error_kind", None) == "validation":
+                prompt.assist_text = self._extract_text(msg)
+                prompt.assist_state = "error"
             return
 
         # Frage anzeigen
