@@ -7,6 +7,16 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## 26-02-27
+**Streaming**
+Die Architektur wurde von einer hybriden Rendering-Lösung (Snapshot + Streaming) 
+auf ein reines **Streaming-First-Modell** umgestellt. Container-Blöcke (z. B. Listen, Key-Value-Paare) 
+werden nun **rekursiv und einheitlich** gestreamt – ohne Duplikate oder Timing-Probleme. 
+Renderer sind rein für die UI zuständig, während die Strukturlogik ausschließlich 
+in der Streaming-Schicht liegt. Das Ergebnis: deterministisches Verhalten, klare Verantwortlichkeiten 
+und Skalierbarkeit für zukünftige Blocktypen wie Tabellen oder Formulare. 
+Die Umsetzung ist für `list` und `kv` abgeschlossen und validiert.
+
 ## 26-02-23
 **input_mode wird fester Bestandteil von ViewFormDef**
 input_mode: Literal["prompt", "form"] = "prompt"
