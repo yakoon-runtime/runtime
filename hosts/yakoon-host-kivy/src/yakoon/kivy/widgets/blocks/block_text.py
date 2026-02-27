@@ -1,42 +1,60 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Protocol
 
-from kivy.factory import Factory
-from kivy.metrics import dp, sp
+from kivy.metrics import dp
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
-from yakoon.kivy.themes.active import active_theme
+
+
+class TextBlockLike(Protocol):
+    """
+    Platform contract: TextBlock has a 'text' field.
+    Keep this minimal and stable.
+    """
+
+    text: str
+
+
+class StreamLabel(Label):
+    """
+    Behavior-only: supports PatchAppendText targets.
+    Styling stays in KV.
+    """
+
+    def append_text(self, chunk: str) -> None:
+        self.text = (self.text or "") + (chunk or "")
+        # ensure texture_size is current for auto-height rules in KV
+        self.texture_update()
 
 
 class TextBlockWidget(Label):
+    """
+    UI behavior only:
+    - auto-height based on texture
+    - reflow method called by KV bindings (or optional callers)
+    """
 
-    DEFAULT_FONT_SIZE = sp(16)
-
-    def __init__(self, **kw):
-        super().__init__(**kw)
-        self.font_size = self.DEFAULT_FONT_SIZE
-        self.halign = "left"
-        self.valign = "top"
-        self.text_size = (self.width, None)
-        self.size_hint_y = None
-        self.color = active_theme.text
-        self.bind(width=self._reflow, text=self._reflow)
-
-    def _reflow(self, *_):
-        self.text_size = (self.width, None)
+    def _reflow(self, *_: object) -> None:
+        # IMPORTANT: text_size is layout (KV); here we only do the "compute height" part.
         self.texture_update()
         self.height = self.texture_size[1] + dp(6)
+
+    def append_text(self, chunk: str) -> None:
+        self.text = (self.text or "") + chunk
+        self._reflow()
 
 
 @dataclass(slots=True)
 class TextBlockRenderer:
+    """
+    Adapter: block -> widget. No fallbacks. If the block is invalid,
+    that is a parser/contract bug and should fail loudly.
+    """
 
-    def render(self, block: Any) -> Widget:
+    def render(self, block: TextBlockLike) -> Widget:
         w = TextBlockWidget()
-        w.text = str(getattr(block, "text", "") or "")
+        w.text = block.text
+        w._reflow()  # ensures correct height on first render
         return w
-
-
-Factory.register("TextBlockWidget", cls=TextBlockWidget)

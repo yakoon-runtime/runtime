@@ -1,0 +1,51 @@
+#:kivy 2.2.0
+#:import theme yakoon.kivy.themes.active.active_theme
+#:import dp kivy.metrics.dp
+
+<ListWidget>:
+    orientation: "vertical"
+    size_hint_x: 1
+    size_hint_y: None
+    height: self.minimum_height
+    spacing: dp(2)
+
+
+<ListItemWidget>:
+    orientation: "vertical"
+    size_hint_x: 1
+    size_hint_y: None
+    height: self.minimum_height
+
+    # Einrückung des Items (Ebene)
+    padding: dp(root.level_indent), 0, 0, 0
+    spacing: dp(2)
+
+    # Kopfzeile: Bullet + Head (list-spezifische Typografie)
+    StreamLabel:
+        id: head_label
+
+        font_name: theme.font
+        font_size: "15sp"
+        color: theme.text
+
+        halign: "left"
+        valign: "top"
+
+        size_hint_y: None
+        text_size: self.width, None
+
+        # Wichtig: Height robust machen
+        height: max(self.texture_size[1] + dp(6), dp(18))
+
+        # Texture neu berechnen bei Änderungen
+        on_width: self.texture_update()
+        on_text: self.texture_update()
+
+    # Body-Container: nimmt verschachtelte Blocks auf
+    BoxLayout:
+        id: body
+        orientation: "vertical"
+        size_hint_y: None
+        height: self.minimum_height
+        padding: dp(root.body_indent), 0, 0, 0
+        spacing: dp(2)

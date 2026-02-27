@@ -95,7 +95,6 @@ class CommandMessage(BoxLayout):
         # kv_item -> value alias
         # -----------------------------
         if btype == "kv_item":
-            # KvItemWidget should expose value_widget()
             getter = getattr(widget, "value_widget", None)
             if callable(getter):
                 self._register(f"{bid}.value", getter())
@@ -147,12 +146,18 @@ class CommandMessage(BoxLayout):
             if kind == "append_text":
                 target_id = getattr(op, "block_id", None)
                 chunk = getattr(op, "text", "") or ""
-
                 w = self._lookup(target_id)
-                append = getattr(w, "append_text", None)
-                if callable(append):
-                    append(chunk)
+                if w is None:
+                    continue
 
+                append = getattr(w, "append_text", None)
+                if not callable(append):
+                    # Contract violation: target must support streaming text
+                    # In dev: raise; in prod: log + ignore (deine Wahl)
+                    raise TypeError(
+                        f"Target '{target_id}' does not support append_text()"
+                    )
+                append(chunk)
                 continue
 
             if kind == "append_child":
@@ -169,14 +174,6 @@ class CommandMessage(BoxLayout):
                 parent = self._lookup(parent_id)
                 if parent is None or child_block is None:
                     continue
-
-                if parent is None:
-                    print(
-                        "MISSING PARENT",
-                        parent_id,
-                        "known:",
-                        list(self._widgets_by_id.keys())[:20],
-                    )
 
                 child_widget = self._render_block(child_block)
 

@@ -1,0 +1,23 @@
+#:kivy 2.2.0
+#:import theme yakoon.kivy.themes.active.active_theme
+
+<StreamLabel@Label>:
+    #
+
+<TextBlockWidget>:
+    # Typo
+    font_name: theme.font
+    font_size: "16sp"
+
+    # design
+    color: theme.text
+
+    # Layout / Wrapping
+    halign: "left"
+    valign: "top"
+    size_hint_y: None
+    text_size: self.width, None
+
+    # bindings
+    on_width: root._reflow()
+    on_text: root._reflow()

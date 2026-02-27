@@ -81,6 +81,10 @@ class YakoonKivyApp(App):
         for kv in _sorted_kv(LAYOUTS / "pages"):
             Builder.load_file(str(kv))
 
+        # 3) blocks
+        for kv in _sorted_kv(LAYOUTS / "blocks"):
+            Builder.load_file(str(kv))
+
         # 3) app root
         app_kv = LAYOUTS / "app.kv"
         if app_kv.exists():

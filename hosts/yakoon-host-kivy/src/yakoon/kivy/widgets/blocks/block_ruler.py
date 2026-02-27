@@ -1,61 +1,88 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Literal, Protocol
 
-from kivy.clock import Clock
 from kivy.graphics import Color, Line
 from kivy.metrics import dp
-from kivy.uix.widget import Factory, Widget
+from kivy.properties import ListProperty, NumericProperty, StringProperty
+from kivy.uix.widget import Widget
+
+RulerStyle = Literal["subtle", "normal", "strong"]
+
+
+class RulerBlockLike(Protocol):
+    style: RulerStyle
 
 
 class RulerBlockWidget(Widget):
+    """
+    UI behavior only:
+    - draws a horizontal line using canvas.after
+    - all parameters are properties (set by renderer / kv)
+    """
 
-    def __init__(self, style="normal", inset_dp=4, **kw):
+    # from theme.kv (RGB); alpha is derived from style
+    rgba = ListProperty([1, 1, 1, 1])
+
+    # public inputs
+    style = StringProperty("normal")  # subtle|normal|strong
+    inset_dp = NumericProperty(4.0)  # left/right inset in dp
+
+    # derived drawing params (dp already applied where appropriate)
+    _alpha = NumericProperty(0.25)
+    _thickness = NumericProperty(1.5)  # dp value (already dp())
+    _pad_y = NumericProperty(2.0)  # dp value (already dp())
+
+    def __init__(self, **kw):
         super().__init__(**kw)
+        self.bind(
+            pos=self._redraw,
+            size=self._redraw,
+            style=self._apply_style,
+            inset_dp=self._redraw,
+            rgba=self._redraw,
+        )
+        self._apply_style()
 
-        self.size_hint_x = 1
-        self.size_hint_y = None
-
-        self._style = style
-        self._inset = dp(inset_dp)
-
-        # style mapping
-        if style == "subtle":
+    def _apply_style(self, *_: object) -> None:
+        s = self.style
+        if s == "subtle":
             self._alpha = 0.12
-            self._thickness = dp(1)
-            self._pad_y = dp(2)
-        elif style == "strong":
-            self._alpha = 0.5
-            self._thickness = dp(1.5)
-            self._pad_y = dp(2)
+            self._thickness = float(dp(1))
+            self._pad_y = float(dp(2))
+        elif s == "strong":
+            self._alpha = 0.50
+            self._thickness = float(dp(1.5))
+            self._pad_y = float(dp(2))
         else:  # normal
             self._alpha = 0.25
-            self._thickness = dp(1.5)
-            self._pad_y = dp(2)
+            self._thickness = float(dp(1.5))
+            self._pad_y = float(dp(2))
 
-        # self.height = self._pad_y * dp(2) + self._thickness * 20
-        self.height = self._thickness
+        # Height is a function of thickness/padding; keep it deterministic.
+        # If you want extra whitespace, increase via pad_y or a separate "height_dp".
+        self.height = self._thickness + self._pad_y * 2
 
-        self.bind(pos=self._redraw, size=self._redraw)
-        Clock.schedule_once(self._redraw, 0)
+        self._redraw()
 
-    def _redraw(self, *_):
+    def _redraw(self, *_: object) -> None:
         self.canvas.after.clear()
         with self.canvas.after:
-            Color(1, 1, 1, self._alpha)
+            r, g, b, _ = self.rgba
+            Color(r, g, b, self._alpha)
 
+            inset = dp(self.inset_dp)
             y = self.y + self._pad_y + self._thickness / 2
-            x1 = self.x + self._inset
-            x2 = self.right - self._inset
+            x1 = self.x + inset
+            x2 = self.right - inset
 
             Line(points=[x1, y, x2, y], width=self._thickness)
 
 
 @dataclass(slots=True)
 class RulerBlockRenderer:
-    def render(self, block: Any) -> Widget:
-        return RulerBlockWidget(style=getattr(block, "style", "normal"))
-
-
-Factory.register("RulerBlockWidget", cls=RulerBlockWidget)
+    def render(self, block: RulerBlockLike) -> Widget:
+        w = RulerBlockWidget()
+        w.style = block.style
+        return w

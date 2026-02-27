@@ -1,32 +1,26 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Protocol
 
-from kivy.factory import Factory
 from kivy.metrics import dp
 from kivy.uix.widget import Widget
 
 
-class SpacerBlockWidget(Widget):
+class SpacerBlockLike(Protocol):
+    size: float
 
-    def __init__(self, height_dp: float = 12, **kw):
-        super().__init__(**kw)
-        self.size_hint_y = None
-        self.height = dp(height_dp)
+
+class SpacerBlockWidget(Widget):
+    pass
 
 
 @dataclass(slots=True)
 class SpacerBlockRenderer:
-    default_height_dp: float = 12
 
-    def render(self, block: Any) -> Widget:
-        h = getattr(block, "size", None)
-        try:
-            height_dp = float(h) if h is not None else self.default_height_dp
-        except Exception:
-            height_dp = self.default_height_dp
-        return SpacerBlockWidget(height_dp=height_dp)
+    default_height_dp: float = 12.0
 
-
-Factory.register("SpacerBlockWidget", cls=SpacerBlockWidget)
+    def render(self, block: SpacerBlockLike) -> Widget:
+        w = SpacerBlockWidget()
+        w.height = dp(block.size)
+        return w
