@@ -65,6 +65,9 @@ class KivyHost(HostAdapter):
         # Engine prompt-mode => exactly one field should be present
         if input_def.input_mode == "prompt":
             field_name = next(iter(fields.keys()))
+
+            print("FIELDNAME ON PROMPT:", repr(field_name))
+
             fd = fields[field_name]
             title = getattr(fd, "title", None) or field_name
             self._ui.set_assist(title, state="question")
@@ -74,7 +77,6 @@ class KivyHost(HostAdapter):
                 self._pending_text = loop.create_future()
             text = (await self._pending_text).strip()
 
-            self._ui.clear_assist()
             await self._submit(FormInput({field_name: text}))
             return
 
@@ -85,6 +87,7 @@ class KivyHost(HostAdapter):
         )
 
     async def on_ready(self, *, ps1: str) -> None:
+        self._ui.clear_assist()
         loop = asyncio.get_running_loop()
         async with self._lock:
             self._pending_text = loop.create_future()

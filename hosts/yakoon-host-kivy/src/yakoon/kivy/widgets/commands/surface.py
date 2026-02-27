@@ -18,6 +18,7 @@ class CommandSurface(BoxLayout):
         self._active: CommandMessage | None = None
         self._prev: CommandMessage | None = None
         self._active_vid: str | None = None
+        self._assist_error: str | None = None
 
     @property
     def prompt(self):
@@ -31,37 +32,21 @@ class CommandSurface(BoxLayout):
         view = ctx.envelope
 
         msg = getattr(view, "message", None)
-        input_def = getattr(view, "input", None)
 
         ui = ctx.ui_state_provider()
         self.ids.prompt.prefix = ui.prompt_prefix
         self.ids.prompt.secret = ui.prompt_secret
 
-        # --- Assist Logic ---
-        prompt = self.ids.prompt
+        # --- Assist: nur Validation-Errors ---
+        if (
+            msg
+            and getattr(msg, "role", None) == "error"
+            and getattr(msg, "error_kind", None) == "validation"
+        ):
+            self._assist_error = self._extract_text(msg)
+            self.ids.prompt.assist_text = self._assist_error
+            self.ids.prompt.assist_state = "error"
 
-        # Wenn Fehler, zeige Fehlermeldung
-        if msg and getattr(msg, "role", None) == "error":
-            if getattr(msg, "error_kind", None) == "validation":
-                prompt.assist_text = self._extract_text(msg)
-                prompt.assist_state = "error"
-            return
-
-        # Frage anzeigen
-        if input_def:
-            fields = input_def.fields or {}
-            if fields:
-                first_key = next(iter(fields.keys()))
-                first = fields[first_key]
-                label = getattr(first, "title", None) or first_key
-            else:
-                label = getattr(input_def, "title", None) or ""
-            prompt.assist_text = label
-            prompt.assist_state = "question"
-            return
-
-        prompt.assist_text = ""
-        prompt.assist_state = "idle"
         self.render(view)
 
     def _extract_text(self, message):
@@ -121,6 +106,11 @@ class CommandSurface(BoxLayout):
 
     def submit(self, text: str):
 
+        print("SURFACE SUBMIT:", repr(text))
+
+        # Enter = neuer Versuch => Fehler freigeben
+        self._assist_error = None
+
         # echo
         # self.append_message(f"> **{self.ids.prompt.prefix}** '{text}'")
         # self.append_message(f"{text}")
@@ -135,14 +125,21 @@ class CommandSurface(BoxLayout):
         self.ids.prompt.focus_input()
 
     def set_assist(self, text: str, state: str = "question") -> None:
+
         def _apply(_dt):
+            # Wenn ein Validation-Error aktiv ist, darf eine Frage ihn nicht überschreiben.
+            if self._assist_error and state == "question":
+                return
             self.ids.prompt.assist_text = text or ""
             self.ids.prompt.assist_state = state if text else "idle"
 
         Clock.schedule_once(_apply, 0)
 
     def clear_assist(self) -> None:
+
         def _apply(_dt):
+            if self._assist_error:
+                return
             self.ids.prompt.assist_text = ""
             self.ids.prompt.assist_state = "idle"
 
