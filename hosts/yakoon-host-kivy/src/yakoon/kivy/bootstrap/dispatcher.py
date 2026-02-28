@@ -8,8 +8,10 @@ from yakoon.kivy.runtime.context.view_context import ViewContext
 
 class ContextDispatcher:
 
+    _handler: Callable[[ViewContext], None] | None
+
     def __init__(self):
-        self._handler: Callable[[ViewContext], None]
+        self._handler = None
 
     def set_handler(self, handler: Callable[[ViewContext], None]) -> None:
         self._handler = handler
