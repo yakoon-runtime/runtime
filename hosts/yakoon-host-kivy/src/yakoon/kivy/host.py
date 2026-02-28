@@ -46,7 +46,9 @@ class KivyHost(HostAdapter):
         fut = self._pending_text
         if not fut or fut.done():
             return
-        # unser set_result weckt den Thread wieder auf.
+
+        # ! Complete the pending Future from the UI thread.
+        # ! This wakes up the asyncio task waiting in on_ready()/on_view().
         loop.call_soon_threadsafe(fut.set_result, text)
 
     async def on_view(self, *, ps1: str, view: ViewSpec) -> None:
@@ -74,11 +76,15 @@ class KivyHost(HostAdapter):
             title = getattr(fd, "title", None) or field_name
             self._ui.set_assist(title, state="question")
 
+            # ! Create a Future that represents the next user input.
+            # ! The coroutine will suspend at 'await' until deliver_text()
+            # ! completes this Future from the UI thread.
             loop = asyncio.get_running_loop()
             async with self._lock:
                 self._pending_text = loop.create_future()
             text = (await self._pending_text).strip()
 
+            # The coroutine was suspended; the event loop keeps running.
             await self._submit(FormInput({field_name: text}))
             return
 
@@ -91,14 +97,14 @@ class KivyHost(HostAdapter):
     async def on_ready(self, *, ps1: str) -> None:
         self._ui.clear_assist()
 
-        # wir erzeugen leeres Versprechen - kein Inhalt.
+        # Create an empty Future to wait for the next user input.
+        # This does NOT block the thread — the coroutine is suspended
+        # while the event loop continues running other tasks.
         loop = asyncio.get_running_loop()
         async with self._lock:
             self._pending_text = loop.create_future()
 
-        # Pause - wir machen erst weiter, wenn dieser Future ein Ergebnis bekommt.
-        # Thread blockiert. Eventloop läuft weiter.
-        # Wir warten auf _pending_text set_result
+        # Suspend here until deliver_text() sets the result.
         text = (await self._pending_text).strip()
         if text:
             await self._submit(TextInput(text))
