@@ -4,8 +4,8 @@ from kivy.config import Config
 
 Config.set("kivy", "exit_on_escape", "0")
 
-Config.set("graphics", "width", "1200")
-Config.set("graphics", "height", "800")
+Config.set("graphics", "width", "1000")
+Config.set("graphics", "height", "700")
 Config.set("graphics", "resizable", "1")
 
 

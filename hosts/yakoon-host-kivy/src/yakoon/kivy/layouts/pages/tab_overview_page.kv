@@ -7,6 +7,13 @@
     padding: dp(theme.pad)
     spacing: dp(theme.pad)
     size_hint_y: 1
+    canvas.before:
+        Color:
+            rgba: theme.bg
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [dp(theme.radius)]
 
     BoxLayout:  # -- Header
         size_hint_y: None

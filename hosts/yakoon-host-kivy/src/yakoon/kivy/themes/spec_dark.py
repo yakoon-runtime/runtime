@@ -9,18 +9,11 @@ class DefaultTheme(EventDispatcher):
     surface = ListProperty([0.11, 0.11, 0.13, 1])
     surface_input = ListProperty([0.13, 0.13, 0.15, 1])
 
-    # bg = [0.15, 0.15, 0.16, 1]
-    # surface = [0.20, 0.20, 0.22, 1]
-
     border = ListProperty([0.20, 0.20, 0.24, 0])  # no border
 
     text = ListProperty([0.93, 0.93, 0.95, 1])
     muted = ListProperty([0.70, 0.70, 0.75, 1])
     accent = ListProperty([0.30, 0.58, 0.95, 1])
-
-    # Amber = rgba => (1.0, 0.69, 0.0, 1.0)
-    # phosphoriger = rgba => (1.0, 0.75, 0.25, 1.0)
-    # Dunkler = rgba => (0.85, 0.55, 0.0, 1.0)
 
     # states
     info = ListProperty([0.45, 0.75, 0.95, 1])  # kühles Blau/Cyan
