@@ -42,9 +42,11 @@ class KivyHost(HostAdapter):
         self._lock = asyncio.Lock()
 
     def deliver_text(self, *, loop: asyncio.AbstractEventLoop, text: str) -> None:
+
         fut = self._pending_text
         if not fut or fut.done():
             return
+        # unser set_result weckt den Thread wieder auf.
         loop.call_soon_threadsafe(fut.set_result, text)
 
     async def on_view(self, *, ps1: str, view: ViewSpec) -> None:
@@ -88,10 +90,15 @@ class KivyHost(HostAdapter):
 
     async def on_ready(self, *, ps1: str) -> None:
         self._ui.clear_assist()
+
+        # wir erzeugen leeres Versprechen - kein Inhalt.
         loop = asyncio.get_running_loop()
         async with self._lock:
             self._pending_text = loop.create_future()
 
+        # Pause - wir machen erst weiter, wenn dieser Future ein Ergebnis bekommt.
+        # Thread blockiert. Eventloop läuft weiter.
+        # Wir warten auf _pending_text set_result
         text = (await self._pending_text).strip()
         if text:
             await self._submit(TextInput(text))
