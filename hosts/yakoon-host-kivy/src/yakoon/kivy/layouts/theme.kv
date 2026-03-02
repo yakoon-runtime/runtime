@@ -7,11 +7,11 @@
     padding: dp(theme.pad)
     canvas.before:
         Color:
-            rgba: theme.surface
-        RoundedRectangle:
+            rgba: theme.surface_input
+        Rectangle:
             pos: self.pos
             size: self.size
-            radius: [dp(theme.radius)]
+            #radius: [dp(theme.radius)]
         Color:
             rgba: theme.border
         Line:
@@ -42,12 +42,13 @@
         RoundedRectangle:
             pos: self.pos
             size: self.size
-            radius: [dp(theme.radius)]
+            radius: [dp(30)]
         Color:
-            rgba: theme.border
+            #rgba: theme.border
+            rgba: 0.75, 0.75, 0.75, 1
         Line:
-            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(theme.radius))
-            width: 1
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(30))
+            width: 0.5
 
 
 <YkIconButton@ButtonBehavior+Label>:

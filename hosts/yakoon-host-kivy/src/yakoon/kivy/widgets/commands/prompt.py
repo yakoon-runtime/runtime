@@ -13,6 +13,8 @@ from kivy.uix.boxlayout import BoxLayout
 
 class CommandPromptBar(BoxLayout):
 
+    locked = BooleanProperty(False)
+
     # hint = StringProperty("shell$ ")
     prefix = StringProperty("shell$")  # wird später von Session gesetzt
     secret = BooleanProperty(False)
@@ -39,6 +41,8 @@ class CommandPromptBar(BoxLayout):
         Clock.schedule_once(lambda _dt: setattr(self.input, "focus", True), 0)
 
     def _submit_internal(self):
+        if self.locked:
+            return
         text = (self.input.text or "").strip()
         self.input.text = ""
         if not text:
@@ -74,6 +78,8 @@ class CommandPromptBar(BoxLayout):
             return True
 
         # Enter = Submit
+        if self.locked:
+            return True
         self._submit_internal()
         return True
 

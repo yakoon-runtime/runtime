@@ -13,7 +13,8 @@ class DefaultTheme(EventDispatcher):
 
     text = ListProperty([0.10, 0.10, 0.10, 1])
     muted = ListProperty([0.40, 0.40, 0.40, 1])
-    accent = ListProperty([0.30, 0.58, 0.95, 1])
+    accent = ListProperty([0, 0, 0, 1])
+    # accent = ListProperty([0.30, 0.58, 0.95, 1])
 
     # states
     info = ListProperty([0.45, 0.75, 0.95, 1])  # kühles Blau/Cyan

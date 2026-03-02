@@ -3,23 +3,30 @@
 
 <CommandSurface>:
     orientation: "vertical"
-    spacing: dp(theme.pad_sm)
+    spacing: 10
+
     canvas.before:
         Color:
-            rgba: theme.bg
-        RoundedRectangle:
+            rgba: theme.surface_input
+        Rectangle:
             pos: self.pos
             size: self.size
-            radius: [dp(theme.radius)]
+            #radius: [dp(theme.radius)]
 
+    # Promptbar OBEN (wächst nach unten, weil height dynamisch aus prompt.kv kommt)
     CommandPromptBar:
         id: prompt
         hint: "shell$ "
-        height: dp(44)
+        size_hint_x: 1
         size_hint_y: None
         on_submit: root.submit(args[1])
 
+
+    # Content darunter: nimmt den Rest
     YkPanel:
+        size_hint_y: 1
+        padding: dp(12), dp(12)
+
         RecycleView:
             id: messages
             key_viewclass: "viewclass"
@@ -32,11 +39,9 @@
                 size_hint_y: None
                 height: self.minimum_height
                 spacing: dp(8)
-                padding: dp(theme.pad), dp(theme.pad)
+                #padding: dp(theme.pad), dp(theme.pad)
+                padding: dp(12), dp(theme.pad)  ## content weiter nach links
 
-                # required for variable-height items
-                #default_size: None, dp(40)
                 default_size_hint: 1, None
-
                 key_size: "size"
                 key_size_hint: "size_hint"

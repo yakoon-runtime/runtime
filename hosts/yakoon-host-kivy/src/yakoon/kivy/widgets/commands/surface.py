@@ -36,6 +36,9 @@ class CommandSurface(BoxLayout):
         self._active_vid: str | None = None
         self._assist_error: str | None = None
 
+        self._busy: bool = False
+        self._awaiting_result: bool = False
+
         # vid -> row dict stored in messages.data
         self._row_by_vid: dict[str, dict[str, Any]] = {}
         # vid -> index in messages.data (newest at 0)
@@ -89,6 +92,33 @@ class CommandSurface(BoxLayout):
     def _maybe_autoscroll(self) -> None:
         if self._stick_to_top or self._force_scroll:
             self._request_scroll_to_top(force=self._force_scroll)
+
+    # ---------- busy / prompt lock ----------
+
+    def set_busy(self, busy: bool) -> None:
+        """Lock/unlock user input and show lightweight UI feedback."""
+        self._busy = busy
+
+        def _apply(_dt):
+            prompt = self.ids.prompt
+
+            # Prefer a dedicated 'locked' property on the prompt widget.
+            if hasattr(prompt, "locked"):
+                prompt.locked = busy
+            else:
+                prompt.disabled = busy
+
+            # UI feedback: show Running… unless a validation error assist is active.
+            if busy:
+                if not self._assist_error:
+                    prompt.assist_text = "Running…"
+                    prompt.assist_state = "question"
+            else:
+                if not self._assist_error and prompt.assist_text == "Running…":
+                    prompt.assist_text = ""
+                    prompt.assist_state = "idle"
+
+        Clock.schedule_once(_apply, 0)
 
     # ---------- model helpers ----------
 
@@ -235,8 +265,16 @@ class CommandSurface(BoxLayout):
         if mode == "patch":
             patch = getattr(view, "patch", None)
             if patch is not None:
+                # End of streaming
+                if getattr(patch, "final", False):
+                    self._awaiting_result = False
+                    self.set_busy(False)
                 self.apply_patch(patch)
         else:
+            # Non-streaming result: first view after submit ends busy
+            if self._awaiting_result:
+                self._awaiting_result = False
+                self.set_busy(False)
             self.apply_view(view)
 
     def apply_patch(self, patch) -> None:
@@ -263,6 +301,9 @@ class CommandSurface(BoxLayout):
     # ---------- prompt plumbing ----------
 
     def submit(self, text: str):
+        if self._busy:
+            return
+
         print("SURFACE SUBMIT:", repr(text))
 
         # New command => user wants the newest message visible at the top
@@ -270,6 +311,12 @@ class CommandSurface(BoxLayout):
 
         # Enter = new try => free validation error
         self._assist_error = None
+
+        # Lock input until we receive either:
+        # - patch.final (streaming), or
+        # - first full view (non-streaming)
+        self._awaiting_result = True
+        self.set_busy(True)
 
         if self.on_submit:
             self.on_submit(text)
