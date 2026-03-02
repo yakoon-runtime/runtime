@@ -6,6 +6,7 @@ from typing import Any
 from kivy.clock import Clock
 from kivy.factory import Factory
 from kivy.metrics import dp
+from kivy.properties import BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 
 
@@ -24,6 +25,8 @@ class CommandSurface(BoxLayout):
           the view at the top so the newest message stays visible.
     """
 
+    busy = BooleanProperty(False)
+
     TOP_EPS = 0.98  # consider "at top" when scroll_y >= this
 
     def __init__(self, on_submit, **kw):
@@ -36,7 +39,6 @@ class CommandSurface(BoxLayout):
         self._active_vid: str | None = None
         self._assist_error: str | None = None
 
-        self._busy: bool = False
         self._awaiting_result: bool = False
 
         # vid -> row dict stored in messages.data
@@ -96,27 +98,16 @@ class CommandSurface(BoxLayout):
     # ---------- busy / prompt lock ----------
 
     def set_busy(self, busy: bool) -> None:
-        """Lock/unlock user input and show lightweight UI feedback."""
-        self._busy = busy
+        """Lock/unlock user input and show lightweight status below prompt."""
+        self.busy = busy
 
         def _apply(_dt):
             prompt = self.ids.prompt
 
-            # Prefer a dedicated 'locked' property on the prompt widget.
             if hasattr(prompt, "locked"):
                 prompt.locked = busy
             else:
                 prompt.disabled = busy
-
-            # UI feedback: show Running… unless a validation error assist is active.
-            if busy:
-                if not self._assist_error:
-                    prompt.assist_text = "Running…"
-                    prompt.assist_state = "question"
-            else:
-                if not self._assist_error and prompt.assist_text == "Running…":
-                    prompt.assist_text = ""
-                    prompt.assist_state = "idle"
 
         Clock.schedule_once(_apply, 0)
 
@@ -301,7 +292,7 @@ class CommandSurface(BoxLayout):
     # ---------- prompt plumbing ----------
 
     def submit(self, text: str):
-        if self._busy:
+        if self.busy:
             return
 
         print("SURFACE SUBMIT:", repr(text))
@@ -321,13 +312,14 @@ class CommandSurface(BoxLayout):
         if self.on_submit:
             self.on_submit(text)
 
-        Clock.schedule_once(lambda _dt: setattr(self.ids.prompt, "focus", True), 0)
+        Clock.schedule_once(lambda _dt: self.focus_prompt(), 0.01)
 
     def focus_prompt(self):
         self.ids.prompt.focus_input()
 
     def set_assist(self, text: str, state: str = "question") -> None:
         def _apply(_dt):
+            self.set_busy(False)
             if self._assist_error and state == "question":
                 return
             self.ids.prompt.assist_text = text or ""
