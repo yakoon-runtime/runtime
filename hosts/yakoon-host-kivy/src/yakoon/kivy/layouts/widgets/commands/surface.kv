@@ -20,20 +20,23 @@
         on_submit: root.submit(args[1])
 
     YkPanel:
-        ScrollView:
-            id: scroll
+        RecycleView:
+            id: messages
+            key_viewclass: "viewclass"
             do_scroll_x: False
             scroll_type: ['bars', 'content']
             bar_width: dp(6)
 
-            BoxLayout:
-                id: stack
+            RecycleBoxLayout:
                 orientation: "vertical"
                 size_hint_y: None
-                
-                size_hint_x: 1
-                width: scroll.width 
-
                 height: self.minimum_height
                 spacing: dp(8)
                 padding: dp(theme.pad), dp(theme.pad)
+
+                # required for variable-height items
+                #default_size: None, dp(40)
+                default_size_hint: 1, None
+
+                key_size: "size"
+                key_size_hint: "size_hint"

@@ -20,6 +20,16 @@
     padding: dp(root.level_indent), 0, 0, 0
     spacing: dp(2)
 
+    #canvas.before:
+    #    Color:
+    #        rgba: 0.2, 0.5, 0.7, 0.7
+    #    Line:
+    #        width: 1
+    #        rectangle: (self.x, self.y, self.width, self.height)
+    #    RoundedRectangle:
+    #        pos: self.pos
+    #        size: self.size
+
     # Kopfzeile: Bullet + Head (list-spezifische Typografie)
     StreamLabel:
         id: head_label
@@ -49,3 +59,4 @@
         height: self.minimum_height
         padding: dp(root.body_indent), 0, 0, 0
         spacing: dp(2)
+

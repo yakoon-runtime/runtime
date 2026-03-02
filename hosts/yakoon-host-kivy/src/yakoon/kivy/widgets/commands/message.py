@@ -1,43 +1,88 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Any
 
 from kivy.factory import Factory
-from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.recycleview.views import RecycleDataViewBehavior
+from kivy.uix.stacklayout import StackLayout
 from yakoon.kivy.widgets.blocks.registry import BlockRendererRegistry
 
 
-class CommandMessage(BoxLayout):
-    """
-    Renders a ViewSpec message either as a full snapshot (set_view)
-    or incrementally via patch ops (apply_patch).
+@dataclass(slots=True)
+class MessageModel:
+    vid: str
+    events: list[Any]  # ViewSpec or PatchSpec
 
-    Contract assumptions:
-    - Block IDs are expected to be stable strings when streaming.
-    - append_text targets an existing widget by id (or alias id).
-    - append_child attaches a rendered child widget to a container parent.
+
+class CommandMessage(RecycleDataViewBehavior, StackLayout):
+    """RecycleView row that can (re)build itself from a list of events.
+
+    Events are stored in the RV data-model (Surface):
+      - ViewSpec  -> full snapshot (set_view)
+      - PatchSpec -> incremental ops (apply_patch)
+
+    Important properties:
+      - Idempotent: refresh_view_attrs() must NOT rebuild on every call.
+      - Delta-based: only applies events not yet applied for the current vid.
+      - Recyclable: when RV reuses the instance for a different vid, it hard-resets.
     """
 
     def __init__(self, registry: BlockRendererRegistry | None = None, **kw: Any):
         super().__init__(**kw)
 
-        self.orientation = "vertical"
         self.size_hint_y = None
-        self.bind(minimum_height=self.setter("height"))
-
         self._registry = registry or BlockRendererRegistry(dbg=True)
-        self._view: Any | None = None
 
-        # patch state: id -> widget (plus optional alias ids, e.g. "<item>.head")
+        # streaming state
         self._widgets_by_id: dict[str, Any] = {}
+        self._vid: str | None = None
+        self._applied_n: int = 0
 
-    @property
-    def view(self) -> Any | None:
-        return self._view
+    # ---------- RecycleView ----------
+
+    def refresh_view_attrs(self, rv, index, data):
+        vid = data.get("vid")
+        events = data.get("events") or []
+
+        # new vid -> reset and start from scratch
+        if vid != self._vid:
+            self._vid = vid
+            self._applied_n = 0
+            self._clear_content()
+
+        # nothing new -> be quiet (prevents layout-trigger loops)
+        if self._applied_n >= len(events):
+            return super().refresh_view_attrs(rv, index, data)
+
+        # apply only the delta
+        for ev in events[self._applied_n :]:
+            # ViewSpec has .mode, PatchSpec typically has .ops/.final
+            if getattr(ev, "ops", None) is not None:
+                # PatchSpec
+                self.apply_patch(ev)
+            else:
+                # ViewSpec (snapshot or wrapper)
+                # If ev is a "patch view wrapper" (mode=="patch"), apply its patch.
+                if getattr(ev, "mode", None) == "patch":
+                    patch = getattr(ev, "patch", None)
+                    if patch is not None:
+                        self.apply_patch(patch)
+                else:
+                    self.set_view(ev)
+
+        self._applied_n = len(events)
+        return super().refresh_view_attrs(rv, index, data)
 
     # ---------- internal helpers ----------
 
-    def _reset(self) -> None:
+    def get_calc_height(self):
+        height = 0
+        for w in self.children:
+            height += w.height
+        return height
+
+    def _clear_content(self) -> None:
         self.clear_widgets()
         self._widgets_by_id.clear()
 
@@ -54,36 +99,24 @@ class CommandMessage(BoxLayout):
         return self._registry.render(block)
 
     def _attach_child(self, parent: Any, child_widget: Any) -> None:
-        # Prefer explicit streaming API if present
         append_child = getattr(parent, "append_child", None)
         if callable(append_child):
             append_child(child_widget)
             return
 
-        # Fallback: Kivy container interface
         add_widget = getattr(parent, "add_widget", None)
         if callable(add_widget):
             add_widget(child_widget)
             return
 
-        # Not a container -> ignore (or raise if you want strict mode)
-
     def _maybe_register_stream_aliases(self, block: Any, widget: Any) -> None:
-        """
-        Register alias targets for streaming sub-parts.
-
-        - list_item: "<id>.head"
-        - kv_item:   "<id>.value"
-        """
+        """Register alias targets for streaming sub-parts."""
         btype = getattr(block, "type", None)
         bid = getattr(block, "id", None)
 
         if not isinstance(bid, str) or not bid:
             return
 
-        # -----------------------------
-        # list_item -> head alias
-        # -----------------------------
         if btype == "list_item":
             ids = getattr(widget, "ids", None)
             head = ids.get("head_label") if isinstance(ids, dict) else None
@@ -91,28 +124,27 @@ class CommandMessage(BoxLayout):
                 self._register(f"{bid}.head", head)
             return
 
-        # -----------------------------
-        # kv_item -> value alias
-        # -----------------------------
         if btype == "kv_item":
             getter = getattr(widget, "value_widget", None)
             if callable(getter):
                 self._register(f"{bid}.value", getter())
             return
 
-    # ---------- Non-stream rendering (full view) ----------
+    # ---------- Non-stream rendering ----------
 
     def set_view(self, view: Any) -> None:
         """Render a full, non-streaming view (snapshot)."""
-        self._view = view
-        self._reset()
+        self._clear_content()
 
         msg = getattr(view, "message", None) if view else None
         blocks = list(getattr(msg, "blocks", None) or []) if msg else []
+
         for b in blocks:
             w = self._render_block(b)
             self.add_widget(w)
-            self._register(getattr(b, "id", None), w)
+            bid = getattr(b, "id", None)
+            self._register(bid, w)
+            self._maybe_register_stream_aliases(b, w)
 
     # ---------- Streaming (patch ops) ----------
 
@@ -121,11 +153,11 @@ class CommandMessage(BoxLayout):
         if patch is None:
             return
 
-        for op in patch.ops or []:
+        for op in getattr(patch, "ops", None) or []:
             kind = getattr(op, "op", None)
 
             if kind == "reset":
-                self._reset()
+                self._clear_content()
                 continue
 
             if kind == "append_block":
@@ -135,12 +167,12 @@ class CommandMessage(BoxLayout):
 
                 bid = getattr(block, "id", None)
                 if not isinstance(bid, str) or not bid:
-                    # IDs are required for stable streaming; ignore invalid blocks
                     continue
 
                 w = self._render_block(block)
                 self.add_widget(w)
                 self._register(bid, w)
+                self._maybe_register_stream_aliases(block, w)
                 continue
 
             if kind == "append_text":
@@ -152,8 +184,6 @@ class CommandMessage(BoxLayout):
 
                 append = getattr(w, "append_text", None)
                 if not callable(append):
-                    # Contract violation: target must support streaming text
-                    # In dev: raise; in prod: log + ignore (deine Wahl)
                     raise TypeError(
                         f"Target '{target_id}' does not support append_text()"
                     )
@@ -161,7 +191,6 @@ class CommandMessage(BoxLayout):
                 continue
 
             if kind == "append_child":
-                # preferred fields: parent_id + block
                 parent_id = getattr(op, "parent_id", None) or getattr(
                     op, "block_id", None
                 )
@@ -185,10 +214,9 @@ class CommandMessage(BoxLayout):
                 self._attach_child(parent, child_widget)
                 continue
 
-            # Unknown op -> ignore (forward compatible)
+            # unknown op -> ignore
 
     def dispose(self) -> None:
-        # Placeholder for future cleanup hooks
         pass
 
 
