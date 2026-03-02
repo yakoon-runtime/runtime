@@ -104,15 +104,15 @@ class OutputStreamService:
     """
 
     # Safety bounds
-    MIN_INTERVAL = 0.01
+    MIN_INTERVAL = 0.05
     MAX_INTERVAL = 0.25
 
     # Chunk sizing:
     MIN_CHUNK_SIZE = 8
-    MAX_CHUNK_SIZE = 256
+    MAX_CHUNK_SIZE = 96
 
     # Feel tuning
-    DEFAULT_JITTER = 0.15  # +/- 15%
+    DEFAULT_JITTER = 0.10  # +/- 10%
     DEFAULT_PUNCT_PAUSE = 1.25  # pause multiplier after sentence-ish punctuation
 
     async def emit(
@@ -152,6 +152,47 @@ class OutputStreamService:
                 base *= eff.punctuation_pause
             return base
 
+        # -----------------------------
+        # Time-based text batching (ChatGPT-like UI cadence)
+        # -----------------------------
+        import time
+
+        FLUSH_INTERVAL = 1.0 / 30.0  # ~30 FPS UI updates
+        pending_text: dict[str, str] = {}
+        last_flush: float = time.monotonic()
+
+        def is_punctuation_pause(chunk: str) -> bool:
+            # Flush before long "thinking" pauses so punctuation becomes visible first.
+            if not chunk:
+                return False
+            tail = chunk[-1]
+            return tail in ".!?…:;" or tail == "\n"
+
+        async def flush_text(*, final: bool = False) -> None:
+            """Emit all queued PatchAppendText ops as a single patch."""
+            nonlocal pending_text, last_flush
+            if not pending_text and not final:
+                return
+            ops = [
+                PatchAppendText(block_id=k, text=v)
+                for k, v in pending_text.items()
+                if v
+            ]
+            pending_text = {}
+            last_flush = time.monotonic()
+            await emit_patch(ops, final=final)
+
+        async def queue_text(block_id: str, chunk: str) -> None:
+            """Queue a chunk and flush at a steady UI cadence."""
+            nonlocal pending_text, last_flush
+            if not chunk:
+                return
+            pending_text[block_id] = pending_text.get(block_id, "") + chunk
+
+            now = time.monotonic()
+            if (now - last_flush) >= FLUSH_INTERVAL:
+                await flush_text(final=False)
+
         def ensure_id(block: Any, suffix: str | int) -> Any:
             bid = getattr(block, "id", None)
             if isinstance(bid, str) and bid:
@@ -185,6 +226,7 @@ class OutputStreamService:
         # -----------------------------
 
         async def append_block_or_child(parent_id: str | None, block: Any) -> None:
+            await flush_text(final=False)  # keep text ops ordered before structural ops
             """Append as root block if parent_id is None; else append as child under parent_id."""
             if parent_id is None:
                 await emit_patch([PatchAppendBlock(block=block)], final=False)
@@ -253,10 +295,11 @@ class OutputStreamService:
                     for chunk in iter_chunks(
                         head, min_size=min_size, max_size=max_size
                     ):
-                        await emit_patch(
-                            [PatchAppendText(block_id=head_id, text=chunk)], final=False
-                        )
+                        await queue_text(head_id, chunk)
+                        if is_punctuation_pause(chunk):
+                            await flush_text(final=False)
                         await asyncio.sleep(pause_for_chunk(chunk))
+                    await flush_text(final=False)
 
                 # recurse nested blocks (including nested list/kv)
                 nested = getattr(item, "blocks", None)
@@ -307,11 +350,11 @@ class OutputStreamService:
                     for chunk in iter_chunks(
                         value, min_size=min_size, max_size=max_size
                     ):
-                        await emit_patch(
-                            [PatchAppendText(block_id=value_id, text=chunk)],
-                            final=False,
-                        )
+                        await queue_text(value_id, chunk)
+                        if is_punctuation_pause(chunk):
+                            await flush_text(final=False)
                         await asyncio.sleep(pause_for_chunk(chunk))
+                    await flush_text(final=False)
 
                 # recurse nested blocks in kv_item.blocks
                 nested = getattr(item, "blocks", None)
@@ -376,10 +419,11 @@ class OutputStreamService:
                 full = prefix + text
 
                 for chunk in iter_chunks(full, min_size=min_size, max_size=max_size):
-                    await emit_patch(
-                        [PatchAppendText(block_id=tid, text=chunk)], final=False
-                    )
+                    await queue_text(tid, chunk)
+                    if is_punctuation_pause(chunk):
+                        await flush_text(final=False)
                     await asyncio.sleep(pause_for_chunk(chunk))
+                await flush_text(final=False)
 
                 continue
 
@@ -390,6 +434,7 @@ class OutputStreamService:
             active_style = None
             await emit_patch([PatchAppendBlock(block=block)], final=False)
 
+        await flush_text(final=False)
         await emit_patch([], final=True)
 
     def _effective(
