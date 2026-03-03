@@ -6,14 +6,14 @@ from datetime import datetime
 from typing import Protocol
 
 from yakoon.base.stores.event.entity import (
+    DomainId,
     EntityId,
     IndexKey,
     IndexSpec,
     IndexTerm,
     IndexValue,
     JsonValue,
-    PluginGroup,
-    ScopeId,
+    SpaceId,
 )
 
 
@@ -49,16 +49,16 @@ class EntityStoreBackendTx(Protocol):
     async def load_current(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
     ) -> CurrentRow | None: ...
 
     async def upsert_current(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         rev: int,
         data: JsonValue,
@@ -68,8 +68,8 @@ class EntityStoreBackendTx(Protocol):
     async def append_revision(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         rev: int,
         ts: datetime,
@@ -79,8 +79,8 @@ class EntityStoreBackendTx(Protocol):
     async def load_revisions(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         rev_gt: int,
         ts_lte: datetime,
@@ -89,8 +89,8 @@ class EntityStoreBackendTx(Protocol):
     async def load_snapshot_at_or_before(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         ts_lte: datetime,
     ) -> SnapshotRow | None: ...
@@ -98,8 +98,8 @@ class EntityStoreBackendTx(Protocol):
     async def write_snapshot(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         rev: int,
         ts: datetime,
@@ -109,8 +109,8 @@ class EntityStoreBackendTx(Protocol):
     async def index_replace_terms(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         terms: Sequence[IndexTerm],
     ) -> None:
@@ -123,8 +123,8 @@ class EntityStoreBackendTx(Protocol):
     async def index_query_ids(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         index_key: IndexKey,
         value: IndexValue,
         limit: int,
@@ -134,16 +134,16 @@ class EntityStoreBackendTx(Protocol):
     async def index_ensure(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         specs: Sequence[IndexSpec],
     ) -> None: ...
 
     async def index_list(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
     ) -> Sequence[IndexSpec]: ...
 
 

@@ -3,11 +3,11 @@ from __future__ import annotations
 from yakoon.base.models.key import Key
 from yakoon.base.runtime.session import Session, SessionState
 from yakoon.base.stores.event.entity import (
+    DomainId,
     EntityId,
     JsonValue,
-    PluginGroup,
-    ScopeId,
     SnapshotHint,
+    SpaceId,
 )
 from yakoon.platform.stores.event.store import EntityStore
 
@@ -30,12 +30,12 @@ class SessionIdentityMap:
         self._live.clear()
 
 
-def _scope_id_from_key(key: Key) -> ScopeId:
-    return ScopeId(key.namespace.scope)
+def _space_id_from_key(key: Key) -> SpaceId:
+    return SpaceId(key.namespace.space)
 
 
-def _plugin_group_from_key(key: Key) -> PluginGroup:
-    return PluginGroup(key.namespace.domain)
+def _domain_id_from_key(key: Key) -> DomainId:
+    return DomainId(key.namespace.domain)
 
 
 def _entity_id_from_key(key: Key) -> EntityId:
@@ -63,13 +63,13 @@ class SessionService:
         if live:
             return live
 
-        scope_id = _scope_id_from_key(key)
-        plugin_group = _plugin_group_from_key(key)
+        space_id = _space_id_from_key(key)
+        domain_id = _domain_id_from_key(key)
         entity_id = _entity_id_from_key(key)
 
         row = await self.store.get(
-            scope_id=scope_id,
-            plugin_group=plugin_group,
+            domain_id=domain_id,
+            space_id=space_id,
             entity_id=entity_id,
         )
         if row.data is None:
@@ -95,8 +95,8 @@ class SessionService:
         state = SessionState(key=key, **kwargs)
         session = Session(state)
 
-        scope_id = _scope_id_from_key(key)
-        plugin_group = _plugin_group_from_key(key)
+        space_id = _space_id_from_key(key)
+        domain_id = _domain_id_from_key(key)
         entity_id = _entity_id_from_key(key)
 
         # Persist full state as a patch:
@@ -107,8 +107,8 @@ class SessionService:
         ]
 
         await self.store.put(
-            scope_id=scope_id,
-            plugin_group=plugin_group,
+            domain_id=domain_id,
+            space_id=space_id,
             entity_id=entity_id,
             patch=patch,
             snapshot_hint=SnapshotHint.COMMIT,
@@ -120,8 +120,8 @@ class SessionService:
     async def save(self, session: Session) -> None:
         key = session.key
 
-        scope_id = _scope_id_from_key(key)
-        plugin_group = _plugin_group_from_key(key)
+        space_id = _space_id_from_key(key)
+        domain_id = _domain_id_from_key(key)
         entity_id = _entity_id_from_key(key)
 
         doc = session.state.to_dict()
@@ -130,8 +130,8 @@ class SessionService:
         ]
 
         await self.store.put(
-            scope_id=scope_id,
-            plugin_group=plugin_group,
+            domain_id=domain_id,
+            space_id=space_id,
             entity_id=entity_id,
             patch=patch,
             snapshot_hint=SnapshotHint.COMMIT,

@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from yakoon.base.resources.reference import ResourceRef
     from yakoon.base.runtime.session.session import Session
     from yakoon.base.stores.event.entity import (
+        DomainId,
         EntityId,
         GetResult,
         IndexKey,
@@ -36,11 +37,10 @@ if TYPE_CHECKING:
         IndexTerm,
         IndexValue,
         JsonValue,
-        PluginGroup,
         PutResult,
         RetentionPolicy,
-        ScopeId,
         SnapshotHint,
+        SpaceId,
     )
     from yakoon.platform.runtime.render.context import RenderContext
 
@@ -76,8 +76,8 @@ class IndexRegistry(Protocol):
     async def ensure(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         specs: Sequence[IndexSpec],
     ) -> None:
         """
@@ -89,8 +89,8 @@ class IndexRegistry(Protocol):
     async def list(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
     ) -> Sequence[IndexSpec]: ...
 
 
@@ -98,8 +98,8 @@ class EntityStore(Protocol):
     async def put(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         patch: JsonValue,
         indexes: Sequence[IndexTerm] = (),
@@ -118,8 +118,8 @@ class EntityStore(Protocol):
     async def get(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         at_time: datetime | None = None,
     ) -> GetResult:
@@ -132,8 +132,8 @@ class EntityStore(Protocol):
     async def query(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         index_key: IndexKey,
         value: IndexValue,
         limit: int = 100,
@@ -147,13 +147,13 @@ class EntityStore(Protocol):
     async def gc(
         self,
         *,
-        scope_id: ScopeId | None,
-        plugin_group: PluginGroup | None,
+        domain_id: DomainId | None,
+        space_id: SpaceId | None,
         policy: RetentionPolicy,
     ) -> None:
         """
         Garbage collection / retention.
-        If scope_id/plugin_group is None => run globally (admin job).
+        If space_id/domain_id is None => run globally (admin job).
         """
         ...
 

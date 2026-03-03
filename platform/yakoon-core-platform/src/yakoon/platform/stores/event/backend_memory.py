@@ -7,15 +7,15 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from yakoon.base.stores.event.entity import (
+    DomainId,
     EntityId,
     IndexKey,
     IndexSpec,
     IndexTerm,
     IndexValue,
     JsonValue,
-    PluginGroup,
     RetentionPolicy,
-    ScopeId,
+    SpaceId,
     ValueType,
 )
 from yakoon.platform.stores.event.backend import (
@@ -38,8 +38,8 @@ class _IndexRecord:
     entity_id: EntityId
 
 
-def _scope_pg_key(scope_id: ScopeId, plugin_group: PluginGroup) -> str:
-    return f"{scope_id}::{plugin_group}"
+def _scope_pg_key(domain_id: DomainId, space_id: SpaceId) -> str:
+    return f"{domain_id}::{space_id}"
 
 
 class MemoryBackend(EntityStoreBackend):
@@ -52,24 +52,24 @@ class MemoryBackend(EntityStoreBackend):
     def __init__(self) -> None:
         self._lock = asyncio.Lock()
 
-        # current: (scope,plugin,entity) -> CurrentRow
+        # current: (domain,space,entity) -> CurrentRow
         self._current: dict[tuple[str, str, str], CurrentRow] = {}
 
-        # revisions: (scope,plugin,entity) -> list[RevisionRow] sorted by rev
+        # revisions: (domain,space,entity) -> list[RevisionRow] sorted by rev
         self._revisions: dict[tuple[str, str, str], list[RevisionRow]] = {}
 
-        # snapshots: (scope,plugin,entity) -> list[SnapshotRow] sorted by ts
+        # snapshots: (domain,space,entity) -> list[SnapshotRow] sorted by ts
         self._snapshots: dict[tuple[str, str, str], list[SnapshotRow]] = {}
 
-        # index specs: (scope,plugin) -> dict[IndexKey, IndexSpec]
+        # index specs: (domain,space) -> dict[IndexKey, IndexSpec]
         self._index_specs: dict[tuple[str, str], dict[str, IndexSpec]] = {}
 
         # index data:
-        # - forward: (scope,plugin,entity) -> dict[index_key -> IndexValue]
+        # - forward: (domain,space,entity) -> dict[index_key -> IndexValue]
         self._index_terms_by_entity: dict[
             tuple[str, str, str], dict[str, IndexValue]
         ] = {}
-        # - inverted: (scope,plugin,index_key,value_norm) -> sorted list of _IndexRecord
+        # - inverted: (domain,space,index_key,value_norm) -> sorted list of _IndexRecord
         self._index_inv: dict[tuple[str, str, str, str], list[_IndexRecord]] = {}
 
     def transaction(self) -> EntityStoreBackendTx:
@@ -91,12 +91,12 @@ class _MemoryTx(EntityStoreBackendTx):
     # ---- helpers ----
 
     def _k(
-        self, scope_id: ScopeId, plugin_group: PluginGroup, entity_id: EntityId
+        self, domain_id: DomainId, space_id: SpaceId, entity_id: EntityId
     ) -> tuple[str, str, str]:
-        return (str(scope_id), str(plugin_group), str(entity_id))
+        return (str(domain_id), str(space_id), str(entity_id))
 
-    def _sp(self, scope_id: ScopeId, plugin_group: PluginGroup) -> tuple[str, str]:
-        return (str(scope_id), str(plugin_group))
+    def _sp(self, domain_id: DomainId, space_id: SpaceId) -> tuple[str, str]:
+        return (str(domain_id), str(space_id))
 
     def _normalize_index_value(self, spec: IndexSpec, value: IndexValue) -> str:
         # Keep it predictable for lookups/pagination.
@@ -123,21 +123,21 @@ class _MemoryTx(EntityStoreBackendTx):
     # ---- current ----
 
     async def load_current(
-        self, *, scope_id: ScopeId, plugin_group: PluginGroup, entity_id: EntityId
+        self, *, domain_id: DomainId, space_id: SpaceId, entity_id: EntityId
     ) -> CurrentRow | None:
-        return self._b._current.get(self._k(scope_id, plugin_group, entity_id))
+        return self._b._current.get(self._k(domain_id, space_id, entity_id))
 
     async def upsert_current(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         rev: int,
         data: JsonValue,
         updated_at: datetime,
     ) -> None:
-        self._b._current[self._k(scope_id, plugin_group, entity_id)] = CurrentRow(
+        self._b._current[self._k(domain_id, space_id, entity_id)] = CurrentRow(
             entity_id=entity_id,
             rev=rev,
             data=data,
@@ -149,14 +149,14 @@ class _MemoryTx(EntityStoreBackendTx):
     async def append_revision(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         rev: int,
         ts: datetime,
         patch: JsonValue,
     ) -> None:
-        k = self._k(scope_id, plugin_group, entity_id)
+        k = self._k(domain_id, space_id, entity_id)
         lst = self._b._revisions.setdefault(k, [])
         # enforce monotonic rev
         if lst and rev <= lst[-1].rev:
@@ -166,13 +166,13 @@ class _MemoryTx(EntityStoreBackendTx):
     async def load_revisions(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         rev_gt: int,
         ts_lte: datetime,
     ) -> Sequence[RevisionRow]:
-        k = self._k(scope_id, plugin_group, entity_id)
+        k = self._k(domain_id, space_id, entity_id)
         lst = self._b._revisions.get(k, [])
         # lst sorted by rev; filter by rev and ts
         return [r for r in lst if r.rev > rev_gt and r.ts <= ts_lte]
@@ -182,12 +182,12 @@ class _MemoryTx(EntityStoreBackendTx):
     async def load_snapshot_at_or_before(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         ts_lte: datetime,
     ) -> SnapshotRow | None:
-        k = self._k(scope_id, plugin_group, entity_id)
+        k = self._k(domain_id, space_id, entity_id)
         lst = self._b._snapshots.get(k, [])
         if not lst:
             return None
@@ -202,14 +202,14 @@ class _MemoryTx(EntityStoreBackendTx):
     async def write_snapshot(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         rev: int,
         ts: datetime,
         data: JsonValue,
     ) -> None:
-        k = self._k(scope_id, plugin_group, entity_id)
+        k = self._k(domain_id, space_id, entity_id)
         lst = self._b._snapshots.setdefault(k, [])
         # keep sorted by ts (append if monotonic; else insert)
         if not lst or ts >= lst[-1].ts:
@@ -224,11 +224,11 @@ class _MemoryTx(EntityStoreBackendTx):
     async def index_ensure(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         specs: Sequence[IndexSpec],
     ) -> None:
-        sp = self._sp(scope_id, plugin_group)
+        sp = self._sp(domain_id, space_id)
         reg = self._b._index_specs.setdefault(sp, {})
         for spec in specs:
             key = str(spec.key)
@@ -241,9 +241,9 @@ class _MemoryTx(EntityStoreBackendTx):
             reg[key] = spec
 
     async def index_list(
-        self, *, scope_id: ScopeId, plugin_group: PluginGroup
+        self, *, domain_id: DomainId, space_id: SpaceId
     ) -> Sequence[IndexSpec]:
-        sp = self._sp(scope_id, plugin_group)
+        sp = self._sp(domain_id, space_id)
         reg = self._b._index_specs.get(sp, {})
         return list(reg.values())
 
@@ -252,18 +252,18 @@ class _MemoryTx(EntityStoreBackendTx):
     async def index_replace_terms(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         terms: Sequence[IndexTerm],
     ) -> None:
         if not terms:
             return
 
-        sp = self._sp(scope_id, plugin_group)
+        sp = self._sp(domain_id, space_id)
         reg = self._b._index_specs.get(sp, {})
 
-        entk = self._k(scope_id, plugin_group, entity_id)
+        entk = self._k(domain_id, space_id, entity_id)
         prev = self._b._index_terms_by_entity.setdefault(entk, {})
 
         # Remove old postings for the keys we are about to write
@@ -276,7 +276,7 @@ class _MemoryTx(EntityStoreBackendTx):
                     # if index isn't registered, treat as config error
                     raise RuntimeError(f"Index key not registered: {k}")
                 old_norm = self._normalize_index_value(spec, old_val)
-                invk = (str(scope_id), str(plugin_group), k, old_norm)
+                invk = (str(domain_id), str(space_id), k, old_norm)
                 bucket = self._b._index_inv.get(invk, [])
                 rec_key = f"{k}|{old_norm}|{entity_id}"
                 # bucket is sorted by record.key
@@ -295,7 +295,7 @@ class _MemoryTx(EntityStoreBackendTx):
             norm = self._normalize_index_value(spec, term.value)
             prev[k] = term.value
 
-            invk = (str(scope_id), str(plugin_group), k, norm)
+            invk = (str(domain_id), str(space_id), k, norm)
             bucket = self._b._index_inv.setdefault(invk, [])
 
             rec_key = f"{k}|{norm}|{entity_id}"
@@ -317,14 +317,14 @@ class _MemoryTx(EntityStoreBackendTx):
     async def index_query_ids(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         index_key: IndexKey,
         value: IndexValue,
         limit: int,
         cursor: str | None,
     ) -> tuple[list[EntityId], str | None]:
-        sp = self._sp(scope_id, plugin_group)
+        sp = self._sp(domain_id, space_id)
         reg = self._b._index_specs.get(sp, {})
         k = str(index_key)
         spec = reg.get(k)
@@ -332,7 +332,7 @@ class _MemoryTx(EntityStoreBackendTx):
             raise RuntimeError(f"Index key not registered: {k}")
 
         norm = self._normalize_index_value(spec, value)
-        invk = (str(scope_id), str(plugin_group), k, norm)
+        invk = (str(domain_id), str(space_id), k, norm)
         bucket = self._b._index_inv.get(invk, [])
 
         start = 0
@@ -354,8 +354,8 @@ class _MemoryTx(EntityStoreBackendTx):
     async def gc(
         self,
         *,
-        scope_id: ScopeId | None,
-        plugin_group: PluginGroup | None,
+        domain_id: DomainId | None,
+        space_id: SpaceId | None,
         policy: RetentionPolicy,
         now: datetime,
     ) -> None:
@@ -367,10 +367,10 @@ class _MemoryTx(EntityStoreBackendTx):
             cutoff_snap = now - timedelta(days=policy.keep_snapshots_days)
 
         def _match(spk: tuple[str, str, str]) -> bool:
-            s, p, _ = spk
-            if scope_id is not None and s != str(scope_id):
+            d, s, _ = spk
+            if domain_id is not None and d != str(domain_id):
                 return False
-            if plugin_group is not None and p != str(plugin_group):
+            if space_id is not None and s != str(space_id):
                 return False
             return True
 

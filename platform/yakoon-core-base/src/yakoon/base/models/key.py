@@ -21,10 +21,10 @@ class Key:
         return Key(Namespace(domain, bucket, scope), id)
 
     @classmethod
-    def from_parts(cls, domain: str, bucket: str, scope: str, id: str) -> Key:
+    def from_parts(cls, domain: str, kind: str, space: str, id: str) -> Key:
         from yakoon.base.models.ns import Namespace
 
-        return cls(namespace=Namespace(domain, bucket, scope), id=id)
+        return cls(namespace=Namespace(domain, kind, space), id=id)
 
     @staticmethod
     def is_key(s: str) -> bool:
@@ -36,7 +36,7 @@ class Key:
 
     def is_valid(self) -> bool:
         ns = self.namespace
-        return all([ns.domain, ns.bucket, ns.scope, self.id])
+        return all([ns.domain, ns.kind, ns.space, self.id])
 
     def with_id(self, new_id: str) -> Key:
         return Key(namespace=self.namespace, id=new_id)

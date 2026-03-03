@@ -1,4 +1,3 @@
-
 from yakoon.base.models.account import Account, AccountData
 from yakoon.base.models.key import Key
 from yakoon.base.models.ns import Namespace
@@ -22,7 +21,7 @@ class InMemoryAccountStore(MemoryStore):
 
 def load_defaults(store: InMemoryAccountStore):
 
-    ns = Namespace(domain="yakoon", bucket="bucket", scope="develop")
+    ns = Namespace(domain="yakoon", kind="bucket", space="develop")
 
     data = AccountData(
         Key(namespace=ns, id="1"),

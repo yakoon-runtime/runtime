@@ -12,19 +12,19 @@ class Namespace:
 
     Components:
     - domain: The functional domain or module (e.g., 'realm', 'minddojo')
-    - bucket: A specific collection or world scope (e.g., 'dojo-42', 'session-abc')
-    - scope: An optional isolation context (e.g., 'global', 'user:xyz', 'tenant:abc')
+    - kind: A specific collection or entity type (session, account, permission, invoice, npc)
+    - space: Isolation boundary (tenant/workspace) — develop, acme, global
 
     Together, these define a unique namespace used for ID resolution, scoping, and separation.
     """
 
-    def __init__(self, domain: str, bucket: str, scope: str = "global"):
+    def __init__(self, domain: str, kind: str, space: str = "global"):
         self.domain = domain
-        self.bucket = bucket
-        self.scope = scope
+        self.kind = kind
+        self.space = space
 
     def to_str(self) -> str:
-        return f"{self.domain}/{self.bucket}/{self.scope}"
+        return f"{self.domain}/{self.kind}/{self.space}"
 
     def get_key(self, id: str) -> Key:
         from yakoon.base.models.key import Key
@@ -35,9 +35,9 @@ class Namespace:
         return (
             isinstance(other, Namespace)
             and self.domain == other.domain
-            and self.bucket == other.bucket
-            and self.scope == other.scope
+            and self.kind == other.kind
+            and self.space == other.space
         )
 
     def __hash__(self):
-        return hash((self.domain, self.bucket, self.scope))
+        return hash((self.domain, self.kind, self.space))

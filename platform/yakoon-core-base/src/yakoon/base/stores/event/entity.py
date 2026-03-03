@@ -20,8 +20,8 @@ JsonValue: TypeAlias = JsonPrimitive | dict[str, "JsonValue"] | list["JsonValue"
 # Strong-ish identifiers
 # ----------------------------
 
-ScopeId = NewType("ScopeId", str)
-PluginGroup = NewType("PluginGroup", str)
+SpaceId = NewType("SpaceId", str)
+DomainId = NewType("DomainId", str)
 EntityId = NewType("EntityId", str)
 
 IndexKey = NewType("IndexKey", str)
@@ -47,7 +47,7 @@ class ValueType(StrEnum):
 @dataclass(frozen=True, slots=True)
 class IndexSpec:
     """
-    Declares a secondary index needed by a plugin_group inside a scope.
+    Declares a secondary index needed by a domain_id inside a scope.
     This is structural metadata, created/ensured at plugin load time.
     """
 
@@ -82,7 +82,7 @@ class SnapshotHint(StrEnum):
 @dataclass(frozen=True, slots=True)
 class RetentionPolicy:
     """
-    GC policy; typically configurable per (scope_id, plugin_group) and optionally
+    GC policy; typically configurable per (space_id, domain_id) and optionally
     further per namespace/index key in your config layer.
     """
 

@@ -6,16 +6,16 @@ from datetime import UTC, datetime
 
 from yakoon.base.ports import EntityStore, IndexRegistry, PatchStrategy
 from yakoon.base.stores.event.entity import (
+    DomainId,
     EntityId,
     GetResult,
     IndexKey,
     IndexTerm,
     JsonValue,
-    PluginGroup,
     PutResult,
     RetentionPolicy,
-    ScopeId,
     SnapshotHint,
+    SpaceId,
 )
 from yakoon.platform.stores.event.backend import EntityStoreBackend
 
@@ -28,7 +28,7 @@ class ConcurrencyError(RuntimeError):
 class SnapshotPolicy:
     """
     Minimal policy: manual hints + automatic safety net.
-    Can be made configurable per scope/plugin_group later.
+    Can be made configurable per scope/domain_id later.
     """
 
     every_n_revisions: int = 50
@@ -72,23 +72,21 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
     async def ensure(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         specs: Sequence,  # Sequence[IndexSpec], keep import light here
     ) -> None:
         async with self._backend.transaction() as tx:
-            await tx.index_ensure(
-                scope_id=scope_id, plugin_group=plugin_group, specs=specs
-            )
+            await tx.index_ensure(domain_id=domain_id, space_id=space_id, specs=specs)
 
     async def list(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
     ) -> Sequence:
         async with self._backend.transaction() as tx:
-            return await tx.index_list(scope_id=scope_id, plugin_group=plugin_group)
+            return await tx.index_list(domain_id=domain_id, space_id=space_id)
 
     # ----------------------------
     # EntityStore
@@ -97,8 +95,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
     async def put(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         patch: JsonValue,
         indexes: Sequence[IndexTerm] = (),
@@ -122,7 +120,7 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
 
         async with self._backend.transaction() as tx:
             cur = await tx.load_current(
-                scope_id=scope_id, plugin_group=plugin_group, entity_id=entity_id
+                domain_id=domain_id, space_id=space_id, entity_id=entity_id
             )
 
             if cur is None:
@@ -136,8 +134,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
                 # backend may expose last snapshot metadata later; for now we re-check via query
                 # (you can optimize by keeping snapshot pointers in current row)
                 last_snapshot = await tx.load_snapshot_at_or_before(
-                    scope_id=scope_id,
-                    plugin_group=plugin_group,
+                    domain_id=domain_id,
+                    space_id=space_id,
                     entity_id=entity_id,
                     ts_lte=now,
                 )
@@ -154,8 +152,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
 
             if self._enable_revisions:
                 await tx.append_revision(
-                    scope_id=scope_id,
-                    plugin_group=plugin_group,
+                    domain_id=domain_id,
+                    space_id=space_id,
                     entity_id=entity_id,
                     rev=new_rev,
                     ts=now,
@@ -163,8 +161,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
                 )
 
             await tx.upsert_current(
-                scope_id=scope_id,
-                plugin_group=plugin_group,
+                domain_id=domain_id,
+                space_id=space_id,
                 entity_id=entity_id,
                 rev=new_rev,
                 data=new_state,
@@ -173,8 +171,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
 
             if indexes:
                 await tx.index_replace_terms(
-                    scope_id=scope_id,
-                    plugin_group=plugin_group,
+                    domain_id=domain_id,
+                    space_id=space_id,
                     entity_id=entity_id,
                     terms=indexes,
                 )
@@ -188,8 +186,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
                 last_snapshot_ts=last_snapshot_ts,
             ):
                 await tx.write_snapshot(
-                    scope_id=scope_id,
-                    plugin_group=plugin_group,
+                    domain_id=domain_id,
+                    space_id=space_id,
                     entity_id=entity_id,
                     rev=new_rev,
                     ts=now,
@@ -207,8 +205,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
     async def get(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         entity_id: EntityId,
         at_time: datetime | None = None,
     ) -> GetResult:
@@ -219,7 +217,7 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
         if at_time is None:
             async with self._backend.transaction() as tx:
                 cur = await tx.load_current(
-                    scope_id=scope_id, plugin_group=plugin_group, entity_id=entity_id
+                    domain_id=domain_id, space_id=space_id, entity_id=entity_id
                 )
                 if cur is None:
                     return GetResult(
@@ -241,8 +239,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
         t = at_time
         async with self._backend.transaction() as tx:
             snap = await tx.load_snapshot_at_or_before(
-                scope_id=scope_id,
-                plugin_group=plugin_group,
+                domain_id=domain_id,
+                space_id=space_id,
                 entity_id=entity_id,
                 ts_lte=t,
             )
@@ -254,8 +252,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
                 base_rev = snap.rev
 
             revs = await tx.load_revisions(
-                scope_id=scope_id,
-                plugin_group=plugin_group,
+                domain_id=domain_id,
+                space_id=space_id,
                 entity_id=entity_id,
                 rev_gt=base_rev,
                 ts_lte=t,
@@ -279,8 +277,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
     async def query(
         self,
         *,
-        scope_id: ScopeId,
-        plugin_group: PluginGroup,
+        domain_id: DomainId,
+        space_id: SpaceId,
         index_key: IndexKey,
         value,
         limit: int = 100,
@@ -288,8 +286,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
     ):
         async with self._backend.transaction() as tx:
             return await tx.index_query_ids(
-                scope_id=scope_id,
-                plugin_group=plugin_group,
+                domain_id=domain_id,
+                space_id=space_id,
                 index_key=index_key,
                 value=value,
                 limit=limit,
@@ -299,8 +297,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
     async def gc(
         self,
         *,
-        scope_id: ScopeId | None,
-        plugin_group: PluginGroup | None,
+        domain_id: DomainId | None,
+        space_id: SpaceId | None,
         policy: RetentionPolicy,
     ) -> None:
         """
@@ -310,7 +308,7 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
         """
         async with self._backend.transaction() as tx:
             # You will implement backend.gc(...) later; keeping this stubbed is fine.
-            await tx.gc(scope_id=scope_id, plugin_group=plugin_group, policy=policy)  # type: ignore[attr-defined]
+            await tx.gc(domain_id=domain_id, space_id=space_id, policy=policy)  # type: ignore[attr-defined]
 
     # ----------------------------
     # Snapshot decision

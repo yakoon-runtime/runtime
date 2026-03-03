@@ -2,6 +2,7 @@ import asyncio
 
 from yakoon.base import ports
 from yakoon.base.models.key import Key
+from yakoon.compose.demo_data import seed_demo_system_data
 from yakoon.compose.engine import compose_engine, initialize_storage
 from yakoon.console.host.console import ConsoleHost
 from yakoon.console.host.output import ConsoleOutput
@@ -22,7 +23,8 @@ async def run_console() -> None:
         ]
     )
 
-    await initialize_storage(engine.services, scope="yakoon")
+    await initialize_storage(engine.services, space="develop")
+    await seed_demo_system_data(engine.services, space="develop")
 
     sessions = engine.services.get(ports.SessionService)
     session, _ = await sessions.get_or_create(

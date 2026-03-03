@@ -20,6 +20,8 @@ class CmdSu(Command):
         namespaces = self.services.get(NamespaceService)
         permissions = self.services.get(PermissionService)
 
+        # TODO: Woher bekommt ein Plugin einen stabilen Namespace?
+
         ns = await namespaces.from_session(session)
 
         username = (

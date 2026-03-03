@@ -12,8 +12,8 @@ class NamespaceService:
     async def from_session(self, session: Session) -> Namespace:
         return Namespace(
             domain=self._domain,
-            bucket="bucket",
-            scope="develop",
+            kind="bucket",
+            space="develop",
         )
 
     async def get_by_bucket(

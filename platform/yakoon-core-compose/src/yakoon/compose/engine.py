@@ -6,7 +6,7 @@ from yakoon.base.models.fields import FieldType
 from yakoon.base.models.policy import FieldPolicy
 from yakoon.base.stores.base.registry import StoreRegistry
 from yakoon.base.stores.batches.json_patch import JsonPatchStrategy
-from yakoon.base.stores.event.entity import PluginGroup, ScopeId
+from yakoon.base.stores.event.entity import DomainId, SpaceId
 from yakoon.platform.directories.controller import ControllerDirectory
 from yakoon.platform.engines.command.engine import Engine
 from yakoon.platform.engines.command.router import CommandDirectory
@@ -244,14 +244,14 @@ def _compose_store() -> DefaultEntityStore:
     return store
 
 
-async def initialize_storage(services: ServiceDirectory, *, scope: str) -> None:
+async def initialize_storage(services: ServiceDirectory, *, space: str) -> None:
     index = services.get(ports.IndexRegistry)
 
     from yakoon.platform.services.account import IDX_ACCOUNT_USERNAME_SPEC
 
     await index.ensure(
-        scope_id=ScopeId(scope),
-        plugin_group=PluginGroup("system"),
+        domain_id=DomainId("system"),
+        space_id=SpaceId(space),
         specs=[
             IDX_ACCOUNT_USERNAME_SPEC,
         ],
