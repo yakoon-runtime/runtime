@@ -1,4 +1,5 @@
 from kivy.clock import Clock
+from yakoon.base.models.key import Key
 from yakoon.base.models.stream import OutputStreamPolicy
 from yakoon.base.ports import PermissionService, SessionService
 from yakoon.kivy.host import KivyHost
@@ -49,7 +50,8 @@ class TabsController:
         sessions = self.runner.engine.services.get(SessionService)
         perms = self.runner.engine.services.get(PermissionService)
 
-        session_key = f"kivy:tab:{tab_id}"
+        tab_id = f"kivy:tab:{tab_id}"
+        session_key = Key.from_parts("system", "session", tab_id, "1")
         session, _ = await sessions.get_or_create(session_key)
         perms.set_bootstrap_permissions(session)
 
