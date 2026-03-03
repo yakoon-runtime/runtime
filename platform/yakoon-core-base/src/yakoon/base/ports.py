@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Protocol
 
 from yakoon.base.models.stream import OutputStreaming
+from yakoon.base.stores.event.entity import SnapshotHint
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -26,7 +28,134 @@ if TYPE_CHECKING:
     from yakoon.base.plugins.plugin import PluginMeta
     from yakoon.base.resources.reference import ResourceRef
     from yakoon.base.runtime.session.session import Session
+    from yakoon.base.stores.event.entity import (
+        EntityId,
+        GetResult,
+        IndexKey,
+        IndexSpec,
+        IndexTerm,
+        IndexValue,
+        JsonValue,
+        PluginGroup,
+        PutResult,
+        RetentionPolicy,
+        ScopeId,
+        SnapshotHint,
+    )
     from yakoon.platform.runtime.render.context import RenderContext
+
+
+class PatchError(Exception):
+    pass
+
+
+class PatchStrategy(Protocol):
+    """
+    Pure patch semantics.
+    Store uses it for:
+    - applying patches on write
+    - replaying patches for historical get(at_time)
+    """
+
+    def apply(self, state: JsonValue | None, patch: JsonValue) -> JsonValue:
+        """
+        Apply 'patch' to 'state' and return NEW state.
+        Must not mutate 'state' in-place.
+        """
+        ...
+
+    def validate(self, patch: JsonValue) -> None:
+        """
+        Optional: raise PatchError for invalid patches
+        (e.g. too many ops, invalid paths, wrong structure).
+        """
+        ...
+
+
+class IndexRegistry(Protocol):
+    async def ensure(
+        self,
+        *,
+        scope_id: ScopeId,
+        plugin_group: PluginGroup,
+        specs: Sequence[IndexSpec],
+    ) -> None:
+        """
+        Idempotent: ensure index structures/metadata exist.
+        Must NOT silently change existing specs (that is a migration).
+        """
+        ...
+
+    async def list(
+        self,
+        *,
+        scope_id: ScopeId,
+        plugin_group: PluginGroup,
+    ) -> Sequence[IndexSpec]: ...
+
+
+class EntityStore(Protocol):
+    async def put(
+        self,
+        *,
+        scope_id: ScopeId,
+        plugin_group: PluginGroup,
+        entity_id: EntityId,
+        patch: JsonValue,
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        meta: Mapping[str, Any] | None = None,
+    ) -> PutResult:
+        """
+        Writes an update:
+        - append revision (patch)
+        - update materialized current state
+        - write index terms (index-on-write)
+        - optionally write snapshot (policy + hint)
+        """
+        ...
+
+    async def get(
+        self,
+        *,
+        scope_id: ScopeId,
+        plugin_group: PluginGroup,
+        entity_id: EntityId,
+        at_time: datetime | None = None,
+    ) -> GetResult:
+        """
+        - at_time=None => current state
+        - at_time set  => reconstructed historical state (within retention window)
+        """
+        ...
+
+    async def query(
+        self,
+        *,
+        scope_id: ScopeId,
+        plugin_group: PluginGroup,
+        index_key: IndexKey,
+        value: IndexValue,
+        limit: int = 100,
+        cursor: str | None = None,
+    ) -> tuple[list[EntityId], str | None]:
+        """
+        Index-based lookup returning entity ids + optional cursor for pagination.
+        """
+        ...
+
+    async def gc(
+        self,
+        *,
+        scope_id: ScopeId | None,
+        plugin_group: PluginGroup | None,
+        policy: RetentionPolicy,
+    ) -> None:
+        """
+        Garbage collection / retention.
+        If scope_id/plugin_group is None => run globally (admin job).
+        """
+        ...
 
 
 class LookupResolverService(Protocol):

@@ -5,6 +5,8 @@ from yakoon.base.models.catalog import CommandInfo, ControllerInfo
 from yakoon.base.models.fields import FieldType
 from yakoon.base.models.policy import FieldPolicy
 from yakoon.base.stores.base.registry import StoreRegistry
+from yakoon.base.stores.batches.json_patch import JsonPatchStrategy
+from yakoon.base.stores.event.entity import PluginGroup, ScopeId
 from yakoon.platform.directories.controller import ControllerDirectory
 from yakoon.platform.engines.command.engine import Engine
 from yakoon.platform.engines.command.router import CommandDirectory
@@ -34,8 +36,9 @@ from yakoon.platform.services.session import SessionService
 from yakoon.platform.services.shard import ShardAllocator, ShardedCounterService
 from yakoon.platform.services.stream import OutputStreamService
 from yakoon.platform.services.viewspec import ViewSpecService
+from yakoon.platform.stores.event.backend_memory import MemoryBackend
+from yakoon.platform.stores.event.store import DefaultEntityStore
 from yakoon.platform.stores.factory import create_system_stores
-from yakoon.platform.stores.memory.account import InMemoryAccountStore
 
 
 def compose_engine(*, plugin_modules: list[str]) -> Engine:
@@ -60,14 +63,15 @@ def compose_engine(*, plugin_modules: list[str]) -> Engine:
 
     directory.register(controllers)
 
-    stores = _compose_stores()
     command_catalog = _compose_command_catalog(directory)
     controller_catalog = _compose_controller_catalog(directory)
     commands = _compose_commands(bootstrap, directory)
+    store = _compose_store()
 
     _compose_services(
         bootstrap,
-        stores,
+        store,
+        create_system_stores("memory", db_path="db/gateway.sqlite3.db"),
         controller_catalog,
         command_catalog,
     )
@@ -169,6 +173,7 @@ def _compose_commands(
 
 def _compose_services(
     services: ServiceDirectory,
+    store: DefaultEntityStore,
     stores: StoreRegistry,
     controller_catalog: ControllerCatalog,
     command_catalog: CommandCatalog,
@@ -177,16 +182,11 @@ def _compose_services(
     # core platform services
     services.register_static(ports.AuditLogService, AuditLogService())
     services.register_static(ports.NamespaceService, NamespaceService())
-    services.register_static(ports.SessionService, SessionService(stores.sessions))
+    services.register_static(ports.SessionService, SessionService(store))
     services.register_static(ports.CommandQueueService, CommandQueueService())
     services.register_static(ports.PresenterService, PresenterService(services))
-    services.register_static(
-        ports.AccountService, AccountService(InMemoryAccountStore())
-    )
+    services.register_static(ports.AccountService, AccountService(store))
     services.register_static(ports.SecretVerifier, ZeroSecretVerifier())
-    services.register_static(
-        ports.AuthenticationService, AuthenticationService(services)
-    )
     services.register_static(ports.PermissionService, PermissionService())
     services.register_static(ports.DialogService, DialogService())
     services.register_static(ports.PolicyService, PolicyService())
@@ -196,6 +196,14 @@ def _compose_services(
     services.register_static(ports.RendererService, RendererService(services))
     services.register_static(ports.RenderEngine, JinjaRenderer())
     services.register_static(ports.OutputStreamService, OutputStreamService())
+
+    services.register_static(
+        ports.AuthenticationService, AuthenticationService(services)
+    )
+
+    # register event store.
+    services.register_static(ports.EntityStore, store)
+    services.register_static(ports.IndexRegistry, store)
 
     # optional lookup feature (can be overridden by plugin export.public_services)
     if not services.has(ports.LookupResolverService):
@@ -222,5 +230,29 @@ def _compose_services(
     return services
 
 
-def _compose_stores() -> StoreRegistry:
-    return create_system_stores("memory", db_path="db/gateway.sqlite3.db")
+def _compose_store() -> DefaultEntityStore:
+
+    backend = MemoryBackend()
+    patch = JsonPatchStrategy(max_ops=50)
+
+    store = DefaultEntityStore(
+        backend=backend,
+        patch_strategy=patch,
+        # snapshot_policy=..., enable_revisions=True
+    )
+
+    return store
+
+
+async def initialize_storage(services: ServiceDirectory, *, scope: str) -> None:
+    index = services.get(ports.IndexRegistry)
+
+    from yakoon.platform.services.account import IDX_ACCOUNT_USERNAME_SPEC
+
+    await index.ensure(
+        scope_id=ScopeId(scope),
+        plugin_group=PluginGroup("system"),
+        specs=[
+            IDX_ACCOUNT_USERNAME_SPEC,
+        ],
+    )
