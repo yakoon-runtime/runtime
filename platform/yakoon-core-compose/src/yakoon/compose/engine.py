@@ -238,6 +238,7 @@ def _compose_store() -> DefaultEntityStore:
     store = DefaultEntityStore(
         backend=backend,
         writer=patch,
+        readers=[patch],
         # snapshot_policy=..., enable_revisions=True
     )
 
