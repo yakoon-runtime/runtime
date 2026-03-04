@@ -22,8 +22,6 @@ class CmdSu(Command):
 
         # TODO: Woher bekommt ein Plugin einen stabilen Namespace?
 
-        ns = await namespaces.from_session(session)
-
         username = (
             request.arg(0)
             or request.option("user")
@@ -34,6 +32,8 @@ class CmdSu(Command):
             secret = (await presenter.inputs.ask("ask_secret")).first()
             if secret:
                 secret = secret.reveal()
+
+        ns = await namespaces.from_session(session, "account", "develop")
 
         result = await auth.authenticate(ns, username, secret)
         if result.ok and result.account:

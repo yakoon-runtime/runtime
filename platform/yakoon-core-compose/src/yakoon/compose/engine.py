@@ -3,10 +3,10 @@ from yakoon.base.controllers.base import BaseController
 from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.catalog import CommandInfo, ControllerInfo
 from yakoon.base.models.fields import FieldType
+from yakoon.base.models.ns import Namespace
 from yakoon.base.models.policy import FieldPolicy
 from yakoon.base.stores.base.registry import StoreRegistry
 from yakoon.base.stores.batches.json_patch import JsonPatchStrategy
-from yakoon.base.stores.event.entity import DomainId, SpaceId
 from yakoon.platform.directories.controller import ControllerDirectory
 from yakoon.platform.engines.command.engine import Engine
 from yakoon.platform.engines.command.router import CommandDirectory
@@ -237,21 +237,20 @@ def _compose_store() -> DefaultEntityStore:
 
     store = DefaultEntityStore(
         backend=backend,
-        patch_strategy=patch,
+        writer=patch,
         # snapshot_policy=..., enable_revisions=True
     )
 
     return store
 
 
-async def initialize_storage(services: ServiceDirectory, *, space: str) -> None:
+async def initialize_storage(services: ServiceDirectory) -> None:
     index = services.get(ports.IndexRegistry)
 
     from yakoon.platform.services.account import IDX_ACCOUNT_USERNAME_SPEC
 
     await index.ensure(
-        domain_id=DomainId("system"),
-        space_id=SpaceId(space),
+        namespace=Namespace("system", "account", "develop"),
         specs=[
             IDX_ACCOUNT_USERNAME_SPEC,
         ],

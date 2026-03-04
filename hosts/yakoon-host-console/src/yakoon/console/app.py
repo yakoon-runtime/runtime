@@ -23,8 +23,8 @@ async def run_console() -> None:
         ]
     )
 
-    await initialize_storage(engine.services, space="develop")
-    await seed_demo_system_data(engine.services, space="develop")
+    await initialize_storage(engine.services)
+    await seed_demo_system_data(engine.services)
 
     sessions = engine.services.get(ports.SessionService)
     session, _ = await sessions.get_or_create(

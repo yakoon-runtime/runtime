@@ -3,11 +3,8 @@ from __future__ import annotations
 from yakoon.base.models.key import Key
 from yakoon.base.runtime.session import Session, SessionState
 from yakoon.base.stores.event.entity import (
-    DomainId,
-    EntityId,
     JsonValue,
     SnapshotHint,
-    SpaceId,
 )
 from yakoon.platform.stores.event.store import EntityStore
 
@@ -28,18 +25,6 @@ class SessionIdentityMap:
 
     def clear(self) -> None:
         self._live.clear()
-
-
-def _space_id_from_key(key: Key) -> SpaceId:
-    return SpaceId(key.namespace.space)
-
-
-def _domain_id_from_key(key: Key) -> DomainId:
-    return DomainId(key.namespace.domain)
-
-
-def _entity_id_from_key(key: Key) -> EntityId:
-    return EntityId(str(key))
 
 
 class SessionService:
@@ -63,15 +48,7 @@ class SessionService:
         if live:
             return live
 
-        space_id = _space_id_from_key(key)
-        domain_id = _domain_id_from_key(key)
-        entity_id = _entity_id_from_key(key)
-
-        row = await self.store.get(
-            domain_id=domain_id,
-            space_id=space_id,
-            entity_id=entity_id,
-        )
+        row = await self.store.get_one(key=key)
         if row.data is None:
             return None
 
@@ -95,10 +72,6 @@ class SessionService:
         state = SessionState(key=key, **kwargs)
         session = Session(state)
 
-        space_id = _space_id_from_key(key)
-        domain_id = _domain_id_from_key(key)
-        entity_id = _entity_id_from_key(key)
-
         # Persist full state as a patch:
         # We keep it simple: replace each top-level field via RFC6902 ops.
         doc = state.to_dict()
@@ -107,9 +80,7 @@ class SessionService:
         ]
 
         await self.store.put(
-            domain_id=domain_id,
-            space_id=space_id,
-            entity_id=entity_id,
+            key=key,
             patch=patch,
             snapshot_hint=SnapshotHint.COMMIT,
         )
@@ -120,19 +91,13 @@ class SessionService:
     async def save(self, session: Session) -> None:
         key = session.key
 
-        space_id = _space_id_from_key(key)
-        domain_id = _domain_id_from_key(key)
-        entity_id = _entity_id_from_key(key)
-
         doc = session.state.to_dict()
         patch: JsonValue = [
             {"op": "add", "path": f"/{k}", "value": v} for k, v in doc.items()
         ]
 
         await self.store.put(
-            domain_id=domain_id,
-            space_id=space_id,
-            entity_id=entity_id,
+            key=key,
             patch=patch,
             snapshot_hint=SnapshotHint.COMMIT,
         )

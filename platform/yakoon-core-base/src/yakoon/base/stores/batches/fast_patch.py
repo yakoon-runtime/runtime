@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
 from yakoon.base.ports import PatchError
-from yakoon.base.stores.event.entity import JsonValue
+from yakoon.base.stores.event.entity import JsonValue, PatchFormat
 
 # ----------------------------
 # Strategy 2: FastPatch (flat-entity friendly)
@@ -26,6 +27,8 @@ class FastPatchStrategy:
       - 'set' values must be JSON-serializable (you can relax/tighten)
       - 'unset' removes keys if present
     """
+
+    format: PatchFormat = PatchFormat.FASTPATCH
 
     max_set_keys: int = 200
     max_unset_keys: int = 200
@@ -54,34 +57,56 @@ class FastPatchStrategy:
                     f"Too many unset keys: {len(u)} > {self.max_unset_keys}"
                 )
 
-    def apply(self, state: JsonValue | None, patch: JsonValue) -> JsonValue:
+    def apply(self, current: JsonValue | None, patch: JsonValue) -> JsonValue:
         self.validate(patch)
 
-        if not isinstance(patch, dict):
-            raise PatchError("FastPatch must be an object.")
-
-        patch_dict = patch  # now narrowed to dict[str, JsonValue]
-
-        if state is None:
+        if current is None or not isinstance(current, dict):
             cur: dict[str, JsonValue] = {}
         else:
-            if not isinstance(state, dict):
-                raise PatchError("FastPatch requires object state (dict).")
-            cur = dict(state)
+            cur = dict(current)
 
-        if "set" in patch_dict:
-            s = patch_dict["set"]
-            if not isinstance(s, dict):
-                raise PatchError("'set' must be an object.")
-            cur.update(s)
+        if not isinstance(patch, dict):
+            raise TypeError("FastPatch must be an object")
 
-        if "unset" in patch_dict:
-            u = patch_dict["unset"]
-            if not isinstance(u, list):
-                raise PatchError("'unset' must be a list.")
-            for k in u:
-                if not isinstance(k, str):
-                    raise PatchError("unset entries must be strings.")
-                cur.pop(k, None)
+        if patch.get("full") is True:
+            set_doc = patch.get("set", {})
+            if not isinstance(set_doc, dict):
+                raise TypeError("FastPatch full requires set object")
+            return dict(set_doc)
+
+        set_fields = patch.get("set")
+        if isinstance(set_fields, dict):
+            for k, v in set_fields.items():
+                cur[str(k)] = v
+
+        del_fields = patch.get("del")
+        if isinstance(del_fields, list):
+            for k in del_fields:
+                if isinstance(k, str):
+                    cur.pop(k, None)
 
         return cur
+
+    def create_full_replace(
+        self,
+        *,
+        current: JsonValue | None,
+        new_doc: Mapping[str, JsonValue],
+    ) -> JsonValue:
+        return {"full": True, "set": dict(new_doc)}
+
+    def create_partial_update(
+        self,
+        *,
+        current: JsonValue | None,
+        fields: Mapping[str, JsonValue],
+    ) -> JsonValue:
+        return {"set": dict(fields)}
+
+    def create_delete(
+        self,
+        *,
+        current: JsonValue | None,
+        fields: Sequence[str],
+    ) -> JsonValue:
+        return {"del": list(fields)}

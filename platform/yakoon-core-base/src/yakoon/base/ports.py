@@ -6,7 +6,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Protocol
 
 from yakoon.base.models.stream import OutputStreaming
-from yakoon.base.stores.event.entity import SnapshotHint
+from yakoon.base.stores.event.entity import PatchFormat, SnapshotHint
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -29,18 +29,13 @@ if TYPE_CHECKING:
     from yakoon.base.resources.reference import ResourceRef
     from yakoon.base.runtime.session.session import Session
     from yakoon.base.stores.event.entity import (
-        DomainId,
-        EntityId,
         GetResult,
-        IndexKey,
         IndexSpec,
         IndexTerm,
-        IndexValue,
         JsonValue,
         PutResult,
         RetentionPolicy,
         SnapshotHint,
-        SpaceId,
     )
     from yakoon.platform.runtime.render.context import RenderContext
 
@@ -57,7 +52,9 @@ class PatchStrategy(Protocol):
     - replaying patches for historical get(at_time)
     """
 
-    def apply(self, state: JsonValue | None, patch: JsonValue) -> JsonValue:
+    format: PatchFormat
+
+    def apply(self, current: JsonValue | None, patch: JsonValue) -> JsonValue:
         """
         Apply 'patch' to 'state' and return NEW state.
         Must not mutate 'state' in-place.
@@ -71,40 +68,51 @@ class PatchStrategy(Protocol):
         """
         ...
 
-
-class IndexRegistry(Protocol):
-    async def ensure(
+    def create_full_replace(
         self,
         *,
-        domain_id: DomainId,
-        space_id: SpaceId,
-        specs: Sequence[IndexSpec],
-    ) -> None:
+        current: JsonValue | None,
+        new_doc: Mapping[str, JsonValue],
+    ) -> JsonValue: ...
+
+    def create_partial_update(
+        self,
+        *,
+        current: JsonValue | None,
+        fields: Mapping[str, JsonValue],
+    ) -> JsonValue: ...
+
+    def create_delete(
+        self,
+        *,
+        current: JsonValue | None,
+        fields: Sequence[str],
+    ) -> JsonValue: ...
+
+
+class IndexRegistry(Protocol):
+
+    async def ensure(self, *, namespace: Namespace, specs: Sequence[IndexSpec]) -> None:
         """
         Idempotent: ensure index structures/metadata exist.
         Must NOT silently change existing specs (that is a migration).
         """
         ...
 
-    async def list(
-        self,
-        *,
-        domain_id: DomainId,
-        space_id: SpaceId,
-    ) -> Sequence[IndexSpec]: ...
+    async def list(self, *, namespace: Namespace) -> Sequence[IndexSpec]: ...
 
 
 class EntityStore(Protocol):
+
     async def put(
         self,
         *,
-        domain_id: DomainId,
-        space_id: SpaceId,
-        entity_id: EntityId,
+        key: Key,
         patch: JsonValue,
         indexes: Sequence[IndexTerm] = (),
         snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
         meta: Mapping[str, Any] | None = None,
+        expected_rev: int | None = None,
     ) -> PutResult:
         """
         Writes an update:
@@ -115,47 +123,60 @@ class EntityStore(Protocol):
         """
         ...
 
-    async def get(
+    async def put_doc(
         self,
         *,
-        domain_id: DomainId,
-        space_id: SpaceId,
-        entity_id: EntityId,
-        at_time: datetime | None = None,
-    ) -> GetResult:
+        key: Key,
+        doc: Mapping[str, JsonValue],
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        meta: Mapping[str, Any] | None = None,
+        expected_rev: int | None = None,
+    ) -> PutResult: ...
+
+    async def put_fields(
+        self,
+        *,
+        key: Key,
+        doc: Mapping[str, JsonValue],
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        meta: Mapping[str, Any] | None = None,
+        expected_rev: int | None = None,
+    ) -> PutResult: ...
+
+    async def delete_fields(
+        self,
+        *,
+        key: Key,
+        doc: Mapping[str, JsonValue],
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        meta: Mapping[str, Any] | None = None,
+        expected_rev: int | None = None,
+    ) -> PutResult: ...
+
+    async def get_one(self, *, key: Key, at_time: datetime | None = None) -> GetResult:
         """
         - at_time=None => current state
         - at_time set  => reconstructed historical state (within retention window)
         """
         ...
 
-    async def query(
+    async def get_many(
         self,
         *,
-        domain_id: DomainId,
-        space_id: SpaceId,
-        index_key: IndexKey,
-        value: IndexValue,
-        limit: int = 100,
-        cursor: str | None = None,
-    ) -> tuple[list[EntityId], str | None]:
-        """
-        Index-based lookup returning entity ids + optional cursor for pagination.
-        """
-        ...
+        keys: Sequence[Key],
+    ) -> list[GetResult]: ...
 
-    async def gc(
-        self,
-        *,
-        domain_id: DomainId | None,
-        space_id: SpaceId | None,
-        policy: RetentionPolicy,
-    ) -> None:
+    async def gc(self, *, namespace: Namespace, policy: RetentionPolicy) -> None:
         """
         Garbage collection / retention.
         If space_id/domain_id is None => run globally (admin job).
         """
         ...
+
+    async def gc_global(self, *, policy: RetentionPolicy) -> None: ...
 
 
 class LookupResolverService(Protocol):
@@ -383,9 +404,8 @@ class RendererService(Protocol):
 
 
 class NamespaceService(Protocol):
-    async def from_session(self, session: Session) -> Namespace: ...
-    async def get_by_bucket(
-        self, bucket: str = "bucket", scope: str = "develop"
+    async def from_session(
+        self, session: Session, kind: str, space: str | None
     ) -> Namespace: ...
 
 

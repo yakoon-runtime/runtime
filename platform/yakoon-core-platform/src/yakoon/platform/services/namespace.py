@@ -6,17 +6,14 @@ class NamespaceService:
 
     _domain: str = "yakoon"
 
-    def __init__(self, domain: str = None):
+    def __init__(self, domain: str | None = None):
         self._domain = domain or self._domain
 
-    async def from_session(self, session: Session) -> Namespace:
-        return Namespace(
-            domain=self._domain,
-            kind="bucket",
-            space="develop",
-        )
-
-    async def get_by_bucket(
-        self, bucket: str = "bucket", scope: str = "develop"
+    async def from_session(
+        self, session: Session, kind: str, space: str | None
     ) -> Namespace:
-        return Namespace(self._domain, bucket, scope)
+        return Namespace(
+            domain=session.key.namespace.domain,
+            kind=kind,
+            space=space or session.key.namespace.space,
+        )

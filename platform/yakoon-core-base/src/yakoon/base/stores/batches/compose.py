@@ -17,6 +17,13 @@ class CompositePatchStrategy:
     mixed patch formats without storing a format marker per revision.
 
     Caveat: ambiguity is possible; prefer per-store strategy or format marker.
+
+    RFC 6902-compatible patch generator.
+
+    Design goal: fast + correct, not minimal diffs.
+    - Full replace: replace root with entire doc (1 op)
+    - Partial update: add/replace each provided top-level field (N ops)
+    - Delete: remove each provided top-level field (N ops)
     """
 
     strategies: tuple[PatchStrategy, ...]
@@ -31,12 +38,12 @@ class CompositePatchStrategy:
                 last = e
         raise PatchError(f"No strategy accepted patch: {last}")
 
-    def apply(self, state: JsonValue | None, patch: JsonValue) -> JsonValue:
+    def apply(self, current: JsonValue | None, patch: JsonValue) -> JsonValue:
         last: Exception | None = None
         for s in self.strategies:
             try:
                 s.validate(patch)
-                return s.apply(state, patch)
+                return s.apply(current, patch)
             except Exception as e:
                 last = e
         raise PatchError(f"No strategy could apply patch: {last}")

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Protocol
@@ -13,6 +13,9 @@ from yakoon.base.stores.event.entity import (
     IndexTerm,
     IndexValue,
     JsonValue,
+    KindId,
+    PatchFormat,
+    RetentionPolicy,
     SpaceId,
 )
 
@@ -31,6 +34,7 @@ class RevisionRow:
     rev: int
     ts: datetime
     patch: JsonValue
+    patch_format: PatchFormat
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,22 +46,34 @@ class SnapshotRow:
 
 
 class EntityStoreBackendTx(Protocol):
-
     async def __aenter__(self) -> EntityStoreBackendTx: ...
     async def __aexit__(self, exc_type, exc, tb) -> bool | None: ...
+
+    # --- entity materialization ---
 
     async def load_current(
         self,
         *,
         domain_id: DomainId,
+        kind_id: KindId,
         space_id: SpaceId,
         entity_id: EntityId,
     ) -> CurrentRow | None: ...
+
+    async def load_current_many(
+        self,
+        *,
+        domain_id: DomainId,
+        kind_id: KindId,
+        space_id: SpaceId,
+        entity_ids: Sequence[EntityId],
+    ) -> Mapping[EntityId, CurrentRow]: ...
 
     async def upsert_current(
         self,
         *,
         domain_id: DomainId,
+        kind_id: KindId,
         space_id: SpaceId,
         entity_id: EntityId,
         rev: int,
@@ -69,10 +85,12 @@ class EntityStoreBackendTx(Protocol):
         self,
         *,
         domain_id: DomainId,
+        kind_id: KindId,
         space_id: SpaceId,
         entity_id: EntityId,
         rev: int,
         ts: datetime,
+        patch_format: PatchFormat,
         patch: JsonValue,
     ) -> None: ...
 
@@ -80,6 +98,7 @@ class EntityStoreBackendTx(Protocol):
         self,
         *,
         domain_id: DomainId,
+        kind_id: KindId,
         space_id: SpaceId,
         entity_id: EntityId,
         rev_gt: int,
@@ -90,6 +109,7 @@ class EntityStoreBackendTx(Protocol):
         self,
         *,
         domain_id: DomainId,
+        kind_id: KindId,
         space_id: SpaceId,
         entity_id: EntityId,
         ts_lte: datetime,
@@ -99,6 +119,7 @@ class EntityStoreBackendTx(Protocol):
         self,
         *,
         domain_id: DomainId,
+        kind_id: KindId,
         space_id: SpaceId,
         entity_id: EntityId,
         rev: int,
@@ -106,35 +127,13 @@ class EntityStoreBackendTx(Protocol):
         data: JsonValue,
     ) -> None: ...
 
-    async def index_replace_terms(
-        self,
-        *,
-        domain_id: DomainId,
-        space_id: SpaceId,
-        entity_id: EntityId,
-        terms: Sequence[IndexTerm],
-    ) -> None:
-        """
-        Replace (upsert) index terms for this entity.
-        Typically: delete existing rows for (entity_id, keys in terms), then insert.
-        """
-        ...
-
-    async def index_query_ids(
-        self,
-        *,
-        domain_id: DomainId,
-        space_id: SpaceId,
-        index_key: IndexKey,
-        value: IndexValue,
-        limit: int,
-        cursor: str | None,
-    ) -> tuple[list[EntityId], str | None]: ...
+    # --- index structures & data ---
 
     async def index_ensure(
         self,
         *,
         domain_id: DomainId,
+        kind_id: KindId,
         space_id: SpaceId,
         specs: Sequence[IndexSpec],
     ) -> None: ...
@@ -143,17 +142,53 @@ class EntityStoreBackendTx(Protocol):
         self,
         *,
         domain_id: DomainId,
+        kind_id: KindId,
         space_id: SpaceId,
     ) -> Sequence[IndexSpec]: ...
 
+    async def index_replace_terms(
+        self,
+        *,
+        domain_id: DomainId,
+        kind_id: KindId,
+        space_id: SpaceId,
+        entity_id: EntityId,
+        terms: Sequence[IndexTerm],
+    ) -> None: ...
 
-class EntityStoreBackend(Protocol):
-
-    def transaction(self) -> EntityStoreBackendTx:
+    async def index_scan(
+        self,
+        *,
+        domain_id: DomainId,
+        kind_id: KindId,
+        space_id: SpaceId,
+        index_key: IndexKey,
+        mode: str,  # "eq" | "range"
+        value: IndexValue | None = None,
+        lo: IndexValue | None = None,
+        hi: IndexValue | None = None,
+        after_value: IndexValue | None = None,
+        after_entity_id: EntityId | None = None,
+        limit: int = 100,
+    ) -> list[tuple[IndexValue, EntityId]]:
         """
-        Returns a transactional context object.
-        Your implementation can return an async context manager if you prefer:
-
-            async with backend.transaction() as tx: ...
+        Returns ordered (value, entity_id) pairs.
+        Order must be (value, entity_id).
         """
         ...
+
+    # --- maintenance ---
+
+    async def gc(
+        self,
+        *,
+        domain_id: DomainId,
+        kind_id: KindId,
+        space_id: SpaceId,
+        policy: RetentionPolicy,
+        now: datetime,
+    ) -> None: ...
+
+
+class EntityStoreBackend(Protocol):
+    def transaction(self) -> EntityStoreBackendTx: ...

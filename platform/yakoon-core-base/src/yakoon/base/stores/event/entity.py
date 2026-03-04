@@ -9,6 +9,12 @@ from typing import (
     TypeAlias,
 )
 
+
+class PatchFormat(StrEnum):
+    JSONPATCH = "jsonpatch"
+    FASTPATCH = "fastpatch"
+
+
 # ----------------------------
 # JSON (for entity payloads, patches, snapshots)
 # ----------------------------
@@ -22,6 +28,7 @@ JsonValue: TypeAlias = JsonPrimitive | dict[str, "JsonValue"] | list["JsonValue"
 
 SpaceId = NewType("SpaceId", str)
 DomainId = NewType("DomainId", str)
+KindId = NewType("KindId", str)
 EntityId = NewType("EntityId", str)
 
 IndexKey = NewType("IndexKey", str)
@@ -47,7 +54,7 @@ class ValueType(StrEnum):
 @dataclass(frozen=True, slots=True)
 class IndexSpec:
     """
-    Declares a secondary index needed by a domain_id inside a scope.
+    Declares a secondary index needed by a domain_id inside a space.
     This is structural metadata, created/ensured at plugin load time.
     """
 
@@ -112,4 +119,9 @@ class GetResult:
     )  # None => not found (or tombstoned, depending on your semantics)
     rev: int | None
     as_of: datetime
-    is_historical: bool
+    historical: bool
+
+    # Backward-compat alias (older code may still read .is_historical)
+    @property
+    def is_historical(self) -> bool:
+        return self.historical
