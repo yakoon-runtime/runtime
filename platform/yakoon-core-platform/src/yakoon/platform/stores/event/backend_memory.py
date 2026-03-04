@@ -79,6 +79,11 @@ class MemoryBackend(EntityStoreBackend):
         ] = {}
         # - inverted: (domain,kind,space,index_key,value_norm) -> sorted list of _IndexRecord
         self._index_inv: dict[tuple[str, str, str, str, str], list[_IndexRecord]] = {}
+        # (domain,kind,space,index_key) -> (value_norm -> sorted list[_IndexRecord])
+        self._index_inv2: dict[
+            tuple[str, str, str, str],
+            dict[str, list[_IndexRecord]],
+        ] = {}
 
     def transaction(self) -> EntityStoreBackendTx:
         return _MemoryTx(self)
@@ -321,58 +326,73 @@ class _MemoryTx(EntityStoreBackendTx):
 
         rows: list[tuple[IndexValue, EntityId]] = []
 
-        # normalize once
-        after_value_norm: str | None = (
+        gkey = (str(domain_id), str(kind_id), str(space_id), str(index_key))
+        bucket = self._b._index_inv2.get(gkey)
+        if not bucket:
+            return []
+
+        # normalize cursor
+        after_value_norm = (
             _norm_index_value(after_value) if after_value is not None else None
         )
-        after_entity_id_norm: EntityId | None = after_entity_id
+        after_entity_id_norm = after_entity_id
 
-        value_norm_query: str | None = None
-        lo_norm: str | None = None
-        hi_norm: str | None = None
-
+        # ------------------------
+        # EQ mode
+        # ------------------------
         if mode == "eq":
             assert value is not None
-            value_norm_query = _norm_index_value(value)
-        else:
-            lo_norm = _norm_index_value(lo) if lo is not None else None
-            hi_norm = _norm_index_value(hi) if hi is not None else None
 
-        for (
-            domain,
-            kind,
-            space,
-            index_key_i,
-            value_norm,
-        ), records in self._b._index_inv.items():
+            vq = _norm_index_value(value)
 
-            if domain != domain_id or kind != kind_id or space != space_id:
-                continue
-            if index_key_i != index_key:
-                continue
+            # cursor may already be past this bucket
+            if after_value_norm is not None and after_value_norm > vq:
+                return []
 
-            # bucket-level filter
-            if mode == "eq":
-                # only this one value bucket is relevant
-                if value_norm_query is not None and value_norm != value_norm_query:
-                    continue
-            else:
-                if lo_norm is not None and value_norm < lo_norm:
-                    continue
-                if hi_norm is not None and value_norm > hi_norm:
-                    continue
+            records = bucket.get(vq, [])
 
-                # keyset across buckets: skip buckets strictly before cursor
-                if after_value_norm is not None and value_norm < after_value_norm:
-                    continue
-
-            # record-level filter (needs eid)
             for rec in records:
                 eid = rec.entity_id
 
+                if after_entity_id_norm is not None and eid <= after_entity_id_norm:
+                    continue
+
+                rows.append((value, eid))
+
+                if len(rows) >= limit:
+                    break
+
+            return rows
+
+        # ------------------------
+        # RANGE mode
+        # ------------------------
+        lo_norm = _norm_index_value(lo) if lo is not None else None
+        hi_norm = _norm_index_value(hi) if hi is not None else None
+
+        values = sorted(bucket.keys())
+
+        start = 0
+        if lo_norm is not None:
+            start = bisect.bisect_left(values, lo_norm)
+
+        # cursor may push start further
+        if after_value_norm is not None:
+            start = max(start, bisect.bisect_left(values, after_value_norm))
+
+        for value_norm in values[start:]:
+
+            if hi_norm is not None and value_norm > hi_norm:
+                break
+
+            # skip values strictly before cursor
+            if after_value_norm is not None and value_norm < after_value_norm:
+                continue
+
+            for rec in bucket[value_norm]:
+                eid = rec.entity_id
+
                 if after_value_norm is not None:
-                    if value_norm < after_value_norm:
-                        continue
                     if (
                         value_norm == after_value_norm
                         and after_entity_id_norm is not None
@@ -380,11 +400,12 @@ class _MemoryTx(EntityStoreBackendTx):
                     ):
                         continue
 
-                # for EQ, cursor uses same boundary rule, already handled above
                 rows.append((value_norm, eid))
 
-        rows.sort(key=lambda x: (x[0], x[1]))
-        return rows[:limit]
+                if len(rows) >= limit:
+                    return rows
+
+        return rows
 
     async def index_replace_terms(
         self,
@@ -414,14 +435,23 @@ class _MemoryTx(EntityStoreBackendTx):
             spec = specs.get(k)
             if spec is None:
                 continue
+
             old_norm = self._norm_value(spec, old)
-            inv_k = (str(domain_id), str(kind_id), str(space_id), k, old_norm)
-            lst = self._b._index_inv.get(inv_k, [])
+
+            gkey = (str(domain_id), str(kind_id), str(space_id), k)
+            bucket = self._b._index_inv2.get(gkey)
+            if not bucket:
+                continue
+
+            lst = bucket.get(old_norm, [])
             lst = [r for r in lst if r.entity_id != entity_id]
             if lst:
-                self._b._index_inv[inv_k] = lst
+                bucket[old_norm] = lst
             else:
-                self._b._index_inv.pop(inv_k, None)
+                bucket.pop(old_norm, None)
+
+            if not bucket:
+                self._b._index_inv2.pop(gkey, None)
 
         # apply new
         newmap = dict(existing)
@@ -430,13 +460,21 @@ class _MemoryTx(EntityStoreBackendTx):
             spec = specs.get(k)
             if spec is None:
                 raise KeyError(f"Index not ensured: {k}")
-            norm = self._norm_value(spec, t.value)
 
+            norm = self._norm_value(spec, t.value)
             newmap[k] = t.value
-            inv_k = (str(domain_id), str(kind_id), str(space_id), k, norm)
-            lst = self._b._index_inv.setdefault(inv_k, [])
+
+            gkey = (str(domain_id), str(kind_id), str(space_id), k)
+            bucket = self._b._index_inv2.setdefault(gkey, {})
+            lst = bucket.setdefault(norm, [])
+
+            # UNIQUE check (optional but strongly recommended)
+            if spec.unique and lst and all(r.entity_id != entity_id for r in lst):
+                raise ValueError(f"Unique index violation for {k}={t.value}")
+
             rec_key = f"{norm}::{entity_id}"
             rec = _IndexRecord(key=rec_key, entity_id=entity_id)
+
             # insert sorted
             i = bisect.bisect_left([r.key for r in lst], rec.key)
             if i >= len(lst) or lst[i].entity_id != entity_id:
