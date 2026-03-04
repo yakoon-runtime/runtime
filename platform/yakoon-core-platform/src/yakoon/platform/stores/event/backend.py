@@ -154,6 +154,7 @@ class EntityStoreBackendTx(Protocol):
         space_id: SpaceId,
         entity_id: EntityId,
         terms: Sequence[IndexTerm],
+        written_at: datetime,
     ) -> None: ...
 
     async def index_scan(
@@ -170,6 +171,7 @@ class EntityStoreBackendTx(Protocol):
         after_value: IndexValue | None = None,
         after_entity_id: EntityId | None = None,
         limit: int = 100,
+        as_of: datetime | None = None,
     ) -> list[tuple[IndexValue, EntityId]]:
         """
         Returns ordered (value, entity_id) pairs.

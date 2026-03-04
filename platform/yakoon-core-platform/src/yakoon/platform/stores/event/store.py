@@ -40,6 +40,7 @@ class ScanCursor:
     mode: str  # "eq" | "range"
     value: Any
     entity_id: str
+    asof: str  # ISO timestamp (UTC) (for freeze view)
 
 
 @dataclass(frozen=True, slots=True)
@@ -230,6 +231,7 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
                     space_id=space_id,
                     entity_id=entity_id,
                     terms=indexes,
+                    written_at=now,
                 )
 
             snapshot_written = False
@@ -532,8 +534,8 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
 
         mode = "eq" if value is not None else "range"
 
-        after_value = None
-        after_entity_id = None
+        after_value: IndexValue | None = None
+        after_entity_id: EntityId | None = None
 
         if cursor:
             c = decode_cursor(cursor)
@@ -544,8 +546,12 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
             after_value = c.value
             after_entity_id = EntityId(c.entity_id)
 
-        async with self._backend.transaction() as tx:
+            # freeze view to first page timestamp
+            as_of = datetime.fromisoformat(c.asof)
+        else:
+            as_of = _utc_now()
 
+        async with self._backend.transaction() as tx:
             rows = await tx.index_scan(
                 domain_id=domain_id,
                 kind_id=kind_id,
@@ -557,6 +563,7 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
                 hi=hi,
                 after_value=after_value,
                 after_entity_id=after_entity_id,
+                as_of=as_of,  # NEW
                 limit=limit,
             )
 
@@ -582,6 +589,7 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
                     mode=mode,
                     value=last_value,
                     entity_id=str(last_id),
+                    asof=as_of.astimezone(UTC).isoformat(),  # keep stable across pages
                 )
             )
 

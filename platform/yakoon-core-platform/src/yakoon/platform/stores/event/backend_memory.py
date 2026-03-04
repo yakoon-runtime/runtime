@@ -38,6 +38,7 @@ class _IndexRecord:
     # stable sort key for pagination
     key: str
     entity_id: EntityId
+    written_at: datetime
 
 
 def _ns_key(domain_id: DomainId, kind_id: KindId, space_id: SpaceId) -> str:
@@ -322,6 +323,7 @@ class _MemoryTx(EntityStoreBackendTx):
         after_value: IndexValue | None = None,
         after_entity_id: EntityId | None = None,
         limit: int = 100,
+        as_of: datetime | None = None,
     ) -> list[tuple[IndexValue, EntityId]]:
 
         rows: list[tuple[IndexValue, EntityId]] = []
@@ -390,6 +392,11 @@ class _MemoryTx(EntityStoreBackendTx):
                 continue
 
             for rec in bucket[value_norm]:
+
+                # continue if out of page frame
+                if as_of is not None and rec.written_at > as_of:
+                    continue
+
                 eid = rec.entity_id
 
                 if after_value_norm is not None:
@@ -415,6 +422,7 @@ class _MemoryTx(EntityStoreBackendTx):
         space_id: SpaceId,
         entity_id: EntityId,
         terms: Sequence[IndexTerm],
+        written_at: datetime,
     ) -> None:
         sp = self._sp(domain_id=domain_id, kind_id=kind_id, space_id=space_id)
         specs = self._b._index_specs.get(sp, {})
@@ -473,7 +481,7 @@ class _MemoryTx(EntityStoreBackendTx):
                 raise ValueError(f"Unique index violation for {k}={t.value}")
 
             rec_key = f"{norm}::{entity_id}"
-            rec = _IndexRecord(key=rec_key, entity_id=entity_id)
+            rec = _IndexRecord(key=rec_key, entity_id=entity_id, written_at=written_at)
 
             # insert sorted
             i = bisect.bisect_left([r.key for r in lst], rec.key)
