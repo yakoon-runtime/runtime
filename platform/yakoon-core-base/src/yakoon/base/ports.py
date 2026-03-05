@@ -6,7 +6,12 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Protocol
 
 from yakoon.base.models.stream import OutputStreaming
-from yakoon.base.stores.event.entity import PatchFormat, SnapshotHint
+from yakoon.base.stores.event.entity import (
+    IndexKey,
+    IndexValue,
+    PatchFormat,
+    SnapshotHint,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Mapping, Sequence
@@ -52,7 +57,8 @@ class PatchStrategy(Protocol):
     - replaying patches for historical get(at_time)
     """
 
-    format: PatchFormat
+    @property
+    def format(self) -> PatchFormat: ...
 
     def apply(self, current: JsonValue | None, patch: JsonValue) -> JsonValue:
         """
@@ -168,6 +174,19 @@ class EntityStore(Protocol):
         *,
         keys: Sequence[Key],
     ) -> list[GetResult]: ...
+
+    async def scan(
+        self,
+        *,
+        namespace: Namespace,
+        index_key: IndexKey,
+        value: IndexValue | None = None,
+        lo: IndexValue | None = None,
+        hi: IndexValue | None = None,
+        limit: int = 100,
+        prefix: str | None = None,
+        cursor: str | None = None,
+    ) -> tuple[list[Key], str | None]: ...
 
     async def gc(self, *, namespace: Namespace, policy: RetentionPolicy) -> None:
         """

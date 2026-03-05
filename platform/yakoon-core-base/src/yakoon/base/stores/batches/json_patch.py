@@ -18,7 +18,9 @@ class JsonPatchStrategy:
     RFC 6902 using the third-party 'jsonpatch' library.
     """
 
-    format: PatchFormat = PatchFormat.JSONPATCH
+    @property
+    def format(self) -> PatchFormat:
+        return PatchFormat.JSONPATCH
 
     # Optional: limit ops to keep CPU predictable
     max_ops: int = 50

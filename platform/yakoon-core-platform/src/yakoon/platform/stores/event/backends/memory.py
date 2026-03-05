@@ -332,13 +332,19 @@ class _MemoryTx(EntityStoreBackendTx):
             raise ValueError(f"unsupported scan mode: {mode}")
 
         gkey = (str(domain_id), str(kind_id), str(space_id), str(index_key))
+        sp = self._sp(domain_id=domain_id, kind_id=kind_id, space_id=space_id)
+        specs = self._b._index_specs.get(sp, {})
+        spec = specs.get(str(index_key))
+        if spec is None:
+            return []
+
         bucket = self._b._index_inv2.get(gkey)
         if not bucket:
             return []
 
         # normalize cursor
         after_value_norm = (
-            _norm_index_value(after_value) if after_value is not None else None
+            self._norm_value(spec, after_value) if after_value is not None else None
         )
         after_entity_id_norm = after_entity_id
 
@@ -348,7 +354,7 @@ class _MemoryTx(EntityStoreBackendTx):
         if mode == "eq":
             assert value is not None
 
-            vq = _norm_index_value(value)
+            vq = self._norm_value(spec, value)
 
             # cursor may already be past this bucket
             if after_value_norm is not None and after_value_norm > vq:
@@ -372,8 +378,8 @@ class _MemoryTx(EntityStoreBackendTx):
         # ------------------------
         # RANGE mode
         # ------------------------
-        lo_norm = _norm_index_value(lo) if lo is not None else None
-        hi_norm = _norm_index_value(hi) if hi is not None else None
+        lo_norm = self._norm_value(spec, lo) if lo is not None else None
+        hi_norm = self._norm_value(spec, hi) if hi is not None else None
 
         values = sorted(bucket.keys())
 
@@ -526,18 +532,5 @@ class _MemoryTx(EntityStoreBackendTx):
                 if not self._b._snapshots[k]:
                     self._b._snapshots.pop(k, None)
 
-
-def _norm_index_value(value: IndexValue) -> str:
-    if isinstance(value, bool):
-        return "1" if value else "0"
-    if isinstance(value, int):
-        # fixed width for correct lexical ordering if you want numeric range
-        # choose width big enough for your domain, or use signed prefix.
-        return f"i:{value:020d}"
-    if isinstance(value, float):
-        return f"f:{value:030.10f}"
-    if isinstance(value, str):
-        return f"s:{value}"
-    if value is None:
-        return "n:"
-    raise TypeError(f"Unsupported IndexValue: {type(value)}")
+    async def gc_global(self, *, policy: RetentionPolicy) -> None:
+        return None

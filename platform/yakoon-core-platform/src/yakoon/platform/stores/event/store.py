@@ -525,6 +525,10 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
         # type narrowing
         return [r for r in results if r is not None]
 
+    # ----------------------------
+    # scan
+    # ----------------------------
+
     async def scan(
         self,
         *,
@@ -582,7 +586,7 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
                 hi=hi,
                 after_value=after_value,
                 after_entity_id=after_entity_id,
-                as_of=as_of,  # NEW
+                as_of=as_of,
                 limit=limit,
             )
 
@@ -614,6 +618,10 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
 
         return keys, next_cursor
 
+    # ----------------------------
+    # maintenance
+    # ----------------------------
+
     async def gc(
         self,
         *,
@@ -629,6 +637,10 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
                 policy=policy,
                 now=_utc_now(),
             )
+
+    async def gc_global(self, *, policy: RetentionPolicy) -> None:
+        async with self._backend.transaction() as tx:
+            await tx.gc_global(policy=policy)
 
     # ----------------------------
     # Snapshot decision

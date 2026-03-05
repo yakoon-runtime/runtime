@@ -51,17 +51,17 @@ class AccountService:
         self, namespace: Namespace, username: str
     ) -> Account | None:
 
-        ids, _ = await self.store.query(
+        keys, _ = await self.store.scan(
             namespace=namespace,
             index_key=IDX_ACCOUNT_USERNAME_KEY,
             value=username,
             limit=1,
             cursor=None,
         )
-        if not ids:
+        if not keys:
             return None
 
-        row = await self.store.get_one(key=ids[0])
+        row = await self.store.get_one(key=keys[0])
         if row.data is None:
             return None
 

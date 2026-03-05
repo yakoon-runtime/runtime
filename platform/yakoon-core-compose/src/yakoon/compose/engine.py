@@ -36,7 +36,7 @@ from yakoon.platform.services.session import SessionService
 from yakoon.platform.services.shard import ShardAllocator, ShardedCounterService
 from yakoon.platform.services.stream import OutputStreamService
 from yakoon.platform.services.viewspec import ViewSpecService
-from yakoon.platform.stores.event.backend_memory import MemoryBackend
+from yakoon.platform.stores.event.backends.memory import MemoryBackend
 from yakoon.platform.stores.event.store import DefaultEntityStore
 from yakoon.platform.stores.factory import create_system_stores
 
@@ -238,7 +238,9 @@ def _compose_store() -> DefaultEntityStore:
     store = DefaultEntityStore(
         backend=backend,
         writer=patch,
-        readers=[patch],
+        readers={
+            patch.format: patch,
+        },
         # snapshot_policy=..., enable_revisions=True
     )
 

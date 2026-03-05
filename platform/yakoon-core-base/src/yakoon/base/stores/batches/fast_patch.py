@@ -28,7 +28,9 @@ class FastPatchStrategy:
       - 'unset' removes keys if present
     """
 
-    format: PatchFormat = PatchFormat.FASTPATCH
+    @property
+    def format(self) -> PatchFormat:
+        return PatchFormat.FASTPATCH
 
     max_set_keys: int = 200
     max_unset_keys: int = 200
