@@ -3,7 +3,6 @@ from __future__ import annotations
 from yakoon.base.models.key import Key
 from yakoon.base.runtime.session import Session, SessionState
 from yakoon.base.stores.event.entity import (
-    JsonValue,
     SnapshotHint,
 )
 from yakoon.platform.stores.event.store import EntityStore
@@ -72,16 +71,9 @@ class SessionService:
         state = SessionState(key=key, **kwargs)
         session = Session(state)
 
-        # Persist full state as a patch:
-        # We keep it simple: replace each top-level field via RFC6902 ops.
-        doc = state.to_dict()
-        patch: JsonValue = [
-            {"op": "add", "path": f"/{k}", "value": v} for k, v in doc.items()
-        ]
-
-        await self.store.put(
+        await self.store.put_doc(
             key=key,
-            patch=patch,
+            doc=state.to_dict(),
             snapshot_hint=SnapshotHint.COMMIT,
         )
 
@@ -91,14 +83,9 @@ class SessionService:
     async def save(self, session: Session) -> None:
         key = session.key
 
-        doc = session.state.to_dict()
-        patch: JsonValue = [
-            {"op": "add", "path": f"/{k}", "value": v} for k, v in doc.items()
-        ]
-
-        await self.store.put(
+        await self.store.put_doc(
             key=key,
-            patch=patch,
+            doc=session.state.to_dict(),
             snapshot_hint=SnapshotHint.COMMIT,
         )
 

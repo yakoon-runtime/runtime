@@ -73,17 +73,14 @@ class AccountService:
 
         doc: JsonValue = account.data.to_dict()
 
-        # simplest: full replace via RFC6902 root replace
-        patch: JsonValue = [{"op": "replace", "path": "", "value": doc}]
-
         # index-on-write: username
         username = doc.get("username")
         if not isinstance(username, str):
             raise TypeError("Account.username must be a string")
 
-        await self.store.put(
+        await self.store.put_doc(
             key=key,
-            patch=patch,
+            doc=doc,
             indexes=[IndexTerm(key=IDX_ACCOUNT_USERNAME_KEY, value=username)],
             snapshot_hint=SnapshotHint.COMMIT,
         )

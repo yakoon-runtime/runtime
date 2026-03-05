@@ -6,6 +6,7 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
 from yakoon.base.models.key import Key
@@ -34,10 +35,15 @@ class ConcurrencyError(RuntimeError):
     pass
 
 
+class ScanMode(StrEnum):
+    EQ = "eq"
+    RANGE = "range"
+
+
 @dataclass(frozen=True, slots=True)
 class ScanCursor:
     index_key: str
-    mode: str  # "eq" | "range"
+    mode: ScanMode
     value: Any
     entity_id: str
     asof: str  # ISO timestamp (UTC) (for freeze view)
@@ -486,12 +492,15 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
             for (domain_id, kind_id, space_id), items in groups.items():
 
                 eids = [eid for _, eid in items]
+                unique_eids = list(
+                    dict.fromkeys(eids)
+                )  # stable order, removes duplicates
 
                 rows = await tx.load_current_many(
                     domain_id=domain_id,
                     kind_id=kind_id,
                     space_id=space_id,
-                    entity_ids=eids,
+                    entity_ids=unique_eids,
                 )
 
                 for idx, eid in items:
@@ -533,7 +542,7 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
         kind_id = KindId(namespace.kind)
         space_id = SpaceId(namespace.space)
 
-        mode = "eq" if value is not None else "range"
+        mode = ScanMode.EQ if value is not None else ScanMode.RANGE
 
         after_value: IndexValue | None = None
         after_entity_id: EntityId | None = None
@@ -665,7 +674,7 @@ def encode_cursor(c: ScanCursor) -> str:
     raw = json.dumps(
         {
             "ik": c.index_key,
-            "m": c.mode,
+            "m": c.mode.value,
             "v": c.value,
             "id": c.entity_id,
             "asof": c.asof,
@@ -685,7 +694,7 @@ def decode_cursor(cursor: str) -> ScanCursor:
 
     return ScanCursor(
         index_key=str(obj["ik"]),
-        mode=str(obj["m"]),
+        mode=ScanMode(obj["m"]),
         value=obj.get("v"),
         entity_id=str(obj["id"]),
         asof=str(asof),

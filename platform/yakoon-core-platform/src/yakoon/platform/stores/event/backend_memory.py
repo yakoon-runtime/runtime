@@ -328,6 +328,9 @@ class _MemoryTx(EntityStoreBackendTx):
 
         rows: list[tuple[IndexValue, EntityId]] = []
 
+        if mode not in ("eq", "range"):
+            raise ValueError(f"unsupported scan mode: {mode}")
+
         gkey = (str(domain_id), str(kind_id), str(space_id), str(index_key))
         bucket = self._b._index_inv2.get(gkey)
         if not bucket:
