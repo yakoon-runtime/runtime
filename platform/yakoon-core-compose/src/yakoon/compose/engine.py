@@ -6,7 +6,6 @@ from yakoon.base.models.fields import FieldType
 from yakoon.base.models.ns import Namespace
 from yakoon.base.models.policy import FieldPolicy
 from yakoon.base.stores.base.registry import StoreRegistry
-from yakoon.base.stores.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.directories.controller import ControllerDirectory
 from yakoon.platform.engines.command.engine import Engine
 from yakoon.platform.engines.command.router import CommandDirectory
@@ -37,6 +36,7 @@ from yakoon.platform.services.shard import ShardAllocator, ShardedCounterService
 from yakoon.platform.services.stream import OutputStreamService
 from yakoon.platform.services.viewspec import ViewSpecService
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
+from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.stores.event.store import DefaultEntityStore
 from yakoon.platform.stores.factory import create_system_stores
 
