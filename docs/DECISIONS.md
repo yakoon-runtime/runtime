@@ -7,6 +7,48 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## 26-03-05
+**Einführung des Eventstores**
+Einführung eines eigenen EventStores, Dieser basiert auf:
+- Event-Sourcing light
+- Snapshots
+- Index-on-write
+- cursor-basierter Pagination
+- time-travel (as_of)
+- Backends Memory und später Postgres
+Entities werden eindeutig über vier Dimensionen adressiert:
+- (domain, kind, space, entity_id) ==> z.B: system / account / develop / 123
+Dabei werden folgende Tabellen verwendet:
+- Current Table - Materialisierter aktueller Zustand -> (entity_id, rev, data, updated_at)
+- Revisions - Append-only Änderungslog -> (entity_id, rev, ts, patch, patch_format)
+- Snapshots - Periodische Materialisierung für schnellen Replay. -> (entity_id, rev, ts, data)
+  Diese werden geschrieben: AUTO / COMMIT / NEVER
+Patch Strategy System: 
+- Patchstrategien sind austauschbar.
+- Der Store speichert zusätzlich: patch_format
+Scan API (Store) - der Store bietet:
+- scan()
+- Prefix wird im Store umgesetzt als:
+  - lo = prefix
+  - hi = prefix_end(prefix)
+- Scans können zeitlich eingefroren werden:
+  - scan(..., as_of=timestamp)
+  - Damit entstehen stabile paginierte Scans über historische Zustände.
+
+Zusammenfassung
+Der EventStore unterstützt bereits:
+- patch strategies
+- snapshots
+- revision log
+- index-on-write
+- prefix scans
+- range scans
+- equality scans
+- cursor pagination
+- freeze view (as_of)
+- get_many batching
+- MemoryBackend
+
 ## 26-02-27
 **Streaming**
 Die Architektur wurde von einer hybriden Rendering-Lösung (Snapshot + Streaming) 
