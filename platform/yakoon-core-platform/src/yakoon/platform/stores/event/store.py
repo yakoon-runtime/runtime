@@ -525,6 +525,7 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
         lo: IndexValue | None = None,
         hi: IndexValue | None = None,
         limit: int = 100,
+        prefix: str | None = None,
         cursor: str | None = None,
     ) -> tuple[list[Key], str | None]:
 
@@ -550,6 +551,15 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
             as_of = datetime.fromisoformat(c.asof)
         else:
             as_of = _utc_now()
+
+        if prefix is not None:
+            if value is not None:
+                raise ValueError("prefix and value are mutually exclusive")
+            if lo is not None or hi is not None:
+                raise ValueError("prefix and lo/hi are mutually exclusive")
+
+            lo = prefix
+            hi = prefix_end(prefix)
 
         async with self._backend.transaction() as tx:
             rows = await tx.index_scan(
@@ -653,22 +663,48 @@ class DefaultEntityStore(EntityStore, IndexRegistry):
 
 def encode_cursor(c: ScanCursor) -> str:
     raw = json.dumps(
-        {"ik": c.index_key, "m": c.mode, "v": c.value, "id": c.entity_id},
+        {
+            "ik": c.index_key,
+            "m": c.mode,
+            "v": c.value,
+            "id": c.entity_id,
+            "asof": c.asof,
+        },
         separators=(",", ":"),
     ).encode("utf-8")
-
     return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
 
 
 def decode_cursor(cursor: str) -> ScanCursor:
     pad = "=" * (-len(cursor) % 4)
     raw = base64.urlsafe_b64decode((cursor + pad).encode("ascii"))
-
     obj = json.loads(raw.decode("utf-8"))
+    asof = obj.get("asof")
+    if asof is None:
+        raise ValueError("cursor missing required field: asof")
 
     return ScanCursor(
-        index_key=obj["ik"],
-        mode=obj["m"],
-        value=obj["v"],
-        entity_id=obj["id"],
+        index_key=str(obj["ik"]),
+        mode=str(obj["m"]),
+        value=obj.get("v"),
+        entity_id=str(obj["id"]),
+        asof=str(asof),
     )
+
+
+def prefix_end(prefix: str) -> str | None:
+    """
+    Return the smallest string that is strictly greater than all strings
+    starting with `prefix`, under normal lexicographic ordering.
+    If no such string exists (all chars are max), return None (unbounded).
+    """
+    if prefix == "":
+        return None
+
+    chars = list(prefix)
+    for i in range(len(chars) - 1, -1, -1):
+        cp = ord(chars[i])
+        if cp < 0x10FFFF:
+            chars[i] = chr(cp + 1)
+            return "".join(chars[: i + 1])
+    return None
