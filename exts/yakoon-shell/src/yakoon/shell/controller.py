@@ -3,18 +3,15 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.controllers.base import BaseController
-from yakoon.base.resources.reference import ResourceReferences
+from yakoon.base.runtime.controllers import Controller
+from yakoon.base.runtime.controllers.resources import ResourceReferences
 from yakoon.shell.commands.core.cmdset import ShellSystemCommands
 
 if TYPE_CHECKING:
-    from yakoon.base.commands.command import Command
-    from yakoon.base.commands.commandset import CommandSet
-    from yakoon.base.commands.request import Request
-    from yakoon.base.runtime.session import Session
+    from yakoon.base.runtime import Command, CommandSet, Request, Session
 
 
-class ShellCoreController(BaseController):
+class ShellCoreController(Controller):
     """Core shell controller.
 
     This controller provides the default interactive shell environment:

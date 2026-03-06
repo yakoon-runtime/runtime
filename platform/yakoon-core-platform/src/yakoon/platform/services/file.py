@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 
 from yakoon.base.models.resource import _clean_rel
-from yakoon.base.resources.reference import ResourceRef
+from yakoon.base.runtime.controllers.resources import ResourceRef
 
 
 @dataclass(slots=True)

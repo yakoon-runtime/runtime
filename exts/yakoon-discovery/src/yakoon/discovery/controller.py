@@ -3,15 +3,15 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.controllers.base import BaseController
-from yakoon.base.resources.reference import ResourceReferences
+from yakoon.base.runtime.controllers import Controller
+from yakoon.base.runtime.controllers.resources import ResourceReferences
 from yakoon.discovery.commands.cmdset import DiscoveryLookupCommands
 
 if TYPE_CHECKING:
-    from yakoon.base.commands.commandset import CommandSet
+    from yakoon.base.runtime import CommandSet
 
 
-class DiscoveryController(BaseController):
+class DiscoveryController(Controller):
     """DiscoveryController controller."""
 
     id: str = "discovery"

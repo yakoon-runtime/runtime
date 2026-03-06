@@ -16,7 +16,7 @@ from yakoon.base.models.view import (
     PatchSpec,
     ViewSpec,
 )
-from yakoon.base.runtime.session.session import Session  # ggf. Pfad anpassen
+from yakoon.base.runtime.sessions.session import Session  # ggf. Pfad anpassen
 
 # -----------------------------
 # Effective config (policy + override)

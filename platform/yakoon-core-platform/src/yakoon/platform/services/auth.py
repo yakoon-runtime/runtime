@@ -1,7 +1,7 @@
-from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.account import Account, AuthResult
-from yakoon.base.models.ns import Namespace
 from yakoon.base.ports import AccountService, SecretVerifier
+from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.values.namespace import Namespace
 
 
 class AuthenticationService:

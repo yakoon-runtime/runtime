@@ -1,11 +1,12 @@
 from yakoon.base import ports
-from yakoon.base.controllers.base import BaseController
-from yakoon.base.directories.service import ServiceDirectory
+from yakoon.base.capabilities.presenters import PresenterService
 from yakoon.base.models.catalog import CommandInfo, ControllerInfo
 from yakoon.base.models.fields import FieldType
-from yakoon.base.models.ns import Namespace
 from yakoon.base.models.policy import FieldPolicy
-from yakoon.base.stores.base.registry import StoreRegistry
+from yakoon.base.runtime.controllers.controller import Controller
+from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.values.namespace import Namespace
+from yakoon.platform.capabilities.presenters import DefaultPresenterService
 from yakoon.platform.directories.controller import ControllerDirectory
 from yakoon.platform.engines.command.engine import Engine
 from yakoon.platform.engines.command.router import CommandDirectory
@@ -28,17 +29,14 @@ from yakoon.platform.services.lookup import NoLookupResolverService
 from yakoon.platform.services.namespace import NamespaceService
 from yakoon.platform.services.perm import PermissionService
 from yakoon.platform.services.policy import PolicyService
-from yakoon.platform.services.presenter import PresenterService
 from yakoon.platform.services.queue import CommandQueueService
 from yakoon.platform.services.render import RendererService
 from yakoon.platform.services.session import SessionService
-from yakoon.platform.services.shard import ShardAllocator, ShardedCounterService
 from yakoon.platform.services.stream import OutputStreamService
 from yakoon.platform.services.viewspec import ViewSpecService
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
 from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.stores.event.store import DefaultEntityStore
-from yakoon.platform.stores.factory import create_system_stores
 
 
 def compose_engine(*, plugin_modules: list[str]) -> Engine:
@@ -49,7 +47,7 @@ def compose_engine(*, plugin_modules: list[str]) -> Engine:
 
     loaded = PluginManager(bootstrap).load(plugin_modules)
 
-    controllers: list[BaseController] = []
+    controllers: list[Controller] = []
     for lp in loaded:
         # export.public_services are registered globally (root service directory)
         for port_type in lp.export.public_services:
@@ -71,7 +69,6 @@ def compose_engine(*, plugin_modules: list[str]) -> Engine:
     _compose_services(
         bootstrap,
         store,
-        create_system_stores("memory", db_path="db/gateway.sqlite3.db"),
         controller_catalog,
         command_catalog,
     )
@@ -174,7 +171,6 @@ def _compose_commands(
 def _compose_services(
     services: ServiceDirectory,
     store: DefaultEntityStore,
-    stores: StoreRegistry,
     controller_catalog: ControllerCatalog,
     command_catalog: CommandCatalog,
 ) -> ServiceDirectory:
@@ -184,7 +180,7 @@ def _compose_services(
     services.register_static(ports.NamespaceService, NamespaceService())
     services.register_static(ports.SessionService, SessionService(store))
     services.register_static(ports.CommandQueueService, CommandQueueService())
-    services.register_static(ports.PresenterService, PresenterService(services))
+    services.register_static(PresenterService, DefaultPresenterService(services))
     services.register_static(ports.AccountService, AccountService(store))
     services.register_static(ports.SecretVerifier, ZeroSecretVerifier())
     services.register_static(ports.PermissionService, PermissionService())
@@ -210,10 +206,10 @@ def _compose_services(
         services.register_static(ports.LookupResolverService, NoLookupResolverService())
 
     # counters / sharding
-    services.register_static(
-        ports.ShardedCounterService,
-        ShardedCounterService(ShardAllocator(stores.counters)),
-    )
+    # services.register_static(
+    #    ports.ShardedCounterService,
+    #    ShardedCounterService(ShardAllocator(stores.counters)),
+    # )
 
     # catalogs (info-only surface)
     services.register_static(

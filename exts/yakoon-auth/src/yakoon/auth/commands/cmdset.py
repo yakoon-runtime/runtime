@@ -2,8 +2,7 @@ from collections.abc import Sequence
 
 from yakoon.auth.commands.cmd_su import CmdSu
 from yakoon.auth.commands.cmd_whoami import CmdWhoAmI
-from yakoon.base.commands.command import Command
-from yakoon.base.commands.commandset import CommandSet
+from yakoon.base.runtime import Command, CommandSet
 
 
 class AuthSystemCommands(CommandSet):

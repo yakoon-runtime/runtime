@@ -1,8 +1,8 @@
 import time
 
-from yakoon.base.commands.request import Request
-from yakoon.base.directories.service import ServiceDirectory
-from yakoon.base.runtime.session import Session
+from yakoon.base.runtime import Session
+from yakoon.base.runtime.commands import Request
+from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.discovery import ports as disc_ports
 from yakoon.discovery.models.discovery import Candidates, Resolved
 from yakoon.discovery.models.lookup import LookupCandidatesPayload

@@ -1,4 +1,0 @@
-{%- if section.key == "show" %}
-Aktuelle Spielzeit:
-{{ section.data.season.name }} – {{ section.data.time }} – Phase: {{ section.data.phase.name }}
-{%- endif %}

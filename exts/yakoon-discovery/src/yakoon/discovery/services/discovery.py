@@ -1,5 +1,5 @@
-from yakoon.base.commands.request import Request
-from yakoon.base.runtime.session.session import Session
+from yakoon.base.runtime.commands import Request
+from yakoon.base.runtime.sessions.session import Session
 from yakoon.discovery.models.discovery import DiscoveryResult, NoMatch
 from yakoon.discovery.ports import DiscoveryStrategy
 

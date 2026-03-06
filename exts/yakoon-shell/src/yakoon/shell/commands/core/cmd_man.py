@@ -1,14 +1,11 @@
-from yakoon.base.commands.command import Command
-from yakoon.base.commands.request import Request
+from yakoon.base.capabilities.presenters.port import PresenterService
 from yakoon.base.models.catalog import CommandInfo
-from yakoon.base.models.command import CommandScope
 from yakoon.base.ports import (
     CommandCatalogService,
     ControllerCatalogService,
-    PresenterService,
 )
-from yakoon.base.resources.reference import resolve_resource
-from yakoon.base.runtime.session import Session
+from yakoon.base.runtime import Command, CommandScope, Request, Session
+from yakoon.base.runtime.controllers import resolve_resource
 
 
 class CmdMan(Command):

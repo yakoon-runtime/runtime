@@ -3,8 +3,8 @@ from __future__ import annotations
 import yaml
 
 from yakoon.base import ports
-from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.view import ViewSpec
+from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.platform.runtime.render.context import RenderContext
 
 

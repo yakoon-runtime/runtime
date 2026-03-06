@@ -4,11 +4,10 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
 from yakoon.base import ports
-from yakoon.base.directories.service import ServiceDirectory
+from yakoon.base.runtime.services import ServiceDirectory
 
 if TYPE_CHECKING:
-    from yakoon.base.commands.command import Command
-    from yakoon.base.commands.commandset import CommandSet
+    from yakoon.base.runtime import Command, CommandSet
 
 
 class CommandDirectory:

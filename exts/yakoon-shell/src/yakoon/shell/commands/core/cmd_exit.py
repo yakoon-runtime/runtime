@@ -1,8 +1,5 @@
-from yakoon.base.commands.command import Command
-from yakoon.base.commands.request import Request
-from yakoon.base.models.command import CommandScope
 from yakoon.base.ports import ControllerCatalogService, SessionService
-from yakoon.base.runtime.session import Session
+from yakoon.base.runtime import Command, CommandScope, Request, Session
 
 
 class CmdExit(Command):

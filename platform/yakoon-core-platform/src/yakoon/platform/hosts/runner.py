@@ -4,10 +4,10 @@ from dataclasses import dataclass
 
 from yakoon.base import ports
 from yakoon.base.models.input import CommandDispatch, ResolveDispatch
-from yakoon.base.runtime.session.session import Session
-from yakoon.base.utils.format import format_ps1
+from yakoon.base.runtime.sessions.session import Session
 from yakoon.platform.engines.command.engine import Engine
 from yakoon.platform.hosts.adapter import HostAdapter
+from yakoon.platform.hosts.format import format_ps1
 
 
 @dataclass

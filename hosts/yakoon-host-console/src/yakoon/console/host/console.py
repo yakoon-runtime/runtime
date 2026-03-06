@@ -3,8 +3,8 @@ import asyncio
 from collections.abc import Awaitable, Callable
 
 from yakoon.base.models.view import ViewSpec
-from yakoon.base.utils.input import safe_input, safe_input_secret
 from yakoon.platform.hosts.adapter import FormInput, HostAdapter, InputEvent, TextInput
+from yakoon.platform.hosts.input import safe_input, safe_input_secret
 
 
 class ConsoleHost(HostAdapter):

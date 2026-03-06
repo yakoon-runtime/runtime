@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from yakoon.base import ports
-from yakoon.base.commands.request import Request
-from yakoon.base.directories.service import ServiceDirectory
-from yakoon.base.resources.reference import resolve_resource
-from yakoon.base.runtime.session import Session
+from yakoon.base.runtime.commands import Request
+from yakoon.base.runtime.controllers import resolve_resource
+from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.discovery import ports as disc_ports
 from yakoon.discovery.models.discovery import (
     Candidates,

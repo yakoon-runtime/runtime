@@ -339,7 +339,7 @@ Permissions werden als Unix-Rechte umgesetzt: rx (read/execute). Das vorherige K
 
 ## [2026-00-04]
 **Hooks in Controller**
-Die Hooks in Controllern wurden reduziert. Auch wurden alle Hooks aus dem BaseController entfernt, die nur von der Shell genutzt wurden. Das System (Engine) macht nun zwischen Controllern keinen Unterschied mehr.
+Die Hooks in Controllern wurden reduziert. Auch wurden alle Hooks aus dem Controller entfernt, die nur von der Shell genutzt wurden. Das System (Engine) macht nun zwischen Controllern keinen Unterschied mehr.
 
 ## [2026-02-04]
 **IdentityMapService**

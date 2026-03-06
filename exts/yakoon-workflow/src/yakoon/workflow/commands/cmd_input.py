@@ -1,8 +1,7 @@
 from yakoon.base import ports as base_ports
-from yakoon.base.commands.command import Command, CommandVisibility
-from yakoon.base.commands.request import Request
-from yakoon.base.models.command import CommandKind, CommandScope
-from yakoon.base.runtime.session.session import Session
+from yakoon.base.runtime import Command, CommandVisibility, Request
+from yakoon.base.runtime.commands import CommandKind, CommandScope
+from yakoon.base.runtime.sessions.session import Session
 from yakoon.workflow import ports as wf_ports
 
 

@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from yakoon.base.controllers.base import BaseController
+from yakoon.base.runtime.controllers import Controller
 
 
 class ControllerDirectory:
@@ -24,9 +24,9 @@ class ControllerDirectory:
         command handling.
         """
 
-        self._controllers: dict[str, BaseController] = {}
+        self._controllers: dict[str, Controller] = {}
 
-    def register(self, controllers: list[BaseController]):
+    def register(self, controllers: list[Controller]):
         has_shell, shell_id = False, None
         for controller in controllers:
             if controller.id in self._controllers:
@@ -45,12 +45,12 @@ class ControllerDirectory:
         if not has_shell:
             raise ValueError("No shell controller found")
 
-    def find_shell(self) -> BaseController | None:
+    def find_shell(self) -> Controller | None:
         for controller in self._controllers.values():
             if controller.is_shell:
                 return controller
 
-    def get(self, controller_id: str) -> BaseController | None:
+    def get(self, controller_id: str) -> Controller | None:
         """
         Resolves and returns a domain controller by its unique ID.
 
@@ -58,17 +58,17 @@ class ControllerDirectory:
             id (str): The identifier of the domain controller (e.g. 'shell', 'office').
 
         Returns:
-            BaseController: The matching controller instance.
+            Controller: The matching controller instance.
         """
 
         return self._controllers.get(controller_id)
 
-    def get_all(self) -> Sequence[BaseController]:
+    def get_all(self) -> Sequence[Controller]:
         """
         Returns all registered domain controllers.
 
         Returns:
-            list[BaseController]: A list of all available domain controllers.
+            list[Controller]: A list of all available domain controllers.
         """
 
         return list(self._controllers.values())

@@ -1,6 +1,6 @@
 from yakoon.base import ports as base_ports
-from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.plugins.plugin import PluginExport, PluginMeta
+from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.discovery import ports
 from yakoon.discovery.controller import DiscoveryController
 from yakoon.discovery.services.candidate import LookupCandidateStoreService

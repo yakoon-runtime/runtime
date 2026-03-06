@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 
-from yakoon.base.commands.command import Command
-from yakoon.base.commands.commandset import CommandSet
+from yakoon.base.runtime import Command, CommandSet
 from yakoon.shell.commands.core.cmd_exit import CmdExit
 from yakoon.shell.commands.core.cmd_man import CmdMan
 from yakoon.shell.commands.core.cmd_quit import CmdQuit

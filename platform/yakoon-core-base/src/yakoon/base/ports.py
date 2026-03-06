@@ -16,23 +16,20 @@ from yakoon.base.stores.event.entity import (
 if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Mapping, Sequence
 
-    from yakoon.base.commands.request import Request
+    from yakoon.base.capabilities.presenters import PromptResult
     from yakoon.base.models.account import Account, AuthResult
     from yakoon.base.models.catalog import CommandInfo, ControllerInfo
-    from yakoon.base.models.command import CommandKind
     from yakoon.base.models.input import DispatchInput
-    from yakoon.base.models.key import Key
-    from yakoon.base.models.ns import Namespace
     from yakoon.base.models.policy import (
         FieldPolicy,
         PolicyValidationResult,
         RawValue,
     )
-    from yakoon.base.models.prompt import PromptResult
     from yakoon.base.models.view import ViewSpec
     from yakoon.base.plugins.plugin import PluginMeta
-    from yakoon.base.resources.reference import ResourceRef
-    from yakoon.base.runtime.session.session import Session
+    from yakoon.base.runtime.commands import CommandKind, Request
+    from yakoon.base.runtime.controllers.resources import ResourceRef
+    from yakoon.base.runtime.sessions.session import Session
     from yakoon.base.stores.event.entity import (
         GetResult,
         IndexSpec,
@@ -42,6 +39,8 @@ if TYPE_CHECKING:
         RetentionPolicy,
         SnapshotHint,
     )
+    from yakoon.base.values.key import Key
+    from yakoon.base.values.namespace import Namespace
     from yakoon.platform.runtime.render.context import RenderContext
 
 
@@ -460,31 +459,6 @@ class OutputStreamService(Protocol):
         *,
         override: OutputStreaming | None = None,
     ) -> None: ...
-
-
-class PresenterViews(Protocol):
-
-    async def emit(
-        self,
-        state: str,
-        *,
-        stream: OutputStreaming | None = None,
-        **data,
-    ) -> None: ...
-
-
-class PresenterInputs(Protocol):
-    async def ask(self, state: str, **data) -> PromptResult: ...
-
-
-class PresenterService(Protocol):
-    async def create_presenter(self, resource: ResourceRef, session) -> Presenter: ...
-
-
-class Presenter(Protocol):
-
-    inputs: PresenterInputs
-    views: PresenterViews
 
 
 class IO(Protocol):

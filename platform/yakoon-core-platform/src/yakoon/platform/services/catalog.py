@@ -3,13 +3,12 @@ from __future__ import annotations
 from collections.abc import Iterable, Sequence
 
 from yakoon.base import ports
-from yakoon.base.commands.command import CommandKind, CommandVisibility
-from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.catalog import CommandInfo, ControllerInfo
-from yakoon.base.models.command import CommandScope
 from yakoon.base.models.perm import Permission
 from yakoon.base.ports import PermissionService
-from yakoon.base.runtime.session.session import Session
+from yakoon.base.runtime import CommandKind, CommandScope, CommandVisibility
+from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions.session import Session
 
 
 class CommandCatalog:

@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from yakoon.base.models.key import Key
+from yakoon.base.values.key import Key
 
 
 @dataclass
@@ -51,9 +51,7 @@ class AccountData:
             "permissions": list(self.permissions),
             "is_disabled": self.is_disabled,
             "last_login": (
-                self.last_login.astimezone(UTC).isoformat()
-                if self.last_login
-                else None
+                self.last_login.astimezone(UTC).isoformat() if self.last_login else None
             ),
             "data": dict(self.data),
         }

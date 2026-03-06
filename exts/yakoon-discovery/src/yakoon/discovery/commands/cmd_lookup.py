@@ -1,9 +1,12 @@
 from __future__ import annotations
 
-from yakoon.base.commands.command import Command
-from yakoon.base.commands.request import Request
-from yakoon.base.models.command import CommandScope, CommandVisibility
-from yakoon.base.runtime.session import Session
+from yakoon.base.runtime import (
+    Command,
+    CommandScope,
+    CommandVisibility,
+    Request,
+    Session,
+)
 from yakoon.discovery import ports
 
 

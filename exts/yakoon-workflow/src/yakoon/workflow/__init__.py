@@ -1,6 +1,6 @@
 from yakoon.base import ports as base_ports
-from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.plugins.plugin import PluginExport, PluginMeta
+from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.workflow import ports as wf_ports
 from yakoon.workflow.controller import WorkflowController
 from yakoon.workflow.services.compile import WorkflowCompileService

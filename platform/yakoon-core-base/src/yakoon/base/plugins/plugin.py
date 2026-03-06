@@ -4,8 +4,8 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from yakoon.base.controllers.base import BaseController
-    from yakoon.base.directories.service import ServiceDirectory
+    from yakoon.base.runtime.controllers import Controller
+    from yakoon.base.runtime.services import ServiceDirectory
 
 
 @dataclass(frozen=True)
@@ -18,7 +18,7 @@ class PluginMeta:
 @dataclass(frozen=True)
 class PluginExport:
     meta: PluginMeta
-    controllers: list[type[BaseController]]
+    controllers: list[type[Controller]]
     public_services: list[type[Any]] = field(default_factory=list)
 
 

@@ -5,8 +5,8 @@ from typing import Any
 from uuid import uuid4
 
 from yakoon.base import ports as base_ports
-from yakoon.base.directories.service import ServiceDirectory
-from yakoon.base.resources.reference import resolve_resource
+from yakoon.base.runtime.controllers import resolve_resource
+from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.workflow import ports as wf_ports
 from yakoon.workflow.models.workflow import (
     WorkflowDef,

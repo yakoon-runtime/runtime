@@ -4,7 +4,7 @@ from collections.abc import Iterable
 
 from yakoon.base.models.account import Account
 from yakoon.base.models.perm import PermBit, PermBits, Permission, PermissionSet
-from yakoon.base.runtime.session.session import Session
+from yakoon.base.runtime.sessions.session import Session
 
 
 class PermissionService:

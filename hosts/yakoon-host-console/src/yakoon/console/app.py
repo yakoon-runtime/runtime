@@ -1,7 +1,7 @@
 import asyncio
 
 from yakoon.base import ports
-from yakoon.base.models.key import Key
+from yakoon.base.values.key import Key
 from yakoon.compose.demo_data import seed_demo_system_data
 from yakoon.compose.engine import compose_engine, initialize_storage
 from yakoon.console.host.console import ConsoleHost

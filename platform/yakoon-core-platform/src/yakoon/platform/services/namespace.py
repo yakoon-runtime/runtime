@@ -1,5 +1,5 @@
-from yakoon.base.models.ns import Namespace
-from yakoon.base.runtime.session import Session
+from yakoon.base.runtime import Session
+from yakoon.base.values.namespace import Namespace
 
 
 class NamespaceService:

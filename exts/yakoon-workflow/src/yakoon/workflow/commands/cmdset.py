@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 
-from yakoon.base.commands.command import Command
-from yakoon.base.commands.commandset import CommandSet
+from yakoon.base.runtime import Command, CommandSet
 from yakoon.workflow.commands.cmd_cancel import CmdWfCancel
 from yakoon.workflow.commands.cmd_input import CmdWfInput
 from yakoon.workflow.commands.cmd_next import CmdWfNext

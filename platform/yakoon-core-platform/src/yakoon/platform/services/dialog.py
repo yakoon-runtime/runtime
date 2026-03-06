@@ -2,9 +2,9 @@ import asyncio
 from collections.abc import Awaitable, Callable
 
 from yakoon.base.models.view import ViewSpec
-from yakoon.base.runtime.devtools.prompt import UnresolvedPromptMonitor
-from yakoon.base.runtime.session.session import Session
-from yakoon.base.runtime.session.views import v_error
+from yakoon.base.runtime.sessions.session import Session
+from yakoon.base.runtime.sessions.views import v_error
+from yakoon.platform.runtime.devtools.prompt import UnresolvedPromptMonitor
 from yakoon.platform.settings import settings
 
 

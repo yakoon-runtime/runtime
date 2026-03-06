@@ -3,11 +3,11 @@ from __future__ import annotations
 from dataclasses import replace
 
 from yakoon.base import ports
-from yakoon.base.directories.service import ServiceDirectory
-from yakoon.base.models.prompt import PromptResult
+from yakoon.base.capabilities.presenters import PromptResult
 from yakoon.base.models.view import ViewSpec
-from yakoon.base.runtime.session.session import Session
-from yakoon.base.runtime.session.views import v_error
+from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions.session import Session
+from yakoon.base.runtime.sessions.views import v_error
 from yakoon.platform.settings import settings
 
 

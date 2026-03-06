@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from yakoon.base import ports
-from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.models.account import Account, AccountData
-from yakoon.base.models.key import Key
-from yakoon.base.models.ns import Namespace
+from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.values.key import Key
+from yakoon.base.values.namespace import Namespace
 
 
 async def seed_demo_system_data(

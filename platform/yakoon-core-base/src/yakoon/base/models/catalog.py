@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 
-from yakoon.base.models.command import (
+from yakoon.base.runtime.commands import (
     CommandKind,
     CommandScope,
     CommandVisibility,
 )
-from yakoon.base.resources.reference import ResourceReferences
+from yakoon.base.runtime.controllers.resources import ResourceReferences
 
 
 @dataclass(frozen=True, slots=True)

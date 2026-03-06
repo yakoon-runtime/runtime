@@ -1,7 +1,6 @@
 from collections.abc import Sequence
 
-from yakoon.base.commands.command import Command
-from yakoon.base.commands.commandset import CommandSet
+from yakoon.base.runtime import Command, CommandSet
 from yakoon.discovery.commands.cmd_lookup import CmdLookup
 
 

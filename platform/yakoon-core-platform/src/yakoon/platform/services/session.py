@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from yakoon.base.models.key import Key
-from yakoon.base.runtime.session import Session, SessionState
+from yakoon.base.runtime.sessions import Session, SessionState
 from yakoon.base.stores.event.entity import (
     SnapshotHint,
 )
+from yakoon.base.values.key import Key
 from yakoon.platform.stores.event.store import EntityStore
 
 

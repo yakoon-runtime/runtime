@@ -4,14 +4,14 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from yakoon.auth.commands.cmdset import AuthSystemCommands
-from yakoon.base.controllers.base import BaseController
-from yakoon.base.resources.reference import ResourceReferences
+from yakoon.base.runtime.controllers import Controller
+from yakoon.base.runtime.controllers.resources import ResourceReferences
 
 if TYPE_CHECKING:
-    from yakoon.base.commands.commandset import CommandSet
+    from yakoon.base.runtime import CommandSet
 
 
-class AuthCoreController(BaseController):
+class AuthCoreController(Controller):
     """Authentication controller.
 
     Provides:

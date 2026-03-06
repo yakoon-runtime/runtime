@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from yakoon.base.models.account import Account, AccountData
-from yakoon.base.models.key import Key
-from yakoon.base.models.ns import Namespace
 from yakoon.base.ports import IndexRegistry
 from yakoon.base.stores.event.entity import (
     IndexKey,
@@ -12,6 +10,8 @@ from yakoon.base.stores.event.entity import (
     SnapshotHint,
     ValueType,
 )
+from yakoon.base.values.key import Key
+from yakoon.base.values.namespace import Namespace
 from yakoon.platform.stores.event.store import EntityStore
 
 

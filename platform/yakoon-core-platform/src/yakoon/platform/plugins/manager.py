@@ -1,8 +1,8 @@
 import importlib
 
 from yakoon.base import ports
-from yakoon.base.directories.service import ServiceDirectory
 from yakoon.base.plugins.plugin import LoadedPlugin, PluginExport
+from yakoon.base.runtime.services import ServiceDirectory
 
 
 class PluginManager:
