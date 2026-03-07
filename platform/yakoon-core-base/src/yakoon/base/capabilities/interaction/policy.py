@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, replace
 from typing import Any, TypeAlias
 
-from yakoon.base.models.fields import FieldType
+from yakoon.base.ui import FieldType
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,7 +18,7 @@ class FieldPolicy:
     options: list[dict] | None = None
     validators: tuple[str, ...] = ()
 
-    def fork(self, **changes) -> "FieldPolicy":
+    def fork(self, **changes) -> FieldPolicy:
         return replace(self, **changes)
 
 

@@ -7,7 +7,7 @@ from yakoon.base.runtime.controllers.resources import ResourceRef
 
 
 @dataclass(slots=True)
-class FileLoader:
+class FileLoader:  ## ==> ResourceLoader / package loader?
     """
     Generic loader for any resource under a package.
 

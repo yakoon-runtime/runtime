@@ -6,7 +6,12 @@ from yakoon.base.capabilities.identity import (
     PermissionService,
     SecretVerifier,
 )
-from yakoon.base.capabilities.interaction import DialogService, InputService
+from yakoon.base.capabilities.interaction import (
+    DialogService,
+    FieldPolicy,
+    InputService,
+    PolicyService,
+)
 from yakoon.base.capabilities.presenters import PresenterService
 from yakoon.base.catalogs import (
     CommandCatalog,
@@ -18,12 +23,10 @@ from yakoon.base.catalogs import (
 )
 from yakoon.base.engine import CommandQueueService
 from yakoon.base.ids import NamespaceService
-from yakoon.base.models.fields import FieldType
-from yakoon.base.models.policy import FieldPolicy
-from yakoon.base.runtime.controllers.controller import Controller
+from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.runtime.sessions.port import SessionService
-from yakoon.base.ui.port import ViewSpecParser
+from yakoon.base.ui import FieldType, ViewSpecParser
 from yakoon.base.values import Namespace
 from yakoon.platform.capabilities.audit import DefaultAuditLogService
 from yakoon.platform.capabilities.identity import (
@@ -32,8 +35,11 @@ from yakoon.platform.capabilities.identity import (
     DefaultPermissionService,
     DefaultZeroSecretVerifier,
 )
-from yakoon.platform.capabilities.interaction.dialog_service import DefaultDialogService
-from yakoon.platform.capabilities.interaction.input_service import DefaultInputService
+from yakoon.platform.capabilities.interaction import (
+    DefaultDialogService,
+    DefaultInputService,
+    DefaultPolicyService,
+)
 from yakoon.platform.capabilities.presenters import DefaultPresenterService
 from yakoon.platform.catalogs import (
     DefaultCommandCatalogService,
@@ -52,7 +58,6 @@ from yakoon.platform.runtime import DefaultSessionService
 from yakoon.platform.runtime.render.jinja.engine import JinjaRenderer
 from yakoon.platform.services.file import FileLoader
 from yakoon.platform.services.lookup import NoLookupResolverService
-from yakoon.platform.services.policy import PolicyService
 from yakoon.platform.services.render import RendererService
 from yakoon.platform.services.stream import OutputStreamService
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
@@ -122,7 +127,7 @@ def _compose_permission_roles(services: ServiceDirectory):
 
 
 def _compose_policies(services: ServiceDirectory):
-    policy = services.get(ports.PolicyService)
+    policy = services.get(PolicyService)
     policy.register_defaults()
     policy.register_policies(
         [
@@ -207,7 +212,7 @@ def _compose_services(
     services.register_static(SecretVerifier, DefaultZeroSecretVerifier())
     services.register_static(PermissionService, DefaultPermissionService())
     services.register_static(DialogService, DefaultDialogService())
-    services.register_static(ports.PolicyService, PolicyService())
+    services.register_static(PolicyService, DefaultPolicyService())
     services.register_static(InputService, DefaultInputService(services))
     services.register_static(ViewSpecParser, DefaultViewSpecParser())
     services.register_static(ports.FileLoader, FileLoader())

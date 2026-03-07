@@ -12,13 +12,8 @@ from yakoon.base.stores.event.entity import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sequence
+    from collections.abc import Mapping, Sequence
 
-    from yakoon.base.models.policy import (
-        FieldPolicy,
-        PolicyValidationResult,
-        RawValue,
-    )
     from yakoon.base.plugins.plugin import PluginMeta
     from yakoon.base.runtime.commands import Request
     from yakoon.base.runtime.controllers.resources import ResourceRef
@@ -267,16 +262,6 @@ class WorkflowInternal(Protocol):
     ) -> None: ...
 
     def cancel_batch(self, session: Session, *, batch_id: str) -> None: ...
-
-
-class PolicyService(Protocol):
-    def register_policy(self, policy: FieldPolicy) -> None: ...
-    def register_policies(self, policies: list[FieldPolicy]) -> None: ...
-    def get_policy(self, key: str) -> FieldPolicy: ...
-    def register_validator(self, key: str, fn) -> None: ...
-    def get_validator(self, key: str) -> Callable: ...
-    def register_defaults(self) -> None: ...
-    def validate(self, *, policy_key: str, raw: RawValue) -> PolicyValidationResult: ...
 
 
 class RendererService(Protocol):

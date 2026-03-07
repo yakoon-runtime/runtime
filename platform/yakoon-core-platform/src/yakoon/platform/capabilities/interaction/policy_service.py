@@ -1,19 +1,19 @@
 import re
 from collections.abc import Callable
 
-from yakoon.base.models.fields import FieldType, SecretValue
-from yakoon.base.models.policy import (
+from yakoon.base.capabilities.interaction import (
     FieldPolicy,
     PolicyValidationError,
     PolicyValidationResult,
     RawValue,
 )
+from yakoon.base.ui import FieldType, SecretValue
 
 
-class PolicyService:
+class DefaultPolicyService:
     def __init__(self):
         self._policies: dict[str, FieldPolicy] = {}
-        self._validators: dict[str, callable] = {}
+        self._validators: dict[str, Callable] = {}
 
     def register_policy(self, policy: FieldPolicy) -> None:
         self._policies[policy.key] = policy
@@ -59,7 +59,9 @@ class PolicyService:
         if pol.required and raw_str == "":
             return PolicyValidationResult(
                 ok=False,
-                errors=(PolicyValidationError("", "Wert ist erforderlich."),),
+                errors=[
+                    PolicyValidationError("", "Wert ist erforderlich."),
+                ],
             )
 
         if raw_str == "":
@@ -70,14 +72,18 @@ class PolicyService:
         except ValueError as e:
             return PolicyValidationResult(
                 ok=False,
-                errors=(PolicyValidationError("", str(e)),),
+                errors=[
+                    PolicyValidationError("", str(e)),
+                ],
             )
 
         if pol.pattern:
             if not re.fullmatch(pol.pattern, str(coerced)):
                 return PolicyValidationResult(
                     ok=False,
-                    errors=(PolicyValidationError("", "Ungültiges Format."),),
+                    errors=[
+                        PolicyValidationError("", "Ungültiges Format."),
+                    ],
                 )
 
         return PolicyValidationResult(

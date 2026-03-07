@@ -1,6 +1,7 @@
 from .blocks import Block
 from .defs.field_def import ViewFieldDef
 from .defs.input_def import ViewInputDef
+from .fields import FieldType, SecretValue, SelectOption
 from .output_spec import OutputSpec
 from .patch_spec import (
     PatchAppendBlock,
@@ -15,8 +16,9 @@ from .view_spec import ViewMeta, ViewMode, ViewSpec, ViewUI
 from .views import v_error, v_info, v_text
 
 __all__ = [
-    "ViewSpecParser",
     "Block",
+    "FieldType",
+    "ViewSpecParser",
     "ViewFieldDef",
     "ViewInputDef",
     "OutputSpec",
@@ -26,6 +28,8 @@ __all__ = [
     "PatchOp",
     "PatchReset",
     "PatchSpec",
+    "SecretValue",
+    "SelectOption",
     "ViewMeta",
     "ViewMode",
     "ViewSpec",
