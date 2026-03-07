@@ -2,17 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from yakoon.base import ports
-from yakoon.base.models.input import CommandDispatch, ResolveDispatch
+from yakoon.base.capabilities.interaction import DialogService
+from yakoon.base.engine import CommandDispatch, CommandQueueService, ResolveDispatch
 from yakoon.base.runtime.sessions.session import Session
-from yakoon.platform.engines.command.engine import Engine
+from yakoon.platform.engine import CommandEngine
 from yakoon.platform.hosts.adapter import HostAdapter
 from yakoon.platform.hosts.format import format_ps1
 
 
 @dataclass
 class Runner:
-    engine: Engine
+    engine: CommandEngine
     session: Session
     host: HostAdapter
 
@@ -32,8 +32,8 @@ class Runner:
         await self.drive()
 
     async def drive(self, *, commands: list[str] | None = None) -> None:
-        dialogs = self.engine.services.get(ports.DialogService)
-        queue = self.engine.services.get(ports.CommandQueueService)
+        dialogs = self.engine.services.get(DialogService)
+        queue = self.engine.services.get(CommandQueueService)
 
         if commands:
             queue.enqueue_commands(self.session, commands)

@@ -1,9 +1,9 @@
 from collections import deque
 
-from yakoon.base.models.input import CommandDispatch, DispatchInput
+from yakoon.base.engine.types import CommandDispatch, DispatchInput
 
 
-class CommandQueueService:
+class DefaultCommandQueueService:
     """
     Session-scoped command queue used to schedule follow-up commands.
 

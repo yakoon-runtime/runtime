@@ -8,10 +8,11 @@ from .commands import (
     CommandVisibility,
     Request,
 )
-from .sessions import Session
+from .sessions import Session, SessionService
 
 __all__ = [
     "Session",
+    "SessionService",
     "Request",
     "CommandContext",
     "CmdNotFound",

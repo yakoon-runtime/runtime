@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.models.stream import OutputStreamPolicy
-from yakoon.base.models.view import ViewSpec
+from yakoon.base.ui import ViewSpec
 from yakoon.base.values import Key
 
 if TYPE_CHECKING:

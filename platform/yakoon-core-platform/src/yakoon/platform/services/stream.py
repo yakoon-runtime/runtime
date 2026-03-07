@@ -8,7 +8,8 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from yakoon.base.models.stream import OutputStreaming, OutputStreamPolicy
-from yakoon.base.models.view import (
+from yakoon.base.runtime.sessions import Session  # ggf. Pfad anpassen
+from yakoon.base.ui import (
     PatchAppendBlock,
     PatchAppendChild,
     PatchAppendText,
@@ -16,7 +17,6 @@ from yakoon.base.models.view import (
     PatchSpec,
     ViewSpec,
 )
-from yakoon.base.runtime.sessions.session import Session  # ggf. Pfad anpassen
 
 # -----------------------------
 # Effective config (policy + override)

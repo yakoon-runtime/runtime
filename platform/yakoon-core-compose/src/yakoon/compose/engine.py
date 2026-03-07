@@ -6,6 +6,7 @@ from yakoon.base.capabilities.identity import (
     PermissionService,
     SecretVerifier,
 )
+from yakoon.base.capabilities.interaction import DialogService, InputService
 from yakoon.base.capabilities.presenters import PresenterService
 from yakoon.base.catalogs import (
     CommandCatalog,
@@ -15,11 +16,14 @@ from yakoon.base.catalogs import (
     ControllerCatalogService,
     ControllerInfo,
 )
-from yakoon.base.ids.port import NamespaceService
+from yakoon.base.engine import CommandQueueService
+from yakoon.base.ids import NamespaceService
 from yakoon.base.models.fields import FieldType
 from yakoon.base.models.policy import FieldPolicy
 from yakoon.base.runtime.controllers.controller import Controller
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions.port import SessionService
+from yakoon.base.ui.port import ViewSpecParser
 from yakoon.base.values import Namespace
 from yakoon.platform.capabilities.audit import DefaultAuditLogService
 from yakoon.platform.capabilities.identity import (
@@ -28,34 +32,36 @@ from yakoon.platform.capabilities.identity import (
     DefaultPermissionService,
     DefaultZeroSecretVerifier,
 )
+from yakoon.platform.capabilities.interaction.dialog_service import DefaultDialogService
+from yakoon.platform.capabilities.interaction.input_service import DefaultInputService
 from yakoon.platform.capabilities.presenters import DefaultPresenterService
 from yakoon.platform.catalogs import (
     DefaultCommandCatalogService,
     DefaultControllerCatalogService,
 )
-from yakoon.platform.directories.controller import ControllerDirectory
-from yakoon.platform.engines.command.engine import Engine
-from yakoon.platform.engines.command.router import CommandDirectory
-from yakoon.platform.ids.namespace_service import DefaultNamespaceService
+from yakoon.platform.engine import (
+    CommandDirectory,
+    CommandEngine,
+    ControllerDirectory,
+    DefaultCommandQueueService,
+)
+from yakoon.platform.ids import DefaultNamespaceService
 from yakoon.platform.plugins.manager import PluginManager
 from yakoon.platform.plugins.registry import PluginRegistry
+from yakoon.platform.runtime import DefaultSessionService
 from yakoon.platform.runtime.render.jinja.engine import JinjaRenderer
-from yakoon.platform.services.dialog import DialogService
 from yakoon.platform.services.file import FileLoader
-from yakoon.platform.services.input import InputService
 from yakoon.platform.services.lookup import NoLookupResolverService
 from yakoon.platform.services.policy import PolicyService
-from yakoon.platform.services.queue import CommandQueueService
 from yakoon.platform.services.render import RendererService
-from yakoon.platform.services.session import SessionService
 from yakoon.platform.services.stream import OutputStreamService
-from yakoon.platform.services.viewspec import ViewSpecService
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
 from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.stores.event.store import DefaultEntityStore
+from yakoon.platform.ui import DefaultViewSpecParser
 
 
-def compose_engine(*, plugins: list[str]) -> Engine:
+def compose_engine(*, plugins: list[str]) -> CommandEngine:
     directory = ControllerDirectory()
 
     bootstrap = ServiceDirectory()
@@ -94,7 +100,7 @@ def compose_engine(*, plugins: list[str]) -> Engine:
 
     commands.validate()
 
-    return Engine(directory, bootstrap, commands)
+    return CommandEngine(directory, bootstrap, commands)
 
 
 def _compose_permission_roles(services: ServiceDirectory):
@@ -194,16 +200,16 @@ def _compose_services(
     # core platform services
     services.register_static(AuditLogService, DefaultAuditLogService())
     services.register_static(NamespaceService, DefaultNamespaceService())
-    services.register_static(ports.SessionService, SessionService(store))
-    services.register_static(ports.CommandQueueService, CommandQueueService())
+    services.register_static(SessionService, DefaultSessionService(store))
+    services.register_static(CommandQueueService, DefaultCommandQueueService())
     services.register_static(PresenterService, DefaultPresenterService(services))
     services.register_static(AccountService, DefaultAccountService(store))
     services.register_static(SecretVerifier, DefaultZeroSecretVerifier())
     services.register_static(PermissionService, DefaultPermissionService())
-    services.register_static(ports.DialogService, DialogService())
+    services.register_static(DialogService, DefaultDialogService())
     services.register_static(ports.PolicyService, PolicyService())
-    services.register_static(ports.InputService, InputService(services))
-    services.register_static(ports.ViewSpecService, ViewSpecService())
+    services.register_static(InputService, DefaultInputService(services))
+    services.register_static(ViewSpecParser, DefaultViewSpecParser())
     services.register_static(ports.FileLoader, FileLoader())
     services.register_static(ports.RendererService, RendererService(services))
     services.register_static(ports.RenderEngine, JinjaRenderer())

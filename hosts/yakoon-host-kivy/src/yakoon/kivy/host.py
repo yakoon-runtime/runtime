@@ -4,7 +4,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Protocol
 
-from yakoon.base.models.view import ViewSpec
+from yakoon.base.ui.view_spec import ViewSpec
 from yakoon.platform.hosts.adapter import FormInput, HostAdapter, InputEvent, TextInput
 
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 import yaml
 
 from yakoon.base import ports
-from yakoon.base.models.view import ViewSpec
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.ui import ViewSpec, ViewSpecParser
 from yakoon.platform.runtime.render.context import RenderContext
 
 
@@ -42,5 +42,5 @@ class RendererService:
             raise TypeError("Root template must be a mapping")
 
         # 3) parse/validate into ViewSpec
-        viewspec = self._services.get(ports.ViewSpecService)
+        viewspec = self._services.get(ViewSpecParser)
         return viewspec.parse_spec(rendered_text)

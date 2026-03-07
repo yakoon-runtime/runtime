@@ -1,14 +1,14 @@
 import asyncio
 from collections.abc import Awaitable, Callable
 
-from yakoon.base.models.view import ViewSpec
 from yakoon.base.runtime.sessions.session import Session
-from yakoon.base.runtime.sessions.views import v_error
+from yakoon.base.ui.view_spec import ViewSpec
+from yakoon.base.ui.views import v_error
 from yakoon.platform.runtime.devtools.prompt import UnresolvedPromptMonitor
 from yakoon.platform.settings import settings
 
 
-class DialogService:
+class DefaultDialogService:
     """
     Unified input dialog service (view-driven).
 

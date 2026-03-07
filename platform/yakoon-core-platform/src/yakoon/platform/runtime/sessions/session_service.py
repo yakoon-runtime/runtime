@@ -7,26 +7,10 @@ from yakoon.base.stores.event.entity import (
 from yakoon.base.values import Key
 from yakoon.platform.stores.event.store import EntityStore
 
-
-class SessionIdentityMap:
-
-    def __init__(self) -> None:
-        self._live: dict[str, Session] = {}
-
-    def get(self, key: Key) -> Session | None:
-        return self._live.get(str(key))
-
-    def put(self, session: Session) -> None:
-        self._live[str(session.key)] = session
-
-    def release(self, key: Key) -> None:
-        self._live.pop(str(key), None)
-
-    def clear(self) -> None:
-        self._live.clear()
+from .identity import SessionIdentityMap
 
 
-class SessionService:
+class DefaultSessionService:
     """
     Session lifecycle service.
 

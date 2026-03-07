@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from yakoon.base.models.view import ViewSpec
+from yakoon.base.ui.view_spec import ViewSpec
 
 
 @dataclass(frozen=True)

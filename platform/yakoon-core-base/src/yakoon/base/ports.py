@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime
-from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Protocol
 
 from yakoon.base.models.stream import OutputStreaming
@@ -14,16 +12,13 @@ from yakoon.base.stores.event.entity import (
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Awaitable, Callable, Mapping, Sequence
+    from collections.abc import Callable, Mapping, Sequence
 
-    from yakoon.base.capabilities.presenters import PromptResult
-    from yakoon.base.models.input import DispatchInput
     from yakoon.base.models.policy import (
         FieldPolicy,
         PolicyValidationResult,
         RawValue,
     )
-    from yakoon.base.models.view import ViewSpec
     from yakoon.base.plugins.plugin import PluginMeta
     from yakoon.base.runtime.commands import Request
     from yakoon.base.runtime.controllers.resources import ResourceRef
@@ -37,6 +32,7 @@ if TYPE_CHECKING:
         RetentionPolicy,
         SnapshotHint,
     )
+    from yakoon.base.ui.view_spec import ViewSpec
     from yakoon.base.values import Key, Namespace
     from yakoon.platform.runtime.render.context import RenderContext
 
@@ -273,17 +269,6 @@ class WorkflowInternal(Protocol):
     def cancel_batch(self, session: Session, *, batch_id: str) -> None: ...
 
 
-class ViewSpecService(Protocol):
-
-    def parse_spec(
-        self,
-        yaml_text: str,
-        *,
-        section_key: str | None = None,
-        base_id: str | None = None,
-    ) -> ViewSpec: ...
-
-
 class PolicyService(Protocol):
     def register_policy(self, policy: FieldPolicy) -> None: ...
     def register_policies(self, policies: list[FieldPolicy]) -> None: ...
@@ -292,55 +277,6 @@ class PolicyService(Protocol):
     def get_validator(self, key: str) -> Callable: ...
     def register_defaults(self) -> None: ...
     def validate(self, *, policy_key: str, raw: RawValue) -> PolicyValidationResult: ...
-
-
-class DialogState(StrEnum):
-    IDLE = "idle"
-    WAITING_WIZARD = "waiting_wizard"
-    WAITING_FORM = "waiting_form"
-
-
-class InputService(Protocol):
-
-    async def ask_view(self, session: Session, field: ViewSpec) -> PromptResult: ...
-
-
-class DialogService(Protocol):
-
-    def state(self, session: Session) -> DialogState: ...
-    def edge_event(self, session: Session) -> asyncio.Event: ...
-
-    def resolve_input(self, session: Session, values: dict[str, object]) -> bool: ...
-    def cancel_input(self, session: Session) -> None: ...
-    def cleanup(self, session: Session) -> None: ...
-
-    def is_waiting(self, session: Session) -> bool: ...
-    def get_view(self, session: Session) -> ViewSpec: ...
-    def wait_view(
-        self,
-        session: Session,
-        *,
-        view: ViewSpec,
-        timeout: float | None = None,
-        on_timeout: Callable[[], Awaitable[None]] | None = None,
-    ) -> asyncio.Future: ...
-
-
-class CommandQueueService(Protocol):
-    def enqueue_commands(self, session, cmds: list[str]) -> None: ...
-    def cancel_batch(self, session, batch_id: str) -> None: ...
-    def next_input(self, session) -> DispatchInput | None: ...
-    def has_pending(self, session) -> bool: ...
-
-
-class SessionService(Protocol):
-    async def delete_by_key(self, key: Key): ...
-    async def get(self, key: Key) -> Session: ...
-    async def get_or_create(self, key: Key, **kwargs) -> tuple[Session, bool]: ...
-    async def save(self, session: Session) -> None: ...
-
-    def release(self, key: Key) -> None: ...
-    def clear(self) -> None: ...
 
 
 class RendererService(Protocol):

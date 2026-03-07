@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from yakoon.base import ports
-from yakoon.base.runtime.commands import Request
+from yakoon.base.catalogs import CommandCatalogService, ControllerCatalogService
+from yakoon.base.runtime import Request, Session
 from yakoon.base.runtime.controllers import resolve_resource
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.discovery import ports as disc_ports
@@ -84,7 +85,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         if not active_id:
             return []
 
-        commands = self._services.get(ports.CommandCatalogService)
+        commands = self._services.get(CommandCatalogService)
         resolve_space = commands.for_resolve_context(active_id)
 
         owner_ids: list[str] = []
@@ -97,7 +98,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         return owner_ids
 
     def _load_lookup_text(self, session: Session, owner_id: str) -> str | None:
-        controllers = self._services.get(ports.ControllerCatalogService)
+        controllers = self._services.get(ControllerCatalogService)
         loader = self._services.get(ports.FileLoader)
 
         ctrl = controllers.get(owner_id)
@@ -124,7 +125,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         return idx
 
     def _visible_keys(self, session: Session, owner_id: str) -> set[str]:
-        commands = self._services.get(ports.CommandCatalogService)
+        commands = self._services.get(CommandCatalogService)
         return {c.key for c in commands.for_controller_visible(owner_id, session)}
 
     def _match_owner(

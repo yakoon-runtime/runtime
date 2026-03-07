@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from yakoon.base.models.message import MessageSpec, TextBlock
-from yakoon.base.models.view import ViewSpec
+from .blocks import TextBlock
+from .output_spec import OutputSpec
+from .view_spec import ViewSpec
 
 
 def v_text(
@@ -16,7 +17,7 @@ def v_text(
         kind="view",
         mode=mode,
         id=None,
-        message=MessageSpec(
+        output=OutputSpec(
             kind="message",
             role=role,
             error_kind=error_kind,

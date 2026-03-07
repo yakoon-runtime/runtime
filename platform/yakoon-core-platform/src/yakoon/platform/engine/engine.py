@@ -3,18 +3,19 @@ import asyncio
 from yakoon.base import ports
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.identity import Permission, PermissionService
-from yakoon.base.models.input import CommandDispatch, DispatchInput, ResolveDispatch
+from yakoon.base.capabilities.interaction import DialogService
+from yakoon.base.engine import CommandDispatch, DispatchInput, ResolveDispatch
 from yakoon.base.runtime import CmdNotFound, Command, CommandContext, Request, Session
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions.views import v_error
-from yakoon.platform.directories.controller import ControllerDirectory
-from yakoon.platform.engines.command.router import CommandDirectory
-from yakoon.platform.services.viewspec import ViewSpecValidationError
+from yakoon.base.ui import v_error
+from yakoon.platform.ui import ViewSpecValidationError
 from yakoon.workflow.models.workflow import WorkflowContextRequired
 
+from .directories import CommandDirectory, ControllerDirectory
 
-class Engine:
+
+class CommandEngine:
 
     def __init__(
         self,
@@ -58,7 +59,7 @@ class Engine:
 
         # 1) Prompt response path
         async with self._lock(session):
-            dialog_service = self.services.get(ports.DialogService)
+            dialog_service = self.services.get(DialogService)
             if dialog_service.is_waiting(session):
 
                 if isinstance(di, ResolveDispatch):
@@ -84,7 +85,7 @@ class Engine:
         if not task:
             return
 
-        dialogs = self.services.get(ports.DialogService)
+        dialogs = self.services.get(DialogService)
 
         # drive until either:
         # - task done

@@ -5,6 +5,8 @@ from typing import Any
 from uuid import uuid4
 
 from yakoon.base import ports as base_ports
+from yakoon.base.catalogs import ControllerCatalogService
+from yakoon.base.engine import CommandQueueService
 from yakoon.base.runtime.controllers import resolve_resource
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.workflow import ports as wf_ports
@@ -39,7 +41,7 @@ class WorkflowService:
     # ---- loading (no caching) ----
 
     def get_def(self, controller_id: str, command_key: str) -> WorkflowDef:
-        catalog = self.services.get(base_ports.ControllerCatalogService)
+        catalog = self.services.get(ControllerCatalogService)
         info = catalog.get(controller_id)
         if not info:
             raise RuntimeError("ControllerInfo cannot be None.")
@@ -197,7 +199,7 @@ class WorkflowService:
 
         self._ensure_running(batch)
 
-        queue = self.services.get(base_ports.CommandQueueService)
+        queue = self.services.get(CommandQueueService)
 
         if step.end:
             self._enqueue_end(rt, batch_id, batch)
@@ -378,5 +380,5 @@ class WorkflowService:
         batch.status = WorkflowStatus.CANCELLED
         batch.error = None
 
-        queue = self.services.get(base_ports.CommandQueueService)
+        queue = self.services.get(CommandQueueService)
         queue.cancel_batch(session, batch_id)

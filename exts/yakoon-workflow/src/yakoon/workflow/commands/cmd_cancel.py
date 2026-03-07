@@ -2,7 +2,7 @@ from yakoon.base import ports as base_ports
 from yakoon.base.runtime import Command, CommandVisibility, Request
 from yakoon.base.runtime.commands import CommandKind, CommandScope
 from yakoon.base.runtime.sessions.session import Session
-from yakoon.base.runtime.sessions.views import v_error
+from yakoon.base.ui.views import v_error
 from yakoon.workflow import ports as wf_ports
 
 

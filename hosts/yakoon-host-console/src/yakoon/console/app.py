@@ -2,6 +2,7 @@ import asyncio
 
 from yakoon.base import ports
 from yakoon.base.capabilities.identity import PermissionService
+from yakoon.base.runtime.sessions import SessionService
 from yakoon.base.values import Key
 from yakoon.compose.demo_data import seed_demo_system_data
 from yakoon.compose.engine import compose_engine, initialize_storage
@@ -27,7 +28,7 @@ async def run_console() -> None:
     await initialize_storage(engine.services)
     await seed_demo_system_data(engine.services)
 
-    sessions = engine.services.get(ports.SessionService)
+    sessions = engine.services.get(SessionService)
     session, _ = await sessions.get_or_create(
         Key.from_parts("system", "session", "develop", "1")
     )

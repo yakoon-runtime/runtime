@@ -4,23 +4,24 @@ from typing import Any, Literal, cast
 
 import yaml
 
-from yakoon.base.models.message import (
+from yakoon.base.ui import (
     Block,
-    Inline,
-    InlineCode,
-    InlineLink,
-    InlineText,
+    ViewFieldDef,
+    ViewInputDef,
+    ViewSpec,
+)
+from yakoon.base.ui.blocks.blocks import (
     KvBlock,
     KvItemBlock,
     ListBlock,
     ListItemBlock,
-    MessageSpec,
     RuleBlock,
     SpacerBlock,
     TableBlock,
     TextBlock,
 )
-from yakoon.base.models.view import ViewFieldDef, ViewFormDef, ViewSpec
+from yakoon.base.ui.blocks.inline import Inline, InlineCode, InlineLink, InlineText
+from yakoon.base.ui.output_spec import OutputSpec
 
 
 class ViewSpecError(Exception): ...
@@ -37,7 +38,7 @@ RuleStyle = Literal["subtle", "normal", "strong"]
 RULE_STYLES = {"subtle", "normal", "strong"}
 
 
-class ViewSpecService:
+class DefaultViewSpecParser:
     """
     Parse a single state file.
 
@@ -70,7 +71,7 @@ class ViewSpecService:
             kind="view",
             mode="replace",
             id=None,  # optional: later derive from command_key/state in renderer
-            message=message,
+            output=message,
             input=input_def,
             meta=None,
         )
@@ -95,7 +96,7 @@ class ViewSpecService:
 
     def _parse_state_body(
         self, state: dict[str, Any]
-    ) -> tuple[MessageSpec | None, ViewFormDef | None]:
+    ) -> tuple[OutputSpec | None, ViewInputDef | None]:
         # Output (blocks)
         role = state.get("role", "info")
         if role is not None and role not in (
@@ -113,12 +114,12 @@ class ViewSpecService:
 
         error_kind = state.get("error_kind", None)
         blocks_raw = state.get("blocks")
-        message: MessageSpec | None = None
+        message: OutputSpec | None = None
         if blocks_raw is not None:
             if not isinstance(blocks_raw, list):
                 raise ViewSpecValidationError("blocks must be a list or null")
             blocks = [self._parse_block(b) for b in blocks_raw]
-            message = MessageSpec(
+            message = OutputSpec(
                 kind="message",
                 error_kind=error_kind,
                 role=cast(Role, role),
@@ -129,7 +130,7 @@ class ViewSpecService:
 
         # Input (fields)
         fields_raw = state.get("fields")
-        input_def: ViewFormDef | None = None
+        input_def: ViewInputDef | None = None
         if fields_raw is not None:
             if not isinstance(fields_raw, list) or not fields_raw:
                 raise ViewSpecValidationError("fields must be a non-empty list or null")
@@ -148,7 +149,7 @@ class ViewSpecService:
 
     def _parse_fields(
         self, fields_raw: list[Any], *, title: str | None, input_mode: str
-    ) -> ViewFormDef:
+    ) -> ViewInputDef:
         # Minimal, deterministic form_id for now.
         # Later you can pass base_id from renderer: f"{command_key}.{state}"
         form_id = "form"
@@ -196,7 +197,7 @@ class ViewSpecService:
 
         meta: dict[str, Any] = {"aliases": aliases, "order": order}
 
-        return ViewFormDef(
+        return ViewInputDef(
             kind="form",
             form_id=form_id,
             fields=fields,

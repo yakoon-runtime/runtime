@@ -3,15 +3,15 @@ from __future__ import annotations
 from dataclasses import replace
 
 from yakoon.base import ports
+from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.capabilities.presenters import PromptResult
-from yakoon.base.models.view import ViewSpec
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.runtime.sessions.session import Session
-from yakoon.base.runtime.sessions.views import v_error
+from yakoon.base.ui import ViewSpec, v_error
 from yakoon.platform.settings import settings
 
 
-class InputService:
+class DefaultInputService:
     """
     Unified interaction layer (view-only).
 
@@ -21,7 +21,7 @@ class InputService:
     """
 
     def __init__(self, services: ServiceDirectory):
-        self._dialogs = services.get(ports.DialogService)
+        self._dialogs = services.get(DialogService)
         self._policy = services.get(ports.PolicyService)
 
     async def ask_view(self, session: Session, view: ViewSpec) -> PromptResult:

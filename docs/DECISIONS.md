@@ -203,7 +203,7 @@ Die Runtime ist leichter verständlich und deutlich schlanker.
 - Session.emit() akzeptiert ausschließlich ViewSpec.
 - Keine Dict-Views mehr im IO-Pfad.
 - Kein zweiter Kanal (err) mehr.
-- role wird ausschließlich über MessageSpec.role bestimmt.
+- role wird ausschließlich über OutputSpec.role bestimmt.
 - op wird ausschließlich über ViewSpec.mode bestimmt.
 - Transport-Parameter wie channel, region, meta werden entfernt.
 

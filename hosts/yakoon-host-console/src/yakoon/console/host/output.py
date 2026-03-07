@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from yakoon.base.models.message import Block
-from yakoon.base.models.view import MessageSpec, ViewSpec  # pfade anpassen
+from yakoon.base.ui import (
+    Block,
+    OutputSpec,
+    ViewSpec,
+)
 
 
 class ConsoleOutput:
@@ -16,7 +19,7 @@ class ConsoleOutput:
             print(text)
 
     def render(self, view: ViewSpec) -> str:
-        msg = view.message
+        msg = view.output
         if msg is None:
             return ""
 
@@ -32,7 +35,7 @@ class ConsoleOutput:
 
         return prefix + body
 
-    def _render_message(self, msg: MessageSpec) -> str:
+    def _render_message(self, msg: OutputSpec) -> str:
         lines: list[str] = []
         # title etc...
         self._render_blocks(lines, msg.blocks or [], indent=0)

@@ -1,6 +1,6 @@
 from yakoon.base.runtime import Command, Request, Session
 from yakoon.base.runtime.commands import CommandKind, CommandVisibility
-from yakoon.base.runtime.sessions.views import v_text
+from yakoon.base.ui.views import v_text
 
 
 class CmdTest(Command):
