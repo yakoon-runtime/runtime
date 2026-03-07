@@ -26,8 +26,7 @@ from yakoon.base.stores.event.entity import (
     SnapshotHint,
     SpaceId,
 )
-from yakoon.base.values.key import Key
-from yakoon.base.values.namespace import Namespace
+from yakoon.base.values import Key, Namespace
 from yakoon.platform.stores.event.backend import EntityStoreBackend, RevisionRow
 
 

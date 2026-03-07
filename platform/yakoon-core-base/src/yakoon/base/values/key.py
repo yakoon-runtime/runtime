@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.values.namespace import Namespace
+from .namespace import Namespace
 
 
 class Key:

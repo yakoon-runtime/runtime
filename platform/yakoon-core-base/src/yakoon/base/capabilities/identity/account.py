@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from yakoon.base.values.key import Key
+from yakoon.base.values import Key
 
 
 @dataclass
@@ -98,7 +98,7 @@ class Account:
 
     @property
     def username(self) -> str:
-        return self.data.username
+        return self.data.username or ""
 
     @property
     def roles(self) -> list[str]:
@@ -110,7 +110,7 @@ class Account:
 
     @property
     def password_hash(self) -> str:
-        return self.data.password_hash
+        return self.data.password_hash or ""
 
     def has_role(self, role: str) -> bool:
         """Delegates to AccountData.has_role()."""
@@ -119,10 +119,3 @@ class Account:
     def is_active(self) -> bool:
         """Delegates to AccountData.is_active()."""
         return self.data.is_active()
-
-
-@dataclass(frozen=True, slots=True)
-class AuthResult:
-    ok: bool
-    account: Account | None = None
-    reason: str | None = None

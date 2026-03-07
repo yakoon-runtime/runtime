@@ -1,6 +1,7 @@
 from .commands import (
     CmdNotFound,
     Command,
+    CommandContext,
     CommandKind,
     CommandScope,
     CommandSet,
@@ -12,6 +13,7 @@ from .sessions import Session
 __all__ = [
     "Session",
     "Request",
+    "CommandContext",
     "CmdNotFound",
     "Command",
     "CommandKind",

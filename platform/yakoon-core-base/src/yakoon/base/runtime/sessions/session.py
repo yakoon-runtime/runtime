@@ -4,10 +4,10 @@ from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
-from yakoon.base.models.perm import PermissionSet
+from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.models.stream import OutputStreamPolicy
 from yakoon.base.models.view import ViewSpec
-from yakoon.base.values.key import Key
+from yakoon.base.values import Key
 
 if TYPE_CHECKING:
     from yakoon.base.ports import IO

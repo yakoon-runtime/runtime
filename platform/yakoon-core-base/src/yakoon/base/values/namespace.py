@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from yakoon.base.values.key import Key
+    from yakoon.base.values import Key
 
 
 class Namespace:
@@ -27,7 +27,7 @@ class Namespace:
         return f"{self.domain}/{self.kind}/{self.space}"
 
     def get_key(self, id: str) -> Key:
-        from yakoon.base.values.key import Key
+        from yakoon.base.values import Key
 
         return Key(self, id)
 

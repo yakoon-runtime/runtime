@@ -21,7 +21,7 @@ class KivyComposition:
 def compose_kivy_app() -> KivyComposition:
 
     engine = compose_engine(
-        plugin_modules=[
+        plugins=[
             "yakoon.shell",
             "yakoon.auth",
             "yakoon.discovery",

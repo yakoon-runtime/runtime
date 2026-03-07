@@ -1,7 +1,6 @@
+from yakoon.base.capabilities.identity import AuthenticationService, PermissionService
+from yakoon.base.ids import NamespaceService
 from yakoon.base.ports import (
-    AuthenticationService,
-    NamespaceService,
-    PermissionService,
     SessionService,
 )
 from yakoon.base.runtime import Command, Request, Session

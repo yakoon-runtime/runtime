@@ -1,65 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from enum import StrEnum
-
-
-class PermBit(StrEnum):
-    READ = "r"
-    WRITE = "w"
-    EXECUTE = "x"
-
-
-@dataclass(frozen=True)
-class PermBits:
-    r: bool = False
-    w: bool = False
-    x: bool = False
-
-    @classmethod
-    def from_str(cls, s: str) -> PermBits:
-        s = s or ""
-        return cls(r="r" in s, w="w" in s, x="x" in s)
-
-    def __bool__(self) -> bool:
-        return self.r or self.w or self.x
-
-    def union(self, other: PermBits) -> PermBits:
-        return PermBits(r=self.r or other.r, w=self.w or other.w, x=self.x or other.x)
-
-    def subtract(self, other: PermBits) -> PermBits:
-        # remove bits present in other
-        return PermBits(
-            r=self.r and not other.r, w=self.w and not other.w, x=self.x and not other.x
-        )
-
-
-@dataclass(frozen=True)
-class Permission:
-    """
-    command_key: e.g. "auth:su"
-    bits: PermBits, e.g. rwx
-    scope1/scope2:
-      - scope1 is the "primary" scope (e.g. account)
-      - scope2 optional (e.g. group / tenant / controller-context)
-    deny: if True, removes bits instead of adding them
-    """
-
-    command_key: str
-    scope1: PermBits
-    scope2: PermBits | None = None
-    deny: bool = False
-
-    @property
-    def is_scoped(self) -> bool:
-        return self.scope2 is not None
-
-    @staticmethod
-    def fq_key(controller_id, command_key) -> str:
-        """
-        Returns fq_key (fully qualified key)
-        """
-        return f"{controller_id}:{command_key}"
+from .perm_types import PermBits
+from .permission import Permission
 
 
 class PermissionSet:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.models.account import Account, AccountData
+from yakoon.base.capabilities.identity import Account, AccountData
 from yakoon.base.ports import IndexRegistry
 from yakoon.base.stores.event.entity import (
     IndexKey,
@@ -10,8 +10,7 @@ from yakoon.base.stores.event.entity import (
     SnapshotHint,
     ValueType,
 )
-from yakoon.base.values.key import Key
-from yakoon.base.values.namespace import Namespace
+from yakoon.base.values import Key, Namespace
 from yakoon.platform.stores.event.store import EntityStore
 
 
@@ -29,7 +28,7 @@ IDX_ACCOUNT_USERNAME_SPEC = IndexSpec(
 )
 
 
-class AccountService:
+class DefaultAccountService:
     """
     Loads/saves accounts via ES-light EntityStore.
     Keeps the public API stable.

@@ -1,10 +1,10 @@
 import asyncio
 
 from yakoon.base import ports
+from yakoon.base.capabilities.audit import AuditLogService
+from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.models.input import CommandDispatch, DispatchInput, ResolveDispatch
-from yakoon.base.models.perm import Permission
-from yakoon.base.runtime import Session
-from yakoon.base.runtime.commands import CmdNotFound, Command, CommandContext, Request
+from yakoon.base.runtime import CmdNotFound, Command, CommandContext, Request, Session
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.runtime.sessions.views import v_error
@@ -160,7 +160,7 @@ class Engine:
                 raise WorkflowContextRequired()
 
             # check permissions
-            perm_service = self.services.get(ports.PermissionService)
+            perm_service = self.services.get(PermissionService)
             fq = Permission.fq_key(resolved_controller.id, command.key)
             if not perm_service.can_execute(session, fq):
                 raise PermissionError("Permission denied")
@@ -200,7 +200,7 @@ class Engine:
 
             # command may be None if permission fails early
             command_key = command.key if command else request.command
-            audit = self._services.get(ports.AuditLogService)
+            audit = self._services.get(AuditLogService)
             await audit.permission(session, "command", command_key)
 
             await session.emit(v_error(str(exc)))
@@ -212,7 +212,7 @@ class Engine:
             self.wf_failed(exc, command, session, di)
 
         except ViewSpecValidationError as exc:
-            audit = self._services.get(ports.AuditLogService)
+            audit = self._services.get(AuditLogService)
             await audit.error(exc)
             await session.emit(
                 v_error("Ein interner Konfigurationsfehler ist aufgetreten.")
@@ -220,7 +220,7 @@ class Engine:
 
         except Exception as exc:
             failed = True
-            audit = self._services.get(ports.AuditLogService)
+            audit = self._services.get(AuditLogService)
             await audit.error(exc)
             await session.emit(v_error("Ein interner Fehler ist aufgetreten."))
             self.wf_failed(exc, command, session, di)

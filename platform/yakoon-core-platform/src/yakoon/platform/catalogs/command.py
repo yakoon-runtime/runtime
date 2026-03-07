@@ -1,26 +1,14 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Sequence
 
-from yakoon.base import ports
-from yakoon.base.models.catalog import CommandInfo, ControllerInfo
-from yakoon.base.models.perm import Permission
-from yakoon.base.ports import PermissionService
-from yakoon.base.runtime import CommandKind, CommandScope, CommandVisibility
+from yakoon.base.capabilities.identity import Permission, PermissionService
+from yakoon.base.catalogs import CommandCatalog, CommandInfo, ControllerCatalogService
+from yakoon.base.runtime import CommandKind, CommandScope, CommandVisibility, Session
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions.session import Session
 
 
-class CommandCatalog:
-
-    def __init__(self, commands: Iterable[CommandInfo]):
-        self._commands: tuple[CommandInfo, ...] = tuple(commands)
-
-    def all(self) -> tuple[CommandInfo, ...]:
-        return self._commands
-
-
-class CommandCatalogService:
+class DefaultCommandCatalogService:
 
     def __init__(self, services: ServiceDirectory, catalog: CommandCatalog):
         self._services = services
@@ -36,7 +24,7 @@ class CommandCatalogService:
         by_controller: dict[str, list[CommandInfo]] = {}
         global_cmds: dict[str, CommandInfo] = {}
 
-        controllers = self._services.get(ports.ControllerCatalogService)
+        controllers = self._services.get(ControllerCatalogService)
 
         for c in self._catalog.all():
             if not c.controller_id:
@@ -90,7 +78,7 @@ class CommandCatalogService:
         """
         self._ensure_built()
 
-        controller_infos = self._services.get(ports.ControllerCatalogService)
+        controller_infos = self._services.get(ControllerCatalogService)
         controller = controller_infos.get(controller_id)
         is_shell = bool(controller and controller.is_shell)
 
@@ -169,60 +157,3 @@ class CommandCatalogService:
                 CommandVisibility.INTERNAL,
             }
         raise ValueError(mode)
-
-
-class ControllerCatalog:
-
-    def __init__(self, controllers: Iterable[ControllerInfo]):
-        self._controllers = controllers
-
-    def all(self):
-        return self._controllers
-
-
-class ControllerCatalogService:
-    """
-    Read-only snapshot about controller metadata.
-    No controller instance, no directory references.
-    """
-
-    def __init__(self, catalog: ControllerCatalog):
-        by_id: dict[str, ControllerInfo] = {}
-        for c in catalog.all():
-            if c.id in by_id:
-                raise ValueError(f"Duplicate controller id in catalog: {c.id}")
-            by_id[c.id] = c
-        self._by_id = by_id
-
-    def ids(self) -> Sequence[str]:
-        return tuple(sorted(self._by_id.keys()))
-
-    def all(self) -> Sequence[ControllerInfo]:
-        return tuple(self._by_id[cid] for cid in self.ids())
-
-    def get(self, controller_id: str) -> ControllerInfo | None:
-        return self._by_id.get(controller_id)
-
-    def exists(self, controller_id: str) -> bool:
-        return controller_id in self._by_id
-
-    def activatable(self) -> Sequence[ControllerInfo]:
-        return tuple(c for c in self.all() if c.is_activatable)
-
-    def listed(self) -> Sequence[ControllerInfo]:
-        return tuple(c for c in self.all() if c.is_listed)
-
-    def shell(self) -> Sequence[ControllerInfo]:
-        return tuple(c for c in self.all() if c.is_shell)
-
-    def is_shell(self, controller_id: str) -> bool:
-        c = self.get(controller_id)
-        return bool(c and c.is_shell)
-
-    def is_activatable(self, controller_id: str) -> bool:
-        c = self.get(controller_id)
-        return bool(c and c.is_activatable)
-
-    def is_listed(self, controller_id: str) -> bool:
-        c = self.get(controller_id)
-        return bool(c and c.is_listed)

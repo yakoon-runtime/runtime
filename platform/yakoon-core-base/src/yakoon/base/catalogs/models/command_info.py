@@ -5,7 +5,6 @@ from yakoon.base.runtime.commands import (
     CommandScope,
     CommandVisibility,
 )
-from yakoon.base.runtime.controllers.resources import ResourceReferences
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,12 +15,3 @@ class CommandInfo:
     visibility: CommandVisibility
     controller_id: str
     category: str
-
-
-@dataclass(frozen=True, slots=True)
-class ControllerInfo:
-    id: str
-    is_shell: bool
-    is_activatable: bool
-    is_listed: bool
-    resources: ResourceReferences

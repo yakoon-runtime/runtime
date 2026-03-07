@@ -17,8 +17,6 @@ if TYPE_CHECKING:
     from collections.abc import Awaitable, Callable, Mapping, Sequence
 
     from yakoon.base.capabilities.presenters import PromptResult
-    from yakoon.base.models.account import Account, AuthResult
-    from yakoon.base.models.catalog import CommandInfo, ControllerInfo
     from yakoon.base.models.input import DispatchInput
     from yakoon.base.models.policy import (
         FieldPolicy,
@@ -27,7 +25,7 @@ if TYPE_CHECKING:
     )
     from yakoon.base.models.view import ViewSpec
     from yakoon.base.plugins.plugin import PluginMeta
-    from yakoon.base.runtime.commands import CommandKind, Request
+    from yakoon.base.runtime.commands import Request
     from yakoon.base.runtime.controllers.resources import ResourceRef
     from yakoon.base.runtime.sessions.session import Session
     from yakoon.base.stores.event.entity import (
@@ -39,8 +37,7 @@ if TYPE_CHECKING:
         RetentionPolicy,
         SnapshotHint,
     )
-    from yakoon.base.values.key import Key
-    from yakoon.base.values.namespace import Namespace
+    from yakoon.base.values import Key, Namespace
     from yakoon.platform.runtime.render.context import RenderContext
 
 
@@ -336,77 +333,6 @@ class CommandQueueService(Protocol):
     def has_pending(self, session) -> bool: ...
 
 
-class SecretVerifier(Protocol):
-    def verify(self, account: Account, secret: str) -> bool: ...
-
-
-class AuthenticationService(Protocol):
-    async def authenticate(
-        self, namespace: Namespace, username: str, secret: str
-    ) -> AuthResult: ...
-
-
-class PermissionService(Protocol):
-
-    def register_role(self, name: str, specs: list[str]) -> None: ...
-    def set_bootstrap_permissions(self, session: Session): ...
-    def apply_account_permissions(self, session: Session, account: Account): ...
-    def can_execute(self, session: Session, perm_key: str) -> bool: ...
-    def can_read(self, session: Session, perm_key: str) -> bool: ...
-
-
-class AccountService(Protocol):
-
-    async def get_by_key(self, key: Key) -> Account | None: ...
-    async def get_by_username(
-        self, namespace: Namespace, name: str
-    ) -> Account | None: ...
-    async def save(self, account: Account): ...
-    async def delete_by_key(self, key: Key): ...
-
-
-class CommandCatalogService(Protocol):
-    def build(self) -> None: ...
-    def all(self) -> tuple[CommandInfo, ...]: ...
-    def for_controller(self, controller_id: str) -> Sequence[CommandInfo]: ...
-    def for_controller_visible(
-        self, controller_id: str, session: Session
-    ) -> Sequence[CommandInfo]: ...
-    def for_resolve_context(
-        self,
-        controller_id: str,
-    ) -> tuple[CommandInfo, ...]: ...
-    def for_man_entries(
-        self,
-        controller_id: str,
-        session: Session,
-        mode: str,
-        kind_filter: CommandKind | None = None,
-    ) -> Sequence[CommandInfo]: ...
-    def resolve_info(
-        self,
-        controller_id: str,
-        command_key: str,
-    ) -> CommandInfo | None: ...
-
-
-class ControllerCatalogService(Protocol):
-    def ids(self) -> Sequence[str]: ...
-    def all(self) -> Sequence[ControllerInfo]: ...
-    def get(self, controller_id: str) -> ControllerInfo | None: ...
-    def exists(self, controller_id: str) -> bool: ...
-    def activatable(self) -> Sequence[ControllerInfo]: ...
-    def listed(self) -> Sequence[ControllerInfo]: ...
-    def shell(self) -> Sequence[ControllerInfo]: ...
-    def is_shell(self, controller_id: str) -> bool: ...
-    def is_activatable(self, controller_id: str) -> bool: ...
-    def is_listed(self, controller_id: str) -> bool: ...
-
-
-class ShardedCounterService(Protocol):
-    async def next(self, prefix: str) -> str: ...
-
-
 class SessionService(Protocol):
     async def delete_by_key(self, key: Key): ...
     async def get(self, key: Key) -> Session: ...
@@ -419,18 +345,6 @@ class SessionService(Protocol):
 
 class RendererService(Protocol):
     async def render_view(self, ctx: RenderContext, state: str, **data) -> ViewSpec: ...
-
-
-class NamespaceService(Protocol):
-    async def from_session(
-        self, session: Session, kind: str, space: str | None
-    ) -> Namespace: ...
-
-
-class AuditLogService(Protocol):
-    async def audit(self, msg: str): ...
-    async def error(self, exc: Exception): ...
-    async def permission(self, session, obj, action): ...
 
 
 class FileLoader(Protocol):

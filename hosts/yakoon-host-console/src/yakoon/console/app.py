@@ -1,7 +1,8 @@
 import asyncio
 
 from yakoon.base import ports
-from yakoon.base.values.key import Key
+from yakoon.base.capabilities.identity import PermissionService
+from yakoon.base.values import Key
 from yakoon.compose.demo_data import seed_demo_system_data
 from yakoon.compose.engine import compose_engine, initialize_storage
 from yakoon.console.host.console import ConsoleHost
@@ -13,7 +14,7 @@ from yakoon.platform.hosts.runner import Runner
 async def run_console() -> None:
 
     engine = compose_engine(
-        plugin_modules=[
+        plugins=[
             "yakoon.shell",
             "yakoon.auth",
             "yakoon.discovery",
@@ -34,7 +35,7 @@ async def run_console() -> None:
     session.bind_io(ConsoleOutput())
     # session.set_output_stream_policy(OutputStreamPolicy(enabled=True))
 
-    permissions = engine.services.get(ports.PermissionService)
+    permissions = engine.services.get(PermissionService)
     permissions.set_bootstrap_permissions(session)
 
     runner: Runner | None = None

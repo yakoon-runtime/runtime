@@ -1,9 +1,9 @@
 import random
 
-from yakoon.base.models.shard import Shard
+from .shard import Shard
 
 
-class ShardAllocator:
+class DefaultShardAllocator:
 
     def __init__(self, shard_store, range_size: int = 1000):
         self.shard_store = shard_store
@@ -45,13 +45,3 @@ class ShardAllocator:
 
         await self.shard_store.save_shard(new_shard.to_row())
         return new_shard
-
-
-class ShardedCounterService:
-
-    def __init__(self, allocator: ShardAllocator):
-        self.allocator = allocator
-
-    async def next(self, prefix: str) -> str:
-        shard = await self.allocator.pick_writable_shard(prefix)
-        return str(shard.range_start + shard.value)

@@ -1,33 +1,49 @@
 from yakoon.base import ports
+from yakoon.base.capabilities.audit import AuditLogService
+from yakoon.base.capabilities.identity import (
+    AccountService,
+    AuthenticationService,
+    PermissionService,
+    SecretVerifier,
+)
 from yakoon.base.capabilities.presenters import PresenterService
-from yakoon.base.models.catalog import CommandInfo, ControllerInfo
+from yakoon.base.catalogs import (
+    CommandCatalog,
+    CommandCatalogService,
+    CommandInfo,
+    ControllerCatalog,
+    ControllerCatalogService,
+    ControllerInfo,
+)
+from yakoon.base.ids.port import NamespaceService
 from yakoon.base.models.fields import FieldType
 from yakoon.base.models.policy import FieldPolicy
 from yakoon.base.runtime.controllers.controller import Controller
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.values.namespace import Namespace
+from yakoon.base.values import Namespace
+from yakoon.platform.capabilities.audit import DefaultAuditLogService
+from yakoon.platform.capabilities.identity import (
+    DefaultAccountService,
+    DefaultAuthenticationService,
+    DefaultPermissionService,
+    DefaultZeroSecretVerifier,
+)
 from yakoon.platform.capabilities.presenters import DefaultPresenterService
+from yakoon.platform.catalogs import (
+    DefaultCommandCatalogService,
+    DefaultControllerCatalogService,
+)
 from yakoon.platform.directories.controller import ControllerDirectory
 from yakoon.platform.engines.command.engine import Engine
 from yakoon.platform.engines.command.router import CommandDirectory
+from yakoon.platform.ids.namespace_service import DefaultNamespaceService
 from yakoon.platform.plugins.manager import PluginManager
 from yakoon.platform.plugins.registry import PluginRegistry
 from yakoon.platform.runtime.render.jinja.engine import JinjaRenderer
-from yakoon.platform.services.account import AccountService
-from yakoon.platform.services.auditlog import AuditLogService
-from yakoon.platform.services.auth import AuthenticationService, ZeroSecretVerifier
-from yakoon.platform.services.catalog import (
-    CommandCatalog,
-    CommandCatalogService,
-    ControllerCatalog,
-    ControllerCatalogService,
-)
 from yakoon.platform.services.dialog import DialogService
 from yakoon.platform.services.file import FileLoader
 from yakoon.platform.services.input import InputService
 from yakoon.platform.services.lookup import NoLookupResolverService
-from yakoon.platform.services.namespace import NamespaceService
-from yakoon.platform.services.perm import PermissionService
 from yakoon.platform.services.policy import PolicyService
 from yakoon.platform.services.queue import CommandQueueService
 from yakoon.platform.services.render import RendererService
@@ -39,13 +55,13 @@ from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.stores.event.store import DefaultEntityStore
 
 
-def compose_engine(*, plugin_modules: list[str]) -> Engine:
+def compose_engine(*, plugins: list[str]) -> Engine:
     directory = ControllerDirectory()
 
     bootstrap = ServiceDirectory()
     bootstrap.register_static(ports.PluginRegistry, PluginRegistry())
 
-    loaded = PluginManager(bootstrap).load(plugin_modules)
+    loaded = PluginManager(bootstrap).load(plugins)
 
     controllers: list[Controller] = []
     for lp in loaded:
@@ -82,7 +98,7 @@ def compose_engine(*, plugin_modules: list[str]) -> Engine:
 
 
 def _compose_permission_roles(services: ServiceDirectory):
-    permissions = services.get(ports.PermissionService)
+    permissions = services.get(PermissionService)
     permissions.register_role(
         "admin",
         [
@@ -176,14 +192,14 @@ def _compose_services(
 ) -> ServiceDirectory:
 
     # core platform services
-    services.register_static(ports.AuditLogService, AuditLogService())
-    services.register_static(ports.NamespaceService, NamespaceService())
+    services.register_static(AuditLogService, DefaultAuditLogService())
+    services.register_static(NamespaceService, DefaultNamespaceService())
     services.register_static(ports.SessionService, SessionService(store))
     services.register_static(ports.CommandQueueService, CommandQueueService())
     services.register_static(PresenterService, DefaultPresenterService(services))
-    services.register_static(ports.AccountService, AccountService(store))
-    services.register_static(ports.SecretVerifier, ZeroSecretVerifier())
-    services.register_static(ports.PermissionService, PermissionService())
+    services.register_static(AccountService, DefaultAccountService(store))
+    services.register_static(SecretVerifier, DefaultZeroSecretVerifier())
+    services.register_static(PermissionService, DefaultPermissionService())
     services.register_static(ports.DialogService, DialogService())
     services.register_static(ports.PolicyService, PolicyService())
     services.register_static(ports.InputService, InputService(services))
@@ -194,7 +210,7 @@ def _compose_services(
     services.register_static(ports.OutputStreamService, OutputStreamService())
 
     services.register_static(
-        ports.AuthenticationService, AuthenticationService(services)
+        AuthenticationService, DefaultAuthenticationService(services)
     )
 
     # register event store.
@@ -213,15 +229,15 @@ def _compose_services(
 
     # catalogs (info-only surface)
     services.register_static(
-        ports.ControllerCatalogService,
-        ControllerCatalogService(controller_catalog),
+        ControllerCatalogService,
+        DefaultControllerCatalogService(controller_catalog),
     )
     services.register_static(
-        ports.CommandCatalogService,
-        CommandCatalogService(services, command_catalog),
+        CommandCatalogService,
+        DefaultCommandCatalogService(services, command_catalog),
     )
 
-    services.get(ports.CommandCatalogService).build()
+    services.get(CommandCatalogService).build()
 
     return services
 
@@ -246,7 +262,9 @@ def _compose_store() -> DefaultEntityStore:
 async def initialize_storage(services: ServiceDirectory) -> None:
     index = services.get(ports.IndexRegistry)
 
-    from yakoon.platform.services.account import IDX_ACCOUNT_USERNAME_SPEC
+    from yakoon.platform.capabilities.identity.account_service import (
+        IDX_ACCOUNT_USERNAME_SPEC,
+    )
 
     await index.ensure(
         namespace=Namespace("system", "account", "develop"),

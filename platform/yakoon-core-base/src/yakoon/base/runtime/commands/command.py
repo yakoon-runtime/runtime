@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from yakoon.base.capabilities.presenters.port import Presenter, PresenterService
-from yakoon.base.ports import NamespaceService
+from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.controllers import resolve_resource
 
 from .types import (
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from yakoon.base.runtime.controllers import Controller
     from yakoon.base.runtime.services import ServiceDirectory
     from yakoon.base.runtime.sessions import Session
-    from yakoon.base.values.namespace import Namespace
+    from yakoon.base.values import Namespace
 
     from .request import Request
 

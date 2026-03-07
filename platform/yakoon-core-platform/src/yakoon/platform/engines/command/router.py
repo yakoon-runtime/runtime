@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base import ports
+from yakoon.base.catalogs import CommandCatalogService
 from yakoon.base.runtime.services import ServiceDirectory
 
 if TYPE_CHECKING:
@@ -75,7 +75,7 @@ class CommandDirectory:
         if not key:
             return None
 
-        catalog = self._services.get(ports.CommandCatalogService)
+        catalog = self._services.get(CommandCatalogService)
 
         # resolve_info() decides WHICH defining controller owns that command (CommandInfo.controller_id)
         ci = catalog.resolve_info(controller_id, key)
@@ -102,7 +102,7 @@ class CommandDirectory:
           - every CommandInfo has a corresponding real command type
           - optionally, no real type exists without a CommandInfo (prevents "ghost commands")
         """
-        catalog = self._services.get(ports.CommandCatalogService)
+        catalog = self._services.get(CommandCatalogService)
 
         missing: list[str] = []
         for ci in catalog.all():

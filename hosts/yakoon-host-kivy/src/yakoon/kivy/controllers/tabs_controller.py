@@ -1,7 +1,8 @@
 from kivy.clock import Clock
+from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.models.stream import OutputStreamPolicy
-from yakoon.base.ports import PermissionService, SessionService
-from yakoon.base.values.key import Key
+from yakoon.base.ports import SessionService
+from yakoon.base.values import Key
 from yakoon.kivy.host import KivyHost
 from yakoon.kivy.runner import SessionRunner
 from yakoon.kivy.runtime.output.output import KivyOutput

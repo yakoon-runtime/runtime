@@ -1,4 +1,4 @@
-from asyncio import Protocol
+from typing import Protocol
 
 from yakoon.base.models.resource import ResourceRef
 from yakoon.base.models.stream import OutputStreaming

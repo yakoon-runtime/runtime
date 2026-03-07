@@ -1,4 +1,5 @@
-from yakoon.base.ports import ControllerCatalogService, SessionService
+from yakoon.base.catalogs import ControllerCatalogService
+from yakoon.base.ports import SessionService
 from yakoon.base.runtime import Command, Request, Session
 
 

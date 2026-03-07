@@ -1,7 +1,7 @@
-from yakoon.base.capabilities.presenters.port import PresenterService
-from yakoon.base.models.catalog import CommandInfo
-from yakoon.base.ports import (
+from yakoon.base.capabilities.presenters import PresenterService
+from yakoon.base.catalogs import (
     CommandCatalogService,
+    CommandInfo,
     ControllerCatalogService,
 )
 from yakoon.base.runtime import Command, CommandScope, Request, Session

@@ -2,12 +2,17 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from yakoon.base.models.account import Account
-from yakoon.base.models.perm import PermBit, PermBits, Permission, PermissionSet
+from yakoon.base.capabilities.identity import (
+    Account,
+    PermBit,
+    PermBits,
+    Permission,
+    PermissionSet,
+)
 from yakoon.base.runtime.sessions.session import Session
 
 
-class PermissionService:
+class DefaultPermissionService:
 
     _roles: dict[str, list[str]]
     _directs: list[str]

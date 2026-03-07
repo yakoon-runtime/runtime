@@ -1,7 +1,7 @@
 from yakoon.platform.settings import settings
 
 
-class AuditLogService:
+class DefaultAuditLogService:
 
     async def audit(self, msg: str):
         if settings.logging.log_commands:

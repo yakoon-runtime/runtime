@@ -1,10 +1,9 @@
-from yakoon.base.models.account import Account, AuthResult
-from yakoon.base.ports import AccountService, SecretVerifier
+from yakoon.base.capabilities.identity import AccountService, AuthResult, SecretVerifier
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.values.namespace import Namespace
+from yakoon.base.values import Namespace
 
 
-class AuthenticationService:
+class DefaultAuthenticationService:
 
     def __init__(self, services: ServiceDirectory):
         self._services = services
@@ -24,9 +23,3 @@ class AuthenticationService:
             return AuthResult(ok=False, reason="invalid-credentials")
 
         return AuthResult(ok=True, account=acc)
-
-
-class ZeroSecretVerifier:
-
-    def verify(self, account: Account, secret: str) -> bool:
-        return account.password_hash == secret

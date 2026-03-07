@@ -4,14 +4,14 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.ports import NamespaceService
+from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.controllers.resources import ResourceReferences
 from yakoon.base.runtime.services import ServiceDirectory
 
 if TYPE_CHECKING:
     from yakoon.base.runtime import Command, Session
     from yakoon.base.runtime.commands import CommandSet, Request
-    from yakoon.base.values.namespace import Namespace
+    from yakoon.base.values import Namespace
 
 
 class Controller(ABC):

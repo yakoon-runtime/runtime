@@ -1,10 +1,10 @@
 from yakoon.base.runtime import Session
-from yakoon.base.values.namespace import Namespace
+from yakoon.base.values import Namespace
 
 
-class NamespaceService:
+class DefaultNamespaceService:
 
-    _domain: str = "yakoon"
+    _domain: str = "System"
 
     def __init__(self, domain: str | None = None):
         self._domain = domain or self._domain
