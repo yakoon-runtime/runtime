@@ -7,7 +7,8 @@ from yakoon.base.capabilities.interaction import (
     PolicyValidationResult,
     RawValue,
 )
-from yakoon.base.ui import FieldType, SecretValue
+from yakoon.base.ui import FieldType
+from yakoon.base.values import SecretValue
 
 
 class DefaultPolicyService:
