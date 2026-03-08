@@ -1,9 +1,15 @@
-from yakoon.base import ports as base_ports
-from yakoon.base.runtime import Command, CommandVisibility, Request
-from yakoon.base.runtime.commands import CommandKind, CommandScope
-from yakoon.base.runtime.sessions.session import Session
-from yakoon.base.ui.views import v_error
-from yakoon.workflow import ports as wf_ports
+from yakoon.base.capabilities.interaction import DialogService
+from yakoon.base.capabilities.workflow import WorkflowService
+from yakoon.base.engine import CommandQueueService
+from yakoon.base.runtime import (
+    Command,
+    CommandKind,
+    CommandScope,
+    CommandVisibility,
+    Request,
+    Session,
+)
+from yakoon.base.ui import v_error
 
 
 class CmdWfCancel(Command):
@@ -17,8 +23,8 @@ class CmdWfCancel(Command):
 
     async def run(self, session: Session, request: Request) -> None:
 
-        wfsvc = self.services.get(wf_ports.WorkflowService)
-        queue = self.services.get(base_ports.CommandQueueService)
+        wfsvc = self.services.get(WorkflowService)
+        queue = self.services.get(CommandQueueService)
 
         rt = wfsvc.runtime(session)
         if not self.context:
@@ -37,7 +43,7 @@ class CmdWfCancel(Command):
         rt.remove(batch.batch_id)
 
         # 3) Dialog ggf. schließen
-        dialogs = self.services.get(base_ports.DialogService)
+        dialogs = self.services.get(DialogService)
         if dialogs.is_waiting(session):
             dialogs.cancel_input(session)
 

@@ -20,13 +20,13 @@ async def run_console() -> None:
             "yakoon.discovery",
             "yakoon.crm",
             "yakoon.office",
-            "yakoon.workflow",
         ],
         capabilities={
             "audit": "default",
             "identity": "default",
             "interaction": "default",
             "presenters": "default",
+            "workflow": "default",
         },
     )
 

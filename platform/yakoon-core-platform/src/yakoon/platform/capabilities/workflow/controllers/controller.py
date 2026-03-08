@@ -4,7 +4,8 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from yakoon.base.runtime.controllers import Controller
-from yakoon.workflow.commands.cmdset import WorkflowCommands
+
+from ..commands.cmdset import WorkflowCommands
 
 if TYPE_CHECKING:
     from yakoon.base.runtime import CommandSet

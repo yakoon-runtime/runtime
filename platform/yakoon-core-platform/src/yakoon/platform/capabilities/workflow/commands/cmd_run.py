@@ -1,7 +1,12 @@
-from yakoon.base.runtime import Command, CommandVisibility, Request
-from yakoon.base.runtime.commands import CommandKind, CommandScope
-from yakoon.base.runtime.sessions.session import Session
-from yakoon.workflow import ports as wf_ports
+from yakoon.base.capabilities.workflow import WorkflowService
+from yakoon.base.runtime import (
+    Command,
+    CommandKind,
+    CommandScope,
+    CommandVisibility,
+    Request,
+)
+from yakoon.base.runtime.sessions import Session
 
 
 class CmdWfRun(Command):
@@ -21,5 +26,5 @@ class CmdWfRun(Command):
 
         controller_id = self.context.controller.id  # kommt aus deinem Dispatcher
 
-        wfsvc = self.services.get(wf_ports.WorkflowService)
+        wfsvc = self.services.get(WorkflowService)
         wfsvc.start(session, controller_id, key)

@@ -1,7 +1,12 @@
-from yakoon.base.runtime import Command, CommandVisibility, Request
-from yakoon.base.runtime.commands import CommandKind, CommandScope
-from yakoon.base.runtime.sessions.session import Session
-from yakoon.workflow import ports as wf_ports
+from yakoon.base.capabilities.workflow import WorkflowService
+from yakoon.base.runtime import (
+    Command,
+    CommandKind,
+    CommandScope,
+    CommandVisibility,
+    Request,
+)
+from yakoon.base.runtime.sessions import Session
 
 
 class CmdWfNext(Command):
@@ -18,6 +23,6 @@ class CmdWfNext(Command):
         batch_id = request.arg(0)
         step_id = request.arg(1)
 
-        wfsvc = self.services.get(wf_ports.WorkflowService)
+        wfsvc = self.services.get(WorkflowService)
         wfsvc.set_value(session, batch_id, "batch_id", batch_id)
         wfsvc.complete_run_step(session, batch_id=batch_id, step_id=step_id)

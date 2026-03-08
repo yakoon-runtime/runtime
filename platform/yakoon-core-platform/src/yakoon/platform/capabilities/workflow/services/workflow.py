@@ -4,26 +4,23 @@ from collections.abc import Mapping
 from typing import Any
 from uuid import uuid4
 
-from yakoon.base.catalogs import ControllerCatalogService
-from yakoon.base.engine import CommandQueueService
-from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime.controllers import resolve_resource
-from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.workflow import ports as wf_ports
-from yakoon.workflow.models.workflow import (
+from yakoon.base.capabilities.workflow import (
+    WorkflowCompiler,
     WorkflowDef,
     WorkflowError,
     WorkflowRuntime,
     WorkflowStatus,
 )
-from yakoon.workflow.runtime.compiler import compile_run_command
+from yakoon.base.catalogs import ControllerCatalogService
+from yakoon.base.engine import CommandQueueService
+from yakoon.base.resources import ResourceLoader
+from yakoon.base.runtime.controllers import resolve_resource
+from yakoon.base.runtime.services import ServiceDirectory
+
+from ..runtime.compiler import compile_run_command
 
 
-class WorkflowNotFound(KeyError):
-    pass
-
-
-class WorkflowService:
+class DefaultWorkflowService:
 
     def __init__(self, services: ServiceDirectory):
         self.services = services
@@ -62,7 +59,7 @@ class WorkflowService:
         if not raw_text:
             raise RuntimeError("Workflow definition not found.")
 
-        compiler = self.services.get(wf_ports.WorkflowCompileService)
+        compiler = self.services.get(WorkflowCompiler)
         wf = compiler.compile(command_key, raw_text)
 
         return wf

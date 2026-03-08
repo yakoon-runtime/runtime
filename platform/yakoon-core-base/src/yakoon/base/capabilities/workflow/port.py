@@ -3,7 +3,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Any, Protocol
 
-from yakoon.workflow.models.workflow import StepDef, WorkflowDef, WorkflowRuntime
+from .models import WorkflowRuntime
+from .types import StepDef, WorkflowDef
 
 
 class WorkflowService(Protocol):
@@ -37,6 +38,7 @@ class WorkflowService(Protocol):
         message: str,
         command: str | None = None,
     ) -> None: ...
+
     def cancel_batch(self, session, *, batch_id: str) -> None: ...
 
     def start(
@@ -47,6 +49,7 @@ class WorkflowService(Protocol):
         *,
         enqueue_first: bool = True,
     ) -> str: ...
+
     def start_with_values(
         self,
         session,
@@ -57,6 +60,7 @@ class WorkflowService(Protocol):
         enqueue_first: bool = True,
         ignore_none: bool = True,
     ) -> str: ...
+
     def resume_with_values(
         self,
         session,
@@ -68,5 +72,5 @@ class WorkflowService(Protocol):
     ) -> None: ...
 
 
-class WorkflowCompileService(Protocol):
+class WorkflowCompiler(Protocol):
     def compile(self, command_key: str, raw_text: str) -> WorkflowDef: ...

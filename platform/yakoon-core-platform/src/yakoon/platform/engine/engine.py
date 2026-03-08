@@ -4,13 +4,13 @@ from yakoon.base import ports
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.capabilities.interaction import DialogService
+from yakoon.base.capabilities.workflow import WorkflowContextRequired
 from yakoon.base.engine import CommandDispatch, DispatchInput, ResolveDispatch
 from yakoon.base.runtime import CmdNotFound, Command, CommandContext, Request, Session
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.ui import v_error
 from yakoon.platform.ui import ViewSpecValidationError
-from yakoon.workflow.models.workflow import WorkflowContextRequired
 
 from .directories import CommandDirectory, ControllerDirectory
 

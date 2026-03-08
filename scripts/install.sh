@@ -15,7 +15,6 @@ pip install \
 pip install \
   -e exts/yakoon-discovery \
   -e exts/yakoon-shell \
-  -e exts/yakoon-workflow \
 
 # apps
 pip install \
