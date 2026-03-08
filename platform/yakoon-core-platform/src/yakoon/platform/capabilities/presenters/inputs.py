@@ -2,13 +2,12 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from yakoon.base import ports
 from yakoon.base.capabilities.interaction import InputService
 from yakoon.base.capabilities.presenters import PromptResult
+from yakoon.base.rendering import RenderContext, RenderService
 from yakoon.base.runtime import Session
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.ui import ViewSpec
-from yakoon.platform.runtime.render.context import RenderContext
 
 
 class PresenterInputs:
@@ -22,7 +21,7 @@ class PresenterInputs:
     ):
         self._ctx = ctx
         self._session = session
-        self._renderer = services.get(ports.RendererService)
+        self._renderer = services.get(RenderService)
         self._inputs = services.get(InputService)
         self._view_id = view_id
 

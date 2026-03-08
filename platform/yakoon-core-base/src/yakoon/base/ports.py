@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Protocol
 
-from yakoon.base.models.stream import OutputStreaming
 from yakoon.base.stores.event.entity import (
     IndexKey,
     IndexValue,
@@ -14,9 +13,7 @@ from yakoon.base.stores.event.entity import (
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-    from yakoon.base.plugins.plugin import PluginMeta
     from yakoon.base.runtime.commands import Request
-    from yakoon.base.runtime.controllers.resources import ResourceRef
     from yakoon.base.runtime.sessions.session import Session
     from yakoon.base.stores.event.entity import (
         GetResult,
@@ -29,7 +26,6 @@ if TYPE_CHECKING:
     )
     from yakoon.base.ui.view_spec import ViewSpec
     from yakoon.base.values import Key, Namespace
-    from yakoon.platform.runtime.render.context import RenderContext
 
 
 class PatchError(Exception):
@@ -264,42 +260,5 @@ class WorkflowInternal(Protocol):
     def cancel_batch(self, session: Session, *, batch_id: str) -> None: ...
 
 
-class RendererService(Protocol):
-    async def render_view(self, ctx: RenderContext, state: str, **data) -> ViewSpec: ...
-
-
-class FileLoader(Protocol):
-
-    def load_text(
-        self,
-        ref: ResourceRef,
-        *,
-        exts: tuple[str, ...] = (".yaml", ".yml", ".json"),
-        encoding: str = "utf-8",
-    ) -> str: ...
-
-
-class RenderEngine(Protocol):
-
-    async def render_str(self, template_str: str, *, context: dict) -> str: ...
-    async def render_any(self, obj: Any, *, context: dict) -> Any: ...
-
-
-class OutputStreamService(Protocol):
-
-    async def emit(
-        self,
-        session: Session,
-        view: ViewSpec,
-        *,
-        override: OutputStreaming | None = None,
-    ) -> None: ...
-
-
 class IO(Protocol):
     async def view(self, view: ViewSpec) -> None: ...
-
-
-class PluginRegistry(Protocol):
-    def register(self, meta: PluginMeta) -> None: ...
-    def list(self) -> list[PluginMeta]: ...

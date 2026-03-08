@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Final
 
-from yakoon.base.models.resource import ResourceRef, _clean_rel
+from yakoon.base.resources.resource import ResourceRef, _clean_rel
 
 
 def resolve_resource(

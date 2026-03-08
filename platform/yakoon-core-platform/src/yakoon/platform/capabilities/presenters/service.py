@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.models.resource import ResourceRef
+from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.runtime.services import ServiceDirectory
 
 from .presenter import Presenter

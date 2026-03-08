@@ -2,12 +2,12 @@ import importlib.resources as ir
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
-from yakoon.base.models.resource import _clean_rel
+from yakoon.base.resources.resource import _clean_rel
 from yakoon.base.runtime.controllers.resources import ResourceRef
 
 
 @dataclass(slots=True)
-class FileLoader:  ## ==> ResourceLoader / package loader?
+class DefaultResourceLoader:
     """
     Generic loader for any resource under a package.
 

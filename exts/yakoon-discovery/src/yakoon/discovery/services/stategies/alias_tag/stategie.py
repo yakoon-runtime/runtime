@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from yakoon.base import ports
 from yakoon.base.catalogs import CommandCatalogService, ControllerCatalogService
+from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime import Request, Session
 from yakoon.base.runtime.controllers import resolve_resource
 from yakoon.base.runtime.services import ServiceDirectory
@@ -99,7 +99,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
 
     def _load_lookup_text(self, session: Session, owner_id: str) -> str | None:
         controllers = self._services.get(ControllerCatalogService)
-        loader = self._services.get(ports.FileLoader)
+        loader = self._services.get(ResourceLoader)
 
         ctrl = controllers.get(owner_id)
         if not ctrl or not ctrl.resources or not ctrl.resources.lookup:

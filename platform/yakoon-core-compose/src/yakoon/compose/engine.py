@@ -23,10 +23,14 @@ from yakoon.base.catalogs import (
 )
 from yakoon.base.engine import CommandQueueService
 from yakoon.base.ids import NamespaceService
+from yakoon.base.plugins import PluginRegistry
+from yakoon.base.rendering import RenderEngine, RenderService
+from yakoon.base.resources import ResourceLoader
+from yakoon.base.runtime import SessionService
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions.port import SessionService
 from yakoon.base.ui import FieldType, ViewSpecParser
+from yakoon.base.ui.stream import OutputStreamService
 from yakoon.base.values import Namespace
 from yakoon.platform.capabilities.audit import DefaultAuditLogService
 from yakoon.platform.capabilities.identity import (
@@ -52,27 +56,25 @@ from yakoon.platform.engine import (
     DefaultCommandQueueService,
 )
 from yakoon.platform.ids import DefaultNamespaceService
-from yakoon.platform.plugins.manager import PluginManager
-from yakoon.platform.plugins.registry import PluginRegistry
+from yakoon.platform.plugins import DefaultPluginManager, DefaultPluginRegistry
+from yakoon.platform.rendering import DefaultRenderService, JinjaRenderEngine
+from yakoon.platform.resources import DefaultResourceLoader
 from yakoon.platform.runtime import DefaultSessionService
-from yakoon.platform.runtime.render.jinja.engine import JinjaRenderer
-from yakoon.platform.services.file import FileLoader
 from yakoon.platform.services.lookup import NoLookupResolverService
-from yakoon.platform.services.render import RendererService
-from yakoon.platform.services.stream import OutputStreamService
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
 from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.stores.event.store import DefaultEntityStore
 from yakoon.platform.ui import DefaultViewSpecParser
+from yakoon.platform.ui.stream import DefaultOutputStreamService
 
 
 def compose_engine(*, plugins: list[str]) -> CommandEngine:
     directory = ControllerDirectory()
 
     bootstrap = ServiceDirectory()
-    bootstrap.register_static(ports.PluginRegistry, PluginRegistry())
+    bootstrap.register_static(PluginRegistry, DefaultPluginRegistry())
 
-    loaded = PluginManager(bootstrap).load(plugins)
+    loaded = DefaultPluginManager(bootstrap).load(plugins)
 
     controllers: list[Controller] = []
     for lp in loaded:
@@ -215,10 +217,10 @@ def _compose_services(
     services.register_static(PolicyService, DefaultPolicyService())
     services.register_static(InputService, DefaultInputService(services))
     services.register_static(ViewSpecParser, DefaultViewSpecParser())
-    services.register_static(ports.FileLoader, FileLoader())
-    services.register_static(ports.RendererService, RendererService(services))
-    services.register_static(ports.RenderEngine, JinjaRenderer())
-    services.register_static(ports.OutputStreamService, OutputStreamService())
+    services.register_static(ResourceLoader, DefaultResourceLoader())
+    services.register_static(RenderService, DefaultRenderService(services))
+    services.register_static(RenderEngine, JinjaRenderEngine())
+    services.register_static(OutputStreamService, DefaultOutputStreamService())
 
     services.register_static(
         AuthenticationService, DefaultAuthenticationService(services)

@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from yakoon.base import ports
-from yakoon.base.models.stream import OutputStreaming
+from yakoon.base.rendering import RenderContext, RenderService
 from yakoon.base.runtime import Session
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.platform.runtime.render.context import RenderContext
+from yakoon.base.ui.stream import OutputStreaming, OutputStreamService
 
 
 class PresenterViews:
@@ -20,8 +19,8 @@ class PresenterViews:
     ):
         self._ctx = ctx
         self._session = session
-        self._renderer = services.get(ports.RendererService)
-        self._streams = services.get(ports.OutputStreamService)
+        self._renderer = services.get(RenderService)
+        self._streams = services.get(OutputStreamService)
         self._view_id = view_id
 
     async def emit(

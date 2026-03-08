@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from yakoon.base import ports
-from yakoon.base.models.resource import ResourceRef
+from yakoon.base.rendering import RenderContext, RenderService
+from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.runtime import Session
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.platform.runtime.render.context import RenderContext
 
 from .inputs import PresenterInputs
 from .views import PresenterViews
@@ -30,7 +29,7 @@ class Presenter:
         self._views = None
         self._session = session
         self._services = services
-        self._renderer = self._services.get(ports.RendererService)
+        self._renderer = self._services.get(RenderService)
         self._view_id = f"view.{uuid4().hex}"
 
         self._ctx = RenderContext(

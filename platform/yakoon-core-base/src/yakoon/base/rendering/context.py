@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from yakoon.base.models.resource import ResourceRef
+from yakoon.base.resources import ResourceRef
 
 
 @dataclass(frozen=True, slots=True)

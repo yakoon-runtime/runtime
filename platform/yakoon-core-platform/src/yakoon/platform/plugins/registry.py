@@ -1,7 +1,7 @@
 from yakoon.base.plugins.plugin import PluginMeta
 
 
-class PluginRegistry:
+class DefaultPluginRegistry:
     def __init__(self):
         self._plugins: dict[str, PluginMeta] = {}
 

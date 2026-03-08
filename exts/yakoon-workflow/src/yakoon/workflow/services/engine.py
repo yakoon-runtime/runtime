@@ -4,9 +4,9 @@ from collections.abc import Mapping
 from typing import Any
 from uuid import uuid4
 
-from yakoon.base import ports as base_ports
 from yakoon.base.catalogs import ControllerCatalogService
 from yakoon.base.engine import CommandQueueService
+from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime.controllers import resolve_resource
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.workflow import ports as wf_ports
@@ -57,7 +57,7 @@ class WorkflowService:
             key=command_key,
         )
 
-        file_loader = self.services.get(base_ports.FileLoader)
+        file_loader = self.services.get(ResourceLoader)
         raw_text = file_loader.load_text(ref)
         if not raw_text:
             raise RuntimeError("Workflow definition not found.")

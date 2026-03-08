@@ -1,15 +1,15 @@
 import importlib
 
-from yakoon.base import ports
+from yakoon.base.plugins import PluginRegistry
 from yakoon.base.plugins.plugin import LoadedPlugin, PluginExport
 from yakoon.base.runtime.services import ServiceDirectory
 
 
-class PluginManager:
+class DefaultPluginManager:
 
     def __init__(self, root: ServiceDirectory):
         self._root = root
-        self._registry = root.get(ports.PluginRegistry)
+        self._registry = root.get(PluginRegistry)
 
     def load(self, modules: list[str]) -> list[LoadedPlugin]:
         loaded: list[LoadedPlugin] = []

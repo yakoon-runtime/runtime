@@ -6,11 +6,9 @@ from typing import Any
 
 from jinja2 import Environment, StrictUndefined
 
-from yakoon.platform.runtime.render.jinja.filters import register_filters
-
 
 @dataclass(slots=True)
-class JinjaRenderer:
+class JinjaRenderEngine:
     env: Environment
 
     def __init__(self):
@@ -39,3 +37,11 @@ class JinjaRenderer:
             rendered = [await self.render_any(v, context=context) for v in obj]
             return tuple(rendered) if isinstance(obj, tuple) else rendered
         return obj
+
+
+def ljust(value: str, width: int) -> str:
+    return value.ljust(width)
+
+
+def register_filters(environment):
+    environment.filters["ljust"] = ljust

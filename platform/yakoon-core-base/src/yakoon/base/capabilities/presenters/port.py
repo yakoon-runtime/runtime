@@ -1,7 +1,7 @@
 from typing import Protocol
 
-from yakoon.base.models.resource import ResourceRef
-from yakoon.base.models.stream import OutputStreaming
+from yakoon.base.resources.resource import ResourceRef
+from yakoon.base.ui.stream.stream import OutputStreaming
 
 from .result import PromptResult
 

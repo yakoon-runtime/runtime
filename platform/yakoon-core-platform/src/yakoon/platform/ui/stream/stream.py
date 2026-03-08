@@ -7,7 +7,6 @@ from collections.abc import Iterator
 from dataclasses import dataclass, replace
 from typing import Any
 
-from yakoon.base.models.stream import OutputStreaming, OutputStreamPolicy
 from yakoon.base.runtime.sessions import Session  # ggf. Pfad anpassen
 from yakoon.base.ui import (
     PatchAppendBlock,
@@ -17,6 +16,7 @@ from yakoon.base.ui import (
     PatchSpec,
     ViewSpec,
 )
+from yakoon.base.ui.stream.stream import OutputStreaming, OutputStreamPolicy
 
 # -----------------------------
 # Effective config (policy + override)
@@ -93,7 +93,7 @@ def iter_chunks(text: str, *, min_size: int, max_size: int) -> Iterator[str]:
 # -----------------------------
 
 
-class OutputStreamService:
+class DefaultOutputStreamService:
     """
     Output streaming service:
     emits ViewSpec(mode="patch") with patch ops.
