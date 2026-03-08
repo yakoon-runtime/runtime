@@ -3,9 +3,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.runtime.controllers import Controller
-from yakoon.base.runtime.controllers.resources import ResourceReferences
-from yakoon.discovery.commands.cmdset import DiscoveryLookupCommands
+from yakoon.base.runtime.controllers import Controller, ResourceReferences
+
+from ..commands import DiscoveryLookupCommands
 
 if TYPE_CHECKING:
     from yakoon.base.runtime import CommandSet
@@ -21,7 +21,7 @@ class DiscoveryController(Controller):
     is_activatable: bool = True
 
     resources = ResourceReferences(
-        package="yakoon.discovery",
+        package="yakoon.platform.capabilities.discovery",
     )
 
     @property

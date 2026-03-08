@@ -1,21 +1,23 @@
 import time
 
-from yakoon.base.runtime import Session
-from yakoon.base.runtime.commands import Request
+from yakoon.base.capabilities.discovery.discovery import Candidates, Resolved
+from yakoon.base.capabilities.discovery.lookup import LookupCandidatesPayload
+from yakoon.base.capabilities.discovery.port import (
+    DiscoveryService,
+    LookupCandidateStoreService,
+)
+from yakoon.base.runtime import Request, Session
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.discovery import ports as disc_ports
-from yakoon.discovery.models.discovery import Candidates, Resolved
-from yakoon.discovery.models.lookup import LookupCandidatesPayload
 
 
-class LookupResolverService:
+class DefaultLookupResolverService:
 
     def __init__(self, services: ServiceDirectory):
         self._services = services
 
     async def resolve(self, session: Session, request: Request) -> str | None:
-        discovery = self._services.get(disc_ports.DiscoveryService)
-        store = self._services.get(disc_ports.LookupCandidateStoreService)
+        discovery = self._services.get(DiscoveryService)
+        store = self._services.get(LookupCandidateStoreService)
 
         query = request.raw
         result = await discovery.discover(session, request)

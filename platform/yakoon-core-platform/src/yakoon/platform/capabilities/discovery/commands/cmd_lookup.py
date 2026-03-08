@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from yakoon.base.capabilities.discovery import LookupCandidateStoreService
 from yakoon.base.runtime import (
     Command,
     CommandScope,
@@ -7,7 +8,6 @@ from yakoon.base.runtime import (
     Request,
     Session,
 )
-from yakoon.discovery import ports
 
 
 class CmdLookup(Command):
@@ -19,7 +19,7 @@ class CmdLookup(Command):
     async def run(self, session: Session, request: Request) -> None:
 
         presenter = await self.get_presenter(session)
-        store = self.services.get(ports.LookupCandidateStoreService)
+        store = self.services.get(LookupCandidateStoreService)
 
         token = request.option("token")
         if not token:

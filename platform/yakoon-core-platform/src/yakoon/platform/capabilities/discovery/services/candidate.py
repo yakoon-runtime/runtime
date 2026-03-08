@@ -3,10 +3,10 @@ from __future__ import annotations
 import secrets
 import time
 
-from yakoon.discovery.models.lookup import LookupCandidatesPayload
+from yakoon.base.capabilities.discovery.lookup import LookupCandidatesPayload
 
 
-class LookupCandidateStoreService:
+class DefaultLookupCandidateStoreService:
     """
     Session-scoped short-lived store for lookup candidate lists.
     """

@@ -1,10 +1,10 @@
 import asyncio
 
-from yakoon.base import ports
 from yakoon.base.capabilities.audit import AuditLogService
+from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.capabilities.interaction import DialogService
-from yakoon.base.capabilities.workflow import WorkflowContextRequired
+from yakoon.base.capabilities.workflow import WorkflowContextRequired, WorkflowService
 from yakoon.base.engine import CommandDispatch, DispatchInput, ResolveDispatch
 from yakoon.base.runtime import CmdNotFound, Command, CommandContext, Request, Session
 from yakoon.base.runtime.controllers import Controller
@@ -139,7 +139,7 @@ class CommandEngine:
             # Resolve command within the single active controller context (+ groups)
             result = await self._find_matching_command(controller_id, request)
             if not result:
-                resolver = self.services.get(ports.LookupResolverService)
+                resolver = self.services.get(LookupResolverService)
                 result = await resolver.resolve(session, request)
                 if result:
                     request = Request(result)
@@ -231,7 +231,7 @@ class CommandEngine:
                 command.context = None
 
             if failed and di.batch_id:
-                wf = self._services.get(ports.WorkflowInternal)
+                wf = self._services.get(WorkflowService)
                 wf.cancel_batch(session, batch_id=di.batch_id)
 
             # Policy 2: cleanup the controller that executed this command
@@ -247,7 +247,7 @@ class CommandEngine:
         di: DispatchInput,
     ) -> None:
         if di.batch_id and command:
-            wf = self._services.get(ports.WorkflowInternal)
+            wf = self._services.get(WorkflowService)
             wf.fail_batch(
                 session,
                 batch_id=di.batch_id,

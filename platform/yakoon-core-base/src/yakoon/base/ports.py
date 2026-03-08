@@ -13,8 +13,6 @@ from yakoon.base.stores.event.entity import (
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-    from yakoon.base.runtime import Request
-    from yakoon.base.runtime.sessions import Session
     from yakoon.base.stores.event.entity import (
         GetResult,
         IndexSpec,
@@ -179,10 +177,6 @@ class EntityStore(Protocol):
         ...
 
     async def gc_global(self, *, policy: RetentionPolicy) -> None: ...
-
-
-class LookupResolverService(Protocol):
-    async def resolve(self, session: Session, request: Request) -> str | None: ...
 
 
 class IO(Protocol):

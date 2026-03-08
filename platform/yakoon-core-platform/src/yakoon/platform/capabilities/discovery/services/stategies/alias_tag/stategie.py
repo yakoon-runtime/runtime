@@ -1,20 +1,20 @@
 from __future__ import annotations
 
+from yakoon.base.capabilities.discovery import (
+    Candidates,
+    Capability,
+    DiscoveryResult,
+    DiscoveryStrategy,
+    LookupIndex,
+    LookupParser,
+    NoMatch,
+    Resolved,
+)
 from yakoon.base.catalogs import CommandCatalogService, ControllerCatalogService
 from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime import Request, Session
 from yakoon.base.runtime.controllers import resolve_resource
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.discovery import ports as disc_ports
-from yakoon.discovery.models.discovery import (
-    Candidates,
-    Capability,
-    DiscoveryResult,
-    NoMatch,
-    Resolved,
-)
-from yakoon.discovery.models.parser import LookupIndex
-from yakoon.discovery.ports import DiscoveryStrategy
 
 
 def _split(line: str) -> tuple[str, str]:
@@ -118,7 +118,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
             return None
 
     def _parse_index(self, text: str):
-        parser = self._services.get(disc_ports.LookupParser)
+        parser = self._services.get(LookupParser)
         idx = parser.parse(text)
         if not idx or not getattr(idx, "commands", None):
             return None

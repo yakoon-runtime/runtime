@@ -5,7 +5,7 @@ from typing import Any
 
 import yaml
 
-from yakoon.discovery.models.parser import LookupEntry, LookupIndex
+from yakoon.base.capabilities.discovery import LookupEntry, LookupIndex
 
 
 def _norm_list(value: Any) -> list[str]:
@@ -19,7 +19,7 @@ def _norm_list(value: Any) -> list[str]:
     return out
 
 
-class LookupParser:
+class DefaultLookupParser:
 
     def parse(self, text: str) -> LookupIndex:
         raw = yaml.safe_load(text) or {}

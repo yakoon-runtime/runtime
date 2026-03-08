@@ -17,12 +17,12 @@ async def run_console() -> None:
     engine = compose_engine(
         plugins=[
             "yakoon.shell",
-            "yakoon.discovery",
             "yakoon.crm",
             "yakoon.office",
         ],
         capabilities={
             "audit": "default",
+            "discovery": "default",
             "identity": "default",
             "interaction": "default",
             "presenters": "default",

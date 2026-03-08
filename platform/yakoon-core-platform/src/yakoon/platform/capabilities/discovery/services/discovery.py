@@ -1,10 +1,12 @@
-from yakoon.base.runtime.commands import Request
-from yakoon.base.runtime.sessions.session import Session
-from yakoon.discovery.models.discovery import DiscoveryResult, NoMatch
-from yakoon.discovery.ports import DiscoveryStrategy
+from yakoon.base.capabilities.discovery import (
+    DiscoveryResult,
+    DiscoveryStrategy,
+    NoMatch,
+)
+from yakoon.base.runtime import Request, Session
 
 
-class DiscoveryService:
+class DefaultDiscoveryService:
 
     def __init__(self) -> None:
         self._strategies: list[tuple[int, DiscoveryStrategy]] = []

@@ -1,6 +1,7 @@
 from typing import Literal, TypeAlias
 
 from yakoon.base import ports
+from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.capabilities.interaction import FieldPolicy, PolicyService
 from yakoon.base.catalogs import (
@@ -211,8 +212,8 @@ def _compose_services(
     services.register_static(ports.IndexRegistry, store)
 
     # optional lookup feature (can be overridden by plugin export.public_services)
-    if not services.has(ports.LookupResolverService):
-        services.register_static(ports.LookupResolverService, NoLookupResolverService())
+    if not services.has(LookupResolverService):
+        services.register_static(LookupResolverService, NoLookupResolverService())
 
     # counters / sharding
     # services.register_static(
