@@ -1,9 +1,9 @@
-from .plugin import LoadedPlugin, PluginExport, PluginMeta
-from .port import PluginRegistry
+from .module import LoadedModule, ModuleExport, ModuleMeta
+from .port import ModuleRegistry
 
 __all__ = [
-    "PluginExport",
-    "PluginMeta",
-    "LoadedPlugin",
-    "PluginRegistry",
+    "ModuleExport",
+    "ModuleMeta",
+    "LoadedModule",
+    "ModuleRegistry",
 ]

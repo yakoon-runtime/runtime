@@ -13,7 +13,6 @@ pip install \
 
 # extensions
 pip install \
-  -e exts/yakoon-auth \
   -e exts/yakoon-discovery \
   -e exts/yakoon-shell \
   -e exts/yakoon-workflow \

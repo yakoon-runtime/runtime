@@ -1,19 +1,19 @@
 from yakoon.base import ports as base_ports
-from yakoon.base.plugins.plugin import PluginExport, PluginMeta
+from yakoon.base.plugins.module import ModuleExport, ModuleMeta
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.workflow import ports as wf_ports
 from yakoon.workflow.controller import WorkflowController
 from yakoon.workflow.services.compile import WorkflowCompileService
 from yakoon.workflow.services.engine import WorkflowService
 
-meta = PluginMeta(
+meta = ModuleMeta(
     name="yakoon.workflow",
     version="0.1.0",
     description="Workflow ...",
 )
 
 
-def register(services: ServiceDirectory) -> PluginExport:
+def register(services: ServiceDirectory) -> ModuleExport:
 
     services.register_static(wf_ports.WorkflowService, WorkflowService(services))
     services.register_static(wf_ports.WorkflowCompileService, WorkflowCompileService())
@@ -26,7 +26,7 @@ def register(services: ServiceDirectory) -> PluginExport:
         base_ports.WorkflowPublic, services.get(wf_ports.WorkflowService)
     )
 
-    return PluginExport(
+    return ModuleExport(
         meta,
         controllers=[
             WorkflowController,

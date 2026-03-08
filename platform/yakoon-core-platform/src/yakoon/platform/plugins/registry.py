@@ -1,12 +1,12 @@
-from yakoon.base.plugins.plugin import PluginMeta
+from yakoon.base.plugins.module import ModuleMeta
 
 
-class DefaultPluginRegistry:
+class DefaultModuleRegistry:
     def __init__(self):
-        self._plugins: dict[str, PluginMeta] = {}
+        self._plugins: dict[str, ModuleMeta] = {}
 
-    def register(self, meta: PluginMeta) -> None:
+    def register(self, meta: ModuleMeta) -> None:
         self._plugins[meta.name] = meta
 
-    def list(self) -> list[PluginMeta]:
+    def list(self) -> list[ModuleMeta]:
         return list(self._plugins.values())

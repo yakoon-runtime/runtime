@@ -3,9 +3,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.auth.commands.cmdset import AuthSystemCommands
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.controllers.resources import ResourceReferences
+
+from ..commands import AuthSystemCommands
 
 if TYPE_CHECKING:
     from yakoon.base.runtime import CommandSet
@@ -26,7 +27,7 @@ class AuthCoreController(Controller):
     is_activatable: bool = True
 
     resources = ResourceReferences(
-        package="yakoon.auth",
+        package="yakoon.platform.capabilities.identity",
     )
 
     @property

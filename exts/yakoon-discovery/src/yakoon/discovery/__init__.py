@@ -1,5 +1,5 @@
 from yakoon.base import ports as base_ports
-from yakoon.base.plugins.plugin import PluginExport, PluginMeta
+from yakoon.base.plugins.module import ModuleExport, ModuleMeta
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.discovery import ports
 from yakoon.discovery.controller import DiscoveryController
@@ -11,14 +11,14 @@ from yakoon.discovery.services.stategies.alias_tag.stategie import (
     LookupAliasTagStrategy,
 )
 
-meta = PluginMeta(
+meta = ModuleMeta(
     name="yakoon.discovery",
     version="0.1.0",
     description="Capability and intent discovery layer.",
 )
 
 
-def register(services: ServiceDirectory) -> PluginExport:
+def register(services: ServiceDirectory) -> ModuleExport:
 
     discovery = DiscoveryService()
     discovery.register(1, LookupAliasTagStrategy(services))
@@ -33,7 +33,7 @@ def register(services: ServiceDirectory) -> PluginExport:
         base_ports.LookupResolverService, LookupResolverService(services)
     )
 
-    return PluginExport(
+    return ModuleExport(
         meta,
         controllers=[
             DiscoveryController,

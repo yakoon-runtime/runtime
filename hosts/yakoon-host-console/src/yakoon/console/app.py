@@ -1,7 +1,7 @@
 import asyncio
 
-from yakoon.base import ports
 from yakoon.base.capabilities.identity import PermissionService
+from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.runtime.sessions import SessionService
 from yakoon.base.values import Key
 from yakoon.compose.demo_data import seed_demo_system_data
@@ -17,12 +17,17 @@ async def run_console() -> None:
     engine = compose_engine(
         plugins=[
             "yakoon.shell",
-            "yakoon.auth",
             "yakoon.discovery",
             "yakoon.crm",
             "yakoon.office",
             "yakoon.workflow",
-        ]
+        ],
+        capabilities={
+            "audit": "default",
+            "identity": "default",
+            "interaction": "default",
+            "presenters": "default",
+        },
     )
 
     await initialize_storage(engine.services)
@@ -57,7 +62,7 @@ async def run_console() -> None:
         await runner.start(inits)
 
     except KeyboardInterrupt:
-        dialogs = engine.services.get(ports.DialogService)
+        dialogs = engine.services.get(DialogService)
         if dialogs.is_waiting(session):
             await runner.on_cancel()  # type: ignore[union-attr]
     finally:

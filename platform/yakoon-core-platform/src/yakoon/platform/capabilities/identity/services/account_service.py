@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from yakoon.base.capabilities.identity import Account, AccountData
-from yakoon.base.ports import IndexRegistry
+from yakoon.base.runtime.services.directory import ServiceDirectory
 from yakoon.base.stores.event.entity import (
     IndexKey,
     IndexSpec,
@@ -34,9 +34,15 @@ class DefaultAccountService:
     Keeps the public API stable.
     """
 
-    def __init__(self, store: EntityStore, index: IndexRegistry | None = None) -> None:
-        self.store = store
-        self.index = index  # optional; can be ensured at compose/plugin-load instead
+    def __init__(self, services: ServiceDirectory) -> None:
+        self.services = services
+        self._store: EntityStore | None = None
+
+    @property
+    def store(self) -> EntityStore:
+        if not self._store:
+            self._store = self.services.get(EntityStore)
+        return self._store
 
     async def get_by_key(self, key: Key) -> Account | None:
         row = await self.store.get_one(key=key)

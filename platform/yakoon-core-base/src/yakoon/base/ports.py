@@ -13,8 +13,8 @@ from yakoon.base.stores.event.entity import (
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
-    from yakoon.base.runtime.commands import Request
-    from yakoon.base.runtime.sessions.session import Session
+    from yakoon.base.runtime import Request
+    from yakoon.base.runtime.sessions import Session
     from yakoon.base.stores.event.entity import (
         GetResult,
         IndexSpec,

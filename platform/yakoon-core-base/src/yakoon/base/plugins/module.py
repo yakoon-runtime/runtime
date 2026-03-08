@@ -9,21 +9,21 @@ if TYPE_CHECKING:
 
 
 @dataclass(frozen=True)
-class PluginMeta:
+class ModuleMeta:
     name: str
     version: str
     description: str
 
 
 @dataclass(frozen=True)
-class PluginExport:
-    meta: PluginMeta
+class ModuleExport:
+    meta: ModuleMeta
     controllers: list[type[Controller]]
     public_services: list[type[Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
-class LoadedPlugin:
-    export: PluginExport
+class LoadedModule:
+    export: ModuleExport
     services: ServiceDirectory
     module_name: str

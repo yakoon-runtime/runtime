@@ -1,7 +1,7 @@
-from .manager import DefaultPluginManager
-from .registry import DefaultPluginRegistry
+from .manager import DefaultModuleManager
+from .registry import DefaultModuleRegistry
 
 __all__ = [
-    "DefaultPluginManager",
-    "DefaultPluginRegistry",
+    "DefaultModuleManager",
+    "DefaultModuleRegistry",
 ]
