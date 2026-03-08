@@ -23,12 +23,17 @@ def compose_kivy_app() -> KivyComposition:
     engine = compose_engine(
         plugins=[
             "yakoon.shell",
-            "yakoon.auth",
-            "yakoon.discovery",
             "yakoon.crm",
             "yakoon.office",
-            "yakoon.workflow",
-        ]
+        ],
+        capabilities={
+            "audit": "default",
+            "discovery": "default",
+            "identity": "default",
+            "interaction": "default",
+            "presenters": "default",
+            "workflow": "default",
+        },
     )
 
     runner = SessionRunner(engine)

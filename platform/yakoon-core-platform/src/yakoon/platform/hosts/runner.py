@@ -4,10 +4,10 @@ from dataclasses import dataclass
 
 from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.engine import CommandDispatch, CommandQueueService, ResolveDispatch
-from yakoon.base.runtime.sessions.session import Session
+from yakoon.base.runtime import Session
 from yakoon.platform.engine import CommandEngine
-from yakoon.platform.hosts.adapter import HostAdapter
-from yakoon.platform.hosts.format import format_ps1
+
+from . import HostAdapter, format_ps1
 
 
 @dataclass

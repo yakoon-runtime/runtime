@@ -6,11 +6,16 @@ import yaml
 
 from yakoon.base.ui import (
     Block,
+    OutputSpec,
     ViewFieldDef,
     ViewInputDef,
     ViewSpec,
 )
-from yakoon.base.ui.blocks.blocks import (
+from yakoon.base.ui.blocks import (
+    Inline,
+    InlineCode,
+    InlineLink,
+    InlineText,
     KvBlock,
     KvItemBlock,
     ListBlock,
@@ -20,8 +25,6 @@ from yakoon.base.ui.blocks.blocks import (
     TableBlock,
     TextBlock,
 )
-from yakoon.base.ui.blocks.inline import Inline, InlineCode, InlineLink, InlineText
-from yakoon.base.ui.output_spec import OutputSpec
 
 
 class ViewSpecError(Exception): ...

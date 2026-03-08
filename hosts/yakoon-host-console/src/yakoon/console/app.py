@@ -2,7 +2,7 @@ import asyncio
 
 from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.capabilities.interaction import DialogService
-from yakoon.base.runtime.sessions import SessionService
+from yakoon.base.runtime import SessionService
 from yakoon.base.values import Key
 from yakoon.compose.demo_data import seed_demo_system_data
 from yakoon.compose.engine import compose_engine, initialize_storage

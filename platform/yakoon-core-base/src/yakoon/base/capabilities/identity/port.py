@@ -1,8 +1,12 @@
-from typing import Protocol
+from __future__ import annotations
 
-from yakoon.base.capabilities.identity import Account, AuthResult
-from yakoon.base.runtime.sessions import Session
-from yakoon.base.values import Key, Namespace
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from yakoon.base.runtime import Session
+    from yakoon.base.values import Key, Namespace
+
+from . import Account, AuthResult
 
 
 class SecretVerifier(Protocol):

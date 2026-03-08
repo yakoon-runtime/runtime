@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from yakoon.base.capabilities.presenters.port import Presenter, PresenterService
+from yakoon.base.capabilities.presenters import Presenter, PresenterService
 from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.controllers import resolve_resource
 

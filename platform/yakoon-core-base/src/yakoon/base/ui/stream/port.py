@@ -1,9 +1,13 @@
-from typing import Protocol
+from __future__ import annotations
 
-from yakoon.base.runtime.sessions import Session
+from typing import TYPE_CHECKING, Protocol
+
 from yakoon.base.ui import ViewSpec
 
 from .stream import OutputStreaming
+
+if TYPE_CHECKING:
+    from yakoon.base.runtime import Session
 
 
 class OutputStreamService(Protocol):
