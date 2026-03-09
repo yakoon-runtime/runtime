@@ -12,29 +12,15 @@ from yakoon.kivy.widgets.blocks.registry import BlockRendererRegistry
 @dataclass(slots=True)
 class MessageModel:
     vid: str
-    events: list[Any]  # ViewSpec or PatchSpec
+    events: list[Any]  # ViewEvent only
 
 
 class CommandMessage(RecycleDataViewBehavior, StackLayout):
-    """RecycleView row that can (re)build itself from a list of events.
-
-    Events are stored in the RV data-model (Surface):
-      - ViewSpec  -> full snapshot (set_view)
-      - PatchSpec -> incremental ops (apply_patch)
-
-    Important properties:
-      - Idempotent: refresh_view_attrs() must NOT rebuild on every call.
-      - Delta-based: only applies events not yet applied for the current vid.
-      - Recyclable: when RV reuses the instance for a different vid, it hard-resets.
-    """
 
     def __init__(self, registry: BlockRendererRegistry | None = None, **kw: Any):
         super().__init__(**kw)
-
         self.size_hint_y = None
         self._registry = registry or BlockRendererRegistry(dbg=True)
-
-        # streaming state
         self._widgets_by_id: dict[str, Any] = {}
         self._vid: str | None = None
         self._applied_n: int = 0
@@ -52,15 +38,9 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
             return super().refresh_view_attrs(rv, index, data)
 
         for ev in events[self._applied_n :]:
-            if getattr(ev, "ops", None) is not None:
-                self.apply_patch(ev)
-            else:
-                if getattr(ev, "mode", None) == "patch":
-                    patch = getattr(ev, "patch", None)
-                    if patch is not None:
-                        self.apply_patch(patch)
-                else:
-                    self.set_view(ev)
+            patch = getattr(ev, "patch", None)
+            if patch is not None:
+                self.apply_patch(patch)
 
         self._applied_n = len(events)
         return super().refresh_view_attrs(rv, index, data)
@@ -89,11 +69,9 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
         if callable(append_child):
             append_child(child_widget)
             return
-
         add_widget = getattr(parent, "add_widget", None)
         if callable(add_widget):
             add_widget(child_widget)
-            return
 
     def _maybe_register_stream_aliases(self, block: Any, widget: Any) -> None:
         btype = getattr(block, "type", None)
@@ -113,22 +91,8 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
             getter = getattr(widget, "value_widget", None)
             if callable(getter):
                 self._register(f"{bid}.value", getter())
-            return
-
-    def set_view(self, view: Any) -> None:
-        """Render a full, non-streaming view snapshot."""
-        self._clear_content()
-
-        blocks = list(getattr(view, "blocks", None) or []) if view else []
-        for block in blocks:
-            widget = self._render_block(block)
-            self.add_widget(widget)
-            bid = getattr(block, "id", None)
-            self._register(bid, widget)
-            self._maybe_register_stream_aliases(block, widget)
 
     def apply_patch(self, patch: Any) -> None:
-        """Apply streaming patch ops in-place."""
         if patch is None:
             return
 
@@ -184,14 +148,12 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
                     continue
 
                 child_widget = self._render_block(child_block)
-
                 child_id = getattr(child_block, "id", None)
                 if isinstance(child_id, str) and child_id:
                     self._register(child_id, child_widget)
                     self._maybe_register_stream_aliases(child_block, child_widget)
 
                 self._attach_child(parent, child_widget)
-                continue
 
     def dispose(self) -> None:
         pass

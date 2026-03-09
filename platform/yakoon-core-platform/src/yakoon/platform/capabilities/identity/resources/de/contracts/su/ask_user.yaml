@@ -3,7 +3,11 @@ kind: view
 view:
   role: info
   title: "Commands"
-  input_mode: prompt
+  blocks:
+    - type: text
+      text: "Geben Sie einen Benutzernamen ein."
 
-  fields:
-    - { var: auth.user, policy: system:string, title: "Username" } 
+    - type: fields
+      input_mode: prompt
+      fields:
+        - { var: auth.user, policy: system:string, title: "Username" } 

@@ -17,7 +17,8 @@ from .blocks import (
     TableBlock,
     TextBlock,
 )
-from .document import ErrorKind, Role, ViewMeta, ViewSpec, ViewUI
+from .document import ErrorKind, Role, ViewHeader, ViewMeta, ViewSpec, ViewUI
+from .event import ViewEvent
 from .fields import FieldType, SelectOption, ViewFieldDef
 from .patch import (
     PatchAppendBlock,
@@ -39,8 +40,10 @@ __all__ = [
     "ErrorKind",
     "InputMode",
     "ViewUI",
+    "ViewHeader",
     "ViewMeta",
     "ViewSpec",
+    "ViewEvent",
     "PatchReset",
     "PatchAppendBlock",
     "PatchAppendText",

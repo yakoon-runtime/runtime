@@ -28,6 +28,7 @@ from yakoon.base.ui import (
     TableBlock,
     TextBlock,
     ViewFieldDef,
+    ViewHeader,
     ViewSpec,
 )
 
@@ -132,15 +133,19 @@ class DefaultViewSpecParser:
 
         blocks = [self._parse_block(b) for b in blocks_raw]
 
-        return ViewSpec(
-            kind="view",
-            id=None,
+        header = ViewHeader(
             role=cast(Role, role),
             title=title,
             subtitle=subtitle,
-            blocks=blocks,
             error_kind=cast(ErrorKind | None, error_kind),
             meta=None,
+        )
+
+        return ViewSpec(
+            kind="view",
+            id=None,
+            header=header,
+            blocks=blocks,
         )
 
     def _parse_fields_block(

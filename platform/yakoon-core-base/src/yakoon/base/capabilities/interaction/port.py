@@ -6,7 +6,7 @@ from typing import Protocol
 
 from yakoon.base.capabilities.presenters import PresentResult
 from yakoon.base.runtime import Session
-from yakoon.base.ui import FieldsBlock, OutputStreaming, ViewSpec
+from yakoon.base.ui import FieldsBlock, OutputStreaming, ViewEvent, ViewSpec
 
 from .policy import FieldPolicy, PolicyValidationResult, RawValue
 from .types import DialogState
@@ -53,6 +53,7 @@ class DialogService(Protocol):
 
     def is_waiting(self, session: Session) -> bool: ...
     def get_view(self, session: Session) -> ViewSpec: ...
+    def get_event(self, session: Session) -> ViewEvent: ...
     def wait_view(
         self,
         session: Session,

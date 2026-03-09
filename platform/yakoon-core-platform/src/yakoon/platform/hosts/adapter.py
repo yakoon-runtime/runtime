@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from yakoon.base.ui import ViewSpec
+from yakoon.base.ui import ViewEvent
 
 
 @dataclass(frozen=True)
@@ -27,7 +27,7 @@ class HostAdapter(Protocol):
     UI -> Engine goes via Runner callbacks.
     """
 
-    async def on_view(self, *, ps1: str, view: ViewSpec) -> None: ...
+    async def on_view(self, *, ps1: str, event: ViewEvent) -> None: ...
     async def on_ready(self, *, ps1: str) -> None: ...
     async def on_idle(self) -> None: ...
     async def on_exit(self) -> None: ...

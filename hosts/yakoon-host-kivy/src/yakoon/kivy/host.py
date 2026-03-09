@@ -4,13 +4,11 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Protocol
 
-from yakoon.base.ui import FieldsBlock, ViewSpec
+from yakoon.base.ui import FieldsBlock, PatchAppendBlock, PatchAppendChild, ViewEvent
 from yakoon.platform.hosts import FormInput, HostAdapter, InputEvent, TextInput
 
 
 class HostUI(Protocol):
-    """Host-lokale UI-API (nicht Engine!), thread-safe zu implementieren."""
-
     def set_assist(self, text: str, state: str = "question") -> None: ...
     def clear_assist(self) -> None: ...
 
@@ -24,12 +22,6 @@ class NullHostUI:
 
 
 class KivyHost(HostAdapter):
-    """Minimaler HostAdapter für Kivy.
-
-    - Text-Input: Runner ruft on_ready(); UI liefert Text via deliver_text() (thread-safe).
-    - Form-Input: Prompt-basiert feldweise; UI wird via HostUI informiert.
-    """
-
     def __init__(
         self,
         *,
@@ -42,17 +34,13 @@ class KivyHost(HostAdapter):
         self._lock = asyncio.Lock()
 
     def deliver_text(self, *, loop: asyncio.AbstractEventLoop, text: str) -> None:
-
         fut = self._pending_text
         if not fut or fut.done():
             return
-
-        # ! Complete the pending Future from the UI thread.
-        # ! This wakes up the asyncio task waiting in on_ready()/on_view().
         loop.call_soon_threadsafe(fut.set_result, text)
 
-    async def on_view(self, *, ps1: str, view: ViewSpec) -> None:
-        block = self._find_fields_block(view)
+    async def on_view(self, *, ps1: str, event: ViewEvent) -> None:
+        block = self._find_fields_block(event)
         if block is None:
             self._ui.clear_assist()
             return
@@ -62,42 +50,39 @@ class KivyHost(HostAdapter):
             await self._submit(FormInput({}))
             return
 
-        # Engine prompt-mode => exactly one field should be present
-        if block.input_mode == "prompt":
-            fd = block.fields[0]
-            field_name = fd.var or "value"
-            title = getattr(fd, "title", None) or field_name
-            self._ui.set_assist(title, state="question")
-
-            # ! Create a Future that represents the next user input.
-            # ! The coroutine will suspend at 'await' until deliver_text()
-            # ! completes this Future from the UI thread.
-            loop = asyncio.get_running_loop()
-            async with self._lock:
-                self._pending_text = loop.create_future()
-
-            # The coroutine was suspended; the event loop keeps running.
-            text = (await self._pending_text).strip()
-            await self._submit(FormInput({field_name: text}))
-            return
-
-        # Batch form-mode (later when FormBlock exists)
-        # For now, either raise or fallback to prompt behavior.
-        raise RuntimeError(
-            "input_mode='form' not supported by Kivy host yet (needs FormBlock UI)"
+        values = await self._read_fields(
+            ps1=ps1,
+            fields=block.fields[:1] if block.input_mode == "prompt" else block.fields,
         )
+        await self._submit(FormInput(values))
 
-    async def on_ready(self, *, ps1: str) -> None:
-        self._ui.clear_assist()
+    async def _read_field(self, *, ps1: str, fd) -> object:
+        key = fd.var or "value"
+        title = getattr(fd, "title", None) or key
+        self._ui.set_assist(title, state="question")
 
-        # Create an empty Future to wait for the next user input.
-        # This does NOT block the thread — the coroutine is suspended
-        # while the event loop continues running other tasks.
         loop = asyncio.get_running_loop()
         async with self._lock:
             self._pending_text = loop.create_future()
 
-        # Suspend here until deliver_text() sets the result.
+        text = (await self._pending_text).strip()
+        return text
+
+    async def _read_fields(self, *, ps1: str, fields) -> dict[str, object]:
+        values: dict[str, object] = {}
+        for fd in fields:
+            key = fd.var
+            if not key:
+                continue
+            values[key] = await self._read_field(ps1=ps1, fd=fd)
+        return values
+
+    async def on_ready(self, *, ps1: str) -> None:
+        self._ui.clear_assist()
+        loop = asyncio.get_running_loop()
+        async with self._lock:
+            self._pending_text = loop.create_future()
+
         text = (await self._pending_text).strip()
         if text:
             await self._submit(TextInput(text))
@@ -108,8 +93,14 @@ class KivyHost(HostAdapter):
     async def on_exit(self) -> None:
         return
 
-    def _find_fields_block(self, view: ViewSpec) -> FieldsBlock | None:
-        for block in view.blocks:
+    def _find_fields_block(self, event: ViewEvent) -> FieldsBlock | None:
+        for op in event.patch.ops:
+            block = None
+            if isinstance(op, PatchAppendBlock):
+                block = op.block
+            elif isinstance(op, PatchAppendChild):
+                block = op.block
+
             if not isinstance(block, FieldsBlock):
                 continue
             if block.state == "done":

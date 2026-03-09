@@ -75,9 +75,7 @@ class DefaultInteractionService:
                 else:
                     snapshot = replace(
                         view,
-                        role=None,
-                        title=None,
-                        subtitle=None,
+                        header=None,
                         blocks=[block],
                     )
                     await session.emit(snapshot)
@@ -203,11 +201,8 @@ class DefaultInteractionService:
     def _view_for_block(self, view_id: str, block: FieldsBlock) -> ViewSpec:
         return ViewSpec(
             id=view_id,
-            role=None,
-            title=None,
-            subtitle=None,
+            header=None,
             blocks=[block],
-            meta=None,
         )
 
     def _field_map(self, block: FieldsBlock) -> dict[str, ViewFieldDef]:

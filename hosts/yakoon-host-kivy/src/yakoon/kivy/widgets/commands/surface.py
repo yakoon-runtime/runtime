@@ -11,22 +11,12 @@ from kivy.uix.boxlayout import BoxLayout
 
 
 class CommandSurface(BoxLayout):
-    """Surface owns the RV data-model (messages.data), not the widgets.
-
-    - Newest message is inserted at index 0 (top).
-    - RV viewclass (CommandMessage) rebuilds itself from row["events"].
-    - Header metadata (role/title/subtitle) belongs to the document and may be
-      received as a header-only view before body patches start.
-    """
-
     busy = BooleanProperty(False)
-
     TOP_EPS = 0.98
 
     def __init__(self, on_submit, **kw):
         super().__init__(**kw)
         self.on_submit = on_submit
-
         self.runner = None
         self.session = None
 
@@ -34,7 +24,6 @@ class CommandSurface(BoxLayout):
         self._assist_error: str | None = None
         self._awaiting_result: bool = False
 
-        # current document header (for future Kivy header widgets)
         self._doc_role: str | None = None
         self._doc_title: str | None = None
         self._doc_subtitle: str | None = None
@@ -49,8 +38,7 @@ class CommandSurface(BoxLayout):
         self._force_scroll: bool = False
 
     def on_kv_post(self, base_widget):
-        rv = self.messages
-        rv.bind(scroll_y=self._on_scroll_y)
+        self.messages.bind(scroll_y=self._on_scroll_y)
 
     @property
     def prompt(self):
@@ -74,8 +62,7 @@ class CommandSurface(BoxLayout):
         self._scroll_trigger()
 
     def _apply_scroll(self, *_):
-        rv = self.messages
-        rv.scroll_y = 1.0
+        self.messages.scroll_y = 1.0
         self._stick_to_top = True
         self._force_scroll = False
 
@@ -114,29 +101,20 @@ class CommandSurface(BoxLayout):
         return new_row
 
     def _shift_indices_on_insert_top(self) -> None:
-        if not self._idx_by_vid:
-            return
         for key in list(self._idx_by_vid.keys()):
             self._idx_by_vid[key] += 1
 
     def _insert_row_top(self, row: dict[str, Any]) -> None:
         self._shift_indices_on_insert_top()
         self.messages.data.insert(0, row)
-
         vid = row["vid"]
         self._row_by_vid[vid] = row
         self._idx_by_vid[vid] = 0
-
         self._refresh_trigger()
         self._maybe_autoscroll()
 
-    def _start_new_message(self) -> None:
-        self._active_vid = uuid.uuid4().hex
-        self._insert_row_top(self._new_row(vid=self._active_vid, first_event=None))
-
     def _get_visible_view(self, idx: int):
-        rv = self.messages
-        adapter = getattr(rv, "view_adapter", None)
+        adapter = getattr(self.messages, "view_adapter", None)
         if adapter is None:
             return None
         return adapter.views.get(idx)
@@ -157,7 +135,6 @@ class CommandSurface(BoxLayout):
             return
 
         row = self._replace_row_at(idx, row)
-
         widget = self._get_visible_view(idx)
         if widget is not None:
             try:
@@ -173,109 +150,100 @@ class CommandSurface(BoxLayout):
     def _update_visible_row_height(self, vid: str | None) -> None:
         if not vid:
             return
-
         idx = self._row_index(vid)
         if idx is None:
             return
-
         widget = self._get_visible_view(idx)
         if widget is None:
             return
-
         h = int(widget.get_calc_height())
         new_size = (0, max(1, h))
-
         row = self._row_by_vid.get(vid)
         if row is None:
             return
-
         if row.get("size") != new_size:
             row["size"] = new_size
             self._replace_row_at(idx, row)
             self.messages.refresh_from_layout()
 
-    def _extract_text(self, view):
-        blocks = getattr(view, "blocks", []) or []
+    def _extract_text_from_event(self, event: Any) -> str:
         texts: list[str] = []
-        for block in blocks:
+        patch = getattr(event, "patch", None)
+        for op in getattr(patch, "ops", None) or []:
+            block = getattr(op, "block", None)
             text = getattr(block, "text", None)
-            if text:
-                texts.append(str(text))
+            if isinstance(text, str) and text:
+                texts.append(text)
         return "\n".join(texts)
 
-    def _update_header(self, view: Any) -> None:
-        self._doc_role = getattr(view, "role", None)
-        self._doc_title = getattr(view, "title", None)
-        self._doc_subtitle = getattr(view, "subtitle", None)
+    def _update_header(self, event: Any) -> None:
+        header = getattr(event, "header", None)
+        if header is None:
+            return
+        self._doc_role = getattr(header, "role", None)
+        self._doc_title = getattr(header, "title", None)
+        self._doc_subtitle = getattr(header, "subtitle", None)
 
     def apply_context(self, ctx):
-        view = ctx.envelope
-
+        event = ctx.envelope
         ui = ctx.ui_state_provider()
         self.ids.prompt.prefix = ui.prompt_prefix
         self.ids.prompt.secret = ui.prompt_secret
 
+        header = getattr(event, "header", None)
         if (
-            view
-            and getattr(view, "role", None) == "error"
-            and getattr(view, "error_kind", None) == "validation"
+            header
+            and getattr(header, "role", None) == "error"
+            and getattr(header, "error_kind", None) == "validation"
         ):
-            self._assist_error = self._extract_text(view)
+            self._assist_error = self._extract_text_from_event(event)
             self.ids.prompt.assist_text = self._assist_error
             self.ids.prompt.assist_state = "error"
 
-        self.render(view)
+        self.render(event)
 
-    def render(self, view) -> None:
-        mode = getattr(view, "mode", None)
+    def _has_body_ops(self, event: Any) -> bool:
+        patch = getattr(event, "patch", None)
+        for op in getattr(patch, "ops", None) or []:
+            if getattr(op, "op", None) != "reset":
+                return True
+        return False
 
-        if mode == "patch":
-            patch = getattr(view, "patch", None)
-            if patch is not None:
-                if getattr(patch, "final", False):
-                    self._awaiting_result = False
-                    self.set_busy(False)
-                self.apply_patch(patch)
-            return
-
-        self._update_header(view)
-
-        if self._awaiting_result:
-            self._awaiting_result = False
-            self.set_busy(False)
-
-        self.apply_view(view)
-
-    def apply_patch(self, patch) -> None:
+    def render(self, event) -> None:
+        self._update_header(event)
+        patch = getattr(event, "patch", None)
         if patch is None:
             return
 
-        start_new = any(
-            getattr(op, "op", None) == "reset"
-            for op in (getattr(patch, "ops", None) or [])
-        )
+        if getattr(patch, "final", False):
+            self._awaiting_result = False
+            self.set_busy(False)
 
-        if start_new or not self._active_vid:
-            self._start_new_message()
+        self.apply_event(event)
 
-        self._append_event(vid=self._active_vid, event=patch)
-
-    def apply_view(self, view) -> None:
-        blocks = list(getattr(view, "blocks", None) or [])
-        if not blocks:
-            # header-only view: update header state, but do not create an empty message row
+    def apply_event(self, event) -> None:
+        vid = getattr(event, "id", None) or uuid.uuid4().hex
+        patch = getattr(event, "patch", None)
+        if patch is None:
             return
 
-        self._active_vid = uuid.uuid4().hex
-        self._insert_row_top(self._new_row(vid=self._active_vid, first_event=view))
-        self._update_visible_row_height(self._active_vid)
+        start_new = any(getattr(op, "op", None) == "reset" for op in (patch.ops or []))
+        if start_new:
+            self._active_vid = vid
+
+        if start_new and not self._has_body_ops(event):
+            return
+
+        if not self._active_vid:
+            self._active_vid = vid
+
+        self._append_event(vid=vid, event=event)
 
     def submit(self, text: str):
         if self.busy:
             return
 
         print("SURFACE SUBMIT:", repr(text))
-
         self._request_scroll_to_top(force=True)
         self._assist_error = None
         self._awaiting_result = True

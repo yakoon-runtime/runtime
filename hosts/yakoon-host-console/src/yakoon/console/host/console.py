@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import Awaitable, Callable
 
-from yakoon.base.ui import FieldsBlock, ViewSpec
+from yakoon.base.ui import FieldsBlock, PatchAppendBlock, PatchAppendChild, ViewEvent
 from yakoon.platform.hosts import (
     FormInput,
     HostAdapter,
@@ -24,8 +24,8 @@ class ConsoleHost(HostAdapter):
         self._submit = submit
         self._lock = asyncio.Lock()
 
-    async def on_view(self, *, ps1: str, view: ViewSpec) -> None:
-        block = self._find_fields_block(view)
+    async def on_view(self, *, ps1: str, event: ViewEvent) -> None:
+        block = self._find_fields_block(event)
         if block is None:
             return
 
@@ -33,30 +33,10 @@ class ConsoleHost(HostAdapter):
             await self._submit(FormInput({}))
             return
 
-        values: dict[str, object] = {}
-
-        for fd in block.fields:
-            key = fd.var
-            if not key:
-                continue
-
-            label = fd.title or key
-            hint = fd.hint or ""
-            ui = fd.ui or {}
-            secret = bool(ui.get("secret", False))
-
-            prompt = label
-            if hint:
-                prompt = f"{prompt} ({hint})"
-            prompt = f"{ps1}[{prompt}]"
-
-            async with self._lock:
-                if secret:
-                    value = await safe_input_secret(ps1=prompt)
-                else:
-                    value = await safe_input(ps1=prompt)
-
-            values[key] = value
+        if block.input_mode == "prompt":
+            values = await self._read_fields(ps1=ps1, fields=block.fields[:1])
+        else:
+            values = await self._read_fields(ps1=ps1, fields=block.fields)
 
         await self._submit(FormInput(values))
 
@@ -73,11 +53,50 @@ class ConsoleHost(HostAdapter):
     async def on_exit(self) -> None:
         return
 
-    def _find_fields_block(self, view: ViewSpec) -> FieldsBlock | None:
-        for block in view.blocks:
-            if not isinstance(block, FieldsBlock):
+    def _find_fields_block(self, event: ViewEvent) -> FieldsBlock | None:
+        for op in event.patch.ops:
+            if isinstance(op, PatchAppendBlock):
+                block = op.block
+            elif isinstance(op, PatchAppendChild):
+                block = op.block
+            else:
                 continue
-            if block.state == "done":
-                continue
-            return block
+
+            if isinstance(block, FieldsBlock) and block.state != "done":
+                return block
+
         return None
+
+    async def _read_field(self, *, ps1: str, fd) -> object:
+        key = fd.var or "value"
+        label = fd.title or key
+        hint = fd.hint or ""
+        ui = fd.ui or {}
+        secret = bool(ui.get("secret", False))
+
+        prompt = label
+        if hint:
+            prompt = f"{prompt} ({hint})"
+        prompt = f"{ps1}[{prompt}]"
+
+        async with self._lock:
+            if secret:
+                return await safe_input_secret(ps1=prompt)
+            return await safe_input(ps1=prompt)
+
+    async def _read_fields(
+        self,
+        *,
+        ps1: str,
+        fields,
+    ) -> dict[str, object]:
+        values: dict[str, object] = {}
+
+        for fd in fields:
+            key = fd.var
+            if not key:
+                continue
+
+            values[key] = await self._read_field(ps1=ps1, fd=fd)
+
+        return values

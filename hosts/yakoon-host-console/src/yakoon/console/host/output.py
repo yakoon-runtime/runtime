@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.ui import Block, ViewSpec
-from yakoon.base.ui.blocks import FieldsBlock
+from yakoon.base.ui import Block, FieldsBlock, ViewEvent
 
 
 class ConsoleOutput:
@@ -10,32 +9,29 @@ class ConsoleOutput:
     Renders view.blocks directly.
     """
 
-    async def view(self, view: ViewSpec) -> None:
-        text = self.render(view)
+    async def view(self, event: ViewEvent) -> None:
+        text = self.render(event)
         if text:
             print(text)
 
-    def render(self, view: ViewSpec) -> str:
-        prefix = ""
-        if view.role == "error":
-            prefix = "(Status) "
-        elif view.role == "info":
-            prefix = "(Information) "
-
-        body = self._render_view(view)
-        if not body:
-            return ""
-
-        return prefix + body
-
-    def _render_view(self, view: ViewSpec) -> str:
+    def render(self, event: ViewEvent) -> str:
         lines: list[str] = []
 
-        if view.title:
-            lines.append(view.title)
-            lines.append("")
+        if event.header:
+            if event.header.role == "error":
+                lines.append("(Status)")
+            elif event.header.role == "info":
+                lines.append("(Information)")
 
-        self._render_blocks(lines, view.blocks or [], indent=0)
+            if event.header.title:
+                lines.append(event.header.title)
+                lines.append("")
+
+        for op in event.patch.ops:
+            block = getattr(op, "block", None)
+            if block:
+                self._render_blocks(lines, [block], indent=0)
+
         return "\n".join(lines).rstrip()
 
     def _render_blocks(

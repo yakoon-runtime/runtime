@@ -9,6 +9,7 @@ from yakoon.base.stores.event.entity import (
     PatchFormat,
     SnapshotHint,
 )
+from yakoon.base.ui.event import ViewEvent
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -22,7 +23,6 @@ if TYPE_CHECKING:
         RetentionPolicy,
         SnapshotHint,
     )
-    from yakoon.base.ui.view_spec import ViewSpec
     from yakoon.base.values import Key, Namespace
 
 
@@ -180,4 +180,4 @@ class EntityStore(Protocol):
 
 
 class IO(Protocol):
-    async def view(self, view: ViewSpec) -> None: ...
+    async def view(self, event: ViewEvent) -> None: ...

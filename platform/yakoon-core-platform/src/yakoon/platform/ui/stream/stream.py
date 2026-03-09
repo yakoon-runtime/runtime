@@ -18,6 +18,7 @@ from yakoon.base.ui import (
     PatchAppendText,
     PatchReset,
     PatchSpec,
+    ViewEvent,
     ViewSpec,
 )
 
@@ -78,14 +79,13 @@ class DefaultOutputStreamService:
     """
     Block-oriented output streamer.
 
-    Contract:
-      - begin_view(...) sends the document header exactly once
-      - emit_block(...) sends only body updates / patches
-      - finish_view(...) finalizes the patch stream
-      - no header fields are repeated in later block emissions
+    Transport contract:
+      - hosts receive ViewEvent only
+      - begin_view(...) emits header + reset patch
+      - emit_block(...) emits patch-only events
+      - finish_view(...) emits final patch-only event
 
-    If header fields change in the future, they should be sent via a dedicated
-    header patch/update operation, not by repeating them on every block update.
+    The streamer never emits ViewSpec directly.
     """
 
     MIN_INTERVAL = 0.05
@@ -106,19 +106,14 @@ class DefaultOutputStreamService:
         override: OutputStreaming | None = None,
     ) -> None:
         eff = self._effective(session.get_output_stream_policy(), override)
-
-        if not eff.enabled:
-            await session.emit(self._header_view(view))
-            return
-
         vid = eff.id or view.id or f"v:{id(view)}"
-        header = self._header_view(replace(view, id=vid))
-        await session.emit(header)
-        await self._emit_patch(
-            session,
-            view=view,
-            view_id=vid,
-            patch=PatchSpec(ops=[PatchReset()], final=False),
+
+        await session.emit(
+            ViewEvent(
+                id=vid,
+                header=view.header,
+                patch=PatchSpec(ops=[PatchReset()], final=False),
+            )
         )
 
     async def finish_view(
@@ -133,11 +128,12 @@ class DefaultOutputStreamService:
             return
 
         vid = eff.id or view.id or f"v:{id(view)}"
-        await self._emit_patch(
-            session,
-            view=view,
-            view_id=vid,
-            patch=PatchSpec(ops=[], final=True),
+        await session.emit(
+            ViewEvent(
+                id=vid,
+                header=None,
+                patch=PatchSpec(ops=[], final=True),
+            )
         )
 
     async def emit_block(
@@ -151,23 +147,35 @@ class DefaultOutputStreamService:
         suffix: str | int = 0,
     ) -> None:
         eff = self._effective(session.get_output_stream_policy(), override)
+        vid = eff.id or view.id or f"v:{id(view)}"
 
         if not eff.enabled:
-            await session.emit(self._body_view(view=view, blocks=[block]))
+            op = (
+                PatchAppendChild(parent_id=parent_id, block=block)
+                if parent_id is not None
+                else PatchAppendBlock(block=block)
+            )
+            await session.emit(
+                ViewEvent(
+                    id=vid,
+                    header=None,
+                    patch=PatchSpec(ops=[op], final=True),
+                )
+            )
             return
 
-        vid = eff.id or view.id or f"v:{id(view)}"
         min_size, max_size = self._chunk_params(eff)
 
         pending_text: dict[str, str] = {}
         last_flush: float = time.monotonic()
 
         async def emit_ops(ops: list[Any], *, final: bool = False) -> None:
-            await self._emit_patch(
-                session,
-                view=view,
-                view_id=vid,
-                patch=PatchSpec(ops=ops, final=final),
+            await session.emit(
+                ViewEvent(
+                    id=vid,
+                    header=None,
+                    patch=PatchSpec(ops=ops, final=final),
+                )
             )
 
         def pause_for_chunk(chunk: str) -> float:
@@ -229,7 +237,9 @@ class DefaultOutputStreamService:
             return replace(item, id=f"{owner_id}:i{index}")
 
         async def stream_any(
-            target_parent_id: str | None, raw_block: Any, local_suffix: str | int
+            target_parent_id: str | None,
+            raw_block: Any,
+            local_suffix: str | int,
         ) -> None:
             out_block = ensure_id(raw_block, local_suffix)
             btype = getattr(out_block, "type", None)
@@ -365,45 +375,6 @@ class DefaultOutputStreamService:
 
         await stream_any(parent_id, block, suffix)
         await flush_text()
-
-    def _header_view(self, view: ViewSpec) -> ViewSpec:
-        return replace(view, blocks=[])
-
-    def _body_view(self, *, view: ViewSpec, blocks: list[Block]) -> ViewSpec:
-        return replace(
-            view,
-            role=None,
-            title=None,
-            subtitle=None,
-            blocks=blocks,
-        )
-
-    async def _emit_patch(
-        self,
-        session: Session,
-        *,
-        view: ViewSpec,
-        view_id: str,
-        patch: PatchSpec,
-    ) -> None:
-        payload = self._build_patch_payload(view=view, view_id=view_id, patch=patch)
-        await session.emit(payload)
-
-    def _build_patch_payload(
-        self,
-        *,
-        view: ViewSpec,
-        view_id: str,
-        patch: PatchSpec,
-    ) -> Any:
-        try:
-            return replace(view, id=view_id, mode="patch", patch=patch)
-        except TypeError:
-            return {
-                "kind": "patch",
-                "id": view_id,
-                "patch": patch,
-            }
 
     def _effective(
         self,

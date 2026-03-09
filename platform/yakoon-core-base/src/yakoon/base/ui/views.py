@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from .blocks import Block, FieldsBlock, InputMode, TextBlock
-from .document import ErrorKind, Role, ViewSpec
+from .document import ErrorKind, Role, ViewHeader, ViewSpec
 from .fields import ViewFieldDef
 
 
@@ -15,14 +15,19 @@ def _view(
     error_kind: ErrorKind | None = None,
     view_id: str | None = None,
 ) -> ViewSpec:
+
+    header = ViewHeader(
+        role=role,
+        title=title,
+        error_kind=error_kind,
+        meta=None,
+    )
+
     return ViewSpec(
         kind="view",
         id=view_id,
-        role=role,
-        title=title,
+        header=header,
         blocks=list(blocks),
-        error_kind=error_kind,
-        meta=None,
     )
 
 

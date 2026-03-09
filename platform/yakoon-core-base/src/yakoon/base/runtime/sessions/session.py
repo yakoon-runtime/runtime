@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from yakoon.base.capabilities.identity import PermissionSet
-from yakoon.base.ui import ViewSpec
-from yakoon.base.ui.stream import OutputStreamPolicy
+from yakoon.base.ui import (
+    OutputStreamPolicy,
+    PatchAppendBlock,
+    PatchOp,
+    PatchReset,
+    PatchSpec,
+    ViewEvent,
+    ViewSpec,
+)
 from yakoon.base.values import Key
 
 if TYPE_CHECKING:
@@ -130,9 +138,16 @@ class Session:
     def clear_signals(self) -> None:
         self._runtime.signals.clear()
 
-    async def emit(self, payload: ViewSpec) -> None:
-        view = self._ensure_view(payload)
-        await self._runtime.io.view(view)
+    async def emit(self, payload: ViewSpec | ViewEvent) -> None:
+        if isinstance(payload, ViewEvent):
+            event = payload
+        else:
+            view = self._ensure_view(payload)
+            event = self._view_to_event(view)
+
+        if self._runtime.io is None:
+            raise RuntimeError("io cannot be None")
+        await self._runtime.io.view(event)
 
     # ----------------------------
     # Steaming output
@@ -157,3 +172,19 @@ class Session:
         if payload.kind != "view":
             raise TypeError("Session output must be a ViewSpec with kind='view'.")
         return payload
+
+    def _view_to_event(self, view: ViewSpec) -> ViewEvent:
+        ops: list[PatchOp] = [PatchReset()]
+
+        def new_view_id() -> str:
+            return f"view.{uuid.uuid4().hex}"
+
+        for block in view.blocks:
+            ops.append(PatchAppendBlock(block=block))
+
+        view_id = view.id or new_view_id()
+        return ViewEvent(
+            id=view_id,
+            header=view.header,
+            patch=PatchSpec(ops=ops, final=True),
+        )
