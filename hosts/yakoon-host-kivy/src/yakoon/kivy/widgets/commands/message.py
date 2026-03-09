@@ -6,17 +6,18 @@ from typing import Any
 from kivy.factory import Factory
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.stacklayout import StackLayout
+from yakoon.base.ui.blocks import TextBlock
 from yakoon.kivy.widgets.blocks.registry import BlockRendererRegistry
 
 
 @dataclass(slots=True)
 class MessageModel:
     vid: str
+    header: Any | None
     events: list[Any]  # ViewEvent only
 
 
 class CommandMessage(RecycleDataViewBehavior, StackLayout):
-
     def __init__(self, registry: BlockRendererRegistry | None = None, **kw: Any):
         super().__init__(**kw)
         self.size_hint_y = None
@@ -24,15 +25,24 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
         self._widgets_by_id: dict[str, Any] = {}
         self._vid: str | None = None
         self._applied_n: int = 0
+        self._current_header: Any | None = None
 
     def refresh_view_attrs(self, rv, index, data):
         vid = data.get("vid")
         events = data.get("events") or []
+        header = data.get("header")
 
         if vid != self._vid:
             self._vid = vid
             self._applied_n = 0
+            self._current_header = header
             self._clear_content()
+            self._render_header(header)
+        elif header is not self._current_header:
+            self._current_header = header
+            self._clear_content()
+            self._applied_n = 0
+            self._render_header(header)
 
         if self._applied_n >= len(events):
             return super().refresh_view_attrs(rv, index, data)
@@ -69,6 +79,7 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
         if callable(append_child):
             append_child(child_widget)
             return
+
         add_widget = getattr(parent, "add_widget", None)
         if callable(add_widget):
             add_widget(child_widget)
@@ -92,6 +103,47 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
             if callable(getter):
                 self._register(f"{bid}.value", getter())
 
+    def _header_text(self, header: Any | None) -> str:
+        if header is None:
+            return ""
+
+        role = getattr(header, "role", None)
+        title = getattr(header, "title", None)
+        subtitle = getattr(header, "subtitle", None)
+
+        parts: list[str] = []
+        if role == "info":
+            parts.append("(Information)")
+        elif role == "error":
+            parts.append("(Status)")
+        elif role == "warning":
+            parts.append("(Warnung)")
+        elif role == "success":
+            parts.append("(Erfolg)")
+        elif role == "help":
+            parts.append("(Hilfe)")
+
+        if title:
+            parts.append(title)
+        if subtitle:
+            parts.append(subtitle)
+
+        return "\n".join(parts).strip()
+
+    def _render_header(self, header: Any | None) -> None:
+        text = self._header_text(header)
+        if not text or self._vid is None:
+            return
+
+        block = TextBlock(
+            id=f"{self._vid}:header",
+            type="text",
+            text=text,
+        )
+        widget = self._render_block(block)
+        self.add_widget(widget)
+        self._register(block.id, widget)
+
     def apply_patch(self, patch: Any) -> None:
         if patch is None:
             return
@@ -101,6 +153,7 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
 
             if kind == "reset":
                 self._clear_content()
+                self._render_header(self._current_header)
                 continue
 
             if kind == "append_block":
@@ -148,6 +201,7 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
                     continue
 
                 child_widget = self._render_block(child_block)
+
                 child_id = getattr(child_block, "id", None)
                 if isinstance(child_id, str) and child_id:
                     self._register(child_id, child_widget)

@@ -24,10 +24,6 @@ class CommandSurface(BoxLayout):
         self._assist_error: str | None = None
         self._awaiting_result: bool = False
 
-        self._doc_role: str | None = None
-        self._doc_title: str | None = None
-        self._doc_subtitle: str | None = None
-
         self._row_by_vid: dict[str, dict[str, Any]] = {}
         self._idx_by_vid: dict[str, int] = {}
 
@@ -82,10 +78,17 @@ class CommandSurface(BoxLayout):
 
         Clock.schedule_once(_apply, 0)
 
-    def _new_row(self, *, vid: str, first_event: Any | None) -> dict[str, Any]:
+    def _new_row(
+        self,
+        *,
+        vid: str,
+        header: Any | None = None,
+        first_event: Any | None,
+    ) -> dict[str, Any]:
         return {
             "viewclass": "CommandMessage",
             "vid": vid,
+            "header": header,
             "size_hint": (1, None),
             "size": (0, dp(24)),
             "events": [first_event] if first_event is not None else [],
@@ -122,8 +125,16 @@ class CommandSurface(BoxLayout):
     def _append_event(self, *, vid: str, event: Any) -> None:
         row = self._row_by_vid.get(vid)
         if row is None:
-            row = self._new_row(vid=vid, first_event=None)
+            row = self._new_row(
+                vid=vid,
+                header=getattr(event, "header", None),
+                first_event=None,
+            )
             self._insert_row_top(row)
+
+        header = getattr(event, "header", None)
+        if header is not None:
+            row["header"] = header
 
         events = list(row.get("events") or [])
         events.append(event)
@@ -135,6 +146,7 @@ class CommandSurface(BoxLayout):
             return
 
         row = self._replace_row_at(idx, row)
+
         widget = self._get_visible_view(idx)
         if widget is not None:
             try:
@@ -150,17 +162,22 @@ class CommandSurface(BoxLayout):
     def _update_visible_row_height(self, vid: str | None) -> None:
         if not vid:
             return
+
         idx = self._row_index(vid)
         if idx is None:
             return
+
         widget = self._get_visible_view(idx)
         if widget is None:
             return
+
         h = int(widget.get_calc_height())
         new_size = (0, max(1, h))
+
         row = self._row_by_vid.get(vid)
         if row is None:
             return
+
         if row.get("size") != new_size:
             row["size"] = new_size
             self._replace_row_at(idx, row)
@@ -175,14 +192,6 @@ class CommandSurface(BoxLayout):
             if isinstance(text, str) and text:
                 texts.append(text)
         return "\n".join(texts)
-
-    def _update_header(self, event: Any) -> None:
-        header = getattr(event, "header", None)
-        if header is None:
-            return
-        self._doc_role = getattr(header, "role", None)
-        self._doc_title = getattr(header, "title", None)
-        self._doc_subtitle = getattr(header, "subtitle", None)
 
     def apply_context(self, ctx):
         event = ctx.envelope
@@ -210,7 +219,6 @@ class CommandSurface(BoxLayout):
         return False
 
     def render(self, event) -> None:
-        self._update_header(event)
         patch = getattr(event, "patch", None)
         if patch is None:
             return
@@ -231,7 +239,22 @@ class CommandSurface(BoxLayout):
         if start_new:
             self._active_vid = vid
 
+            row = self._row_by_vid.get(vid)
+            if row is None:
+                row = self._new_row(
+                    vid=vid,
+                    header=getattr(event, "header", None),
+                    first_event=None,
+                )
+                self._insert_row_top(row)
+            elif getattr(event, "header", None) is not None:
+                row["header"] = event.header
+                idx = self._row_index(vid)
+                if idx is not None:
+                    self._replace_row_at(idx, row)
+
         if start_new and not self._has_body_ops(event):
+            self._refresh_trigger()
             return
 
         if not self._active_vid:
