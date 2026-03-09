@@ -73,6 +73,16 @@ class DefaultPresenter:
             raise RuntimeError(f"Presenter state {state!r} returned no result")
         return result
 
+    async def require_first(
+        self,
+        state: str,
+        *,
+        stream: OutputStreaming | None = None,
+        **data: Any,
+    ) -> Any:
+        result = await self.require_present(state, stream=stream, **data)
+        return result.first()
+
     def _normalize_blocks(self, blocks: list[Block]) -> list[Block]:
         """
         Minimal structural normalization before playback.

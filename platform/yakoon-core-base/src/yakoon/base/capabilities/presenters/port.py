@@ -30,6 +30,14 @@ class Presenter(Protocol):
         **data: Any,
     ) -> PresentResult: ...
 
+    async def require_first(
+        self,
+        state: str,
+        *,
+        stream: OutputStreaming | None = None,
+        **data: Any,
+    ) -> Any: ...
+
 
 class PresenterService(Protocol):
     async def create_presenter(self, resource: ResourceRef, session) -> Presenter: ...

@@ -20,11 +20,11 @@ class CmdSu(Command):
         username = (
             request.arg(0)
             or request.option("user")
-            or (await presenter.require_present("ask_user")).first()
+            or (await presenter.require_first("ask_user"))
         )
         secret = request.option("password")
         if not secret:
-            secret = (await presenter.require_present("ask_secret")).first()
+            secret = await presenter.require_first("ask_secret")
             if secret:
                 secret = secret.reveal()
 
