@@ -15,19 +15,13 @@ class CommandSurface(BoxLayout):
 
     - Newest message is inserted at index 0 (top).
     - RV viewclass (CommandMessage) rebuilds itself from row["events"].
-    - Performance:
-        * O(1) vid -> index mapping (no list.index() per patch)
-        * If a row view is visible, update it directly via refresh_view_attrs()
-          instead of triggering a full refresh_from_data() each time.
-    - Auto-scroll:
-        * User may scroll freely while streaming.
-        * If the user is currently at the top (or submit() is called), we keep/force
-          the view at the top so the newest message stays visible.
+    - Header metadata (role/title/subtitle) belongs to the document and may be
+      received as a header-only view before body patches start.
     """
 
     busy = BooleanProperty(False)
 
-    TOP_EPS = 0.98  # consider "at top" when scroll_y >= this
+    TOP_EPS = 0.98
 
     def __init__(self, on_submit, **kw):
         super().__init__(**kw)
@@ -38,26 +32,23 @@ class CommandSurface(BoxLayout):
 
         self._active_vid: str | None = None
         self._assist_error: str | None = None
-
         self._awaiting_result: bool = False
 
-        # vid -> row dict stored in messages.data
+        # current document header (for future Kivy header widgets)
+        self._doc_role: str | None = None
+        self._doc_title: str | None = None
+        self._doc_subtitle: str | None = None
+
         self._row_by_vid: dict[str, dict[str, Any]] = {}
-        # vid -> index in messages.data (newest at 0)
         self._idx_by_vid: dict[str, int] = {}
 
-        # refresh and scroll triggers
         self._refresh_trigger = Clock.create_trigger(self._refresh_from_data, 0)
         self._scroll_trigger = Clock.create_trigger(self._apply_scroll, 0)
 
-        # if True, we keep the viewport at the top while new content arrives
         self._stick_to_top: bool = True
-        # if True, we force a scroll-to-top on next tick (used on submit)
         self._force_scroll: bool = False
 
     def on_kv_post(self, base_widget):
-        # Track whether the user is currently at the top. If they scroll away,
-        # we stop auto-scrolling until they return to the top or submit again.
         rv = self.messages
         rv.bind(scroll_y=self._on_scroll_y)
 
@@ -69,13 +60,10 @@ class CommandSurface(BoxLayout):
     def messages(self):
         return self.ids.messages
 
-    # ---------- refresh + scroll ----------
-
     def _refresh_from_data(self, *_):
         self.messages.refresh_from_data()
 
     def _on_scroll_y(self, _rv, value: float):
-        # User intent: when user scrolls away from top, stop auto-stick.
         if self._force_scroll:
             return
         self._stick_to_top = value >= self.TOP_EPS
@@ -87,7 +75,7 @@ class CommandSurface(BoxLayout):
 
     def _apply_scroll(self, *_):
         rv = self.messages
-        rv.scroll_y = 1.0  # top
+        rv.scroll_y = 1.0
         self._stick_to_top = True
         self._force_scroll = False
 
@@ -95,15 +83,11 @@ class CommandSurface(BoxLayout):
         if self._stick_to_top or self._force_scroll:
             self._request_scroll_to_top(force=self._force_scroll)
 
-    # ---------- busy / prompt lock ----------
-
     def set_busy(self, busy: bool) -> None:
-        """Lock/unlock user input and show lightweight status below prompt."""
         self.busy = busy
 
         def _apply(_dt):
             prompt = self.ids.prompt
-
             if hasattr(prompt, "locked"):
                 prompt.locked = busy
             else:
@@ -111,14 +95,11 @@ class CommandSurface(BoxLayout):
 
         Clock.schedule_once(_apply, 0)
 
-    # ---------- model helpers ----------
-
     def _new_row(self, *, vid: str, first_event: Any | None) -> dict[str, Any]:
         return {
             "viewclass": "CommandMessage",
             "vid": vid,
             "size_hint": (1, None),
-            # realistic placeholder reduces relayout jumps
             "size": (0, dp(24)),
             "events": [first_event] if first_event is not None else [],
         }
@@ -135,8 +116,8 @@ class CommandSurface(BoxLayout):
     def _shift_indices_on_insert_top(self) -> None:
         if not self._idx_by_vid:
             return
-        for k in list(self._idx_by_vid.keys()):
-            self._idx_by_vid[k] += 1
+        for key in list(self._idx_by_vid.keys()):
+            self._idx_by_vid[key] += 1
 
     def _insert_row_top(self, row: dict[str, Any]) -> None:
         self._shift_indices_on_insert_top()
@@ -146,7 +127,6 @@ class CommandSurface(BoxLayout):
         self._row_by_vid[vid] = row
         self._idx_by_vid[vid] = 0
 
-        # New row => refresh dataset so RV can create a view
         self._refresh_trigger()
         self._maybe_autoscroll()
 
@@ -178,22 +158,17 @@ class CommandSurface(BoxLayout):
 
         row = self._replace_row_at(idx, row)
 
-        # If mounted, update directly (cheap). Otherwise schedule RV refresh.
-        w = self._get_visible_view(idx)
-        if w is not None:
+        widget = self._get_visible_view(idx)
+        if widget is not None:
             try:
-                w.refresh_view_attrs(self.messages, idx, row)
+                widget.refresh_view_attrs(self.messages, idx, row)
             except Exception:
                 self._refresh_trigger()
         else:
             self._refresh_trigger()
 
-        # Keep height accurate so content is fully visible.
         self._update_visible_row_height(vid)
-
         self._maybe_autoscroll()
-
-    # ---------- height sync (measured from visible widget) ----------
 
     def _update_visible_row_height(self, vid: str | None) -> None:
         if not vid:
@@ -203,11 +178,11 @@ class CommandSurface(BoxLayout):
         if idx is None:
             return
 
-        w = self._get_visible_view(idx)
-        if w is None:
+        widget = self._get_visible_view(idx)
+        if widget is None:
             return
 
-        h = int(w.get_calc_height())
+        h = int(widget.get_calc_height())
         new_size = (0, max(1, h))
 
         row = self._row_by_vid.get(vid)
@@ -219,32 +194,33 @@ class CommandSurface(BoxLayout):
             self._replace_row_at(idx, row)
             self.messages.refresh_from_layout()
 
-    # ---------- context + rendering ----------
-
-    def _extract_text(self, message):
-        blocks = getattr(message, "blocks", []) or []
+    def _extract_text(self, view):
+        blocks = getattr(view, "blocks", []) or []
         texts: list[str] = []
-        for b in blocks:
-            t = getattr(b, "text", None)
-            if t:
-                texts.append(str(t))
+        for block in blocks:
+            text = getattr(block, "text", None)
+            if text:
+                texts.append(str(text))
         return "\n".join(texts)
+
+    def _update_header(self, view: Any) -> None:
+        self._doc_role = getattr(view, "role", None)
+        self._doc_title = getattr(view, "title", None)
+        self._doc_subtitle = getattr(view, "subtitle", None)
 
     def apply_context(self, ctx):
         view = ctx.envelope
-        msg = getattr(view, "message", None)
 
         ui = ctx.ui_state_provider()
         self.ids.prompt.prefix = ui.prompt_prefix
         self.ids.prompt.secret = ui.prompt_secret
 
-        # Assist: only validation errors
         if (
-            msg
-            and getattr(msg, "role", None) == "error"
-            and getattr(msg, "error_kind", None) == "validation"
+            view
+            and getattr(view, "role", None) == "error"
+            and getattr(view, "error_kind", None) == "validation"
         ):
-            self._assist_error = self._extract_text(msg)
+            self._assist_error = self._extract_text(view)
             self.ids.prompt.assist_text = self._assist_error
             self.ids.prompt.assist_state = "error"
 
@@ -256,17 +232,19 @@ class CommandSurface(BoxLayout):
         if mode == "patch":
             patch = getattr(view, "patch", None)
             if patch is not None:
-                # End of streaming
                 if getattr(patch, "final", False):
                     self._awaiting_result = False
                     self.set_busy(False)
                 self.apply_patch(patch)
-        else:
-            # Non-streaming result: first view after submit ends busy
-            if self._awaiting_result:
-                self._awaiting_result = False
-                self.set_busy(False)
-            self.apply_view(view)
+            return
+
+        self._update_header(view)
+
+        if self._awaiting_result:
+            self._awaiting_result = False
+            self.set_busy(False)
+
+        self.apply_view(view)
 
     def apply_patch(self, patch) -> None:
         if patch is None:
@@ -283,13 +261,14 @@ class CommandSurface(BoxLayout):
         self._append_event(vid=self._active_vid, event=patch)
 
     def apply_view(self, view) -> None:
+        blocks = list(getattr(view, "blocks", None) or [])
+        if not blocks:
+            # header-only view: update header state, but do not create an empty message row
+            return
+
         self._active_vid = uuid.uuid4().hex
         self._insert_row_top(self._new_row(vid=self._active_vid, first_event=view))
-
-        # avoid first-line flicker by measuring immediately if mounted
         self._update_visible_row_height(self._active_vid)
-
-    # ---------- prompt plumbing ----------
 
     def submit(self, text: str):
         if self.busy:
@@ -297,15 +276,8 @@ class CommandSurface(BoxLayout):
 
         print("SURFACE SUBMIT:", repr(text))
 
-        # New command => user wants the newest message visible at the top
         self._request_scroll_to_top(force=True)
-
-        # Enter = new try => free validation error
         self._assist_error = None
-
-        # Lock input until we receive either:
-        # - patch.final (streaming), or
-        # - first full view (non-streaming)
         self._awaiting_result = True
         self.set_busy(True)
 

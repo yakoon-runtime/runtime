@@ -39,31 +39,22 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
         self._vid: str | None = None
         self._applied_n: int = 0
 
-    # ---------- RecycleView ----------
-
     def refresh_view_attrs(self, rv, index, data):
         vid = data.get("vid")
         events = data.get("events") or []
 
-        # new vid -> reset and start from scratch
         if vid != self._vid:
             self._vid = vid
             self._applied_n = 0
             self._clear_content()
 
-        # nothing new -> be quiet (prevents layout-trigger loops)
         if self._applied_n >= len(events):
             return super().refresh_view_attrs(rv, index, data)
 
-        # apply only the delta
         for ev in events[self._applied_n :]:
-            # ViewSpec has .mode, PatchSpec typically has .ops/.final
             if getattr(ev, "ops", None) is not None:
-                # PatchSpec
                 self.apply_patch(ev)
             else:
-                # ViewSpec (snapshot or wrapper)
-                # If ev is a "patch view wrapper" (mode=="patch"), apply its patch.
                 if getattr(ev, "mode", None) == "patch":
                     patch = getattr(ev, "patch", None)
                     if patch is not None:
@@ -74,13 +65,8 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
         self._applied_n = len(events)
         return super().refresh_view_attrs(rv, index, data)
 
-    # ---------- internal helpers ----------
-
     def get_calc_height(self):
-        height = 0
-        for w in self.children:
-            height += w.height
-        return height
+        return sum(w.height for w in self.children)
 
     def _clear_content(self) -> None:
         self.clear_widgets()
@@ -110,7 +96,6 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
             return
 
     def _maybe_register_stream_aliases(self, block: Any, widget: Any) -> None:
-        """Register alias targets for streaming sub-parts."""
         btype = getattr(block, "type", None)
         bid = getattr(block, "id", None)
 
@@ -130,23 +115,17 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
                 self._register(f"{bid}.value", getter())
             return
 
-    # ---------- Non-stream rendering ----------
-
     def set_view(self, view: Any) -> None:
-        """Render a full, non-streaming view (snapshot)."""
+        """Render a full, non-streaming view snapshot."""
         self._clear_content()
 
-        msg = getattr(view, "message", None) if view else None
-        blocks = list(getattr(msg, "blocks", None) or []) if msg else []
-
-        for b in blocks:
-            w = self._render_block(b)
-            self.add_widget(w)
-            bid = getattr(b, "id", None)
-            self._register(bid, w)
-            self._maybe_register_stream_aliases(b, w)
-
-    # ---------- Streaming (patch ops) ----------
+        blocks = list(getattr(view, "blocks", None) or []) if view else []
+        for block in blocks:
+            widget = self._render_block(block)
+            self.add_widget(widget)
+            bid = getattr(block, "id", None)
+            self._register(bid, widget)
+            self._maybe_register_stream_aliases(block, widget)
 
     def apply_patch(self, patch: Any) -> None:
         """Apply streaming patch ops in-place."""
@@ -169,20 +148,20 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
                 if not isinstance(bid, str) or not bid:
                     continue
 
-                w = self._render_block(block)
-                self.add_widget(w)
-                self._register(bid, w)
-                self._maybe_register_stream_aliases(block, w)
+                widget = self._render_block(block)
+                self.add_widget(widget)
+                self._register(bid, widget)
+                self._maybe_register_stream_aliases(block, widget)
                 continue
 
             if kind == "append_text":
                 target_id = getattr(op, "block_id", None)
                 chunk = getattr(op, "text", "") or ""
-                w = self._lookup(target_id)
-                if w is None:
+                widget = self._lookup(target_id)
+                if widget is None:
                     continue
 
-                append = getattr(w, "append_text", None)
+                append = getattr(widget, "append_text", None)
                 if not callable(append):
                     raise TypeError(
                         f"Target '{target_id}' does not support append_text()"
@@ -213,8 +192,6 @@ class CommandMessage(RecycleDataViewBehavior, StackLayout):
 
                 self._attach_child(parent, child_widget)
                 continue
-
-            # unknown op -> ignore
 
     def dispose(self) -> None:
         pass

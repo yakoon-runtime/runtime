@@ -4,7 +4,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Protocol
 
-from yakoon.base.ui import ViewSpec
+from yakoon.base.ui import FieldsBlock, ViewSpec
 from yakoon.platform.hosts import FormInput, HostAdapter, InputEvent, TextInput
 
 
@@ -52,27 +52,20 @@ class KivyHost(HostAdapter):
         loop.call_soon_threadsafe(fut.set_result, text)
 
     async def on_view(self, *, ps1: str, view: ViewSpec) -> None:
-        input_def = view.input
-        if not input_def:
+        block = self._find_fields_block(view)
+        if block is None:
             self._ui.clear_assist()
             return
 
-        if input_def.kind != "form":
-            raise RuntimeError("KivyHost supports only form inputs")
-
-        fields = input_def.fields or {}
-        if not fields:
+        if not block.fields:
             self._ui.clear_assist()
             await self._submit(FormInput({}))
             return
 
         # Engine prompt-mode => exactly one field should be present
-        if input_def.input_mode == "prompt":
-            field_name = next(iter(fields.keys()))
-
-            print("FIELDNAME ON PROMPT:", repr(field_name))
-
-            fd = fields[field_name]
+        if block.input_mode == "prompt":
+            fd = block.fields[0]
+            field_name = fd.var or "value"
             title = getattr(fd, "title", None) or field_name
             self._ui.set_assist(title, state="question")
 
@@ -82,9 +75,9 @@ class KivyHost(HostAdapter):
             loop = asyncio.get_running_loop()
             async with self._lock:
                 self._pending_text = loop.create_future()
-            text = (await self._pending_text).strip()
 
             # The coroutine was suspended; the event loop keeps running.
+            text = (await self._pending_text).strip()
             await self._submit(FormInput({field_name: text}))
             return
 
@@ -114,3 +107,12 @@ class KivyHost(HostAdapter):
 
     async def on_exit(self) -> None:
         return
+
+    def _find_fields_block(self, view: ViewSpec) -> FieldsBlock | None:
+        for block in view.blocks:
+            if not isinstance(block, FieldsBlock):
+                continue
+            if block.state == "done":
+                continue
+            return block
+        return None

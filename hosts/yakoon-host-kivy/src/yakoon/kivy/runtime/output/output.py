@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.ui.view_spec import ViewSpec
+from yakoon.base.ui import ViewSpec
 from yakoon.kivy.runtime.context.view_context import ViewContext
 from yakoon.kivy.runtime.output.output_adapter import OutputAdapter
 
