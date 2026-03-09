@@ -13,7 +13,7 @@ class CmdVersion(Command):
     async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
 
         presenter = await self.get_presenter(session)
-        await presenter.views.emit(
+        await presenter.present(
             "show",
             version=get_platform_version(),
             python=platform.python_version(),

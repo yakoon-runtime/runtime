@@ -26,18 +26,18 @@ class CmdLookup(Command):
             return
 
         # if not token:
-        #    await presenter.views.emit("not_found", query=request.raw)
+        #    await presenter.present("not_found", query=request.raw)
         #   return
 
         payload = store.get(token)
         store.delete(token)
 
         # if not payload:
-        #    await presenter.views.emit("not_found", query=request.raw)
+        #    await presenter.present("not_found", query=request.raw)
         #    return
 
         if payload:
-            await presenter.views.emit(
+            await presenter.present(
                 "choose",
                 query=payload.query,
                 candidates=list(payload.candidates),

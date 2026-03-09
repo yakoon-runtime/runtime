@@ -1,4 +1,4 @@
-from yakoon.base.capabilities.interaction import InputService
+from yakoon.base.capabilities.interaction import InteractionService
 from yakoon.base.capabilities.workflow import WorkflowService
 from yakoon.base.runtime import (
     Command,
@@ -24,7 +24,7 @@ class CmdWfInput(Command):
         step_id = request.arg(1)
 
         wfsvc = self.services.get(WorkflowService)
-        inputs = self.services.get(InputService)
+        inputs = self.services.get(InteractionService)
 
         step = wfsvc.get_step(session, batch_id=batch_id, step_id=step_id)
         s = step.input

@@ -3,12 +3,16 @@ from __future__ import annotations
 import asyncio
 import random
 import re
+import time
 from collections.abc import Iterator
 from dataclasses import dataclass, replace
 from typing import Any
 
-from yakoon.base.runtime.sessions import Session  # ggf. Pfad anpassen
+from yakoon.base.runtime import Session
 from yakoon.base.ui import (
+    Block,
+    OutputStreaming,
+    OutputStreamPolicy,
     PatchAppendBlock,
     PatchAppendChild,
     PatchAppendText,
@@ -16,11 +20,6 @@ from yakoon.base.ui import (
     PatchSpec,
     ViewSpec,
 )
-from yakoon.base.ui.stream.stream import OutputStreaming, OutputStreamPolicy
-
-# -----------------------------
-# Effective config (policy + override)
-# -----------------------------
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,20 +40,10 @@ def _clamp_int(value: int, lo: int, hi: int) -> int:
     return max(lo, min(hi, value))
 
 
-# -----------------------------
-# Chunking (shared for ALL streaming)
-# -----------------------------
-
 _WS_TOKENS = re.compile(r"\S+|\s+")
 
 
 def iter_chunks(text: str, *, min_size: int, max_size: int) -> Iterator[str]:
-    """
-    Natural-feeling chunk generator:
-    - Prefer word boundaries.
-    - Keep chunks roughly in [min_size, max_size].
-    - Split oversized tokens safely.
-    """
     if not text:
         return
 
@@ -62,7 +51,6 @@ def iter_chunks(text: str, *, min_size: int, max_size: int) -> Iterator[str]:
     buf = ""
 
     for tok in tokens:
-        # Oversized single token: flush buffer, then hard-split the token
         if len(tok) > max_size:
             if buf:
                 yield buf
@@ -71,7 +59,6 @@ def iter_chunks(text: str, *, min_size: int, max_size: int) -> Iterator[str]:
                 yield tok[i : i + max_size]
             continue
 
-        # Would overflow max_size? emit current buffer
         if buf and (len(buf) + len(tok) > max_size):
             yield buf
             buf = tok
@@ -79,7 +66,6 @@ def iter_chunks(text: str, *, min_size: int, max_size: int) -> Iterator[str]:
 
         buf += tok
 
-        # Reached minimum "natural" size -> emit
         if len(buf) >= min_size:
             yield buf
             buf = ""
@@ -88,34 +74,31 @@ def iter_chunks(text: str, *, min_size: int, max_size: int) -> Iterator[str]:
         yield buf
 
 
-# -----------------------------
-# Service
-# -----------------------------
-
-
 class DefaultOutputStreamService:
     """
-    Output streaming service:
-    emits ViewSpec(mode="patch") with patch ops.
+    Block-oriented output streamer.
 
-    Streaming rules (no exceptions):
-    - list / kv are always streamed structurally (container first, then items, then nested blocks)
-    - nested list / kv use the exact same logic as top-level (recursive)
+    Contract:
+      - begin_view(...) sends the document header exactly once
+      - emit_block(...) sends only body updates / patches
+      - finish_view(...) finalizes the patch stream
+      - no header fields are repeated in later block emissions
+
+    If header fields change in the future, they should be sent via a dedicated
+    header patch/update operation, not by repeating them on every block update.
     """
 
-    # Safety bounds
     MIN_INTERVAL = 0.05
     MAX_INTERVAL = 0.25
 
-    # Chunk sizing:
     MIN_CHUNK_SIZE = 8
     MAX_CHUNK_SIZE = 96
 
-    # Feel tuning
-    DEFAULT_JITTER = 0.10  # +/- 10%
-    DEFAULT_PUNCT_PAUSE = 1.25  # pause multiplier after sentence-ish punctuation
+    DEFAULT_JITTER = 0.10
+    DEFAULT_PUNCT_PAUSE = 1.25
+    FLUSH_INTERVAL = 1.0 / 30.0
 
-    async def emit(
+    async def begin_view(
         self,
         session: Session,
         view: ViewSpec,
@@ -125,25 +108,66 @@ class DefaultOutputStreamService:
         eff = self._effective(session.get_output_stream_policy(), override)
 
         if not eff.enabled:
-            await session.emit(view)
-            return
-
-        msg = getattr(view, "message", None) if view else None
-        blocks = list(getattr(msg, "blocks", None) or []) if msg else []
-        if not blocks:
-            await session.emit(view)
+            await session.emit(self._header_view(view))
             return
 
         vid = eff.id or view.id or f"v:{id(view)}"
+        header = self._header_view(replace(view, id=vid))
+        await session.emit(header)
+        await self._emit_patch(
+            session,
+            view=view,
+            view_id=vid,
+            patch=PatchSpec(ops=[PatchReset()], final=False),
+        )
 
-        async def emit_patch(ops: list[Any], *, final: bool = False) -> None:
-            await session.emit(
-                replace(
-                    view,
-                    id=vid,
-                    mode="patch",
-                    patch=PatchSpec(ops=ops, final=final),
-                )
+    async def finish_view(
+        self,
+        session: Session,
+        view: ViewSpec,
+        *,
+        override: OutputStreaming | None = None,
+    ) -> None:
+        eff = self._effective(session.get_output_stream_policy(), override)
+        if not eff.enabled:
+            return
+
+        vid = eff.id or view.id or f"v:{id(view)}"
+        await self._emit_patch(
+            session,
+            view=view,
+            view_id=vid,
+            patch=PatchSpec(ops=[], final=True),
+        )
+
+    async def emit_block(
+        self,
+        session: Session,
+        *,
+        view: ViewSpec,
+        block: Block,
+        override: OutputStreaming | None = None,
+        parent_id: str | None = None,
+        suffix: str | int = 0,
+    ) -> None:
+        eff = self._effective(session.get_output_stream_policy(), override)
+
+        if not eff.enabled:
+            await session.emit(self._body_view(view=view, blocks=[block]))
+            return
+
+        vid = eff.id or view.id or f"v:{id(view)}"
+        min_size, max_size = self._chunk_params(eff)
+
+        pending_text: dict[str, str] = {}
+        last_flush: float = time.monotonic()
+
+        async def emit_ops(ops: list[Any], *, final: bool = False) -> None:
+            await self._emit_patch(
+                session,
+                view=view,
+                view_id=vid,
+                patch=PatchSpec(ops=ops, final=final),
             )
 
         def pause_for_chunk(chunk: str) -> float:
@@ -152,136 +176,115 @@ class DefaultOutputStreamService:
                 base *= eff.punctuation_pause
             return base
 
-        # -----------------------------
-        # Time-based text batching (ChatGPT-like UI cadence)
-        # -----------------------------
-        import time
-
-        FLUSH_INTERVAL = 1.0 / 30.0  # ~30 FPS UI updates
-        pending_text: dict[str, str] = {}
-        last_flush: float = time.monotonic()
-
         def is_punctuation_pause(chunk: str) -> bool:
-            # Flush before long "thinking" pauses so punctuation becomes visible first.
             if not chunk:
                 return False
-            tail = chunk[-1]
-            return tail in ".!?…:;" or tail == "\n"
+            return chunk[-1] in ".!?…:;\n"
 
-        async def flush_text(*, final: bool = False) -> None:
-            """Emit all queued PatchAppendText ops as a single patch."""
+        async def flush_text() -> None:
             nonlocal pending_text, last_flush
-            if not pending_text and not final:
+            if not pending_text:
                 return
             ops = [
-                PatchAppendText(block_id=k, text=v)
-                for k, v in pending_text.items()
-                if v
+                PatchAppendText(block_id=block_id, text=text)
+                for block_id, text in pending_text.items()
+                if text
             ]
             pending_text = {}
             last_flush = time.monotonic()
-            await emit_patch(ops, final=final)
+            if ops:
+                await emit_ops(ops, final=False)
 
         async def queue_text(block_id: str, chunk: str) -> None:
-            """Queue a chunk and flush at a steady UI cadence."""
             nonlocal pending_text, last_flush
             if not chunk:
                 return
             pending_text[block_id] = pending_text.get(block_id, "") + chunk
-
             now = time.monotonic()
-            if (now - last_flush) >= FLUSH_INTERVAL:
-                await flush_text(final=False)
+            if (now - last_flush) >= self.FLUSH_INTERVAL:
+                await flush_text()
 
-        def ensure_id(block: Any, suffix: str | int) -> Any:
-            bid = getattr(block, "id", None)
+        async def append_block_or_child(
+            target_parent_id: str | None, out_block: Any
+        ) -> None:
+            await flush_text()
+            if target_parent_id is None:
+                await emit_ops([PatchAppendBlock(block=out_block)], final=False)
+            else:
+                await emit_ops(
+                    [PatchAppendChild(parent_id=target_parent_id, block=out_block)],
+                    final=False,
+                )
+
+        def ensure_id(raw_block: Any, local_suffix: str | int) -> Any:
+            bid = getattr(raw_block, "id", None)
             if isinstance(bid, str) and bid:
-                return block
-            return replace(block, id=f"{vid}:b{suffix}")
+                return raw_block
+            return replace(raw_block, id=f"{vid}:b{local_suffix}")
 
-        def ensure_item_id(item: Any, parent_id: str, index: int) -> Any:
+        def ensure_item_id(item: Any, owner_id: str, index: int) -> Any:
             iid = getattr(item, "id", None)
             if isinstance(iid, str) and iid:
                 return item
-            return replace(item, id=f"{parent_id}:i{index}")
-
-        def can_merge_text(active_style: Any, block: Any) -> bool:
-            return (
-                getattr(block, "type", None) == "text"
-                and isinstance(getattr(block, "text", None), str)
-                and getattr(block, "style", None) == active_style
-            )
-
-        def chunk_params() -> tuple[int, int]:
-            max_size = _clamp_int(
-                eff.chunk_size, self.MIN_CHUNK_SIZE, self.MAX_CHUNK_SIZE
-            )
-            min_size = max(self.MIN_CHUNK_SIZE, int(max_size * 0.4))
-            return min_size, max_size
-
-        min_size, max_size = chunk_params()
-
-        # -----------------------------
-        # Unified recursive streaming helpers
-        # -----------------------------
-
-        async def append_block_or_child(parent_id: str | None, block: Any) -> None:
-            await flush_text(final=False)  # keep text ops ordered before structural ops
-            """Append as root block if parent_id is None; else append as child under parent_id."""
-            if parent_id is None:
-                await emit_patch([PatchAppendBlock(block=block)], final=False)
-            else:
-                await emit_patch(
-                    [PatchAppendChild(parent_id=parent_id, block=block)], final=False
-                )
+            return replace(item, id=f"{owner_id}:i{index}")
 
         async def stream_any(
-            parent_id: str | None, raw_block: Any, suffix: str | int
+            target_parent_id: str | None, raw_block: Any, local_suffix: str | int
         ) -> None:
-            """
-            Stream any block under parent_id (or root if parent_id is None).
-            Containers (list/kv) are streamed structurally, recursively.
-            Everything else is appended as a single block (snapshot for that block type).
-            """
-            block = ensure_id(raw_block, suffix)
-            btype = getattr(block, "type", None)
+            out_block = ensure_id(raw_block, local_suffix)
+            btype = getattr(out_block, "type", None)
 
+            if btype == "text":
+                await stream_text(target_parent_id, out_block)
+                return
             if btype == "list":
-                await stream_list(parent_id, block)
+                await stream_list(target_parent_id, out_block)
                 return
-
             if btype == "kv":
-                await stream_kv(parent_id, block)
+                await stream_kv(target_parent_id, out_block)
                 return
 
-            # text blocks at root (or nested) can still be appended as blocks;
-            # their internal text streaming is handled by the outer loop only for top-level.
-            await append_block_or_child(parent_id, block)
+            await append_block_or_child(target_parent_id, out_block)
 
-        async def stream_list(parent_id: str | None, block: Any) -> None:
-            """
-            Stream list structurally (works for root and nested):
-            - append empty list container
-            - append empty list_item children
-            - stream head into '<item_id>.head'
-            - recurse into nested blocks
-            """
-            empty_list = replace(block, items=[])
-            await append_block_or_child(parent_id, empty_list)
+        async def stream_text(target_parent_id: str | None, out_block: Any) -> None:
+            text = getattr(out_block, "text", None)
+            if not isinstance(text, str):
+                await append_block_or_child(target_parent_id, out_block)
+                return
+
+            empty = replace(out_block, text="")
+            await append_block_or_child(target_parent_id, empty)
+
+            block_id = getattr(empty, "id", None)
+            if not isinstance(block_id, str) or not block_id:
+                return
+
+            for chunk in iter_chunks(text, min_size=min_size, max_size=max_size):
+                await queue_text(block_id, chunk)
+                if is_punctuation_pause(chunk):
+                    await flush_text()
+                await asyncio.sleep(pause_for_chunk(chunk))
+
+            await flush_text()
+
+        async def stream_list(target_parent_id: str | None, out_block: Any) -> None:
+            empty_list = replace(out_block, items=[])
+            await append_block_or_child(target_parent_id, empty_list)
 
             list_id = getattr(empty_list, "id", None)
             if not isinstance(list_id, str) or not list_id:
-                list_id = getattr(block, "id", "")
+                return
 
-            items = list(getattr(block, "items", None) or [])
+            items = list(getattr(out_block, "items", None) or [])
             for j, item_raw in enumerate(items):
                 item = ensure_item_id(item_raw, list_id, j)
 
                 head = getattr(item, "head", "")
                 empty_item = replace(item, head="" if isinstance(head, str) else [])
 
-                await emit_patch(
-                    [PatchAppendChild(parent_id=list_id, block=empty_item)], final=False
+                await emit_ops(
+                    [PatchAppendChild(parent_id=list_id, block=empty_item)],
+                    final=False,
                 )
 
                 item_id = getattr(empty_item, "id", None)
@@ -289,54 +292,46 @@ class DefaultOutputStreamService:
                     continue
 
                 head_id = f"{item_id}.head"
-
-                # stream head (string only)
                 if isinstance(head, str) and head:
                     for chunk in iter_chunks(
                         head, min_size=min_size, max_size=max_size
                     ):
                         await queue_text(head_id, chunk)
                         if is_punctuation_pause(chunk):
-                            await flush_text(final=False)
+                            await flush_text()
                         await asyncio.sleep(pause_for_chunk(chunk))
-                    await flush_text(final=False)
+                    await flush_text()
 
-                # recurse nested blocks (including nested list/kv)
                 nested = getattr(item, "blocks", None)
                 if nested:
                     for k, child_raw in enumerate(nested):
-                        await stream_any(item_id, child_raw, suffix=f"{item_id}:{k}")
+                        await stream_any(
+                            item_id, child_raw, local_suffix=f"{item_id}:{k}"
+                        )
 
-        async def stream_kv(parent_id: str | None, block: Any) -> None:
-            """
-            Stream kv structurally (works for root and nested):
-            - append empty kv container
-            - append empty kv_item children
-            - stream string value into '<item_id>.value'
-            - recurse into nested blocks (blocks + list values)
-            """
-            empty_kv = replace(block, items=[])
-            await append_block_or_child(parent_id, empty_kv)
+        async def stream_kv(target_parent_id: str | None, out_block: Any) -> None:
+            empty_kv = replace(out_block, items=[])
+            await append_block_or_child(target_parent_id, empty_kv)
 
             kv_id = getattr(empty_kv, "id", None)
             if not isinstance(kv_id, str) or not kv_id:
-                kv_id = getattr(block, "id", "")
+                return
 
-            items = list(getattr(block, "items", None) or [])
+            items = list(getattr(out_block, "items", None) or [])
             for j, item_raw in enumerate(items):
                 item = ensure_item_id(item_raw, kv_id, j)
 
                 key = str(getattr(item, "key", "") or "")
                 value = getattr(item, "value", None)
 
-                # append empty kv_item first
                 if isinstance(value, str):
                     empty_item = replace(item, key=key, value="")
                 else:
                     empty_item = replace(item, key=key, value=[])
 
-                await emit_patch(
-                    [PatchAppendChild(parent_id=kv_id, block=empty_item)], final=False
+                await emit_ops(
+                    [PatchAppendChild(parent_id=kv_id, block=empty_item)],
+                    final=False,
                 )
 
                 item_id = getattr(empty_item, "id", None)
@@ -345,97 +340,70 @@ class DefaultOutputStreamService:
 
                 value_id = f"{item_id}.value"
 
-                # stream string value
                 if isinstance(value, str) and value:
                     for chunk in iter_chunks(
                         value, min_size=min_size, max_size=max_size
                     ):
                         await queue_text(value_id, chunk)
                         if is_punctuation_pause(chunk):
-                            await flush_text(final=False)
+                            await flush_text()
                         await asyncio.sleep(pause_for_chunk(chunk))
-                    await flush_text(final=False)
+                    await flush_text()
 
-                # recurse nested blocks in kv_item.blocks
                 nested = getattr(item, "blocks", None)
                 if nested:
                     for k, child_raw in enumerate(nested):
-                        await stream_any(item_id, child_raw, suffix=f"{item_id}:{k}")
+                        await stream_any(
+                            item_id, child_raw, local_suffix=f"{item_id}:{k}"
+                        )
 
-                # value as blocks
                 if isinstance(value, list):
                     for k, child_raw in enumerate(value):
-                        await stream_any(item_id, child_raw, suffix=f"{item_id}:{k}")
+                        await stream_any(
+                            item_id, child_raw, local_suffix=f"{item_id}:{k}"
+                        )
 
-        # Start a new patch stream in the host
-        await emit_patch([PatchReset()], final=False)
+        await stream_any(parent_id, block, suffix)
+        await flush_text()
 
-        active_text_id: str | None = None
-        active_style: Any = None
+    def _header_view(self, view: ViewSpec) -> ViewSpec:
+        return replace(view, blocks=[])
 
-        for idx, raw in enumerate(blocks):
-            block = ensure_id(raw, idx)
-            btype = getattr(block, "type", None)
+    def _body_view(self, *, view: ViewSpec, blocks: list[Block]) -> ViewSpec:
+        return replace(
+            view,
+            role=None,
+            title=None,
+            subtitle=None,
+            blocks=blocks,
+        )
 
-            # -----------------------------
-            # LIST streaming (root)
-            # -----------------------------
-            if btype == "list":
-                await stream_list(None, block)
-                active_text_id = None
-                active_style = None
-                continue
+    async def _emit_patch(
+        self,
+        session: Session,
+        *,
+        view: ViewSpec,
+        view_id: str,
+        patch: PatchSpec,
+    ) -> None:
+        payload = self._build_patch_payload(view=view, view_id=view_id, patch=patch)
+        await session.emit(payload)
 
-            # -----------------------------
-            # KV streaming (root)
-            # -----------------------------
-            if btype == "kv":
-                await stream_kv(None, block)
-                active_text_id = None
-                active_style = None
-                continue
-
-            # -----------------------------
-            # TEXT streaming (merge adjacent same-style blocks) (root)
-            # -----------------------------
-            text = getattr(block, "text", None)
-            if btype == "text" and isinstance(text, str):
-                bstyle = getattr(block, "style", None)
-
-                starting_new = (active_text_id is None) or (
-                    not can_merge_text(active_style, block)
-                )
-
-                if starting_new:
-                    empty = replace(block, text="")
-                    await emit_patch([PatchAppendBlock(block=empty)], final=False)
-                    active_text_id = getattr(empty, "id", None)
-                    active_style = bstyle
-                    prefix = ""
-                else:
-                    prefix = "\n" if (text and not text.startswith("\n")) else ""
-
-                tid = active_text_id or getattr(block, "id", "")
-                full = prefix + text
-
-                for chunk in iter_chunks(full, min_size=min_size, max_size=max_size):
-                    await queue_text(tid, chunk)
-                    if is_punctuation_pause(chunk):
-                        await flush_text(final=False)
-                    await asyncio.sleep(pause_for_chunk(chunk))
-                await flush_text(final=False)
-
-                continue
-
-            # -----------------------------
-            # NON-TEXT (snapshot append of that block type)
-            # -----------------------------
-            active_text_id = None
-            active_style = None
-            await emit_patch([PatchAppendBlock(block=block)], final=False)
-
-        await flush_text(final=False)
-        await emit_patch([], final=True)
+    def _build_patch_payload(
+        self,
+        *,
+        view: ViewSpec,
+        view_id: str,
+        patch: PatchSpec,
+    ) -> Any:
+        try:
+            return replace(view, id=view_id, mode="patch", patch=patch)
+        except TypeError:
+            return {
+                "kind": "patch",
+                "id": view_id,
+                "patch": patch,
+            }
 
     def _effective(
         self,
@@ -445,7 +413,7 @@ class DefaultOutputStreamService:
         if override is None:
             enabled = bool(policy.enabled)
             interval = float(policy.interval)
-            chunk_size = int(policy.chunk_tokens)  # historical name, now used as size
+            chunk_size = int(policy.chunk_tokens)
             sid = None
         else:
             enabled = bool(policy.enabled) and bool(override.enabled)
@@ -470,3 +438,8 @@ class DefaultOutputStreamService:
             jitter=self.DEFAULT_JITTER,
             punctuation_pause=self.DEFAULT_PUNCT_PAUSE,
         )
+
+    def _chunk_params(self, eff: _EffectiveStreaming) -> tuple[int, int]:
+        max_size = _clamp_int(eff.chunk_size, self.MIN_CHUNK_SIZE, self.MAX_CHUNK_SIZE)
+        min_size = max(self.MIN_CHUNK_SIZE, int(max_size * 0.4))
+        return min_size, max_size

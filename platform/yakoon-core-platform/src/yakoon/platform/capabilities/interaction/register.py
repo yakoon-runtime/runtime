@@ -2,13 +2,13 @@ from typing import Any
 
 from yakoon.base.capabilities.interaction import (
     DialogService,
-    InputService,
+    InteractionService,
     PolicyService,
 )
 from yakoon.base.plugins import ModuleExport, ModuleMeta
 from yakoon.base.runtime.services import ServiceDirectory
 
-from . import DefaultDialogService, DefaultInputService, DefaultPolicyService
+from . import DefaultDialogService, DefaultInteractionService, DefaultPolicyService
 
 meta = ModuleMeta(
     name="yakoon.interaction",
@@ -32,7 +32,7 @@ def register(services: ServiceDirectory) -> ModuleExport:
 
     publish(PolicyService, DefaultPolicyService())
     publish(DialogService, DefaultDialogService())
-    publish(InputService, DefaultInputService(services))
+    publish(InteractionService, DefaultInteractionService(services))
 
     return ModuleExport(
         meta,

@@ -1,9 +1,13 @@
-kind: state
+kind: view
 
-state:
+view:
   role: info
   title: "Commands"
-  input_mode: prompt
+  blocks:
+    - type: text
+      text: "Geben Sie ihren Benuternamen ein."
 
-  fields:
-    - { var: result, policy: system:string, title: "Username:" } 
+    - type: fields
+      input_mode: prompt
+      fields:
+        - { var: result, policy: system:string, title: "Username:" } 

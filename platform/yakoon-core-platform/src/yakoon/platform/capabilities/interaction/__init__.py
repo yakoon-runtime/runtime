@@ -1,9 +1,9 @@
 from .dialog_service import DefaultDialogService
-from .input_service import DefaultInputService
+from .interaction_service import DefaultInteractionService
 from .policy_service import DefaultPolicyService
 
 __all__ = [
     "DefaultDialogService",
-    "DefaultInputService",
+    "DefaultInteractionService",
     "DefaultPolicyService",
 ]

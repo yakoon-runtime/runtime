@@ -1,9 +1,13 @@
-kind: state
+kind: view
 
-state:
+view:
   role: info
   title: "Commands"
-  input_mode: prompt
+  blocks:
+    - type: text
+      text: "Geben Sie ihr Alter ein."
 
-  fields:
-    - { var: result, policy: customer.age, title: "Alter:", required: true }
+    - type: fields
+      input_mode: prompt
+      fields:
+        - { var: result, policy: customer.age, title: "Alter:", required: true }

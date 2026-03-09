@@ -7,6 +7,35 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## 26-03-08
+**Neue Pipeline für UI**
+Presenter
+  → render state
+  → normalize / merge blocks
+  → hand block sequence to DefaultInputService
+DefaultInputService
+  → play blocks sequentially
+  → stream or emit passive blocks
+  → on fields(prompt): wait via DialogService
+  → continue after result
+  → accumulate PresentResult
+Streamer
+  → write exactly one block to the session
+
+## 26-03-08
+**Felder werden normale Blöcke**
+Fields als normale Blocks → beseitigt die künstliche Input/Output-Trennung
+InteractionService als Ablaufsteuerung → genau der richtige Ort für wait / validate / continue
+Streamer auf Transport reduziert → Presenter bestimmt Struktur, Streamer überträgt nur
+
+## 26-03-06
+**Einführung von Capabilities vs. Fachlichkeit**
+Plugins stellen nun nur noch fachliche Module und die Shell zur Verfügung.
+Alle andere Fähigkeiten werden in Form von Capabilities innerhalb von Base 
+und Platform abgebildet. Capabilitites bringen zum Teil Controller und 
+Dienste mit und greifen auf den gleichen Registrierungs-Mechanismus wie
+Plugins zurück.
+
 ## 26-03-05
 **Einführung des Eventstores**
 Einführung eines eigenen EventStores, Dieser basiert auf:
@@ -115,7 +144,7 @@ Vorteile:
 - Testbarkeit steigt
 - Architektur wird klarer und ehrlicher
 
-kind: state
+kind: view
 state:
   role: info
   title: ...

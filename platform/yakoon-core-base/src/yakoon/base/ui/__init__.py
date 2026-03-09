@@ -1,9 +1,25 @@
-from .blocks import Block
-from .defs.field_def import ViewFieldDef
-from .defs.input_def import ViewInputDef
-from .fields import FieldType, SecretValue, SelectOption
-from .output_spec import OutputSpec
-from .patch_spec import (
+from .blocks import (
+    Block,
+    FieldsBlock,
+    FieldsState,
+    Inline,
+    InlineCode,
+    InlineLink,
+    InlineText,
+    InputMode,
+    KvBlock,
+    KvItemBlock,
+    ListBlock,
+    ListItemBlock,
+    RuleBlock,
+    RuleStyle,
+    SpacerBlock,
+    TableBlock,
+    TextBlock,
+)
+from .document import ErrorKind, Role, ViewMeta, ViewSpec, ViewUI
+from .fields import FieldType, SelectOption, ViewFieldDef
+from .patch import (
     PatchAppendBlock,
     PatchAppendChild,
     PatchAppendText,
@@ -12,29 +28,46 @@ from .patch_spec import (
     PatchSpec,
 )
 from .port import ViewSpecParser
-from .view_spec import ViewMeta, ViewMode, ViewSpec, ViewUI
+from .stream import OutputStreaming, OutputStreamPolicy, OutputStreamService
 from .views import v_error, v_info, v_text
 
 __all__ = [
-    "Block",
-    "FieldType",
-    "ViewSpecParser",
-    "ViewFieldDef",
-    "ViewInputDef",
-    "OutputSpec",
-    "PatchAppendBlock",
-    "PatchAppendChild",
-    "PatchAppendText",
-    "PatchOp",
-    "PatchReset",
-    "PatchSpec",
-    "SecretValue",
-    "SelectOption",
+    "OutputStreaming",
+    "OutputStreamService",
+    "OutputStreamPolicy",
+    "Role",
+    "ErrorKind",
+    "InputMode",
+    "ViewUI",
     "ViewMeta",
-    "ViewMode",
     "ViewSpec",
+    "PatchReset",
+    "PatchAppendBlock",
+    "PatchAppendText",
+    "PatchAppendChild",
+    "PatchOp",
+    "PatchSpec",
+    "ViewFieldDef",
+    "ViewSpecParser",
+    "FieldType",
+    "SelectOption",
+    "Inline",
+    "InlineText",
+    "InlineCode",
+    "InlineLink",
+    "Block",
+    "RuleStyle",
+    "TextBlock",
+    "RuleBlock",
+    "SpacerBlock",
+    "ListItemBlock",
+    "ListBlock",
+    "KvItemBlock",
+    "KvBlock",
+    "TableBlock",
+    "FieldsBlock",
+    "FieldsState",
+    "v_text",
     "v_error",
     "v_info",
-    "v_text",
-    "ViewUI",
 ]

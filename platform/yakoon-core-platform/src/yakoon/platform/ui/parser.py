@@ -1,87 +1,92 @@
 from __future__ import annotations
 
-from typing import Any, Literal, cast
+from collections.abc import Callable
+from typing import Any, cast
 
 import yaml
 
 from yakoon.base.ui import (
     Block,
-    OutputSpec,
-    ViewFieldDef,
-    ViewInputDef,
-    ViewSpec,
-)
-from yakoon.base.ui.blocks import (
+    ErrorKind,
+    FieldsBlock,
+    FieldsState,
+    FieldType,
     Inline,
     InlineCode,
     InlineLink,
     InlineText,
+    InputMode,
     KvBlock,
     KvItemBlock,
     ListBlock,
     ListItemBlock,
+    Role,
     RuleBlock,
+    RuleStyle,
+    SelectOption,
     SpacerBlock,
     TableBlock,
     TextBlock,
+    ViewFieldDef,
+    ViewSpec,
 )
 
-
-class ViewSpecError(Exception): ...
-
-
-class ViewSpecParseError(ViewSpecError): ...
+RULE_STYLES = ("subtle", "normal", "strong")
+BlockParser = Callable[[str | None, dict[str, Any]], Block]
 
 
-class ViewSpecValidationError(ViewSpecError): ...
+class ViewSpecError(Exception):
+    pass
 
 
-Role = Literal["info", "success", "warning", "error", "help"]
-RuleStyle = Literal["subtle", "normal", "strong"]
-RULE_STYLES = {"subtle", "normal", "strong"}
+class ViewSpecParseError(ViewSpecError):
+    pass
+
+
+class ViewSpecValidationError(ViewSpecError):
+    pass
 
 
 class DefaultViewSpecParser:
     """
-    Parse a single state file.
+    Parse a single view file.
 
     Root:
-      kind: state
-      state: { role?, title?, blocks?, fields? }
+      kind: view
+      view: { role?, title?, subtitle?, error_kind?, blocks }
 
-    One file == one state. No sections. No bundles.
+    One file == one view. No sections. No bundles.
+
+    Interactive input is represented as a normal block:
+      - type: fields
     """
+
+    def __init__(self) -> None:
+        self._block_parsers: dict[str, BlockParser] = {
+            "text": self._parse_text_block,
+            "list_item": self._parse_list_item_block,
+            "list": self._parse_list_block,
+            "kv": self._parse_kv_block,
+            "table": self._parse_table_block,
+            "fields": self._parse_fields_block,
+            "rule": self._parse_rule_block,
+            "spacer": self._parse_spacer_block,
+        }
 
     def parse_spec(self, yaml_text: str) -> ViewSpec:
         raw = self._load_yaml_mapping(yaml_text)
 
         kind = raw.get("kind")
-        if kind != "state":
+        if kind != "view":
             raise ViewSpecValidationError(
-                f"Unknown root kind: {kind!r} (expected 'state')"
+                f"Unknown root kind: {kind!r} (expected 'view')"
             )
 
-        state = raw.get("state")
-        if not isinstance(state, dict):
-            raise ViewSpecValidationError("state must be a mapping")
+        view = raw.get("view")
+        if not isinstance(view, dict):
+            raise ViewSpecValidationError("view must be a mapping")
 
-        message, input_def = self._parse_state_body(state)
-
-        if message is None and input_def is None:
-            raise ViewSpecValidationError("state must define blocks and/or fields")
-
-        return ViewSpec(
-            kind="view",
-            mode="replace",
-            id=None,  # optional: later derive from command_key/state in renderer
-            output=message,
-            input=input_def,
-            meta=None,
-        )
-
-    # -----------------------
-    # YAML loading
-    # -----------------------
+        return self._parse_view_body(view)
 
     def _load_yaml_mapping(self, yaml_text: str) -> dict[str, Any]:
         try:
@@ -93,73 +98,92 @@ class DefaultViewSpecParser:
             raise ViewSpecParseError("Root must be a mapping")
         return raw
 
-    # -----------------------
-    # state parsing
-    # -----------------------
+    def _parse_view_body(self, view: dict[str, Any]) -> ViewSpec:
+        if "fields" in view:
+            raise ViewSpecValidationError(
+                "view.fields is no longer supported; use a block with type='fields' inside view.blocks"
+            )
+        if "input_mode" in view:
+            raise ViewSpecValidationError(
+                "view.input_mode is no longer supported; use input_mode on a 'fields' block"
+            )
 
-    def _parse_state_body(
-        self, state: dict[str, Any]
-    ) -> tuple[OutputSpec | None, ViewInputDef | None]:
-        # Output (blocks)
-        role = state.get("role", "info")
-        if role is not None and role not in (
-            "info",
-            "success",
-            "warning",
-            "error",
-            "help",
-        ):
+        role = view.get("role", "info")
+        if role not in ("info", "success", "warning", "error", "help"):
             raise ViewSpecValidationError(f"Invalid role: {role!r}")
 
-        title = state.get("title")
+        title = view.get("title")
         if title is not None and not isinstance(title, str):
             raise ViewSpecValidationError("title must be a string or null")
 
-        error_kind = state.get("error_kind", None)
-        blocks_raw = state.get("blocks")
-        message: OutputSpec | None = None
-        if blocks_raw is not None:
-            if not isinstance(blocks_raw, list):
-                raise ViewSpecValidationError("blocks must be a list or null")
-            blocks = [self._parse_block(b) for b in blocks_raw]
-            message = OutputSpec(
-                kind="message",
-                error_kind=error_kind,
-                role=cast(Role, role),
-                title=title,
-                blocks=blocks,
-                meta=None,
+        subtitle = view.get("subtitle")
+        if subtitle is not None and not isinstance(subtitle, str):
+            raise ViewSpecValidationError("subtitle must be a string or null")
+
+        error_kind = view.get("error_kind")
+        if error_kind is not None and error_kind not in ("validation", "system"):
+            raise ViewSpecValidationError(
+                "error_kind must be 'validation', 'system', or null"
             )
 
-        # Input (fields)
-        fields_raw = state.get("fields")
-        input_def: ViewInputDef | None = None
-        if fields_raw is not None:
-            if not isinstance(fields_raw, list) or not fields_raw:
-                raise ViewSpecValidationError("fields must be a non-empty list or null")
+        blocks_raw = view.get("blocks")
+        if not isinstance(blocks_raw, list) or not blocks_raw:
+            raise ViewSpecValidationError("view.blocks must be a non-empty list")
 
-            input_mode = state.get("input_mode", "prompt")
-            if input_mode is None:
-                input_mode = "prompt"
-            if not isinstance(input_mode, str) or input_mode not in ("prompt", "form"):
-                raise ViewSpecValidationError("input_mode must be 'prompt' or 'form'")
+        blocks = [self._parse_block(b) for b in blocks_raw]
 
-            input_def = self._parse_fields(
-                fields_raw, title=title, input_mode=input_mode
+        return ViewSpec(
+            kind="view",
+            id=None,
+            role=cast(Role, role),
+            title=title,
+            subtitle=subtitle,
+            blocks=blocks,
+            error_kind=cast(ErrorKind | None, error_kind),
+            meta=None,
+        )
+
+    def _parse_fields_block(
+        self, block_id: str | None, b: dict[str, Any]
+    ) -> FieldsBlock:
+        fields_raw = b.get("fields")
+        if not isinstance(fields_raw, list) or not fields_raw:
+            raise ViewSpecValidationError("FieldsBlock.fields must be a non-empty list")
+
+        input_mode = b.get("input_mode", "prompt")
+        if input_mode is None:
+            input_mode = "prompt"
+        if not isinstance(input_mode, str) or input_mode not in ("prompt", "form"):
+            raise ViewSpecValidationError(
+                "FieldsBlock.input_mode must be 'prompt' or 'form'"
             )
 
-        return message, input_def
+        title = b.get("title")
+        if title is not None and not isinstance(title, str):
+            raise ViewSpecValidationError("FieldsBlock.title must be a string or null")
 
-    def _parse_fields(
-        self, fields_raw: list[Any], *, title: str | None, input_mode: str
-    ) -> ViewInputDef:
-        # Minimal, deterministic form_id for now.
-        # Later you can pass base_id from renderer: f"{command_key}.{state}"
-        form_id = "form"
+        step_key = b.get("step_key")
+        if step_key is not None and not isinstance(step_key, str):
+            raise ViewSpecValidationError(
+                "FieldsBlock.step_key must be a string or null"
+            )
+
+        batch_id = b.get("batch_id")
+        if batch_id is not None and not isinstance(batch_id, str):
+            raise ViewSpecValidationError(
+                "FieldsBlock.batch_id must be a string or null"
+            )
+
+        state = b.get("state", "idle")
+        if not isinstance(state, str) or state not in ("idle", "active", "done"):
+            raise ViewSpecValidationError(
+                "FieldsBlock.state must be 'idle', 'active', or 'done'"
+            )
 
         aliases: dict[str, str] = {}
         order: list[str] = []
-        fields: dict[str, ViewFieldDef] = {}
+        seen_vars: set[str] = set()
+        parsed_fields: list[ViewFieldDef] = []
 
         for i, item in enumerate(fields_raw):
             if not isinstance(item, dict):
@@ -170,7 +194,7 @@ class DefaultViewSpecParser:
                 raise ViewSpecValidationError(
                     f"fields[{i}].var must be a non-empty string"
                 )
-            if var in fields:
+            if var in seen_vars:
                 raise ViewSpecValidationError(f"Duplicate var {var!r} in fields")
 
             key = item.get("key")
@@ -179,34 +203,33 @@ class DefaultViewSpecParser:
                     f"fields[{i}].key must be a non-empty string or null"
                 )
 
-            fd = self._parse_field_def(field_id=var, fd=item)
-            fields[var] = fd
-            order.append(var)
-
             if key:
                 if key in aliases:
                     raise ViewSpecValidationError(
                         f"Duplicate key alias {key!r} in fields"
                     )
-                if key == var or key in fields:
+                if key == var:
                     raise ViewSpecValidationError(
-                        f"Alias {key!r} collides with a var in fields"
-                    )
-                if var in aliases:
-                    raise ViewSpecValidationError(
-                        f"var {var!r} collides with an alias key in fields"
+                        f"Alias {key!r} collides with its own var"
                     )
                 aliases[key] = var
 
+            parsed_fields.append(self._parse_field_def(field_id=var, fd=item))
+            order.append(var)
+            seen_vars.add(var)
+
         meta: dict[str, Any] = {"aliases": aliases, "order": order}
 
-        return ViewInputDef(
-            kind="form",
-            form_id=form_id,
-            fields=fields,
-            input_mode=cast(Literal["prompt", "form"], input_mode),
+        return FieldsBlock(
+            type="fields",
+            id=block_id,
+            fields=parsed_fields,
+            input_mode=cast(InputMode, input_mode),
             title=title,
-            meta=meta,
+            step_key=step_key,
+            batch_id=batch_id,
+            state=cast(FieldsState, state),
+            meta=meta or None,
         )
 
     def _parse_field_def(self, *, field_id: str, fd: dict[str, Any]) -> ViewFieldDef:
@@ -262,6 +285,47 @@ class DefaultViewSpecParser:
         if policy in {"system:masked"} or policy.endswith(":masked"):
             ui.setdefault("secret", True)
 
+        type_raw = fd.get("type")
+        field_type: FieldType | None = None
+        if type_raw is not None:
+            if not isinstance(type_raw, str):
+                raise ViewSpecValidationError(
+                    f"fields[{field_id}].type must be a string or null"
+                )
+            try:
+                field_type = FieldType(type_raw)
+            except ValueError as e:
+                raise ViewSpecValidationError(
+                    f"fields[{field_id}].type has invalid value {type_raw!r}"
+                ) from e
+
+        options_raw = fd.get("options")
+        options: list[SelectOption] | None = None
+        if options_raw is not None:
+            if field_type != FieldType.SELECT:
+                raise ViewSpecValidationError(
+                    f"fields[{field_id}].options is only allowed for select fields"
+                )
+            if not isinstance(options_raw, list):
+                raise ViewSpecValidationError(
+                    f"fields[{field_id}].options must be a list"
+                )
+
+            parsed_options: list[SelectOption] = []
+            for j, opt in enumerate(options_raw):
+                if not isinstance(opt, dict):
+                    raise ViewSpecValidationError(
+                        f"fields[{field_id}].options[{j}] must be a mapping"
+                    )
+                value = opt.get("value")
+                label = opt.get("label")
+                if not isinstance(value, str) or not isinstance(label, str):
+                    raise ViewSpecValidationError(
+                        f"fields[{field_id}].options[{j}] must define string value and label"
+                    )
+                parsed_options.append(SelectOption(value=value, label=label))
+            options = parsed_options
+
         return ViewFieldDef(
             policy=policy,
             title=title_,
@@ -271,11 +335,132 @@ class DefaultViewSpecParser:
             default=default,
             pattern=pattern,
             ui=ui or None,
+            type=field_type,
+            options=options,
         )
 
-    # -----------------------
-    # blocks / inline (reuse)
-    # -----------------------
+    def _parse_block(self, b: Any) -> Block:
+        if not isinstance(b, dict):
+            raise ViewSpecValidationError("Each block must be a mapping")
+
+        t = b.get("type")
+        if not isinstance(t, str) or not t:
+            raise ViewSpecValidationError("Each block must define a non-empty 'type'")
+
+        bid = self._validate_block_id(b.get("id"))
+
+        handler = self._block_parsers.get(t)
+        if handler is None:
+            raise ViewSpecValidationError(f"Unknown block type: {t!r}")
+
+        return handler(bid, b)
+
+    def _parse_text_block(self, bid: str | None, b: dict[str, Any]) -> TextBlock:
+        return TextBlock(
+            type="text",
+            id=bid,
+            text=self._parse_text_content(b.get("text", "")),
+        )
+
+    def _parse_list_item_block(
+        self, bid: str | None, b: dict[str, Any]
+    ) -> ListItemBlock:
+        head = self._parse_text_content(b.get("head", ""))
+
+        blocks_raw = b.get("blocks")
+        if blocks_raw is None:
+            return ListItemBlock(type="list_item", id=bid, head=head, blocks=None)
+
+        if not isinstance(blocks_raw, list):
+            raise ViewSpecValidationError("ListItemBlock.blocks must be a list or null")
+
+        nested = [self._parse_block(x) for x in blocks_raw]
+        return ListItemBlock(type="list_item", id=bid, head=head, blocks=nested)
+
+    def _parse_list_block(self, bid: str | None, b: dict[str, Any]) -> ListBlock:
+        items_raw = b.get("items", [])
+        if not isinstance(items_raw, list):
+            raise ViewSpecValidationError("ListBlock.items must be a list")
+
+        return ListBlock(
+            type="list",
+            id=bid,
+            items=[self._parse_list_item(x) for x in items_raw],
+        )
+
+    def _parse_kv_block(self, bid: str | None, b: dict[str, Any]) -> KvBlock:
+        items_raw = b.get("items", [])
+        if not isinstance(items_raw, list):
+            raise ViewSpecValidationError("KvBlock.items must be a list")
+
+        parsed_items: list[KvItemBlock] = []
+        for entry in items_raw:
+            if not isinstance(entry, list) or len(entry) != 2:
+                raise ViewSpecValidationError(
+                    "Each kv item must be a [key, value] list"
+                )
+
+            key, value = entry
+            parsed_items.append(
+                KvItemBlock(
+                    key=str(key),
+                    value=(
+                        str(value)
+                        if isinstance(value, (str, int, float, bool))
+                        else value
+                    ),
+                    id=None,
+                )
+            )
+
+        return KvBlock(type="kv", id=bid, items=parsed_items)
+
+    def _parse_table_block(self, bid: str | None, b: dict[str, Any]) -> TableBlock:
+        headers = b.get("headers")
+        if headers is not None:
+            if not isinstance(headers, list) or not all(
+                isinstance(x, str) for x in headers
+            ):
+                raise ViewSpecValidationError(
+                    "TableBlock.headers must be list[str] or null"
+                )
+
+        rows = b.get("rows", [])
+        if not isinstance(rows, list):
+            raise ViewSpecValidationError("TableBlock.rows must be a list")
+
+        parsed_rows: list[list[str]] = []
+        for r in rows:
+            if not isinstance(r, list) or not all(isinstance(x, str) for x in r):
+                raise ViewSpecValidationError("Each table row must be list[str]")
+            parsed_rows.append(r)
+
+        width = (
+            len(headers)
+            if headers is not None
+            else (len(parsed_rows[0]) if parsed_rows else 0)
+        )
+        if headers is not None and any(len(r) != len(headers) for r in parsed_rows):
+            raise ViewSpecValidationError("All rows must match headers length")
+        if headers is None and any(len(r) != width for r in parsed_rows):
+            raise ViewSpecValidationError("All rows must have equal length")
+
+        return TableBlock(type="table", id=bid, headers=headers, rows=parsed_rows)
+
+    def _parse_rule_block(self, bid: str | None, b: dict[str, Any]) -> RuleBlock:
+        return RuleBlock(
+            type="rule",
+            id=bid,
+            style=self._parse_rule_style(b.get("style")),
+        )
+
+    def _parse_spacer_block(self, bid: str | None, b: dict[str, Any]) -> SpacerBlock:
+        size = b.get("size", 1)
+        if not isinstance(size, int) or size < 0:
+            raise ViewSpecValidationError(
+                "SpacerBlock.size must be a non-negative integer"
+            )
+        return SpacerBlock(type="spacer", id=bid, size=size)
 
     def _parse_text_content(self, value: Any) -> str | list[Inline]:
         if isinstance(value, str):
@@ -312,12 +497,12 @@ class DefaultViewSpecParser:
 
     def _parse_rule_style(self, value: Any) -> RuleStyle:
         if value is None:
-            value = "normal"
+            return "normal"
         if not isinstance(value, str):
             raise ViewSpecValidationError("RuleBlock.style must be a string")
         if value not in RULE_STYLES:
             raise ViewSpecValidationError(
-                f"Invalid rule style: {value!r}. Expected one of: {sorted(RULE_STYLES)}"
+                f"Invalid rule style: {value!r}. Expected one of: {RULE_STYLES}"
             )
         return cast(RuleStyle, value)
 
@@ -342,9 +527,6 @@ class DefaultViewSpecParser:
             )
 
         iid = self._validate_block_id(node.get("id"))
-        if iid is not None and not isinstance(iid, str):
-            raise ViewSpecValidationError("ListItem.id must be a string or null")
-
         head = self._parse_text_content(node.get("head", ""))
 
         blocks_raw = node.get("blocks")
@@ -356,127 +538,3 @@ class DefaultViewSpecParser:
 
         nested = [self._parse_block(b) for b in blocks_raw]
         return ListItemBlock(type="list_item", head=head, blocks=nested, id=iid)
-
-    def _parse_block(self, b: Any) -> Block:
-        if not isinstance(b, dict):
-            raise ViewSpecValidationError("Each block must be a mapping")
-
-        t = b.get("type")
-        bid = self._validate_block_id(b.get("id"))
-
-        if t == "text":
-            return TextBlock(
-                type="text", id=bid, text=self._parse_text_content(b.get("text", ""))
-            )
-
-        if t == "list_item":
-            # list_item as standalone block (useful for streaming / append_child)
-            head = self._parse_text_content(b.get("head", ""))
-
-            blocks_raw = b.get("blocks")
-            if blocks_raw is None:
-                return ListItemBlock(type="list_item", id=bid, head=head, blocks=None)
-
-            if not isinstance(blocks_raw, list):
-                raise ViewSpecValidationError(
-                    "ListItemBlock.blocks must be a list or null"
-                )
-
-            nested = [self._parse_block(x) for x in blocks_raw]
-            return ListItemBlock(type="list_item", id=bid, head=head, blocks=nested)
-
-        if t == "list":
-            items_raw = b.get("items", [])
-            if not isinstance(items_raw, list):
-                raise ViewSpecValidationError(
-                    "ListBlock.items (field 'items') must be a list"
-                )
-            return ListBlock(
-                type="list", id=bid, items=[self._parse_list_item(x) for x in items_raw]
-            )
-
-        if t == "kv":
-            items_raw = b.get("items", [])
-            if not isinstance(items_raw, list):
-                raise ViewSpecValidationError("KvBlock.items must be a list")
-
-            parsed_items: list[KvItemBlock] = []
-
-            for entry in items_raw:
-                if not isinstance(entry, list) or len(entry) != 2:
-                    raise ViewSpecValidationError(
-                        "Each kv item must be a [key, value] list"
-                    )
-
-                key, value = entry
-
-                parsed_items.append(
-                    KvItemBlock(
-                        key=str(key),
-                        value=value,
-                        id=None,
-                    )
-                )
-
-            return KvBlock(type="kv", id=bid, items=parsed_items)
-
-        if t == "table":
-            headers = b.get("headers")
-            if headers is not None:
-                if not isinstance(headers, list) or not all(
-                    isinstance(x, str) for x in headers
-                ):
-                    raise ViewSpecValidationError(
-                        "TableBlock.headers must be list[str] or null"
-                    )
-
-            rows = b.get("rows", [])
-            if not isinstance(rows, list):
-                raise ViewSpecValidationError("TableBlock.rows must be a list")
-
-            parsed_rows: list[list[str]] = []
-            for r in rows:
-                if not isinstance(r, list) or not all(isinstance(x, str) for x in r):
-                    raise ViewSpecValidationError("Each table row must be list[str]")
-                parsed_rows.append(r)
-
-            width = (
-                len(headers)
-                if headers is not None
-                else (len(parsed_rows[0]) if parsed_rows else 0)
-            )
-            if headers is not None and any(len(r) != len(headers) for r in parsed_rows):
-                raise ViewSpecValidationError("All rows must match headers length")
-            if headers is None and any(len(r) != width for r in parsed_rows):
-                raise ViewSpecValidationError("All rows must have equal length")
-
-            return TableBlock(type="table", id=bid, headers=headers, rows=parsed_rows)
-
-        if t == "kv":
-            items = b.get("items", [])
-            if not isinstance(items, list):
-                raise ViewSpecValidationError("KvBlock.items must be a list")
-            pairs: list[tuple[str, Any]] = []
-            for entry in items:
-                if not isinstance(entry, list) or len(entry) != 2:
-                    raise ViewSpecValidationError(
-                        "Each kv item must be a [key, value] list"
-                    )
-                k, v = entry
-                pairs.append((str(k), v))
-            return KvBlock(type="kv", id=bid, items=pairs)
-
-        if t == "rule":
-            return RuleBlock(
-                type="rule", id=bid, style=self._parse_rule_style(b.get("style"))
-            )
-
-        if t == "spacer":
-            size = b.get("size", 1)
-            if not isinstance(size, int) or size < 0:
-                raise ViewSpecValidationError(
-                    "SpacerBlock.size must be a non-negative integer"
-                )
-            return SpacerBlock(type="spacer", id=bid, size=size)
-
-        raise ViewSpecValidationError(f"Unknown block type: {t!r}")

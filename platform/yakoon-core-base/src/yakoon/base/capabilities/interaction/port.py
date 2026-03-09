@@ -1,18 +1,45 @@
+from __future__ import annotations
+
 from asyncio import Event, Future
 from collections.abc import Awaitable, Callable
 from typing import Protocol
 
-from yakoon.base.capabilities.presenters import PromptResult
+from yakoon.base.capabilities.presenters import PresentResult
 from yakoon.base.runtime import Session
-from yakoon.base.ui import ViewSpec
+from yakoon.base.ui import FieldsBlock, OutputStreaming, ViewSpec
 
 from .policy import FieldPolicy, PolicyValidationResult, RawValue
 from .types import DialogState
 
 
-class InputService(Protocol):
+class InteractionService(Protocol):
+    """
+    Executes one rendered interaction document.
 
-    async def ask_view(self, session: Session, field: ViewSpec) -> PromptResult: ...
+    Responsibilities:
+      - play a view block-by-block
+      - emit passive blocks immediately
+      - wait on FieldsBlock(prompt)
+      - validate and retry via DialogService / PolicyService
+      - continue after interaction
+    """
+
+    async def play_view(
+        self,
+        session: Session,
+        *,
+        view: ViewSpec,
+        stream: OutputStreaming | None = None,
+    ) -> PresentResult | None: ...
+
+    async def run_fields(
+        self,
+        session: Session,
+        *,
+        view_id: str,
+        block: FieldsBlock,
+        stream: OutputStreaming | None = None,
+    ) -> PresentResult: ...
 
 
 class DialogService(Protocol):

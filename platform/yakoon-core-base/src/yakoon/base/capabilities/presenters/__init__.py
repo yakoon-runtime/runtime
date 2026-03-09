@@ -1,8 +1,8 @@
 from .port import Presenter, PresenterService
-from .result import PromptResult
+from .result import PresentResult
 
 __all__ = [
-    "PromptResult",
-    "PresenterService",
     "Presenter",
+    "PresenterService",
+    "PresentResult",
 ]

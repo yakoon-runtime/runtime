@@ -11,6 +11,6 @@ class CmdWhoAmI(Command):
 
         username = session.get_username()
         if username:
-            await presenter.views.emit("show_user", user=username)
+            await presenter.present("show_user", user=username)
         else:
-            await presenter.views.emit("show_hint")
+            await presenter.present("show_hint")

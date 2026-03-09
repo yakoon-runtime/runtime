@@ -27,7 +27,6 @@ class PatchAppendText:
 @dataclass(frozen=True, slots=True)
 class PatchAppendChild:
     op: Literal["append_child"] = "append_child"
-    block_id: str = ""
     parent_id: str = ""
     block: Block | None = None
 
@@ -37,5 +36,12 @@ PatchOp = PatchReset | PatchAppendBlock | PatchAppendText | PatchAppendChild
 
 @dataclass(frozen=True, slots=True)
 class PatchSpec:
+    """
+    Patch stream for mutating one UI document.
+
+    A one-shot render is simply:
+      reset + append all + final=True
+    """
+
     ops: list[PatchOp] = field(default_factory=list)
     final: bool = False

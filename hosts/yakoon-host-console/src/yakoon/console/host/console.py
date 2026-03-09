@@ -1,18 +1,23 @@
-# yakoon/console/host.py
 import asyncio
 from collections.abc import Awaitable, Callable
 
-from yakoon.base.ui.view_spec import ViewSpec
-from yakoon.platform.hosts.adapter import FormInput, HostAdapter, InputEvent, TextInput
-from yakoon.platform.hosts.input import safe_input, safe_input_secret
+from yakoon.base.ui import FieldsBlock, ViewSpec
+from yakoon.platform.hosts import (
+    FormInput,
+    HostAdapter,
+    InputEvent,
+    TextInput,
+    safe_input,
+    safe_input_secret,
+)
 
 
 class ConsoleHost(HostAdapter):
     """
-    Console input adapter (view-driven, silent).
+    Console input adapter (block-driven, silent).
 
     - does NOT render output (Session/Output owns rendering)
-    - only collects input from view.input and submits values
+    - collects input from FieldsBlock instances inside view.blocks
     """
 
     def __init__(self, submit: Callable[[InputEvent], Awaitable[None]]):
@@ -20,22 +25,23 @@ class ConsoleHost(HostAdapter):
         self._lock = asyncio.Lock()
 
     async def on_view(self, *, ps1: str, view: ViewSpec) -> None:
-        input_def = view.input
-        if not input_def:
+        block = self._find_fields_block(view)
+        if block is None:
             return
-        if input_def.kind != "form":
-            raise RuntimeError("ConsoleHost supports only form inputs")
 
-        fields = input_def.fields or {}
-        if not isinstance(fields, dict) or not fields:
+        if not block.fields:
             await self._submit(FormInput({}))
             return
 
         values: dict[str, object] = {}
 
-        for key, fd in fields.items():
+        for fd in block.fields:
+            key = fd.var
+            if not key:
+                continue
+
             label = fd.title or key
-            hint = getattr(fd, "hint", "") or ""
+            hint = fd.hint or ""
             ui = fd.ui or {}
             secret = bool(ui.get("secret", False))
 
@@ -45,7 +51,6 @@ class ConsoleHost(HostAdapter):
             prompt = f"{ps1}[{prompt}]"
 
             async with self._lock:
-                secret = bool(ui.get("secret", False))
                 if secret:
                     value = await safe_input_secret(ps1=prompt)
                 else:
@@ -67,3 +72,12 @@ class ConsoleHost(HostAdapter):
 
     async def on_exit(self) -> None:
         return
+
+    def _find_fields_block(self, view: ViewSpec) -> FieldsBlock | None:
+        for block in view.blocks:
+            if not isinstance(block, FieldsBlock):
+                continue
+            if block.state == "done":
+                continue
+            return block
+        return None

@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from yakoon.base.ui import (
-    Block,
-    OutputSpec,
-    ViewSpec,
-)
+from yakoon.base.ui import Block, ViewSpec
+from yakoon.base.ui.blocks import FieldsBlock
 
 
 class ConsoleOutput:
     """
-    Console renderer (typed, view-only).
-    Renders only view.message. Ignores view.input (handled by Host).
+    Console renderer for the new document model.
+    Renders view.blocks directly.
     """
 
     async def view(self, view: ViewSpec) -> None:
@@ -19,30 +16,34 @@ class ConsoleOutput:
             print(text)
 
     def render(self, view: ViewSpec) -> str:
-        msg = view.output
-        if msg is None:
-            return ""
-
         prefix = ""
-        if msg.role == "error":
+        if view.role == "error":
             prefix = "(Status) "
-        if msg.role == "info":
+        elif view.role == "info":
             prefix = "(Information) "
 
-        body = self._render_message(msg)
+        body = self._render_view(view)
         if not body:
             return ""
 
         return prefix + body
 
-    def _render_message(self, msg: OutputSpec) -> str:
+    def _render_view(self, view: ViewSpec) -> str:
         lines: list[str] = []
-        # title etc...
-        self._render_blocks(lines, msg.blocks or [], indent=0)
+
+        if view.title:
+            lines.append(view.title)
+            lines.append("")
+
+        self._render_blocks(lines, view.blocks or [], indent=0)
         return "\n".join(lines).rstrip()
 
     def _render_blocks(
-        self, lines: list[str], blocks: list[Block], *, indent: int
+        self,
+        lines: list[str],
+        blocks: list[Block],
+        *,
+        indent: int,
     ) -> None:
         pad = " " * indent
 
@@ -61,8 +62,10 @@ class ConsoleOutput:
                 lines.append("")
 
             elif t == "kv":
-                for k, v in block.items:
-                    lines.append(pad + f"{k}: {v}")
+                for item in block.items:
+                    lines.append(pad + f"{item.key}: {item.value}")
+                    if item.blocks:
+                        self._render_blocks(lines, item.blocks, indent=indent + 2)
                 lines.append("")
 
             elif t == "rule":
@@ -73,6 +76,18 @@ class ConsoleOutput:
                 for _ in range(block.size):
                     lines.append("")
 
+            elif isinstance(block, FieldsBlock):
+                if block.input_mode == "prompt":
+                    continue
+
+                title = block.title or "Eingabe"
+                mode = block.input_mode
+                lines.append(pad + f"[{title} - {mode}]")
+                for fd in block.fields:
+                    label = fd.title or fd.var or "field"
+                    lines.append(pad + f"  • {label}")
+                lines.append("")
+
     def _render_textish(self, value) -> str:
         if value is None:
             return ""
@@ -80,7 +95,6 @@ class ConsoleOutput:
         if isinstance(value, str):
             return value
 
-        # Inline-Liste?
         if isinstance(value, list):
             parts: list[str] = []
             for inl in value:
@@ -97,5 +111,4 @@ class ConsoleOutput:
                     parts.append("")
             return "".join(parts)
 
-        # Fallback: int/float/bool/… => stringifizieren
         return str(value)

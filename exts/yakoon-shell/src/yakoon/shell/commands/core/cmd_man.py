@@ -28,7 +28,7 @@ class CmdMan(Command):
         command_key = request.arg(0)
         if not command_key:
             presenter = await self.get_presenter(session)
-            await presenter.views.emit("no_manual_entry", command_key="")
+            await presenter.present("no_manual_entry", command_key="")
             return
 
         active_controller_id = session.get_active_controller()
@@ -75,7 +75,7 @@ class CmdMan(Command):
         # ----------------------------------------------------
         if not cmd_info:
             presenter = await self.get_presenter(session)
-            await presenter.views.emit("no_manual_entry", command_key=command_key)
+            await presenter.present("no_manual_entry", command_key=command_key)
             return
 
         # controller has to exist - command was found before.
@@ -99,12 +99,12 @@ class CmdMan(Command):
                 key=cmd_info.key,
             )
             presenter = await presenter_service.create_presenter(ref, session)
-            await presenter.views.emit("man_page")
+            await presenter.present("man_page")
 
         except LookupError:
             # use the own presenter.
             presenter = await self.get_presenter(session)
-            await presenter.views.emit("no_manual_entry", command_key=command_key)
+            await presenter.present("no_manual_entry", command_key=command_key)
 
     async def show_index(self, session: Session, request: Request) -> None:
 
@@ -146,7 +146,7 @@ class CmdMan(Command):
                 key=lambda c: c.id,
             )
 
-            await presenter.views.emit(
+            await presenter.present(
                 "show_help",
                 mode="shell",
                 shell_commands=shell_commands,
@@ -179,7 +179,7 @@ class CmdMan(Command):
         merged.update(program_by_key)
 
         commands = sorted(merged.values(), key=lambda c: c.key)
-        await presenter.views.emit("show_help", mode="program", commands=commands)
+        await presenter.present("show_help", mode="program", commands=commands)
 
     def resolve_man_mode(self, request: Request) -> str:
         if request.has_option("internal"):

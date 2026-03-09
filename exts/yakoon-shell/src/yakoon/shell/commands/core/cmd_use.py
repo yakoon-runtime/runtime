@@ -21,12 +21,12 @@ class CmdUse(Command):
                 infos.append(controller)
 
         if infos and not name:
-            await presenter.views.emit("show", controllers=infos)
+            await presenter.present("show", controllers=infos)
         elif infos:
             if name == session.get_active_controller():
-                await presenter.views.emit("already_in_shell", controller=infos[0])
+                await presenter.present("already_in_shell", controller=infos[0])
             else:
                 session.set_active_controller(name)
                 await self.services.get(SessionService).save(session)
         else:
-            await presenter.views.emit("name_not_found", name=name)
+            await presenter.present("name_not_found", name=name)

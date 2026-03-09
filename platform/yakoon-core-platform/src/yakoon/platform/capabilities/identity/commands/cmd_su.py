@@ -15,19 +15,18 @@ class CmdSu(Command):
         permissions = self.services.get(PermissionService)
 
         # TODO: Woher bekommt ein Plugin einen stabilen Namespace?
+        ns = await namespaces.from_session(session, "account", "develop")
 
         username = (
             request.arg(0)
             or request.option("user")
-            or (await presenter.inputs.ask("ask_user")).first()
+            or (await presenter.require_present("ask_user")).first()
         )
         secret = request.option("password")
         if not secret:
-            secret = (await presenter.inputs.ask("ask_secret")).first()
+            secret = (await presenter.require_present("ask_secret")).first()
             if secret:
                 secret = secret.reveal()
-
-        ns = await namespaces.from_session(session, "account", "develop")
 
         result = await auth.authenticate(ns, username, secret)
         if result.ok and result.account:
@@ -36,7 +35,7 @@ class CmdSu(Command):
             permissions.apply_account_permissions(session, account)
 
             await self.services.get(SessionService).save(session)
-            await presenter.views.emit("success", user=username)
+            await presenter.present("success", user=username)
 
         else:
-            await presenter.views.emit("failed", user=username, reason=result.reason)
+            await presenter.present("failed", user=username, reason=result.reason)

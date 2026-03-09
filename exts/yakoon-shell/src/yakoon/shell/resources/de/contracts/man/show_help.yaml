@@ -1,5 +1,5 @@
-kind: state
-state:
+kind: view
+view:
   role: info
   title: "Commands"
   blocks:

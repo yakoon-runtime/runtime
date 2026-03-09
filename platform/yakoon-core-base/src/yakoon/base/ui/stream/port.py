@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
 
-from yakoon.base.ui import ViewSpec
+from yakoon.base.ui import Block, ViewSpec
 
 from .stream import OutputStreaming
 
@@ -11,8 +11,26 @@ if TYPE_CHECKING:
 
 
 class OutputStreamService(Protocol):
+    async def begin_view(
+        self,
+        session: Session,
+        view: ViewSpec,
+        *,
+        override: OutputStreaming | None = None,
+    ) -> None: ...
 
-    async def emit(
+    async def emit_block(
+        self,
+        session: Session,
+        *,
+        view: ViewSpec,
+        block: Block,
+        override: OutputStreaming | None = None,
+        parent_id: str | None = None,
+        suffix: str | int = 0,
+    ) -> None: ...
+
+    async def finish_view(
         self,
         session: Session,
         view: ViewSpec,

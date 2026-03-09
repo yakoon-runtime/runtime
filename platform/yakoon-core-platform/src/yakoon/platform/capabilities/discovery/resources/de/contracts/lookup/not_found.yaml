@@ -1,6 +1,6 @@
-kind: state
+kind: view
 
-state:
+view:
   role: warning
   title: "Nichts gefunden"
   blocks:

@@ -1,11 +1,7 @@
-from .inputs import PresenterInputs
-from .presenter import Presenter
+from .presenter import DefaultPresenter
 from .service import DefaultPresenterService
-from .views import PresenterViews
 
 __all__ = [
-    "Presenter",
-    "PresenterInputs",
+    "DefaultPresenter",
     "DefaultPresenterService",
-    "PresenterViews",
 ]

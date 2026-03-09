@@ -1,30 +1,34 @@
-from typing import Protocol
+from typing import Any, Protocol
 
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.ui.stream import OutputStreaming
 
-from .result import PromptResult
+from .result import PresentResult
 
 
-class PresenterViews(Protocol):
+class Presenter(Protocol):
+    """
+    Unified presentation API.
 
-    async def emit(
+    A presenter renders one state, streams it to the host, may pause on
+    interactive blocks, and optionally returns collected values.
+    """
+
+    async def present(
         self,
         state: str,
         *,
         stream: OutputStreaming | None = None,
-        **data,
-    ) -> None: ...
+        **data: Any,
+    ) -> PresentResult | None: ...
 
-
-class PresenterInputs(Protocol):
-    async def ask(self, state: str, **data) -> PromptResult: ...
-
-
-class Presenter(Protocol):
-
-    inputs: PresenterInputs
-    views: PresenterViews
+    async def require_present(
+        self,
+        state: str,
+        *,
+        stream: OutputStreaming | None = None,
+        **data: Any,
+    ) -> PresentResult: ...
 
 
 class PresenterService(Protocol):

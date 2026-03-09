@@ -2,8 +2,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 
 from yakoon.base.runtime.sessions.session import Session
-from yakoon.base.ui.view_spec import ViewSpec
-from yakoon.base.ui.views import v_error
+from yakoon.base.ui import ViewSpec, v_error
 from yakoon.platform.runtime.devtools.prompt import UnresolvedPromptMonitor
 from yakoon.platform.settings import settings
 
@@ -24,7 +23,7 @@ class DefaultDialogService:
         self._edges: dict[str, asyncio.Event] = {}
 
         # pending view payload for the host/runner
-        self._views: dict[str, dict] = {}
+        self._views: dict[str, dict | ViewSpec] = {}
 
     def is_waiting(self, session: Session) -> bool:
         return str(session.key) in self._waiting
@@ -39,7 +38,7 @@ class DefaultDialogService:
 
     def get_view(self, session: Session) -> ViewSpec:
         view = self._views.get(str(session.key))
-        if view is None:
+        if not view:
             raise RuntimeError("No View available (not waiting for input).")
         return view
 
@@ -109,7 +108,7 @@ class DefaultDialogService:
         self,
         *,
         session: Session,
-        view: dict,
+        view: dict | ViewSpec,
         timeout: float | None,
         on_timeout: Callable[[], Awaitable[None]] | None,
     ) -> asyncio.Future:

@@ -1,4 +1,4 @@
-kind: state
+kind: view
 state:
   role: info
   title: "Test – Inline Head"

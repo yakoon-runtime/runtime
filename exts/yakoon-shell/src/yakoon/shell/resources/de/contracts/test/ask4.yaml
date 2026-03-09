@@ -1,11 +1,14 @@
-kind: state
+kind: view
 
-state:
+view:
   role: info
   title: "Commands"
-  input_mode: prompt
+  blocks:
+    - type: text
+      text: "Weitere Eingaben"
 
-  fields:
-    - { var: var_a, policy: customer.age, title: "Zahl (1 von 2)", required: true }
-    - { var: var_b, policy: system:int, title: "Zahl (2 von 2)" } 
-
+    - type: fields
+      input_mode: prompt
+      fields:
+        - { var: var_a, policy: customer.age, title: "Zahl (1 von 2)", required: true }
+        - { var: var_b, policy: system:int, title: "Zahl (2 von 2)" } 

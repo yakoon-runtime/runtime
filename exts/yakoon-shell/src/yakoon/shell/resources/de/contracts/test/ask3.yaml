@@ -1,9 +1,13 @@
-kind: state
+kind: view
 
-state:
+view:
   role: info
   title: "Commands"
-  input_mode: prompt
+  blocks:
+    - type: text
+      text: "Noch eine Bemerkung..."
 
-  fields:
-      - { key: the_key, var: result, policy: system:string, title: "Bemerkung" } 
+    - type: fields
+      input_mode: prompt
+      fields:
+        - { key: the_key, var: result, policy: system:string, title: "Bemerkung" } 

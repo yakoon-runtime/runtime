@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,15 +20,22 @@ class FieldType(StrEnum):
     SELECT = "select"
 
 
-@dataclass(frozen=True)
-class SecretValue:
-    value: str
+@dataclass(frozen=True, slots=True)
+class ViewFieldDef:
+    """
+    Canonical field definition used by FieldsBlock.
+    """
 
-    def reveal(self) -> str:
-        return self.value
+    policy: str
+    title: str | None = None
+    required: bool = False
+    var: str | None = None
 
-    def __str__(self) -> str:
-        return "******"
+    hint: str = ""
+    default: str = ""
+    pattern: str = ""
 
-    def __repr__(self) -> str:
-        return "SecretValue(******)"
+    ui: dict[str, Any] | None = None
+
+    type: FieldType | None = None
+    options: list[SelectOption] | None = None
