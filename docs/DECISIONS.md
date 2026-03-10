@@ -7,6 +7,15 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## 26-03-10
+**Streaming invariants**
+- Struktur wird vor Text übertragen
+- Text wird nur für veröffentlichte Nodes gesendet
+- Chunkgröße wird geclamped
+- Flush passiert maximal 30 FPS
+- Jitter verhindert mechanisches Timing
+- Punctuation erzeugt Lesepausen
+
 ## 26-03-08
 **Neue Pipeline für UI**
 Presenter

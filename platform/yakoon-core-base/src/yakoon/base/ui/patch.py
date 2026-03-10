@@ -1,9 +1,7 @@
-from __future__ import annotations
-
 from dataclasses import dataclass, field
 from typing import Literal
 
-from .blocks import Block
+from .node import NodeSpec
 
 
 @dataclass(frozen=True, slots=True)
@@ -12,36 +10,23 @@ class PatchReset:
 
 
 @dataclass(frozen=True, slots=True)
-class PatchAppendBlock:
-    op: Literal["append_block"] = "append_block"
-    block: Block | None = None
+class PatchAppendStructure:
+    op: Literal["append_structure"] = "append_structure"
+    nodes: list[NodeSpec] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
 class PatchAppendText:
     op: Literal["append_text"] = "append_text"
     block_id: str = ""
+    key: str = "text"
     text: str = ""
 
 
-@dataclass(frozen=True, slots=True)
-class PatchAppendChild:
-    op: Literal["append_child"] = "append_child"
-    parent_id: str = ""
-    block: Block | None = None
-
-
-PatchOp = PatchReset | PatchAppendBlock | PatchAppendText | PatchAppendChild
+PatchOp = PatchReset | PatchAppendStructure | PatchAppendText
 
 
 @dataclass(frozen=True, slots=True)
 class PatchSpec:
-    """
-    Patch stream for mutating one UI document.
-
-    A one-shot render is simply:
-      reset + append all + final=True
-    """
-
     ops: list[PatchOp] = field(default_factory=list)
     final: bool = False

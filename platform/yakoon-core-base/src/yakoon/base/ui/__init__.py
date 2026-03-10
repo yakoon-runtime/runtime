@@ -2,6 +2,7 @@ from .blocks import (
     Block,
     FieldsBlock,
     FieldsState,
+    HeaderBlock,
     Inline,
     InlineCode,
     InlineLink,
@@ -20,22 +21,28 @@ from .blocks import (
 from .document import ErrorKind, Role, ViewHeader, ViewMeta, ViewSpec, ViewUI
 from .event import ViewEvent
 from .fields import FieldType, SelectOption, ViewFieldDef
+from .node import NodeSpec
 from .patch import (
-    PatchAppendBlock,
-    PatchAppendChild,
+    PatchAppendStructure,
     PatchAppendText,
     PatchOp,
     PatchReset,
     PatchSpec,
 )
 from .port import ViewSpecParser
-from .stream import OutputStreaming, OutputStreamPolicy, OutputStreamService
+from .stream import (
+    EffectiveStreaming,
+    OutputStreaming,
+    OutputStreamPolicy,
+    OutputStreamService,
+)
 from .views import v_error, v_info, v_text
 
 __all__ = [
     "OutputStreaming",
     "OutputStreamService",
     "OutputStreamPolicy",
+    "EffectiveStreaming",
     "Role",
     "ErrorKind",
     "InputMode",
@@ -45,9 +52,9 @@ __all__ = [
     "ViewSpec",
     "ViewEvent",
     "PatchReset",
-    "PatchAppendBlock",
+    "NodeSpec",
     "PatchAppendText",
-    "PatchAppendChild",
+    "PatchAppendStructure",
     "PatchOp",
     "PatchSpec",
     "ViewFieldDef",
@@ -59,6 +66,7 @@ __all__ = [
     "InlineCode",
     "InlineLink",
     "Block",
+    "HeaderBlock",
     "RuleStyle",
     "TextBlock",
     "RuleBlock",

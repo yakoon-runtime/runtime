@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from yakoon.kivy.widgets.blocks.block import BlockRenderer
+from yakoon.kivy.widgets.blocks.block_header import HeaderBlockRenderer
 from yakoon.kivy.widgets.blocks.block_kv import KvBlockRenderer, KvItemBlockRenderer
 from yakoon.kivy.widgets.blocks.block_list import (
     ListBlockRenderer,
@@ -17,6 +18,7 @@ class BlockRendererRegistry:
         self._dbg = dbg
         self._by_type: dict[str, BlockRenderer] = {
             "text": TextBlockRenderer(),
+            "header": HeaderBlockRenderer(),
             "spacer": SpacerBlockRenderer(),
             "rule": RulerBlockRenderer(),
             "list": ListBlockRenderer(self),

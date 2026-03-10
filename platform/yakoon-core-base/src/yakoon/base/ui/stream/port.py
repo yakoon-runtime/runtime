@@ -4,13 +4,20 @@ from typing import TYPE_CHECKING, Protocol
 
 from yakoon.base.ui import Block, ViewSpec
 
-from .stream import OutputStreaming
+from .stream import EffectiveStreaming, OutputStreaming, OutputStreamPolicy
 
 if TYPE_CHECKING:
     from yakoon.base.runtime import Session
 
 
 class OutputStreamService(Protocol):
+
+    def effective(
+        self,
+        base: OutputStreamPolicy,
+        override: OutputStreaming | None,
+    ) -> EffectiveStreaming: ...
+
     async def begin_view(
         self,
         session: Session,

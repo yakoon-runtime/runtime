@@ -7,14 +7,15 @@ from typing import TYPE_CHECKING, Any
 
 from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.ui import (
+    NodeSpec,
     OutputStreamPolicy,
-    PatchAppendBlock,
-    PatchOp,
+    PatchAppendStructure,
     PatchReset,
     PatchSpec,
     ViewEvent,
     ViewSpec,
 )
+from yakoon.base.ui.patch import PatchAppendText
 from yakoon.base.values import Key
 
 if TYPE_CHECKING:
@@ -174,17 +175,36 @@ class Session:
         return payload
 
     def _view_to_event(self, view: ViewSpec) -> ViewEvent:
-        ops: list[PatchOp] = [PatchReset()]
+        view_id = view.id or f"view.{uuid.uuid4().hex}"
 
-        def new_view_id() -> str:
-            return f"view.{uuid.uuid4().hex}"
-
+        nodes = []
+        text_nodes = []
         for block in view.blocks:
-            ops.append(PatchAppendBlock(block=block))
+            block_id = block.id or f"{view_id}:{uuid.uuid4().hex}"
+            node = NodeSpec.from_block(
+                block, parent=f"{view_id}:root", block_id=block_id
+            )
+            nodes.append(node)
 
-        view_id = view.id or new_view_id()
+            text = getattr(block, "text", None)
+            if isinstance(text, str) and text:
+                text_nodes.append(
+                    PatchAppendText(
+                        block_id=block_id,
+                        key="text",
+                        text=text,
+                    )
+                )
+
         return ViewEvent(
             id=view_id,
             header=view.header,
-            patch=PatchSpec(ops=ops, final=True),
+            patch=PatchSpec(
+                ops=[
+                    PatchReset(),
+                    PatchAppendStructure(nodes=nodes),
+                    *text_nodes,
+                ],
+                final=True,
+            ),
         )

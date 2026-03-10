@@ -5,6 +5,7 @@ from collections.abc import Awaitable, Callable
 from typing import Protocol
 
 from yakoon.base.ui import FieldsBlock, PatchAppendBlock, PatchAppendChild, ViewEvent
+from yakoon.base.ui.document import ViewSpec
 from yakoon.platform.hosts import FormInput, HostAdapter, InputEvent, TextInput
 
 
@@ -39,8 +40,8 @@ class KivyHost(HostAdapter):
             return
         loop.call_soon_threadsafe(fut.set_result, text)
 
-    async def on_view(self, *, ps1: str, event: ViewEvent) -> None:
-        block = self._find_fields_block(event)
+    async def on_view(self, *, ps1: str, view: ViewSpec) -> None:
+        block = self._find_fields_block(view)
         if block is None:
             self._ui.clear_assist()
             return

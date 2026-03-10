@@ -45,3 +45,13 @@ class OutputStreamPolicy:
 
     # range: 3–5
     chunk_tokens: int = 4  # words/whitespace chunks per tick
+
+
+@dataclass(frozen=True, slots=True)
+class EffectiveStreaming:
+    enabled: bool
+    id: str | None
+    interval: float
+    chunk_size: int
+    jitter: float
+    punctuation_pause: float

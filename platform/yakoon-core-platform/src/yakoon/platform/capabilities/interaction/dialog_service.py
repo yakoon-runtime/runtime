@@ -3,8 +3,6 @@ from collections.abc import Awaitable, Callable
 
 from yakoon.base.runtime.sessions.session import Session
 from yakoon.base.ui import ViewSpec, v_error
-from yakoon.base.ui.event import ViewEvent
-from yakoon.base.ui.patch import PatchAppendBlock, PatchOp, PatchReset, PatchSpec
 from yakoon.platform.runtime.devtools.prompt import UnresolvedPromptMonitor
 from yakoon.platform.settings import settings
 
@@ -40,30 +38,9 @@ class DefaultDialogService:
 
     def get_view(self, session: Session) -> ViewSpec:
         view = self._views.get(str(session.key))
-        if not view:
+        if view is None:
             raise RuntimeError("No View available (not waiting for input).")
         return view
-
-    def get_event(self, session: Session) -> ViewEvent:
-
-        def to_view_event(view: ViewSpec) -> ViewEvent:
-            ops: list[PatchOp] = [PatchReset()]
-
-            view_id = view.id
-            if view_id is None:
-                raise RuntimeError("view.id cannot be None")
-
-            for block in view.blocks:
-                ops.append(PatchAppendBlock(block=block))
-
-            return ViewEvent(
-                id=view_id,
-                header=view.header,
-                patch=PatchSpec(ops=ops, final=True),
-            )
-
-        view = self.get_view(session)
-        return to_view_event(view)
 
     def wait_view(
         self,

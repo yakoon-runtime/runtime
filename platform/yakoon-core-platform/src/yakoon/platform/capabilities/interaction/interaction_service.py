@@ -42,29 +42,30 @@ class DefaultInteractionService:
         aliases: dict[str, str] = {}
         order: list[str] = []
 
-        if stream is not None:
+        eff = self.streams.effective(session.get_output_stream_policy(), stream)
+        if eff.enabled:
             await self.streams.begin_view(session, view, override=stream)
         else:
-            await session.emit(replace(view, blocks=[]))
+            await session.emit(view)
 
         try:
             for index, block in enumerate(view.blocks):
-                if isinstance(block, FieldsBlock) and block.input_mode == "prompt":
-                    result = await self.run_fields(
-                        session,
-                        view_id=view.id or "",
-                        block=block,
-                        stream=stream,
-                    )
-                    self._merge_result(
-                        result=result,
-                        values=values,
-                        aliases=aliases,
-                        order=order,
-                    )
-                    continue
+                if isinstance(block, FieldsBlock):
+                    if block.input_mode == "prompt":
+                        result = await self.run_fields(
+                            session,
+                            view_id=view.id or "",
+                            block=block,
+                        )
+                        self._merge_result(
+                            result=result,
+                            values=values,
+                            aliases=aliases,
+                            order=order,
+                        )
+                        continue
 
-                if stream is not None:
+                if eff.enabled:
                     await self.streams.emit_block(
                         session,
                         view=view,
@@ -72,15 +73,9 @@ class DefaultInteractionService:
                         override=stream,
                         suffix=index,
                     )
-                else:
-                    snapshot = replace(
-                        view,
-                        header=None,
-                        blocks=[block],
-                    )
-                    await session.emit(snapshot)
+
         finally:
-            if stream is not None:
+            if eff.enabled:
                 await self.streams.finish_view(session, view, override=stream)
 
         if not values:
@@ -94,7 +89,6 @@ class DefaultInteractionService:
         *,
         view_id: str,
         block: FieldsBlock,
-        stream: OutputStreaming | None = None,
     ) -> PresentResult:
         if not block.fields:
             raise TypeError("FieldsBlock.fields must be a non-empty list")

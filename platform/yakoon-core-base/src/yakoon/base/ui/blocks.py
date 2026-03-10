@@ -40,6 +40,15 @@ Inline = InlineText | InlineCode | InlineLink
 # -----------------------------
 
 
+@dataclass(slots=True)
+class HeaderBlock:
+    type: str = "header"
+    id: str | None = None
+    role: str | None = None
+    title: str | None = None
+    subtitle: str | None = None
+
+
 @dataclass(frozen=True, slots=True)
 class TextBlock:
     type: Literal["text"] = "text"
@@ -129,7 +138,8 @@ class FieldsBlock:
 
 
 Block = (
-    TextBlock
+    HeaderBlock
+    | TextBlock
     | RuleBlock
     | SpacerBlock
     | ListItemBlock

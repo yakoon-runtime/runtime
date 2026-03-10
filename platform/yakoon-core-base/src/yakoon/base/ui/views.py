@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from collections.abc import Sequence
 
 from .blocks import Block, FieldsBlock, InputMode, TextBlock
@@ -25,7 +26,7 @@ def _view(
 
     return ViewSpec(
         kind="view",
-        id=view_id,
+        id=view_id or f"view.{uuid.uuid4().hex}",
         header=header,
         blocks=list(blocks),
     )
@@ -39,12 +40,18 @@ def v_text(
     error_kind: ErrorKind | None = None,
     view_id: str | None = None,
 ) -> ViewSpec:
+    block_id = f"{view_id}:b{uuid.uuid4().hex}"
     return _view(
         role=role,
         title=title,
         error_kind=error_kind,
         view_id=view_id,
-        blocks=[TextBlock(text=text)],
+        blocks=[
+            TextBlock(
+                text=text,
+                id=block_id,
+            )
+        ],
     )
 
 
@@ -125,12 +132,14 @@ def v_fields(
     title: str | None = None,
     view_id: str | None = None,
 ) -> ViewSpec:
+    block_id = f"{view_id}:b{uuid.uuid4().hex}"
     return _view(
         role=role,
         title=title,
         view_id=view_id,
         blocks=[
             FieldsBlock(
+                id=block_id,
                 fields=fields,
                 input_mode=input_mode,
             )

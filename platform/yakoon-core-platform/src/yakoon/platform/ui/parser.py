@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import replace
 from typing import Any, cast
+from uuid import uuid4
 
 import yaml
 
@@ -109,6 +111,12 @@ class DefaultViewSpecParser:
                 "view.input_mode is no longer supported; use input_mode on a 'fields' block"
             )
 
+        view_id = view.get("id")
+        if view_id is not None and not isinstance(view_id, str):
+            raise ViewSpecValidationError("id must be a string or null")
+        if view_id is None:
+            view_id = f"view.{uuid4().hex}"
+
         role = view.get("role", "info")
         if role not in ("info", "success", "warning", "error", "help"):
             raise ViewSpecValidationError(f"Invalid role: {role!r}")
@@ -132,6 +140,7 @@ class DefaultViewSpecParser:
             raise ViewSpecValidationError("view.blocks must be a non-empty list")
 
         blocks = [self._parse_block(b) for b in blocks_raw]
+        blocks = self._ensure_block_ids(view_id, blocks)
 
         header = ViewHeader(
             role=cast(Role, role),
@@ -143,10 +152,22 @@ class DefaultViewSpecParser:
 
         return ViewSpec(
             kind="view",
-            id=None,
+            id=view_id,
             header=header,
             blocks=blocks,
         )
+
+    def _ensure_block_ids(self, view_id: str, blocks: list[Block]) -> list[Block]:
+
+        def assign(block: Block, path: str) -> Block:
+            bid = block.id or path
+            block = replace(block, id=bid)
+            if hasattr(block, "blocks") and block.blocks:
+                nested = [assign(b, f"{bid}.{i}") for i, b in enumerate(block.blocks)]
+                block = replace(block, blocks=nested)
+            return block
+
+        return [assign(b, f"{view_id}.{i}") for i, b in enumerate(blocks)]
 
     def _parse_fields_block(
         self, block_id: str | None, b: dict[str, Any]
