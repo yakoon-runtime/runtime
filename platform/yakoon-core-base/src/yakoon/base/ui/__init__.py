@@ -21,6 +21,7 @@ from .blocks import (
 from .document import ErrorKind, Role, ViewHeader, ViewMeta, ViewSpec, ViewUI
 from .event import ViewEvent
 from .fields import FieldType, SelectOption, ViewFieldDef
+from .io import IO, RenderDone
 from .node import NodeSpec
 from .patch import (
     PatchAppendStructure,
@@ -35,13 +36,17 @@ from .stream import (
     OutputStreaming,
     OutputStreamPolicy,
     OutputStreamService,
+    PerceptualStream,
 )
 from .views import v_error, v_info, v_text
 
 __all__ = [
+    "IO",
+    "RenderDone",
     "OutputStreaming",
     "OutputStreamService",
     "OutputStreamPolicy",
+    "PerceptualStream",
     "EffectiveStreaming",
     "Role",
     "ErrorKind",

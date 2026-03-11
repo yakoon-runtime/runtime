@@ -27,5 +27,5 @@ class BlockRendererRegistry:
             "kv_item": KvItemBlockRenderer(self),
         }
 
-    def render(self, block):
-        return self._by_type[block.type].render(block)
+    def render(self, node):
+        return self._by_type[node.type].render(node)

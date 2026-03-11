@@ -20,7 +20,10 @@ class SpacerBlockRenderer:
 
     default_height_dp: float = 12.0
 
-    def render(self, block: SpacerBlockLike) -> Widget:
+    def render(self, node) -> Widget:
+
+        size = node.props.get("size", self.default_height_dp)
         w = SpacerBlockWidget()
-        w.height = dp(block.size)
+        w.height = dp(size)
+
         return w

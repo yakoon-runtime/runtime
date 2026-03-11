@@ -1,7 +1,10 @@
-from .base import BaseRenderer
+class RuleRenderer:
 
+    def __init__(self, node):
+        pass
 
-class RuleRenderer(BaseRenderer):
+    def append(self, key, chunk):
+        print("-" * 60)
 
-    def render(self):
-        return ["-" * 40, ""]
+    def finish(self):
+        pass

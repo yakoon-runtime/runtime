@@ -1,17 +1,40 @@
-from .base import BaseRenderer
+import sys
 
 
-class KVRenderer(BaseRenderer):
+class KVRenderer:
 
-    def render(self):
-        lines = []
+    def __init__(self, node):
+        self._line_open = False
+        self._current = None
 
-        items = self.node.props.get("items", [])
+    def append(self, key: str, chunk: str):
 
-        for item in items:
-            key = getattr(item, "key", "")
-            value = getattr(item, "value", "")
-            lines.append(f"{key}: {value}")
+        # neuer key beginnt eine neue Zeile
+        if key == "key":
 
-        lines.append("")
-        return lines
+            if self._line_open:
+                sys.stdout.write("\n")
+
+            sys.stdout.write(chunk)
+            sys.stdout.write(": ")
+
+            self._line_open = True
+            self._current = "value"
+
+        elif key == "value":
+
+            if not self._line_open:
+                return
+
+            sys.stdout.write(chunk)
+
+        sys.stdout.flush()
+
+    def finish(self):
+
+        if self._line_open:
+            sys.stdout.write("\n")
+            self._line_open = False
+
+        sys.stdout.write("\n")
+        sys.stdout.flush()

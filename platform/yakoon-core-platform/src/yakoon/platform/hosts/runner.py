@@ -46,6 +46,9 @@ class Runner:
             ps1 = format_ps1(self.session)
 
             if dialogs.is_waiting(self.session):
+
+                await self.session.wait_render()
+
                 view = dialogs.get_view(self.session)
                 await self.host.on_view(ps1=ps1, view=view)
                 return

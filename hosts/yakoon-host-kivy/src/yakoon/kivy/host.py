@@ -4,7 +4,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Protocol
 
-from yakoon.base.ui import FieldsBlock, PatchAppendBlock, PatchAppendChild, ViewEvent
+from yakoon.base.ui import FieldsBlock
 from yakoon.base.ui.document import ViewSpec
 from yakoon.platform.hosts import FormInput, HostAdapter, InputEvent, TextInput
 
@@ -94,17 +94,8 @@ class KivyHost(HostAdapter):
     async def on_exit(self) -> None:
         return
 
-    def _find_fields_block(self, event: ViewEvent) -> FieldsBlock | None:
-        for op in event.patch.ops:
-            block = None
-            if isinstance(op, PatchAppendBlock):
-                block = op.block
-            elif isinstance(op, PatchAppendChild):
-                block = op.block
-
-            if not isinstance(block, FieldsBlock):
-                continue
-            if block.state == "done":
-                continue
-            return block
+    def _find_fields_block(self, view: ViewSpec) -> FieldsBlock | None:
+        for block in view.blocks:
+            if isinstance(block, FieldsBlock) and block.state != "done":
+                return block
         return None

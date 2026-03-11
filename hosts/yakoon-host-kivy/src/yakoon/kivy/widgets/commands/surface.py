@@ -9,29 +9,37 @@ from kivy.metrics import dp
 from kivy.properties import BooleanProperty
 from kivy.uix.boxlayout import BoxLayout
 
+from .snapshot import MessageSnapshot
+
 
 class CommandSurface(BoxLayout):
     busy = BooleanProperty(False)
+
     TOP_EPS = 0.98
 
     def __init__(self, on_submit, **kw):
         super().__init__(**kw)
+
         self.on_submit = on_submit
         self.runner = None
         self.session = None
 
         self._active_vid: str | None = None
         self._assist_error: str | None = None
+
         self._awaiting_result: bool = False
 
-        self._row_by_vid: dict[str, dict[str, Any]] = {}
+        self._rows: dict[str, dict[str, Any]] = {}
         self._idx_by_vid: dict[str, int] = {}
+
+        self._dirty_rows: set[str] = set()
+        self._render_trigger = Clock.create_trigger(self._flush_rows, 0)
 
         self._refresh_trigger = Clock.create_trigger(self._refresh_from_data, 0)
         self._scroll_trigger = Clock.create_trigger(self._apply_scroll, 0)
 
-        self._stick_to_top: bool = True
-        self._force_scroll: bool = False
+        self._stick_to_top = True
+        self._force_scroll = False
 
     def on_kv_post(self, base_widget):
         self.messages.bind(scroll_y=self._on_scroll_y)
@@ -44,6 +52,10 @@ class CommandSurface(BoxLayout):
     def messages(self):
         return self.ids.messages
 
+    # --------------------------------------------------------
+    # Scroll Handling
+    # --------------------------------------------------------
+
     def _refresh_from_data(self, *_):
         self.messages.refresh_from_data()
 
@@ -52,7 +64,7 @@ class CommandSurface(BoxLayout):
             return
         self._stick_to_top = value >= self.TOP_EPS
 
-    def _request_scroll_to_top(self, *, force: bool = False) -> None:
+    def _request_scroll_to_top(self, *, force=False):
         if force:
             self._force_scroll = True
         self._scroll_trigger()
@@ -62,15 +74,20 @@ class CommandSurface(BoxLayout):
         self._stick_to_top = True
         self._force_scroll = False
 
-    def _maybe_autoscroll(self) -> None:
+    def _maybe_autoscroll(self):
         if self._stick_to_top or self._force_scroll:
             self._request_scroll_to_top(force=self._force_scroll)
 
-    def set_busy(self, busy: bool) -> None:
+    # --------------------------------------------------------
+    # Busy State
+    # --------------------------------------------------------
+
+    def set_busy(self, busy: bool):
         self.busy = busy
 
         def _apply(_dt):
             prompt = self.ids.prompt
+
             if hasattr(prompt, "locked"):
                 prompt.locked = busy
             else:
@@ -78,120 +95,49 @@ class CommandSurface(BoxLayout):
 
         Clock.schedule_once(_apply, 0)
 
-    def _new_row(
-        self,
-        *,
-        vid: str,
-        header: Any | None = None,
-        first_event: Any | None,
-    ) -> dict[str, Any]:
+    # --------------------------------------------------------
+    # Row Management
+    # --------------------------------------------------------
+
+    def _new_row(self, *, vid: str, header: Any | None):
+
         return {
             "viewclass": "CommandMessage",
             "vid": vid,
             "header": header,
+            "snapshot": MessageSnapshot(),
             "size_hint": (1, None),
             "size": (0, dp(24)),
-            "events": [first_event] if first_event is not None else [],
         }
 
-    def _row_index(self, vid: str) -> int | None:
-        return self._idx_by_vid.get(vid)
+    def _ensure_row(self, vid: str, header):
+        row = self._rows.get(vid)
+        if row:
+            return row
 
-    def _replace_row_at(self, idx: int, row: dict[str, Any]) -> dict[str, Any]:
-        new_row = dict(row)
-        self.messages.data[idx] = new_row
-        self._row_by_vid[new_row["vid"]] = new_row
-        return new_row
+        row = self._new_row(
+            vid=vid,
+            header=header,
+        )
 
-    def _shift_indices_on_insert_top(self) -> None:
-        for key in list(self._idx_by_vid.keys()):
-            self._idx_by_vid[key] += 1
-
-    def _insert_row_top(self, row: dict[str, Any]) -> None:
-        self._shift_indices_on_insert_top()
         self.messages.data.insert(0, row)
-        vid = row["vid"]
-        self._row_by_vid[vid] = row
-        self._idx_by_vid[vid] = 0
-        self._refresh_trigger()
+
+        self._rows[vid] = row
+        self._reindex()
+
         self._maybe_autoscroll()
+        return row
 
-    def _get_visible_view(self, idx: int):
-        adapter = getattr(self.messages, "view_adapter", None)
-        if adapter is None:
-            return None
-        return adapter.views.get(idx)
+    def _reindex(self):
 
-    def _append_event(self, *, vid: str, event: Any) -> None:
-        row = self._row_by_vid.get(vid)
-        if row is None:
-            row = self._new_row(
-                vid=vid,
-                header=getattr(event, "header", None),
-                first_event=None,
-            )
-            self._insert_row_top(row)
+        self._idx_by_vid.clear()
 
-        header = getattr(event, "header", None)
-        if header is not None:
-            row["header"] = header
+        for i, row in enumerate(self.messages.data):
+            self._idx_by_vid[row["vid"]] = i
 
-        events = list(row.get("events") or [])
-        events.append(event)
-        row["events"] = events
-
-        idx = self._row_index(vid)
-        if idx is None:
-            self._refresh_trigger()
-            return
-
-        row = self._replace_row_at(idx, row)
-
-        widget = self._get_visible_view(idx)
-        if widget is not None:
-            try:
-                widget.refresh_view_attrs(self.messages, idx, row)
-            except Exception:
-                self._refresh_trigger()
-        else:
-            self._refresh_trigger()
-
-        self._update_visible_row_height(vid)
-        self._maybe_autoscroll()
-
-    def _update_visible_row_height(self, vid: str | None) -> None:
-        if not vid:
-            return
-
-        idx = self._row_index(vid)
-        if idx is None:
-            return
-
-        widget = self._get_visible_view(idx)
-        if widget is None:
-            return
-
-        h = int(widget.get_calc_height())
-        new_size = (0, max(1, h))
-
-        row = self._row_by_vid.get(vid)
-        if row is None:
-            return
-
-        if row.get("size") != new_size:
-            row["size"] = new_size
-            self._replace_row_at(idx, row)
-            self.messages.refresh_from_layout()
-
-    def _extract_text_from_event(self, event: Any) -> str:
-        texts: list[str] = []
-        patch = getattr(event, "patch", None)
-        for op in getattr(patch, "ops", None) or []:
-            block = getattr(op, "block", None)
-            text = getattr(block, "text", None)
-            if isinstance(text, str) and text:
-                texts.append(text)
-        return "\n".join(texts)
+    # --------------------------------------------------------
+    # Rendering
+    # --------------------------------------------------------
 
     def apply_context(self, ctx):
         event = ctx.envelope
@@ -211,14 +157,17 @@ class CommandSurface(BoxLayout):
 
         self.render(event)
 
-    def _has_body_ops(self, event: Any) -> bool:
+    def _extract_text_from_event(self, event: Any) -> str:
+        texts: list[str] = []
         patch = getattr(event, "patch", None)
         for op in getattr(patch, "ops", None) or []:
-            if getattr(op, "op", None) != "reset":
-                return True
-        return False
+            block = getattr(op, "block", None)
+            text = getattr(block, "text", None)
+            if isinstance(text, str) and text:
+                texts.append(text)
+        return "\n".join(texts)
 
-    def render(self, event) -> None:
+    def render(self, event):
         patch = getattr(event, "patch", None)
         if patch is None:
             return
@@ -229,46 +178,40 @@ class CommandSurface(BoxLayout):
 
         self.apply_event(event)
 
-    def apply_event(self, event) -> None:
+    def apply_event(self, event):
+
         vid = getattr(event, "id", None) or uuid.uuid4().hex
+
         patch = getattr(event, "patch", None)
         if patch is None:
             return
 
         start_new = any(getattr(op, "op", None) == "reset" for op in (patch.ops or []))
+
         if start_new:
             self._active_vid = vid
 
-            row = self._row_by_vid.get(vid)
-            if row is None:
-                row = self._new_row(
-                    vid=vid,
-                    header=getattr(event, "header", None),
-                    first_event=None,
-                )
-                self._insert_row_top(row)
-            elif getattr(event, "header", None) is not None:
-                row["header"] = event.header
-                idx = self._row_index(vid)
-                if idx is not None:
-                    self._replace_row_at(idx, row)
+        row = self._ensure_row(
+            vid,
+            getattr(event, "header", None),
+        )
 
-        if start_new and not self._has_body_ops(event):
-            self._refresh_trigger()
-            return
+        row["snapshot"].apply_patch(patch)
 
-        if not self._active_vid:
-            self._active_vid = vid
+        self._dirty_rows.add(vid)
 
-        self._append_event(vid=vid, event=event)
+        self._render_trigger()
+
+    # --------------------------------------------------------
+    # Input
+    # --------------------------------------------------------
 
     def submit(self, text: str):
         if self.busy:
             return
 
-        print("SURFACE SUBMIT:", repr(text))
+        # print("SURFACE SUBMIT:", repr(text))
         self._request_scroll_to_top(force=True)
-        self._assist_error = None
         self._awaiting_result = True
         self.set_busy(True)
 
@@ -298,6 +241,21 @@ class CommandSurface(BoxLayout):
             self.ids.prompt.assist_state = "idle"
 
         Clock.schedule_once(_apply, 0)
+
+    def _flush_rows(self, *_):
+
+        for vid in self._dirty_rows:
+
+            idx = self._idx_by_vid.get(vid)
+            if idx is None:
+                continue
+
+            row = self._rows[vid]
+
+            # wichtig: neues dict erzeugen
+            self.messages.data[idx] = dict(row)
+
+        self._dirty_rows.clear()
 
 
 Factory.register("CommandSurface", cls=CommandSurface)

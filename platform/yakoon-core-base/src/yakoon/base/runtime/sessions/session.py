@@ -1,26 +1,24 @@
 from __future__ import annotations
 
+import asyncio
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.ui import (
+    IO,
     NodeSpec,
     OutputStreamPolicy,
     PatchAppendStructure,
+    PatchAppendText,
     PatchReset,
     PatchSpec,
     ViewEvent,
     ViewSpec,
 )
-from yakoon.base.ui.patch import PatchAppendText
 from yakoon.base.values import Key
-
-if TYPE_CHECKING:
-    from yakoon.base.ports import IO
-
 
 _OUTPUT_STREAM_POLICY_KEY = "output_stream_policy"
 
@@ -77,6 +75,8 @@ class Session:
     def __init__(self, state: SessionState):
         self._state = state
         self._runtime = SessionRuntime()
+        self._render_event = asyncio.Event()
+        self._render_event.set()
 
     @property
     def lang(self) -> str:
@@ -100,6 +100,12 @@ class Session:
     @classmethod
     def from_state(cls, state: SessionState) -> Session:
         return cls(state)
+
+    def _render_done(self):
+        self._render_event.set()
+
+    async def wait_render(self):
+        await self._render_event.wait()
 
     def touch(self) -> None:
         self._state.last_active = datetime.now(UTC)
@@ -146,9 +152,12 @@ class Session:
             view = self._ensure_view(payload)
             event = self._view_to_event(view)
 
+        # if event.patch.final:
+        self._render_event.clear()
+
         if self._runtime.io is None:
             raise RuntimeError("io cannot be None")
-        await self._runtime.io.view(event)
+        await self._runtime.io.view(event, self._render_done)
 
     # ----------------------------
     # Steaming output

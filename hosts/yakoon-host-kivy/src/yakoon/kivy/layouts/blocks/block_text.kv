@@ -5,29 +5,20 @@
     #
 
 <TextBlockWidget>:
-    # Typo
     font_name: theme.font
-    #font_size: "17sp"
-
-    # design
     color: theme.text
 
-    # Layout / Wrapping
     halign: "left"
     valign: "top"
+
     size_hint_y: None
-    text_size: self.width, None
 
-    # bindings
-    on_width: root._reflow()
-    on_text: root._reflow()
-
-    #canvas.before:
-    #    Color:
-    #        rgba: 0.6, 0.3, 0.3, 0.5
-    #    Line:
-    #        width: 1
-    #        rectangle: (self.x, self.y, self.width, self.height)
-    #    RoundedRectangle:
-    #        pos: self.pos
-    #        size: self.size
+    canvas.before:
+        Color:
+            rgba: 0.6, 0.3, 0.3, 0.5
+        Line:
+            width: 1
+            rectangle: (self.x, self.y, self.width, self.height)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size

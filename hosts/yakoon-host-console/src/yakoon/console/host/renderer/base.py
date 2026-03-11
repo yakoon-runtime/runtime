@@ -1,7 +1,7 @@
-class BaseRenderer:
+from typing import Protocol
 
-    def __init__(self, node):
-        self.node = node
 
-    def render(self) -> list[str]:
-        return []
+class BaseRenderer(Protocol):
+
+    def append(self, key, chunk): ...
+    def finish(self): ...

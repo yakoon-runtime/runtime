@@ -1,23 +1,34 @@
-from .base import BaseRenderer
+import sys
 
 
-class ListRenderer(BaseRenderer):
+class ListRenderer:
 
-    def render(self):
-        lines = []
+    def __init__(self, node):
+        self._line_open = False
 
-        items = self.node.props.get("items", [])
+    def append(self, key: str, chunk: str):
 
-        for item in items:
-            head = getattr(item, "head", "")
-            if head:
-                lines.append(f"- {head}")
+        if key == "head":
 
-            if getattr(item, "blocks", None):
-                for sub in item.blocks:
-                    text = getattr(sub, "text", "")
-                    if text:
-                        lines.append(f"  {text}")
+            if not self._line_open:
+                sys.stdout.write("- ")
+                self._line_open = True
 
-        lines.append("")
-        return lines
+            sys.stdout.write(chunk)
+
+        elif key == "text":
+
+            if not self._line_open:
+                sys.stdout.write("  ")
+                self._line_open = True
+
+            sys.stdout.write(chunk)
+
+        sys.stdout.flush()
+
+    def finish(self):
+
+        if self._line_open:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+            self._line_open = False

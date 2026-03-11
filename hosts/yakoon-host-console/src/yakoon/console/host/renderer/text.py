@@ -1,11 +1,15 @@
-from .base import BaseRenderer
+import sys
 
 
-class TextRenderer(BaseRenderer):
+class TextRenderer:
 
-    def render(self):
-        text = self.node.text.get("text")
-        if not text:
-            return []
+    def __init__(self, node):
+        pass
 
-        return [text, ""]
+    def append(self, key, chunk):
+
+        sys.stdout.write(chunk)
+        sys.stdout.flush()
+
+    def finish(self):
+        pass

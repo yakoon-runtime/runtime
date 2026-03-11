@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
+from kivy.clock import Clock
 from kivy.metrics import dp
 from kivy.uix.label import Label
 from kivy.uix.widget import Widget
@@ -36,14 +37,31 @@ class TextBlockWidget(Label):
     - reflow method called by KV bindings (or optional callers)
     """
 
-    def _reflow(self, *_: object) -> None:
-        # IMPORTANT: text_size is layout (KV); here we only do the "compute height" part.
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+        self.size_hint_y = None
+
+        # Reflow wenn Breite oder Text sich ändern
+        self.bind(width=self._reflow)
+        self.bind(text=self._reflow)
+        self._trigger_reflow = Clock.create_trigger(self._reflow, 0)
+
+    def _reflow(self, *_):
+
+        self.text_size = (self.width, None)
         self.texture_update()
         self.height = self.texture_size[1] + dp(6)
 
-    def append_text(self, chunk: str) -> None:
+    def append_text(self, key: str, chunk: str):
+
+        if key != "text":
+            return
+
         self.text = (self.text or "") + chunk
+
         self._reflow()
+        # self._trigger_reflow()
 
 
 @dataclass(slots=True)
@@ -53,8 +71,5 @@ class TextBlockRenderer:
     that is a parser/contract bug and should fail loudly.
     """
 
-    def render(self, block: TextBlockLike) -> Widget:
-        w = TextBlockWidget()
-        w.text = str(block.text)
-        w._reflow()  # ensures correct height on first render
-        return w
+    def render(self, node) -> Widget:
+        return TextBlockWidget()

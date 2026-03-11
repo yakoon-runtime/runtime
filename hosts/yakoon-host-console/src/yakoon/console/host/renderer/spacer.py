@@ -1,8 +1,10 @@
-from .base import BaseRenderer
+class SpacerRenderer:
 
+    def __init__(self, node):
+        pass
 
-class SpacerRenderer(BaseRenderer):
+    def append(self, key, chunk):
+        print()
 
-    def render(self):
-        size = self.node.props.get("size", 1)
-        return [""] * size
+    def finish(self):
+        pass

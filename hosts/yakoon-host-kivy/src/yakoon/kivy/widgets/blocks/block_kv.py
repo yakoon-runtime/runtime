@@ -113,6 +113,8 @@ class KvItemWidget(BoxLayout):
             lbl.text = (lbl.text or "") + chunk
             lbl.texture_update()
 
+        self.height = max(self.height, lbl.texture_size[1] + dp(8))
+
 
 # -----------------------------
 # Renderers (container-only)

@@ -65,6 +65,9 @@ class _ViewStream:
     published_nodes: set[str]
     last_flush: float
 
+    emitted_chars: int = 0
+    total_chars: int = 0
+
 
 class DefaultOutputStreamService:
 
@@ -74,7 +77,7 @@ class DefaultOutputStreamService:
     MIN_CHUNK_SIZE = 8
     MAX_CHUNK_SIZE = 96
 
-    STRUCT_NODE_BATCH = 128
+    STRUCT_NODE_BATCH = 64
     TEXT_BATCH = 32
 
     DEFAULT_JITTER = 0.10
@@ -187,7 +190,10 @@ class DefaultOutputStreamService:
 
         text = getattr(block, "text", None)
         if isinstance(text, str) and text:
-            min_size = max(self.MIN_CHUNK_SIZE, int(self.MAX_CHUNK_SIZE * 0.4))
+
+            stream.total_chars += len(text)
+
+            min_size = max(self.MIN_CHUNK_SIZE, int(self.MAX_CHUNK_SIZE * 0.2))
             for chunk in iter_chunks(text, min_size, self.MAX_CHUNK_SIZE):
 
                 stream.text_queue.append(
@@ -201,6 +207,9 @@ class DefaultOutputStreamService:
                 if chunk.rstrip().endswith((".", "!", "?", ":", "...")):
                     stream.last_flush -= self.DEFAULT_PUNCT_PAUSE
 
+                if chunk.endswith("\n\n"):
+                    stream.last_flush -= self.DEFAULT_PUNCT_PAUSE * 1.5
+
         await self._maybe_flush(stream)
 
     # ---------------------------------------------------------
@@ -208,6 +217,9 @@ class DefaultOutputStreamService:
     async def _maybe_flush(self, stream: _ViewStream) -> None:
 
         now = time.monotonic()
+        progress = 0.0
+        if stream.total_chars > 0:
+            progress = stream.emitted_chars / stream.total_chars
 
         if len(stream.structure_queue) >= self.STRUCT_NODE_BATCH:
             await self._flush(stream)
@@ -218,7 +230,10 @@ class DefaultOutputStreamService:
             return
 
         jitter = random.uniform(-self.DEFAULT_JITTER, self.DEFAULT_JITTER)
-        if now - stream.last_flush >= max(self.MIN_INTERVAL, stream.interval + jitter):
+
+        adaptive = self._adaptive_interval(stream.interval, progress)
+        adaptive = max(self.MIN_INTERVAL, adaptive)
+        if now - stream.last_flush >= adaptive + jitter:
             await self._flush(stream)
 
     # ---------------------------------------------------------
@@ -265,10 +280,15 @@ class DefaultOutputStreamService:
         remaining = []
 
         for op in stream.text_queue:
+
             if op.block_id in stream.published_nodes:
                 safe_text.append(op)
             else:
                 remaining.append(op)
+
+        for op in safe_text:
+            stream.emitted_chars += len(op.text)
+
         if safe_text:
             ops.extend(safe_text)
         stream.text_queue = remaining
@@ -325,3 +345,19 @@ class DefaultOutputStreamService:
             jitter=self.DEFAULT_JITTER,
             punctuation_pause=self.DEFAULT_PUNCT_PAUSE,
         )
+
+    def _adaptive_interval(self, base: float, progress: float) -> float:
+        """
+        Streaming starts slow and ends faster.
+        """
+
+        if progress < 0.15:
+            return base * 2.2
+
+        if progress < 0.50:
+            return base * 1.4
+
+        if progress < 0.85:
+            return base * 0.9
+
+        return base * 0.45

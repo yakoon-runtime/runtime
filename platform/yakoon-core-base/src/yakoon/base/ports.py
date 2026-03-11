@@ -9,7 +9,6 @@ from yakoon.base.stores.event.entity import (
     PatchFormat,
     SnapshotHint,
 )
-from yakoon.base.ui.event import ViewEvent
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
@@ -177,7 +176,3 @@ class EntityStore(Protocol):
         ...
 
     async def gc_global(self, *, policy: RetentionPolicy) -> None: ...
-
-
-class IO(Protocol):
-    async def view(self, event: ViewEvent) -> None: ...

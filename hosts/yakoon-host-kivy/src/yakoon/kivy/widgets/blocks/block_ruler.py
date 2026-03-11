@@ -82,7 +82,11 @@ class RulerBlockWidget(Widget):
 
 @dataclass(slots=True)
 class RulerBlockRenderer:
-    def render(self, block: RulerBlockLike) -> Widget:
+
+    def render(self, node) -> Widget:
+
+        style = node.props.get("style", "normal")
         w = RulerBlockWidget()
-        w.style = block.style
+        w.style = style
+
         return w
