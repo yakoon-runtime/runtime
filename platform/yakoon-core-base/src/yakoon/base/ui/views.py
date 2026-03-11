@@ -40,7 +40,8 @@ def v_text(
     error_kind: ErrorKind | None = None,
     view_id: str | None = None,
 ) -> ViewSpec:
-    block_id = f"{view_id}:b{uuid.uuid4().hex}"
+    view_id = view_id or f"view.{uuid.uuid4().hex}"
+    block_id = f"{view_id}:b{0}"
     return _view(
         role=role,
         title=title,
@@ -132,14 +133,13 @@ def v_fields(
     title: str | None = None,
     view_id: str | None = None,
 ) -> ViewSpec:
-    block_id = f"{view_id}:b{uuid.uuid4().hex}"
     return _view(
         role=role,
         title=title,
         view_id=view_id,
         blocks=[
             FieldsBlock(
-                id=block_id,
+                id="0",
                 fields=fields,
                 input_mode=input_mode,
             )

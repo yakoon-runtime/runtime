@@ -9,6 +9,8 @@ from yakoon.base.ui import (
     ViewEvent,
 )
 
+from .builder import RendererBuilder
+
 
 class Node:
     def __init__(self, *, id: str, type: str, parent: str | None, props: dict):
@@ -26,6 +28,7 @@ class ConsoleOutput:
 
     def __init__(self):
         self._nodes: dict[str, Node] = {}
+        self._builder = RendererBuilder()
 
     async def view(self, event: ViewEvent) -> None:
         self._apply_patch(event)
@@ -71,44 +74,11 @@ class ConsoleOutput:
 
         for node in self._nodes.values():
 
-            if node.type == "text":
-                text = node.text.get("text")
-                if text:
-                    lines.append(text)
-                    lines.append("")
+            renderer = self._builder.create(node)
+            if not renderer:
+                continue
 
-            elif node.type == "rule":
-                lines.append("-" * 40)
-                lines.append("")
-
-            elif node.type == "spacer":
-                size = node.props.get("size", 1)
-                for _ in range(size):
-                    lines.append("")
-
-            elif node.type == "list":
-                items = node.props.get("items", [])
-                for item in items:
-                    head = getattr(item, "head", "")
-                    if head:
-                        lines.append(f"- {head}")
-
-                    if getattr(item, "blocks", None):
-                        for sub in item.blocks:
-                            text = getattr(sub, "text", "")
-                            if text:
-                                lines.append(f"  {text}")
-
-                lines.append("")
-
-            elif node.type == "kv":
-                items = node.props.get("items", [])
-                for item in items:
-                    key = getattr(item, "key", "")
-                    value = getattr(item, "value", "")
-                    lines.append(f"{key}: {value}")
-
-                lines.append("")
+            lines.extend(renderer.render())
 
         return "\n".join(lines).rstrip()
 
