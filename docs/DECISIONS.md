@@ -7,6 +7,26 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+
+## 26-03-12
+**Einführung von LLM-Streaming**
+Large Language Models Streaming wird nun nicht mehr nur durch den Server geregelt, 
+sondern durch den PerceptionStream innerhalb des Outputs. 
+Somit wird der ServerStreamer für den Transport angepasst und PerceptionStream für
+die Art und Weise dar Ausgabe in Chunks. Derzeit unterstützt der Stream:
+- Fragment Reconstruction (Transport-Entkopplung) rekonstruiert Text aus beliebig kleinen Fragmenten.
+- Progressive Chunk Generation (Chunks werden dynamisch erzeugt)
+- Frame-Budget Rendering - Rendering wird pro Frame begrenzt:
+- Timing-Modell (Perceptual Timing) - simuliert natürliches Lesen.
+  - Initial Delay - startet leicht verzögert, damit Text „erscheint“.
+  - Frame Timing - begrenzt Render-FPS.
+  - Jitter - zufällige Variation verhindert mechanisches Streaming.
+  - Satzzeichen-Pausen - erzeugt ein sehr natürliches Lesen.
+  - Lifecycle Control - führt  zu einem klaren Lebenszyklus.
+    - Pause / Resume 
+- Streaming Scheduler - kennt Producer & Consumer
+  - buffers → produce → queue → render
+
 ## 26-03-10
 **Streaming invariants**
 - Struktur wird vor Text übertragen
