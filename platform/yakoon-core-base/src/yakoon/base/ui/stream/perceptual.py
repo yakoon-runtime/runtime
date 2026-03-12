@@ -1,11 +1,11 @@
 import asyncio
 import random
-from collections import defaultdict, deque
+from collections import defaultdict
 
 
 class PerceptualStream:
 
-    FRAME_INTERVAL = 1 / 60
+    FRAME_INTERVAL = 1 / 15
     FRAME_BUDGET = 12
 
     INITIAL_DELAY = 0.06
@@ -25,7 +25,7 @@ class PerceptualStream:
         "\n\n": 0.30,
     }
 
-    # -----------------------------------------------------
+    # -------------------------------------------------
 
     def __init__(self, on_text, on_finish=None):
 
@@ -35,30 +35,30 @@ class PerceptualStream:
         self._buffers = defaultdict(dict)
         self._visible = defaultdict(dict)
 
-        self._queue = deque()
-
-        self._running = False
-        self._finished = False
         self._paused = False
+        self._fast_forward = False
+        self._active = False
 
-    # -----------------------------------------------------
+        self._wake = asyncio.Event()
+
+        asyncio.create_task(self._worker())
+
+    # -------------------------------------------------
 
     def push(self, node_id: str, key: str, text: str):
 
         node_buf = self._buffers[node_id]
         node_vis = self._visible[node_id]
 
-        buf = node_buf.get(key, "")
-        node_buf[key] = buf + text
+        node_buf[key] = node_buf.get(key, "") + text
 
         if key not in node_vis:
             node_vis[key] = 0
 
-        if not self._running:
-            self._running = True
-            asyncio.create_task(self._produce())
+        self._active = True
+        self._wake.set()
 
-    # -----------------------------------------------------
+    # -------------------------------------------------
 
     def pause(self):
         self._paused = True
@@ -66,106 +66,124 @@ class PerceptualStream:
     def resume(self):
         self._paused = False
 
-    def finish(self):
-        self._finished = True
+    def fast_forward(self):
+        self._fast_forward = True
 
-    # -----------------------------------------------------
+    def normal_speed(self):
+        self._fast_forward = False
 
-    def reset(self):
+    # -------------------------------------------------
+
+    def _reset_internal(self):
 
         self._buffers.clear()
         self._visible.clear()
-        self._queue.clear()
 
-        self._running = False
-        self._finished = False
+        self._active = False
+        self._fast_forward = False
 
-    # -----------------------------------------------------
+    # -------------------------------------------------
 
-    async def _produce(self):
+    async def _worker(self):
 
         first = True
 
         while True:
 
-            node_id = next(iter(self._buffers), None)
-            if not node_id:
-                break
+            await self._wake.wait()
+            self._wake.clear()
 
-            node_buf = self._buffers[node_id]
-            node_vis = self._visible[node_id]
+            while self._buffers:
 
-            key = next(iter(node_buf), None)
-            if not key:
-                del self._buffers[node_id]
-                del self._visible[node_id]
-                continue
+                if self._paused:
+                    await asyncio.sleep(0.01)
+                    continue
 
-            buf = node_buf[key]
-            pos = node_vis[key]
+                node_id = next(iter(self._buffers))
+                node_buf = self._buffers[node_id]
+                node_vis = self._visible[node_id]
 
-            if pos >= len(buf):
-                del node_buf[key]
-                del node_vis[key]
-                continue
+                key = next(iter(node_buf), None)
 
-            progress = pos / max(len(buf), 1)
-            step = self._step_size(progress, len(buf))
+                if key is None:
+                    del self._buffers[node_id]
+                    del self._visible[node_id]
+                    continue
 
-            new_pos = min(len(buf), pos + step)
+                buf = node_buf[key]
+                pos = node_vis[key]
 
-            chunk = buf[pos:new_pos]
-            node_vis[key] = new_pos
+                if pos >= len(buf):
 
-            self._queue.append((node_id, key, chunk))
+                    del node_buf[key]
+                    del node_vis[key]
 
-            if chunk.isspace():
-                continue
+                    if not node_buf:
+                        del self._buffers[node_id]
+                        del self._visible[node_id]
 
-            if first:
-                first = False
-                await asyncio.sleep(self.INITIAL_DELAY)
-            else:
-                jitter = random.uniform(-self.JITTER, self.JITTER)
-                await asyncio.sleep(self.FRAME_INTERVAL + jitter)
+                    continue
 
-        self._running = False
+                progress = pos / max(len(buf), 1)
+                step = self._step_size(progress, len(buf))
 
-    # -----------------------------------------------------
+                new_pos = min(len(buf), pos + step)
+                chunk = buf[pos:new_pos]
 
-    async def render_loop(self):
+                # natural typing: slow down long words
+                if " " not in chunk and len(chunk) > 12:
+                    new_pos = min(len(buf), pos + max(4, step // 2))
+                    chunk = buf[pos:new_pos]
 
-        while True:
+                # word-aware chunking
+                if new_pos < len(buf) and not chunk.endswith((" ", "\n", "\t")):
 
-            if self._paused:
-                await asyncio.sleep(0.03)
-                continue
+                    rest = buf[new_pos:]
 
-            updates = 0
+                    for i, c in enumerate(rest):
+                        if c in (" ", "\n", "\t"):
+                            new_pos += i + 1
+                            chunk = buf[pos:new_pos]
+                            break
 
-            while self._queue and updates < self.FRAME_BUDGET:
-
-                node_id, key, chunk = self._queue.popleft()
+                node_vis[key] = new_pos
 
                 self._on_text(node_id, key, chunk)
 
-                pause = self._punctuation_pause(chunk)
-                if pause:
-                    await asyncio.sleep(pause)
+                if not self._fast_forward:
 
-                updates += 1
+                    pause = self._punctuation_pause(chunk)
 
-            if self._finished and not self._queue and not self._running:
+                    if pause:
+                        await asyncio.sleep(pause)
+
+                    else:
+                        if first:
+                            first = False
+                            await asyncio.sleep(self.INITIAL_DELAY)
+                        else:
+                            jitter = random.uniform(-self.JITTER, self.JITTER)
+                            await asyncio.sleep(self.FRAME_INTERVAL + jitter)
+
+            # finish transition
+            if self._active:
+
+                # clean state first
+                self._reset_internal()
+
+                # next stream should again start with typing delay
+                first = True
+
                 if self._on_finish:
                     self._on_finish()
 
-                self._finished = False
-
-            await asyncio.sleep(self.FRAME_INTERVAL)
-
-    # -----------------------------------------------------
+    # -------------------------------------------------
 
     def _step_size(self, progress, length):
+
+        # instant flush for short responses
+        if length < 60:
+            return length
 
         if length < 80:
             return 64
@@ -178,7 +196,7 @@ class PerceptualStream:
 
         return self.CHARS_FAST
 
-    # -----------------------------------------------------
+    # -------------------------------------------------
 
     def _punctuation_pause(self, chunk):
 
