@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -19,6 +18,8 @@ from yakoon.base.ui import (
     ViewSpec,
 )
 from yakoon.base.values import Key
+
+from .flow import FlowControl
 
 _OUTPUT_STREAM_POLICY_KEY = "output_stream_policy"
 
@@ -74,9 +75,8 @@ class Session:
 
     def __init__(self, state: SessionState):
         self._state = state
+        self._flow = FlowControl()
         self._runtime = SessionRuntime()
-        self._render_event = asyncio.Event()
-        self._render_event.set()
 
     @property
     def lang(self) -> str:
@@ -101,17 +101,15 @@ class Session:
     def from_state(cls, state: SessionState) -> Session:
         return cls(state)
 
-    def _render_done(self):
-        self._render_event.set()
-
-    async def wait_render(self):
-        await self._render_event.wait()
+    async def wait_ready(self):
+        await self._flow.wait_ready()
 
     def touch(self) -> None:
         self._state.last_active = datetime.now(UTC)
 
     def bind_io(self, io: IO):
         self._runtime.io = io
+        self._runtime.io.set_flow_control(self._flow)
 
     def set_username(self, username: str | None):
         self._state.username = username
@@ -152,12 +150,9 @@ class Session:
             view = self._ensure_view(payload)
             event = self._view_to_event(view)
 
-        # if event.patch.final:
-        self._render_event.clear()
-
         if self._runtime.io is None:
             raise RuntimeError("io cannot be None")
-        await self._runtime.io.view(event, self._render_done)
+        await self._runtime.io.view(event)
 
     # ----------------------------
     # Steaming output

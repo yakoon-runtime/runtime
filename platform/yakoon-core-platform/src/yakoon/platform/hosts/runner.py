@@ -39,6 +39,7 @@ class Runner:
             queue.enqueue_commands(self.session, commands)
 
         while True:
+
             if self.session.has_signal("exit_app"):
                 await self.host.on_exit()
                 return
@@ -47,7 +48,9 @@ class Runner:
 
             if dialogs.is_waiting(self.session):
 
-                await self.session.wait_render()
+                # print("wait_ready ---------------- START")
+                await self.session.wait_ready()
+                # print("wait_ready ------------------ END")
 
                 view = dialogs.get_view(self.session)
                 await self.host.on_view(ps1=ps1, view=view)
