@@ -1,5 +1,6 @@
 import asyncio
 import getpass
+import sys
 
 
 async def safe_input(ps1: str = "$ ", prefix: str = "") -> str:
@@ -16,7 +17,9 @@ async def safe_input(ps1: str = "$ ", prefix: str = "") -> str:
         str: The entered user input.
     """
     print(prefix + ps1, end="", flush=True)
+
     loop = asyncio.get_running_loop()
+    sys.stdout.flush()
     return await loop.run_in_executor(None, input)
 
 

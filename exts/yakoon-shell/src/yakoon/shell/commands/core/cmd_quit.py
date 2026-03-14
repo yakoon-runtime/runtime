@@ -10,4 +10,4 @@ class CmdQuit(Command):
         presenter = await self.get_presenter(session)
         result = await presenter.present("really_quit")
         if bool(result and result.first()):
-            session.signal("exit_app")
+            session.mark("exit_app")

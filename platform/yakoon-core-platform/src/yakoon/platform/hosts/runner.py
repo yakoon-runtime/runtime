@@ -7,7 +7,7 @@ from yakoon.base.engine import CommandDispatch, CommandQueueService, ResolveDisp
 from yakoon.base.runtime import Session
 from yakoon.platform.engine import CommandEngine
 
-from . import HostAdapter, format_ps1
+from . import HostAdapter, Interaction, format_ps1
 
 
 @dataclass
@@ -15,12 +15,19 @@ class Runner:
     engine: CommandEngine
     session: Session
     host: HostAdapter
+    interact: Interaction
 
     async def start(self, commands: list[str] | None = None) -> None:
         await self.drive(commands=commands)
 
     async def on_user_input(self, text: str) -> None:
         await self.engine.dispatch(self.session, CommandDispatch(text=text))
+
+        if self.interact:
+            entry = self.session.execution.resolved_entry()
+            if entry and entry.command:
+                self.interact.add_history(entry.command)
+
         await self.drive()
 
     async def on_input_submit(self, values: dict[str, object]) -> None:
@@ -40,7 +47,7 @@ class Runner:
 
         while True:
 
-            if self.session.has_signal("exit_app"):
+            if self.session.has_mark("exit_app"):
                 await self.host.on_exit()
                 return
 
@@ -53,7 +60,7 @@ class Runner:
                 # print("wait_ready ------------------ END")
 
                 view = dialogs.get_view(self.session)
-                await self.host.on_view(ps1=ps1, view=view)
+                await self.host.on_prompt(ps1=ps1, view=view)
                 return
 
             # Drain queued command handling

@@ -1,4 +1,3 @@
-import asyncio
 import random
 from collections import defaultdict
 
@@ -39,9 +38,8 @@ class PerceptualStream:
         self._fast_forward = False
         self._active = False
 
-        self._wake = asyncio.Event()
-
-        asyncio.create_task(self._worker())
+        self._first = True
+        self._sleep = 0.0
 
     # -------------------------------------------------
 
@@ -56,7 +54,6 @@ class PerceptualStream:
             node_vis[key] = 0
 
         self._active = True
-        self._wake.set()
 
     # -------------------------------------------------
 
@@ -84,104 +81,101 @@ class PerceptualStream:
 
     # -------------------------------------------------
 
-    async def _worker(self):
+    def step(self, dt):
 
-        first = True
+        if self._paused:
+            return
 
-        while True:
+        if self._sleep > 0:
+            self._sleep -= dt
+            return
 
-            await self._wake.wait()
-            self._wake.clear()
+        processed = 0
 
-            while self._buffers:
+        while self._buffers and processed < self.FRAME_BUDGET:
 
-                if self._paused:
-                    await asyncio.sleep(0.01)
-                    continue
+            node_id = next(iter(self._buffers))
+            node_buf = self._buffers[node_id]
+            node_vis = self._visible[node_id]
 
-                node_id = next(iter(self._buffers))
-                node_buf = self._buffers[node_id]
-                node_vis = self._visible[node_id]
+            key = next(iter(node_buf), None)
 
-                key = next(iter(node_buf), None)
+            if key is None:
+                del self._buffers[node_id]
+                del self._visible[node_id]
+                continue
 
-                if key is None:
+            buf = node_buf[key]
+            pos = node_vis[key]
+
+            if pos >= len(buf):
+
+                del node_buf[key]
+                del node_vis[key]
+
+                if not node_buf:
                     del self._buffers[node_id]
                     del self._visible[node_id]
-                    continue
 
-                buf = node_buf[key]
-                pos = node_vis[key]
+                continue
 
-                if pos >= len(buf):
+            progress = pos / max(len(buf), 1)
+            step = self._step_size(progress, len(buf))
 
-                    del node_buf[key]
-                    del node_vis[key]
+            new_pos = min(len(buf), pos + step)
+            chunk = buf[pos:new_pos]
 
-                    if not node_buf:
-                        del self._buffers[node_id]
-                        del self._visible[node_id]
-
-                    continue
-
-                progress = pos / max(len(buf), 1)
-                step = self._step_size(progress, len(buf))
-
-                new_pos = min(len(buf), pos + step)
+            # natural typing: slow down long words
+            if " " not in chunk and len(chunk) > 12:
+                new_pos = min(len(buf), pos + max(4, step // 2))
                 chunk = buf[pos:new_pos]
 
-                # natural typing: slow down long words
-                if " " not in chunk and len(chunk) > 12:
-                    new_pos = min(len(buf), pos + max(4, step // 2))
-                    chunk = buf[pos:new_pos]
+            # word-aware chunking
+            if new_pos < len(buf) and not chunk.endswith((" ", "\n", "\t")):
 
-                # word-aware chunking
-                if new_pos < len(buf) and not chunk.endswith((" ", "\n", "\t")):
+                rest = buf[new_pos:]
 
-                    rest = buf[new_pos:]
+                for i, c in enumerate(rest):
+                    if c in (" ", "\n", "\t"):
+                        new_pos += i + 1
+                        chunk = buf[pos:new_pos]
+                        break
 
-                    for i, c in enumerate(rest):
-                        if c in (" ", "\n", "\t"):
-                            new_pos += i + 1
-                            chunk = buf[pos:new_pos]
-                            break
+            node_vis[key] = new_pos
 
-                node_vis[key] = new_pos
+            self._on_text(node_id, key, chunk)
 
-                self._on_text(node_id, key, chunk)
+            processed += 1
 
-                if not self._fast_forward:
+            if not self._fast_forward:
 
-                    pause = self._punctuation_pause(chunk)
+                pause = self._punctuation_pause(chunk)
 
-                    if pause:
-                        await asyncio.sleep(pause)
-
+                if pause:
+                    self._sleep = pause
+                else:
+                    if self._first:
+                        self._first = False
+                        self._sleep = self.INITIAL_DELAY
                     else:
-                        if first:
-                            first = False
-                            await asyncio.sleep(self.INITIAL_DELAY)
-                        else:
-                            jitter = random.uniform(-self.JITTER, self.JITTER)
-                            await asyncio.sleep(self.FRAME_INTERVAL + jitter)
+                        jitter = random.uniform(-self.JITTER, self.JITTER)
+                        self._sleep = self.FRAME_INTERVAL + jitter
 
-            # finish transition
-            if self._active:
+                break
 
-                # clean state first
-                self._reset_internal()
+        # finish transition
+        if self._active and not self._buffers:
 
-                # next stream should again start with typing delay
-                first = True
+            self._reset_internal()
+            self._first = True
 
-                if self._on_finish:
-                    self._on_finish()
+            if self._on_finish:
+                self._on_finish()
 
     # -------------------------------------------------
 
     def _step_size(self, progress, length):
 
-        # instant flush for short responses
         if length < 60:
             return length
 

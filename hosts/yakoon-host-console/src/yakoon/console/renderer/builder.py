@@ -1,18 +1,16 @@
-# builder.py
-
-from yakoon.console.host.renderer.base import BaseRenderer
-from yakoon.console.host.renderer.header import HeaderRenderer
-
-from .renderer.kv import KVRenderer
-from .renderer.list import ListRenderer
-from .renderer.rule import RuleRenderer
-from .renderer.spacer import SpacerRenderer
-from .renderer.text import TextRenderer
+from .base import BaseRenderer
+from .header import HeaderRenderer
+from .kv import KVRenderer
+from .list import ListRenderer
+from .rule import RuleRenderer
+from .spacer import SpacerRenderer
+from .text import TextRenderer
 
 
 class RendererBuilder:
 
-    def __init__(self):
+    def __init__(self, surface):
+        self._surface = surface
         self._types = {
             "text": TextRenderer,
             "header": HeaderRenderer,
@@ -27,4 +25,4 @@ class RendererBuilder:
         if not cls:
             raise RuntimeError(f"No renderer for {node.type}.")
 
-        return cls(node)
+        return cls(node, self._surface)

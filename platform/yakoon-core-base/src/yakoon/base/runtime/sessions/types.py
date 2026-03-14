@@ -1,0 +1,15 @@
+from enum import IntEnum
+
+
+class ExecStep(IntEnum):
+    EXECUTION_START = 1
+
+    COMMAND_RECEIVED = 10
+    COMMAND_RESOLVED = 11
+    COMMAND_RUNNING = 12
+    COMMAND_SUCCESS = 13
+    COMMAND_FAILED = 14
+
+    # TODO: Later
+    # WORKFLOW_START = 20
+    # WORKFLOW_FINISH = 21

@@ -8,7 +8,7 @@ from .commands import (
     CommandVisibility,
     Request,
 )
-from .sessions import Session, SessionService
+from .sessions import ExecStep, ExecutionTrace, Session, SessionService, TraceEntry
 
 __all__ = [
     "Session",
@@ -21,4 +21,7 @@ __all__ = [
     "CommandVisibility",
     "CommandSet",
     "CommandScope",
+    "ExecutionTrace",
+    "TraceEntry",
+    "ExecStep",
 ]

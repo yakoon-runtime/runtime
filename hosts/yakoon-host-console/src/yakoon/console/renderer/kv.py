@@ -29,12 +29,3 @@ class KVRenderer:
             sys.stdout.write(chunk)
 
         sys.stdout.flush()
-
-    def finish(self):
-
-        if self._line_open:
-            sys.stdout.write("\n")
-            self._line_open = False
-
-        sys.stdout.write("\n")
-        sys.stdout.flush()

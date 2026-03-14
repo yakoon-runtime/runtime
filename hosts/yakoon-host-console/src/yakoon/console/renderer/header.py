@@ -5,7 +5,6 @@ class HeaderRenderer:
 
     def __init__(self, node):
         self._printed_role = False
-        self._title_open = False
 
     def append(self, key, chunk):
 
@@ -22,11 +21,3 @@ class HeaderRenderer:
         elif key == "title":
             sys.stdout.write(chunk)
             sys.stdout.flush()
-            self._title_open = True
-
-    def finish(self):
-
-        if self._title_open:
-            sys.stdout.write("\n\n")
-            sys.stdout.flush()
-            self._title_open = False

@@ -40,7 +40,7 @@ class KivyHost(HostAdapter):
             return
         loop.call_soon_threadsafe(fut.set_result, text)
 
-    async def on_view(self, *, ps1: str, view: ViewSpec) -> None:
+    async def on_prompt(self, *, ps1: str, view: ViewSpec) -> None:
         block = self._find_fields_block(view)
         if block is None:
             self._ui.clear_assist()

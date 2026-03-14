@@ -6,7 +6,14 @@ from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.capabilities.workflow import WorkflowContextRequired, WorkflowService
 from yakoon.base.engine import CommandDispatch, DispatchInput, ResolveDispatch
-from yakoon.base.runtime import CmdNotFound, Command, CommandContext, Request, Session
+from yakoon.base.runtime import (
+    CmdNotFound,
+    Command,
+    CommandContext,
+    ExecStep,
+    Request,
+    Session,
+)
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.ui import v_error
@@ -49,6 +56,11 @@ class CommandEngine:
             return self._controllers.get(controller_id), command
 
     async def dispatch(self, session: Session, di: DispatchInput) -> Session:
+
+        session.execution.reset()
+        session.execution.step(
+            ExecStep.EXECUTION_START,
+        )
 
         skey = str(session.key)
         shell = self._controllers.find_shell()
@@ -114,6 +126,7 @@ class CommandEngine:
                 edge_task.cancel()
 
     async def _dispatch_command(self, session: Session, di: DispatchInput) -> None:
+
         if not isinstance(di, CommandDispatch):
             return
 
@@ -121,6 +134,11 @@ class CommandEngine:
         request = Request(di.text)
         if not request.command:
             return
+
+        session.execution.step(
+            ExecStep.COMMAND_RECEIVED,
+            command=request.raw,
+        )
 
         # Active controller is the single routing context (S1)
         controller_id = session.get_active_controller()
@@ -155,6 +173,12 @@ class CommandEngine:
             if not command:
                 raise RuntimeError("Command missing in result")
 
+            session.execution.step(
+                ExecStep.COMMAND_RESOLVED,
+                command=command.key,
+                controller=resolved_controller.id,
+            )
+
             # check workflow context
             # user cannot start workflow commands without batch
             if command.requires_workflow and not di.batch_id:
@@ -175,8 +199,20 @@ class CommandEngine:
             # Pre-command hook
             await controller.on_before_run_command(session, request, command)
 
+            session.execution.step(
+                ExecStep.COMMAND_RUNNING,
+                command=command.key,
+                controller=controller.id,
+            )
+
             # Execute command
             await command.run(session, request)
+
+            session.execution.step(
+                ExecStep.COMMAND_SUCCESS,
+                command=command.key,
+                controller=controller.id,
+            )
 
             # Post-command hook
             await controller.on_after_run_command(session, request, command)
@@ -227,6 +263,14 @@ class CommandEngine:
             self.wf_failed(exc, command, session, di)
 
         finally:
+
+            if failed:
+                session.execution.step(
+                    ExecStep.COMMAND_FAILED,
+                    command=command.key if command else None,
+                    controller=controller.id if controller else None,
+                )
+
             if command:
                 command.context = None
 

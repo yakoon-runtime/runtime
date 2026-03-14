@@ -17,9 +17,11 @@ from yakoon.base.ui import (
     ViewEvent,
     ViewSpec,
 )
+from yakoon.base.ui.io import FlowControl
 from yakoon.base.values import Key
 
-from .flow import FlowControl
+from .flow import FlowControl as FC
+from .trace import ExecutionTrace
 
 _OUTPUT_STREAM_POLICY_KEY = "output_stream_policy"
 
@@ -61,9 +63,10 @@ class SessionState:
 @dataclass
 class SessionRuntime:
     permissions: PermissionSet = field(default_factory=PermissionSet)
-    signals: set[str] = field(default_factory=set)
+    marks: set[str] = field(default_factory=set)
     io: IO | None = None
     meta: dict[str, Any] = field(default_factory=dict)
+    execution: ExecutionTrace = field(default_factory=ExecutionTrace)
 
 
 class Session:
@@ -75,7 +78,7 @@ class Session:
 
     def __init__(self, state: SessionState):
         self._state = state
-        self._flow = FlowControl()
+        self._flow: FlowControl = FC()
         self._runtime = SessionRuntime()
 
     @property
@@ -85,6 +88,10 @@ class Session:
     @property
     def key(self) -> Key:
         return self._state.key
+
+    @property
+    def execution(self) -> ExecutionTrace:
+        return self._runtime.execution
 
     @property
     def state(self) -> SessionState:
@@ -134,14 +141,14 @@ class Session:
     def has_identity(self) -> bool:
         return self._state.account_key is not None
 
-    def signal(self, name: str) -> None:
-        self._runtime.signals.add(name)
+    def mark(self, name: str) -> None:
+        self._runtime.marks.add(name)
 
-    def has_signal(self, name: str) -> bool:
-        return name in self._runtime.signals
+    def has_mark(self, name: str) -> bool:
+        return name in self._runtime.marks
 
-    def clear_signals(self) -> None:
-        self._runtime.signals.clear()
+    def clear_marks(self) -> None:
+        self._runtime.marks.clear()
 
     async def emit(self, payload: ViewSpec | ViewEvent) -> None:
         if isinstance(payload, ViewEvent):

@@ -1,9 +1,6 @@
-from collections.abc import Callable
 from typing import Protocol
 
 from .event import ViewEvent
-
-Done = Callable[[], None]
 
 
 class FlowControl(Protocol):
@@ -11,6 +8,9 @@ class FlowControl(Protocol):
     def acquire(self) -> None: ...
     def try_acquire(self) -> bool: ...
     def release(self) -> None: ...
+
+    def is_ready(self) -> bool: ...
+    async def wait_ready(self) -> None: ...
 
 
 class IO(Protocol):
