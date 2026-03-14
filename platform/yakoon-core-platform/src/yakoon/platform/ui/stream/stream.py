@@ -185,30 +185,64 @@ class DefaultOutputStreamService:
 
         parent = parent_id or f"{vid}:root"
 
+        # -------------------------------------------------
+        # STEP 1: publish structure
+        # -------------------------------------------------
+
         node = NodeSpec.from_block(block, parent=parent)
         stream.structure_queue.append(node)
 
-        text = getattr(block, "text", None)
-        if isinstance(text, str) and text:
+        # -------------------------------------------------
+        # STEP 2: recursively emit children (structure first)
+        # -------------------------------------------------
 
-            stream.total_chars += len(text)
+        for i, child in enumerate(block.children()):
+            await self.emit_block(
+                session,
+                view=view,
+                block=child,
+                parent_id=block_id,
+                suffix=i,
+                override=override,
+            )
 
-            min_size = max(self.MIN_CHUNK_SIZE, int(self.MAX_CHUNK_SIZE * 0.2))
-            for chunk in iter_chunks(text, min_size, self.MAX_CHUNK_SIZE):
+        # -------------------------------------------------
+        # STEP 3: stream text fields
+        # -------------------------------------------------
 
-                stream.text_queue.append(
-                    PatchAppendText(
-                        block_id=block_id,
-                        key="text",
-                        text=chunk,
-                    )
+        for key in getattr(block, "__stream_fields__", ()):
+            value = getattr(block, key)
+
+            if not hasattr(block, key):
+                raise RuntimeError(
+                    f"{type(block).__name__} declares stream field '{key}' "
+                    f"but the attribute does not exist"
                 )
 
-                if chunk.rstrip().endswith((".", "!", "?", ":", "...")):
-                    stream.last_flush -= self.DEFAULT_PUNCT_PAUSE
+            if isinstance(value, str) and value:
+                stream.total_chars += len(value)
 
-                if chunk.endswith("\n\n"):
-                    stream.last_flush -= self.DEFAULT_PUNCT_PAUSE * 1.5
+                min_size = max(self.MIN_CHUNK_SIZE, int(self.MAX_CHUNK_SIZE * 0.2))
+
+                for chunk in iter_chunks(value, min_size, self.MAX_CHUNK_SIZE):
+
+                    stream.text_queue.append(
+                        PatchAppendText(
+                            block_id=block_id,
+                            key=key,
+                            text=chunk,
+                        )
+                    )
+
+                    if chunk.rstrip().endswith((".", "!", "?", ":", "...", " - ")):
+                        stream.last_flush -= self.DEFAULT_PUNCT_PAUSE
+
+                    if chunk.endswith("\n\n"):
+                        stream.last_flush -= self.DEFAULT_PUNCT_PAUSE * 1.5
+
+        # -------------------------------------------------
+        # STEP 4: maybe flush
+        # -------------------------------------------------
 
         await self._maybe_flush(stream)
 

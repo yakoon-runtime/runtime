@@ -1,9 +1,7 @@
-import sys
-
-
 class HeaderRenderer:
 
-    def __init__(self, node):
+    def __init__(self, node, surface):
+        self.surface = surface
         self._printed_role = False
 
     def append(self, key, chunk):
@@ -12,12 +10,11 @@ class HeaderRenderer:
             if not self._printed_role:
 
                 if chunk == "error":
-                    sys.stdout.write("(Status)\n")
+                    self.surface.write("(Status)\n")
                 elif chunk == "info":
-                    sys.stdout.write("(Information)\n")
+                    self.surface.write("(Information)\n")
 
                 self._printed_role = True
 
         elif key == "title":
-            sys.stdout.write(chunk)
-            sys.stdout.flush()
+            self.surface.write(chunk)

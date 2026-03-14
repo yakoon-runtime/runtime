@@ -162,9 +162,21 @@ class DefaultViewSpecParser:
         def assign(block: Block, path: str) -> Block:
             bid = block.id or path
             block = replace(block, id=bid)
-            if hasattr(block, "blocks") and block.blocks:
-                nested = [assign(b, f"{bid}.{i}") for i, b in enumerate(block.blocks)]
-                block = replace(block, blocks=nested)
+
+            children = block.children()
+            if not children:
+                return block
+
+            new_children = [
+                assign(child, f"{bid}.{i}") for i, child in enumerate(children)
+            ]
+
+            if hasattr(block, "blocks"):
+                block = replace(block, blocks=new_children)
+
+            elif hasattr(block, "items"):
+                block = replace(block, items=new_children)
+
             return block
 
         return [assign(b, f"{view_id}.{i}") for i, b in enumerate(blocks)]

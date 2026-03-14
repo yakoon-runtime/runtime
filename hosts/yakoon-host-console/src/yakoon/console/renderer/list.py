@@ -1,9 +1,7 @@
-import sys
-
-
 class ListRenderer:
 
-    def __init__(self, node):
+    def __init__(self, node, surface):
+        self.surface = surface
         self._line_open = False
 
     def append(self, key: str, chunk: str):
@@ -11,24 +9,15 @@ class ListRenderer:
         if key == "head":
 
             if not self._line_open:
-                sys.stdout.write("- ")
+                self.surface.write("- ")
                 self._line_open = True
 
-            sys.stdout.write(chunk)
+            self.surface.write(chunk)
 
         elif key == "text":
 
             if not self._line_open:
-                sys.stdout.write("  ")
+                self.surface.write("  ")
                 self._line_open = True
 
-            sys.stdout.write(chunk)
-
-        sys.stdout.flush()
-
-    def finish(self):
-
-        if self._line_open:
-            sys.stdout.write("\n")
-            sys.stdout.flush()
-            self._line_open = False
+            self.surface.write(chunk)

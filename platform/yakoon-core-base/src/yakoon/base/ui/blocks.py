@@ -40,21 +40,17 @@ Inline = InlineText | InlineCode | InlineLink
 # -----------------------------
 
 
-@dataclass(slots=True)
-class HeaderBlock:
-    type: str = "header"
-    id: str | None = None
-    role: str | None = None
-    title: str | None = None
-    subtitle: str | None = None
-
-
 @dataclass(frozen=True, slots=True)
 class TextBlock:
     type: Literal["text"] = "text"
     text: str | list[Inline] = ""
     id: str | None = None
     style: str | None = None
+
+    __stream_fields__ = ("text",)
+
+    def children(self) -> tuple[Block, ...]:
+        return ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -63,12 +59,28 @@ class RuleBlock:
     id: str | None = None
     style: RuleStyle = "normal"
 
+    def children(self) -> tuple[Block, ...]:
+        return ()
+
 
 @dataclass(frozen=True, slots=True)
 class SpacerBlock:
     type: Literal["spacer"] = "spacer"
     id: str | None = None
     size: int = 1
+
+    def children(self) -> tuple[Block, ...]:
+        return ()
+
+
+@dataclass(frozen=True, slots=True)
+class ListBlock:
+    type: Literal["list"] = "list"
+    items: list[ListItemBlock] = field(default_factory=list)
+    id: str | None = None
+
+    def children(self):
+        return tuple(self.items)
 
 
 @dataclass(frozen=True, slots=True)
@@ -78,20 +90,10 @@ class ListItemBlock:
     blocks: list[Block] | None = None
     id: str | None = None
 
+    __stream_fields__ = ("head",)
 
-@dataclass(frozen=True, slots=True)
-class ListBlock:
-    type: Literal["list"] = "list"
-    items: list[ListItemBlock] = field(default_factory=list)
-    id: str | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class KvItemBlock:
-    key: str = ""
-    value: str | list[Block] = ""
-    id: str | None = None
-    blocks: list[Block] | None = None
+    def children(self):
+        return tuple(self.blocks or ())
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +102,22 @@ class KvBlock:
     items: list[KvItemBlock] = field(default_factory=list)
     id: str | None = None
 
+    def children(self):
+        return tuple(self.items)
+
+
+@dataclass(frozen=True, slots=True)
+class KvItemBlock:
+    type: Literal["kv_item"] = "kv_item"
+    key: str = ""
+    value: str | list[Block] = ""
+    id: str | None = None
+
+    __stream_fields__ = ("value",)
+
+    def children(self) -> tuple[Block, ...]:
+        return ()
+
 
 @dataclass(frozen=True, slots=True)
 class TableBlock:
@@ -107,6 +125,9 @@ class TableBlock:
     headers: list[str] | None = None
     rows: list[list[str]] = field(default_factory=list)
     id: str | None = None
+
+    def children(self) -> tuple[Block, ...]:
+        return ()
 
 
 InputMode = Literal["prompt", "form"]
@@ -136,14 +157,17 @@ class FieldsBlock:
     state: FieldsState = "idle"
     meta: dict[str, Any] | None = None
 
+    def children(self) -> tuple[Block, ...]:
+        return ()
+
 
 Block = (
-    HeaderBlock
-    | TextBlock
+    TextBlock
     | RuleBlock
     | SpacerBlock
     | ListItemBlock
     | ListBlock
+    | KvItemBlock
     | KvBlock
     | TableBlock
     | FieldsBlock
