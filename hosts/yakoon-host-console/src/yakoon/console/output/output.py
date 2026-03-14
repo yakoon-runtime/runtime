@@ -92,4 +92,5 @@ class ConsoleOutput:
             elif isinstance(op, PatchAppendText):
                 node = self._nodes.get(op.block_id)
                 if node:
-                    self._stream.push(op.block_id, node.type, op.text)
+                    self._stream.push(op.block_id, op.key, op.text)
+                    # print(op.block_id)

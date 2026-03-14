@@ -1,6 +1,7 @@
 from .base import BaseRenderer
 from .header import HeaderRenderer
 from .kv import KVRenderer
+from .kv_item import KVItemRenderer
 from .list import ListRenderer
 from .rule import RuleRenderer
 from .spacer import SpacerRenderer
@@ -18,6 +19,7 @@ class RendererBuilder:
             "spacer": SpacerRenderer,
             "list": ListRenderer,
             "kv": KVRenderer,
+            "kv_item": KVItemRenderer,
         }
 
     def create(self, node) -> BaseRenderer:
