@@ -7,6 +7,21 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## 26-03-14
+**ViewHeader & Dokument**
+Der ViewHeader gehört nicht zum Dokumentinhalt, aber er gehört sehr wohl zur 
+Präsentationsentscheidung des Hosts. Der Renderer sollte ihn nicht sehen – der Host schon. 
+ViewHeader ist Host-Metadaten.
+
+## 26-03-13
+**Prompt_toolk**
+Promptoolkit wurde eingeführt um aus der console eine richtige App zu bauen. 
+
+## 26-03-14
+**UI ist kein Screen**
+UI ist ein Document, das wächst und sich verändert. 
+So wir das festgelegt wurde, war klar, die Anwendung darf nicht mehr als Chatlog
+arbeiten, sondern als Live-Runtime-Document.
 
 ## 26-03-12
 **Einführung von LLM-Streaming**
