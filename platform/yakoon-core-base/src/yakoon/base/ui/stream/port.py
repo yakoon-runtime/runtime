@@ -37,6 +37,12 @@ class OutputStreamService(Protocol):
         suffix: str | int = 0,
     ) -> None: ...
 
+    async def abort_view(
+        self,
+        session: Session,
+        view_id: str,
+    ) -> None: ...
+
     async def finish_view(
         self,
         session: Session,

@@ -38,6 +38,7 @@ class DefaultInteractionService:
         view: ViewSpec,
         stream: OutputStreaming | None = None,
     ) -> PresentResult | None:
+
         values: dict[str, Any] = {}
         aliases: dict[str, str] = {}
         order: list[str] = []
@@ -49,20 +50,25 @@ class DefaultInteractionService:
             await session.emit(view)
 
         try:
+            view_id = view.id or ""
             for index, block in enumerate(view.blocks):
+
                 if isinstance(block, FieldsBlock):
                     if block.input_mode == "prompt":
+
                         result = await self.run_fields(
                             session,
-                            view_id=view.id or "",
+                            view_id=view_id,
                             block=block,
                         )
+
                         self._merge_result(
                             result=result,
                             values=values,
                             aliases=aliases,
                             order=order,
                         )
+
                         continue
 
                 if eff.enabled:
@@ -74,7 +80,13 @@ class DefaultInteractionService:
                         suffix=index,
                     )
 
-        finally:
+        except Exception:
+            if eff.enabled:
+                await self.streams.abort_view(session, view.id or "")
+
+            raise
+
+        else:
             if eff.enabled:
                 await self.streams.finish_view(session, view, override=stream)
 

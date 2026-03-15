@@ -21,4 +21,4 @@ class ListItemRenderer:
         self.surface.write(chunk)
 
     def finish(self):
-        self.surface.write("\n")
+        pass
