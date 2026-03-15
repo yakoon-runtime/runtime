@@ -237,9 +237,9 @@ class CommandEngine:
 
             # command may be None if permission fails early
             command_key = command.key if command else request.command
-            audit = self._services.get(AuditLogService)
-            await audit.permission(session, "command", command_key)
-
+            self._services.get(AuditLogService).security(
+                session, "command", command_key
+            )
             await session.emit(v_error(str(exc)))
             self.wf_failed(exc, command, session, di)
 
@@ -249,16 +249,14 @@ class CommandEngine:
             self.wf_failed(exc, command, session, di)
 
         except ViewSpecValidationError as exc:
-            audit = self._services.get(AuditLogService)
-            await audit.error(exc)
+            self._services.get(AuditLogService).error(exc, session)
             await session.emit(
                 v_error("Ein interner Konfigurationsfehler ist aufgetreten.")
             )
 
         except Exception as exc:
             failed = True
-            audit = self._services.get(AuditLogService)
-            await audit.error(exc)
+            self._services.get(AuditLogService).error(exc, session)
             await session.emit(v_error("Ein interner Fehler ist aufgetreten."))
             self.wf_failed(exc, command, session, di)
 

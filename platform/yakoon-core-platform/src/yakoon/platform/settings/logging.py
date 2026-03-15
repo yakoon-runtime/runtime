@@ -7,10 +7,13 @@ class LoggingSettings:
     log_commands: bool = True
     """Logs every command issued by a session."""
 
+    log_audits: bool = True
+    """Logs audits"""
+
     log_errors: bool = True
     """Logs unexpected exceptions raised during execution."""
 
-    log_permission_denied: bool = True
+    log_security: bool = True
     """Logs access denials (e.g. PermissionError, has_perm=False)."""
 
     log_to_file: bool = False
