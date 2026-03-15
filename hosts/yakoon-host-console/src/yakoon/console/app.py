@@ -58,13 +58,13 @@ async def run_console() -> None:
             await runner.on_user_input(event.value)
 
     async def cancel():
-        await output.cancel()
         dialogs = engine.services.get(DialogService)
         if dialogs.is_waiting(session):
             if runner is not None:
                 await runner.on_cancel()
-
-        session.mark("exit_app")
+        else:
+            await output.cancel()
+            session.mark("exit_app")
 
     try:
         ui = TerminalUI(surface, on_cancel=cancel)

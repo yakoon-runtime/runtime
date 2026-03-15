@@ -15,6 +15,19 @@ class PresentResult:
     _values: dict[str, Any]  # var -> value
     _aliases: dict[str, str]  # alias -> var
     _order: list[str]  # vars in definition order
+    _cancelled: bool = False
+
+    @classmethod
+    def create_empty(cls) -> PresentResult:
+        return cls({}, {}, [])
+
+    @classmethod
+    def create_cancelled(cls) -> PresentResult:
+        return cls({}, {}, [], _cancelled=True)
+
+    @property
+    def cancelled(self) -> bool:
+        return self._cancelled
 
     def get(self, key: str, default: Any = None) -> Any:
         if key in self._values:
@@ -48,4 +61,4 @@ class PresentResult:
         return value
 
     def __bool__(self) -> bool:
-        return bool(self._values)
+        return not self.cancelled and bool(self._values)

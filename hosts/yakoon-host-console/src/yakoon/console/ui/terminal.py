@@ -49,7 +49,7 @@ class TerminalUI:
         def _(event):
             if self.on_cancel:
                 asyncio.create_task(self.on_cancel())
-            self.app.exit()
+            # self.app.exit()
 
         root = HSplit(
             [

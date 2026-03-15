@@ -1,7 +1,8 @@
 import asyncio
 from collections.abc import Awaitable, Callable
 
-from yakoon.base.runtime.sessions.session import Session
+from yakoon.base.capabilities.interaction import DialogCancelled
+from yakoon.base.runtime import Session
 from yakoon.base.ui import ViewSpec, v_error
 from yakoon.platform.runtime.devtools.prompt import UnresolvedPromptMonitor
 from yakoon.platform.settings import settings
@@ -84,8 +85,20 @@ class DefaultDialogService:
 
         self.cleanup(session)
 
+        # raise asyncio.CancelledErrornel
         if fut and not fut.done():
             fut.cancel()
+            self.edge_event(session).set()
+
+    def resolve_cancelled(self, session: Session) -> None:
+
+        session_key = str(session.key)
+        fut = self._waiting.get(session_key)
+
+        self.cleanup(session)
+
+        if fut and not fut.done():
+            fut.set_exception(DialogCancelled())
             self.edge_event(session).set()
 
     def cleanup(self, session: Session) -> None:

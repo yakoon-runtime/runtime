@@ -35,6 +35,12 @@ class Runner:
         await self.drive()
 
     async def on_cancel(self) -> None:
+
+        dialogs = self.engine.services.get(DialogService)
+        if dialogs.is_waiting(self.session):
+            dialogs.resolve_cancelled(self.session)
+            return
+
         await self.engine.dispatch(self.session, CommandDispatch("shell:wf.cancel"))
         await self.drive()
 

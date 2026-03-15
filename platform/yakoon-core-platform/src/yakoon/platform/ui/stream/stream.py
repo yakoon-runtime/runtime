@@ -164,6 +164,16 @@ class DefaultOutputStreamService:
 
     # ---------------------------------------------------------
 
+    async def flush_view(self, view_id: str) -> None:
+
+        stream = self._streams.get(view_id)
+        if stream is None:
+            return
+
+        await self._flush(stream)
+
+    # ---------------------------------------------------------
+
     async def abort_view(
         self,
         session: Session,

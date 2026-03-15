@@ -3,7 +3,11 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from yakoon.base.capabilities.interaction import DialogService, PolicyService
+from yakoon.base.capabilities.interaction import (
+    DialogCancelled,
+    DialogService,
+    PolicyService,
+)
 from yakoon.base.capabilities.presenters import PresentResult
 from yakoon.base.runtime import Session
 from yakoon.base.runtime.services import ServiceDirectory
@@ -19,6 +23,7 @@ from yakoon.platform.settings import settings
 
 
 class DefaultInteractionService:
+
     def __init__(self, services: ServiceDirectory) -> None:
         self._dialogs = services.get(DialogService)
         self._policy = services.get(PolicyService)
@@ -43,52 +48,50 @@ class DefaultInteractionService:
         aliases: dict[str, str] = {}
         order: list[str] = []
 
-        eff = self.streams.effective(session.get_output_stream_policy(), stream)
-        if eff.enabled:
-            await self.streams.begin_view(session, view, override=stream)
-        else:
-            await session.emit(view)
+        if view.id is None:
+            raise RuntimeError("ViewSpec.id is required for streaming but was None")
 
+        await self.streams.begin_view(session, view, override=stream)
         try:
-            view_id = view.id or ""
+
             for index, block in enumerate(view.blocks):
+                if isinstance(block, FieldsBlock) and block.input_mode == "prompt":
 
-                if isinstance(block, FieldsBlock):
-                    if block.input_mode == "prompt":
+                    # hard flush-border before input
+                    await self.streams.flush_view(view.id)
 
-                        result = await self.run_fields(
-                            session,
-                            view_id=view_id,
-                            block=block,
-                        )
-
-                        self._merge_result(
-                            result=result,
-                            values=values,
-                            aliases=aliases,
-                            order=order,
-                        )
-
-                        continue
-
-                if eff.enabled:
-                    await self.streams.emit_block(
+                    result = await self.run_fields(
                         session,
-                        view=view,
+                        view_id=view.id,
                         block=block,
-                        override=stream,
-                        suffix=index,
                     )
 
+                    # CANCEL SOFORT PROPAGIEREN
+                    if result.cancelled:
+                        return result
+
+                    self._merge_result(
+                        result=result,
+                        values=values,
+                        aliases=aliases,
+                        order=order,
+                    )
+
+                    continue
+
+                await self.streams.emit_block(
+                    session,
+                    view=view,
+                    block=block,
+                    override=stream,
+                    suffix=index,
+                )
+
         except Exception:
-            if eff.enabled:
-                await self.streams.abort_view(session, view.id or "")
-
+            await self.streams.abort_view(session, view.id)
             raise
-
         else:
-            if eff.enabled:
-                await self.streams.finish_view(session, view, override=stream)
+            await self.streams.finish_view(session, view, override=stream)
 
         if not values:
             return None
@@ -102,29 +105,31 @@ class DefaultInteractionService:
         view_id: str,
         block: FieldsBlock,
     ) -> PresentResult:
+
         if not block.fields:
             raise TypeError("FieldsBlock.fields must be a non-empty list")
 
         meta = block.meta or {}
-        aliases = meta.get("aliases") or {}
-        order = meta.get("order") or self._field_order(block)
 
-        if not isinstance(aliases, dict) or not all(
-            isinstance(k, str) and isinstance(v, str) for k, v in aliases.items()
-        ):
+        aliases = meta.get("aliases") or {}
+        if not isinstance(aliases, dict):
             aliases = {}
 
-        if not isinstance(order, list) or not all(isinstance(x, str) for x in order):
+        order = meta.get("order") or self._field_order(block)
+        if not isinstance(order, list):
             order = self._field_order(block)
 
         input_mode = block.input_mode or "prompt"
-        if input_mode not in ("prompt", "form"):
-            input_mode = "prompt"
 
-        if input_mode == "form":
-            out = await self._ask_batch(session, view_id, block, order)
-        else:
-            out = await self._ask_stepwise(session, view_id, block, order)
+        try:
+
+            if input_mode == "form":
+                out = await self._ask_batch(session, view_id, block, order)
+            else:
+                out = await self._ask_stepwise(session, view_id, block, order)
+
+        except DialogCancelled:
+            return PresentResult.create_cancelled()
 
         return PresentResult(out, aliases, order)
 
@@ -135,9 +140,11 @@ class DefaultInteractionService:
         block: FieldsBlock,
         order: list[str],
     ) -> dict[str, object]:
+
         view = self._view_for_block(view_id, block)
 
         while True:
+
             raw = await self._dialogs.wait_view(
                 session,
                 view=view,
@@ -164,15 +171,18 @@ class DefaultInteractionService:
         block: FieldsBlock,
         order: list[str],
     ) -> dict[str, object]:
+
         fields_def = self._field_map(block)
         out: dict[str, object] = {}
 
         for key in order:
+
             fd = fields_def.get(key)
             if fd is None:
                 continue
 
             while True:
+
                 step_block = self._with_only_field_block(block, key)
                 step_view = self._view_for_block(view_id, step_block)
 
@@ -200,16 +210,13 @@ class DefaultInteractionService:
 
                 if key in partial_out:
                     out[key] = partial_out[key]
+
                 break
 
         return out
 
     def _view_for_block(self, view_id: str, block: FieldsBlock) -> ViewSpec:
-        return ViewSpec(
-            id=view_id,
-            header=None,
-            blocks=[block],
-        )
+        return ViewSpec(id=view_id, header=None, blocks=[block])
 
     def _field_map(self, block: FieldsBlock) -> dict[str, ViewFieldDef]:
         out: dict[str, ViewFieldDef] = {}
@@ -225,11 +232,7 @@ class DefaultInteractionService:
         only = [fd for fd in block.fields if fd.var == key]
         if not only:
             return block
-        return replace(
-            block,
-            fields=only,
-            input_mode="prompt",
-        )
+        return replace(block, fields=only, input_mode="prompt")
 
     async def _validate_all(
         self,
@@ -237,12 +240,14 @@ class DefaultInteractionService:
         raw: dict[str, object],
         order: list[str],
     ) -> tuple[dict[str, object], dict[str, list[str]]]:
+
         out: dict[str, object] = {}
         errors: dict[str, list[str]] = {}
 
         fields_def = self._field_map(block)
 
         for key in order:
+
             fd = fields_def.get(key)
             if fd is None:
                 continue
@@ -278,6 +283,7 @@ class DefaultInteractionService:
         session: Session,
         errors: dict[str, list[str]],
     ) -> None:
+
         for key, msgs in errors.items():
             for msg in msgs:
                 if key == "form":
@@ -295,6 +301,7 @@ class DefaultInteractionService:
         aliases: dict[str, str],
         order: list[str],
     ) -> None:
+
         for key, value in result.dict().items():
             values[key] = value
 
