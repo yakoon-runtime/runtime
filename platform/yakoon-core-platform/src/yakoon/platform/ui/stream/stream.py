@@ -64,6 +64,7 @@ class _ViewStream:
     structure_queue: list[NodeSpec]
     text_queue: list[PatchAppendText]
     finish_queue: list[PatchFinishNode]
+    node_depth: dict[str, int]
     published_nodes: set[str]
     last_flush: float
 
@@ -85,6 +86,8 @@ class DefaultOutputStreamService:
     DEFAULT_JITTER = 0.10
     DEFAULT_PUNCT_PAUSE = 1.25
     FLUSH_INTERVAL = 1.0 / 30.0
+
+    ROOT_ID = ":root"
 
     def __init__(self) -> None:
         self._streams: dict[str, _ViewStream] = {}
@@ -121,10 +124,14 @@ class DefaultOutputStreamService:
             text_queue=[],
             finish_queue=[],
             published_nodes=set(),
+            node_depth={},
             last_flush=time.monotonic(),
         )
 
         self._streams[vid] = stream
+
+        # Root depth explizit definieren
+        stream.node_depth[f"{vid}{self.ROOT_ID}"] = -1
 
         await session.emit(
             ViewEvent(
@@ -186,13 +193,21 @@ class DefaultOutputStreamService:
         if block_id is None:
             raise RuntimeError("Block without id passed to streamer")
 
-        parent = parent_id or f"{vid}:root"
+        parent = parent_id or f"{vid}{self.ROOT_ID}"
+        parent_depth = stream.node_depth.get(parent, -1)
+        depth = parent_depth + 1
 
         # -------------------------------------------------
         # STEP 1: publish structure
         # -------------------------------------------------
 
-        node = NodeSpec.from_block(block, parent=parent)
+        node = NodeSpec.from_block(
+            block,
+            parent=parent,
+            depth=depth,
+        )
+
+        stream.node_depth[node.id] = depth
         stream.structure_queue.append(node)
 
         # -------------------------------------------------
@@ -361,10 +376,12 @@ class DefaultOutputStreamService:
 
             safe_finish.append(op)
 
-        if safe_finish:
-            ops.extend(safe_finish[: self.TEXT_BATCH])
+        # limit batch size
+        emit_finish = safe_finish[: self.TEXT_BATCH]
+        ops.extend(emit_finish)
 
-        stream.finish_queue = remaining_finish
+        # keep remaining finish nodes
+        stream.finish_queue = remaining_finish + safe_finish[self.TEXT_BATCH :]
 
         # -------------------------------------------------
 
@@ -438,3 +455,15 @@ class DefaultOutputStreamService:
             return base * 0.9
 
         return base * 0.45
+
+
+# -------------------------------------------------
+# DEBUGGING
+# -------------------------------------------------
+
+
+def dump_stream(stream):
+    print("nodes:", len(stream.node_depth))
+    print("structure:", len(stream.structure_queue))
+    print("text:", len(stream.text_queue))
+    print("finish:", len(stream.finish_queue))

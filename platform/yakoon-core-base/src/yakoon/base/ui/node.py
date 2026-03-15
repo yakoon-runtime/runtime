@@ -2,16 +2,22 @@ from dataclasses import dataclass, fields
 from typing import Any
 
 
-@dataclass
+@dataclass(slots=True)
 class NodeSpec:
     id: str
     type: str
     parent: str | None
     props: dict[str, Any]
+    depth: int
 
     @classmethod
     def from_block(
-        cls, block, *, parent: str, block_id: str | None = None
+        cls,
+        block,
+        *,
+        parent: str | None,
+        depth: int,
+        block_id: str | None = None,
     ) -> "NodeSpec":
 
         block_id = block.id or block_id
@@ -31,4 +37,5 @@ class NodeSpec:
             type=block.type,
             parent=parent,
             props=props,
+            depth=depth,
         )

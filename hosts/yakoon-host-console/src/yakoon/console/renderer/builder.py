@@ -2,6 +2,7 @@ from .base import BaseRenderer
 from .kv import KVRenderer
 from .kv_item import KVItemRenderer
 from .list import ListRenderer
+from .list_item import ListItemRenderer
 from .rule import RuleRenderer
 from .spacer import SpacerRenderer
 from .text import TextRenderer
@@ -16,6 +17,7 @@ class RendererBuilder:
             "rule": RuleRenderer,
             "spacer": SpacerRenderer,
             "list": ListRenderer,
+            "list_item": ListItemRenderer,
             "kv": KVRenderer,
             "kv_item": KVItemRenderer,
         }

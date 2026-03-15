@@ -1,5 +1,8 @@
 import random
-from collections import defaultdict
+from collections import deque
+
+from .profiler import StreamProfiler
+from .types import FinishEvent, StreamEvent, StreamEventType, TextEvent
 
 
 class PerceptualStream:
@@ -32,9 +35,7 @@ class PerceptualStream:
         self._on_block_finish = on_block_finish
         self._on_stream_finish = on_stream_finish
 
-        self._buffers = defaultdict(dict)
-        self._visible = defaultdict(dict)
-        self._finished_blocks = set()
+        self._events: deque[StreamEvent] = deque()
 
         self._paused = False
         self._fast_forward = False
@@ -43,24 +44,49 @@ class PerceptualStream:
         self._first = True
         self._sleep = 0.0
 
+        self._profiler = StreamProfiler()
+
+    # -------------------------------------------------
+    # profiler control
+    # -------------------------------------------------
+
+    def enable_profiler(self):
+        self._profiler.enabled = True
+        self._profiler.reset()
+
+    def disable_profiler(self):
+        self._profiler.enabled = False
+
+    def profiler_stats(self):
+        return self._profiler.stats()
+
     # -------------------------------------------------
     # API used by ConsoleOutput
     # -------------------------------------------------
 
     def push_block(self, node_id: str, key: str, text: str):
 
-        node_buf = self._buffers[node_id]
-        node_vis = self._visible[node_id]
-
-        node_buf[key] = node_buf.get(key, "") + text
-
-        if key not in node_vis:
-            node_vis[key] = 0
+        self._events.append(
+            TextEvent(
+                type=StreamEventType.TEXT,
+                node=node_id,
+                key=key,
+                text=text,
+            )
+        )
 
         self._active = True
 
-    def finish_block(self, node_id: str):
-        self._finished_blocks.add(node_id)
+    def finish_block(self, node_id):
+
+        self._events.append(
+            FinishEvent(
+                type=StreamEventType.FINISH,
+                node=node_id,
+            )
+        )
+
+        self._active = True
 
     # -------------------------------------------------
 
@@ -80,9 +106,7 @@ class PerceptualStream:
 
     def _reset_internal(self):
 
-        self._buffers.clear()
-        self._visible.clear()
-        self._finished_blocks.clear()
+        self._events.clear()
 
         self._active = False
         self._fast_forward = False
@@ -96,112 +120,144 @@ class PerceptualStream:
 
         if self._sleep > 0:
             self._sleep -= dt
+
+            if self._profiler.enabled:
+                self._profiler.sleep(dt)
+
             return
 
         processed = 0
 
-        while self._buffers and processed < self.FRAME_BUDGET:
+        while self._events and processed < self.FRAME_BUDGET:
 
-            node_id = next(iter(self._buffers))
-            node_buf = self._buffers[node_id]
-            node_vis = self._visible[node_id]
-
-            key = next(iter(node_buf), None)
-
-            if key is None:
-                del self._buffers[node_id]
-                del self._visible[node_id]
-                continue
-
-            buf = node_buf[key]
-            pos = node_vis[key]
+            event = self._events[0]
 
             # ---------------------------------------------
-            # key finished
+            # FINISH EVENT
             # ---------------------------------------------
 
-            if pos >= len(buf):
+            if isinstance(event, FinishEvent):
 
-                del node_buf[key]
-                del node_vis[key]
+                self._handle_finish(event)
 
-                # block finished (no more keys)
-                if not node_buf:
+                if self._profiler.enabled:
+                    self._profiler.event()
 
-                    del self._buffers[node_id]
-                    del self._visible[node_id]
-
-                    if node_id in self._finished_blocks:
-                        self._finished_blocks.remove(node_id)
-
-                        if self._on_block_finish:
-                            self._on_block_finish(node_id)
+                processed += 1
 
                 continue
 
             # ---------------------------------------------
-            # chunk calculation
+            # TEXT EVENT
             # ---------------------------------------------
 
-            progress = pos / max(len(buf), 1)
-            step = self._step_size(progress, len(buf))
+            if isinstance(event, TextEvent):
 
-            new_pos = min(len(buf), pos + step)
-            chunk = buf[pos:new_pos]
+                should_pause = self._handle_text(event)
 
-            # natural typing: slow down long words
-            if " " not in chunk and len(chunk) > 12:
-                new_pos = min(len(buf), pos + max(4, step // 2))
-                chunk = buf[pos:new_pos]
+                if self._profiler.enabled:
+                    self._profiler.event()
 
-            # word-aware chunking
-            if new_pos < len(buf) and not chunk.endswith((" ", "\n", "\t")):
+                processed += 1
 
-                rest = buf[new_pos:]
+                if should_pause:
+                    break
 
-                for i, c in enumerate(rest):
-                    if c in (" ", "\n", "\t"):
-                        new_pos += i + 1
-                        chunk = buf[pos:new_pos]
-                        break
+                continue
 
-            node_vis[key] = new_pos
-
-            self._on_text(node_id, key, chunk)
-
-            processed += 1
-
-            # ---------------------------------------------
-            # pacing / perceptual timing
-            # ---------------------------------------------
-
-            if not self._fast_forward:
-
-                pause = self._punctuation_pause(chunk)
-
-                if pause:
-                    self._sleep = pause
-                else:
-                    if self._first:
-                        self._first = False
-                        self._sleep = self.INITIAL_DELAY
-                    else:
-                        jitter = random.uniform(-self.JITTER, self.JITTER)
-                        self._sleep = self.FRAME_INTERVAL + jitter
-
-                break
+            raise RuntimeError(
+                f"Unexpected event in PerceptualStream: {type(event).__name__}"
+            )
 
         # ---------------------------------------------
         # stream finished
         # ---------------------------------------------
 
-        if self._active and not self._buffers:
+        if self._active and not self._events:
 
             self._reset_internal()
             self._first = True
 
             if self._on_stream_finish:
                 self._on_stream_finish()
+
+    # -------------------------------------------------
+
+    def _handle_finish(self, event: FinishEvent):
+
+        if self._on_block_finish:
+            self._on_block_finish(event.node)
+
+        self._events.popleft()
+
+    # -------------------------------------------------
+
+    def _handle_text(self, event: TextEvent) -> bool:
+        """
+        Returns True if streaming should pause this frame.
+        """
+
+        node_id = event.node
+        key = event.key
+        text = event.text
+        pos = event.pos
+
+        if pos >= len(text):
+            self._events.popleft()
+            return False
+
+        progress = pos / max(len(text), 1)
+        step = self._step_size(progress, len(text))
+
+        new_pos = min(len(text), pos + step)
+        chunk = text[pos:new_pos]
+
+        # natural typing: slow long words
+        if " " not in chunk and len(chunk) > 12:
+            new_pos = min(len(text), pos + max(4, step // 2))
+            chunk = text[pos:new_pos]
+
+        # word aware chunking
+        if new_pos < len(text) and not chunk.endswith((" ", "\n", "\t")):
+
+            rest = text[new_pos:]
+
+            for i, c in enumerate(rest):
+                if c in (" ", "\n", "\t"):
+                    new_pos += i + 1
+                    chunk = text[pos:new_pos]
+                    break
+
+        event.pos = new_pos
+
+        self._on_text(node_id, key, chunk)
+
+        if self._profiler.enabled:
+            self._profiler.chunk(len(chunk))
+
+        return self._apply_pacing(chunk)
+
+    # -------------------------------------------------
+
+    def _apply_pacing(self, chunk) -> bool:
+
+        if self._fast_forward:
+            return False
+
+        pause = self._punctuation_pause(chunk)
+
+        if pause:
+            self._sleep = pause
+            return True
+
+        if self._first:
+            self._first = False
+            self._sleep = self.INITIAL_DELAY
+        else:
+            jitter = random.uniform(-self.JITTER, self.JITTER)
+            self._sleep = self.FRAME_INTERVAL + jitter
+
+        return True
 
     # -------------------------------------------------
 

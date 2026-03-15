@@ -2,7 +2,8 @@ kind: view
 
 view:
   role: info
-  title: "sdfdshfdskjfd fdfl dhflk dhf dslf jdsf jkds fhdsf dskjlf dsjkfdsfndsmf ds flds födslfsdnfd"
+  title: "Welcome"
+
   blocks:
   - type: text
     text: |

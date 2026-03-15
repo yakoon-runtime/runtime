@@ -193,7 +193,10 @@ class Session:
         for block in view.blocks:
             block_id = block.id or f"{view_id}:{uuid.uuid4().hex}"
             node = NodeSpec.from_block(
-                block, parent=f"{view_id}:root", block_id=block_id
+                block,
+                parent=f"{view_id}:root",
+                depth=0,
+                block_id=block_id,
             )
             nodes.append(node)
 
