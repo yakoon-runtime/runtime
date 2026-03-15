@@ -4,6 +4,7 @@ from prompt_toolkit.application import Application
 from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.layout import HSplit, Layout, Window
+from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea
 
 
@@ -65,6 +66,16 @@ class TerminalUI:
             mouse_support=True,
             key_bindings=kb,
         )
+
+        style = Style.from_dict(
+            {
+                "": "#00d9ff bg:#000000",
+                "prompt": "#00ffff bold",
+                "cursor": "#ffffff reverse",
+            }
+        )
+
+        # self.app.style = style
 
         self.surface.attach(self.view.buffer, self.app)
 
