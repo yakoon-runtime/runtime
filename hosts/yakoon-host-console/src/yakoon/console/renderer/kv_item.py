@@ -10,7 +10,6 @@ class KVItemRenderer:
         if key != "value":
             return
 
-        # start line on first value chunk
         if not self._started:
             if self.key:
                 self.surface.write(self.key)
@@ -18,3 +17,7 @@ class KVItemRenderer:
             self._started = True
 
         self.surface.write(chunk)
+
+    def finish(self):
+        if self._started:
+            self.surface.write("\n")

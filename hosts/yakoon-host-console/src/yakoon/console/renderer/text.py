@@ -5,3 +5,6 @@ class TextRenderer:
 
     def append(self, key, chunk):
         self.surface.write(chunk)
+
+    def finish(self):
+        pass

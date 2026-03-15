@@ -21,3 +21,6 @@ class ListRenderer:
                 self._line_open = True
 
             self.surface.write(chunk)
+
+    def finish(self):
+        pass

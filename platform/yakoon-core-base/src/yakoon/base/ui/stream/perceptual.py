@@ -26,13 +26,15 @@ class PerceptualStream:
 
     # -------------------------------------------------
 
-    def __init__(self, on_text, on_finish=None):
+    def __init__(self, on_text, on_block_finish=None, on_stream_finish=None):
 
         self._on_text = on_text
-        self._on_finish = on_finish
+        self._on_block_finish = on_block_finish
+        self._on_stream_finish = on_stream_finish
 
         self._buffers = defaultdict(dict)
         self._visible = defaultdict(dict)
+        self._finished_blocks = set()
 
         self._paused = False
         self._fast_forward = False
@@ -42,8 +44,10 @@ class PerceptualStream:
         self._sleep = 0.0
 
     # -------------------------------------------------
+    # API used by ConsoleOutput
+    # -------------------------------------------------
 
-    def push(self, node_id: str, key: str, text: str):
+    def push_block(self, node_id: str, key: str, text: str):
 
         node_buf = self._buffers[node_id]
         node_vis = self._visible[node_id]
@@ -54,6 +58,9 @@ class PerceptualStream:
             node_vis[key] = 0
 
         self._active = True
+
+    def finish_block(self, node_id: str):
+        self._finished_blocks.add(node_id)
 
     # -------------------------------------------------
 
@@ -75,6 +82,7 @@ class PerceptualStream:
 
         self._buffers.clear()
         self._visible.clear()
+        self._finished_blocks.clear()
 
         self._active = False
         self._fast_forward = False
@@ -108,16 +116,32 @@ class PerceptualStream:
             buf = node_buf[key]
             pos = node_vis[key]
 
+            # ---------------------------------------------
+            # key finished
+            # ---------------------------------------------
+
             if pos >= len(buf):
 
                 del node_buf[key]
                 del node_vis[key]
 
+                # block finished (no more keys)
                 if not node_buf:
+
                     del self._buffers[node_id]
                     del self._visible[node_id]
 
+                    if node_id in self._finished_blocks:
+                        self._finished_blocks.remove(node_id)
+
+                        if self._on_block_finish:
+                            self._on_block_finish(node_id)
+
                 continue
+
+            # ---------------------------------------------
+            # chunk calculation
+            # ---------------------------------------------
 
             progress = pos / max(len(buf), 1)
             step = self._step_size(progress, len(buf))
@@ -147,6 +171,10 @@ class PerceptualStream:
 
             processed += 1
 
+            # ---------------------------------------------
+            # pacing / perceptual timing
+            # ---------------------------------------------
+
             if not self._fast_forward:
 
                 pause = self._punctuation_pause(chunk)
@@ -163,14 +191,17 @@ class PerceptualStream:
 
                 break
 
-        # finish transition
+        # ---------------------------------------------
+        # stream finished
+        # ---------------------------------------------
+
         if self._active and not self._buffers:
 
             self._reset_internal()
             self._first = True
 
-            if self._on_finish:
-                self._on_finish()
+            if self._on_stream_finish:
+                self._on_stream_finish()
 
     # -------------------------------------------------
 

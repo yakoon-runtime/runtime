@@ -23,7 +23,12 @@ class PatchAppendText:
     text: str = ""
 
 
-PatchOp = PatchReset | PatchAppendStructure | PatchAppendText
+@dataclass(frozen=True, slots=True)
+class PatchFinishNode:
+    block_id: str
+
+
+PatchOp = PatchReset | PatchAppendStructure | PatchAppendText | PatchFinishNode
 
 
 @dataclass(frozen=True, slots=True)

@@ -25,6 +25,7 @@ from .node import NodeSpec
 from .patch import (
     PatchAppendStructure,
     PatchAppendText,
+    PatchFinishNode,
     PatchOp,
     PatchReset,
     PatchSpec,
@@ -59,6 +60,7 @@ __all__ = [
     "NodeSpec",
     "PatchAppendText",
     "PatchAppendStructure",
+    "PatchFinishNode",
     "PatchOp",
     "PatchSpec",
     "ViewFieldDef",

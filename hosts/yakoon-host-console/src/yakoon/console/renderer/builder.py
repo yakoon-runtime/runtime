@@ -1,5 +1,4 @@
 from .base import BaseRenderer
-from .header import HeaderRenderer
 from .kv import KVRenderer
 from .kv_item import KVItemRenderer
 from .list import ListRenderer
@@ -14,7 +13,6 @@ class RendererBuilder:
         self._surface = surface
         self._types = {
             "text": TextRenderer,
-            "header": HeaderRenderer,
             "rule": RuleRenderer,
             "spacer": SpacerRenderer,
             "list": ListRenderer,

@@ -5,3 +5,6 @@ class SpacerRenderer:
 
     def append(self, key, chunk):
         self.surface.write("\n")
+
+    def finish(self):
+        pass

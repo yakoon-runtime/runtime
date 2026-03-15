@@ -8,6 +8,7 @@ from yakoon.base.ui import (
     FlowControl,
     PatchAppendStructure,
     PatchAppendText,
+    PatchFinishNode,
     PatchReset,
     PerceptualStream,
     ViewEvent,
@@ -34,7 +35,9 @@ class ConsoleOutput:
         self._nodes: dict[str, Node] = {}
         self._renderers: dict[str, BaseRenderer] = {}
         self._builder = RendererBuilder(surface)
-        self._stream = PerceptualStream(self._append_text, self._finished)
+        self._stream = PerceptualStream(
+            self._block_append, self._block_finish, self._stream_finished
+        )
 
         self._cancelled = False
         loop = asyncio.get_running_loop()
@@ -43,26 +46,30 @@ class ConsoleOutput:
     # PerceptualStream ---------------------------------
 
     async def _stream_loop(self):
-
         while not self._cancelled:
             self._stream.step(self._stream.FRAME_INTERVAL)
             await asyncio.sleep(0.005)
 
-    def _append_text(self, node_id, key, chunk):
+    def _block_finish(self, node_id):
+        renderer = self._renderers.get(node_id)
+        if not renderer:
+            return
+        renderer.finish()
 
+    def _block_append(self, node_id, key, chunk):
         renderer = self._renderers.get(node_id)
         if not renderer:
             return
 
         renderer.append(key, chunk)
 
-    def _finished(self):
+    def _stream_finished(self):
         self._flow.release()
+
+    # IO ---------------------------------
 
     async def cancel(self):
         self._cancelled = True
-
-    # IO ---------------------------------
 
     def set_flow_control(self, flow: FlowControl) -> None:
         self._flow = flow
@@ -92,5 +99,9 @@ class ConsoleOutput:
             elif isinstance(op, PatchAppendText):
                 node = self._nodes.get(op.block_id)
                 if node:
-                    self._stream.push(op.block_id, op.key, op.text)
-                    # print(op.block_id)
+                    self._stream.push_block(op.block_id, op.key, op.text)
+
+            elif isinstance(op, PatchFinishNode):
+                node = self._nodes.get(op.block_id)
+                if node:
+                    self._stream.finish_block(op.block_id)

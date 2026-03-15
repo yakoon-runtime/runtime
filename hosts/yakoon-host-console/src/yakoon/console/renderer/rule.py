@@ -5,3 +5,6 @@ class RuleRenderer:
 
     def append(self, key, chunk):
         self.surface.write("-" * 60 + "\n")
+
+    def finish(self):
+        pass

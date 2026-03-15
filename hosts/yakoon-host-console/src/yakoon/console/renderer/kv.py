@@ -22,3 +22,6 @@ class KVRenderer:
                 return
 
             self.surface.write(chunk)
+
+    def finish(self):
+        pass

@@ -15,6 +15,7 @@ from yakoon.base.ui import (
     OutputStreamPolicy,
     PatchAppendStructure,
     PatchAppendText,
+    PatchFinishNode,
     PatchReset,
     PatchSpec,
     ViewEvent,
@@ -62,6 +63,7 @@ class _ViewStream:
     interval: float
     structure_queue: list[NodeSpec]
     text_queue: list[PatchAppendText]
+    finish_queue: list[PatchFinishNode]
     published_nodes: set[str]
     last_flush: float
 
@@ -117,6 +119,7 @@ class DefaultOutputStreamService:
             interval=interval,
             structure_queue=[],
             text_queue=[],
+            finish_queue=[],
             published_nodes=set(),
             last_flush=time.monotonic(),
         )
@@ -213,12 +216,6 @@ class DefaultOutputStreamService:
         for key in getattr(block, "__stream_fields__", ()):
             value = getattr(block, key)
 
-            if not hasattr(block, key):
-                raise RuntimeError(
-                    f"{type(block).__name__} declares stream field '{key}' "
-                    f"but the attribute does not exist"
-                )
-
             if isinstance(value, str) and value:
                 stream.total_chars += len(value)
 
@@ -241,7 +238,17 @@ class DefaultOutputStreamService:
                         stream.last_flush -= self.DEFAULT_PUNCT_PAUSE * 1.5
 
         # -------------------------------------------------
-        # STEP 4: maybe flush
+        # STEP 4: finish queue
+        # -------------------------------------------------
+
+        stream.finish_queue.append(
+            PatchFinishNode(
+                block_id=block_id,
+            )
+        )
+
+        # -------------------------------------------------
+        # STEP 5: maybe flush
         # -------------------------------------------------
 
         await self._maybe_flush(stream)
@@ -282,6 +289,7 @@ class DefaultOutputStreamService:
 
         if stream.text_queue:
             first_text = stream.text_queue[0]
+
             if first_text.block_id not in stream.published_nodes:
                 if not stream.structure_queue:
                     return
@@ -292,6 +300,7 @@ class DefaultOutputStreamService:
                 ]
 
                 ops.append(PatchAppendStructure(nodes=nodes))
+
                 for n in nodes:
                     stream.published_nodes.add(n.id)
 
@@ -300,9 +309,12 @@ class DefaultOutputStreamService:
         # -------------------------------------------------
 
         elif stream.structure_queue:
+
             nodes = stream.structure_queue[: self.STRUCT_NODE_BATCH]
             stream.structure_queue = stream.structure_queue[self.STRUCT_NODE_BATCH :]
+
             ops.append(PatchAppendStructure(nodes=nodes))
+
             for n in nodes:
                 stream.published_nodes.add(n.id)
 
@@ -311,21 +323,50 @@ class DefaultOutputStreamService:
         # -------------------------------------------------
 
         safe_text = []
-        remaining = []
+        remaining_text = []
 
         for op in stream.text_queue:
 
             if op.block_id in stream.published_nodes:
                 safe_text.append(op)
             else:
-                remaining.append(op)
+                remaining_text.append(op)
 
         for op in safe_text:
             stream.emitted_chars += len(op.text)
 
         if safe_text:
             ops.extend(safe_text)
-        stream.text_queue = remaining
+
+        stream.text_queue = remaining_text
+
+        # -------------------------------------------------
+        # STEP 4: send finish only when node is complete
+        # -------------------------------------------------
+
+        safe_finish = []
+        remaining_finish = []
+
+        for op in stream.finish_queue:
+
+            # node must exist
+            if op.block_id not in stream.published_nodes:
+                remaining_finish.append(op)
+                continue
+
+            # node must not have pending text
+            if any(t.block_id == op.block_id for t in stream.text_queue):
+                remaining_finish.append(op)
+                continue
+
+            safe_finish.append(op)
+
+        if safe_finish:
+            ops.extend(safe_finish[: self.TEXT_BATCH])
+
+        stream.finish_queue = remaining_finish
+
+        # -------------------------------------------------
 
         if not ops:
             return
@@ -338,6 +379,8 @@ class DefaultOutputStreamService:
         )
 
         stream.last_flush = time.monotonic()
+
+    # ---------------------------------------------------------
 
     def _effective(
         self,
