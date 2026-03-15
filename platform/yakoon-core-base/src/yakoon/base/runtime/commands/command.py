@@ -4,7 +4,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from yakoon.base.capabilities.presenters import Presenter, PresenterService
+from yakoon.base.capabilities.presenters import (
+    Presenter,
+    PresenterService,
+    PresentResult,
+)
 from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.controllers import resolve_resource
 
@@ -22,6 +26,12 @@ if TYPE_CHECKING:
     from yakoon.base.values import Namespace
 
     from .request import Request
+
+
+class CommandCancelled(Exception):
+    """Command cancelled."""
+
+    pass
 
 
 class CmdNotFound(LookupError):
@@ -139,6 +149,13 @@ class Command(ABC):
         )
 
         return await presenter_service.create_presenter(ref, session)
+
+    async def ask(self, session: Session, view: str) -> PresentResult:
+        presenter = await self.get_presenter(session)
+        result = await presenter.require_present(view)
+        if result.cancelled:
+            raise CommandCancelled()
+        return result
 
     @abstractmethod
     async def run(self, session: Session, request: Request) -> None:

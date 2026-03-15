@@ -2,14 +2,15 @@ from __future__ import annotations
 
 from asyncio import Event, Future
 from collections.abc import Awaitable, Callable
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
-from yakoon.base.capabilities.presenters import PresentResult
-from yakoon.base.runtime import Session
-from yakoon.base.ui import FieldsBlock, OutputStreaming, ViewEvent, ViewSpec
+if TYPE_CHECKING:
+    from yakoon.base.capabilities.presenters import PresentResult
+    from yakoon.base.runtime import Session
+    from yakoon.base.ui import FieldsBlock, OutputStreaming, ViewEvent, ViewSpec
 
-from .policy import FieldPolicy, PolicyValidationResult, RawValue
-from .types import DialogState
+    from .policy import FieldPolicy, PolicyValidationResult, RawValue
+    from .types import DialogState
 
 
 class InteractionService(Protocol):
