@@ -7,4 +7,4 @@ class KVRenderer:
         pass
 
     def finish(self):
-        pass
+        self.surface.write("\n")

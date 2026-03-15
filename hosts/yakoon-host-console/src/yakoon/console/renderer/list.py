@@ -7,4 +7,4 @@ class ListRenderer:
         pass
 
     def finish(self):
-        self.surface.write("LIST END.")
+        self.surface.write("\n")
