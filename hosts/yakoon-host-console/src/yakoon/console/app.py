@@ -80,9 +80,10 @@ async def run_console() -> None:
 
         runner_task = asyncio.create_task(runner.start(inits))
         ui_task = asyncio.create_task(ui.run())
+        output_task = asyncio.create_task(output.run())
 
         _, pending = await asyncio.wait(
-            [runner_task, ui_task],
+            [runner_task, ui_task, output_task],
             return_when=asyncio.FIRST_COMPLETED,
         )
 

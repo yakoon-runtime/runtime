@@ -35,17 +35,14 @@ class ConsoleOutput:
         self._nodes: dict[str, Node] = {}
         self._renderers: dict[str, BaseRenderer] = {}
         self._builder = RendererBuilder(surface)
+        self._cancelled = False
         self._stream = PerceptualStream(
             self._block_append, self._block_finish, self._stream_finished
         )
 
-        self._cancelled = False
-        loop = asyncio.get_running_loop()
-        loop.create_task(self._stream_loop())
-
     # PerceptualStream ---------------------------------
 
-    async def _stream_loop(self):
+    async def run(self):
         while not self._cancelled:
             self._stream.step(self._stream.FRAME_INTERVAL)
             await asyncio.sleep(0.005)
