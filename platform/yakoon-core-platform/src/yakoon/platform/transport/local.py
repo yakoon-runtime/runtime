@@ -21,7 +21,7 @@ class LocalTransport:
     async def connect(self, on_emit, io: IO, interaction: Interaction):
 
         async def send_input(event):
-            await self._host.receive_input(event)
+            await self._host.receive_input(connection, event)
 
         connection = ClientConnection(
             send=on_emit,
