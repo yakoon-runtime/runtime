@@ -104,7 +104,10 @@ class CommandEngine:
         # - prompt state changes, then re-check
         while True:
             if task.done():
-                _ = task.exception()  # drain
+                exc = task.exception()
+                if exc:
+                    raise exc
+
                 self._active_tasks.pop(skey, None)
                 return
 
