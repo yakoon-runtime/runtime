@@ -7,6 +7,14 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## 26-03-16
+**PerceptualStream - Verzicht auf Loop**
+Der Stream arbeitet nur mit Step() und nicht mit Loop.
+Wenn der Stream selbst eine Loop enthält (z. B. asyncio), 
+wird er an eine Runtime gebunden und ist nicht mehr portabel.
+Der PerceptualStream ist im Grunde ein Frame Scheduler und
+ist eine deterministischen Render-Engine.
+
 ## 26-03-14
 **ViewHeader & Dokument**
 Der ViewHeader gehört nicht zum Dokumentinhalt, aber er gehört sehr wohl zur 
