@@ -7,6 +7,42 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## ==26-03-16== 
+**Host / Client Architektur eingeführt**
+Die Plattform wurde von einer lokalen CLI-Anwendung zu einer echten Host/Client-Runtime umgebaut.
+Engine, Session, Runner und EventBus laufen im Host.
+Clients verbinden sich über Transport und kommunizieren ausschließlich über Events und InputEvents.
+Damit kann die Plattform künftig remote betrieben werden (Console, Web, SSH, Bots, AI, IoT).
+
+## 26-03-16
+**Runtime EventBus als Infrastruktur**
+Die Ausgabe der Engine erfolgt nicht mehr direkt an Renderer,
+sondern über einen Runtime EventBus.
+Sessions senden Events, die vom Bus an verbundene Clients verteilt werden.
+Damit können mehrere Clients gleichzeitig mit derselben Session arbeiten.
+
+## 26-03-16
+**Interaction als Eingabe-Port der Runtime**
+Die Benutzerinteraktion wurde als eigener Port (`Interaction`) modelliert.
+Der Runner spricht ausschließlich mit diesem Interface und kennt keine UI.
+Interaction orchestriert Eingaben (Prompt, Formulare) und wandelt sie in `InputEvent`.
+Damit kann dieselbe Runtime mit unterschiedlichen Eingabequellen arbeiten.
+
+## 26-03-16
+**Interaction vollständig UI-agnostisch**
+Interaction erhält keine UI-Objekte mehr, sondern arbeitet mit zwei Callbacks:
+* `read_input(prompt)`
+* `submit_input(event)`
+Dadurch wird die Interaktion unabhängig von konkreten Interfaces
+(Console, Web, Bot, AI, IoT).
+
+## 26-03-16
+**Base als öffentliches API der Plattform**
+Die Architektur trennt strikt zwischen `base` und `platform`.
+Clients und Plugins dürfen nur `base` referenzieren, niemals `platform`.
+Damit kann die Runtime serverseitig bleiben, während Clients und Plugins
+ohne Zugriff auf die interne Plattform entwickelt und ausgeliefert werden.
+
 ## 26-03-16
 **PerceptualStream - Verzicht auf Loop**
 Der Stream arbeitet nur mit Step() und nicht mit Loop.
