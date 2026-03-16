@@ -4,9 +4,9 @@ import asyncio
 import threading
 from typing import Any
 
+from yakoon.base.host.ports import FormInput, InputEvent, TextInput
 from yakoon.kivy.host import KivyHost
-from yakoon.platform.hosts.adapter import FormInput, InputEvent, TextInput
-from yakoon.platform.hosts.runner import Runner
+from yakoon.platform.host.runner import Runner
 
 
 class TabRunnerThread:
@@ -68,7 +68,9 @@ class TabRunnerThread:
         # (Host selber ist thread-safe via deliver_text()).
         self.host._submit = submit  # type: ignore[attr-defined]
 
-        self._runner = Runner(engine=self.engine, session=self.session, host=self.host)
+        self._runner = Runner(
+            engine=self.engine, session=self.session, interaction=self.host
+        )
         await self._runner.start(self.inits)
 
         loop = asyncio.get_running_loop()

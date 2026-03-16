@@ -1,34 +1,29 @@
 import asyncio
 from collections.abc import Awaitable, Callable
 
+from yakoon.base.host import FormInput, InputEvent, Interaction, TextInput
 from yakoon.base.ui import FieldsBlock, ViewSpec
-from yakoon.platform.hosts import (
-    FormInput,
-    HostAdapter,
-    InputEvent,
-    TextInput,
-)
 
 
-class ConsoleHost(HostAdapter):
+class DefaultInteraction(Interaction):
 
     def __init__(
         self,
-        ui,
-        submit: Callable[[InputEvent], Awaitable[None]],
+        read_input: Callable[[str], Awaitable[str]],
+        submit_input: Callable[[InputEvent], Awaitable[None]],
     ):
-        self.ui = ui
-        self._submit = submit
+        self._read_command = read_input
+        self._submit_command = submit_input
 
-    async def on_ready(self, *, ps1: str) -> None:
+    async def ready(self, *, ps1: str) -> None:
         try:
-            text = await self.ui.read_line(ps1)
+            text = await self._read_command(ps1)
         except asyncio.CancelledError:
             return
         if text.strip():
-            await self._submit(TextInput(text))
+            await self._submit_command(TextInput(text))
 
-    async def on_prompt(self, *, ps1: str, view: ViewSpec):
+    async def prompt(self, *, ps1: str, view: ViewSpec):
 
         for block in view.blocks:
 
@@ -39,17 +34,17 @@ class ConsoleHost(HostAdapter):
                 else:
                     values = await self._read_fields(ps1=ps1, fields=block.fields)
 
-                await self._submit(FormInput(values))
+                await self._submit_command(FormInput(values))
                 return
 
-    async def on_idle(self) -> None:
+    async def idle(self) -> None:
         return
 
-    async def on_exit(self) -> None:
-        await self.ui.stop()
+    async def exit(self) -> None:
+        pass
+        # await self.ui.stop()
 
     async def _read_field(self, *, ps1: str, fd) -> object:
-
         key = fd.var or "value"
         label = fd.title or key
         hint = fd.hint or ""
@@ -59,13 +54,10 @@ class ConsoleHost(HostAdapter):
             prompt = f"{prompt} ({hint})"
 
         prompt = f"{ps1}[{prompt}]"
-
-        return await self.ui.read_line(prompt)
+        return await self._read_command(prompt)
 
     async def _read_fields(self, *, ps1: str, fields) -> dict[str, object]:
-
         values: dict[str, object] = {}
-
         for fd in fields:
             key = fd.var
             if key:

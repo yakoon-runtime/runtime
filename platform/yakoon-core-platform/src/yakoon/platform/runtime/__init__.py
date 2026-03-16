@@ -1,3 +1,5 @@
 from .sessions import DefaultSessionService
 
-__all__ = ["DefaultSessionService"]
+__all__ = [
+    "DefaultSessionService",
+]

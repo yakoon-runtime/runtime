@@ -6,8 +6,9 @@ from yakoon.base.values import Key
 from yakoon.compose.demo_data import seed_demo_system_data
 from yakoon.compose.engine import compose_engine, initialize_storage
 from yakoon.console.client import ConsoleClient
-from yakoon.platform.interaction.bus_output import BusOutput
-from yakoon.platform.interaction.session_bus import SessionBus
+from yakoon.platform.host import RuntimeHost
+from yakoon.platform.runtime.bus import BusOutput, SessionBus
+from yakoon.platform.transport import LocalTransport
 
 
 async def run_console() -> None:
@@ -32,6 +33,7 @@ async def run_console() -> None:
     await seed_demo_system_data(engine.services)
 
     sessions = engine.services.get(SessionService)
+
     session, _ = await sessions.get_or_create(
         Key.from_parts("system", "session", "develop", "1")
     )
@@ -39,13 +41,31 @@ async def run_console() -> None:
     permissions = engine.services.get(PermissionService)
     permissions.set_bootstrap_permissions(session)
 
+    # -------------------------------------------------
+    # Host runtime
+    # -------------------------------------------------
+
     bus = SessionBus()
+
     session.bind_io(BusOutput(bus))
 
-    client = ConsoleClient(engine, session, bus)
+    host = RuntimeHost(
+        engine=engine,
+        session=session,
+        bus=bus,
+    )
+
+    transport = LocalTransport(host)
+
+    # -------------------------------------------------
+    # Client
+    # -------------------------------------------------
+
+    client = ConsoleClient(transport)
 
     try:
         await client.run()
+
     finally:
         sessions.release(session.key)
 

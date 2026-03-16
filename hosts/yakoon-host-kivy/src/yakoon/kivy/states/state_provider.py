@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from yakoon.base.runtime.sessions.session import Session
-from yakoon.platform.hosts import format_ps1
+from yakoon.platform.host import format_ps1
 
 
 @dataclass(frozen=True)

@@ -1,6 +1,13 @@
-from collections.abc import Awaitable, Callable
+from __future__ import annotations
 
-from yakoon.base.interaction import ClientConnection
+from typing import TYPE_CHECKING
+
+from yakoon.base.clients import ClientConnection
+from yakoon.base.host import Interaction
+
+if TYPE_CHECKING:
+    from yakoon.base.ui import IO
+    from yakoon.platform.host import RuntimeHost
 
 
 class LocalTransport:
@@ -8,23 +15,20 @@ class LocalTransport:
     Connects a client directly to the host in the same process.
     """
 
-    def __init__(self, host):
+    def __init__(self, host: RuntimeHost):
         self._host = host
 
-    async def connect(
-        self,
-        on_event: Callable[[object], Awaitable[None]],
-        set_flow_control,
-    ):
-        """
-        Connect client to host in same process.
-        """
+    async def connect(self, on_emit, io: IO, interaction: Interaction):
+
+        async def send_input(event):
+            await self._host.receive_input(event)
 
         connection = ClientConnection(
-            send=on_event,
-            set_flow_control=set_flow_control,
+            send=on_emit,
+            send_input=send_input,
+            io=io,
         )
 
-        await self._host.connect(connection)
+        await self._host.connect(connection, interaction)
 
         return connection

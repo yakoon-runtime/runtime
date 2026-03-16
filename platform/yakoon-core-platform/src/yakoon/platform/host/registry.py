@@ -1,5 +1,3 @@
-# yakoon/platform/host/registry.py
-
 from __future__ import annotations
 
 

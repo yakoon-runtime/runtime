@@ -1,4 +1,4 @@
-from yakoon.base.interaction import ClientConnection
+from yakoon.base.clients import ClientConnection
 
 
 class SessionBus:

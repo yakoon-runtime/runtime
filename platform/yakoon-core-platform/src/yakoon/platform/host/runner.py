@@ -4,18 +4,18 @@ from dataclasses import dataclass
 
 from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.engine import CommandDispatch, CommandQueueService, ResolveDispatch
+from yakoon.base.host import Interaction
 from yakoon.base.runtime import Session
 from yakoon.platform.engine import CommandEngine
 
-from . import HostAdapter, Interaction, format_ps1
+from . import format_ps1
 
 
 @dataclass
 class Runner:
     engine: CommandEngine
     session: Session
-    host: HostAdapter
-    interact: Interaction
+    interaction: Interaction
 
     async def start(self, commands: list[str] | None = None) -> None:
         await self.drive(commands=commands)
@@ -23,11 +23,9 @@ class Runner:
     async def on_user_input(self, text: str) -> None:
         await self.engine.dispatch(self.session, CommandDispatch(text=text))
 
-        if self.interact:
-            entry = self.session.execution.resolved_entry()
-            if entry and entry.command:
-                pass
-                # self.interact.add_history(entry.command)
+        # entry = self.session.execution.resolved_entry()
+        # if entry and entry.command:
+        # self.interact.add_history(entry.command)
 
         await self.drive()
 
@@ -57,7 +55,7 @@ class Runner:
         while True:
 
             if self.session.has_mark("exit_app"):
-                await self.host.on_exit()
+                await self.interaction.exit()
                 return
 
             ps1 = format_ps1(self.session)
@@ -69,7 +67,7 @@ class Runner:
                 # print("wait_ready ------------------ END")
 
                 view = dialogs.get_view(self.session)
-                await self.host.on_prompt(ps1=ps1, view=view)
+                await self.interaction.prompt(ps1=ps1, view=view)
                 return
 
             # Drain queued command handling
@@ -78,7 +76,7 @@ class Runner:
                 await self.engine.dispatch(self.session, di)
                 continue
 
-            if hasattr(self.host, "on_ready"):
-                await self.host.on_ready(ps1=ps1)
+            if hasattr(self.interaction, "ready"):
+                await self.interaction.ready(ps1=ps1)
             else:
-                await self.host.on_idle()
+                await self.interaction.idle()
