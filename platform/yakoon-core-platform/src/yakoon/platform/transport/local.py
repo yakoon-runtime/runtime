@@ -1,10 +1,6 @@
-# yakoon/platform/transport/local.py
-
-from __future__ import annotations
-
 from collections.abc import Awaitable, Callable
 
-# from yakoon.base.interaction import ClientConnection
+from yakoon.base.interaction import ClientConnection
 
 
 class LocalTransport:
@@ -18,16 +14,17 @@ class LocalTransport:
     async def connect(
         self,
         on_event: Callable[[object], Awaitable[None]],
+        set_flow_control,
     ):
         """
-        on_event is called whenever the host sends an event to the client.
+        Connect client to host in same process.
         """
 
-        async def send(event):
-            await on_event(event)
+        connection = ClientConnection(
+            send=on_event,
+            set_flow_control=set_flow_control,
+        )
 
-        # connection = ClientConnection(send)
+        await self._host.connect(connection)
 
-        # runner = await self._host.connect(connection)
-
-        return runner
+        return connection
