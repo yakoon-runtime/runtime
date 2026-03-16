@@ -35,3 +35,6 @@ PatchOp = PatchReset | PatchAppendStructure | PatchAppendText | PatchFinishNode
 class PatchSpec:
     ops: list[PatchOp] = field(default_factory=list)
     final: bool = False
+
+    def has_reset(self) -> bool:
+        return any(isinstance(op, PatchReset) for op in self.ops)

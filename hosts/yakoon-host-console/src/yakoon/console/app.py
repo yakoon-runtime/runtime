@@ -1,16 +1,13 @@
 import asyncio
 
 from yakoon.base.capabilities.identity import PermissionService
-from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.runtime import SessionService
-from yakoon.base.ui import OutputStreamPolicy
 from yakoon.base.values import Key
 from yakoon.compose.demo_data import seed_demo_system_data
 from yakoon.compose.engine import compose_engine, initialize_storage
-from yakoon.console.host import ConsoleHost
-from yakoon.console.output import ConsoleOutput
-from yakoon.console.ui import TerminalSurface, TerminalUI
-from yakoon.platform.hosts import FormInput, InputEvent, Runner, TextInput
+from yakoon.console.client import ConsoleClient
+from yakoon.platform.interaction.bus_output import BusOutput
+from yakoon.platform.interaction.session_bus import SessionBus
 
 
 async def run_console() -> None:
@@ -39,68 +36,22 @@ async def run_console() -> None:
         Key.from_parts("system", "session", "develop", "1")
     )
 
-    surface = TerminalSurface()
-
-    output = ConsoleOutput(surface)
-    session.bind_io(output)
-    session.set_output_stream_policy(OutputStreamPolicy(enabled=True))
-
     permissions = engine.services.get(PermissionService)
     permissions.set_bootstrap_permissions(session)
 
-    runner: Runner | None = None
+    bus = SessionBus()
+    session.bind_io(BusOutput(bus))
 
-    async def submit(event: InputEvent) -> None:
-        assert runner is not None
-        if isinstance(event, FormInput):
-            await runner.on_input_submit(event.data)
-        elif isinstance(event, TextInput):
-            await runner.on_user_input(event.value)
-
-    async def cancel():
-
-        dialogs = engine.services.get(DialogService)
-        if dialogs.is_waiting(session):
-            if not runner:
-                raise RuntimeError("Runner must not be None")
-            await runner.on_cancel()
-            return
-
-        await output.cancel()
-        session.mark("exit_app")
-        ui.app.exit()
+    client = ConsoleClient(engine, session, bus)
 
     try:
-        ui = TerminalUI(surface, on_cancel=cancel)
-        host = ConsoleHost(ui=ui, submit=submit)
-        runner = Runner(engine=engine, session=session, host=host, interact=ui)
-
-        inits: list[str] = []
-        # inits = ["use crm-customer", "customer-create"]
-
-        runner_task = asyncio.create_task(runner.start(inits))
-        ui_task = asyncio.create_task(ui.run())
-        output_task = asyncio.create_task(output.run())
-
-        _, pending = await asyncio.wait(
-            [runner_task, ui_task, output_task],
-            return_when=asyncio.FIRST_COMPLETED,
-        )
-
-        for task in pending:
-            task.cancel()
-
-        await asyncio.gather(*pending, return_exceptions=True)
-        await host.on_exit()
-
-    except KeyboardInterrupt:
-        await cancel()
-
+        await client.run()
     finally:
         sessions.release(session.key)
 
 
 if __name__ == "__main__":
+
     try:
         asyncio.run(run_console())
     except KeyboardInterrupt:

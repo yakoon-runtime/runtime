@@ -26,7 +26,8 @@ class Runner:
         if self.interact:
             entry = self.session.execution.resolved_entry()
             if entry and entry.command:
-                self.interact.add_history(entry.command)
+                pass
+                # self.interact.add_history(entry.command)
 
         await self.drive()
 
