@@ -24,6 +24,8 @@ from .directories import CommandDirectory, ControllerDirectory
 
 class CommandEngine:
 
+    GLOBAL_PARALLEL_COMMANDS = 8
+
     def __init__(
         self,
         controllers: ControllerDirectory,
@@ -33,8 +35,13 @@ class CommandEngine:
         self._controllers = controllers
         self._services = services
         self._commands = commands
-        self._active_tasks: dict[str, asyncio.Task] = {}  # TODO: cleanup
-        self._session_locks: dict[str, asyncio.Lock] = {}  # TODO: cleanup
+
+        self._active_tasks: dict[str, asyncio.Task] = {}
+        self._session_locks: dict[str, asyncio.Lock] = {}
+        self._session_limits: dict[str, asyncio.Semaphore] = {}
+
+        limit = self.GLOBAL_PARALLEL_COMMANDS
+        self._global_limit = asyncio.Semaphore(limit)
 
     @property
     def services(self) -> ServiceDirectory:
@@ -83,12 +90,18 @@ class CommandEngine:
 
         # 2) Normal command path
         loop = asyncio.get_running_loop()
-        task = loop.create_task(self._dispatch_command(session, di))
+        task = loop.create_task(self._run_limited(session, di))
 
         self._active_tasks[skey] = task
 
         await self._drive_until_blocked_or_done(session)
         return session
+
+    def cleanup_session(self, session: Session) -> None:
+        skey = str(session.key)
+        self._session_limits.pop(skey, None)
+        self._session_locks.pop(skey, None)
+        self._active_tasks.pop(skey, None)
 
     async def _drive_until_blocked_or_done(self, session: Session) -> None:
 
@@ -300,3 +313,16 @@ class CommandEngine:
                 message=str(exc),
                 command=command.key,
             )
+
+    def _get_session_semaphore(self, session: Session) -> asyncio.Semaphore:
+        skey = str(session.key)
+        return self._session_limits.setdefault(
+            skey,
+            # bewusst sequenziell pro Session
+            asyncio.Semaphore(1),
+        )
+
+    async def _run_limited(self, session: Session, di: DispatchInput) -> None:
+        async with self._global_limit:
+            async with self._get_session_semaphore(session):
+                await self._dispatch_command(session, di)
