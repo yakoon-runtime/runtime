@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -20,6 +21,7 @@ from .types import (
 
 if TYPE_CHECKING:
 
+    from yakoon.base.engine.step import Step
     from yakoon.base.runtime.controllers import Controller
     from yakoon.base.runtime.services import ServiceDirectory
     from yakoon.base.runtime.sessions import Session
@@ -80,7 +82,6 @@ class Command(ABC):
 
     # Public identity
     key: str
-    aliases: tuple[str, ...] = ()
 
     # Execution metadata
     kind: CommandKind = CommandKind.USER
@@ -166,3 +167,18 @@ class Command(ABC):
               exceptional states.
         """
         raise NotImplementedError
+
+    @abstractmethod
+    async def respond(self, session: Session, request: Request) -> None:
+        """Execute the command immediate and return always None.
+
+        Notes:
+            - Reserve exceptions for programmer errors, missing context, or truly
+              exceptional states.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def flow(
+        self, session: Session, request: Request
+    ) -> AsyncGenerator[Step, None]: ...

@@ -80,6 +80,7 @@ class Session:
         self._state = state
         self._flow: FlowControl = FC()
         self._runtime = SessionRuntime()
+        self.flow = {}
 
     @property
     def lang(self) -> str:
@@ -108,6 +109,10 @@ class Session:
     def from_state(cls, state: SessionState) -> Session:
         return cls(state)
 
+    # ----------------------------
+    # wait ready
+    # ----------------------------
+
     async def wait_ready(self):
         await self._flow.wait_ready()
 
@@ -118,17 +123,29 @@ class Session:
         self._runtime.io = io
         self._runtime.io.set_flow_control(self._flow)
 
+    # ----------------------------
+    # Username
+    # ----------------------------
+
     def set_username(self, username: str | None):
         self._state.username = username
 
     def get_username(self) -> str | None:
         return self._state.username
 
+    # ----------------------------
+    # Contoller
+    # ----------------------------
+
     def set_active_controller(self, controller_id: str) -> None:
         self._state.active_controller_id = controller_id
 
     def get_active_controller(self, default=None):
         return self._state.active_controller_id or default
+
+    # ----------------------------
+    # Identity
+    # ----------------------------
 
     def set_identity(self, account_key, username: str) -> None:
         self._state.account_key = str(account_key)
@@ -141,6 +158,10 @@ class Session:
     def has_identity(self) -> bool:
         return self._state.account_key is not None
 
+    # ----------------------------
+    # Mark
+    # ----------------------------
+
     def mark(self, name: str) -> None:
         self._runtime.marks.add(name)
 
@@ -149,6 +170,10 @@ class Session:
 
     def clear_marks(self) -> None:
         self._runtime.marks.clear()
+
+    # ----------------------------
+    # emit
+    # ----------------------------
 
     async def emit(self, payload: ViewSpec | ViewEvent) -> None:
         if isinstance(payload, ViewEvent):

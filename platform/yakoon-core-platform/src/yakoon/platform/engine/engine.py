@@ -1,19 +1,24 @@
-import asyncio
-
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import Permission, PermissionService
-from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.capabilities.workflow import WorkflowContextRequired, WorkflowService
-from yakoon.base.engine import CommandDispatch, DispatchInput, ResolveDispatch
+from yakoon.base.engine import CommandDispatch, DispatchInput
+from yakoon.base.engine.flow import FlowCursor
+from yakoon.base.engine.step import (
+    FlowFinished,
+    FlowState,
+    InputRequired,
+    Step,
+    TickResult,
+)
 from yakoon.base.runtime import (
     CmdNotFound,
     Command,
-    CommandContext,
     ExecStep,
     Request,
     Session,
 )
+from yakoon.base.runtime.commands.command import CommandContext
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.ui import v_error
@@ -23,8 +28,6 @@ from .directories import CommandDirectory, ControllerDirectory
 
 
 class CommandEngine:
-
-    GLOBAL_PARALLEL_COMMANDS = 8
 
     def __init__(
         self,
@@ -36,184 +39,105 @@ class CommandEngine:
         self._services = services
         self._commands = commands
 
-        self._active_tasks: dict[str, asyncio.Task] = {}
-        self._session_locks: dict[str, asyncio.Lock] = {}
-        self._session_limits: dict[str, asyncio.Semaphore] = {}
-
-        limit = self.GLOBAL_PARALLEL_COMMANDS
-        self._global_limit = asyncio.Semaphore(limit)
-
     @property
     def services(self) -> ServiceDirectory:
         return self._services
 
-    def _lock(self, session: Session) -> asyncio.Lock:
-        skey = str(session.key)
-        return self._session_locks.setdefault(skey, asyncio.Lock())
-
     async def _find_matching_command(
         self, controller_id, request: Request
-    ) -> tuple[Controller | None, Command | None] | None:
+    ) -> tuple[Controller | None, type[Command] | None] | None:
 
-        result: tuple[str, Command] | None = self._commands.find(
+        result: tuple[str, type[Command]] | None = self._commands.find(
             controller_id, request.command
         )
         if result and isinstance(result, tuple):
             controller_id, command = result
             return self._controllers.get(controller_id), command
 
-    async def dispatch(self, session: Session, di: DispatchInput) -> Session:
+    async def dispatch(self, session: Session, di: DispatchInput) -> Step | None:
 
         session.execution.reset()
-        session.execution.step(
-            ExecStep.EXECUTION_START,
-        )
-
-        skey = str(session.key)
-        shell = self._controllers.find_shell()
-        if not shell:
-            raise RuntimeError("Shell was not found.")
-        if not session.get_active_controller():
-            session.set_active_controller(shell.id)
-
-        # 1) Prompt response path
-        async with self._lock(session):
-            dialog_service = self.services.get(DialogService)
-            if dialog_service.is_waiting(session):
-
-                if isinstance(di, ResolveDispatch):
-                    dialog_service.resolve_input(session, di.values)
-                    # Drive the existing active task until it either finishes or asks again
-                    await self._drive_until_blocked_or_done(session)
-                    # print("DISPATCH END")
-                    return session
-
-        # 2) Normal command path
-        loop = asyncio.get_running_loop()
-        task = loop.create_task(self._run_limited(session, di))
-
-        self._active_tasks[skey] = task
-
-        await self._drive_until_blocked_or_done(session)
-        return session
-
-    def cleanup_session(self, session: Session) -> None:
-        skey = str(session.key)
-        self._session_limits.pop(skey, None)
-        self._session_locks.pop(skey, None)
-        self._active_tasks.pop(skey, None)
-
-    async def _drive_until_blocked_or_done(self, session: Session) -> None:
-
-        skey = str(session.key)
-        task = self._active_tasks.get(skey)
-        if not task:
-            return
-
-        dialogs = self.services.get(DialogService)
-
-        # drive until either:
-        # - task done
-        # - prompt state changes, then re-check
-        while True:
-            if task.done():
-                exc = task.exception()
-                if exc:
-                    raise exc
-
-                self._active_tasks.pop(skey, None)
-                return
-
-            if dialogs.is_waiting(session):
-                return
-
-            # wait for either task completion OR a prompt edge
-            edge = dialogs.edge_event(session)
-            edge.clear()
-
-            edge_task = asyncio.create_task(edge.wait())
-            try:
-                await asyncio.wait(
-                    {task, edge_task},
-                    return_when=asyncio.FIRST_COMPLETED,
-                )
-            finally:
-                # don't await cancel; best-effort
-                edge_task.cancel()
-
-    async def _dispatch_command(self, session: Session, di: DispatchInput) -> None:
-
+        session.execution.step(ExecStep.EXECUTION_START)
         if not isinstance(di, CommandDispatch):
-            return
+            return None
 
-        failed = False
         request = Request(di.text)
         if not request.command:
-            return
+            return None
 
         session.execution.step(
             ExecStep.COMMAND_RECEIVED,
             command=request.raw,
         )
 
-        # Active controller is the single routing context (S1)
+        # Active controller sicherstellen
         controller_id = session.get_active_controller()
-        controller = self._controllers.get(controller_id) if controller_id else None
+        if not controller_id:
+            shell = self._controllers.find_shell()
+            if not shell:
+                raise RuntimeError("Shell was not found.")
+            session.set_active_controller(shell.id)
+            controller_id = shell.id
+
+        controller = self._controllers.get(controller_id)
         if not controller:
             await session.emit(v_error("Kein aktiver Controller gesetzt."))
-            return
+            return None
 
-        command = None
+        command_type: type[Command] | None = None
 
         try:
-            # Domain-level hook before resolving the input into a command.
-            # Allows dynamic command registration or early input rewriting.
+
+            # Hook vor resolve
             await controller.on_before_resolve(session)
 
-            # Resolve command within the single active controller context (+ groups)
+            # Command finden
             result = await self._find_matching_command(controller_id, request)
             if not result:
                 resolver = self.services.get(LookupResolverService)
-                result = await resolver.resolve(session, request)
-                if result:
-                    request = Request(result)
+                resolved = await resolver.resolve(session, request)
+                if resolved:
+                    request = Request(resolved)
                     result = await self._find_matching_command(controller_id, request)
 
             if not result:
-                raise CmdNotFound(f"{request.command}")
+                raise CmdNotFound(request.command)
 
-            resolved_controller, command = result
-
+            resolved_controller, command_type = result
             if not resolved_controller:
-                raise RuntimeError("Controller missing in result")
-            if not command:
-                raise RuntimeError("Command missing in result")
+                raise RuntimeError(
+                    f"Resolved controller is None for command '{request.raw}'"
+                )
+
+            if not command_type:
+                raise RuntimeError(
+                    f"Resolved command is None for input '{request.raw}' "
+                    f"(controller='{resolved_controller.id}')"
+                )
 
             session.execution.step(
                 ExecStep.COMMAND_RESOLVED,
-                command=command.key,
+                command=command_type.key,
                 controller=resolved_controller.id,
             )
 
-            # check workflow context
-            # user cannot start workflow commands without batch
-            if command.requires_workflow and not di.batch_id:
-                raise WorkflowContextRequired()
-
-            # check permissions
+            # Permission check
             perm_service = self.services.get(PermissionService)
-            fq = Permission.fq_key(resolved_controller.id, command.key)
+            fq = Permission.fq_key(resolved_controller.id, command_type.key)
             if not perm_service.can_execute(session, fq):
                 raise PermissionError("Permission denied")
 
-            # Safety: Under S1, resolved controller should match active controller
-            # (If your router can return a different controller, keep this;
-            # otherwise you can drop it.)
-            controller = resolved_controller
-            command.context = CommandContext(controller, di.batch_id)
+            command = self.create_command(command_type, controller)
+
+            session.execution.step(
+                ExecStep.COMMAND_PREPARED,
+                command=command_type.key,
+                controller=resolved_controller.id,
+            )
 
             # Pre-command hook
             await controller.on_before_run_command(session, request, command)
+            await command.respond(session, request)
 
             session.execution.step(
                 ExecStep.COMMAND_RUNNING,
@@ -221,32 +145,116 @@ class CommandEngine:
                 controller=controller.id,
             )
 
-            # Execute command
-            await command.run(session, request)
+            session.flow = {
+                "started": True,
+                "finished": False,
+                "waiting": False,
+                "command_key": command_type.key,
+                "controller_id": resolved_controller.id,
+                "request": request.raw,
+                "cursor": FlowCursor(command_type.flow),
+                "ctx": {},
+            }
 
-            session.execution.step(
-                ExecStep.COMMAND_SUCCESS,
-                command=command.key,
-                controller=controller.id,
+        except CmdNotFound:
+            await session.emit(
+                v_error(f"{request.command}': command not found... use 'man'")
             )
 
-            # Post-command hook
-            await controller.on_after_run_command(session, request, command)
+        except PermissionError as exc:
+            self.services.get(AuditLogService).security(
+                session,
+                "command",
+                command_type.key if command_type else request.command,
+            )
+            await session.emit(v_error(str(exc)))
 
         except WorkflowContextRequired:
-            failed = True
             await session.emit(
                 v_error(
                     f"{request.command}': may only be executed from within a workflow.'"
                 )
             )
 
-        except CmdNotFound as exc:
-            failed = True
-            await session.emit(
-                v_error(f"{request.command}': command not found... use 'man'")
+        except Exception as exc:
+            self.services.get(AuditLogService).error(exc, session)
+            await session.emit(v_error("Ein interner Fehler ist aufgetreten."))
+
+        finally:
+            if command_type:
+                command_type.context = None
+            await controller.on_cleanup(session)
+
+    def create_command(self, command_type: type, controller: Controller) -> Command:
+        command = command_type()
+        command.context = CommandContext(controller, "")
+        return command
+
+    async def tick(self, session: Session):
+
+        failed = False
+        command: Command | None = None
+
+        flow = session.flow
+        cursor = flow["cursor"]
+        command_key = flow["command_key"]
+        controller_id = flow["controller_id"]
+        request = Request(flow["request"])
+
+        # print("TICK", flow.get("ctx"))
+
+        if not request.command:
+            return
+
+        controller = self._controllers.get(controller_id)
+        if not controller:
+            raise RuntimeError(f"Controller is None for command '{request.raw}'")
+
+        command_type = self._commands.get_type(controller_id, command_key)
+        if not command_type:
+            raise RuntimeError(
+                f"Command is None for input '{request.raw}' "
+                f"(controller='{controller.id}')"
             )
-            self.wf_failed(exc, command, session, di)
+
+        try:
+            command = self.create_command(command_type, controller)
+
+            # check permissions
+            if not flow["started"]:
+                perm_service = self.services.get(PermissionService)
+                fq = Permission.fq_key(controller.id, command.key)
+                if not perm_service.can_execute(session, fq):
+                    raise PermissionError("Permission denied")
+                flow["started"] = True
+
+            try:
+                step = await cursor.next(command, session, request)
+            except StopAsyncIteration:
+                flow["finished"] = True
+                session.flow = {}
+                return TickResult(FlowState.FINISHED, FlowFinished())
+
+            outcome = await step.run(session, request)
+            if isinstance(outcome, InputRequired):
+                flow["waiting"] = True
+                return TickResult(state=FlowState.WAITING, outcome=outcome)
+
+            if isinstance(outcome, FlowFinished) and not flow.get("finished"):
+                # Post-command hook
+                await controller.on_after_run_command(session, request, command)
+                flow["finished"] = True
+
+                session.flow = {}
+                session.execution.step(
+                    ExecStep.COMMAND_SUCCESS,
+                    command=command.key,
+                    controller=controller.id,
+                )
+                return TickResult(FlowState.FINISHED, outcome)
+
+            flow["waiting"] = False
+            return TickResult(FlowState.RUNNING, outcome)
 
         except PermissionError as exc:
             failed = True
@@ -257,12 +265,12 @@ class CommandEngine:
                 session, "command", command_key
             )
             await session.emit(v_error(str(exc)))
-            self.wf_failed(exc, command, session, di)
+            # self.wf_failed(exc, command, session, di)
 
         except ValueError as exc:
             failed = True
             await session.emit(v_error(str(exc)))
-            self.wf_failed(exc, command, session, di)
+            # self.wf_failed(exc, command, session, di)
 
         except ViewSpecValidationError as exc:
             self._services.get(AuditLogService).error(exc, session)
@@ -274,7 +282,7 @@ class CommandEngine:
             failed = True
             self._services.get(AuditLogService).error(exc, session)
             await session.emit(v_error("Ein interner Fehler ist aufgetreten."))
-            self.wf_failed(exc, command, session, di)
+            # self.wf_failed(exc, command, session, di)
 
         finally:
 
@@ -285,12 +293,9 @@ class CommandEngine:
                     controller=controller.id if controller else None,
                 )
 
-            if command:
-                command.context = None
-
-            if failed and di.batch_id:
-                wf = self._services.get(WorkflowService)
-                wf.cancel_batch(session, batch_id=di.batch_id)
+            # if failed and di.batch_id:
+            #    wf = self._services.get(WorkflowService)
+            #    wf.cancel_batch(session, batch_id=di.batch_id)
 
             # Policy 2: cleanup the controller that executed this command
             # (NOT the current active controller after the command potentially
@@ -313,16 +318,3 @@ class CommandEngine:
                 message=str(exc),
                 command=command.key,
             )
-
-    def _get_session_semaphore(self, session: Session) -> asyncio.Semaphore:
-        skey = str(session.key)
-        return self._session_limits.setdefault(
-            skey,
-            # bewusst sequenziell pro Session
-            asyncio.Semaphore(1),
-        )
-
-    async def _run_limited(self, session: Session, di: DispatchInput) -> None:
-        async with self._global_limit:
-            async with self._get_session_semaphore(session):
-                await self._dispatch_command(session, di)

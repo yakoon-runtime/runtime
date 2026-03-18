@@ -61,6 +61,8 @@ class ConsoleOutput:
         renderer.append(key, chunk)
 
     def _stream_finished(self):
+        self._nodes.clear()
+        self._renderers.clear()
         self._flow.release()
 
     # IO ---------------------------------
@@ -72,12 +74,12 @@ class ConsoleOutput:
         self._flow = flow
 
     async def view(self, event: ViewEvent) -> None:
-
         for op in event.patch.ops:
 
             if isinstance(op, PatchReset):
-                self._nodes.clear()
-                self._renderers.clear()
+                pass
+                # self._nodes.clear()
+                # self._renderers.clear()
 
             elif isinstance(op, PatchAppendStructure):
                 for spec in op.nodes:

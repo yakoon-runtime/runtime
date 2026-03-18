@@ -24,7 +24,7 @@ class RuntimeHost:
 
         self._sessions: dict[Key, Runner] = {}
         self._connections: dict[ClientConnection, Runner] = {}
-
+        self._runner_tasks: dict[int, asyncio.Task] = {}
         self._session_counter = 0
 
     async def connect(
@@ -49,13 +49,32 @@ class RuntimeHost:
                 interaction=interaction,
             )
             self._sessions[session.key] = runner
-            asyncio.create_task(runner.start([]))
+
+            task = asyncio.create_task(runner.start([]))
+            self._runner_tasks[self._runner_key(runner)] = task
 
         self._connections[connection] = runner
         return connection
 
     async def disconnect(self, connection: ClientConnection):
-        self._connections.pop(connection, None)
+        runner = self._connections.pop(connection, None)
+        if not runner:
+            return
+
+        # has session other clients
+        if self._has_connections(runner):
+            return
+
+        # real session ist deth
+        session = runner.session
+
+        # cancel task
+        task = self._runner_tasks.pop(self._runner_key(runner), None)
+        if task:
+            task.cancel()
+
+        self.engine.cleanup_session(session)
+        self._sessions.pop(session.key, None)
 
     async def receive_input(self, connection: ClientConnection, event):
         runner = self._connections.get(connection)
@@ -89,3 +108,9 @@ class RuntimeHost:
             "runtime",
             str(self._session_counter),
         )
+
+    def _has_connections(self, runner: Runner) -> bool:
+        return any(r is runner for r in self._connections.values())
+
+    def _runner_key(self, runner: Runner) -> int:
+        return id(runner)

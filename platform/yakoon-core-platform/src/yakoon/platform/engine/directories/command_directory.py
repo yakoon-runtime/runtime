@@ -62,7 +62,9 @@ class CommandDirectory:
     # Resolve + materialize
     # ---------------------------------------------------------------------
 
-    def find(self, controller_id: str, command_key: str) -> tuple[str, Command] | None:
+    def find(
+        self, controller_id: str, command_key: str
+    ) -> tuple[str, type[Command]] | None:
         """
         Resolve a command within a controller context and materialize it.
 
@@ -88,7 +90,7 @@ class CommandDirectory:
             # Catalog says it exists, but we have no type -> composition mismatch
             return None
 
-        return owner_id, cmd_type()
+        return owner_id, cmd_type
 
     # ---------------------------------------------------------------------
     # Validation

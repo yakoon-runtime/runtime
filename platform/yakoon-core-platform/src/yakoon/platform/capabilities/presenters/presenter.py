@@ -8,6 +8,7 @@ from yakoon.base.rendering import RenderContext, RenderService
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.runtime import Session
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.ui.document import ViewSpec
 from yakoon.base.ui.stream import OutputStreaming
 
 
@@ -36,6 +37,18 @@ class DefaultPresenter:
             lang=session.lang,
         )
 
+    async def view(
+        self,
+        state: str,
+        **data: Any,
+    ) -> ViewSpec:
+        view = await self._renderer.render_view(self._ctx, state, **data)
+        if view.id is None:
+            raise RuntimeError(
+                "Renderer returned a ViewSpec without id (parser invariant violated)"
+            )
+        return view
+
     async def present(
         self,
         state: str,
@@ -44,12 +57,7 @@ class DefaultPresenter:
         **data: Any,
     ) -> PresentResult | None:
 
-        view = await self._renderer.render_view(self._ctx, state, **data)
-        if view.id is None:
-            raise RuntimeError(
-                "Renderer returned a ViewSpec without id (parser invariant violated)"
-            )
-
+        view = await self.view(state, **data)
         return await self._interaction.play_view(
             self._session,
             view=view,

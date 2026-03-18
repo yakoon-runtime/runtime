@@ -1,0 +1,10 @@
+kind: view
+
+view:
+  role: info
+  title: "Commands"
+  blocks:
+    - type: text
+      text: "Nur ein einfacher Text."
+
+    

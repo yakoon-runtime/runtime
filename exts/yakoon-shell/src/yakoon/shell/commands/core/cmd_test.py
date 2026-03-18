@@ -1,3 +1,6 @@
+from collections.abc import AsyncGenerator
+
+from yakoon.base.engine.step import Ask, Step
 from yakoon.base.runtime import Command, Request, Session
 from yakoon.base.runtime.commands import (
     CommandCancelled,
@@ -12,6 +15,24 @@ class CmdTest(Command):
     key = "test"
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
+
+    async def respond(self, session: Session, request: Request) -> None:
+        presenter = await self.get_presenter(session=session)
+        await presenter.present("test")
+
+    async def flow(
+        self, session: Session, request: Request
+    ) -> AsyncGenerator[Step, None]:
+
+        presenter = await self.get_presenter(session=session)
+        yield Ask("ask1", presenter)
+        return
+        # yield ShowResult(value)
+
+        # yield Show("test", presenter)
+
+        # yield Show("test")
+        # yield Show("test")
 
     async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
 
