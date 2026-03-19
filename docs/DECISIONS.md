@@ -7,6 +7,16 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+==26-03-19== 
+**Stateless Engine**
+Die gesamte Engine wurde auf stateless umgestellt:
++ stateless engine
++ stateful execution (generator)
++ non-blocking runtime
+- no semaphore
+- no tasks
+- no asycn-event
+
 ## ==26-03-16== 
 **Host / Client Architektur eingeführt**
 Die Plattform wurde von einer lokalen CLI-Anwendung zu einer echten Host/Client-Runtime umgebaut.
