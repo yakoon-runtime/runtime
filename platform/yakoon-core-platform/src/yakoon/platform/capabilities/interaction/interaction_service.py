@@ -5,7 +5,6 @@ from typing import Any
 
 from yakoon.base.capabilities.interaction import (
     DialogCancelled,
-    DialogService,
     PolicyService,
 )
 from yakoon.base.capabilities.presenters import PresentResult
@@ -19,15 +18,13 @@ from yakoon.base.ui import (
     ViewSpec,
     v_error,
 )
-from yakoon.platform.settings import settings
 
 
 class DefaultInteractionService:
 
     def __init__(self, services: ServiceDirectory) -> None:
-        self._dialogs = services.get(DialogService)
-        self._policy = services.get(PolicyService)
         self._services = services
+        self._policy = services.get(PolicyService)
         self._stream_service: OutputStreamService | None = None
 
     @property
@@ -133,88 +130,6 @@ class DefaultInteractionService:
 
         return PresentResult(out, aliases, order)
 
-    async def _ask_batch(
-        self,
-        session: Session,
-        view_id: str,
-        block: FieldsBlock,
-        order: list[str],
-    ) -> dict[str, object]:
-
-        view = self._view_for_block(view_id, block)
-
-        while True:
-
-            raw = await self._dialogs.wait_view(
-                session,
-                view=view,
-                timeout=settings.network.prompt_timed_out,
-            )
-
-            out, errors = await self._validate_all(block, raw, order)
-
-            unknown = set(raw.keys()) - set(self._field_map(block).keys())
-            if unknown:
-                errors.setdefault("form", []).append(
-                    f"Unknown fields: {sorted(unknown)}"
-                )
-
-            if not errors:
-                return out
-
-            await self._emit_errors(session, errors)
-
-    async def _ask_stepwise(
-        self,
-        session: Session,
-        view_id: str,
-        block: FieldsBlock,
-        order: list[str],
-    ) -> dict[str, object]:
-
-        fields_def = self._field_map(block)
-        out: dict[str, object] = {}
-
-        for key in order:
-
-            fd = fields_def.get(key)
-            if fd is None:
-                continue
-
-            while True:
-
-                step_block = self._with_only_field_block(block, key)
-                step_view = self._view_for_block(view_id, step_block)
-
-                raw = await self._dialogs.wait_view(
-                    session,
-                    view=step_view,
-                    timeout=settings.network.prompt_timed_out,
-                )
-
-                partial_out, errors = await self._validate_all(
-                    step_block,
-                    raw,
-                    order=[key],
-                )
-
-                unknown = set(raw.keys()) - {key}
-                if unknown:
-                    errors.setdefault("form", []).append(
-                        f"Unknown fields: {sorted(unknown)}"
-                    )
-
-                if errors:
-                    await self._emit_errors(session, errors)
-                    continue
-
-                if key in partial_out:
-                    out[key] = partial_out[key]
-
-                break
-
-        return out
-
     def _view_for_block(self, view_id: str, block: FieldsBlock) -> ViewSpec:
         return ViewSpec(id=view_id, header=None, blocks=[block])
 
@@ -233,50 +148,6 @@ class DefaultInteractionService:
         if not only:
             return block
         return replace(block, fields=only, input_mode="prompt")
-
-    async def _validate_all(
-        self,
-        block: FieldsBlock,
-        raw: dict[str, object],
-        order: list[str],
-    ) -> tuple[dict[str, object], dict[str, list[str]]]:
-
-        out: dict[str, object] = {}
-        errors: dict[str, list[str]] = {}
-
-        fields_def = self._field_map(block)
-
-        for key in order:
-
-            fd = fields_def.get(key)
-            if fd is None:
-                continue
-
-            raw_value = raw.get(key)
-
-            if (
-                (raw_value is None or raw_value == "")
-                and fd.required
-                and not fd.default
-            ):
-                errors.setdefault(key, []).append("This field is required.")
-                continue
-
-            if raw_value is None or raw_value == "":
-                raw_value = fd.default
-
-            result = self._policy.validate(
-                policy_key=fd.policy,
-                raw=raw_value,
-            )
-
-            if not result.ok:
-                errors.setdefault(key, []).extend(err.message for err in result.errors)
-                continue
-
-            out[key] = result.value
-
-        return out, errors
 
     async def _emit_errors(
         self,

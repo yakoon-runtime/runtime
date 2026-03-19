@@ -2,14 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from yakoon.base.capabilities.interaction import InteractionService
-from yakoon.base.capabilities.presenters import PresentResult
 from yakoon.base.rendering import RenderContext, RenderService
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.runtime import Session
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.ui.document import ViewSpec
-from yakoon.base.ui.stream import OutputStreaming
 
 
 class DefaultPresenter:
@@ -30,7 +27,6 @@ class DefaultPresenter:
     ) -> None:
         self._session = session
         self._renderer = services.get(RenderService)
-        self._interaction = services.get(InteractionService)
 
         self._ctx = RenderContext(
             resource=resource,
@@ -48,40 +44,3 @@ class DefaultPresenter:
                 "Renderer returned a ViewSpec without id (parser invariant violated)"
             )
         return view
-
-    async def present(
-        self,
-        state: str,
-        *,
-        stream: OutputStreaming | None = None,
-        **data: Any,
-    ) -> PresentResult | None:
-
-        view = await self.view(state, **data)
-        return await self._interaction.play_view(
-            self._session,
-            view=view,
-            stream=stream,
-        )
-
-    async def require_present(
-        self,
-        state: str,
-        *,
-        stream: OutputStreaming | None = None,
-        **data: Any,
-    ) -> PresentResult:
-        result = await self.present(state, stream=stream, **data)
-        if result is None:
-            raise RuntimeError(f"Presenter state {state!r} returned no result")
-        return result
-
-    async def require_first(
-        self,
-        state: str,
-        *,
-        stream: OutputStreaming | None = None,
-        **data: Any,
-    ) -> Any:
-        result = await self.require_present(state, stream=stream, **data)
-        return result.first()

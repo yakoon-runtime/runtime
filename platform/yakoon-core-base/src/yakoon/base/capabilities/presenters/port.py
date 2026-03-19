@@ -2,9 +2,6 @@ from typing import Any, Protocol
 
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.ui import ViewSpec
-from yakoon.base.ui.stream import OutputStreaming
-
-from .result import PresentResult
 
 
 class Presenter(Protocol):
@@ -20,30 +17,6 @@ class Presenter(Protocol):
         state: str,
         **data: Any,
     ) -> ViewSpec: ...
-
-    async def present(
-        self,
-        state: str,
-        *,
-        stream: OutputStreaming | None = None,
-        **data: Any,
-    ) -> PresentResult | None: ...
-
-    async def require_present(
-        self,
-        state: str,
-        *,
-        stream: OutputStreaming | None = None,
-        **data: Any,
-    ) -> PresentResult: ...
-
-    async def require_first(
-        self,
-        state: str,
-        *,
-        stream: OutputStreaming | None = None,
-        **data: Any,
-    ) -> Any: ...
 
 
 class PresenterService(Protocol):

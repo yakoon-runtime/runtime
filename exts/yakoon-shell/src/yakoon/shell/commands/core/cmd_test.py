@@ -16,25 +16,35 @@ class CmdTest(Command):
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
 
-    async def respond(self, session: Session, request: Request) -> None:
-        presenter = await self.get_presenter(session=session)
-        await presenter.present("test")
-
-    async def flow(
+    async def run(
         self, session: Session, request: Request
     ) -> AsyncGenerator[Step, None]:
 
+        messages = []
+
         presenter = await self.get_presenter(session=session)
-        yield Ask("ask1", presenter)
-        return
-        # yield ShowResult(value)
+        data = yield Ask("ask1", presenter)
+        messages.append(data)
 
-        # yield Show("test", presenter)
+        data = yield Ask("ask1", presenter)
+        messages.append(data)
 
-        # yield Show("test")
-        # yield Show("test")
+        await session.emit(v_text(str(messages)))
 
-    async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+        # view = await presenter.view("ask1")
+
+        # yield Show("ask1", presenter)
+        # data = yield Ask("ask1", presenter)
+
+        # compiled = compile_view(view)
+        # async for step in compiled(self, session, request):
+        #    yield step
+
+        # data = yield Ask("ask1", presenter)
+
+        # print(data)
+
+    async def _run(self, session: Session, request: Request) -> None:  # noqa: ARG002
 
         try:
             result = await self.ask(session, "ask1")

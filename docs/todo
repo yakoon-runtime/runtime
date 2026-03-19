@@ -1,0 +1,18 @@
+1. Ask → PresentResult sauber zurückgeben
+2. Validation wieder einbauen (ohne Blocking!)
+3. Multi-field Handling sauber machen
+4. ctx entfernen oder klar definieren
+
+
+Validation (sehr sinnvoll)
+
+→ Input prüfen, retry, UX
+
+2. Persistenz (großer Schritt)
+
+→ Flow speichern / wiederherstellen
+
+3. Scheduling optimieren
+
+→ viele Flows effizient treiben
+

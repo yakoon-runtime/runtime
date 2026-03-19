@@ -9,8 +9,9 @@ from .step import (
     Show,
     Step,
     StepOutcome,
-    StepResult,
     TickResult,
+    Wait,
+    WaitUntil,
 )
 from .types import CommandDispatch, DispatchInput, ResolveDispatch
 
@@ -25,9 +26,10 @@ __all__ = [
     "Ask",
     "Show",
     "Step",
-    "StepResult",
     "StepOutcome",
     "FlowFinished",
     "InputRequired",
     "Continue",
+    "Wait",
+    "WaitUntil",
 ]

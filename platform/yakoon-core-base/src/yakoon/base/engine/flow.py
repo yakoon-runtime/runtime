@@ -10,7 +10,9 @@ class FlowCursor:
     async def next(self, command, session, request):
         if not self.iterator:
             self.start(command, session, request)
-        if self.iterator is None:
-            raise RuntimeError("Cursor not started")
-        # return await self.iterator.__anext__()
         return await anext(self.iterator)
+
+    async def send(self, value):
+        if not self.iterator:
+            raise RuntimeError("Cursor not started")
+        return await self.iterator.asend(value)

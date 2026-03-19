@@ -1,13 +1,18 @@
+import time
+
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import Permission, PermissionService
-from yakoon.base.capabilities.workflow import WorkflowContextRequired, WorkflowService
+from yakoon.base.capabilities.presenters.result import PresentResult
+from yakoon.base.capabilities.workflow import WorkflowContextRequired
 from yakoon.base.engine import CommandDispatch, DispatchInput
 from yakoon.base.engine.flow import FlowCursor
 from yakoon.base.engine.step import (
     FlowFinished,
     FlowState,
     InputRequired,
+    SleepRequired,
+    SleepUntilRequired,
     Step,
     TickResult,
 )
@@ -22,7 +27,6 @@ from yakoon.base.runtime.commands.command import CommandContext
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.ui import v_error
-from yakoon.platform.ui import ViewSpecValidationError
 
 from .directories import CommandDirectory, ControllerDirectory
 
@@ -127,33 +131,17 @@ class CommandEngine:
             if not perm_service.can_execute(session, fq):
                 raise PermissionError("Permission denied")
 
-            command = self.create_command(command_type, controller)
-
             session.execution.step(
                 ExecStep.COMMAND_PREPARED,
                 command=command_type.key,
                 controller=resolved_controller.id,
             )
 
-            # Pre-command hook
-            await controller.on_before_run_command(session, request, command)
-            await command.respond(session, request)
-
-            session.execution.step(
-                ExecStep.COMMAND_RUNNING,
-                command=command.key,
-                controller=controller.id,
-            )
-
             session.flow = {
-                "started": True,
-                "finished": False,
-                "waiting": False,
                 "command_key": command_type.key,
                 "controller_id": resolved_controller.id,
                 "request": request.raw,
-                "cursor": FlowCursor(command_type.flow),
-                "ctx": {},
+                "cursor": FlowCursor(command_type.run),
             }
 
         except CmdNotFound:
@@ -190,131 +178,84 @@ class CommandEngine:
         command.context = CommandContext(controller, "")
         return command
 
-    async def tick(self, session: Session):
+    async def tick(self, session: Session) -> TickResult:
 
-        failed = False
-        command: Command | None = None
+        def now():
+            return time.time()
 
         flow = session.flow
+        if not flow:
+            return TickResult(FlowState.FINISHED, None)
+
         cursor = flow["cursor"]
         command_key = flow["command_key"]
         controller_id = flow["controller_id"]
         request = Request(flow["request"])
 
-        # print("TICK", flow.get("ctx"))
-
-        if not request.command:
-            return
-
         controller = self._controllers.get(controller_id)
         if not controller:
-            raise RuntimeError(f"Controller is None for command '{request.raw}'")
+            raise RuntimeError(
+                f"Resolved controller is None for command '{request.raw}'"
+            )
 
         command_type = self._commands.get_type(controller_id, command_key)
         if not command_type:
             raise RuntimeError(
-                f"Command is None for input '{request.raw}' "
+                f"Resolved command is None for input '{request.raw}' "
                 f"(controller='{controller.id}')"
             )
 
+        command = self.create_command(command_type, controller)
+
+        # TODO: nur beim ersten Step
+        # Pre-command hook
+        # await controller.on_before_run_command(session, request, command)
+
+        session.execution.step(
+            ExecStep.COMMAND_RUNNING,
+            command=command.key,
+            controller=controller.id,
+        )
+
         try:
-            command = self.create_command(command_type, controller)
+            if "input" in flow:
+                raw_values: dict = flow.pop("input", {})
 
-            # check permissions
-            if not flow["started"]:
-                perm_service = self.services.get(PermissionService)
-                fq = Permission.fq_key(controller.id, command.key)
-                if not perm_service.can_execute(session, fq):
-                    raise PermissionError("Permission denied")
-                flow["started"] = True
+                step = flow["last_step"]
+                result_values = await step.resume(session, raw_values)
 
-            try:
+                value = PresentResult(result_values, {}, list(result_values.keys()))
+                step = await cursor.send(value)
+            else:
                 step = await cursor.next(command, session, request)
-            except StopAsyncIteration:
-                flow["finished"] = True
-                session.flow = {}
-                return TickResult(FlowState.FINISHED, FlowFinished())
 
-            outcome = await step.run(session, request)
-            if isinstance(outcome, InputRequired):
-                flow["waiting"] = True
-                return TickResult(state=FlowState.WAITING, outcome=outcome)
+            flow["last_step"] = step
+        except StopAsyncIteration:
+            session.flow = {}
+            return TickResult(FlowState.FINISHED, FlowFinished())
 
-            if isinstance(outcome, FlowFinished) and not flow.get("finished"):
-                # Post-command hook
-                await controller.on_after_run_command(session, request, command)
-                flow["finished"] = True
+        # Step ausführen
+        outcome = await step.run(session, request)
 
-                session.flow = {}
-                session.execution.step(
-                    ExecStep.COMMAND_SUCCESS,
-                    command=command.key,
-                    controller=controller.id,
-                )
-                return TickResult(FlowState.FINISHED, outcome)
+        if isinstance(outcome, SleepRequired):
+            flow["wake_at"] = now() + outcome.seconds
+            return TickResult(FlowState.WAITING, None)
 
-            flow["waiting"] = False
-            return TickResult(FlowState.RUNNING, outcome)
+        if isinstance(outcome, SleepUntilRequired):
+            flow["wake_at"] = outcome.timestamp
+            return TickResult(FlowState.WAITING, None)
 
-        except PermissionError as exc:
-            failed = True
+        # WAITING
+        if isinstance(outcome, InputRequired):
+            return TickResult(FlowState.WAITING, outcome)
 
-            # command may be None if permission fails early
-            command_key = command.key if command else request.command
-            self._services.get(AuditLogService).security(
-                session, "command", command_key
-            )
-            await session.emit(v_error(str(exc)))
-            # self.wf_failed(exc, command, session, di)
+        # FINISHED (explizit)
+        if isinstance(outcome, FlowFinished):
+            # Nur beim letzten Step
+            await controller.on_after_run_command(session, request, command)
 
-        except ValueError as exc:
-            failed = True
-            await session.emit(v_error(str(exc)))
-            # self.wf_failed(exc, command, session, di)
+            session.flow = {}
+            return TickResult(FlowState.FINISHED, outcome)
 
-        except ViewSpecValidationError as exc:
-            self._services.get(AuditLogService).error(exc, session)
-            await session.emit(
-                v_error("Ein interner Konfigurationsfehler ist aufgetreten.")
-            )
-
-        except Exception as exc:
-            failed = True
-            self._services.get(AuditLogService).error(exc, session)
-            await session.emit(v_error("Ein interner Fehler ist aufgetreten."))
-            # self.wf_failed(exc, command, session, di)
-
-        finally:
-
-            if failed:
-                session.execution.step(
-                    ExecStep.COMMAND_FAILED,
-                    command=command.key if command else None,
-                    controller=controller.id if controller else None,
-                )
-
-            # if failed and di.batch_id:
-            #    wf = self._services.get(WorkflowService)
-            #    wf.cancel_batch(session, batch_id=di.batch_id)
-
-            # Policy 2: cleanup the controller that executed this command
-            # (NOT the current active controller after the command potentially
-            # changed it)
-            await controller.on_cleanup(session)
-
-    def wf_failed(
-        self,
-        exc: Exception,
-        command: Command | None,
-        session: Session,
-        di: DispatchInput,
-    ) -> None:
-        if di.batch_id and command:
-            wf = self._services.get(WorkflowService)
-            wf.fail_batch(
-                session,
-                batch_id=di.batch_id,
-                code="",  # TODO code ist empty
-                message=str(exc),
-                command=command.key,
-            )
+        # 🔵 RUNNING
+        return TickResult(FlowState.RUNNING, outcome)

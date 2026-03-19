@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import asyncio
 from enum import IntEnum
+from typing import Any
 
-from yakoon.base.capabilities.presenters.port import Presenter
-from yakoon.base.ui.document import ViewSpec
+# ============================================================
+# Flow State
+# ============================================================
 
 
 class FlowState(IntEnum):
@@ -14,51 +15,31 @@ class FlowState(IntEnum):
 
 
 class TickResult:
-    state: FlowState
-    outcome: StepOutcome | None
-
-    def __init__(self, state, outcome):
+    def __init__(self, state: FlowState, outcome: StepOutcome | None):
         self.state = state
         self.outcome = outcome
 
 
-class StepResult:
-    def __init__(self, step):
-        self.step = step
+# ============================================================
+# Step Base
+# ============================================================
 
 
 class Step:
-    pass
-    # async def run(self, session) -> Step: ...
-
-
-class Ask(Step):
-
-    def __init__(self, field, presenter: Presenter):
-        self.presenter = presenter
-        self.field = field
-
     async def run(self, session, request):
-        view = await self.presenter.view(self.field)
-        return InputRequired(view)
+        raise NotImplementedError
+
+    async def resume(self, session, input):
+        # Default: einfach durchreichen
+        return input
 
 
-class Show(Step):
-
-    def __init__(self, view: str, presenter: Presenter):
-        self.view = view
-        self.presenter = presenter
-
-    async def run(self, session, request) -> Step:
-        await self.presenter.present(self.view)
-        return Continue()
+# ============================================================
+# Outcomes
+# ============================================================
 
 
-class StepOutcome(Step):
-    pass
-
-
-class FlowFinished(StepOutcome):
+class StepOutcome:
     pass
 
 
@@ -66,30 +47,113 @@ class Continue(StepOutcome):
     pass
 
 
-class Parallel(Step):
+class FlowFinished(StepOutcome):
+    pass
 
-    def __init__(self, *steps):
-        self.steps = steps
 
-    async def run(self, session):
-        await asyncio.gather(*(s.run(session) for s in self.steps))
+class InputRequired(StepOutcome):
+    def __init__(
+        self, block, *, errors: dict | None = None, values: dict | None = None
+    ):
+        self.block = block
+        self.errors = errors or {}
+        self.values = values or {}
+
+
+# ============================================================
+# Steps
+# ============================================================
+
+
+class NoOp(Step):
+    async def run(self, session, request):
         return Continue()
 
 
-class InputRequired:
-    view: ViewSpec
-
-    def __init__(self, view: ViewSpec):
-        self.view = view
+# ------------------------------------------------------------
+# Show (Block-Level)
+# ------------------------------------------------------------
 
 
-class Form(Step):
+class Show(Step):
+    def __init__(self, block, *, stream: str | None = None):
+        self.block = block
+        self.stream = stream
 
-    def __init__(self, view: str, fields: list[str]):
-        self.view = view
-        self.fields = fields
+    async def run(self, session, request):
+        await session.emit_block(self.block, stream=self.stream)
+        return Continue()
 
-    async def run(self, session):
-        return InputRequired(
-            view=self.view,
-        )
+
+# ------------------------------------------------------------
+# Ask (Block-Level)
+# ------------------------------------------------------------
+
+
+class Ask(Step):
+
+    def __init__(self, block, policy_service):
+        self.block = block
+        self.policy = policy_service
+
+    async def run(self, session, request):
+        return InputRequired(self.block)
+
+    async def resume(self, session, raw_values: dict[str, Any]):
+
+        validated: dict[str, Any] = {}
+        errors: dict[str, Any] = {}
+
+        for field in self.block.fields:
+
+            raw = raw_values.get(field.var)
+
+            res = self.policy.validate(
+                policy_key=field.policy,
+                raw=raw,
+            )
+
+            if res.ok:
+                validated[field.var] = res.value
+            else:
+                errors[field.var] = res.errors
+
+        if errors:
+            return InputRequired(
+                self.block,
+                errors=errors,
+                values=raw_values,
+            )
+
+        return validated
+
+
+# ------------------------------------------------------------
+# TIME BASED
+# ------------------------------------------------------------
+
+
+class SleepRequired(StepOutcome):
+    def __init__(self, seconds: int):
+        self.seconds = seconds
+
+
+class SleepUntilRequired(StepOutcome):
+    def __init__(self, timestamp: float):
+        self.timestamp = timestamp
+
+
+class Wait(Step):
+    def __init__(self, seconds: int):
+        self.seconds = seconds
+
+    async def run(self, session, request):
+        return SleepRequired(seconds=self.seconds)
+
+
+class WaitUntil(Step):
+    def __init__(self, timestamp: float):
+        self.timestamp = timestamp
+
+    async def run(self, session, request):
+        return SleepUntilRequired(timestamp=self.timestamp)
