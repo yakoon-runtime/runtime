@@ -11,3 +11,6 @@ view:
       input_mode: prompt
       fields:
         - { var: result, policy: system:string, title: "Username:" } 
+
+    - type: text
+      text: "Vielen Dank! Ihre Daten werden verarbeitet.definiere."

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Coroutine
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, TypeAlias
 
 from yakoon.base.capabilities.presenters import (
     Presenter,
@@ -12,6 +12,7 @@ from yakoon.base.capabilities.presenters import (
 from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.controllers import resolve_resource
 
+from .steps.step import Step
 from .types import (
     CommandKind,
     CommandScope,
@@ -20,7 +21,6 @@ from .types import (
 
 if TYPE_CHECKING:
 
-    from yakoon.base.engine.step import Step
     from yakoon.base.runtime.controllers import Controller
     from yakoon.base.runtime.services import ServiceDirectory
     from yakoon.base.runtime.sessions import Session
@@ -29,10 +29,8 @@ if TYPE_CHECKING:
     from .request import Request
 
 
-class CommandCancelled(Exception):
-    """Command cancelled."""
-
-    pass
+CommandFlow: TypeAlias = AsyncGenerator[Step, Any]
+CommandRun: TypeAlias = Coroutine[Any, Any, CommandFlow]
 
 
 class CmdNotFound(LookupError):
@@ -151,13 +149,21 @@ class Command(ABC):
         return await presenter_service.create_presenter(ref, session)
 
     @abstractmethod
-    async def run(
-        self, session: Session, request: Request
-    ) -> AsyncGenerator[Step, None]:
-        """Execute the command and return always None.
+    def run(
+        self,
+        session: Session,
+        request: Request,
+    ) -> CommandFlow:
+        """Execute the command as an async generator.
+
+        Yields:
+            Step: Next step to execute.
+
+        Receives:
+            Arbitrary data from step results via `yield`.
 
         Notes:
-            - Reserve exceptions for programmer errors, missing context, or truly
-              exceptional states.
+            - Do not use return values; data flows via `yield`.
+            - Reserve exceptions for programmer errors.
         """
         raise NotImplementedError

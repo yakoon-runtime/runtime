@@ -1,3 +1,33 @@
+from __future__ import annotations
+
+from enum import IntEnum
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from yakoon.base.runtime.commands import StepOutcome
+
+# ============================================================
+# Flow State
+# ============================================================
+
+
+class FlowState(IntEnum):
+    RUNNING = 1
+    WAITING = 2
+    FINISHED = 3
+
+
+class TickResult:
+    def __init__(self, state: FlowState, outcome: StepOutcome | None):
+        self.state = state
+        self.outcome = outcome
+
+
+# ============================================================
+# Flow Cursor
+# ============================================================
+
+
 class FlowCursor:
 
     def __init__(self, flow_factory):

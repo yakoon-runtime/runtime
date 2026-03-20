@@ -1,13 +1,14 @@
-from collections.abc import AsyncGenerator
-
-from yakoon.base.engine.step import Ask, Step
+from yakoon.base.capabilities.interaction import PolicyService
 from yakoon.base.runtime import Command, Request, Session
 from yakoon.base.runtime.commands import (
-    CommandCancelled,
+    Advance,
+    CommandFlow,
     CommandKind,
     CommandVisibility,
+    Delay,
+    compile_view,
 )
-from yakoon.base.ui.views import v_text
+from yakoon.base.ui import v_text
 
 
 class CmdTest(Command):
@@ -16,18 +17,41 @@ class CmdTest(Command):
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
 
-    async def run(
-        self, session: Session, request: Request
-    ) -> AsyncGenerator[Step, None]:
+    async def run(self, session: Session, request: Request) -> CommandFlow:
 
-        messages = []
+        while True:
 
+            # 1. Ausgabe
+            await session.emit(v_text("Hello"))
+
+            # 2. 5 Sekunden warten
+            yield Delay(5)
+
+    async def _run(self, session: Session, request: Request) -> CommandFlow:
+        messages = ["Test print..."]
+        await session.emit(v_text(str(messages)))
+        yield Advance()
+
+    async def __run(self, session: Session, request: Request) -> CommandFlow:
+
+        messages = ["Test print..."]
+        await session.emit(v_text(str(messages)))
+        yield Advance()
+
+        policy = self.services.get(PolicyService)
         presenter = await self.get_presenter(session=session)
-        data = yield Ask("ask1", presenter)
-        messages.append(data)
 
-        data = yield Ask("ask1", presenter)
-        messages.append(data)
+        view = await presenter.view("ask1")
+        view_group = presenter.group_blocks_by_type(view)
+        for i, group in enumerate(view_group):
+            async for step in compile_view(group, policy_service=policy):
+                yield step
+
+        # data = yield Ask("ask1", presenter)
+        # messages.append(data)
+
+        # data = yield Ask("ask1", presenter)
+        # messages.append(data)
 
         await session.emit(v_text(str(messages)))
 
@@ -46,17 +70,14 @@ class CmdTest(Command):
 
     async def _run(self, session: Session, request: Request) -> None:  # noqa: ARG002
 
-        try:
-            result = await self.ask(session, "ask1")
-            await session.emit(v_text(result.first()))
+        result = await self.ask(session, "ask1")
+        await session.emit(v_text(result.first()))
 
-            result = await self.ask(session, "ask2")
-            await session.emit(v_text(result.get("result")))
+        result = await self.ask(session, "ask2")
+        await session.emit(v_text(result.get("result")))
 
-            result = await self.ask(session, "ask3")
-            await session.emit(v_text(result.get("the_key")))
-        except CommandCancelled:
-            return
+        result = await self.ask(session, "ask3")
+        await session.emit(v_text(result.get("the_key")))
 
         presenter = await self.get_presenter(session)
         items = await presenter.present("ask4")

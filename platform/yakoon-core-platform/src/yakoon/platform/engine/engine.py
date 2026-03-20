@@ -3,17 +3,12 @@ import time
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import Permission, PermissionService
-from yakoon.base.capabilities.presenters.result import PresentResult
 from yakoon.base.capabilities.workflow import WorkflowContextRequired
-from yakoon.base.engine import CommandDispatch, DispatchInput
-from yakoon.base.engine.flow import FlowCursor
-from yakoon.base.engine.step import (
-    FlowFinished,
+from yakoon.base.engine import (
+    CommandDispatch,
+    DispatchInput,
+    FlowCursor,
     FlowState,
-    InputRequired,
-    SleepRequired,
-    SleepUntilRequired,
-    Step,
     TickResult,
 )
 from yakoon.base.runtime import (
@@ -23,7 +18,16 @@ from yakoon.base.runtime import (
     Request,
     Session,
 )
-from yakoon.base.runtime.commands.command import CommandContext
+from yakoon.base.runtime.commands import (
+    CommandContext,
+)
+from yakoon.base.runtime.commands.steps import (
+    AwaitInput,
+    InputResolved,
+    Next,
+    Stop,
+)
+from yakoon.base.runtime.commands.steps.outcome import Sleep, SleepUntil
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.ui import v_error
@@ -58,7 +62,7 @@ class CommandEngine:
             controller_id, command = result
             return self._controllers.get(controller_id), command
 
-    async def dispatch(self, session: Session, di: DispatchInput) -> Step | None:
+    async def dispatch(self, session: Session, di: DispatchInput) -> None:
 
         session.execution.reset()
         session.execution.step(ExecStep.EXECUTION_START)
@@ -194,22 +198,13 @@ class CommandEngine:
 
         controller = self._controllers.get(controller_id)
         if not controller:
-            raise RuntimeError(
-                f"Resolved controller is None for command '{request.raw}'"
-            )
+            raise RuntimeError("Controller not found")
 
         command_type = self._commands.get_type(controller_id, command_key)
         if not command_type:
-            raise RuntimeError(
-                f"Resolved command is None for input '{request.raw}' "
-                f"(controller='{controller.id}')"
-            )
+            raise RuntimeError("Command not found")
 
         command = self.create_command(command_type, controller)
-
-        # TODO: nur beim ersten Step
-        # Pre-command hook
-        # await controller.on_before_run_command(session, request, command)
 
         session.execution.step(
             ExecStep.COMMAND_RUNNING,
@@ -218,44 +213,65 @@ class CommandEngine:
         )
 
         try:
+            # --------------------------------------------------
+            # RESUME (Input zurück in Generator schicken)
+            # --------------------------------------------------
             if "input" in flow:
                 raw_values: dict = flow.pop("input", {})
 
                 step = flow["last_step"]
-                result_values = await step.resume(session, raw_values)
+                outcome = await step.resume(session, raw_values)
 
-                value = PresentResult(result_values, {}, list(result_values.keys()))
-                step = await cursor.send(value)
+                if isinstance(outcome, InputResolved):
+                    step = await cursor.send(outcome.data)
+                elif isinstance(outcome, AwaitInput):
+                    return TickResult(FlowState.WAITING, outcome)
+                else:
+                    raise RuntimeError("Unexpected resume outcome")
+
             else:
                 step = await cursor.next(command, session, request)
 
             flow["last_step"] = step
+
         except StopAsyncIteration:
             session.flow = {}
-            return TickResult(FlowState.FINISHED, FlowFinished())
+            return TickResult(FlowState.FINISHED, None)
 
-        # Step ausführen
+        # --------------------------------------------------
+        # STEP AUSFÜHREN
+        # --------------------------------------------------
         outcome = await step.run(session, request)
 
-        if isinstance(outcome, SleepRequired):
-            flow["wake_at"] = now() + outcome.seconds
-            return TickResult(FlowState.WAITING, None)
+        # --------------------------------------------------
+        # OUTCOME INTERPRETATION
+        # --------------------------------------------------
 
-        if isinstance(outcome, SleepUntilRequired):
-            flow["wake_at"] = outcome.timestamp
-            return TickResult(FlowState.WAITING, None)
+        match outcome:
 
-        # WAITING
-        if isinstance(outcome, InputRequired):
-            return TickResult(FlowState.WAITING, outcome)
+            # Continue
+            case Next():
+                return TickResult(FlowState.RUNNING, None)
 
-        # FINISHED (explizit)
-        if isinstance(outcome, FlowFinished):
-            # Nur beim letzten Step
-            await controller.on_after_run_command(session, request, command)
+            # ⏹ Stop
+            case Stop():
+                await controller.on_after_run_command(session, request, command)
+                session.flow = {}
+                return TickResult(FlowState.FINISHED, None)
 
-            session.flow = {}
-            return TickResult(FlowState.FINISHED, outcome)
+            # Input
+            case AwaitInput():
+                return TickResult(FlowState.WAITING, outcome)
 
-        # 🔵 RUNNING
-        return TickResult(FlowState.RUNNING, outcome)
+            # Sleep
+            case Sleep(seconds=s):
+                flow["wake_at"] = now() + s
+                return TickResult(FlowState.WAITING, None)
+
+            case SleepUntil(timestamp=t):
+                flow["wake_at"] = t
+                return TickResult(FlowState.WAITING, None)
+
+            # Fallback (wichtig!)
+            case _:
+                raise RuntimeError(f"Unknown StepOutcome: {type(outcome)}")

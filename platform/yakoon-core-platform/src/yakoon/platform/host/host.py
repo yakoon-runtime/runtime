@@ -8,6 +8,7 @@ from yakoon.base.clients.connection import ClientConnection
 from yakoon.base.host import FormInput, TextInput
 from yakoon.base.runtime import SessionService
 from yakoon.base.values.key import Key
+from yakoon.platform.host.scheduler import Scheduler
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
 
 if TYPE_CHECKING:
@@ -26,6 +27,8 @@ class RuntimeHost:
         self._connections: dict[ClientConnection, Runner] = {}
         self._runner_tasks: dict[int, asyncio.Task] = {}
         self._session_counter = 0
+        self.scheduler = Scheduler(engine)
+        asyncio.create_task(self.scheduler.run())
 
     async def connect(
         self,
