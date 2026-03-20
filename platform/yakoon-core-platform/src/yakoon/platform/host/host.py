@@ -25,7 +25,6 @@ class RuntimeHost:
 
         self._sessions: dict[Key, Runner] = {}
         self._connections: dict[ClientConnection, Runner] = {}
-        self._runner_tasks: dict[int, asyncio.Task] = {}
         self._session_counter = 0
         self.scheduler = Scheduler(engine)
         asyncio.create_task(self.scheduler.run())
@@ -50,11 +49,13 @@ class RuntimeHost:
                 engine=self.engine,
                 session=session,
                 interaction=interaction,
+                scheduler=self.scheduler,
             )
             self._sessions[session.key] = runner
 
-            task = asyncio.create_task(runner.start([]))
-            self._runner_tasks[self._runner_key(runner)] = task
+            # initial_command = DispatchInput("")
+            # await self.engine.dispatch(session, initial_command)
+            self.scheduler.schedule(session)
 
         self._connections[connection] = runner
         return connection
@@ -71,12 +72,7 @@ class RuntimeHost:
         # real session ist deth
         session = runner.session
 
-        # cancel task
-        task = self._runner_tasks.pop(self._runner_key(runner), None)
-        if task:
-            task.cancel()
-
-        self.engine.cleanup_session(session)
+        # self.engine.cleanup_session(session)
         self._sessions.pop(session.key, None)
 
     async def receive_input(self, connection: ClientConnection, event):

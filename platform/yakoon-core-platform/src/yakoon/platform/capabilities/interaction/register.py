@@ -8,7 +8,7 @@ from yakoon.base.capabilities.interaction import (
 from yakoon.base.plugins import ModuleExport, ModuleMeta
 from yakoon.base.runtime.services import ServiceDirectory
 
-from . import DefaultDialogService, DefaultInteractionService, DefaultPolicyService
+from . import ConsoleInteractionService, DefaultDialogService, DefaultPolicyService
 
 meta = ModuleMeta(
     name="yakoon.interaction",
@@ -32,7 +32,7 @@ def register(services: ServiceDirectory) -> ModuleExport:
 
     publish(PolicyService, DefaultPolicyService())
     publish(DialogService, DefaultDialogService())
-    publish(InteractionService, DefaultInteractionService(services))
+    publish(InteractionService, ConsoleInteractionService(services))
 
     return ModuleExport(
         meta,

@@ -7,16 +7,18 @@ from prompt_toolkit.layout import HSplit, Layout, Window
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea
 
+from yakoon.base.host import TextInput
+
 
 class TerminalUI:
 
-    def __init__(self, surface, on_cancel):
-
+    def __init__(self, surface, on_cancel, on_submit):
         self.surface = surface
         self.on_cancel = on_cancel
+        self.on_submit = on_submit
+        self.surface = surface
 
         self._prompt = "shell$ "
-        self._future: asyncio.Future | None = None
 
         self.history = InMemoryHistory()
 
@@ -89,19 +91,6 @@ class TerminalUI:
         except Exception:
             pass
 
-    async def read_line(self, prompt: str):
-
-        self._prompt = prompt
-        self.app.invalidate()
-
-        loop = asyncio.get_running_loop()
-        self._future = loop.create_future()
-
-        try:
-            return await self._future
-        except asyncio.CancelledError:
-            return ""
-
     def _on_enter(self, buffer):
         if not buffer.text:
             return
@@ -111,8 +100,12 @@ class TerminalUI:
 
         self.surface.new_view()
 
-        if self._future and not self._future.done():
-            self._future.set_result(text)
+        if self.on_submit:
+            asyncio.create_task(self.on_submit(TextInput(text)))
 
     def add_history(self, command: str):
         self.history.append_string(command)
+
+    def set_prompt(self, ps1: str):
+        self._prompt = ps1
+        self.app.invalidate()

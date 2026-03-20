@@ -1,5 +1,5 @@
-from .default import DefaultInteraction
+from .console import ConsoleInteraction
 
 __all__ = [
-    "DefaultInteraction",
+    "ConsoleInteraction",
 ]

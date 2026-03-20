@@ -25,7 +25,7 @@ class CmdTest(Command):
             await session.emit(v_text("Hello"))
 
             # 2. 5 Sekunden warten
-            yield Delay(5)
+            yield Delay(3)
 
     async def _run(self, session: Session, request: Request) -> CommandFlow:
         messages = ["Test print..."]

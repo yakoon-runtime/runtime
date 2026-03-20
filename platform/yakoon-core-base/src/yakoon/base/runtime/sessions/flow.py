@@ -1,4 +1,53 @@
+from __future__ import annotations
+
 import asyncio
+from dataclasses import dataclass
+from typing import Any
+
+# ============================================================
+# Flow
+# ============================================================
+
+
+@dataclass
+class Flow:
+    command_key: str
+    controller_id: str
+    request: str
+    cursor: FlowCursor
+    last_step: Any | None = None
+    input: dict | None = None
+    sleeping = False
+
+
+# ============================================================
+# Flow Cursor
+# ============================================================
+
+
+class FlowCursor:
+
+    def __init__(self, flow_factory):
+        self.flow_factory = flow_factory
+        self.iterator = None
+
+    def start(self, command, session, request):
+        self.iterator = self.flow_factory(command, session, request)
+
+    async def next(self, command, session, request):
+        if not self.iterator:
+            self.start(command, session, request)
+        return await anext(self.iterator)
+
+    async def send(self, value):
+        if not self.iterator:
+            raise RuntimeError("Cursor not started")
+        return await self.iterator.asend(value)
+
+
+# ============================================================
+# Flow Conrroll
+# ============================================================
 
 
 class FlowControl:

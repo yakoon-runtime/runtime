@@ -3,9 +3,14 @@ import heapq
 import time
 from collections import deque
 
-from yakoon.base.engine.flow import FlowState
-from yakoon.base.runtime.commands.steps.outcome import AwaitInput, Sleep, SleepUntil
-from yakoon.platform.engine.engine import CommandEngine
+from yakoon.base.runtime.commands import (
+    AwaitInput,
+    Next,
+    Sleep,
+    SleepUntil,
+    Stop,
+)
+from yakoon.platform.engine import CommandEngine
 
 
 class Scheduler:
@@ -16,7 +21,7 @@ class Scheduler:
         self.ready = deque()  # flows ready to run
         self.sleeping = []  # (wake_at, session)
         self.waiting_input = {}  # session_id -> session
-
+        self.ready_set = set()
         self._running = False
 
     # --------------------------------------------------------
@@ -25,13 +30,27 @@ class Scheduler:
 
     def schedule(self, session):
         """Put a session into ready queue."""
+        sid = id(session)
+
+        if sid in self.ready_set:
+            return
+
         self.ready.append(session)
+        self.ready_set.add(sid)
 
     def resume_input(self, session, data):
         """Resume a flow with user input."""
-        session.flow["input"] = data
-        self.waiting_input.pop(id(session), None)
-        self.schedule(session)
+
+        if not session.flow:
+            return
+
+        # Input immer puffern
+        session.flow.input_queue.append(data)
+
+        # NUR wenn Flow wirklich wartet:
+        if id(session) in self.waiting_input:
+            self.waiting_input.pop(id(session), None)
+            self.schedule(session)
 
     # --------------------------------------------------------
     # Main loop
@@ -52,9 +71,13 @@ class Scheduler:
 
             # 3. Run one step
             session = self.ready.popleft()
-            result = await self.engine.tick(session)
+            self.ready_set.discard(id(session))
+            if session.flow and session.flow.sleeping:
+                continue
 
-            await self._handle_result(session, result)
+            outcome = await self.engine.tick(session)
+
+            await self._handle_outcome(session, outcome)
 
     # --------------------------------------------------------
     # Internal
@@ -65,6 +88,7 @@ class Scheduler:
 
         while self.sleeping and self.sleeping[0][0] <= now:
             _, session = heapq.heappop(self.sleeping)
+            session.flow.sleeping = False
             self.ready.append(session)
 
     async def _idle_wait(self):
@@ -76,39 +100,56 @@ class Scheduler:
             # nothing at all → small sleep
             await asyncio.sleep(0.05)
 
-    async def _handle_result(self, session, result):
+    async def _handle_outcome(self, session, outcome):
 
-        if result.state == FlowState.RUNNING:
-            self.ready.append(session)
+        # ----------------------------------------
+        # CONTINUE
+        # ----------------------------------------
+        if outcome is None:
+            # optional fallback
             return
 
-        if result.state == FlowState.FINISHED:
-            session.flow = None
-            return
+        match outcome:
 
-        if result.state == FlowState.WAITING:
+            # ----------------------------
+            # RUNNING
+            # ----------------------------
+            case Next():
+                self.ready.append(session)
 
-            outcome = result.outcome
+            # ----------------------------
+            # FINISHED
+            # ----------------------------
+            case Stop():
+                session.flow = None
 
-            # ----------------------------------------
+            # ----------------------------
             # INPUT
-            # ----------------------------------------
-            if isinstance(outcome, AwaitInput):
+            # ----------------------------
+            case AwaitInput() as ask:
                 self.waiting_input[id(session)] = session
 
-                # UI trigger
-                view = outcome.block
-                await session.interaction.prompt(view=view)
-                return
+                view = ask.block
+                await session.interaction.show_view(view)
 
-            # ----------------------------------------
+            # ----------------------------
             # SLEEP
-            # ----------------------------------------
-            if isinstance(outcome, Sleep):
-                wake_at = time.time() + outcome.seconds
+            # ----------------------------
+            case Sleep(seconds=s):
+                if session.flow.sleeping:
+                    return
+                wake_at = time.time() + s
                 heapq.heappush(self.sleeping, (wake_at, session))
-                return
+                session.flow.sleeping = True
 
-            if isinstance(outcome, SleepUntil):
-                heapq.heappush(self.sleeping, (outcome.timestamp, session))
-                return
+            case SleepUntil(timestamp=t):
+                if session.flow.sleeping:
+                    return
+                heapq.heappush(self.sleeping, (t, session))
+                session.flow.sleeping = True
+
+            # ----------------------------
+            # SAFETY
+            # ----------------------------
+            case _:
+                raise RuntimeError(f"Unhandled outcome: {type(outcome)}")

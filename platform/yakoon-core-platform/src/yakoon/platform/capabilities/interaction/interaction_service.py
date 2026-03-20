@@ -20,7 +20,7 @@ from yakoon.base.ui import (
 )
 
 
-class DefaultInteractionService:
+class ConsoleInteractionService:
 
     def __init__(self, services: ServiceDirectory) -> None:
         self._services = services

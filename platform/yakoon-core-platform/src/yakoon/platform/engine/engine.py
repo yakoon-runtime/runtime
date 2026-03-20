@@ -1,5 +1,3 @@
-import time
-
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import Permission, PermissionService
@@ -7,9 +5,6 @@ from yakoon.base.capabilities.workflow import WorkflowContextRequired
 from yakoon.base.engine import (
     CommandDispatch,
     DispatchInput,
-    FlowCursor,
-    FlowState,
-    TickResult,
 )
 from yakoon.base.runtime import (
     CmdNotFound,
@@ -27,9 +22,10 @@ from yakoon.base.runtime.commands.steps import (
     Next,
     Stop,
 )
-from yakoon.base.runtime.commands.steps.outcome import Sleep, SleepUntil
+from yakoon.base.runtime.commands.steps.outcome import Sleep, SleepUntil, StepOutcome
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions.flow import Flow, FlowCursor
 from yakoon.base.ui import v_error
 
 from .directories import CommandDirectory, ControllerDirectory
@@ -141,12 +137,12 @@ class CommandEngine:
                 controller=resolved_controller.id,
             )
 
-            session.flow = {
-                "command_key": command_type.key,
-                "controller_id": resolved_controller.id,
-                "request": request.raw,
-                "cursor": FlowCursor(command_type.run),
-            }
+            session.flow = Flow(
+                command_type.key,
+                resolved_controller.id,
+                request.raw,
+                FlowCursor(command_type.run),
+            )
 
         except CmdNotFound:
             await session.emit(
@@ -182,19 +178,16 @@ class CommandEngine:
         command.context = CommandContext(controller, "")
         return command
 
-    async def tick(self, session: Session) -> TickResult:
-
-        def now():
-            return time.time()
+    async def tick(self, session: Session) -> StepOutcome | None:
 
         flow = session.flow
         if not flow:
-            return TickResult(FlowState.FINISHED, None)
+            return Stop()
 
-        cursor = flow["cursor"]
-        command_key = flow["command_key"]
-        controller_id = flow["controller_id"]
-        request = Request(flow["request"])
+        cursor = flow.cursor
+        command_key = flow.command_key
+        controller_id = flow.controller_id
+        request = Request(flow.request)
 
         controller = self._controllers.get(controller_id)
         if not controller:
@@ -216,27 +209,31 @@ class CommandEngine:
             # --------------------------------------------------
             # RESUME (Input zurück in Generator schicken)
             # --------------------------------------------------
-            if "input" in flow:
-                raw_values: dict = flow.pop("input", {})
+            if flow.input is not None:
+                raw_values: dict = flow.input
+                flow.input = None
 
-                step = flow["last_step"]
+                step = flow.last_step
+                if not step:
+                    raise RuntimeError("Missing last_step for resume")
+
                 outcome = await step.resume(session, raw_values)
 
                 if isinstance(outcome, InputResolved):
                     step = await cursor.send(outcome.data)
                 elif isinstance(outcome, AwaitInput):
-                    return TickResult(FlowState.WAITING, outcome)
+                    return outcome
                 else:
                     raise RuntimeError("Unexpected resume outcome")
 
             else:
                 step = await cursor.next(command, session, request)
 
-            flow["last_step"] = step
+            flow.last_step = step
 
         except StopAsyncIteration:
-            session.flow = {}
-            return TickResult(FlowState.FINISHED, None)
+            session.flow = None
+            return Stop()
 
         # --------------------------------------------------
         # STEP AUSFÜHREN
@@ -249,29 +246,22 @@ class CommandEngine:
 
         match outcome:
 
-            # Continue
             case Next():
-                return TickResult(FlowState.RUNNING, None)
+                return Next()
 
-            # ⏹ Stop
             case Stop():
                 await controller.on_after_run_command(session, request, command)
-                session.flow = {}
-                return TickResult(FlowState.FINISHED, None)
+                session.flow = None
+                return Stop()
 
-            # Input
             case AwaitInput():
-                return TickResult(FlowState.WAITING, outcome)
+                return outcome
 
-            # Sleep
-            case Sleep(seconds=s):
-                flow["wake_at"] = now() + s
-                return TickResult(FlowState.WAITING, None)
+            case Sleep():
+                return outcome
 
-            case SleepUntil(timestamp=t):
-                flow["wake_at"] = t
-                return TickResult(FlowState.WAITING, None)
+            case SleepUntil():
+                return outcome
 
-            # Fallback (wichtig!)
             case _:
                 raise RuntimeError(f"Unknown StepOutcome: {type(outcome)}")

@@ -1,7 +1,7 @@
 import asyncio
 
 from yakoon.base.host import InputEvent, TextInput
-from yakoon.base.interations import DefaultInteraction
+from yakoon.base.interations import ConsoleInteraction
 from yakoon.base.transports import Transport
 from yakoon.console.output import ConsoleOutput
 from yakoon.console.ui import TerminalSurface, TerminalUI
@@ -22,8 +22,13 @@ class ConsoleClient:
 
         surface = TerminalSurface()
         renderer = ConsoleOutput(surface)
-        ui = TerminalUI(surface, on_cancel=cancel)
-        interaction = DefaultInteraction(ui.read_line, submit)
+        ui = TerminalUI(
+            surface,
+            on_cancel=cancel,
+            on_submit=submit,
+        )
+
+        interaction = ConsoleInteraction(ui)
 
         async def on_emit(event):
             await renderer.view(event)

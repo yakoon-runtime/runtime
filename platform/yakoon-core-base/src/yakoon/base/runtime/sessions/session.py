@@ -20,6 +20,7 @@ from yakoon.base.ui import (
 from yakoon.base.ui.io import FlowControl
 from yakoon.base.values import Key
 
+from .flow import Flow
 from .flow import FlowControl as FC
 from .trace import ExecutionTrace
 
@@ -80,7 +81,7 @@ class Session:
         self._state = state
         self._flow: FlowControl = FC()
         self._runtime = SessionRuntime()
-        self.flow = {}
+        self.flow: Flow | None = None
 
     @property
     def lang(self) -> str:
