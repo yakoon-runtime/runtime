@@ -14,3 +14,12 @@ class FormInput:
 
 
 InputEvent = TextInput | FormInput
+
+# TODO: Statt der Unterscheidung.
+
+"""
+class __InputEvent:
+    def to_values(self) -> dict
+    def to_text(self) -> str
+
+    """

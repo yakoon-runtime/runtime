@@ -50,14 +50,12 @@ class Advance(Step):
 # ------------------------------------------------------------
 
 
-class Show(Step):
-    def __init__(self, block, *, stream: str | None = None):
-        self.block = block
-        self.stream = stream
+class Show:
+    def __init__(self, view: ViewSpec):
+        self.view = view
 
-    async def run(self, session, request) -> StepOutcome:
-        view = ViewSpec("view", blocks=[self.block])
-        await session.emit(view)
+    async def run(self, session, request):
+        await session.emit(self.view)
         return Next()
 
 
@@ -67,39 +65,101 @@ class Show(Step):
 
 
 class Ask(Step):
-    def __init__(self, block, policy_service):
-        self.block = block
+    def __init__(self, view: ViewSpec, policy_service):
+        self.view = view
         self.policy = policy_service
 
     async def run(self, session, request) -> StepOutcome:
-        return AwaitInput(self.block)
+        return AwaitInput(self.view)
 
     async def resume(self, session, raw_values: dict[str, Any]) -> StepOutcome:
 
         validated: dict[str, Any] = {}
         errors: dict[str, Any] = {}
 
-        for field in self.block.fields:
-            raw = raw_values.get(field.var)
+        for block in self.view.blocks:
+            fields = getattr(block, "fields", None)
+            if not fields:
+                continue
 
-            result = self.policy.validate(
-                policy_key=field.policy,
-                raw=raw,
-            )
+            for field in fields:
+                raw = raw_values.get(field.var)
 
-            if result.ok:
-                validated[field.var] = result.value
-            else:
-                errors[field.var] = result.errors
+                result = self.policy.validate(
+                    policy_key=field.policy,
+                    raw=raw,
+                )
+
+                if result.ok:
+                    validated[field.var] = result.value
+                else:
+                    errors[field.var] = result.errors
 
         if errors:
             return AwaitInput(
-                self.block,
+                self.view,
                 errors=errors,
                 values=raw_values,
             )
 
         return InputResolved(validated)
+
+
+# ------------------------------------------------------------
+# Time-based
+# ------------------------------------------------------------
+
+
+class Form(Step):
+
+    def __init__(self, views: list[ViewSpec], policy_service):
+        self.views = views
+        self.policy = policy_service
+        self.index = 0
+        self.values = {}
+
+    async def run(self, session, request) -> StepOutcome:
+        return AwaitInput(self.views[self.index])
+
+    async def resume(self, session, raw_values):
+
+        view = self.views[self.index]
+
+        validated = {}
+        errors = {}
+
+        for block in view.blocks:
+            fields = getattr(block, "fields", None)
+            if not fields:
+                continue
+
+            for field in fields:
+                raw = raw_values.get(field.var)
+
+                result = self.policy.validate(
+                    policy_key=field.policy,
+                    raw=raw,
+                )
+
+                if result.ok:
+                    validated[field.var] = result.value
+                else:
+                    errors[field.var] = result.errors
+
+        if errors:
+            return AwaitInput(
+                view,
+                errors=errors,
+                values=raw_values,
+            )
+
+        self.values.update(validated)
+        self.index += 1
+
+        if self.index >= len(self.views):
+            return InputResolved(self.values)
+
+        return AwaitInput(self.views[self.index])
 
 
 # ------------------------------------------------------------

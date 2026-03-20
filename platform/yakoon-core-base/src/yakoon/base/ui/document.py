@@ -35,6 +35,7 @@ class ViewHeader:
     subtitle: str | None = None
     error_kind: ErrorKind | None = None
     meta: dict[str, Any] | ViewMeta | None = None
+    expects_input: bool = False
 
 
 @dataclass(frozen=True, slots=True)

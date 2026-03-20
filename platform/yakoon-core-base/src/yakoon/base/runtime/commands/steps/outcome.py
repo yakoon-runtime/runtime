@@ -40,12 +40,12 @@ class AwaitInput(StepOutcome):
 
     def __init__(
         self,
-        block,
+        view,
         *,
         errors: dict[str, Any] | None = None,
         values: dict[str, Any] | None = None,
     ):
-        self.block = block
+        self.view = view
         self.errors = errors or {}
         self.values = values or {}
 

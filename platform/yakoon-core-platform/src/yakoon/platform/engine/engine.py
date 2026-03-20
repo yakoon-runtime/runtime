@@ -25,7 +25,7 @@ from yakoon.base.runtime.commands.steps import (
 from yakoon.base.runtime.commands.steps.outcome import Sleep, SleepUntil, StepOutcome
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions.flow import Flow, FlowCursor
+from yakoon.base.runtime.sessions.flow import Flow, FlowCursor, FlowState
 from yakoon.base.ui import v_error
 
 from .directories import CommandDirectory, ControllerDirectory
@@ -209,9 +209,14 @@ class CommandEngine:
             # --------------------------------------------------
             # RESUME (Input zurück in Generator schicken)
             # --------------------------------------------------
-            if flow.input is not None:
-                raw_values: dict = flow.input
-                flow.input = None
+            if flow.state == FlowState.WAITING_INPUT and flow.input_queue:
+                version, raw_values = flow.input_queue[0]
+
+                if version != flow.input_version:
+                    flow.input_queue.popleft()  # verwerfen
+                    return Next()  # einfach weiter
+
+                flow.input_queue.popleft()
 
                 step = flow.last_step
                 if not step:
@@ -220,7 +225,7 @@ class CommandEngine:
                 outcome = await step.resume(session, raw_values)
 
                 if isinstance(outcome, InputResolved):
-                    step = await cursor.send(outcome.data)
+                    step = await cursor.send(outcome)
                 elif isinstance(outcome, AwaitInput):
                     return outcome
                 else:

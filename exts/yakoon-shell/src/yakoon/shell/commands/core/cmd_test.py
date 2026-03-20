@@ -19,15 +19,30 @@ class CmdTest(Command):
 
     async def run(self, session: Session, request: Request) -> CommandFlow:
 
+        policy = self.services.get(PolicyService)
+        presenter = await self.get_presenter(session=session)
+
+        view = await presenter.view("ask1")
+        view_group = presenter.group_blocks_by_type(view)
+        async for step in compile_view(
+            view.id, view.header, groups=view_group, policy_service=policy
+        ):
+            result = yield step
+            pass
+
+    async def _run_delay(self, session: Session, request: Request) -> CommandFlow:
+
         while True:
 
             # 1. Ausgabe
-            await session.emit(v_text("Hello"))
+            await session.emit(v_text("\nHello"))
 
             # 2. 5 Sekunden warten
             yield Delay(3)
 
-    async def _run(self, session: Session, request: Request) -> CommandFlow:
+    async def _run_print_message(
+        self, session: Session, request: Request
+    ) -> CommandFlow:
         messages = ["Test print..."]
         await session.emit(v_text(str(messages)))
         yield Advance()

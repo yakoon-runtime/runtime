@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 
 from yakoon.base.capabilities.identity.port import PermissionService
 from yakoon.base.clients.connection import ClientConnection
-from yakoon.base.host import FormInput, TextInput
 from yakoon.base.runtime import SessionService
 from yakoon.base.values.key import Key
 from yakoon.platform.host.scheduler import Scheduler
@@ -27,12 +26,12 @@ class RuntimeHost:
         self._connections: dict[ClientConnection, Runner] = {}
         self._session_counter = 0
         self.scheduler = Scheduler(engine)
+
         asyncio.create_task(self.scheduler.run())
 
     async def connect(
         self,
         connection: ClientConnection,
-        interaction,
         session_key: Key | None = None,
     ):
         self.bus.join(connection)
@@ -48,7 +47,6 @@ class RuntimeHost:
             runner = Runner(
                 engine=self.engine,
                 session=session,
-                interaction=interaction,
                 scheduler=self.scheduler,
             )
             self._sessions[session.key] = runner
@@ -75,15 +73,12 @@ class RuntimeHost:
         # self.engine.cleanup_session(session)
         self._sessions.pop(session.key, None)
 
-    async def receive_input(self, connection: ClientConnection, event):
+    async def receive_input(self, connection, event):
         runner = self._connections.get(connection)
         if runner is None:
             raise RuntimeError("No runner for connection.")
 
-        if isinstance(event, FormInput):
-            await runner.on_input_submit(event.data)
-        elif isinstance(event, TextInput):
-            await runner.on_user_input(event.value)
+        await runner.on_input(event)
 
     async def create_session(self):
 

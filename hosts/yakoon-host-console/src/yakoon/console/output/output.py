@@ -84,6 +84,9 @@ class ConsoleOutput:
             elif isinstance(op, PatchAppendStructure):
                 for spec in op.nodes:
 
+                    if spec.type == "fields":  # TODO:  Später eventl.
+                        continue
+
                     node = Node(
                         id=spec.id,
                         type=spec.type,

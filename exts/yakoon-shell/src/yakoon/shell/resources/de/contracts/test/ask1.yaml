@@ -13,4 +13,4 @@ view:
         - { var: result, policy: system:string, title: "Username:" } 
 
     - type: text
-      text: "Vielen Dank! Ihre Daten werden verarbeitet.definiere."
+      text: "Vielen Dank! \nIhre Daten werden verarbeitet.\n"

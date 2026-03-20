@@ -1,8 +1,17 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from collections import deque
+from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import Any
+
+
+class FlowState(Enum):
+    READY = auto()
+    SLEEPING = auto()
+    WAITING_INPUT = auto()
+
 
 # ============================================================
 # Flow
@@ -16,8 +25,10 @@ class Flow:
     request: str
     cursor: FlowCursor
     last_step: Any | None = None
-    input: dict | None = None
-    sleeping = False
+    state: FlowState = FlowState.READY
+
+    input_queue: deque = field(default_factory=deque)
+    input_version: int = 0
 
 
 # ============================================================
