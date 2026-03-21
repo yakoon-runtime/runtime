@@ -6,22 +6,20 @@ from datetime import UTC, datetime
 from typing import Any
 
 from yakoon.base.capabilities.identity import PermissionSet
+from yakoon.base.transports import IO
 from yakoon.base.ui import (
-    IO,
-    NodeSpec,
+    Node,
     OutputStreamPolicy,
+    Patch,
     PatchAppendStructure,
     PatchAppendText,
     PatchReset,
-    PatchSpec,
+    View,
     ViewEvent,
-    ViewSpec,
 )
-from yakoon.base.ui.io import FlowControl
 from yakoon.base.values import Key
 
 from .flow import Flow
-from .flow import FlowControl as FC
 from .trace import ExecutionTrace
 
 _OUTPUT_STREAM_POLICY_KEY = "output_stream_policy"
@@ -73,13 +71,12 @@ class SessionRuntime:
 class Session:
     """
     Session output contract is strict:
-      - emit/notify/fail accept ONLY ViewSpec mappings (kind='view')
+      - emit/notify/fail accept ONLY View mappings (kind='view')
       - mime is always application/yakoon.view+json
     """
 
     def __init__(self, state: SessionState):
         self._state = state
-        self._flow: FlowControl = FC()
         self._runtime = SessionRuntime()
         self.flow: Flow | None = None
 
@@ -111,18 +108,18 @@ class Session:
         return cls(state)
 
     # ----------------------------
-    # wait ready
+    # BIND
     # ----------------------------
-
-    async def wait_ready(self):
-        await self._flow.wait_ready()
-
-    def touch(self) -> None:
-        self._state.last_active = datetime.now(UTC)
 
     def bind_io(self, io: IO):
         self._runtime.io = io
-        self._runtime.io.set_flow_control(self._flow)
+
+    # ----------------------------
+    # TOUCH
+    # ----------------------------
+
+    def touch(self) -> None:
+        self._state.last_active = datetime.now(UTC)
 
     # ----------------------------
     # Username
@@ -176,7 +173,7 @@ class Session:
     # emit
     # ----------------------------
 
-    async def emit(self, payload: ViewSpec | ViewEvent) -> None:
+    async def emit(self, payload: View | ViewEvent) -> None:
         if isinstance(payload, ViewEvent):
             event = payload
         else:
@@ -204,21 +201,21 @@ class Session:
     # Strict View output
     # ----------------------------
 
-    def _ensure_view(self, payload: ViewSpec) -> ViewSpec:
-        if not isinstance(payload, ViewSpec):
-            raise TypeError("Session output must be a ViewSpec object.")
+    def _ensure_view(self, payload: View) -> View:
+        if not isinstance(payload, View):
+            raise TypeError("Session output must be a View object.")
         if payload.kind != "view":
-            raise TypeError("Session output must be a ViewSpec with kind='view'.")
+            raise TypeError("Session output must be a View with kind='view'.")
         return payload
 
-    def _view_to_event(self, view: ViewSpec) -> ViewEvent:
+    def _view_to_event(self, view: View) -> ViewEvent:
         view_id = view.id or f"view.{uuid.uuid4().hex}"
 
         nodes = []
         text_nodes = []
         for block in view.blocks:
             block_id = block.id or f"{view_id}:{uuid.uuid4().hex}"
-            node = NodeSpec.from_block(
+            node = Node.from_block(
                 block,
                 parent=f"{view_id}:root",
                 depth=0,
@@ -239,7 +236,7 @@ class Session:
         return ViewEvent(
             id=view_id,
             header=view.header,
-            patch=PatchSpec(
+            patch=Patch(
                 ops=[
                     PatchReset(),
                     PatchAppendStructure(nodes=nodes),

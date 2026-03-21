@@ -5,7 +5,7 @@ import yaml
 from yakoon.base.rendering import RenderContext, RenderEngine
 from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.ui import ViewSpec, ViewSpecParser
+from yakoon.base.ui import View, ViewSpecParser
 
 
 class DefaultRenderService:
@@ -13,7 +13,7 @@ class DefaultRenderService:
     def __init__(self, services: ServiceDirectory) -> None:
         self._services = services
 
-    async def render_view(self, ctx: RenderContext, state: str, **data) -> ViewSpec:
+    async def render_view(self, ctx: RenderContext, state: str, **data) -> View:
         loader = self._services.get(ResourceLoader)
         source = loader.load_text(ctx.resource.child(state))
 
@@ -41,6 +41,6 @@ class DefaultRenderService:
         if not isinstance(raw, dict):
             raise TypeError("Root template must be a mapping")
 
-        # 3) parse/validate into ViewSpec
-        viewspec = self._services.get(ViewSpecParser)
-        return viewspec.parse_spec(rendered_text)
+        # 3) parse/validate into View
+        View = self._services.get(ViewSpecParser)
+        return View.parse_spec(rendered_text)

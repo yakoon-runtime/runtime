@@ -4,9 +4,9 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Protocol
 
-from yakoon.base.host import FormInput, InputEvent, Interaction, TextInput
+from yakoon.base.host import InputEvent, Interaction
 from yakoon.base.ui import FieldsBlock
-from yakoon.base.ui.document import ViewSpec
+from yakoon.base.ui.view import View
 
 
 class HostUI(Protocol):
@@ -40,7 +40,7 @@ class KivyHost(Interaction):
             return
         loop.call_soon_threadsafe(fut.set_result, text)
 
-    async def prompt(self, *, ps1: str, view: ViewSpec) -> None:
+    async def prompt(self, *, ps1: str, view: View) -> None:
         block = self._find_fields_block(view)
         if block is None:
             self._ui.clear_assist()
@@ -48,14 +48,14 @@ class KivyHost(Interaction):
 
         if not block.fields:
             self._ui.clear_assist()
-            await self._submit(FormInput({}))
+            await self._submit(InputEvent({}))
             return
 
         values = await self._read_fields(
             ps1=ps1,
             fields=block.fields[:1] if block.input_mode == "prompt" else block.fields,
         )
-        await self._submit(FormInput(values))
+        await self._submit(InputEvent(values))
 
     async def _read_field(self, *, ps1: str, fd) -> object:
         key = fd.var or "value"
@@ -86,7 +86,7 @@ class KivyHost(Interaction):
 
         text = (await self._pending_text).strip()
         if text:
-            await self._submit(TextInput(text))
+            await self._submit(InputEvent(text))
 
     async def idle(self) -> None:
         return
@@ -94,7 +94,7 @@ class KivyHost(Interaction):
     async def exit(self) -> None:
         return
 
-    def _find_fields_block(self, view: ViewSpec) -> FieldsBlock | None:
+    def _find_fields_block(self, view: View) -> FieldsBlock | None:
         for block in view.blocks:
             if isinstance(block, FieldsBlock) and block.state != "done":
                 return block

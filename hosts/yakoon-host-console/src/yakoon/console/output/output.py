@@ -5,7 +5,6 @@ from __future__ import annotations
 import asyncio
 
 from yakoon.base.ui import (
-    FlowControl,
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
@@ -31,7 +30,6 @@ class ConsoleOutput:
     """
 
     def __init__(self, surface):
-        self._flow: FlowControl
         self._nodes: dict[str, Node] = {}
         self._renderers: dict[str, BaseRenderer] = {}
         self._builder = RendererBuilder(surface)
@@ -63,15 +61,11 @@ class ConsoleOutput:
     def _stream_finished(self):
         self._nodes.clear()
         self._renderers.clear()
-        self._flow.release()
 
     # IO ---------------------------------
 
     async def cancel(self):
         self._cancelled = True
-
-    def set_flow_control(self, flow: FlowControl) -> None:
-        self._flow = flow
 
     async def view(self, event: ViewEvent) -> None:
         for op in event.patch.ops:

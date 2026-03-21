@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 from yakoon.base.clients import ClientConnection
 
 if TYPE_CHECKING:
-    from yakoon.base.ui import IO
     from yakoon.platform.host import RuntimeHost
 
 
@@ -17,7 +16,7 @@ class LocalTransport:
     def __init__(self, host: RuntimeHost):
         self._host = host
 
-    async def connect(self, on_emit, io: IO):
+    async def connect(self, on_emit):
 
         async def send_input(event):
             await self._host.receive_input(connection, event)
@@ -25,7 +24,6 @@ class LocalTransport:
         connection = ClientConnection(
             send=on_emit,
             send_input=send_input,
-            io=io,
         )
 
         await self._host.connect(

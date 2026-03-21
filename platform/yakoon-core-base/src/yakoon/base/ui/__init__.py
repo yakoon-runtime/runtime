@@ -1,4 +1,4 @@
-from .blocks import (
+from .block import (
     Block,
     FieldsBlock,
     FieldsState,
@@ -17,18 +17,17 @@ from .blocks import (
     TableBlock,
     TextBlock,
 )
-from .document import ErrorKind, Role, ViewHeader, ViewMeta, ViewSpec, ViewUI
+from .builder import v_error, v_info, v_text
 from .event import ViewEvent
-from .fields import FieldType, SelectOption, ViewFieldDef
-from .io import IO, FlowControl
-from .node import NodeSpec
+from .field import Field, FieldError, FieldType, SelectOption
+from .node import Node
 from .patch import (
+    Patch,
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
     PatchOp,
     PatchReset,
-    PatchSpec,
 )
 from .port import ViewSpecParser
 from .stream import (
@@ -38,11 +37,9 @@ from .stream import (
     OutputStreamService,
     PerceptualStream,
 )
-from .views import v_error, v_info, v_text
+from .view import ErrorKind, Role, View, ViewHeader, ViewMeta, ViewUI
 
 __all__ = [
-    "IO",
-    "FlowControl",
     "OutputStreaming",
     "OutputStreamService",
     "OutputStreamPolicy",
@@ -54,18 +51,19 @@ __all__ = [
     "ViewUI",
     "ViewHeader",
     "ViewMeta",
-    "ViewSpec",
+    "View",
     "ViewEvent",
+    "ViewSpecParser",
+    "Node",
     "PatchReset",
-    "NodeSpec",
     "PatchAppendText",
     "PatchAppendStructure",
     "PatchFinishNode",
     "PatchOp",
-    "PatchSpec",
-    "ViewFieldDef",
-    "ViewSpecParser",
+    "Patch",
+    "Field",
     "FieldType",
+    "FieldError",
     "SelectOption",
     "Inline",
     "InlineText",

@@ -1,12 +1,12 @@
 from typing import Any, Protocol
 
-from yakoon.base.ui import ViewSpec
+from yakoon.base.ui import View
 
 from .context import RenderContext
 
 
 class RenderService(Protocol):
-    async def render_view(self, ctx: RenderContext, state: str, **data) -> ViewSpec: ...
+    async def render_view(self, ctx: RenderContext, state: str, **data) -> View: ...
 
 
 class RenderEngine(Protocol):

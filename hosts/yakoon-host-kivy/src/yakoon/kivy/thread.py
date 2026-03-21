@@ -4,7 +4,7 @@ import asyncio
 import threading
 from typing import Any
 
-from yakoon.base.host.ports import FormInput, InputEvent, TextInput
+from yakoon.base.host.ports import InputEvent
 from yakoon.kivy.host import KivyHost
 from yakoon.platform.host.runner import Runner
 
@@ -57,9 +57,9 @@ class TabRunnerThread:
             runner = self._runner
             if runner is None:
                 return
-            if isinstance(event, FormInput):
+            if isinstance(event, InputEvent):
                 await runner.on_input_submit(event.data)
-            elif isinstance(event, TextInput):
+            elif isinstance(event, InputEvent):
                 await runner.on_user_input(event.value)
             else:
                 raise TypeError(f"Unsupported event: {type(event)}")

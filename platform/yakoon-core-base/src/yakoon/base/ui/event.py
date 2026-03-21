@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
-from .document import ViewHeader
-from .patch import PatchSpec
+from .patch import Patch
+from .view import ViewHeader
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,7 +24,7 @@ class ViewEvent:
     kind: Literal["view_event"] = "view_event"
     id: str = ""
     header: ViewHeader | None = None
-    patch: PatchSpec = field(default_factory=PatchSpec)
+    patch: Patch = field(default_factory=Patch)
 
     def is_final(self) -> bool:
         return self.patch.final

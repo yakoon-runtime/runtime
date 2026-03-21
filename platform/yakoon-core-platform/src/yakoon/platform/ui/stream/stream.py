@@ -9,16 +9,16 @@ from yakoon.base.runtime import Session
 from yakoon.base.ui import (
     Block,
     EffectiveStreaming,
-    NodeSpec,
+    Node,
     OutputStreaming,
     OutputStreamPolicy,
+    Patch,
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
     PatchReset,
-    PatchSpec,
+    View,
     ViewEvent,
-    ViewSpec,
 )
 
 _WS = re.compile(r"\S+|\s+")
@@ -98,7 +98,7 @@ class DefaultOutputStreamService:
     async def begin_view(
         self,
         session: Session,
-        view: ViewSpec,
+        view: View,
         *,
         override: OutputStreaming | None = None,
     ) -> None:
@@ -129,7 +129,7 @@ class DefaultOutputStreamService:
         await session.emit(
             ViewEvent(
                 id=vid,
-                patch=PatchSpec(ops=[PatchReset()], final=False),
+                patch=Patch(ops=[PatchReset()], final=False),
             )
         )
 
@@ -138,7 +138,7 @@ class DefaultOutputStreamService:
     async def finish_view(
         self,
         session: Session,
-        view: ViewSpec,
+        view: View,
         *,
         override: OutputStreaming | None = None,
     ) -> None:
@@ -156,7 +156,7 @@ class DefaultOutputStreamService:
         await session.emit(
             ViewEvent(
                 id=vid,
-                patch=PatchSpec(ops=[], final=True),
+                patch=Patch(ops=[], final=True),
             )
         )
 
@@ -189,7 +189,7 @@ class DefaultOutputStreamService:
         await session.emit(
             ViewEvent(
                 id=view_id,
-                patch=PatchSpec(ops=[], final=True),
+                patch=Patch(ops=[], final=True),
             )
         )
 
@@ -201,7 +201,7 @@ class DefaultOutputStreamService:
         self,
         session: Session,
         *,
-        view: ViewSpec,
+        view: View,
         block: Block,
         parent_id: str | None = None,
         suffix: str | int = 0,
@@ -223,7 +223,7 @@ class DefaultOutputStreamService:
         parent_depth = stream.node_depth.get(parent, -1)
         depth = parent_depth + 1
 
-        node = NodeSpec.from_block(
+        node = Node.from_block(
             block,
             parent=parent,
             depth=depth,
@@ -337,7 +337,7 @@ class DefaultOutputStreamService:
         await stream.session.emit(
             ViewEvent(
                 id=stream.view_id,
-                patch=PatchSpec(ops=ops, final=False),
+                patch=Patch(ops=ops, final=False),
             )
         )
 

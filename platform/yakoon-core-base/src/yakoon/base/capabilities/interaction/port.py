@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from yakoon.base.capabilities.presenters import PresentResult
     from yakoon.base.runtime import Session
-    from yakoon.base.ui import FieldsBlock, OutputStreaming, ViewEvent, ViewSpec
+    from yakoon.base.ui import FieldsBlock, OutputStreaming, View, ViewEvent
 
     from .policy import FieldPolicy, PolicyValidationResult, RawValue
     from .types import DialogState
@@ -29,7 +29,7 @@ class InteractionService(Protocol):
         self,
         session: Session,
         *,
-        view: ViewSpec,
+        view: View,
         stream: OutputStreaming | None = None,
     ) -> PresentResult | None: ...
 
@@ -55,13 +55,13 @@ class DialogService(Protocol):
     def cleanup(self, session: Session) -> None: ...
 
     def is_waiting(self, session: Session) -> bool: ...
-    def get_view(self, session: Session) -> ViewSpec: ...
+    def get_view(self, session: Session) -> View: ...
     def get_event(self, session: Session) -> ViewEvent: ...
     def wait_view(
         self,
         session: Session,
         *,
-        view: ViewSpec,
+        view: View,
         timeout: float | None = None,
         on_timeout: Callable[[], Awaitable[None]] | None = None,
     ) -> Future: ...

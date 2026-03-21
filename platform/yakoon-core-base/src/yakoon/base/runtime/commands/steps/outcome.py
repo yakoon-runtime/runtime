@@ -38,16 +38,8 @@ class Stop(StepOutcome):
 class AwaitInput(StepOutcome):
     """Pause execution and request user input."""
 
-    def __init__(
-        self,
-        view,
-        *,
-        errors: dict[str, Any] | None = None,
-        values: dict[str, Any] | None = None,
-    ):
+    def __init__(self, view):
         self.view = view
-        self.errors = errors or {}
-        self.values = values or {}
 
 
 class InputResolved(StepOutcome):

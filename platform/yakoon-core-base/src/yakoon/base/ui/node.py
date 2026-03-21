@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, fields
 from typing import Any
 
 
 @dataclass(slots=True)
-class NodeSpec:
+class Node:
     id: str
     type: str
     parent: str | None
@@ -18,7 +20,7 @@ class NodeSpec:
         parent: str | None,
         depth: int,
         block_id: str | None = None,
-    ) -> "NodeSpec":
+    ) -> Node:
 
         block_id = block.id or block_id
         if block_id is None:

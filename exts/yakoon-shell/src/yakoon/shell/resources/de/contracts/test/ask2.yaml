@@ -10,4 +10,7 @@ view:
     - type: fields
       input_mode: prompt
       fields:
-        - { var: result, policy: customer.age, title: "Alter:", required: true }
+        - { var: result, policy: customer.age, title: "Alter", required: true }
+
+    - type: text
+      text: "Vielen Dank! \nIhre Daten werden verarbeitet.\n"

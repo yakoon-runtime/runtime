@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from yakoon.base.ui import ViewSpec
+from .view import View
 
 
 class ViewSpecParser(Protocol):
@@ -11,4 +11,4 @@ class ViewSpecParser(Protocol):
         *,
         section_key: str | None = None,
         base_id: str | None = None,
-    ) -> ViewSpec: ...
+    ) -> View: ...

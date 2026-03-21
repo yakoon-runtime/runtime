@@ -3,7 +3,7 @@ from collections.abc import Awaitable, Callable
 
 from yakoon.base.capabilities.interaction import DialogCancelled
 from yakoon.base.runtime import Session
-from yakoon.base.ui import ViewSpec, v_error
+from yakoon.base.ui import View, v_error
 from yakoon.platform.runtime.devtools.prompt import UnresolvedPromptMonitor
 from yakoon.platform.settings import settings
 
@@ -13,7 +13,7 @@ class DefaultDialogService:
     Unified input dialog service (view-driven).
 
     There is exactly one interactive shape:
-      - WAITING_INPUT → ViewSpec (as dict) with optional input definition
+      - WAITING_INPUT → View (as dict) with optional input definition
     """
 
     DEFAULT_TIMEOUT = 60 * 15  # 15 minutes
@@ -24,7 +24,7 @@ class DefaultDialogService:
         self._edges: dict[str, asyncio.Event] = {}
 
         # pending view payload for the host/runner
-        self._views: dict[str, ViewSpec] = {}
+        self._views: dict[str, View] = {}
 
     def is_waiting(self, session: Session) -> bool:
         return str(session.key) in self._waiting
@@ -37,7 +37,7 @@ class DefaultDialogService:
             self._edges[session_key] = ev
         return ev
 
-    def get_view(self, session: Session) -> ViewSpec:
+    def get_view(self, session: Session) -> View:
         view = self._views.get(str(session.key))
         if view is None:
             raise RuntimeError("No View available (not waiting for input).")
@@ -47,12 +47,12 @@ class DefaultDialogService:
         self,
         session: Session,
         *,
-        view: ViewSpec,
+        view: View,
         timeout: float | None = None,
         on_timeout: Callable[[], Awaitable[None]] | None = None,
     ) -> asyncio.Future:
         """
-        Register an input request (ViewSpec).
+        Register an input request (View).
         Future resolves with dict[str, object].
         """
         return self._set_waiting(
@@ -121,7 +121,7 @@ class DefaultDialogService:
         self,
         *,
         session: Session,
-        view: ViewSpec,
+        view: View,
         timeout: float | None,
         on_timeout: Callable[[], Awaitable[None]] | None,
     ) -> asyncio.Future:

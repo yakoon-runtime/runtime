@@ -11,11 +11,11 @@ from yakoon.base.capabilities.presenters import PresentResult
 from yakoon.base.runtime import Session
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.ui import (
+    Field,
     FieldsBlock,
     OutputStreaming,
     OutputStreamService,
-    ViewFieldDef,
-    ViewSpec,
+    View,
     v_error,
 )
 
@@ -37,7 +37,7 @@ class ConsoleInteractionService:
         self,
         session: Session,
         *,
-        view: ViewSpec,
+        view: View,
         stream: OutputStreaming | None = None,
     ) -> PresentResult | None:
 
@@ -46,7 +46,7 @@ class ConsoleInteractionService:
         order: list[str] = []
 
         if view.id is None:
-            raise RuntimeError("ViewSpec.id is required for streaming but was None")
+            raise RuntimeError("View.id is required for streaming but was None")
 
         await self.streams.begin_view(session, view, override=stream)
         try:
@@ -130,11 +130,11 @@ class ConsoleInteractionService:
 
         return PresentResult(out, aliases, order)
 
-    def _view_for_block(self, view_id: str, block: FieldsBlock) -> ViewSpec:
-        return ViewSpec(id=view_id, header=None, blocks=[block])
+    def _view_for_block(self, view_id: str, block: FieldsBlock) -> View:
+        return View(id=view_id, header=None, blocks=[block])
 
-    def _field_map(self, block: FieldsBlock) -> dict[str, ViewFieldDef]:
-        out: dict[str, ViewFieldDef] = {}
+    def _field_map(self, block: FieldsBlock) -> dict[str, Field]:
+        out: dict[str, Field] = {}
         for fd in block.fields:
             if fd.var:
                 out[fd.var] = fd

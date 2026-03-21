@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from .fields import ViewFieldDef
+from .field import Field
 
 RuleStyle = Literal["subtle", "normal", "strong"]
 
@@ -145,7 +145,7 @@ class FieldsBlock:
     """
 
     type: Literal["fields"] = "fields"
-    fields: list[ViewFieldDef] = field(default_factory=list)
+    fields: list[Field] = field(default_factory=list)
     input_mode: InputMode = "prompt"
 
     title: str | None = None

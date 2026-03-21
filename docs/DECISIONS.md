@@ -215,7 +215,7 @@ Gefühl beim Benutzer.
 Eingaben (offene Prompts) werden durch ein immer quitiert. Somit können Hosts ihr Frontend 
 entsprechend anpassen oder aufräumarbeiten erledigen. Dazu schickt die Platform 
 an die Sessionausgabe ein: 
-- `ViewSpec(kind="view", input=None, message=None)'`
+- `View(kind="view", input=None, message=None)'`
 
 ## 26-02-22
 **State-based Template Architecture**
@@ -321,17 +321,17 @@ Dafür wurde der FileLoader eingeführt. Dieser übernimmt alle Dateizugriff im 
 - Visibility von Scope getrennt; Scope ist nicht Sichtbarkeit.
 
 ## 2026-02-17
-**Umstellung auf ViewSpec**
+**Umstellung auf View**
 Der Output-Stack wurde radikal vereinfacht. IO ist nun vollständig View-getrieben.
 Die Architektur ist konsistent mit dem Input-/Workflow-Modell.
 Die Runtime ist leichter verständlich und deutlich schlanker.
 - OutputEvent wird vollständig entfernt.
-- Es existiert nur noch ein IO-Einstiegspunkt: io.view(ViewSpec)
-- Session.emit() akzeptiert ausschließlich ViewSpec.
+- Es existiert nur noch ein IO-Einstiegspunkt: io.view(View)
+- Session.emit() akzeptiert ausschließlich View.
 - Keine Dict-Views mehr im IO-Pfad.
 - Kein zweiter Kanal (err) mehr.
 - role wird ausschließlich über OutputSpec.role bestimmt.
-- op wird ausschließlich über ViewSpec.mode bestimmt.
+- op wird ausschließlich über View.mode bestimmt.
 - Transport-Parameter wie channel, region, meta werden entfernt.
 
 ## 2026-02-17

@@ -1,9 +1,9 @@
 from dataclasses import replace
 
-from yakoon.base.capabilities.presenters.types import BlockGroup
-from yakoon.base.ui.document import ViewHeader, ViewSpec
+from yakoon.base.capabilities.presenters import BlockGroup
+from yakoon.base.ui import View, ViewHeader
 
-from .steps.step import Ask, Show
+from .steps import Ask, Show
 
 # -----------------------------
 # COMPILE
@@ -21,7 +21,7 @@ async def compile_view(
             expects_input=(group.type == "fields"),
         )
 
-        subview = ViewSpec(
+        subview = View(
             "view",
             header=header,
             id=view_id,
@@ -29,7 +29,6 @@ async def compile_view(
         )
 
         if group.type == "fields":
-            # ! result is
-            result = yield Ask(subview, policy_service)
+            yield Ask(subview, policy_service)
         else:
             yield Show(subview)

@@ -1,70 +1,76 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any, Literal
+from yakoon.base.ui import Block
 
-from .blocks import Block
-
-Role = Literal["info", "success", "warning", "error", "help"]
-ErrorKind = Literal["validation", "system"]
+from .event import ViewEvent
 
 
-@dataclass(frozen=True, slots=True)
-class ViewUI:
-    secret: bool = False
+class ViewDocument:
 
+    def __init__(self):
+        self.header = None
+        self.blocks: list[Block] = []
 
-@dataclass(frozen=True, slots=True)
-class ViewMeta:
-    ui: ViewUI | None = None
+    # ------------------------
+    # Patch anwenden
+    # ------------------------
 
+    def apply(self, event: ViewEvent):
 
-@dataclass(frozen=True, slots=True)
-class ViewHeader:
-    """
-    Document-level presentation metadata.
+        if event.header:
+            self.header = event.header
 
-    This is the stable header that hosts may render as:
-      - title / subtitle
-      - role-based framing / icon / color
-      - future document-level presentation hints
-    """
+        patch = event.patch
 
-    role: Role | None = "info"
-    title: str | None = None
-    subtitle: str | None = None
-    error_kind: ErrorKind | None = None
-    meta: dict[str, Any] | ViewMeta | None = None
-    expects_input: bool = False
+        for op in patch.ops:
+            if op is None:
+                raise RuntimeError("")
+            if op.op == "reset":
+                self.blocks = []
 
+            elif op.op == "append_structure":
+                for node in op.nodes:
+                    block = node.props.get("block")
+                    if block:
+                        self.blocks.append(block)
 
-@dataclass(frozen=True, slots=True)
-class ViewSpec:
-    """
-    Canonical UI document.
+    # ----------------------------------------
+    # PUBLIC
+    # ----------------------------------------
 
-    A view is one structured document:
-      - header: document-level framing
-      - blocks: document body
-    """
+    def expects_input(self):
+        return self.header and self.header.expects_input
 
-    kind: Literal["view"] = "view"
-    id: str | None = None
-    header: ViewHeader | None = None
-    blocks: list[Block] = field(default_factory=list)
+    def has_fields(self):
+        return len(self.get_fields()) > 0
 
-    def with_body(self, blocks: list[Block]) -> ViewSpec:
-        return ViewSpec(
-            kind=self.kind,
-            id=self.id,
-            header=self.header,
-            blocks=blocks,
-        )
+    def get_first_field(self):
+        fields = self.get_fields()
+        return fields[0] if fields else None
 
-    def body_only(self, blocks: list[Block]) -> ViewSpec:
-        return ViewSpec(
-            kind=self.kind,
-            id=self.id,
-            header=None,
-            blocks=blocks,
-        )
+    # ----------------------------------------
+    # QUERIES
+    # ----------------------------------------
+
+    def get_blocks(self):
+        return self.blocks
+
+    def get_fields(self):
+        fields = []
+        for block in self.blocks:
+            for field in getattr(block, "fields", []):
+                fields.append(field)
+
+        return fields
+
+    def get_blocks_by_type(self, type_name):
+        return [b for b in self.blocks if getattr(b, "type", None) == type_name]
+
+    def get_required_fields(self):
+        result = []
+        for block in self.blocks:
+            for field in getattr(block, "fields", []):
+                if getattr(field, "required", False):
+                    result.append(field)
+
+        return result

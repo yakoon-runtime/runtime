@@ -10,7 +10,7 @@ view:
     - type: fields
       input_mode: prompt
       fields:
-        - { var: result, policy: system:string, title: "Username:" } 
+        - { var: result, policy: system:string, title: "Username" } 
 
     - type: text
       text: "Vielen Dank! \nIhre Daten werden verarbeitet.\n"

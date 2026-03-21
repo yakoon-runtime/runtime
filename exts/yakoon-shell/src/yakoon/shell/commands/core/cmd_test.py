@@ -22,13 +22,14 @@ class CmdTest(Command):
         policy = self.services.get(PolicyService)
         presenter = await self.get_presenter(session=session)
 
-        view = await presenter.view("ask1")
-        view_group = presenter.group_blocks_by_type(view)
+        view = await presenter.view("ask2")
         async for step in compile_view(
-            view.id, view.header, groups=view_group, policy_service=policy
+            view.id, view.header, groups=view.groups(), policy_service=policy
         ):
             result = yield step
             pass
+
+        yield Advance()
 
     async def _run_delay(self, session: Session, request: Request) -> CommandFlow:
 

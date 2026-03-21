@@ -1,5 +1,5 @@
 from yakoon.base.host import Interaction
-from yakoon.base.ui import ViewSpec
+from yakoon.base.ui import View
 
 
 class ConsoleInteraction(Interaction):
@@ -10,7 +10,7 @@ class ConsoleInteraction(Interaction):
     async def show_prompt(self, ps1: str) -> None:
         self.ui.set_prompt(ps1)
 
-    async def show_view(self, view: ViewSpec) -> None:
+    async def show_view(self, view: View) -> None:
         self.ui.render_view(view)
 
     async def exit(self) -> None:

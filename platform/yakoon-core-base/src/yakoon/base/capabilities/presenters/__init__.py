@@ -1,9 +1,10 @@
 from .port import Presenter, PresenterService
 from .result import PresentResult
-from .types import BlockGroup
+from .view import BlockGroup, PresenterView
 
 __all__ = [
     "Presenter",
+    "PresenterView",
     "PresenterService",
     "PresentResult",
     "BlockGroup",

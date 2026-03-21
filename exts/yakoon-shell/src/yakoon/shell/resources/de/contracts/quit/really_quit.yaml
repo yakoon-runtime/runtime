@@ -12,5 +12,5 @@ view:
       fields:
         - var: quit
           policy: system:bool
-          title: "Ja/Nein:"
+          title: "Ja/Nein"
           required: true

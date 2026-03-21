@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
-    from yakoon.base.capabilities.presenters import BlockGroup
     from yakoon.base.resources.resource import ResourceRef
-    from yakoon.base.ui import ViewSpec
+
+    from .view import PresenterView
 
 
 class Presenter(Protocol):
@@ -20,12 +20,7 @@ class Presenter(Protocol):
         self,
         state: str,
         **data: Any,
-    ) -> ViewSpec: ...
-
-    def group_blocks_by_type(
-        self,
-        view: ViewSpec,
-    ) -> list[BlockGroup]: ...
+    ) -> PresenterView: ...
 
 
 class PresenterService(Protocol):

@@ -10,6 +10,7 @@ import yaml
 from yakoon.base.ui import (
     Block,
     ErrorKind,
+    Field,
     FieldsBlock,
     FieldsState,
     FieldType,
@@ -29,9 +30,8 @@ from yakoon.base.ui import (
     SpacerBlock,
     TableBlock,
     TextBlock,
-    ViewFieldDef,
+    View,
     ViewHeader,
-    ViewSpec,
 )
 
 RULE_STYLES = ("subtle", "normal", "strong")
@@ -76,7 +76,7 @@ class DefaultViewSpecParser:
             "spacer": self._parse_spacer_block,
         }
 
-    def parse_spec(self, yaml_text: str) -> ViewSpec:
+    def parse_spec(self, yaml_text: str) -> View:
         raw = self._load_yaml_mapping(yaml_text)
 
         kind = raw.get("kind")
@@ -101,7 +101,7 @@ class DefaultViewSpecParser:
             raise ViewSpecParseError("Root must be a mapping")
         return raw
 
-    def _parse_view_body(self, view: dict[str, Any]) -> ViewSpec:
+    def _parse_view_body(self, view: dict[str, Any]) -> View:
         if "fields" in view:
             raise ViewSpecValidationError(
                 "view.fields is no longer supported; use a block with type='fields' inside view.blocks"
@@ -150,7 +150,7 @@ class DefaultViewSpecParser:
             meta=None,
         )
 
-        return ViewSpec(
+        return View(
             kind="view",
             id=view_id,
             header=header,
@@ -221,7 +221,7 @@ class DefaultViewSpecParser:
         aliases: dict[str, str] = {}
         order: list[str] = []
         seen_vars: set[str] = set()
-        parsed_fields: list[ViewFieldDef] = []
+        parsed_fields: list[Field] = []
 
         for i, item in enumerate(fields_raw):
             if not isinstance(item, dict):
@@ -270,7 +270,7 @@ class DefaultViewSpecParser:
             meta=meta or None,
         )
 
-    def _parse_field_def(self, *, field_id: str, fd: dict[str, Any]) -> ViewFieldDef:
+    def _parse_field_def(self, *, field_id: str, fd: dict[str, Any]) -> Field:
         policy = fd.get("policy")
         if not isinstance(policy, str) or not policy:
             raise ViewSpecValidationError(
@@ -364,7 +364,7 @@ class DefaultViewSpecParser:
                 parsed_options.append(SelectOption(value=value, label=label))
             options = parsed_options
 
-        return ViewFieldDef(
+        return Field(
             policy=policy,
             title=title_,
             required=required,

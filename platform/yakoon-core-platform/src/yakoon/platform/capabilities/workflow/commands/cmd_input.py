@@ -31,7 +31,7 @@ class CmdWfInput(Command):
         if not s:
             raise RuntimeError(f"{batch_id}:{step_id}: step has no input")
 
-        # Build ViewSpec for the host (fields keyed by var)
+        # Build View for the host (fields keyed by var)
         fields: dict[str, dict] = {}
         order: list[str] = []
 

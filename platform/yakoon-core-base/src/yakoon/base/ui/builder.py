@@ -3,9 +3,9 @@ from __future__ import annotations
 import uuid
 from collections.abc import Sequence
 
-from .blocks import Block, FieldsBlock, InputMode, TextBlock
-from .document import ErrorKind, Role, ViewHeader, ViewSpec
-from .fields import ViewFieldDef
+from .block import Block, FieldsBlock, InputMode, TextBlock
+from .field import Field
+from .view import ErrorKind, Role, View, ViewHeader
 
 
 def _view(
@@ -15,7 +15,7 @@ def _view(
     title: str | None = None,
     error_kind: ErrorKind | None = None,
     view_id: str | None = None,
-) -> ViewSpec:
+) -> View:
 
     header = ViewHeader(
         role=role,
@@ -24,7 +24,7 @@ def _view(
         meta=None,
     )
 
-    return ViewSpec(
+    return View(
         kind="view",
         id=view_id or f"view.{uuid.uuid4().hex}",
         header=header,
@@ -39,7 +39,7 @@ def v_text(
     title: str | None = None,
     error_kind: ErrorKind | None = None,
     view_id: str | None = None,
-) -> ViewSpec:
+) -> View:
     view_id = view_id or f"view.{uuid.uuid4().hex}"
     block_id = f"{view_id}:b{0}"
     return _view(
@@ -61,7 +61,7 @@ def v_info(
     *,
     title: str | None = None,
     view_id: str | None = None,
-) -> ViewSpec:
+) -> View:
     return v_text(text, role="info", title=title, view_id=view_id)
 
 
@@ -71,7 +71,7 @@ def v_error(
     title: str | None = None,
     error_kind: ErrorKind = "system",
     view_id: str | None = None,
-) -> ViewSpec:
+) -> View:
     return v_text(
         text,
         role="error",
@@ -86,7 +86,7 @@ def v_success(
     *,
     title: str | None = None,
     view_id: str | None = None,
-) -> ViewSpec:
+) -> View:
     return v_text(text, role="success", title=title, view_id=view_id)
 
 
@@ -95,7 +95,7 @@ def v_warning(
     *,
     title: str | None = None,
     view_id: str | None = None,
-) -> ViewSpec:
+) -> View:
     return v_text(text, role="warning", title=title, view_id=view_id)
 
 
@@ -104,7 +104,7 @@ def v_help(
     *,
     title: str | None = None,
     view_id: str | None = None,
-) -> ViewSpec:
+) -> View:
     return v_text(text, role="help", title=title, view_id=view_id)
 
 
@@ -115,7 +115,7 @@ def v_blocks(
     title: str | None = None,
     error_kind: ErrorKind | None = None,
     view_id: str | None = None,
-) -> ViewSpec:
+) -> View:
     return _view(
         blocks=blocks,
         role=role,
@@ -126,13 +126,13 @@ def v_blocks(
 
 
 def v_fields(
-    fields: list[ViewFieldDef],
+    fields: list[Field],
     *,
     input_mode: InputMode,
     role: Role = "info",
     title: str | None = None,
     view_id: str | None = None,
-) -> ViewSpec:
+) -> View:
     return _view(
         role=role,
         title=title,
