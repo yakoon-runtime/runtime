@@ -33,14 +33,6 @@ CommandFlow: TypeAlias = AsyncGenerator[Step, Any]
 CommandRun: TypeAlias = Coroutine[Any, Any, CommandFlow]
 
 
-class CmdNotFound(LookupError):
-    """Raised when a command cannot be resolved.
-
-    This is intentionally a LookupError to align with Python's lookup semantics.
-    Dispatchers typically map this to a user-facing "unknown command" message.
-    """
-
-
 class WorkflowContextRequired(RuntimeError):
     """Raised when a workflow-only command is invoked without a workflow batch."""
 

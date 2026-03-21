@@ -1,5 +1,4 @@
 from .commands import (
-    CmdNotFound,
     Command,
     CommandContext,
     CommandKind,
@@ -15,7 +14,6 @@ __all__ = [
     "SessionService",
     "Request",
     "CommandContext",
-    "CmdNotFound",
     "Command",
     "CommandKind",
     "CommandVisibility",

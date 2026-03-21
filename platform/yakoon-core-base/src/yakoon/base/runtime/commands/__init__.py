@@ -1,4 +1,4 @@
-from .command import CmdNotFound, Command, CommandContext, CommandFlow
+from .command import Command, CommandContext, CommandFlow
 from .commandset import CommandSet
 from .request import Request
 from .steps import (
@@ -28,7 +28,6 @@ __all__ = [
     "CommandKind",
     "CommandScope",
     "CommandVisibility",
-    "CmdNotFound",
     "compile_view",
     "Ask",
     "Advance",

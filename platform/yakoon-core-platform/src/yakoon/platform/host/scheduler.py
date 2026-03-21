@@ -3,6 +3,8 @@ import heapq
 import time
 from collections import deque
 
+from yakoon.base.capabilities.audit.port import AuditLogService
+from yakoon.base.engine.types import DispatchInput
 from yakoon.base.runtime.commands import (
     AwaitInput,
     Next,
@@ -11,7 +13,10 @@ from yakoon.base.runtime.commands import (
     Stop,
 )
 from yakoon.base.runtime.sessions.flow import FlowState
+from yakoon.base.runtime.sessions.session import Session
+from yakoon.base.ui.builder import v_error
 from yakoon.platform.engine import CommandEngine
+from yakoon.platform.runtime import PlatformError
 
 
 class Scheduler:
@@ -28,8 +33,15 @@ class Scheduler:
     # Public API
     # --------------------------------------------------------
 
-    def schedule(self, session):
-        self.ready.append(session)
+    async def dispatch(self, session: Session, dispatch_input: DispatchInput):
+        try:
+            await self.engine.dispatch(session, dispatch_input)
+            self._schedule(session)
+        except PlatformError as e:
+            await session.emit(v_error(e.message, error_kind=e.code))  # type: ignore
+        except Exception as e:
+            self.engine.services.get(AuditLogService).error(e, session)
+            await session.emit(v_error("Fatal error", error_kind="fatal"))
 
     def resume_input(self, session, data):
 
@@ -42,10 +54,10 @@ class Scheduler:
 
         # if flow.state == FlowState.WAITING_INPUT:
         #    flow.state = FlowState.READY
-        self.schedule(session)
+        self._schedule(session)
 
     # --------------------------------------------------------
-    # Main loop
+    # MAIN LOOP
     # --------------------------------------------------------
 
     async def run(self):
@@ -69,12 +81,21 @@ class Scheduler:
             if flow.state not in (FlowState.READY, FlowState.WAITING_INPUT):
                 continue
 
-            outcome = await self.engine.tick(session)
-            await self._handle_outcome(session, outcome)
+            try:
+                outcome = await self.engine.tick(session)
+                await self._handle_outcome(session, outcome)
+            except PlatformError as e:
+                await session.emit(v_error(e.message, error_kind=e.code))  # type: ignore
+            except Exception as e:
+                self.engine.services.get(AuditLogService).error(e, session)
+                await session.emit(v_error("Fatal error", error_kind="fatal"))
 
     # --------------------------------------------------------
-    # Internal
+    # INTERNAL
     # --------------------------------------------------------
+
+    def _schedule(self, session):
+        self.ready.append(session)
 
     def _wake_sleeping(self):
         now = time.time()
@@ -90,7 +111,7 @@ class Scheduler:
                 continue
 
             flow.state = FlowState.READY
-            self.schedule(session)
+            self._schedule(session)
 
     async def _idle_wait(self):
         if self.sleeping:
@@ -113,7 +134,7 @@ class Scheduler:
 
             case Next():
                 flow.state = FlowState.READY
-                self.schedule(session)
+                self._schedule(session)
 
             case Stop():
                 session.flow = None

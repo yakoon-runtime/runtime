@@ -27,5 +27,4 @@ class Runner:
             return
 
         data = event.to_text()
-        await self.engine.dispatch(self.session, CommandDispatch(data))
-        self.scheduler.schedule(self.session)
+        await self.scheduler.dispatch(self.session, CommandDispatch(data))

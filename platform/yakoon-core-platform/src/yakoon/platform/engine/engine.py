@@ -1,32 +1,31 @@
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import Permission, PermissionService
-from yakoon.base.capabilities.workflow import WorkflowContextRequired
 from yakoon.base.engine import (
     CommandDispatch,
     DispatchInput,
 )
 from yakoon.base.runtime import (
-    CmdNotFound,
     Command,
+    CommandContext,
     ExecStep,
     Request,
     Session,
 )
 from yakoon.base.runtime.commands import (
-    CommandContext,
-)
-from yakoon.base.runtime.commands.steps import (
     AwaitInput,
     InputResolved,
     Next,
+    Sleep,
+    SleepUntil,
+    StepOutcome,
     Stop,
 )
-from yakoon.base.runtime.commands.steps.outcome import Sleep, SleepUntil, StepOutcome
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions.flow import Flow, FlowCursor, FlowState
+from yakoon.base.runtime.sessions import Flow, FlowCursor, FlowState
 from yakoon.base.ui import v_error
+from yakoon.platform.runtime import CommandNotFound, PermissionDenied, PlatformError
 
 from .directories import CommandDirectory, ControllerDirectory
 
@@ -105,7 +104,7 @@ class CommandEngine:
                     result = await self._find_matching_command(controller_id, request)
 
             if not result:
-                raise CmdNotFound(request.command)
+                raise CommandNotFound(request.command)
 
             resolved_controller, command_type = result
             if not resolved_controller:
@@ -129,7 +128,7 @@ class CommandEngine:
             perm_service = self.services.get(PermissionService)
             fq = Permission.fq_key(resolved_controller.id, command_type.key)
             if not perm_service.can_execute(session, fq):
-                raise PermissionError("Permission denied")
+                raise PermissionDenied()
 
             session.execution.step(
                 ExecStep.COMMAND_PREPARED,
@@ -144,29 +143,22 @@ class CommandEngine:
                 FlowCursor(command_type.run),
             )
 
-        except CmdNotFound:
-            await session.emit(
-                v_error(f"{request.command}': command not found... use 'man'")
-            )
+        except CommandNotFound as exc:
+            raise CommandNotFound(request.command) from exc
 
-        except PermissionError as exc:
+        except PermissionDenied as exc:
             self.services.get(AuditLogService).security(
                 session,
                 "command",
                 command_type.key if command_type else request.command,
             )
-            await session.emit(v_error(str(exc)))
-
-        except WorkflowContextRequired:
-            await session.emit(
-                v_error(
-                    f"{request.command}': may only be executed from within a workflow.'"
-                )
-            )
+            raise PermissionDenied() from exc
 
         except Exception as exc:
-            self.services.get(AuditLogService).error(exc, session)
-            await session.emit(v_error("Ein interner Fehler ist aufgetreten."))
+            raise PlatformError(
+                "Ein interner Fehler ist aufgetreten.",
+                "internal_error",
+            ) from exc
 
         finally:
             if command_type:

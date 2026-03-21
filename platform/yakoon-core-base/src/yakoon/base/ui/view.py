@@ -6,7 +6,7 @@ from typing import Any, Literal
 from .block import Block
 
 Role = Literal["info", "success", "warning", "error", "help"]
-ErrorKind = Literal["validation", "system"]
+ErrorKind = Literal["validation", "system", "fatal"]
 
 
 @dataclass(frozen=True, slots=True)
