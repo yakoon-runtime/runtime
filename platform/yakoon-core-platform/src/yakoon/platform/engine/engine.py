@@ -24,7 +24,7 @@ from yakoon.base.runtime.commands import (
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.runtime.sessions import Flow, FlowCursor, FlowState
-from yakoon.base.ui import v_error
+from yakoon.base.ui import v_error_system
 from yakoon.platform.runtime import CommandNotFound, PermissionDenied, PlatformError
 
 from .directories import CommandDirectory, ControllerDirectory
@@ -84,7 +84,7 @@ class CommandEngine:
 
         controller = self._controllers.get(controller_id)
         if not controller:
-            await session.emit(v_error("Kein aktiver Controller gesetzt."))
+            await session.emit(v_error_system("Kein aktiver Controller gesetzt."))
             return None
 
         command_type: type[Command] | None = None
@@ -143,16 +143,16 @@ class CommandEngine:
                 FlowCursor(command_type.run),
             )
 
-        except CommandNotFound as exc:
-            raise CommandNotFound(request.command) from exc
+        except CommandNotFound:
+            raise
 
-        except PermissionDenied as exc:
+        except PermissionDenied:
             self.services.get(AuditLogService).security(
                 session,
                 "command",
                 command_type.key if command_type else request.command,
             )
-            raise PermissionDenied() from exc
+            raise
 
         except Exception as exc:
             raise PlatformError(

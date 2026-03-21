@@ -17,7 +17,7 @@ from .block import (
     TableBlock,
     TextBlock,
 )
-from .builder import v_error, v_info, v_text
+from .builder import v_error_domain, v_error_fatal, v_error_system, v_info, v_text
 from .event import ViewEvent
 from .field import Field, FieldError, FieldType, SelectOption
 from .node import Node
@@ -82,6 +82,8 @@ __all__ = [
     "FieldsBlock",
     "FieldsState",
     "v_text",
-    "v_error",
+    "v_error_system",
+    "v_error_fatal",
+    "v_error_domain",
     "v_info",
 ]

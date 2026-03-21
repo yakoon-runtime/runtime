@@ -14,6 +14,7 @@ def _view(
     role: Role = "info",
     title: str | None = None,
     error_kind: ErrorKind | None = None,
+    error_code: str | None = None,
     view_id: str | None = None,
 ) -> View:
 
@@ -21,6 +22,7 @@ def _view(
         role=role,
         title=title,
         error_kind=error_kind,
+        error_code=error_code,
         meta=None,
     )
 
@@ -38,6 +40,7 @@ def v_text(
     role: Role = "info",
     title: str | None = None,
     error_kind: ErrorKind | None = None,
+    error_code: str | None = None,
     view_id: str | None = None,
 ) -> View:
     view_id = view_id or f"view.{uuid.uuid4().hex}"
@@ -46,6 +49,7 @@ def v_text(
         role=role,
         title=title,
         error_kind=error_kind,
+        error_code=error_code,
         view_id=view_id,
         blocks=[
             TextBlock(
@@ -65,11 +69,34 @@ def v_info(
     return v_text(text, role="info", title=title, view_id=view_id)
 
 
-def v_error(
+def v_error_domain(text: str, *, title=None, error_code=None, view_id=None) -> View:
+    return v_text(
+        text,
+        role="error",
+        title=title,
+        error_kind="domain",
+        error_code=error_code,
+        view_id=view_id,
+    )
+
+
+def v_error_fatal(text: str, *, title=None, error_code=None, view_id=None) -> View:
+    return v_text(
+        text,
+        role="error",
+        title=title,
+        error_kind="fatal",
+        error_code=error_code,
+        view_id=view_id,
+    )
+
+
+def v_error_system(
     text: str,
     *,
     title: str | None = None,
     error_kind: ErrorKind = "system",
+    error_code: str | None = None,
     view_id: str | None = None,
 ) -> View:
     return v_text(
@@ -77,6 +104,7 @@ def v_error(
         role="error",
         title=title,
         error_kind=error_kind,
+        error_code=error_code,
         view_id=view_id,
     )
 

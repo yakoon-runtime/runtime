@@ -3,7 +3,7 @@ from collections.abc import Awaitable, Callable
 
 from yakoon.base.capabilities.interaction import DialogCancelled
 from yakoon.base.runtime import Session
-from yakoon.base.ui import View, v_error
+from yakoon.base.ui import View, v_error_system
 from yakoon.platform.runtime.devtools.prompt import UnresolvedPromptMonitor
 from yakoon.platform.settings import settings
 
@@ -148,7 +148,7 @@ class DefaultDialogService:
                     if on_timeout:
                         await on_timeout()
                     else:
-                        await session.emit(v_error("Input timed out."))
+                        await session.emit(v_error_system("Input timed out."))
 
             self._timeouts[session_key] = asyncio.create_task(auto_expire())
 

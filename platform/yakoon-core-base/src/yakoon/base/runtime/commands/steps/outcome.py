@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from yakoon.base.ui import View
 
 # ============================================================
 # Step Outcomes (Engine Control)
@@ -31,6 +34,17 @@ class Stop(StepOutcome):
 
 
 # ------------------------------------------------------------
+# FAILURE
+# ------------------------------------------------------------
+
+
+class DomainFailure(StepOutcome):
+
+    def __init__(self, error):
+        self.error = error
+
+
+# ------------------------------------------------------------
 # Input Handling
 # ------------------------------------------------------------
 
@@ -38,7 +52,7 @@ class Stop(StepOutcome):
 class AwaitInput(StepOutcome):
     """Pause execution and request user input."""
 
-    def __init__(self, view):
+    def __init__(self, view: View):
         self.view = view
 
 

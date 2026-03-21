@@ -41,6 +41,10 @@ class ConsoleClient:
             # ------------------------
             # Form Mode
             # ------------------------
+            if self._current_index >= len(self._current_fields):
+                self._reset_form()
+                return
+
             field = self._current_fields[self._current_index]
 
             self._current_values[field.var] = raw
@@ -117,8 +121,9 @@ class ConsoleClient:
 
         header = self._document_header
 
+        self._reset_form()
+
         if not header or not header.expects_input:
-            self._reset_form()
             ui.reset_prompt()
             return
 

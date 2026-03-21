@@ -8,7 +8,7 @@ class PlatformError(Exception):
 
 
 # ----------------------------------------
-# COMMAND
+# PLATFORM ERRORS
 # ----------------------------------------
 
 
@@ -20,14 +20,21 @@ class CommandNotFound(PlatformError):
         )
 
 
-# ----------------------------------------
-# PERMISSIONS
-# ----------------------------------------
-
-
 class PermissionDenied(PlatformError):
     def __init__(self):
         super().__init__(
             message="Permission denied",
             code="permission_denied",
         )
+
+
+# ----------------------------------------
+# DOMAIN ERRORS
+# ----------------------------------------
+
+
+class DomainError(Exception):
+
+    def __init__(self, message: str, code: str | None = None):
+        self.message = message
+        self.code = code

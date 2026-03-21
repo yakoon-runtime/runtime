@@ -16,7 +16,7 @@ from yakoon.base.ui import (
     OutputStreaming,
     OutputStreamService,
     View,
-    v_error,
+    v_error_system,
 )
 
 
@@ -158,10 +158,10 @@ class ConsoleInteractionService:
         for key, msgs in errors.items():
             for msg in msgs:
                 if key == "form":
-                    await session.emit(v_error(msg, error_kind="validation"))
+                    await session.emit(v_error_system(msg, error_kind="validation"))
                 else:
                     await session.emit(
-                        v_error(f"{key}: {msg}", error_kind="validation")
+                        v_error_system(f"{key}: {msg}", error_kind="validation")
                     )
 
     def _merge_result(

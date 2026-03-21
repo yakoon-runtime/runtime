@@ -8,7 +8,10 @@ from yakoon.base.runtime.commands import (
     Delay,
     compile_view,
 )
+from yakoon.base.runtime.commands.steps import InputResolved
+from yakoon.base.runtime.commands.steps.step import ActiveStep
 from yakoon.base.ui import v_text
+from yakoon.platform.runtime.error import DomainError
 
 
 class CmdTest(Command):
@@ -26,8 +29,41 @@ class CmdTest(Command):
         async for step in compile_view(
             view.id, view.header, groups=view.groups(), policy_service=policy
         ):
-            result = yield step
-            pass
+
+            while True:
+                try:
+                    result = yield step
+
+                    if isinstance(step, ActiveStep):
+                        if isinstance(result, InputResolved):
+                            value = int(result.data.get("result", 0))
+
+                            if value > 10:
+                                raise DomainError(
+                                    "Kunde nicht gefunden", "customer_not_found"
+                                )
+                                # continue
+
+                            if value == 7:
+                                step.reject("result", "Nicht die 7")
+                                # yield step
+                                continue
+
+                            if value == 1:
+                                step.warn("Zahl ist sehr klein")
+                                yield step
+                                continue
+
+                            # raise DomainError(
+                            #    "Kunde nicht gefunden", "customer_not_found"
+                            # )
+
+                    # alle andere steps
+                    break
+
+                except DomainError:
+                    # raise
+                    continue
 
         yield Advance()
 

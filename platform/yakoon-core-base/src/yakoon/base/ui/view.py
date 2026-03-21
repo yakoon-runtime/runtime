@@ -6,7 +6,12 @@ from typing import Any, Literal
 from .block import Block
 
 Role = Literal["info", "success", "warning", "error", "help"]
-ErrorKind = Literal["validation", "system", "fatal"]
+ErrorKind = Literal[
+    "validation",  # Field / Input
+    "domain",  # Business / erwartbar
+    "system",  # Infrastruktur
+    "fatal",  # Crash / unrecoverable
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -34,6 +39,7 @@ class ViewHeader:
     title: str | None = None
     subtitle: str | None = None
     error_kind: ErrorKind | None = None
+    error_code: str | None = None
     meta: dict[str, Any] | ViewMeta | None = None
     expects_input: bool = False
 
