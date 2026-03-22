@@ -7,8 +7,19 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
-==26-03-22== 
-**Verarbeitung von Commands**
+## 26-03-22 
+**yields im Commands**
+DomainError darf NICHT für Validierung benutzt werden.
+- Antipattern
+  if value < 3:
+      raise DomainError(...) => Antipattern
+- Sondern
+  if value < 3:
+      yield step.reject(...)
+      continue
+
+## 26-03-22 
+**Flows in Commands**
 - Step liefert ausschließlich Outcomes
 - Command yieldet ausschließlich Outcomes
 - Engine verarbeitet ausschließlich Outcomes
@@ -16,7 +27,15 @@
 Bespiel:
 - yield step.run() / resume()
 
-==26-03-19== 
+FlowTypen:
+- NORMAL:
+  - Step → AwaitInput → InputResolved → Next
+- VALIDATION:
+  - Step → reject → AwaitInput
+- ERROR:
+  - raise DomainError → Flow stop
+
+## ==26-03-19== 
 **Stateless Engine**
 Die gesamte Engine wurde auf stateless umgestellt:
 + stateless engine
