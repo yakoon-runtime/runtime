@@ -33,7 +33,7 @@ class ActiveStep(Step):
     async def resume(self, session, data):
         raise NotImplementedError
 
-    def reject(self, field: str, message: str) -> None:
+    def reject(self, field: str, message: str) -> AwaitInput:
         raise NotImplementedError
 
 
@@ -95,20 +95,8 @@ class Ask(ActiveStep):
     # Public API
     # --------------------------------------------------------
 
-    def reject(self, field, message) -> AwaitInput:
-        new_view = self._apply_field_error(field, message)
-        return AwaitInput(new_view)
-
-    def warn(self, message: str) -> AwaitInput:
-        view = self._with_header(role="warning", title=message)
-        return AwaitInput(view)
-
-    def info(self, message: str) -> AwaitInput:
-        view = self._with_header(role="info", title=message)
-        return AwaitInput(view)
-
-    def success(self, message: str) -> AwaitInput:
-        view = self._with_header(role="success", title=message)
+    def reject(self, field: str, message: str) -> AwaitInput:
+        view = self._apply_field_error(field, message)
         return AwaitInput(view)
 
     # --------------------------------------------------------
@@ -189,11 +177,7 @@ class Ask(ActiveStep):
     def _with_header(self, *, role: str, title: str | None = None) -> View:
 
         header = self.view.header
-        new_header = replace(
-            header,
-            role=role,
-            title=title or header.title,
-        )
+        new_header = replace(header, role=role, title=title)  # or header.title,
 
         self.view = View(
             kind=self.view.kind,

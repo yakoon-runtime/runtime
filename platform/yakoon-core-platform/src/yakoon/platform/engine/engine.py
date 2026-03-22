@@ -13,11 +13,8 @@ from yakoon.base.runtime import (
     Session,
 )
 from yakoon.base.runtime.commands import (
-    AwaitInput,
     InputResolved,
     Next,
-    Sleep,
-    SleepUntil,
     StepOutcome,
     Stop,
 )
@@ -198,15 +195,17 @@ class CommandEngine:
         )
 
         try:
-            # --------------------------------------------------
-            # RESUME (Input zurück in Generator schicken)
-            # --------------------------------------------------
+            # ==================================================
+            # RESUME (Input zurück in Generator)
+            # ==================================================
             if flow.state == FlowState.WAITING_INPUT and flow.input_queue:
+
                 version, raw_values = flow.input_queue[0]
 
+                # veralteten Input verwerfen
                 if version != flow.input_version:
-                    flow.input_queue.popleft()  # verwerfen
-                    return Next()  # einfach weiter
+                    flow.input_queue.popleft()
+                    return Next()
 
                 flow.input_queue.popleft()
 
@@ -216,15 +215,31 @@ class CommandEngine:
 
                 outcome = await step.resume(session, raw_values)
 
-                if isinstance(outcome, InputResolved):
-                    step = await cursor.send(outcome)
-                elif isinstance(outcome, AwaitInput):
-                    return outcome
-                else:
-                    raise RuntimeError("Unexpected resume outcome")
+                if not isinstance(outcome, StepOutcome):
+                    raise RuntimeError("resume() must return StepOutcome")
 
+                # InputResolved → zurück in Generator
+                if isinstance(outcome, InputResolved):
+                    item = await cursor.send(outcome)
+
+                    if isinstance(item, StepOutcome):
+                        return item
+
+                    step = item
+
+                else:
+                    return outcome
+
+            # ==================================================
+            # NORMALER FLOW (Generator weiterlaufen lassen)
+            # ==================================================
             else:
-                step = await cursor.next(command, session, request)
+                item = await cursor.next(command, session, request)
+
+                if isinstance(item, StepOutcome):
+                    return item
+
+                step = item
 
             flow.last_step = step
 
@@ -232,33 +247,12 @@ class CommandEngine:
             session.flow = None
             return Stop()
 
-        # --------------------------------------------------
+        # ==================================================
         # STEP AUSFÜHREN
-        # --------------------------------------------------
+        # ==================================================
         outcome = await step.run(session, request)
 
-        # --------------------------------------------------
-        # OUTCOME INTERPRETATION
-        # --------------------------------------------------
+        if not isinstance(outcome, StepOutcome):
+            raise RuntimeError(f"Invalid step result: {type(outcome)}")
 
-        match outcome:
-
-            case Next():
-                return Next()
-
-            case Stop():
-                await controller.on_after_run_command(session, request, command)
-                session.flow = None
-                return Stop()
-
-            case AwaitInput():
-                return outcome
-
-            case Sleep():
-                return outcome
-
-            case SleepUntil():
-                return outcome
-
-            case _:
-                raise RuntimeError(f"Unknown StepOutcome: {type(outcome)}")
+        return outcome

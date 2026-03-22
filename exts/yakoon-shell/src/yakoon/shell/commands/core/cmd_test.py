@@ -45,14 +45,12 @@ class CmdTest(Command):
                                 # continue
 
                             if value == 7:
-                                step.reject("result", "Nicht die 7")
-                                # yield step
+                                yield step.reject("result", "Nicht die 7")
                                 continue
 
-                            if value == 1:
-                                step.warn("Zahl ist sehr klein")
-                                yield step
-                                continue
+                            # if value == 1:
+                            #    yield step.warn("Zahl ist sehr klein")
+                            #    continue
 
                             # raise DomainError(
                             #    "Kunde nicht gefunden", "customer_not_found"
@@ -62,8 +60,8 @@ class CmdTest(Command):
                     break
 
                 except DomainError:
-                    # raise
-                    continue
+                    raise
+                    # continue
 
         yield Advance()
 

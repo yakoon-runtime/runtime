@@ -12,7 +12,7 @@ from yakoon.base.capabilities.presenters import (
 from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.controllers import resolve_resource
 
-from .steps.step import Step
+from .steps.step import Step, StepOutcome
 from .types import (
     CommandKind,
     CommandScope,
@@ -29,7 +29,7 @@ if TYPE_CHECKING:
     from .request import Request
 
 
-CommandFlow: TypeAlias = AsyncGenerator[Step, Any]
+CommandFlow: TypeAlias = AsyncGenerator[Step | StepOutcome, Any]
 CommandRun: TypeAlias = Coroutine[Any, Any, CommandFlow]
 
 
