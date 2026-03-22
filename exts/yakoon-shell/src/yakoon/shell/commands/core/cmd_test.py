@@ -20,7 +20,7 @@ class CmdTest(Command):
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
 
-    async def run(self, session: Session, request: Request) -> CommandFlow:
+    async def __run(self, session: Session, request: Request) -> CommandFlow:
 
         policy = self.services.get(PolicyService)
         presenter = await self.get_presenter(session=session)
@@ -65,7 +65,7 @@ class CmdTest(Command):
 
         yield Advance()
 
-    async def _run_delay(self, session: Session, request: Request) -> CommandFlow:
+    async def run(self, session: Session, request: Request) -> CommandFlow:
 
         while True:
 

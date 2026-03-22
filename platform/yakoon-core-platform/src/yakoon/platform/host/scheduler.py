@@ -27,7 +27,7 @@ class Scheduler:
 
         self.ready = deque()
         self.sleeping = []  # (wake_at, session)
-
+        self._event = asyncio.Event()
         self._running = False
 
     # --------------------------------------------------------
@@ -68,17 +68,33 @@ class Scheduler:
 
             self._wake_sleeping()
 
+            # --------------------------------------------------
+            # Nichts zu tun → warten
+            # --------------------------------------------------
             if not self.ready:
-                await self._idle_wait()
+                if self.sleeping:
+                    wake_at = self.sleeping[0][0]
+                    delay = max(0, wake_at - time.time())
+
+                    try:
+                        await asyncio.wait_for(self._event.wait(), timeout=delay)
+                    except TimeoutError:
+                        pass
+                else:
+                    await self._event.wait()
+
+                self._event.clear()
                 continue
 
+            # --------------------------------------------------
+            # Work vorhanden
+            # --------------------------------------------------
             session: Session = self.ready.popleft()
             flow = session.flow
 
             if not flow:
                 continue
 
-            # EINZIGE WAHRHEIT
             if flow.state not in (FlowState.READY, FlowState.WAITING_INPUT):
                 continue
 
@@ -87,11 +103,7 @@ class Scheduler:
                 await self._handle_outcome(session, outcome)
 
             except DomainError as e:
-
-                def _abort_flow(session):
-                    session.flow = None
-
-                _abort_flow(session)
+                session.flow = None
                 await session.emit(v_error_domain(e.message, error_code=e.code))  # type: ignore
 
             except PlatformError as e:
@@ -107,6 +119,7 @@ class Scheduler:
 
     def _schedule(self, session):
         self.ready.append(session)
+        self._event.set()
 
     def _wake_sleeping(self):
         now = time.time()
@@ -123,14 +136,6 @@ class Scheduler:
 
             flow.state = FlowState.READY
             self._schedule(session)
-
-    async def _idle_wait(self):
-        if self.sleeping:
-            wake_at = self.sleeping[0][0]
-            delay = max(0, wake_at - time.time())
-            await asyncio.sleep(delay)
-        else:
-            await asyncio.sleep(0.05)
 
     async def _handle_outcome(self, session, outcome):
 
