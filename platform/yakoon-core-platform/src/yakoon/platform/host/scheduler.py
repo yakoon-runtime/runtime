@@ -12,7 +12,7 @@ from yakoon.base.runtime.commands import (
     SleepUntil,
     Stop,
 )
-from yakoon.base.runtime.sessions.flow import FlowState
+from yakoon.base.runtime.sessions.flow import Flow, FlowState
 from yakoon.base.runtime.sessions.session import Session
 from yakoon.base.ui import v_error_domain, v_error_fatal, v_error_system
 from yakoon.platform.engine import CommandEngine
@@ -26,7 +26,7 @@ class Scheduler:
         self.engine = engine
 
         self.ready = deque()
-        self.sleeping = []  # (wake_at, session)
+        self.sleeping = []  # (wake_at, session, flow)
         self._event = asyncio.Event()
         self._running = False
 
@@ -90,17 +90,16 @@ class Scheduler:
             # Work vorhanden
             # --------------------------------------------------
             session: Session = self.ready.popleft()
-            flow = session.focused_flow
 
-            if not flow:
-                continue
-
-            if flow.state not in (FlowState.READY, FlowState.WAITING_INPUT):
+            # Multi-Flow: nur prüfen, ob überhaupt Flows existieren
+            if not session.flows():
                 continue
 
             try:
-                outcome = await self.engine.tick(session)
-                await self._handle_outcome(session, outcome)
+                results = await self.engine.tick(session)
+
+                for flow, outcome in results:
+                    await self._handle_outcome(session, flow, outcome)
 
             except DomainError as e:
                 if session.focused_flow:
@@ -119,19 +118,15 @@ class Scheduler:
     # --------------------------------------------------------
 
     def _schedule(self, session):
-        self.ready.append(session)
+        if session not in self.ready:
+            self.ready.append(session)
         self._event.set()
 
     def _wake_sleeping(self):
         now = time.time()
 
         while self.sleeping and self.sleeping[0][0] <= now:
-            _, session = heapq.heappop(self.sleeping)
-            session: Session = session
-
-            flow = session.focused_flow
-            if not flow:
-                continue
+            _, session, flow = heapq.heappop(self.sleeping)
 
             if flow.state != FlowState.SLEEPING:
                 continue
@@ -139,14 +134,7 @@ class Scheduler:
             flow.state = FlowState.READY
             self._schedule(session)
 
-    async def _handle_outcome(self, session: Session, outcome):
-
-        if outcome is None:
-            return
-
-        flow = session.focused_flow
-        if not flow:
-            return
+    async def _handle_outcome(self, session: Session, flow: Flow, outcome):
 
         match outcome:
 
@@ -155,22 +143,23 @@ class Scheduler:
                 self._schedule(session)
 
             case Stop():
-                if session.focused_flow:
-                    session.del_flow(session.focused_flow)
+                session.del_flow(flow)
 
-            case AwaitInput() as input:
+            case AwaitInput() as a:
                 # neue Version starten
                 flow.state = FlowState.WAITING_INPUT
                 flow.input_version += 1
+                if a.emit:
+                    await session.emit(a.view)
 
             case Sleep(seconds=s):
                 flow.state = FlowState.SLEEPING
                 wake_at = time.time() + s
-                heapq.heappush(self.sleeping, (wake_at, session))
+                heapq.heappush(self.sleeping, (wake_at, session, flow))
 
             case SleepUntil(timestamp=t):
                 flow.state = FlowState.SLEEPING
-                heapq.heappush(self.sleeping, (t, session))
+                heapq.heappush(self.sleeping, (t, session, flow))
 
             case _:
                 raise RuntimeError(f"Unhandled outcome: {type(outcome)}")

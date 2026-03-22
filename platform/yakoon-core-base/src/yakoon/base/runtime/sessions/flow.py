@@ -26,6 +26,7 @@ class Flow:
     cursor: FlowCursor
     last_step: Any | None = None
     state: FlowState = FlowState.READY
+    # wake_at: float | None = None
 
     input_queue: deque = field(default_factory=deque)
     input_version: int = 0

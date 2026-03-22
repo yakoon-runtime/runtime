@@ -89,8 +89,7 @@ class Ask(ActiveStep):
     # --------------------------------------------------------
 
     async def run(self, session, request) -> StepOutcome:
-        await session.emit(self.view)
-        return AwaitInput(self.view)
+        return AwaitInput(self.view, emit=True)
 
     # --------------------------------------------------------
     # Public API
@@ -98,7 +97,7 @@ class Ask(ActiveStep):
 
     def reject(self, field: str, message: str) -> AwaitInput:
         view = self._apply_field_error(field, message)
-        return AwaitInput(view)
+        return AwaitInput(view, emit=True)
 
     # --------------------------------------------------------
     # Resume
@@ -163,9 +162,7 @@ class Ask(ActiveStep):
 
         if errors:
             self.view = self.view.with_body(new_blocks)
-            # WICHTIG: View aktiv senden Client braucht Fehlermeldung.
-            await session.emit(self.view)
-            return AwaitInput(self.view)
+            return AwaitInput(self.view, emit=True)
 
         # ----------------------------------------------------
         # 3. Erfolg

@@ -65,7 +65,7 @@ class CmdTest(Command):
 
         yield Advance()
 
-    async def run_delay(self, session: Session, request: Request) -> CommandFlow:
+    async def delay_run(self, session: Session, request: Request) -> CommandFlow:
 
         while True:
 
@@ -73,7 +73,7 @@ class CmdTest(Command):
             await session.emit(v_text("\nHello " + str(request.args)))
 
             # 2. 5 Sekunden warten
-            yield Delay(3)
+            yield Delay(15)
 
     async def _run_print_message(
         self, session: Session, request: Request

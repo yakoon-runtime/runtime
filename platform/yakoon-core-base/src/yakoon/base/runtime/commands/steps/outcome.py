@@ -41,8 +41,9 @@ class Stop(StepOutcome):
 class AwaitInput(StepOutcome):
     """Pause execution and request user input."""
 
-    def __init__(self, view: View):
+    def __init__(self, view: View, *, emit: bool = False):
         self.view = view
+        self.emit = emit
 
 
 class InputResolved(StepOutcome):
