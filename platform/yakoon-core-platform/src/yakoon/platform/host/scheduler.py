@@ -12,7 +12,6 @@ from yakoon.base.runtime.commands import (
     SleepUntil,
     Stop,
 )
-from yakoon.base.runtime.commands.steps.outcome import DomainFailure
 from yakoon.base.runtime.sessions.flow import FlowState
 from yakoon.base.runtime.sessions.session import Session
 from yakoon.base.ui import v_error_domain, v_error_fatal, v_error_system
@@ -88,7 +87,11 @@ class Scheduler:
                 await self._handle_outcome(session, outcome)
 
             except DomainError as e:
-                session.flow = None
+
+                def _abort_flow(session):
+                    session.flow = None
+
+                _abort_flow(session)
                 await session.emit(v_error_domain(e.message, error_code=e.code))  # type: ignore
 
             except PlatformError as e:
@@ -161,16 +164,6 @@ class Scheduler:
             case SleepUntil(timestamp=t):
                 flow.state = FlowState.SLEEPING
                 heapq.heappush(self.sleeping, (t, session))
-
-            case DomainFailure() as failure:
-                view = v_error_domain(
-                    failure.error.message,
-                    error_code=failure.error.code,
-                )
-                await session.emit(view)
-                # entscheidend:
-                flow.state = FlowState.READY
-                self._schedule(session)
 
             case _:
                 raise RuntimeError(f"Unhandled outcome: {type(outcome)}")

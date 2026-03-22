@@ -202,8 +202,11 @@ class CommandEngine:
 
                 version, raw_values = flow.input_queue[0]
 
+                def _is_stale_input(flow, version):
+                    return version != flow.input_version
+
                 # veralteten Input verwerfen
-                if version != flow.input_version:
+                if _is_stale_input(flow, version):
                     flow.input_queue.popleft()
                     return Next()
 
