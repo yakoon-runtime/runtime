@@ -8,7 +8,11 @@
 --
 
 ## 26-03-22 
-**yields im Commands**
+**Flow lebt sein eigenes Leben**
+Ein Command erzeugt einen Flow, und dieser lebt sein eigenes Leben.
+
+## 26-03-22 
+**yield's im Commands**
 DomainError darf NICHT für Validierung benutzt werden.
 - Antipattern
   if value < 3:
