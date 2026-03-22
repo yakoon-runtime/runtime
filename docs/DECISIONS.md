@@ -12,7 +12,7 @@
 **Flow lebt sein eigenes Leben**
 Ein Command erzeugt einen Flow, und dieser lebt sein eigenes Leben.
 **WICHTIG:** 
-- Ein Step darf NIEMALS den UI-Zustand ändern, ohne zu emittieren.
+- Steps dürfen keine Emits mehr machen (für AwaitInput)
 
 ## 26-03-22 
 **yield's im Commands**
