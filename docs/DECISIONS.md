@@ -7,9 +7,12 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+
 ## 26-03-22 
 **Flow lebt sein eigenes Leben**
 Ein Command erzeugt einen Flow, und dieser lebt sein eigenes Leben.
+**WICHTIG:** 
+- Ein Step darf NIEMALS den UI-Zustand ändern, ohne zu emittieren.
 
 ## 26-03-22 
 **yield's im Commands**
