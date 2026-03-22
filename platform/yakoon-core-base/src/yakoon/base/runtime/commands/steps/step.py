@@ -89,7 +89,7 @@ class Ask(ActiveStep):
     # --------------------------------------------------------
 
     async def run(self, session, request) -> StepOutcome:
-        # await session.emit(self.view)
+        await session.emit(self.view)
         return AwaitInput(self.view)
 
     # --------------------------------------------------------
@@ -163,6 +163,8 @@ class Ask(ActiveStep):
 
         if errors:
             self.view = self.view.with_body(new_blocks)
+            # WICHTIG: View aktiv senden Client braucht Fehlermeldung.
+            await session.emit(self.view)
             return AwaitInput(self.view)
 
         # ----------------------------------------------------

@@ -162,7 +162,6 @@ class Scheduler:
                 # neue Version starten
                 flow.state = FlowState.WAITING_INPUT
                 flow.input_version += 1
-                await session.emit(input.view)
 
             case Sleep(seconds=s):
                 flow.state = FlowState.SLEEPING
