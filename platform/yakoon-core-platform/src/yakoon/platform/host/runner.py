@@ -18,7 +18,7 @@ class Runner:
 
     async def on_input(self, event: InputEvent):
 
-        flow = self.session.flow
+        flow = self.session.focused_flow
 
         # Kontext entscheidet
         if flow and flow.state == FlowState.WAITING_INPUT:

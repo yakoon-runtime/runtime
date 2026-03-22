@@ -19,6 +19,7 @@ class FlowState(Enum):
 
 @dataclass
 class Flow:
+    id: str  # = field(default_factory=lambda: uuid4().hex)
     command_key: str
     controller_id: str
     request: str

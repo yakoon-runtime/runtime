@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from typing import Any
@@ -78,7 +79,9 @@ class Session:
     def __init__(self, state: SessionState):
         self._state = state
         self._runtime = SessionRuntime()
-        self.flow: Flow | None = None
+        self._flows: dict[str, Flow] = {}
+        self._focus_flow_id: str | None = None
+        self._runtime_flow_id: str | None = None
 
     @property
     def lang(self) -> str:
@@ -113,6 +116,33 @@ class Session:
 
     def bind_io(self, io: IO):
         self._runtime.io = io
+
+    # ----------------------------
+    # FLOWS
+    # ----------------------------
+
+    def add_flow(self, flow: Flow) -> str:
+        self._flows[flow.id] = flow
+        self._focus_flow_id = flow.id
+        return flow.id
+
+    def get_flow(self, id: str) -> Flow | None:
+        return self._flows.get(id)
+
+    def del_flow(self, flow: Flow):
+        if flow.id in self._flows:
+            del self._flows[flow.id]
+        if self._focus_flow_id == flow.id:
+            self._focus_flow_id = next(iter(self._flows), None)
+
+    def flows(self) -> Sequence[Flow]:
+        return list(self._flows.values())
+
+    @property
+    def focused_flow(self) -> Flow | None:
+        if not self._focus_flow_id:
+            return None
+        return self.get_flow(self._focus_flow_id)
 
     # ----------------------------
     # TOUCH
@@ -173,12 +203,19 @@ class Session:
     # emit
     # ----------------------------
 
-    async def emit(self, payload: View | ViewEvent) -> None:
+    async def emit(
+        self,
+        payload: View | ViewEvent,
+        *,
+        job_id: str | None = None,
+        channel: str = "main",
+    ) -> None:
+        job_id = job_id or self._runtime_flow_id or "system"
         if isinstance(payload, ViewEvent):
             event = payload
         else:
             view = self._ensure_view(payload)
-            event = self._view_to_event(view)
+            event = self._view_to_event(view, job_id=job_id, channel=channel)
 
         if self._runtime.io is None:
             raise RuntimeError("io cannot be None")
@@ -208,7 +245,7 @@ class Session:
             raise TypeError("Session output must be a View with kind='view'.")
         return payload
 
-    def _view_to_event(self, view: View) -> ViewEvent:
+    def _view_to_event(self, view: View, *, job_id: str, channel: str) -> ViewEvent:
         view_id = view.id or f"view.{uuid.uuid4().hex}"
 
         nodes = []
@@ -244,4 +281,8 @@ class Session:
                 ],
                 final=True,
             ),
+            meta={
+                "job_id": job_id,
+                "channel": channel,
+            },
         )

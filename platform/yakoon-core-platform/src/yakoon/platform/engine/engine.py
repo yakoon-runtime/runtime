@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import Permission, PermissionService
@@ -133,12 +135,14 @@ class CommandEngine:
                 controller=resolved_controller.id,
             )
 
-            session.flow = Flow(
+            flow = Flow(
+                uuid4().hex,
                 command_type.key,
                 resolved_controller.id,
                 request.raw,
                 FlowCursor(command_type.run),
             )
+            session.add_flow(flow)
 
         except CommandNotFound:
             raise
@@ -169,7 +173,9 @@ class CommandEngine:
 
     async def tick(self, session: Session) -> StepOutcome | None:
 
-        flow = session.flow
+        # TODO: Könnte inzwischen durch neuen Dispatch
+        # schon wieder geändert worden sein.
+        flow = session.focused_flow
         if not flow:
             return Stop()
 
@@ -195,67 +201,72 @@ class CommandEngine:
         )
 
         try:
-            # ==================================================
-            # RESUME (Input zurück in Generator)
-            # ==================================================
-            if flow.state == FlowState.WAITING_INPUT and flow.input_queue:
+            session._runtime_flow_id = flow.id
+            try:
 
-                version, raw_values = flow.input_queue[0]
+                # ==================================================
+                # RESUME (Input zurück in Generator)
+                # ==================================================
+                if flow.state == FlowState.WAITING_INPUT and flow.input_queue:
 
-                def _is_stale_input(flow, version):
-                    return version != flow.input_version
+                    version, raw_values = flow.input_queue[0]
 
-                # veralteten Input verwerfen
-                if _is_stale_input(flow, version):
+                    def _is_stale_input(flow, version):
+                        return version != flow.input_version
+
+                    # veralteten Input verwerfen
+                    if _is_stale_input(flow, version):
+                        flow.input_queue.popleft()
+                        return Next()
+
                     flow.input_queue.popleft()
-                    return Next()
 
-                flow.input_queue.popleft()
+                    step = flow.last_step
+                    if not step:
+                        raise RuntimeError("Missing last_step for resume")
 
-                step = flow.last_step
-                if not step:
-                    raise RuntimeError("Missing last_step for resume")
+                    outcome = await step.resume(session, raw_values)
 
-                outcome = await step.resume(session, raw_values)
+                    if not isinstance(outcome, StepOutcome):
+                        raise RuntimeError("resume() must return StepOutcome")
 
-                if not isinstance(outcome, StepOutcome):
-                    raise RuntimeError("resume() must return StepOutcome")
+                    # InputResolved → zurück in Generator
+                    if isinstance(outcome, InputResolved):
+                        item = await cursor.send(outcome)
 
-                # InputResolved → zurück in Generator
-                if isinstance(outcome, InputResolved):
-                    item = await cursor.send(outcome)
+                        if isinstance(item, StepOutcome):
+                            return item
+
+                        step = item
+
+                    else:
+                        return outcome
+
+                # ==================================================
+                # NORMALER FLOW (Generator weiterlaufen lassen)
+                # ==================================================
+                else:
+                    item = await cursor.next(command, session, request)
 
                     if isinstance(item, StepOutcome):
                         return item
 
                     step = item
 
-                else:
-                    return outcome
+                flow.last_step = step
+
+            except StopAsyncIteration:
+                return Stop()
 
             # ==================================================
-            # NORMALER FLOW (Generator weiterlaufen lassen)
+            # STEP AUSFÜHREN
             # ==================================================
-            else:
-                item = await cursor.next(command, session, request)
+            outcome = await step.run(session, request)
 
-                if isinstance(item, StepOutcome):
-                    return item
+            if not isinstance(outcome, StepOutcome):
+                raise RuntimeError(f"Invalid step result: {type(outcome)}")
 
-                step = item
+            return outcome
 
-            flow.last_step = step
-
-        except StopAsyncIteration:
-            session.flow = None
-            return Stop()
-
-        # ==================================================
-        # STEP AUSFÜHREN
-        # ==================================================
-        outcome = await step.run(session, request)
-
-        if not isinstance(outcome, StepOutcome):
-            raise RuntimeError(f"Invalid step result: {type(outcome)}")
-
-        return outcome
+        finally:
+            session._runtime_flow_id = None

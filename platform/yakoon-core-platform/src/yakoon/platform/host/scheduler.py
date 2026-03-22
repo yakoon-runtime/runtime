@@ -44,9 +44,9 @@ class Scheduler:
             self.engine.services.get(AuditLogService).error(e, session)
             await session.emit(v_error_system("Fatal error", error_kind="fatal"))
 
-    def resume_input(self, session, data):
+    def resume_input(self, session: Session, data):
 
-        flow = session.flow
+        flow = session.focused_flow
         if not flow:
             return
 
@@ -90,7 +90,7 @@ class Scheduler:
             # Work vorhanden
             # --------------------------------------------------
             session: Session = self.ready.popleft()
-            flow = session.flow
+            flow = session.focused_flow
 
             if not flow:
                 continue
@@ -103,7 +103,8 @@ class Scheduler:
                 await self._handle_outcome(session, outcome)
 
             except DomainError as e:
-                session.flow = None
+                if session.focused_flow:
+                    session.del_flow(session.focused_flow)
                 await session.emit(v_error_domain(e.message, error_code=e.code))  # type: ignore
 
             except PlatformError as e:
@@ -126,8 +127,9 @@ class Scheduler:
 
         while self.sleeping and self.sleeping[0][0] <= now:
             _, session = heapq.heappop(self.sleeping)
+            session: Session = session
 
-            flow = session.flow
+            flow = session.focused_flow
             if not flow:
                 continue
 
@@ -137,12 +139,12 @@ class Scheduler:
             flow.state = FlowState.READY
             self._schedule(session)
 
-    async def _handle_outcome(self, session, outcome):
+    async def _handle_outcome(self, session: Session, outcome):
 
         if outcome is None:
             return
 
-        flow = session.flow
+        flow = session.focused_flow
         if not flow:
             return
 
@@ -153,11 +155,12 @@ class Scheduler:
                 self._schedule(session)
 
             case Stop():
-                session.flow = None
+                if session.focused_flow:
+                    session.del_flow(session.focused_flow)
 
             case AwaitInput() as input:
-                flow.state = FlowState.WAITING_INPUT
                 # neue Version starten
+                flow.state = FlowState.WAITING_INPUT
                 flow.input_version += 1
                 await session.emit(input.view)
 

@@ -25,6 +25,7 @@ class ViewEvent:
     id: str = ""
     header: ViewHeader | None = None
     patch: Patch = field(default_factory=Patch)
+    meta: dict = field(default_factory=dict)
 
     def is_final(self) -> bool:
         return self.patch.final
