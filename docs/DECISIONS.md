@@ -7,6 +7,15 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+==26-03-22== 
+**Verarbeitung von Commands**
+- Step liefert ausschließlich Outcomes
+- Command yieldet ausschließlich Outcomes
+- Engine verarbeitet ausschließlich Outcomes
+- Step selbst wird NICHT mehr yielded
+Bespiel:
+- yield step.run() / resume()
+
 ==26-03-19== 
 **Stateless Engine**
 Die gesamte Engine wurde auf stateless umgestellt:
