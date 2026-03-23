@@ -121,13 +121,9 @@ class Scheduler:
                 if flow.state == FlowState.READY:
                     pass  # normal
 
+                # WAITING_INPUT = passiv
                 elif flow.state == FlowState.WAITING_INPUT:
-                    if flow.input_queue:
-                        pass  # normal weiter
-                    else:
-                        # soft parking
-                        wake_at = time.time() + 2
-                        heapq.heappush(self.sleeping, (wake_at, session, flow))
+                    if not flow.input_queue:
                         continue
 
                 elif flow.state == FlowState.SLEEPING:
