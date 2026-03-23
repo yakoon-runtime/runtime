@@ -22,10 +22,19 @@ from yakoon.platform.runtime.error import DomainError
 
 class Scheduler:
 
+    # PULSE
+    # --------------------------------------------------------
+    MAX_STEPS_PER_CYCLE = 20  # konservativ
+    MAX_TIME_PER_CYCLE = 0.01  # 10 ms
+    MAX_ITERATIONS = 1000
+    # --------------------------------------------------------
+
     def __init__(self, engine: CommandEngine):
         self.engine = engine
 
+        # Flow-basierte Queue: (session, flow)
         self.ready = deque()
+
         self.sleeping = []  # (wake_at, session, flow)
         self._event = asyncio.Event()
         self._running = False
@@ -37,7 +46,11 @@ class Scheduler:
     async def dispatch(self, session: Session, dispatch_input: DispatchInput):
         try:
             await self.engine.dispatch(session, dispatch_input)
-            self._schedule(session)
+
+            # alle Flows der Session schedulen
+            for flow in session.flows():
+                self._schedule_flow(flow, session)
+
         except PlatformError as e:
             await session.emit(v_error_system(e.message, error_kind=e.code))  # type: ignore
         except Exception as e:
@@ -53,9 +66,8 @@ class Scheduler:
         # Queue statt single input
         flow.input_queue.append((flow.input_version, data))
 
-        # if flow.state == FlowState.WAITING_INPUT:
-        #    flow.state = FlowState.READY
-        self._schedule(session)
+        # Flow wieder schedulen (nicht Session!)
+        self._schedule_flow(flow, session)
 
     # --------------------------------------------------------
     # MAIN LOOP
@@ -66,6 +78,8 @@ class Scheduler:
 
         while self._running:
 
+            steps = 0  # Quota-Counter pro Zyklus
+            iterations = 0
             self._wake_sleeping()
 
             # --------------------------------------------------
@@ -86,40 +100,86 @@ class Scheduler:
                 self._event.clear()
                 continue
 
-            # --------------------------------------------------
-            # Work vorhanden
-            # --------------------------------------------------
-            session: Session = self.ready.popleft()
+            start = time.time()
+            while self.ready and steps < self.MAX_STEPS_PER_CYCLE:
 
-            # Multi-Flow: nur prüfen, ob überhaupt Flows existieren
-            if not session.flows():
-                continue
+                if time.time() - start > self.MAX_TIME_PER_CYCLE:
+                    break
 
-            try:
-                results = await self.engine.tick(session)
+                # --------------------------------------------------
+                # Work vorhanden
+                # --------------------------------------------------
+                session, flow = self.ready.popleft()
 
-                for flow, outcome in results:
-                    await self._handle_outcome(session, flow, outcome)
+                iterations += 1
+                if iterations > self.MAX_ITERATIONS:
+                    self.engine.services.get(AuditLogService).warning(
+                        "Scheduler iteration limit reached", session
+                    )
+                    break
 
-            except DomainError as e:
-                if session.focused_flow:
-                    session.del_flow(session.focused_flow)
-                await session.emit(v_error_domain(e.message, error_code=e.code))  # type: ignore
+                if flow.state == FlowState.READY:
+                    pass  # normal
 
-            except PlatformError as e:
-                await session.emit(v_error_system(e.message, error_kind=e.code))  # type: ignore
+                elif flow.state == FlowState.WAITING_INPUT:
+                    if flow.input_queue:
+                        pass  # normal weiter
+                    else:
+                        # soft parking
+                        wake_at = time.time() + 2
+                        heapq.heappush(self.sleeping, (wake_at, session, flow))
+                        continue
 
-            except Exception as e:
-                self.engine.services.get(AuditLogService).error(e, session)
-                await session.emit(v_error_fatal("Fatal error", title="Fatal"))
+                elif flow.state == FlowState.SLEEPING:
+                    # sollte NIE hier landen
+                    # → zurück in sleeping queue
+                    # Wenn hier - Scheduler ist inkonsistent
+                    if flow.wake_at is not None:
+                        heapq.heappush(self.sleeping, (flow.wake_at, session, flow))
+                    continue
+
+                else:
+                    # unbekannter Zustand → loggen
+                    self.engine.services.get(AuditLogService).warning(
+                        f"Flow in unexpected state: {flow.state}", session
+                    )
+                    continue
+
+                try:
+                    # EIN Flow pro Tick
+                    outcome = await self.engine.tick_flow(flow, session)
+
+                    steps += 1
+
+                    if outcome:
+                        await self._handle_outcome(session, flow, outcome)
+
+                except DomainError as e:
+                    if session.focused_flow:
+                        session.del_flow(session.focused_flow)
+                    await session.emit(v_error_domain(e.message, error_code=e.code))  # type: ignore
+
+                except PlatformError as e:
+                    await session.emit(v_error_system(e.message, error_kind=e.code))  # type: ignore
+
+                except Exception as e:
+                    self.engine.services.get(AuditLogService).error(e, session)
+                    await session.emit(v_error_fatal("Fatal error", title="Fatal"))
+
+            # WICHTIG: Kontrolle zurück an EventLoop
+            if (
+                steps >= self.MAX_STEPS_PER_CYCLE
+                or time.time() - start > self.MAX_TIME_PER_CYCLE
+            ):
+                await asyncio.sleep(0)
 
     # --------------------------------------------------------
     # INTERNAL
     # --------------------------------------------------------
 
-    def _schedule(self, session):
-        if session not in self.ready:
-            self.ready.append(session)
+    def _schedule_flow(self, flow: Flow, session: Session):
+        # bewusst KEIN dedupe -> echtes Round-Robin
+        self.ready.append((session, flow))
         self._event.set()
 
     def _wake_sleeping(self):
@@ -132,15 +192,18 @@ class Scheduler:
                 continue
 
             flow.state = FlowState.READY
-            self._schedule(session)
+
+            #  Flow wieder einreihen
+            self._schedule_flow(flow, session)
 
     async def _handle_outcome(self, session: Session, flow: Flow, outcome):
 
         match outcome:
 
             case Next():
+                # Round-Robin: hinten anstellen
                 flow.state = FlowState.READY
-                self._schedule(session)
+                self._schedule_flow(flow, session)
 
             case Stop():
                 session.del_flow(flow)
@@ -149,8 +212,11 @@ class Scheduler:
                 # neue Version starten
                 flow.state = FlowState.WAITING_INPUT
                 flow.input_version += 1
+
                 if a.emit:
                     await session.emit(a.view)
+
+                # NICHT schedulen → wartet auf Input
 
             case Sleep(seconds=s):
                 flow.state = FlowState.SLEEPING

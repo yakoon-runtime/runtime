@@ -53,7 +53,6 @@ class RuntimeHost:
 
             # initial_command = DispatchInput("")
             # await self.engine.dispatch(session, initial_command)
-            self.scheduler._schedule(session)
 
         self._connections[connection] = runner
         return connection

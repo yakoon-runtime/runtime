@@ -1,4 +1,3 @@
-from collections.abc import Sequence
 from uuid import uuid4
 
 from yakoon.base.capabilities.audit import AuditLogService
@@ -172,24 +171,7 @@ class CommandEngine:
         command.context = CommandContext(controller, "")
         return command
 
-    async def tick(self, session: Session) -> Sequence[tuple[Flow, StepOutcome]]:
-        results = []
-        for flow in session.flows():
-
-            # Skip finished / invalid
-            if flow.state not in (
-                FlowState.READY,
-                FlowState.WAITING_INPUT,
-                FlowState.SLEEPING,
-            ):
-                continue
-
-            outcome = await self._tick_flow(flow, session)
-            if outcome:
-                results.append((flow, outcome))
-        return results
-
-    async def _tick_flow(self, flow: Flow, session: Session) -> StepOutcome | None:
+    async def tick_flow(self, flow: Flow, session: Session) -> StepOutcome | None:
 
         cursor = flow.cursor
         command_key = flow.command_key

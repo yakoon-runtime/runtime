@@ -20,7 +20,7 @@ class CmdTest(Command):
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
 
-    async def run(self, session: Session, request: Request) -> CommandFlow:
+    async def ask_run(self, session: Session, request: Request) -> CommandFlow:
 
         policy = self.services.get(PolicyService)
         presenter = await self.get_presenter(session=session)
@@ -65,7 +65,7 @@ class CmdTest(Command):
 
         yield Advance()
 
-    async def delay_run(self, session: Session, request: Request) -> CommandFlow:
+    async def run(self, session: Session, request: Request) -> CommandFlow:
 
         while True:
 
@@ -73,7 +73,7 @@ class CmdTest(Command):
             await session.emit(v_text("\nHello " + str(request.args)))
 
             # 2. 5 Sekunden warten
-            yield Delay(15)
+            yield Delay(10)
 
     async def _run_print_message(
         self, session: Session, request: Request

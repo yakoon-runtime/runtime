@@ -13,6 +13,9 @@ class LoggingSettings:
     log_errors: bool = True
     """Logs unexpected exceptions raised during execution."""
 
+    log_warnings: bool = True
+    """Logs warnings raised during execution."""
+
     log_security: bool = True
     """Logs access denials (e.g. PermissionError, has_perm=False)."""
 
