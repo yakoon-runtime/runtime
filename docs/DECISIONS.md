@@ -7,6 +7,11 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+## 26-03-22 
+**Flow-basierten Scheduler**
+Der Scheduler arbeitet nun flow statt sessionbassiert. 
+Scheduling erfoglt via Round-Robin, weil jeder Flow fair CPU-Zeit erhält.
+Kein Flow dominiert. Kein künstliches Clustering mehr.
 
 ## 26-03-22 
 **Flow lebt sein eigenes Leben**
