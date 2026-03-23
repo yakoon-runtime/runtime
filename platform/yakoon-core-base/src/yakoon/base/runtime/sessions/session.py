@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from yakoon.base.capabilities.identity import PermissionSet
+from yakoon.base.host.events import InputEvent
 from yakoon.base.transports import IO
 from yakoon.base.ui import (
     Node,
@@ -123,7 +124,6 @@ class Session:
 
     def add_flow(self, flow: Flow) -> str:
         self._flows[flow.id] = flow
-        self._focus_flow_id = flow.id
         return flow.id
 
     def get_flow(self, id: str) -> Flow | None:
@@ -135,8 +135,21 @@ class Session:
         if self._focus_flow_id == flow.id:
             self._focus_flow_id = next(iter(self._flows), None)
 
+    def set_focus(self, flow_id: str | None):
+        if flow_id and flow_id not in self._flows:
+            return
+        self._focus_flow_id = flow_id
+
     def flows(self) -> Sequence[Flow]:
         return list(self._flows.values())
+
+    def send_event(self, event: InputEvent) -> bool:
+        flow = self.focused_flow
+        if not flow:
+            return False
+
+        flow.push_event(event)
+        return True
 
     @property
     def focused_flow(self) -> Flow | None:

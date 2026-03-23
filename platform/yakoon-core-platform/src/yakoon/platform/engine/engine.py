@@ -16,13 +16,18 @@ from yakoon.base.runtime import (
 )
 from yakoon.base.runtime.commands import (
     InputResolved,
-    Next,
     StepOutcome,
     Stop,
 )
+from yakoon.base.runtime.commands.steps.step import InputStep
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions import Flow, FlowCursor, FlowState
+from yakoon.base.runtime.sessions import (
+    Flow,
+    FlowCursor,
+    FlowKind,
+    FlowState,
+)
 from yakoon.base.ui import v_error_system
 from yakoon.platform.runtime import CommandNotFound, PermissionDenied, PlatformError
 
@@ -30,6 +35,8 @@ from .directories import CommandDirectory, ControllerDirectory
 
 
 class CommandEngine:
+
+    DEFAULT_FLOW_KIND = FlowKind.USER
 
     def __init__(
         self,
@@ -45,16 +52,9 @@ class CommandEngine:
     def services(self) -> ServiceDirectory:
         return self._services
 
-    async def _find_matching_command(
-        self, controller_id, request: Request
-    ) -> tuple[Controller | None, type[Command] | None] | None:
-
-        result: tuple[str, type[Command]] | None = self._commands.find(
-            controller_id, request.command
-        )
-        if result and isinstance(result, tuple):
-            controller_id, command = result
-            return self._controllers.get(controller_id), command
+    # ----------------------------------------------------
+    # PUBLIC API
+    # ----------------------------------------------------
 
     async def dispatch(self, session: Session, di: DispatchInput) -> None:
 
@@ -141,6 +141,7 @@ class CommandEngine:
                 resolved_controller.id,
                 request.raw,
                 FlowCursor(command_type.run),
+                kind=self._resolve_flow_kind(request),
             )
             session.add_flow(flow)
 
@@ -166,101 +167,133 @@ class CommandEngine:
                 command_type.context = None
             await controller.on_cleanup(session)
 
-    def create_command(self, command_type: type, controller: Controller) -> Command:
-        command = command_type()
-        command.context = CommandContext(controller, "")
-        return command
-
     async def tick_flow(self, flow: Flow, session: Session) -> StepOutcome | None:
 
         cursor = flow.cursor
-        command_key = flow.command_key
-        controller_id = flow.controller_id
         request = Request(flow.request)
 
-        controller = self._controllers.get(controller_id)
+        controller = self._controllers.get(flow.controller_id)
         if not controller:
             raise RuntimeError("Controller not found")
 
-        command_type = self._commands.get_type(controller_id, command_key)
+        command_type = self._commands.get_type(flow.controller_id, flow.command_key)
         if not command_type:
             raise RuntimeError("Command not found")
 
-        command = self.create_command(command_type, controller)
-
-        session.execution.step(
-            ExecStep.COMMAND_RUNNING,
-            command=command.key,
-            controller=controller.id,
-        )
+        command = self._create_command(command_type, controller)
 
         try:
             session._runtime_flow_id = flow.id
+
             try:
+                # --------------------------------------------------
+                # 1. Step holen (next oder resume)
+                # --------------------------------------------------
+                step = await self._next_step(flow, session, command, request)
+                if step is None:
+                    return None
 
-                # ==================================================
-                # RESUME (Input zurück in Generator)
-                # ==================================================
-                if flow.state == FlowState.WAITING_INPUT and flow.input_queue:
-
-                    version, raw_values = flow.input_queue[0]
-
-                    def _is_stale_input(flow, version):
-                        return version != flow.input_version
-
-                    # veralteten Input verwerfen
-                    if _is_stale_input(flow, version):
-                        flow.input_queue.popleft()
-                        return Next()
-
-                    flow.input_queue.popleft()
-
-                    step = flow.last_step
-                    if not step:
-                        raise RuntimeError("Missing last_step for resume")
-
-                    outcome = await step.resume(session, raw_values)
-
-                    if not isinstance(outcome, StepOutcome):
-                        raise RuntimeError("resume() must return StepOutcome")
-
-                    # InputResolved → zurück in Generator
-                    if isinstance(outcome, InputResolved):
-                        item = await cursor.send(outcome)
-
-                        if isinstance(item, StepOutcome):
-                            return item
-
-                        step = item
-
-                    else:
-                        return outcome
-
-                # ==================================================
-                # NORMALER FLOW (Generator weiterlaufen lassen)
-                # ==================================================
-                else:
-                    item = await cursor.next(command, session, request)
-
-                    if isinstance(item, StepOutcome):
-                        return item
-
-                    step = item
+                if isinstance(step, StepOutcome):
+                    return step
 
                 flow.last_step = step
+
+                # --------------------------------------------------
+                # 2. Step ausführen
+                # --------------------------------------------------
+                outcome = await step.run(session, flow, request)
+
+                if not isinstance(outcome, StepOutcome):
+                    raise RuntimeError(f"Invalid step result: {type(outcome)}")
+
+                # --------------------------------------------------
+                # 3. InputResolved sofort auflösen
+                # --------------------------------------------------
+                return await self._resolve_outcome(
+                    cursor, flow, session, request, outcome
+                )
 
             except StopAsyncIteration:
                 return Stop()
 
-            # ==================================================
-            # STEP AUSFÜHREN
-            # ==================================================
-            outcome = await step.run(session, request)
+        finally:
+            session._runtime_flow_id = None
+
+    # ----------------------------------------------------
+    # INTERNAL
+    # ----------------------------------------------------
+
+    async def _next_step(self, flow, session, command, request):
+
+        # Resume (nur für InputStep)
+        if flow.state == FlowState.WAITING_INPUT:
+
+            if not flow.input_queue:
+                return None
+
+            step = flow.last_step
+            if not step:
+                raise RuntimeError("Missing last_step for resume")
+
+            if isinstance(step, InputStep):
+                _, raw_values = flow.input_queue.popleft()
+                return await step.resume(session, flow, raw_values)
+            else:
+                event = flow.pop_event()
+                item = await flow.cursor.send(event)
+                return item
+
+            # Receive(wait=True) → einfach weiter
+            return await flow.cursor.next(command, session, request)
+
+        # normaler Flow
+        return await flow.cursor.next(command, session, request)
+
+    async def _resolve_outcome(self, cursor, flow, session, request, outcome):
+
+        while isinstance(outcome, InputResolved):
+
+            item = await cursor.send(outcome.data)
+            if isinstance(item, StepOutcome):
+                return item
+
+            step = item
+            flow.last_step = step
+
+            outcome = await step.run(session, flow, request)
 
             if not isinstance(outcome, StepOutcome):
                 raise RuntimeError(f"Invalid step result: {type(outcome)}")
 
-            return outcome
+        return outcome
 
-        finally:
-            session._runtime_flow_id = None
+    def _create_command(self, command_type: type, controller: Controller) -> Command:
+        command = command_type()
+        command.context = CommandContext(controller, "")
+        return command
+
+    async def _find_matching_command(
+        self, controller_id, request: Request
+    ) -> tuple[Controller | None, type[Command] | None] | None:
+
+        result: tuple[str, type[Command]] | None = self._commands.find(
+            controller_id, request.command
+        )
+        if result and isinstance(result, tuple):
+            controller_id, command = result
+            return self._controllers.get(controller_id), command
+
+    def _resolve_flow_kind(self, request: Request):
+        """
+        usage:
+        --job background
+        """
+        job = request.option("job")
+        if not job:
+            return self.DEFAULT_FLOW_KIND
+
+        job = job.lower()
+        if job in FlowKind._value2member_map_:
+            return FlowKind(job)
+
+        return self.DEFAULT_FLOW_KIND

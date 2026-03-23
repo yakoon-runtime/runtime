@@ -41,7 +41,7 @@ class Stop(StepOutcome):
 class AwaitInput(StepOutcome):
     """Pause execution and request user input."""
 
-    def __init__(self, view: View, *, emit: bool = False):
+    def __init__(self, view: View | None, *, emit: bool = False):
         self.view = view
         self.emit = emit
 
@@ -49,7 +49,7 @@ class AwaitInput(StepOutcome):
 class InputResolved(StepOutcome):
     """Validated input ready to be fed back into the flow."""
 
-    def __init__(self, data: dict[str, Any]):
+    def __init__(self, data: dict[str, Any] | None):
         self.data = data
 
 

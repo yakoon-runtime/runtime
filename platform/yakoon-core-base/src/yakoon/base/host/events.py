@@ -26,5 +26,8 @@ class InputEvent:
     def to_values(self) -> dict[str, Any]:
         if isinstance(self.raw, dict):
             return self.raw
-        # Fallback für einfache Eingaben
-        return {"_": self.raw}
+        return {}
+
+    def get(self, name: str) -> Any:
+        data = self.to_values()
+        return data.get(name)

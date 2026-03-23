@@ -21,6 +21,7 @@ async def run_console() -> None:
             "discovery": "default",
             "identity": "default",
             "interaction": "default",
+            "jobs": "default",
             "presenters": "default",
             "workflow": "default",
         },

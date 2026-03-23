@@ -1,4 +1,5 @@
 from yakoon.base.capabilities.interaction import PolicyService
+from yakoon.base.host.events import InputEvent
 from yakoon.base.runtime import Command, Request, Session
 from yakoon.base.runtime.commands import (
     Advance,
@@ -6,10 +7,11 @@ from yakoon.base.runtime.commands import (
     CommandKind,
     CommandVisibility,
     Delay,
+    InputResolved,
+    InputStep,
+    Receive,
     compile_view,
 )
-from yakoon.base.runtime.commands.steps import InputResolved
-from yakoon.base.runtime.commands.steps.step import ActiveStep
 from yakoon.base.ui import v_text
 from yakoon.platform.runtime.error import DomainError
 
@@ -34,13 +36,13 @@ class CmdTest(Command):
                 try:
                     result = yield step
 
-                    if isinstance(step, ActiveStep):
+                    if isinstance(step, InputStep):
                         if isinstance(result, InputResolved):
                             value = int(result.data.get("result", 0))
 
                             if value > 10:
                                 raise DomainError(
-                                    "Kunde nicht gefunden", "customer_not_found"
+                                    "\nKunde nicht gefunden", "customer_not_found"
                                 )
                                 # continue
 
@@ -67,13 +69,17 @@ class CmdTest(Command):
 
     async def run(self, session: Session, request: Request) -> CommandFlow:
 
+        name = str(request.args)
+        await session.emit(v_text(f"Hello started ... {name}"))
         while True:
 
-            # 1. Ausgabe
-            await session.emit(v_text("\nHello " + str(request.args)))
+            event: InputEvent = yield Receive(wait=True)
+            name = event.to_text()
 
-            # 2. 5 Sekunden warten
-            yield Delay(10)
+            await session.emit(v_text(f"Hello {name}"))
+
+            # 5 Sekunden warten
+            yield Delay(5)
 
     async def _run_print_message(
         self, session: Session, request: Request

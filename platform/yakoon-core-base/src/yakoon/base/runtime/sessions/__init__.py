@@ -1,4 +1,4 @@
-from .flow import Flow, FlowCursor, FlowState
+from .flow import Flow, FlowCursor, FlowKind, FlowState
 from .port import SessionService
 from .session import Session, SessionRuntime, SessionState
 from .trace import ExecutionTrace, TraceEntry
@@ -15,4 +15,5 @@ __all__ = [
     "Flow",
     "FlowState",
     "FlowCursor",
+    "FlowKind",
 ]

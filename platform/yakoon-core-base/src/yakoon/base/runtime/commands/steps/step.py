@@ -21,16 +21,14 @@ from .outcome import (
 
 class Step:
 
-    async def run(self, session, request) -> StepOutcome:
+    async def run(self, session, flow, request) -> StepOutcome:
         raise NotImplementedError
 
-    async def resume(self, session, data):
-        return Next()
 
+class InputStep(Step):
+    """Benötigt externes resume() (Ask, Form)"""
 
-class ActiveStep(Step):
-
-    async def resume(self, session, data):
+    async def resume(self, session, flow, data):
         raise NotImplementedError
 
     def reject(self, field: str, message: str) -> AwaitInput:
@@ -38,6 +36,8 @@ class ActiveStep(Step):
 
 
 class PassiveStep(Step):
+    """Läuft vollständig innerhalb des Flows"""
+
     pass
 
 
@@ -54,7 +54,7 @@ class PassiveStep(Step):
 class Advance(Step):
     """Explicitly advance the flow."""
 
-    async def run(self, session, request) -> StepOutcome:
+    async def run(self, session, flow, request) -> StepOutcome:
         return Next()
 
 
@@ -68,7 +68,7 @@ class Show(PassiveStep):
     def __init__(self, view: View):
         self.view = view
 
-    async def run(self, session, request):
+    async def run(self, session, flow, request):
         await session.emit(self.view)
         return Next()
 
@@ -78,36 +78,20 @@ class Show(PassiveStep):
 # ------------------------------------------------------------
 
 
-class Ask(ActiveStep):
+class Ask(InputStep):
 
     def __init__(self, view: View, policy_service):
         self.view = view
         self.policy = policy_service
 
-    # --------------------------------------------------------
-    # Run
-    # --------------------------------------------------------
-
-    async def run(self, session, request) -> StepOutcome:
+    async def run(self, session, flow, request) -> StepOutcome:
         return AwaitInput(self.view, emit=True)
-
-    # --------------------------------------------------------
-    # Public API
-    # --------------------------------------------------------
 
     def reject(self, field: str, message: str) -> AwaitInput:
         view = self._apply_field_error(field, message)
         return AwaitInput(view, emit=True)
 
-    # --------------------------------------------------------
-    # Resume
-    # --------------------------------------------------------
-
-    async def resume(self, session, raw_values: dict[str, Any]) -> StepOutcome:
-
-        # ----------------------------------------------------
-        # 1. Validation
-        # ----------------------------------------------------
+    async def resume(self, session, flow, raw_values: dict[str, Any]) -> StepOutcome:
 
         validated: dict[str, Any] = {}
         errors: dict[str, list[FieldError]] = {}
@@ -156,37 +140,11 @@ class Ask(ActiveStep):
 
             new_blocks.append(replace(block, fields=new_fields))
 
-        # ----------------------------------------------------
-        # 2. Validation Fehler → Retry
-        # ----------------------------------------------------
-
         if errors:
             self.view = self.view.with_body(new_blocks)
             return AwaitInput(self.view, emit=True)
 
-        # ----------------------------------------------------
-        # 3. Erfolg
-        # ----------------------------------------------------
-
         return InputResolved(validated)
-
-    # --------------------------------------------------------
-    # Helpers
-    # --------------------------------------------------------
-
-    def _with_header(self, *, role: str, title: str | None = None) -> View:
-
-        header = self.view.header
-        new_header = replace(header, role=role, title=title)  # or header.title,
-
-        self.view = View(
-            kind=self.view.kind,
-            id=self.view.id,
-            header=new_header,
-            blocks=self.view.blocks,
-        )
-
-        return self.view
 
     def _apply_field_error(self, field_name: str, message: str) -> View:
 
@@ -216,11 +174,35 @@ class Ask(ActiveStep):
 
 
 # ------------------------------------------------------------
-# Time-based
+# Receive (NEW DESIGN)
 # ------------------------------------------------------------
 
 
-class Form(ActiveStep):
+class Receive(PassiveStep):
+
+    def __init__(self, default: dict | None = None, wait: bool = False):
+        self.default = default
+        self.wait = wait
+
+    async def run(self, session, flow, request) -> StepOutcome:
+
+        event = flow.pop_event()
+        if event:
+            return InputResolved(event)
+
+        # blockieren
+        if self.wait:
+            return AwaitInput(None, emit=False)
+
+        return InputResolved(self.default or None)
+
+
+# ------------------------------------------------------------
+# Form
+# ------------------------------------------------------------
+
+
+class Form(InputStep):
 
     def __init__(self, views: list[View], policy_service):
         self.views = views
@@ -228,10 +210,10 @@ class Form(ActiveStep):
         self.index = 0
         self.values = {}
 
-    async def run(self, session, request) -> StepOutcome:
+    async def run(self, session, flow, request) -> StepOutcome:
         return AwaitInput(self.views[self.index])
 
-    async def resume(self, session, raw_values):
+    async def resume(self, session, flow, raw_values):
 
         view = self.views[self.index]
 
@@ -277,7 +259,7 @@ class Delay(PassiveStep):
     def __init__(self, seconds: int):
         self.seconds = seconds
 
-    async def run(self, session, request) -> StepOutcome:
+    async def run(self, session, flow, request) -> StepOutcome:
         return Sleep(self.seconds)
 
 
@@ -285,5 +267,5 @@ class DelayUntil(PassiveStep):
     def __init__(self, timestamp: float):
         self.timestamp = timestamp
 
-    async def run(self, session, request) -> StepOutcome:
+    async def run(self, session, flow, request) -> StepOutcome:
         return SleepUntil(self.timestamp)

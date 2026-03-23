@@ -7,6 +7,7 @@ from yakoon.base.capabilities.audit.port import AuditLogService
 from yakoon.base.engine.types import DispatchInput
 from yakoon.base.runtime.commands import (
     AwaitInput,
+    InputResolved,
     Next,
     Sleep,
     SleepUntil,
@@ -49,7 +50,7 @@ class Scheduler:
 
             # alle Flows der Session schedulen
             for flow in session.flows():
-                self._schedule_flow(flow, session)
+                self.schedule_flow(flow, session)
 
         except PlatformError as e:
             await session.emit(v_error_system(e.message, error_kind=e.code))  # type: ignore
@@ -67,7 +68,7 @@ class Scheduler:
         flow.input_queue.append((flow.input_version, data))
 
         # Flow wieder schedulen (nicht Session!)
-        self._schedule_flow(flow, session)
+        self.schedule_flow(flow, session)
 
     # --------------------------------------------------------
     # MAIN LOOP
@@ -127,9 +128,6 @@ class Scheduler:
                         continue
 
                 elif flow.state == FlowState.SLEEPING:
-                    # sollte NIE hier landen
-                    # → zurück in sleeping queue
-                    # Wenn hier - Scheduler ist inkonsistent
                     if flow.wake_at is not None:
                         heapq.heappush(self.sleeping, (flow.wake_at, session, flow))
                     continue
@@ -169,14 +167,14 @@ class Scheduler:
             ):
                 await asyncio.sleep(0)
 
-    # --------------------------------------------------------
-    # INTERNAL
-    # --------------------------------------------------------
-
-    def _schedule_flow(self, flow: Flow, session: Session):
+    def schedule_flow(self, flow: Flow, session: Session):
         # bewusst KEIN dedupe -> echtes Round-Robin
         self.ready.append((session, flow))
         self._event.set()
+
+    # --------------------------------------------------------
+    # INTERNAL
+    # --------------------------------------------------------
 
     def _wake_sleeping(self):
         now = time.time()
@@ -190,7 +188,7 @@ class Scheduler:
             flow.state = FlowState.READY
 
             #  Flow wieder einreihen
-            self._schedule_flow(flow, session)
+            self.schedule_flow(flow, session)
 
     async def _handle_outcome(self, session: Session, flow: Flow, outcome):
 
@@ -199,20 +197,22 @@ class Scheduler:
             case Next():
                 # Round-Robin: hinten anstellen
                 flow.state = FlowState.READY
-                self._schedule_flow(flow, session)
+                self.schedule_flow(flow, session)
 
             case Stop():
                 session.del_flow(flow)
+
+            case InputResolved() as ir:
+                # einfach weiterlaufen lassen
+                flow.state = FlowState.READY
+                self.schedule_flow(flow, session)
 
             case AwaitInput() as a:
                 # neue Version starten
                 flow.state = FlowState.WAITING_INPUT
                 flow.input_version += 1
-
-                if a.emit:
+                if a.emit and a.view:
                     await session.emit(a.view)
-
-                # NICHT schedulen → wartet auf Input
 
             case Sleep(seconds=s):
                 flow.state = FlowState.SLEEPING

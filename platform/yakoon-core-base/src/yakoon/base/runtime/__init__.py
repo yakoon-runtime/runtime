@@ -1,6 +1,7 @@
 from .commands import (
     Command,
     CommandContext,
+    CommandFlow,
     CommandKind,
     CommandScope,
     CommandSet,
@@ -16,6 +17,7 @@ __all__ = [
     "CommandContext",
     "Command",
     "CommandKind",
+    "CommandFlow",
     "CommandVisibility",
     "CommandSet",
     "CommandScope",

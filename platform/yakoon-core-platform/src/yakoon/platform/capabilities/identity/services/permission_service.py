@@ -21,6 +21,9 @@ class DefaultPermissionService:
 
         self._roles: dict[str, list[str]] = {}
         self._directs = [
+            "auth:su|rx",
+            "auth:whoami|rx",
+            "jobs:jobs|rx",
             "shell:welcome|rx",
             "shell:version|rx",
             "shell:test|rx",
@@ -29,8 +32,6 @@ class DefaultPermissionService:
             "shell:exit|rx",
             "shell:quit|rx",
             "shell:su|rx",
-            "auth:su|rx",
-            "auth:whoami|rx",
             "crm-customer:customer-create|rx",
             "crm-customer:wf:crm.customer.store|rx",
             "crm-customer:wf:crm.customer.validate|rx",

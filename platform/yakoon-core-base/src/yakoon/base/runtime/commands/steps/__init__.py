@@ -7,17 +7,28 @@ from .outcome import (
     StepOutcome,
     Stop,
 )
-from .step import ActiveStep, Advance, Ask, Delay, DelayUntil, PassiveStep, Show, Step
+from .step import (
+    Advance,
+    Ask,
+    Delay,
+    DelayUntil,
+    InputStep,
+    PassiveStep,
+    Receive,
+    Show,
+    Step,
+)
 
 __all__ = [
     "Ask",
     "Advance",
-    "ActiveStep",
+    "InputStep",
     "PassiveStep",
     "Show",
     "Step",
     "Sleep",
     "SleepUntil",
+    "Receive",
     "AwaitInput",
     "InputResolved",
     "Next",
