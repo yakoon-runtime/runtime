@@ -3,6 +3,10 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
+from yakoon.base.host.events import InputEvent
+from yakoon.base.runtime.commands.request import Request
+from yakoon.base.runtime.sessions import Session
+from yakoon.base.runtime.sessions.flow import Flow
 from yakoon.base.ui import FieldError, View
 
 from .outcome import (
@@ -21,14 +25,14 @@ from .outcome import (
 
 class Step:
 
-    async def run(self, session, flow, request) -> StepOutcome:
+    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
         raise NotImplementedError
 
 
 class InputStep(Step):
     """Benötigt externes resume() (Ask, Form)"""
 
-    async def resume(self, session, flow, data):
+    async def resume(self, session: Session, flow: Flow, event: InputEvent):
         raise NotImplementedError
 
     def reject(self, field: str, message: str) -> AwaitInput:
@@ -54,7 +58,7 @@ class PassiveStep(Step):
 class Advance(Step):
     """Explicitly advance the flow."""
 
-    async def run(self, session, flow, request) -> StepOutcome:
+    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
         return Next()
 
 
@@ -68,7 +72,7 @@ class Show(PassiveStep):
     def __init__(self, view: View):
         self.view = view
 
-    async def run(self, session, flow, request):
+    async def run(self, session: Session, flow: Flow, request: Request):
         await session.emit(self.view)
         return Next()
 
@@ -84,17 +88,21 @@ class Ask(InputStep):
         self.view = view
         self.policy = policy_service
 
-    async def run(self, session, flow, request) -> StepOutcome:
+    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
         return AwaitInput(self.view, emit=True)
 
     def reject(self, field: str, message: str) -> AwaitInput:
         view = self._apply_field_error(field, message)
         return AwaitInput(view, emit=True)
 
-    async def resume(self, session, flow, raw_values: dict[str, Any]) -> StepOutcome:
+    async def resume(
+        self, session: Session, flow: Flow, event: InputEvent
+    ) -> StepOutcome:
 
         validated: dict[str, Any] = {}
         errors: dict[str, list[FieldError]] = {}
+
+        raw_values = event.to_values()
 
         allowed_fields = {
             field.var
@@ -144,7 +152,7 @@ class Ask(InputStep):
             self.view = self.view.with_body(new_blocks)
             return AwaitInput(self.view, emit=True)
 
-        return InputResolved(validated)
+        return InputResolved(InputEvent(validated))
 
     def _apply_field_error(self, field_name: str, message: str) -> View:
 
@@ -184,7 +192,7 @@ class Receive(PassiveStep):
         self.default = default
         self.wait = wait
 
-    async def run(self, session, flow, request) -> StepOutcome:
+    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
 
         event = flow.pop_event()
         if event:
@@ -210,12 +218,13 @@ class Form(InputStep):
         self.index = 0
         self.values = {}
 
-    async def run(self, session, flow, request) -> StepOutcome:
+    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
         return AwaitInput(self.views[self.index])
 
-    async def resume(self, session, flow, raw_values):
+    async def resume(self, session: Session, flow: Flow, event: InputEvent):
 
         view = self.views[self.index]
+        raw_values = event.to_values()
 
         validated = {}
         errors = {}
@@ -245,7 +254,7 @@ class Form(InputStep):
         self.index += 1
 
         if self.index >= len(self.views):
-            return InputResolved(self.values)
+            return InputResolved(InputEvent(self.values))
 
         return AwaitInput(self.views[self.index])
 
@@ -259,7 +268,7 @@ class Delay(PassiveStep):
     def __init__(self, seconds: int):
         self.seconds = seconds
 
-    async def run(self, session, flow, request) -> StepOutcome:
+    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
         return Sleep(self.seconds)
 
 
@@ -267,5 +276,5 @@ class DelayUntil(PassiveStep):
     def __init__(self, timestamp: float):
         self.timestamp = timestamp
 
-    async def run(self, session, flow, request) -> StepOutcome:
+    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
         return SleepUntil(self.timestamp)

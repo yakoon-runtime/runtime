@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
+
+from yakoon.base.host.events import InputEvent
 
 if TYPE_CHECKING:
     from yakoon.base.ui import View
@@ -49,8 +51,8 @@ class AwaitInput(StepOutcome):
 class InputResolved(StepOutcome):
     """Validated input ready to be fed back into the flow."""
 
-    def __init__(self, data: dict[str, Any] | None):
-        self.data = data
+    def __init__(self, event: InputEvent | None):
+        self.event = event
 
 
 # ------------------------------------------------------------

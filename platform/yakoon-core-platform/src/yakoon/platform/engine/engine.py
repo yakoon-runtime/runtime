@@ -223,8 +223,9 @@ class CommandEngine:
     # INTERNAL
     # ----------------------------------------------------
 
-    async def _next_step(self, flow, session, command, request):
-
+    async def _next_step(
+        self, flow: Flow, session: Session, command: Command, request: Request
+    ):
         # Resume (nur für InputStep)
         if flow.state == FlowState.WAITING_INPUT:
 
@@ -236,15 +237,17 @@ class CommandEngine:
                 raise RuntimeError("Missing last_step for resume")
 
             if isinstance(step, InputStep):
-                _, raw_values = flow.input_queue.popleft()
-                return await step.resume(session, flow, raw_values)
+                _, event = flow.input_queue.popleft()
+                outcome = await step.resume(session, flow, event)
+
+                if isinstance(outcome, InputResolved):
+                    return await flow.cursor.send(outcome.event)
+
+                return outcome
             else:
                 event = flow.pop_event()
                 item = await flow.cursor.send(event)
                 return item
-
-            # Receive(wait=True) → einfach weiter
-            return await flow.cursor.next(command, session, request)
 
         # normaler Flow
         return await flow.cursor.next(command, session, request)
@@ -253,7 +256,7 @@ class CommandEngine:
 
         while isinstance(outcome, InputResolved):
 
-            item = await cursor.send(outcome.data)
+            item = await cursor.send(outcome.event)
             if isinstance(item, StepOutcome):
                 return item
 

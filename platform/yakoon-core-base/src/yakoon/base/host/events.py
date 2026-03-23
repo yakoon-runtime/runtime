@@ -6,6 +6,7 @@ from typing import Any
 
 @dataclass(frozen=True, slots=True)
 class InputEvent:
+
     raw: Any  # str | dict | später mehr
 
     # ------------------------
@@ -28,6 +29,6 @@ class InputEvent:
             return self.raw
         return {}
 
-    def get(self, name: str) -> Any:
+    def get(self, name: str, default: Any = None) -> Any:
         data = self.to_values()
-        return data.get(name)
+        return data.get(name, default)

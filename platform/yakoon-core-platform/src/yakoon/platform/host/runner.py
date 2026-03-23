@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from yakoon.base.engine import CommandDispatch
 from yakoon.base.host import InputEvent
 from yakoon.base.runtime import Session
+from yakoon.base.runtime.sessions.flow import FlowState
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.host.scheduler import Scheduler
 
@@ -19,12 +20,23 @@ class Runner:
 
         flow = self.session.focused_flow
 
-        # Wenn Flow aktiv → Event direkt rein
-        if flow:
-            self.session.send_event(event)
-            self.scheduler.schedule_flow(flow, self.session)
+        # --------------------------------------------------
+        # 1. Kein Flow → Command Dispatch
+        # --------------------------------------------------
+        if not flow:
+            text = event.to_text()
+            await self.scheduler.dispatch(self.session, CommandDispatch(text))
             return
 
-        # Nur Fallback interpretiert Text
-        text = event.to_text()
-        await self.scheduler.dispatch(self.session, CommandDispatch(text))
+        # --------------------------------------------------
+        # 2. Flow wartet auf InputStep (Ask/Form)
+        # --------------------------------------------------
+        if flow.state == FlowState.WAITING_INPUT:
+            self.scheduler.resume_input(self.session, event)
+            return
+
+        # --------------------------------------------------
+        # 3. Normaler Flow → Event (Receive)
+        # --------------------------------------------------
+        self.session.send_event(event)
+        self.scheduler.schedule_flow(flow, self.session)

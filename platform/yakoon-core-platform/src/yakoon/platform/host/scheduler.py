@@ -5,6 +5,7 @@ from collections import deque
 
 from yakoon.base.capabilities.audit.port import AuditLogService
 from yakoon.base.engine.types import DispatchInput
+from yakoon.base.host.events import InputEvent
 from yakoon.base.runtime.commands import (
     AwaitInput,
     InputResolved,
@@ -58,14 +59,14 @@ class Scheduler:
             self.engine.services.get(AuditLogService).error(e, session)
             await session.emit(v_error_system("Fatal error", error_kind="fatal"))
 
-    def resume_input(self, session: Session, data):
+    def resume_input(self, session: Session, event: InputEvent):
 
         flow = session.focused_flow
         if not flow:
             return
 
         # Queue statt single input
-        flow.input_queue.append((flow.input_version, data))
+        flow.input_queue.append((flow.input_version, event))
 
         # Flow wieder schedulen (nicht Session!)
         self.schedule_flow(flow, session)
@@ -211,6 +212,9 @@ class Scheduler:
                 # neue Version starten
                 flow.state = FlowState.WAITING_INPUT
                 flow.input_version += 1
+
+                session.set_focus(flow.id)
+
                 if a.emit and a.view:
                     await session.emit(a.view)
 

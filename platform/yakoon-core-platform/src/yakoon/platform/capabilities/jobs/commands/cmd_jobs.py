@@ -84,7 +84,7 @@ class CmdJobs(Command):
             state = f.state.name
             marker = " *" if focused and focused.id == f.id else ""
 
-            await session.emit(v_text(f"[{i}] {label} - {state}{marker}"))
+            await session.emit(v_text(f"[{i}] {label} - {state}{marker}\n"))
 
     async def _stop_job(self, session: Session, request: Request):
 

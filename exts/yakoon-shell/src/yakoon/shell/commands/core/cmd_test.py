@@ -7,7 +7,6 @@ from yakoon.base.runtime.commands import (
     CommandKind,
     CommandVisibility,
     Delay,
-    InputResolved,
     InputStep,
     Receive,
     compile_view,
@@ -22,7 +21,7 @@ class CmdTest(Command):
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
 
-    async def ask_run(self, session: Session, request: Request) -> CommandFlow:
+    async def run(self, session: Session, request: Request) -> CommandFlow:
 
         policy = self.services.get(PolicyService)
         presenter = await self.get_presenter(session=session)
@@ -34,29 +33,19 @@ class CmdTest(Command):
 
             while True:
                 try:
-                    result = yield step
-
+                    event: InputEvent = yield step
                     if isinstance(step, InputStep):
-                        if isinstance(result, InputResolved):
-                            value = int(result.data.get("result", 0))
 
-                            if value > 10:
-                                raise DomainError(
-                                    "\nKunde nicht gefunden", "customer_not_found"
-                                )
-                                # continue
+                        value = event.get("result", 0)
 
-                            if value == 7:
-                                yield step.reject("result", "Nicht die 7")
-                                continue
+                        if value > 10:
+                            raise DomainError(
+                                "\nKunde nicht gefunden", "customer_not_found"
+                            )
 
-                            # if value == 1:
-                            #    yield step.warn("Zahl ist sehr klein")
-                            #    continue
-
-                            # raise DomainError(
-                            #    "Kunde nicht gefunden", "customer_not_found"
-                            # )
+                        if value == 7:
+                            yield step.reject("result", "Nicht die 7")
+                            continue
 
                     # alle andere steps
                     break
@@ -67,7 +56,7 @@ class CmdTest(Command):
 
         yield Advance()
 
-    async def run(self, session: Session, request: Request) -> CommandFlow:
+    async def delay_run(self, session: Session, request: Request) -> CommandFlow:
 
         name = str(request.args)
         await session.emit(v_text(f"Hello started ... {name}"))
