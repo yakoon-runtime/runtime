@@ -3,7 +3,7 @@ import asyncio
 from yakoon.base.host import InputEvent
 from yakoon.base.interations import ConsoleInteraction
 from yakoon.base.transports import Transport
-from yakoon.base.ui.event import ViewEvent
+from yakoon.base.ui import ViewDocument, ViewEvent
 from yakoon.console.output import ConsoleOutput
 from yakoon.console.ui import TerminalSurface, TerminalUI
 
@@ -18,9 +18,8 @@ class ConsoleClient:
         self._current_index = 0
         self._current_values = {}
 
-        # Document State (aus Patches gebaut)
-        self._document_blocks = []
-        self._document_header = None
+        # NEW: Single Source of Truth
+        self.document = ViewDocument()
 
     async def run(self):
 
@@ -71,12 +70,9 @@ class ConsoleClient:
         async def on_view(event: ViewEvent):
 
             # ------------------------
-            # Document aktualisieren
+            # Document aktualisieren (zentral!)
             # ------------------------
-            if event.header:
-                self._document_header = event.header
-
-            self._apply_patch(event.patch)
+            self.document.apply(event)
 
             # ------------------------
             # Rendern
@@ -97,55 +93,27 @@ class ConsoleClient:
         await interaction.exit()
 
     # --------------------------------------------------------
-    # Document Handling
-    # --------------------------------------------------------
-
-    def _apply_patch(self, patch):
-        for op in patch.ops:
-
-            if op.op == "reset":
-                self._document_blocks = []
-
-            elif op.op == "append_structure":
-                for node in op.nodes:
-                    block = node.props.get("block")
-                    self._document_blocks.append(block)
-
-            # später: replace/remove etc.
-
-    # --------------------------------------------------------
     # View Ready
     # --------------------------------------------------------
 
     def _handle_view_ready(self, ui):
 
-        header = self._document_header
-
         self._reset_form()
 
-        if not header or not header.expects_input:
+        if not self.document.expects_input():
             ui.reset_prompt()
             return
 
-        # FieldDefs extrahieren
-        self._current_fields = self._extract_fields()
+        # Fields direkt aus Document
+        self._current_fields = self.document.get_fields()
         self._current_index = 0
         self._current_values = {}
 
+        if not self._current_fields:
+            ui.reset_prompt()
+            return
+
         self._show_next_prompt(ui)
-
-    # --------------------------------------------------------
-    # Fields
-    # --------------------------------------------------------
-
-    def _extract_fields(self):
-        fields = []
-
-        for block in self._document_blocks:
-            for field in getattr(block, "fields", []):
-                fields.append(field)
-
-        return fields
 
     # --------------------------------------------------------
     # Prompt
@@ -158,7 +126,7 @@ class ConsoleClient:
 
         field = self._current_fields[self._current_index]
 
-        ui.set_prompt(field)  # FieldDef direkt übergeben
+        ui.set_prompt(field)
 
     # --------------------------------------------------------
     # Helpers

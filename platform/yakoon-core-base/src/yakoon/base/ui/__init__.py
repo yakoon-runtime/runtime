@@ -18,6 +18,7 @@ from .block import (
     TextBlock,
 )
 from .builder import v_error_domain, v_error_fatal, v_error_system, v_info, v_text
+from .document import ViewDocument
 from .event import ViewEvent
 from .field import Field, FieldError, FieldType, SelectOption
 from .node import Node
@@ -54,6 +55,7 @@ __all__ = [
     "View",
     "ViewEvent",
     "ViewSpecParser",
+    "ViewDocument",
     "Node",
     "PatchReset",
     "PatchAppendText",
