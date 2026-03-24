@@ -2,18 +2,14 @@ from yakoon.base.capabilities.interaction import PolicyService
 from yakoon.base.host.events import InputEvent
 from yakoon.base.runtime import Command, Request, Session
 from yakoon.base.runtime.commands import (
-    Advance,
     CommandFlow,
     CommandKind,
     CommandVisibility,
-    Delay,
-    InputStep,
-    Receive,
-    compile_view,
 )
-from yakoon.base.runtime.commands.steps import FocusReleased
+from yakoon.base.runtime.flow import compile_view
+from yakoon.base.runtime.steps.step import InputStep
 from yakoon.base.ui import v_text
-from yakoon.platform.runtime.error import DomainError
+from yakoon.platform.runtime import DomainError
 
 
 class CmdTest(Command):
@@ -22,7 +18,7 @@ class CmdTest(Command):
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
 
-    async def ask_run(self, session: Session, request: Request) -> CommandFlow:
+    async def run(self, session: Session, request: Request) -> CommandFlow:
 
         policy = self.services.get(PolicyService)
         presenter = await self.get_presenter(session=session)
@@ -55,9 +51,7 @@ class CmdTest(Command):
                     raise
                     # continue
 
-        yield Advance()
-
-    async def run(self, session: Session, request: Request) -> CommandFlow:
+    async def wait_run(self, session: Session, request: Request) -> CommandFlow:
 
         name = str(request.args)
         await session.emit(v_text(f"Hello started ... {name}"))
@@ -67,15 +61,13 @@ class CmdTest(Command):
             name = event.to_text()
             await session.emit(v_text(f"Hello {name}"))
 
-            yield FocusReleased()
             yield Delay(5)
 
-    async def _run_print_message(
-        self, session: Session, request: Request
-    ) -> CommandFlow:
-        messages = ["Test print..."]
-        await session.emit(v_text(str(messages)))
-        yield Advance()
+    async def delay_run(self, session: Session, request: Request) -> CommandFlow:
+
+        yield Show(v_text("\nStart"))
+        yield Delay(10)
+        yield Show(v_text("\nDone"))
 
     async def __run(self, session: Session, request: Request) -> CommandFlow:
 

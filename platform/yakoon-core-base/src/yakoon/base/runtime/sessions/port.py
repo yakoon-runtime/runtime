@@ -1,8 +1,11 @@
-from typing import Protocol
+from __future__ import annotations
 
-from yakoon.base.values.key import Key
+from typing import TYPE_CHECKING, Protocol
 
-from .session import Session
+if TYPE_CHECKING:
+    from yakoon.base.values.key import Key
+
+    from .session import Session
 
 
 class SessionService(Protocol):

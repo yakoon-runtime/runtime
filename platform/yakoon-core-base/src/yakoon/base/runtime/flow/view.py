@@ -1,13 +1,13 @@
-from dataclasses import replace
+from __future__ import annotations
 
-from yakoon.base.capabilities.presenters import BlockGroup
+from dataclasses import replace
+from typing import TYPE_CHECKING
+
+from yakoon.base.runtime.steps import Ask, Show
 from yakoon.base.ui import View, ViewHeader
 
-from .steps import Ask, Show
-
-# -----------------------------
-# COMPILE
-# -----------------------------
+if TYPE_CHECKING:
+    from yakoon.base.capabilities.presenters import BlockGroup
 
 
 async def compile_view(

@@ -8,6 +8,7 @@ from typing import Any
 
 from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.host.events import InputEvent
+from yakoon.base.runtime.flow import Flow
 from yakoon.base.transports import IO
 from yakoon.base.ui import (
     Node,
@@ -21,7 +22,6 @@ from yakoon.base.ui import (
 )
 from yakoon.base.values import Key
 
-from .flow import Flow
 from .trace import ExecutionTrace
 
 _OUTPUT_STREAM_POLICY_KEY = "output_stream_policy"

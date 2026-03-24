@@ -1,23 +1,24 @@
 from __future__ import annotations
 
 from dataclasses import replace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from yakoon.base.host.events import InputEvent
-from yakoon.base.runtime.commands.request import Request
-from yakoon.base.runtime.sessions import Session
-from yakoon.base.runtime.sessions.flow import Flow
+from yakoon.base.runtime.steps import Emit, SetFocus
 from yakoon.base.ui import FieldError, View
 
-from .outcome import (
+if TYPE_CHECKING:
+    from yakoon.base.runtime.commands import Request
+    from yakoon.base.runtime.flow import Flow
+    from yakoon.base.runtime.sessions import Session
+
+
+from .controls import (
     AwaitInput,
-    FocusReleased,
-    InputResolved,
-    Next,
     Sleep,
     SleepUntil,
-    StepOutcome,
 )
+from .outcome import Outcome
 
 # ============================================================
 # Step Base
@@ -26,17 +27,17 @@ from .outcome import (
 
 class Step:
 
-    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
+    async def run(self, session: Session, flow: Flow, request: Request) -> Outcome:
         raise NotImplementedError
 
 
 class InputStep(Step):
     """Benötigt externes resume() (Ask, Form)"""
 
-    async def resume(self, session: Session, flow: Flow, event: InputEvent):
+    async def resume(self, session: Session, flow: Flow, event: InputEvent) -> Outcome:
         raise NotImplementedError
 
-    def reject(self, field: str, message: str) -> AwaitInput:
+    def reject(self, field: str, message: str) -> Outcome:
         raise NotImplementedError
 
 
@@ -52,23 +53,6 @@ class PassiveStep(Step):
 
 
 # ------------------------------------------------------------
-# Flow Control
-# ------------------------------------------------------------
-
-
-class Advance(Step):
-    """Explicitly advance the flow."""
-
-    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
-        return Next()
-
-
-class ReleaseFocus(Step):
-    async def run(self, session, flow, request):
-        return FocusReleased()
-
-
-# ------------------------------------------------------------
 # Show
 # ------------------------------------------------------------
 
@@ -78,9 +62,13 @@ class Show(PassiveStep):
     def __init__(self, view: View):
         self.view = view
 
-    async def run(self, session: Session, flow: Flow, request: Request):
-        await session.emit(self.view)
-        return Next()
+    async def run(self, session: Session, flow: Flow, request: Request) -> Outcome:
+
+        return Outcome(
+            effects=[
+                Emit(self.view),
+            ]
+        )
 
 
 # ------------------------------------------------------------
@@ -94,16 +82,26 @@ class Ask(InputStep):
         self.view = view
         self.policy = policy_service
 
-    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
-        return AwaitInput(self.view, emit=True)
+    async def run(self, session: Session, flow: Flow, request: Request) -> Outcome:
 
-    def reject(self, field: str, message: str) -> AwaitInput:
+        return Outcome(
+            control=AwaitInput(self.view),
+            effects=[
+                SetFocus(flow.id),
+                Emit(self.view),
+            ],
+        )
+
+    def reject(self, field: str, message: str) -> Outcome:
         view = self._apply_field_error(field, message)
-        return AwaitInput(view, emit=True)
+        return Outcome(
+            control=AwaitInput(view),
+            effects=[
+                Emit(view),
+            ],
+        )
 
-    async def resume(
-        self, session: Session, flow: Flow, event: InputEvent
-    ) -> StepOutcome:
+    async def resume(self, session: Session, flow: Flow, event: InputEvent) -> Outcome:
 
         validated: dict[str, Any] = {}
         errors: dict[str, list[FieldError]] = {}
@@ -156,9 +154,16 @@ class Ask(InputStep):
 
         if errors:
             self.view = self.view.with_body(new_blocks)
-            return AwaitInput(self.view, emit=True)
+            return Outcome(
+                control=AwaitInput(self.view),
+                effects=[
+                    Emit(
+                        self.view,
+                    )
+                ],
+            )
 
-        return InputResolved(InputEvent(validated))
+        return Outcome(value=InputEvent(validated))
 
     def _apply_field_error(self, field_name: str, message: str) -> View:
 
@@ -194,21 +199,21 @@ class Ask(InputStep):
 
 class Receive(PassiveStep):
 
-    def __init__(self, default: dict | None = None, wait: bool = False):
+    def __init__(self, default: InputEvent | None = None, wait: bool = False):
         self.default = default
         self.wait = wait
 
-    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
+    async def run(self, session: Session, flow: Flow, request: Request) -> Outcome:
 
         event = flow.pop_event()
         if event:
-            return InputResolved(event)
+            return Outcome(value=event)
 
         # blockieren
         if self.wait:
-            return AwaitInput(None, emit=False)
+            return Outcome(control=AwaitInput(None))
 
-        return InputResolved(self.default or None)
+        return Outcome(value=self.default)
 
 
 # ------------------------------------------------------------
@@ -218,24 +223,26 @@ class Receive(PassiveStep):
 
 class Form(InputStep):
 
-    def __init__(self, views: list[View], policy_service):
-        self.views = views
+    def __init__(self, view: View, policy_service):
+        self.view = view
         self.policy = policy_service
         self.index = 0
         self.values = {}
 
-    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
-        return AwaitInput(self.views[self.index])
+    async def run(self, session: Session, flow: Flow, request: Request) -> Outcome:
 
-    async def resume(self, session: Session, flow: Flow, event: InputEvent):
+        return Outcome(
+            control=AwaitInput(self.view), effects=[Emit(self.view), SetFocus(flow.id)]
+        )
 
-        view = self.views[self.index]
+    async def resume(self, session: Session, flow: Flow, event: InputEvent) -> Outcome:
+
         raw_values = event.to_values()
 
         validated = {}
         errors = {}
 
-        for block in view.blocks:
+        for block in self.view.blocks:
             fields = getattr(block, "fields", None)
             if not fields:
                 continue
@@ -254,15 +261,16 @@ class Form(InputStep):
                     errors[field.var] = result.errors
 
         if errors:
-            return AwaitInput(view)
+            return Outcome(
+                control=AwaitInput(self.view),
+                effects=[
+                    Emit(
+                        self.view,
+                    )
+                ],
+            )
 
-        self.values.update(validated)
-        self.index += 1
-
-        if self.index >= len(self.views):
-            return InputResolved(InputEvent(self.values))
-
-        return AwaitInput(self.views[self.index])
+        return Outcome(value=InputEvent(validated))
 
 
 # ------------------------------------------------------------
@@ -274,13 +282,13 @@ class Delay(PassiveStep):
     def __init__(self, seconds: int):
         self.seconds = seconds
 
-    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
-        return Sleep(self.seconds)
+    async def run(self, session: Session, flow: Flow, request: Request) -> Outcome:
+        return Outcome(control=Sleep(self.seconds))
 
 
 class DelayUntil(PassiveStep):
     def __init__(self, timestamp: float):
         self.timestamp = timestamp
 
-    async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
-        return SleepUntil(self.timestamp)
+    async def run(self, session: Session, flow: Flow, request: Request) -> Outcome:
+        return Outcome(control=SleepUntil(self.timestamp))

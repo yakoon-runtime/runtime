@@ -7,8 +7,8 @@ from yakoon.base.runtime import (
     Request,
     Session,
 )
-from yakoon.base.runtime.commands import Advance
-from yakoon.base.ui.builder import v_text
+from yakoon.base.runtime.steps import Show
+from yakoon.base.ui import v_text
 
 
 class CmdJobs(Command):
@@ -25,21 +25,17 @@ class CmdJobs(Command):
 
         if not action:
             await self._list_jobs(session)
-            yield Advance()
             return
 
         if action == "stop":
             await self._stop_job(session, request)
-            yield Advance()
             return
 
         if action == "use":
             await self._use_job(session, request)
-            yield Advance()
             return
 
-        await session.emit(v_text(f"Unbekannte Aktion: {action}"))
-        yield Advance()
+        yield Show(v_text(f"Unbekannte Aktion: {action}"))
 
     # --------------------------------------------------------
     # Helpers

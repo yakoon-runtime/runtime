@@ -1,3 +1,4 @@
+import time
 from uuid import uuid4
 
 from yakoon.base.capabilities.audit import AuditLogService
@@ -14,19 +15,25 @@ from yakoon.base.runtime import (
     Request,
     Session,
 )
-from yakoon.base.runtime.commands import (
-    InputResolved,
-    StepOutcome,
-    Stop,
-)
-from yakoon.base.runtime.commands.steps.step import InputStep
 from yakoon.base.runtime.controllers import Controller
-from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions import (
+from yakoon.base.runtime.flow import (
     Flow,
     FlowCursor,
     FlowKind,
     FlowState,
+)
+from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.steps import (
+    BLOCKING_STEPS,
+    ClearFocus,
+    Control,
+    Effect,
+    Emit,
+    InputStep,
+    Outcome,
+    SetFocus,
+    Stop,
+    YieldToScheduler,
 )
 from yakoon.base.ui import v_error_system
 from yakoon.platform.runtime import CommandNotFound, PermissionDenied, PlatformError
@@ -167,7 +174,7 @@ class CommandEngine:
                 command_type.context = None
             await controller.on_cleanup(session)
 
-    async def tick_flow(self, flow: Flow, session: Session) -> StepOutcome | None:
+    async def tick_flow(self, flow: Flow, session: Session) -> Control | None:
 
         cursor = flow.cursor
         request = Request(flow.request)
@@ -182,39 +189,79 @@ class CommandEngine:
 
         command = self._create_command(command_type, controller)
 
+        steps = 0
+        start = time.time()
+
+        max_steps, max_time = self._get_inline_budget(flow)
+
         try:
             session._runtime_flow_id = flow.id
 
-            try:
+            while True:
+
                 # --------------------------------------------------
-                # 1. Step holen (next oder resume)
+                # 1. Step holen (KEINE Interpretation!)
                 # --------------------------------------------------
                 step = await self._next_step(flow, session, command, request)
                 if step is None:
                     return None
 
-                if isinstance(step, StepOutcome):
-                    return step
-
-                flow.last_step = step
+                # --------------------------------------------------
+                # 2. Step → Outcome
+                # --------------------------------------------------
+                if isinstance(step, Outcome):
+                    outcome = step
+                else:
+                    flow.last_step = step
+                    outcome = await step.run(session, flow, request)
 
                 # --------------------------------------------------
-                # 2. Step ausführen
+                # 3. InputEvent + value
                 # --------------------------------------------------
-                outcome = await step.run(session, flow, request)
+                while outcome.value is not None:
 
-                if not isinstance(outcome, StepOutcome):
+                    item = await cursor.send(outcome.value)
+                    outcome.value = None
+
+                    if isinstance(item, Outcome):
+                        outcome = item
+                        continue
+
+                    # muss Step sein
+                    flow.last_step = item
+                    outcome = await item.run(session, flow, request)
+
+                # Safety
+                if not isinstance(outcome, Outcome):
                     raise RuntimeError(f"Invalid step result: {type(outcome)}")
 
                 # --------------------------------------------------
-                # 3. InputResolved sofort auflösen
+                # 4. Effects ausführen
                 # --------------------------------------------------
-                return await self._resolve_outcome(
-                    cursor, flow, session, request, outcome
-                )
+                await self._apply_effects(outcome.effects, session)
 
-            except StopAsyncIteration:
-                return Stop()
+                # --------------------------------------------------
+                # 5. Control → Scheduler
+                # --------------------------------------------------
+                control = outcome.control
+
+                if control is not None:
+                    if isinstance(control, BLOCKING_STEPS):
+                        return control
+
+                # --------------------------------------------------
+                # 6. Budget / Fairness
+                # --------------------------------------------------
+                steps += 1
+
+                if steps >= max_steps:
+                    return YieldToScheduler()
+
+                if time.time() - start > max_time:
+                    return YieldToScheduler()
+
+        except StopAsyncIteration:
+            return Stop()
 
         finally:
             session._runtime_flow_id = None
@@ -222,6 +269,26 @@ class CommandEngine:
     # ----------------------------------------------------
     # INTERNAL
     # ----------------------------------------------------
+
+    def _get_inline_budget(self, flow: Flow):
+        base_steps = 20
+        base_time = 0.005
+        if flow.kind == FlowKind.SYSTEM:
+            return base_steps * 3, base_time * 2
+        return base_steps, base_time
+
+    async def _apply_effects(self, effects: list[Effect], session: Session):
+
+        for effect in effects:
+
+            if isinstance(effect, Emit):
+                await session.emit(effect.view)
+
+            elif isinstance(effect, SetFocus):
+                session.set_focus(effect.flow_id)
+
+            elif isinstance(effect, ClearFocus):
+                session.set_focus(None)
 
     async def _next_step(
         self, flow: Flow, session: Session, command: Command, request: Request
@@ -238,12 +305,7 @@ class CommandEngine:
 
             if isinstance(step, InputStep):
                 _, event = flow.input_queue.popleft()
-                outcome = await step.resume(session, flow, event)
-
-                if isinstance(outcome, InputResolved):
-                    return await flow.cursor.send(outcome.event)
-
-                return outcome
+                return await step.resume(session, flow, event)
             else:
                 event = flow.pop_event()
                 item = await flow.cursor.send(event)
@@ -251,24 +313,6 @@ class CommandEngine:
 
         # normaler Flow
         return await flow.cursor.next(command, session, request)
-
-    async def _resolve_outcome(self, cursor, flow, session, request, outcome):
-
-        while isinstance(outcome, InputResolved):
-
-            item = await cursor.send(outcome.event)
-            if isinstance(item, StepOutcome):
-                return item
-
-            step = item
-            flow.last_step = step
-
-            outcome = await step.run(session, flow, request)
-
-            if not isinstance(outcome, StepOutcome):
-                raise RuntimeError(f"Invalid step result: {type(outcome)}")
-
-        return outcome
 
     def _create_command(self, command_type: type, controller: Controller) -> Command:
         command = command_type()

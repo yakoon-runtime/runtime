@@ -3,25 +3,21 @@ import heapq
 import time
 from collections import deque
 
-from yakoon.base.capabilities.audit.port import AuditLogService
-from yakoon.base.engine.types import DispatchInput
+from yakoon.base.capabilities.audit import AuditLogService
+from yakoon.base.engine import DispatchInput
 from yakoon.base.host.events import InputEvent
-from yakoon.base.runtime.commands import (
+from yakoon.base.runtime.flow import Flow, FlowKind, FlowState
+from yakoon.base.runtime.sessions import Session
+from yakoon.base.runtime.steps import (
     AwaitInput,
-    InputResolved,
-    Next,
     Sleep,
     SleepUntil,
     Stop,
+    YieldToScheduler,
 )
-from yakoon.base.runtime.commands.steps import acquire_focus, release_focus
-from yakoon.base.runtime.commands.steps.outcome import FocusReleased
-from yakoon.base.runtime.sessions.flow import Flow, FlowState
-from yakoon.base.runtime.sessions.session import Session
 from yakoon.base.ui import v_error_domain, v_error_fatal, v_error_system
 from yakoon.platform.engine import CommandEngine
-from yakoon.platform.runtime import PlatformError
-from yakoon.platform.runtime.error import DomainError
+from yakoon.platform.runtime import DomainError, PlatformError
 
 
 class Scheduler:
@@ -37,7 +33,8 @@ class Scheduler:
         self.engine = engine
 
         # Flow-basierte Queue: (session, flow)
-        self.ready = deque()
+        self.ready_user = deque()
+        self.ready_system = deque()
 
         self.sleeping = []  # (wake_at, session, flow)
         self._event = asyncio.Event()
@@ -89,7 +86,7 @@ class Scheduler:
             # --------------------------------------------------
             # Nichts zu tun → warten
             # --------------------------------------------------
-            if not self.ready:
+            if not self.ready_user and not self.ready_system:
                 if self.sleeping:
                     wake_at = self.sleeping[0][0]
                     delay = max(0, wake_at - time.time())
@@ -105,7 +102,10 @@ class Scheduler:
                 continue
 
             start = time.time()
-            while self.ready and steps < self.MAX_STEPS_PER_CYCLE:
+
+            while (
+                self.ready_user or self.ready_system
+            ) and steps < self.MAX_STEPS_PER_CYCLE:
 
                 if time.time() - start > self.MAX_TIME_PER_CYCLE:
                     break
@@ -113,7 +113,12 @@ class Scheduler:
                 # --------------------------------------------------
                 # Work vorhanden
                 # --------------------------------------------------
-                session, flow = self.ready.popleft()
+                if self.ready_system:
+                    session, flow = self.ready_system.popleft()
+                elif self.ready_user:
+                    session, flow = self.ready_user.popleft()
+                else:
+                    break
 
                 iterations += 1
                 if iterations > self.MAX_ITERATIONS:
@@ -171,8 +176,11 @@ class Scheduler:
                 await asyncio.sleep(0)
 
     def schedule_flow(self, flow: Flow, session: Session):
-        # bewusst KEIN dedupe -> echtes Round-Robin
-        self.ready.append((session, flow))
+        if flow.kind == FlowKind.SYSTEM:
+            self.ready_system.append((session, flow))
+        else:
+            self.ready_user.append((session, flow))
+
         self._event.set()
 
     # --------------------------------------------------------
@@ -197,34 +205,16 @@ class Scheduler:
 
         match outcome:
 
-            case Next():
-                # Round-Robin: hinten anstellen
+            case YieldToScheduler():
                 flow.state = FlowState.READY
                 self.schedule_flow(flow, session)
 
             case Stop():
-                release_focus(session, flow)
                 session.del_flow(flow)
 
-            case FocusReleased():
-                release_focus(session, flow)
-
-            case InputResolved() as ir:
-                release_focus(session, flow)
-
-                # einfach weiterlaufen lassen
-                flow.state = FlowState.READY
-                self.schedule_flow(flow, session)
-
-            case AwaitInput() as a:
-                # neue Version starten
+            case AwaitInput():
                 flow.state = FlowState.WAITING_INPUT
                 flow.input_version += 1
-
-                acquire_focus(session, flow)
-
-                if a.emit and a.view:
-                    await session.emit(a.view)
 
             case Sleep(seconds=s):
                 flow.state = FlowState.SLEEPING

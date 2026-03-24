@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import AsyncGenerator, Coroutine
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, TypeAlias
 
@@ -11,8 +11,8 @@ from yakoon.base.capabilities.presenters import (
 )
 from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.controllers import resolve_resource
+from yakoon.base.runtime.steps import Outcome, Step
 
-from .steps.step import Step, StepOutcome
 from .types import (
     CommandKind,
     CommandScope,
@@ -28,9 +28,8 @@ if TYPE_CHECKING:
 
     from .request import Request
 
-
-CommandFlow: TypeAlias = AsyncGenerator[Step | StepOutcome, Any]
-CommandRun: TypeAlias = Coroutine[Any, Any, CommandFlow]
+FlowInstruction = Step | Outcome
+CommandFlow: TypeAlias = AsyncGenerator[FlowInstruction, Any]
 
 
 class WorkflowContextRequired(RuntimeError):
@@ -149,7 +148,7 @@ class Command(ABC):
         """Execute the command as an async generator.
 
         Yields:
-            Step: Next step to execute.
+            Step | Outcome: Flow instructions executed by the runtime.
 
         Receives:
             Arbitrary data from step results via `yield`.
