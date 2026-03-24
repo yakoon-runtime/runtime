@@ -1,5 +1,7 @@
+from .focus import acquire_focus, release_focus
 from .outcome import (
     AwaitInput,
+    FocusReleased,
     InputResolved,
     Next,
     Sleep,
@@ -15,6 +17,7 @@ from .step import (
     InputStep,
     PassiveStep,
     Receive,
+    ReleaseFocus,
     Show,
     Step,
 )
@@ -36,4 +39,8 @@ __all__ = [
     "DelayUntil",
     "StepOutcome",
     "Stop",
+    "acquire_focus",
+    "release_focus",
+    "ReleaseFocus",
+    "FocusReleased",
 ]

@@ -11,6 +11,7 @@ from yakoon.base.runtime.commands import (
     Receive,
     compile_view,
 )
+from yakoon.base.runtime.commands.steps import FocusReleased
 from yakoon.base.ui import v_text
 from yakoon.platform.runtime.error import DomainError
 
@@ -21,7 +22,7 @@ class CmdTest(Command):
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
 
-    async def run(self, session: Session, request: Request) -> CommandFlow:
+    async def ask_run(self, session: Session, request: Request) -> CommandFlow:
 
         policy = self.services.get(PolicyService)
         presenter = await self.get_presenter(session=session)
@@ -56,7 +57,7 @@ class CmdTest(Command):
 
         yield Advance()
 
-    async def delay_run(self, session: Session, request: Request) -> CommandFlow:
+    async def run(self, session: Session, request: Request) -> CommandFlow:
 
         name = str(request.args)
         await session.emit(v_text(f"Hello started ... {name}"))
@@ -64,10 +65,9 @@ class CmdTest(Command):
 
             event: InputEvent = yield Receive(wait=True)
             name = event.to_text()
-
             await session.emit(v_text(f"Hello {name}"))
 
-            # 5 Sekunden warten
+            yield FocusReleased()
             yield Delay(5)
 
     async def _run_print_message(

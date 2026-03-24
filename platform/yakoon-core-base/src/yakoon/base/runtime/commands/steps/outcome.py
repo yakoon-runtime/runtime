@@ -55,6 +55,10 @@ class InputResolved(StepOutcome):
         self.event = event
 
 
+class FocusReleased(StepOutcome):
+    pass
+
+
 # ------------------------------------------------------------
 # Time Control
 # ------------------------------------------------------------

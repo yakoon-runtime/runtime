@@ -14,6 +14,8 @@ from yakoon.base.runtime.commands import (
     SleepUntil,
     Stop,
 )
+from yakoon.base.runtime.commands.steps import acquire_focus, release_focus
+from yakoon.base.runtime.commands.steps.outcome import FocusReleased
 from yakoon.base.runtime.sessions.flow import Flow, FlowState
 from yakoon.base.runtime.sessions.session import Session
 from yakoon.base.ui import v_error_domain, v_error_fatal, v_error_system
@@ -201,9 +203,15 @@ class Scheduler:
                 self.schedule_flow(flow, session)
 
             case Stop():
+                release_focus(session, flow)
                 session.del_flow(flow)
 
+            case FocusReleased():
+                release_focus(session, flow)
+
             case InputResolved() as ir:
+                release_focus(session, flow)
+
                 # einfach weiterlaufen lassen
                 flow.state = FlowState.READY
                 self.schedule_flow(flow, session)
@@ -213,7 +221,7 @@ class Scheduler:
                 flow.state = FlowState.WAITING_INPUT
                 flow.input_version += 1
 
-                session.set_focus(flow.id)
+                acquire_focus(session, flow)
 
                 if a.emit and a.view:
                     await session.emit(a.view)

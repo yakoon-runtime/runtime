@@ -11,6 +11,7 @@ from yakoon.base.ui import FieldError, View
 
 from .outcome import (
     AwaitInput,
+    FocusReleased,
     InputResolved,
     Next,
     Sleep,
@@ -60,6 +61,11 @@ class Advance(Step):
 
     async def run(self, session: Session, flow: Flow, request: Request) -> StepOutcome:
         return Next()
+
+
+class ReleaseFocus(Step):
+    async def run(self, session, flow, request):
+        return FocusReleased()
 
 
 # ------------------------------------------------------------

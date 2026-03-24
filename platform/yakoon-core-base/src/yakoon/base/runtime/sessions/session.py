@@ -132,8 +132,8 @@ class Session:
     def del_flow(self, flow: Flow):
         if flow.id in self._flows:
             del self._flows[flow.id]
-        if self._focus_flow_id == flow.id:
-            self._focus_flow_id = next(iter(self._flows), None)
+        if flow.id == self._focus_flow_id:
+            self.set_focus(None)
 
     def set_focus(self, flow_id: str | None):
         if flow_id and flow_id not in self._flows:
