@@ -5,8 +5,8 @@ from typing import Any
 from yakoon.base.capabilities.presenters.view import PresenterView
 from yakoon.base.rendering import RenderContext, RenderService
 from yakoon.base.resources import ResourceRef
-from yakoon.base.runtime import Session
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions import Session
 
 from .view import DefaultPresenterView
 
@@ -35,7 +35,7 @@ class DefaultPresenter:
             lang=session.lang,
         )
 
-    async def view(
+    async def render(
         self,
         state: str,
         **data: Any,

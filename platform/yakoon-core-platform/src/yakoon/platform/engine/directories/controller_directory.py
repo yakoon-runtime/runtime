@@ -35,7 +35,7 @@ class ControllerDirectory:
                 )
             if controller.is_shell and has_shell:
                 raise ValueError(
-                    f"Duplicate shell controller: {shell_id.id} / {controller.id}"  # type: ignore
+                    f"Duplicate shell controller: {shell_id} / {controller.id}"  # type: ignore
                 )
             if controller.is_shell:
                 has_shell = True

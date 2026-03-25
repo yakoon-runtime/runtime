@@ -4,8 +4,13 @@ from collections.abc import Sequence
 
 from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.catalogs import CommandCatalog, CommandInfo, ControllerCatalogService
-from yakoon.base.runtime import CommandKind, CommandScope, CommandVisibility, Session
+from yakoon.base.runtime.commands import (
+    CommandKind,
+    CommandScope,
+    CommandVisibility,
+)
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions import Session
 
 
 class DefaultCommandCatalogService:

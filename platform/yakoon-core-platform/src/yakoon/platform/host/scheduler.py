@@ -5,8 +5,8 @@ from collections import deque
 
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.engine import DispatchInput
-from yakoon.base.host.events import InputEvent
 from yakoon.base.runtime.flow import Flow, FlowKind, FlowState
+from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.sessions import Session
 from yakoon.base.runtime.steps import (
     AwaitInput,

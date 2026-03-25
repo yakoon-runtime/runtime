@@ -16,7 +16,7 @@ class Presenter(Protocol):
     interactive blocks, and optionally returns collected values.
     """
 
-    async def view(
+    async def render(
         self,
         state: str,
         **data: Any,

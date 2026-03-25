@@ -3,17 +3,17 @@ import subprocess
 import time
 from datetime import UTC, datetime
 
-from yakoon.base.runtime import Command, Request, Session
+from yakoon.base.api import Command, Request, show
 
 
 class CmdVersion(Command):
 
     key = "version"
 
-    async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+    async def run(self, request: Request):
 
-        presenter = await self.get_presenter(session)
-        await presenter.present(
+        presenter = await self.get_presenter()
+        pview = await presenter.render(
             "show",
             version=get_platform_version(),
             python=platform.python_version(),
@@ -21,6 +21,7 @@ class CmdVersion(Command):
             uptime=get_uptime(),
             time=datetime.now(UTC).isoformat(),
         )
+        yield show(pview.view)
 
 
 _start_time = time.time()

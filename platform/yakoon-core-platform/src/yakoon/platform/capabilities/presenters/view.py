@@ -27,12 +27,12 @@ class DefaultPresenterView:
     def header(self) -> ViewHeader | None:
         return self._spec.header
 
+    @property
+    def view(self) -> View:
+        return self._spec
+
     def blocks(self) -> list[Block]:
         return self._spec.blocks
-
-    def raw(self) -> View:
-        """Escape hatch – nur wenn wirklich nötig"""
-        return self._spec
 
     # --------------------------------------------------------
     # Document State

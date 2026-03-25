@@ -9,7 +9,7 @@ pip install \
 # hosts
 pip install \
   -e hosts/yakoon-host-console \
-  -e hosts/yakoon-host-kivy
+  -e hosts/yakoon-host-kivy \
 
 # extensions
 pip install \
@@ -19,3 +19,4 @@ pip install \
 pip install \
   -e apps/yakoon-crm \
   -e apps/yakoon-office \
+  -e apps/yakoon-playground \

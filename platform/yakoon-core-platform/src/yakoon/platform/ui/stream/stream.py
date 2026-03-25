@@ -5,7 +5,7 @@ import time
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-from yakoon.base.runtime import Session
+from yakoon.base.runtime.sessions import Session
 from yakoon.base.ui import (
     Block,
     EffectiveStreaming,

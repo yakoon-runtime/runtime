@@ -1,7 +1,7 @@
 import time
 
-from yakoon.base.runtime import Command, Request, Session
-from yakoon.base.runtime.commands import CommandKind, CommandVisibility
+from yakoon.base.api import Command, Request
+from yakoon.base.api.command import CommandKind, CommandVisibility
 from yakoon.base.ui.builder import v_text
 
 
@@ -15,7 +15,7 @@ class CmdSpeedTest(Command):
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
 
-    async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+    async def run(self, request: Request):
 
         CmdSpeedTest._counter += 1
 

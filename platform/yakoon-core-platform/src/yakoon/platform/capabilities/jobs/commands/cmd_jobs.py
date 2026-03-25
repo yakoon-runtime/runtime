@@ -1,13 +1,5 @@
-from yakoon.base.runtime import (
-    Command,
-    CommandFlow,
-    CommandKind,
-    CommandScope,
-    CommandVisibility,
-    Request,
-    Session,
-)
-from yakoon.base.runtime.steps import Show
+from yakoon.base.api import Command, Request, show
+from yakoon.base.api.command import CommandKind, CommandScope, CommandVisibility
 from yakoon.base.ui import v_text
 
 
@@ -19,39 +11,40 @@ class CmdJobs(Command):
     scope = CommandScope.GLOBAL
     visibility = CommandVisibility.INTERNAL
 
-    async def run(self, session: Session, request: Request) -> CommandFlow:
+    async def run(self, request: Request):
 
         action = request.arg(0)
 
         if not action:
-            await self._list_jobs(session)
-            return
+            async for step in self._list_jobs():
+                yield step
 
-        if action == "stop":
-            await self._stop_job(session, request)
-            return
+        elif action == "stop":
+            async for step in self._stop_job(request):
+                yield step
 
-        if action == "use":
-            await self._use_job(session, request)
-            return
-
-        yield Show(v_text(f"Unbekannte Aktion: {action}"))
+        elif action == "use":
+            async for step in self._use_job(request):
+                yield step
+        else:
+            yield show(v_text(f"Unbekannte Aktion: {action}"))
 
     # --------------------------------------------------------
     # Helpers
     # --------------------------------------------------------
 
-    def _enumerate_flows(self, session: Session):
+    def _enumerate_flows(self):
+        session = self.context.system
         flows = [f for f in session.flows() if f.command_key != self.key]
         return list(enumerate(flows, start=1))
 
-    def _get_flow_by_index(self, session: Session, request: Request):
+    def _get_flow_by_index(self, request: Request):
         try:
             index = int(request.arg(1))
         except (TypeError, ValueError):
             return None, None
 
-        indexed = self._enumerate_flows(session)
+        indexed = self._enumerate_flows()
 
         for i, flow in indexed:
             if i == index:
@@ -63,45 +56,41 @@ class CmdJobs(Command):
     # Actions
     # --------------------------------------------------------
 
-    async def _list_jobs(self, session: Session):
+    async def _list_jobs(self):
 
-        indexed = self._enumerate_flows(session)
+        indexed = self._enumerate_flows()
 
         if not indexed:
-            await session.emit(v_text("Keine Jobs aktiv."))
+            yield show(v_text("Keine Jobs aktiv."))
             return
 
-        await session.emit(v_text("Aktive Jobs:\n"))
+        yield show(v_text("Aktive Jobs:\n"))
 
-        focused = session.focused_flow
-
+        focused = self.context.system.focused_flow
         for i, f in indexed:
             label = getattr(f, "label", f.command_key)
             state = f.state.name
             marker = " *" if focused and focused.id == f.id else ""
 
-            await session.emit(v_text(f"[{i}] {label} - {state}{marker}\n"))
+            yield show(v_text(f"[{i}] {label} - {state}{marker}\n"))
 
-    async def _stop_job(self, session: Session, request: Request):
+    async def _stop_job(self, request: Request):
 
-        flow, index = self._get_flow_by_index(session, request)
-
-        if not flow:
-            await session.emit(v_text(f"Job {index} nicht gefunden"))
-            return
-
-        session.del_flow(flow)
-
-        await session.emit(v_text(f"Job {index} gestoppt"))
-
-    async def _use_job(self, session: Session, request: Request):
-
-        flow, index = self._get_flow_by_index(session, request)
+        flow, index = self._get_flow_by_index(request)
 
         if not flow:
-            await session.emit(v_text(f"Job {index} nicht gefunden"))
+            yield show(v_text(f"Job {index} nicht gefunden"))
+
+        self.context.system.del_flow(flow)
+        yield show(v_text(f"Job {index} gestoppt"))
+
+    async def _use_job(self, request: Request):
+
+        flow, index = self._get_flow_by_index(request)
+
+        if not flow:
+            yield show(v_text(f"Job {index} nicht gefunden"))
             return
 
-        session.set_focus(flow.id)
-
-        await session.emit(v_text(f"Fokus auf Job {index} gesetzt"))
+        self.context.system.set_focus(flow.id)
+        yield show(v_text(f"Fokus auf Job {index} gesetzt"))

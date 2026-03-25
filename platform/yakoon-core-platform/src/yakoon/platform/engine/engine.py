@@ -8,13 +8,11 @@ from yakoon.base.engine import (
     CommandDispatch,
     DispatchInput,
 )
-from yakoon.base.runtime import (
+from yakoon.base.runtime.commands import (
     Command,
-    CommandContext,
-    ExecStep,
     Request,
-    Session,
 )
+from yakoon.base.runtime.commands.context import CommandContext
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.flow import (
     Flow,
@@ -23,6 +21,7 @@ from yakoon.base.runtime.flow import (
     FlowState,
 )
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions.session import Session
 from yakoon.base.runtime.steps import (
     BLOCKING_STEPS,
     ClearFocus,
@@ -35,9 +34,12 @@ from yakoon.base.runtime.steps import (
     Stop,
     YieldToScheduler,
 )
+from yakoon.base.runtime.steps.context import StepContext
 from yakoon.base.ui import v_error_system
-from yakoon.platform.runtime import CommandNotFound, PermissionDenied, PlatformError
+from yakoon.platform.runtime import CommandNotFound, PermissionDenied
+from yakoon.platform.runtime.error import CriticalError
 
+from .coroutine import ensure_step
 from .directories import CommandDirectory, ControllerDirectory
 
 
@@ -65,8 +67,8 @@ class CommandEngine:
 
     async def dispatch(self, session: Session, di: DispatchInput) -> None:
 
-        session.execution.reset()
-        session.execution.step(ExecStep.EXECUTION_START)
+        # session.execution.reset()
+        # session.execution.step(ExecStep.EXECUTION_START)
         if not isinstance(di, CommandDispatch):
             return None
 
@@ -74,10 +76,10 @@ class CommandEngine:
         if not request.command:
             return None
 
-        session.execution.step(
-            ExecStep.COMMAND_RECEIVED,
-            command=request.raw,
-        )
+        # session.execution.step(
+        #    ExecStep.COMMAND_RECEIVED,
+        #    command=request.raw,
+        # )
 
         # Active controller sicherstellen
         controller_id = session.get_active_controller()
@@ -124,11 +126,11 @@ class CommandEngine:
                     f"(controller='{resolved_controller.id}')"
                 )
 
-            session.execution.step(
-                ExecStep.COMMAND_RESOLVED,
-                command=command_type.key,
-                controller=resolved_controller.id,
-            )
+            # session.execution.step(
+            #    ExecStep.COMMAND_RESOLVED,
+            #    command=command_type.key,
+            #    controller=resolved_controller.id,
+            # )
 
             # Permission check
             perm_service = self.services.get(PermissionService)
@@ -136,18 +138,18 @@ class CommandEngine:
             if not perm_service.can_execute(session, fq):
                 raise PermissionDenied()
 
-            session.execution.step(
-                ExecStep.COMMAND_PREPARED,
-                command=command_type.key,
-                controller=resolved_controller.id,
-            )
+            # session.execution.step(
+            #    ExecStep.COMMAND_PREPARED,
+            #    command=command_type.key,
+            #    controller=resolved_controller.id,
+            # )
 
             flow = Flow(
                 uuid4().hex,
                 command_type.key,
                 resolved_controller.id,
                 request.raw,
-                FlowCursor(command_type.run),
+                FlowCursor(ensure_step(command_type.run)),
                 kind=self._resolve_flow_kind(request),
             )
             session.add_flow(flow)
@@ -164,20 +166,21 @@ class CommandEngine:
             raise
 
         except Exception as exc:
-            raise PlatformError(
+            raise CriticalError(
                 "Ein interner Fehler ist aufgetreten.",
                 "internal_error",
             ) from exc
-
-        finally:
-            if command_type:
-                command_type.context = None
-            await controller.on_cleanup(session)
 
     async def tick_flow(self, flow: Flow, session: Session) -> Control | None:
 
         cursor = flow.cursor
         request = Request(flow.request)
+
+        context = StepContext(
+            session=session,
+            request=request,
+            services=self.services,
+        )
 
         controller = self._controllers.get(flow.controller_id)
         if not controller:
@@ -187,7 +190,7 @@ class CommandEngine:
         if not command_type:
             raise RuntimeError("Command not found")
 
-        command = self._create_command(command_type, controller)
+        command = self._create_command(command_type, controller, session)
 
         steps = 0
         start = time.time()
@@ -195,28 +198,37 @@ class CommandEngine:
         max_steps, max_time = self._get_inline_budget(flow)
 
         try:
-            session._runtime_flow_id = flow.id
+            session._runtime_flow_id = flow.id  # type: ignore
 
             while True:
 
                 # --------------------------------------------------
-                # 1. Step holen (KEINE Interpretation!)
+                # 1. Step holen
                 # --------------------------------------------------
-                step = await self._next_step(flow, session, command, request)
-                if step is None:
+                step_or_tuple = await self._next_step(flow, session, command, request)
+                if step_or_tuple is None:
                     return None
 
                 # --------------------------------------------------
-                # 2. Step → Outcome
+                # 2. Ausführen (run / resume)
                 # --------------------------------------------------
-                if isinstance(step, Outcome):
-                    outcome = step
-                else:
+                if isinstance(step_or_tuple, tuple):
+                    step, event = step_or_tuple
+
                     flow.last_step = step
-                    outcome = await step.run(session, flow, request)
+                    outcome = await step.resume(flow, event, context)
+
+                elif isinstance(step_or_tuple, Outcome):
+                    outcome = step_or_tuple
+
+                else:
+                    step = step_or_tuple
+
+                    flow.last_step = step
+                    outcome = await step.run(flow, context)
 
                 # --------------------------------------------------
-                # 3. InputEvent + value
+                # 3. VALUE LOOP (entscheidend!)
                 # --------------------------------------------------
                 while outcome.value is not None:
 
@@ -227,21 +239,31 @@ class CommandEngine:
                         outcome = item
                         continue
 
-                    # muss Step sein
-                    flow.last_step = item
-                    outcome = await item.run(session, flow, request)
+                    if isinstance(item, tuple):
+                        step, event = item
 
-                # Safety
+                        flow.last_step = step
+                        outcome = await step.resume(flow, event, context)
+                        continue
+
+                    step = item
+                    flow.last_step = step
+
+                    outcome = await step.run(flow, context)
+
+                # --------------------------------------------------
+                # 4. Safety
+                # --------------------------------------------------
                 if not isinstance(outcome, Outcome):
                     raise RuntimeError(f"Invalid step result: {type(outcome)}")
 
                 # --------------------------------------------------
-                # 4. Effects ausführen
+                # 5. Effects
                 # --------------------------------------------------
                 await self._apply_effects(outcome.effects, session)
 
                 # --------------------------------------------------
-                # 5. Control → Scheduler
+                # 6. Control (Scheduler)
                 # --------------------------------------------------
                 control = outcome.control
 
@@ -250,7 +272,7 @@ class CommandEngine:
                         return control
 
                 # --------------------------------------------------
-                # 6. Budget / Fairness
+                # 7. Budget / Fairness
                 # --------------------------------------------------
                 steps += 1
 
@@ -264,7 +286,7 @@ class CommandEngine:
             return Stop()
 
         finally:
-            session._runtime_flow_id = None
+            session._runtime_flow_id = None  # type: ignore
 
     # ----------------------------------------------------
     # INTERNAL
@@ -293,9 +315,8 @@ class CommandEngine:
     async def _next_step(
         self, flow: Flow, session: Session, command: Command, request: Request
     ):
-        # Resume (nur für InputStep)
-        if flow.state == FlowState.WAITING_INPUT:
 
+        if flow.state == FlowState.WAITING_INPUT:
             if not flow.input_queue:
                 return None
 
@@ -305,18 +326,19 @@ class CommandEngine:
 
             if isinstance(step, InputStep):
                 _, event = flow.input_queue.popleft()
-                return await step.resume(session, flow, event)
+                return step, event
+
             else:
                 event = flow.pop_event()
-                item = await flow.cursor.send(event)
-                return item
+                return await flow.cursor.send(event)
 
-        # normaler Flow
-        return await flow.cursor.next(command, session, request)
+        return await flow.cursor.next(command, request)
 
-    def _create_command(self, command_type: type, controller: Controller) -> Command:
+    def _create_command(
+        self, command_type: type, controller: Controller, session: Session
+    ) -> Command:
         command = command_type()
-        command.context = CommandContext(controller, "")
+        command.context = CommandContext(session, controller)
         return command
 
     async def _find_matching_command(

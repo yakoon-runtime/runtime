@@ -1,6 +1,7 @@
 from yakoon.base.capabilities.identity import AuthenticationService, PermissionService
 from yakoon.base.ids import NamespaceService
-from yakoon.base.runtime import Command, Request, Session, SessionService
+from yakoon.base.runtime.commands import Command, Request
+from yakoon.base.runtime.sessions import Session, SessionService
 
 
 class CmdSu(Command):

@@ -1,4 +1,5 @@
-from yakoon.base.runtime import Command, Request, Session
+from yakoon.base.runtime.commands import Command, Request
+from yakoon.base.runtime.sessions import Session
 
 
 class CmdWhoAmI(Command):

@@ -1,12 +1,11 @@
-from yakoon.base.capabilities.interaction import PolicyService
-from yakoon.base.host.events import InputEvent
-from yakoon.base.runtime import Command, Request, Session
-from yakoon.base.runtime.commands import (
-    CommandFlow,
+from yakoon.base.api import Command, Request
+from yakoon.base.api.command import (
     CommandKind,
     CommandVisibility,
 )
+from yakoon.base.capabilities.interaction import PolicyService
 from yakoon.base.runtime.flow import compile_view
+from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.steps.step import InputStep
 from yakoon.base.ui import v_text
 from yakoon.platform.runtime import DomainError
@@ -18,7 +17,7 @@ class CmdTest(Command):
     kind = CommandKind.BUILTIN
     visibility = CommandVisibility.DEVELOPER
 
-    async def run(self, session: Session, request: Request) -> CommandFlow:
+    async def run(self, request: Request):
 
         policy = self.services.get(PolicyService)
         presenter = await self.get_presenter(session=session)
@@ -51,7 +50,7 @@ class CmdTest(Command):
                     raise
                     # continue
 
-    async def wait_run(self, session: Session, request: Request) -> CommandFlow:
+    async def wait_run(self, request: Request):
 
         name = str(request.args)
         await session.emit(v_text(f"Hello started ... {name}"))
@@ -63,13 +62,13 @@ class CmdTest(Command):
 
             yield Delay(5)
 
-    async def delay_run(self, session: Session, request: Request) -> CommandFlow:
+    async def delay_run(self, request: Request):
 
         yield Show(v_text("\nStart"))
         yield Delay(10)
         yield Show(v_text("\nDone"))
 
-    async def __run(self, session: Session, request: Request) -> CommandFlow:
+    async def __run(self, request: Request):
 
         messages = ["Test print..."]
         await session.emit(v_text(str(messages)))
@@ -105,7 +104,7 @@ class CmdTest(Command):
 
         # print(data)
 
-    async def _run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+    async def _run(self, request: Request):  # noqa: ARG002
 
         result = await self.ask(session, "ask1")
         await session.emit(v_text(result.first()))

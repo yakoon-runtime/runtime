@@ -9,7 +9,7 @@ from yakoon.base.capabilities.identity import (
     Permission,
     PermissionSet,
 )
-from yakoon.base.runtime.sessions.session import Session
+from yakoon.base.runtime.sessions import Session
 
 
 class DefaultPermissionService:
@@ -41,6 +41,10 @@ class DefaultPermissionService:
             "workflow:wf.cancel|rx",
             "shell:use|rx",
             "discovery:lookup|rx",
+            #
+            "pg:delay_5|rx",
+            "pg:use_pres|rx",
+            "pg:use_ask|rx",
         ]
 
     def register_role(self, name: str, specs: list[str]) -> None:

@@ -4,7 +4,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
-from yakoon.base.host.events import InputEvent
+from yakoon.base.runtime.input import InputEvent
 
 from .cursor import FlowCursor
 from .types import FlowKind, FlowState

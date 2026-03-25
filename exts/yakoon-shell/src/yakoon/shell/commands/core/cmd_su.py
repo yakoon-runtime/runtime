@@ -1,12 +1,12 @@
+from yakoon.base.api import Command, Request
 from yakoon.base.capabilities.workflow import WorkflowService
-from yakoon.base.runtime import Command, Request, Session
 
 
 class CmdSu(Command):
 
     key = "su"
 
-    async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+    async def run(self, request: Request):
         wf = self.services.get(WorkflowService)  # TODO:
         if not self.context:
             raise RuntimeError("Cannot cannot be None.")

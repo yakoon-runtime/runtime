@@ -4,14 +4,12 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.controllers.resources import ResourceReferences
 from yakoon.base.runtime.services import ServiceDirectory
 
 if TYPE_CHECKING:
-    from yakoon.base.runtime import Command, Session
-    from yakoon.base.runtime.commands import CommandSet, Request
-    from yakoon.base.values import Namespace
+    from yakoon.base.runtime.commands import Command, CommandSet, Request
+    from yakoon.base.runtime.sessions import CommandSession
 
 
 class Controller(ABC):
@@ -78,25 +76,7 @@ class Controller(ABC):
         """
         self.services = services
 
-    async def create_namespace(
-        self, session: Session, kind: str, space: str | None
-    ) -> Namespace:
-        """Resolve the namespace for the given session.
-
-        Args:
-            session: Current runtime session.
-
-        Returns:
-            The resolved namespace for the session.
-        """
-        if not self.services:
-            raise RuntimeError(
-                "Services cannot be None. Call connect_services() before."
-            )
-        namespaces = self.services.get(NamespaceService)
-        return await namespaces.from_session(session, kind, space)
-
-    async def on_before_resolve(self, session: Session) -> None:
+    async def on_before_resolve(self, session: CommandSession) -> None:
         """Hook executed before command resolution.
 
         Intended use:
@@ -109,7 +89,7 @@ class Controller(ABC):
         return None
 
     async def on_before_run_command(
-        self, session: Session, request: Request, command: Command
+        self, session: CommandSession, request: Request, command: Command
     ) -> None:
         """Hook executed immediately before a command is run.
 
@@ -126,7 +106,7 @@ class Controller(ABC):
         return None
 
     async def on_after_run_command(
-        self, session: Session, request: Request, command: Command
+        self, session: CommandSession, request: Request, command: Command
     ) -> None:
         """Hook executed immediately after a command finished.
 
@@ -142,7 +122,7 @@ class Controller(ABC):
         """
         return None
 
-    async def on_cleanup(self, session: Session) -> None:
+    async def on_cleanup(self, session: CommandSession) -> None:
         """Hook executed after a command cycle, even if exceptions occurred.
 
         Intended use:

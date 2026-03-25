@@ -8,8 +8,8 @@ from yakoon.base.capabilities.interaction import (
     PolicyService,
 )
 from yakoon.base.capabilities.presenters import PresentResult
-from yakoon.base.runtime import Session
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions import Session
 from yakoon.base.ui import (
     Field,
     FieldsBlock,

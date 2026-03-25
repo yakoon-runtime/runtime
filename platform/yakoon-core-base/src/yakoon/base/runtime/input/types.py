@@ -32,3 +32,9 @@ class InputEvent:
     def get(self, name: str, default: Any = None) -> Any:
         data = self.to_values()
         return data.get(name, default)
+
+    def require(self, name: str) -> Any:
+        data = self.to_values()
+        if name not in data:
+            raise KeyError(f"Missing input field: {name}")
+        return data[name]

@@ -1,7 +1,7 @@
 import asyncio
 
-from yakoon.base.host import InputEvent
 from yakoon.base.interations import ConsoleInteraction
+from yakoon.base.runtime.input import InputEvent
 from yakoon.base.transports import Transport
 from yakoon.base.ui import ViewDocument, ViewEvent
 from yakoon.console.output import ConsoleOutput

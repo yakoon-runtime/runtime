@@ -12,9 +12,10 @@ from yakoon.base.capabilities.discovery import (
 )
 from yakoon.base.catalogs import CommandCatalogService, ControllerCatalogService
 from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime import Request, Session
+from yakoon.base.runtime.commands import Request
 from yakoon.base.runtime.controllers import resolve_resource
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions import Session
 
 
 def _split(line: str) -> tuple[str, str]:

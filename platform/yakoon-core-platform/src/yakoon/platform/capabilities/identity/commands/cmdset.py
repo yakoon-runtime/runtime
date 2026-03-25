@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from yakoon.base.runtime import Command, CommandSet
+from yakoon.base.api import Command, CommandSet
 
 from .cmd_su import CmdSu
 from .cmd_whoami import CmdWhoAmI

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from yakoon.base.runtime.sessions import Session, SessionState
+from typing import cast
+
+from yakoon.base.runtime.sessions import Session
 from yakoon.base.stores.event.entity import (
     SnapshotHint,
 )
 from yakoon.base.values import Key
+from yakoon.platform.runtime.sessions import DefaultSession, SessionState
 from yakoon.platform.stores.event.store import EntityStore
 
 from .identity import SessionIdentityMap
@@ -42,7 +45,7 @@ class DefaultSessionService:
             )
 
         state = SessionState.from_dict(data)  # data ist JsonValue (dict)
-        session = Session(state)
+        session = DefaultSession(state)
         self._map.put(session)
         return session
 
@@ -53,7 +56,7 @@ class DefaultSessionService:
 
         # Create new state (key is required)
         state = SessionState(key=key, **kwargs)
-        session = Session(state)
+        session = DefaultSession(state)
 
         await self.store.put_doc(
             key=key,
@@ -66,10 +69,10 @@ class DefaultSessionService:
 
     async def save(self, session: Session) -> None:
         key = session.key
-
+        system_session = cast(DefaultSession, session)
         await self.store.put_doc(
             key=key,
-            doc=session.state.to_dict(),
+            doc=system_session.state.to_dict(),
             snapshot_hint=SnapshotHint.COMMIT,
         )
 

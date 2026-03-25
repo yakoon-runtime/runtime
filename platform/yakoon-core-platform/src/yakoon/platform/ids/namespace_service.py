@@ -1,4 +1,4 @@
-from yakoon.base.runtime import Session
+from yakoon.base.runtime.sessions import Session
 from yakoon.base.values import Namespace
 
 

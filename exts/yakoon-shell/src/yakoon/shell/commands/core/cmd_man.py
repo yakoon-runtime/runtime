@@ -1,10 +1,11 @@
+from yakoon.base.api import Command, Request
+from yakoon.base.api.command import CommandScope
 from yakoon.base.capabilities.presenters import PresenterService
 from yakoon.base.catalogs import (
     CommandCatalogService,
     CommandInfo,
     ControllerCatalogService,
 )
-from yakoon.base.runtime import Command, CommandScope, Request, Session
 from yakoon.base.runtime.controllers import resolve_resource
 
 
@@ -13,21 +14,21 @@ class CmdMan(Command):
     key = "man"
     scope = CommandScope.GLOBAL
 
-    async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+    async def run(self, request: Request):
 
         args = request.arg(0)
         if not args:
-            await self.show_index(session, request)
+            await self.show_index(request)
         else:
-            await self.show_manual(session, request)
+            await self.show_manual(request)
 
-    async def show_manual(self, session: Session, request: Request) -> None:
+    async def show_manual(self, request: Request) -> None:
         controller_service = self.services.get(ControllerCatalogService)
         command_service = self.services.get(CommandCatalogService)
 
         command_key = request.arg(0)
         if not command_key:
-            presenter = await self.get_presenter(session)
+            presenter = await self.get_presenter()
             await presenter.present("no_manual_entry", command_key="")
             return
 
@@ -106,7 +107,7 @@ class CmdMan(Command):
             presenter = await self.get_presenter(session)
             await presenter.present("no_manual_entry", command_key=command_key)
 
-    async def show_index(self, session: Session, request: Request) -> None:
+    async def show_index(self, request: Request) -> None:
 
         presenter = await self.get_presenter(session)
         controller_service = self.services.get(ControllerCatalogService)

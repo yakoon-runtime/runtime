@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 from yakoon.base.capabilities.discovery import LookupCandidateStoreService
-from yakoon.base.runtime import (
+from yakoon.base.runtime.commands import (
     Command,
     CommandScope,
     CommandVisibility,
     Request,
-    Session,
 )
+from yakoon.base.runtime.sessions import Session
 
 
 class CmdLookup(Command):
@@ -16,7 +16,7 @@ class CmdLookup(Command):
     scope = CommandScope.GLOBAL
     visibility = CommandVisibility.INTERNAL
 
-    async def run(self, session: Session, request: Request) -> None:
+    async def run(self, session: Session, request: Request):
 
         presenter = await self.get_presenter(session)
         store = self.services.get(LookupCandidateStoreService)
@@ -42,3 +42,5 @@ class CmdLookup(Command):
                 query=payload.query,
                 candidates=list(payload.candidates),
             )
+
+        return

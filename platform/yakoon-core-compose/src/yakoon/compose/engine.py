@@ -17,11 +17,10 @@ from yakoon.base.ids import NamespaceService
 from yakoon.base.plugins import ModuleRegistry
 from yakoon.base.rendering import RenderEngine, RenderService
 from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime import SessionService
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.ui import FieldType, ViewSpecParser
-from yakoon.base.ui.stream import OutputStreamService
+from yakoon.base.runtime.sessions import SessionService
+from yakoon.base.ui import FieldType, OutputStreamService, ViewSpecParser
 from yakoon.base.values import Namespace
 from yakoon.platform.catalogs import (
     DefaultCommandCatalogService,

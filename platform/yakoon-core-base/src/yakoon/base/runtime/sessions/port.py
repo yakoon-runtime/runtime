@@ -5,7 +5,8 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from yakoon.base.values.key import Key
 
-    from .session import Session
+
+from .session import Session
 
 
 class SessionService(Protocol):

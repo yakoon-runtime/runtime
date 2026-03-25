@@ -3,9 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from yakoon.base.engine import CommandDispatch
-from yakoon.base.host import InputEvent
-from yakoon.base.runtime import Session
 from yakoon.base.runtime.flow import FlowState
+from yakoon.base.runtime.input import InputEvent
+from yakoon.base.runtime.sessions import Session
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.host.scheduler import Scheduler
 

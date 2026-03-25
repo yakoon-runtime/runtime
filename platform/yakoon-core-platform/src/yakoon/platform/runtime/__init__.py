@@ -1,4 +1,10 @@
-from .error import CommandNotFound, DomainError, PermissionDenied, PlatformError
+from .error import (
+    CommandNotFound,
+    CriticalError,
+    DomainError,
+    PermissionDenied,
+    PlatformError,
+)
 from .sessions import DefaultSessionService
 
 __all__ = [
@@ -7,4 +13,5 @@ __all__ = [
     "CommandNotFound",
     "PermissionDenied",
     "DomainError",
+    "CriticalError",
 ]

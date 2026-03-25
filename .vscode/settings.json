@@ -10,11 +10,9 @@
     // apps
     "apps/yakoon-crm/src",
     "apps/yakoon-office/src",
+    "apps/yakoon-playground/src",
     // exts
-    "exts/yakoon-auth/src",
-    "exts/yakoon-discovery/src",
     "exts/yakoon-shell/src",
-    "exts/yakoon-workflow/src",
     // hosts
     "hosts/yakoon-host-console/src",
     "hosts/yakoon-host-kivy/src",

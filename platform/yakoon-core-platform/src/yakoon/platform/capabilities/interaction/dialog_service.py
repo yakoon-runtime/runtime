@@ -2,7 +2,7 @@ import asyncio
 from collections.abc import Awaitable, Callable
 
 from yakoon.base.capabilities.interaction import DialogCancelled
-from yakoon.base.runtime import Session
+from yakoon.base.runtime.sessions import Session
 from yakoon.base.ui import View, v_error_system
 from yakoon.platform.runtime.devtools.prompt import UnresolvedPromptMonitor
 from yakoon.platform.settings import settings

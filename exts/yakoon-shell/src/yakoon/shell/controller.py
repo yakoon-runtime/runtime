@@ -3,12 +3,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.runtime.controllers import Controller
-from yakoon.base.runtime.controllers.resources import ResourceReferences
-from yakoon.shell.commands.core.cmdset import ShellSystemCommands
+from yakoon.base.api.controller import Controller, ResourceReferences
+
+from .commands.core.cmdset import ShellSystemCommands
 
 if TYPE_CHECKING:
-    from yakoon.base.runtime import Command, CommandSet, Request, Session
+    from yakoon.base.api import Command, CommandSet, Request, Session
 
 
 class ShellCoreController(Controller):

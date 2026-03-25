@@ -1,15 +1,16 @@
 from collections.abc import Sequence
 
-from yakoon.base.runtime import Command, CommandSet
-from yakoon.shell.commands.core.cmd_exit import CmdExit
-from yakoon.shell.commands.core.cmd_man import CmdMan
-from yakoon.shell.commands.core.cmd_quit import CmdQuit
-from yakoon.shell.commands.core.cmd_speed import CmdSpeedTest
-from yakoon.shell.commands.core.cmd_su import CmdSu
-from yakoon.shell.commands.core.cmd_test import CmdTest
-from yakoon.shell.commands.core.cmd_use import CmdUse
-from yakoon.shell.commands.core.cmd_version import CmdVersion
-from yakoon.shell.commands.core.cmd_welcome import CmdWelcome
+from yakoon.base.api import Command, CommandSet
+
+from .cmd_exit import CmdExit
+from .cmd_man import CmdMan
+from .cmd_quit import CmdQuit
+from .cmd_speed import CmdSpeedTest
+from .cmd_su import CmdSu
+from .cmd_test import CmdTest
+from .cmd_use import CmdUse
+from .cmd_version import CmdVersion
+from .cmd_welcome import CmdWelcome
 
 
 class ShellSystemCommands(CommandSet):

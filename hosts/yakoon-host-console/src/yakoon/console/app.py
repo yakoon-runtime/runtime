@@ -15,6 +15,7 @@ async def run_console() -> None:
             "yakoon.shell",
             "yakoon.crm",
             "yakoon.office",
+            "yakoon.playground",
         ],
         capabilities={
             "audit": "default",

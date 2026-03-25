@@ -1,13 +1,15 @@
 import time
 
-from yakoon.base.capabilities.discovery.discovery import Candidates, Resolved
-from yakoon.base.capabilities.discovery.lookup import LookupCandidatesPayload
-from yakoon.base.capabilities.discovery.port import (
+from yakoon.base.capabilities.discovery import (
+    Candidates,
     DiscoveryService,
+    LookupCandidatesPayload,
     LookupCandidateStoreService,
+    Resolved,
 )
-from yakoon.base.runtime import Request, Session
+from yakoon.base.runtime.commands import Request
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions import Session
 
 
 class DefaultLookupResolverService:

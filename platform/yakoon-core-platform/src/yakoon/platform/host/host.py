@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from yakoon.base.capabilities.identity.port import PermissionService
 from yakoon.base.clients.connection import ClientConnection
-from yakoon.base.runtime import SessionService
+from yakoon.base.runtime.sessions import SessionService
 from yakoon.base.values.key import Key
 from yakoon.platform.host.scheduler import Scheduler
 from yakoon.platform.runtime.bus import BusOutput, SessionBus

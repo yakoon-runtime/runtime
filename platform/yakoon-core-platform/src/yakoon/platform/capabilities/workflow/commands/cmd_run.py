@@ -1,12 +1,6 @@
+from yakoon.base.api import Command, Request
+from yakoon.base.api.command import CommandKind, CommandScope, CommandVisibility
 from yakoon.base.capabilities.workflow import WorkflowService
-from yakoon.base.runtime import (
-    Command,
-    CommandKind,
-    CommandScope,
-    CommandVisibility,
-    Request,
-)
-from yakoon.base.runtime.sessions import Session
 
 
 class CmdWfRun(Command):
@@ -18,7 +12,7 @@ class CmdWfRun(Command):
     visibility = CommandVisibility.INTERNAL
     requires_workflow = True
 
-    async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+    async def run(self, request: Request) -> None:  # noqa: ARG002
 
         key = request.arg(0)  # "kunden_anlage" oder "shell:kunden_anlage"
         if not self.context:

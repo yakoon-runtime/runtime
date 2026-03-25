@@ -3,7 +3,8 @@ from yakoon.base.capabilities.discovery import (
     DiscoveryStrategy,
     NoMatch,
 )
-from yakoon.base.runtime import Request, Session
+from yakoon.base.runtime.commands import Request
+from yakoon.base.runtime.sessions import Session
 
 
 class DefaultDiscoveryService:

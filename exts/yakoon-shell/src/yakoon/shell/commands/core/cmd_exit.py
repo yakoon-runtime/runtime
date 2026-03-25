@@ -1,5 +1,7 @@
+from yakoon.base.api import Command, Request
+from yakoon.base.api.command import CommandScope
 from yakoon.base.catalogs import ControllerCatalogService
-from yakoon.base.runtime import Command, CommandScope, Request, Session, SessionService
+from yakoon.base.runtime.sessions.port import SessionService
 
 
 class CmdExit(Command):
@@ -7,12 +9,13 @@ class CmdExit(Command):
     key = "exit"
     scope = CommandScope.GLOBAL
 
-    async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+    async def run(self, request: Request):
 
         controllers = self.services.get(ControllerCatalogService)
 
         shell = controllers.shell()[0]
-        active_controller_id = session.get_active_controller()
+        sysession = self.context.system
+        active_controller_id = sysession.get_active_controller()
         if shell.id != active_controller_id:
-            session.set_active_controller(shell.id)
-            await self.services.get(SessionService).save(session)
+            sysession.set_active_controller(shell.id)
+            await self.services.get(SessionService).save(sysession)

@@ -1,14 +1,16 @@
-from .command import Command, CommandContext, CommandFlow
+from .command import Command
 from .commandset import CommandSet
 from .request import Request
 from .types import CommandKind, CommandScope, CommandVisibility
 
 __all__ = [
+    # .request
     "Request",
+    # .commandset
     "CommandSet",
+    # .command
     "Command",
-    "CommandContext",
-    "CommandFlow",
+    # .types
     "CommandKind",
     "CommandScope",
     "CommandVisibility",

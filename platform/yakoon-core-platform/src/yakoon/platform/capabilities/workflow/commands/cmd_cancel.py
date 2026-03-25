@@ -1,14 +1,8 @@
+from yakoon.base.api import Command, Request
+from yakoon.base.api.command import CommandKind, CommandScope, CommandVisibility
 from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.capabilities.workflow import WorkflowService
 from yakoon.base.engine import CommandQueueService
-from yakoon.base.runtime import (
-    Command,
-    CommandKind,
-    CommandScope,
-    CommandVisibility,
-    Request,
-    Session,
-)
 from yakoon.base.ui import v_error_system
 
 
@@ -21,7 +15,7 @@ class CmdWfCancel(Command):
     visibility = CommandVisibility.INTERNAL
     requires_workflow = True
 
-    async def run(self, session: Session, request: Request) -> None:
+    async def run(self, request: Request) -> None:
 
         wfsvc = self.services.get(WorkflowService)
         queue = self.services.get(CommandQueueService)
