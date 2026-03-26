@@ -39,7 +39,6 @@ from yakoon.base.ui import v_error_system
 from yakoon.platform.runtime import CommandNotFound, PermissionDenied
 from yakoon.platform.runtime.error import CriticalError
 
-from .coroutine import ensure_step
 from .directories import CommandDirectory, ControllerDirectory
 
 
@@ -149,7 +148,7 @@ class CommandEngine:
                 command_type.key,
                 resolved_controller.id,
                 request.raw,
-                FlowCursor(ensure_step(command_type.run)),
+                FlowCursor(),
                 kind=self._resolve_flow_kind(request),
             )
             session.add_flow(flow)
@@ -203,53 +202,28 @@ class CommandEngine:
             while True:
 
                 # --------------------------------------------------
-                # 1. Step holen
+                # 1. nächstes Item holen
                 # --------------------------------------------------
-                step_or_tuple = await self._next_step(flow, session, command, request)
-                if step_or_tuple is None:
+                item = await self._next_step(flow, session, command, request)
+                if item is None:
                     return None
 
                 # --------------------------------------------------
-                # 2. Ausführen (run / resume)
+                # 2. ausführen (zentral!)
                 # --------------------------------------------------
-                if isinstance(step_or_tuple, tuple):
-                    step, event = step_or_tuple
-
-                    flow.last_step = step
-                    outcome = await step.resume(flow, event, context)
-
-                elif isinstance(step_or_tuple, Outcome):
-                    outcome = step_or_tuple
-
-                else:
-                    step = step_or_tuple
-
-                    flow.last_step = step
-                    outcome = await step.run(flow, context)
+                outcome = await self._execute_item(item, flow, context)
 
                 # --------------------------------------------------
-                # 3. VALUE LOOP (entscheidend!)
+                # 3. VALUE LOOP
                 # --------------------------------------------------
                 while outcome.value is not None:
 
-                    item = await cursor.send(outcome.value)
+                    value = outcome.value
                     outcome.value = None
 
-                    if isinstance(item, Outcome):
-                        outcome = item
-                        continue
+                    item = await cursor.send(value)
 
-                    if isinstance(item, tuple):
-                        step, event = item
-
-                        flow.last_step = step
-                        outcome = await step.resume(flow, event, context)
-                        continue
-
-                    step = item
-                    flow.last_step = step
-
-                    outcome = await step.run(flow, context)
+                    outcome = await self._execute_item(item, flow, context)
 
                 # --------------------------------------------------
                 # 4. Safety
@@ -298,6 +272,53 @@ class CommandEngine:
         if flow.kind == FlowKind.SYSTEM:
             return base_steps * 3, base_time * 2
         return base_steps, base_time
+
+    async def _execute_item(self, item, flow, context) -> Outcome:
+
+        # Generator = First-Class
+        if hasattr(item, "__aiter__"):
+            return await self._run_generator(item, flow, context)
+
+        if isinstance(item, Outcome):
+            return item
+
+        if isinstance(item, tuple):
+            step, event = item
+            flow.last_step = step
+            return await step.resume(flow, event, context)
+
+        # normaler Step
+        flow.last_step = item
+        return await item.run(flow, context)
+
+    async def _run_generator(self, gen, flow, context) -> Outcome:
+
+        value = None
+
+        while True:
+            try:
+                if value is None:
+                    item = await anext(gen)
+                else:
+                    item = await gen.asend(value)
+                    value = None
+
+            except StopAsyncIteration:
+                return Outcome()
+
+            outcome = await self._execute_item(item, flow, context)
+
+            # VALUE
+            if outcome.value is not None:
+                value = outcome.value
+                continue
+
+            # EFFECTS
+            await self._apply_effects(outcome.effects, context.session)
+
+            # CONTROL
+            if outcome.control is not None:
+                return outcome
 
     async def _apply_effects(self, effects: list[Effect], session: Session):
 

@@ -1,21 +1,53 @@
 from __future__ import annotations
 
+import inspect
+
 
 class FlowCursor:
 
-    def __init__(self, flow_factory):
-        self.flow_factory = flow_factory
+    def __init__(self):
         self.iterator = None
 
-    def start(self, command, request):
-        self.iterator = self.flow_factory(command, request)
-
     async def next(self, command, request):
-        if not self.iterator:
-            self.start(command, request)
-        return await anext(self.iterator)  # type: ignore
+
+        if self.iterator is None:
+            self.iterator = _ensure_step(command.run)(command, request)
+
+        return await anext(self.iterator)
 
     async def send(self, value):
-        if not self.iterator:
-            raise RuntimeError("Cursor not started")
-        return await self.iterator.asend(value)
+        return await self.iterator.asend(value)  # type: ignore
+
+
+def _ensure_step(run_fn):
+
+    from yakoon.base.runtime.steps import Outcome
+
+    def factory(command, request):
+
+        result = run_fn(request)
+
+        # --- async generator ---
+        if inspect.isasyncgen(result):
+            return result
+
+        # --- coroutine ---
+        if inspect.iscoroutine(result):
+
+            async def coro_wrapper():
+                await result
+                yield Outcome()
+
+            return coro_wrapper()
+
+        # --- None ---
+        if result is None:
+
+            async def empty():
+                yield Outcome()
+
+            return empty()
+
+        raise TypeError(f"Invalid return type: {type(result)}")
+
+    return factory
