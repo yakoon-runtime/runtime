@@ -1,12 +1,11 @@
 from yakoon.base.runtime.commands import Command, Request
-from yakoon.base.runtime.sessions import Session
 
 
 class CmdWhoAmI(Command):
 
     key = "whoami"
 
-    async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+    async def run(self, request: Request) -> None:  # noqa: ARG002
 
         presenter = await self.get_presenter(session)
 

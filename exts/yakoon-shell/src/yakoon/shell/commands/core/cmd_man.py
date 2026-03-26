@@ -1,10 +1,13 @@
-from yakoon.base.api import Command, Request
-from yakoon.base.api.command import CommandScope
 from yakoon.base.capabilities.presenters import PresenterService
 from yakoon.base.catalogs import (
     CommandCatalogService,
     CommandInfo,
     ControllerCatalogService,
+)
+from yakoon.base.runtime.commands import (
+    Command,
+    CommandScope,
+    Request,
 )
 from yakoon.base.runtime.controllers import resolve_resource
 

@@ -5,7 +5,6 @@ import time
 from collections.abc import Iterator
 from dataclasses import dataclass
 
-from yakoon.base.runtime.sessions import Session
 from yakoon.base.ui import (
     Block,
     EffectiveStreaming,
@@ -20,6 +19,7 @@ from yakoon.base.ui import (
     View,
     ViewEvent,
 )
+from yakoon.platform.runtime.sessions import Session
 
 _WS = re.compile(r"\S+|\s+")
 

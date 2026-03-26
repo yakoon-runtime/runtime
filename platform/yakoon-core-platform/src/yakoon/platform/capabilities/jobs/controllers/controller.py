@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from yakoon.base.api import CommandSet
-from yakoon.base.api.controller import Controller
+from yakoon.base.runtime.commands.commandset import CommandSet
+from yakoon.base.runtime.controllers.controller import Controller
 
 from ..commands.cmdset import JobsCommands
 

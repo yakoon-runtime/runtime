@@ -1,5 +1,5 @@
-from yakoon.base.runtime.sessions import Session
 from yakoon.base.values import Namespace
+from yakoon.platform.runtime.sessions import Session
 
 
 class DefaultNamespaceService:

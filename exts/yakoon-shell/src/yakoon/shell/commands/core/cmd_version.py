@@ -3,7 +3,7 @@ import subprocess
 import time
 from datetime import UTC, datetime
 
-from yakoon.base.api import Command, Request, show
+from yakoon.base.runtime.commands import Command, Request
 
 
 class CmdVersion(Command):

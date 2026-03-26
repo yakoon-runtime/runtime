@@ -5,10 +5,11 @@ from .error import (
     PermissionDenied,
     PlatformError,
 )
-from .sessions import DefaultSessionService
+from .sessions import DefaultSessionService, Session
 
 __all__ = [
     "DefaultSessionService",
+    "Session",
     "PlatformError",
     "CommandNotFound",
     "PermissionDenied",

@@ -12,5 +12,9 @@ class SetFocus(Effect):
         self.flow_id = flow_id
 
 
+class AutoFocus(Effect):
+    pass
+
+
 class ClearFocus(Effect):
     pass

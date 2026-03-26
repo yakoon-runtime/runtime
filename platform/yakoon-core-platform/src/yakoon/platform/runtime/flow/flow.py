@@ -3,10 +3,10 @@ from __future__ import annotations
 from collections import deque
 from dataclasses import dataclass, field
 
+from yakoon.base.runtime.flow import FlowKind, FlowState
 from yakoon.base.runtime.input import InputEvent
 
 from .cursor import FlowCursor
-from .types import FlowKind, FlowState
 
 
 @dataclass

@@ -20,6 +20,10 @@ class Stop(Control):
     pass
 
 
+class WaitForInput(Control):
+    pass
+
+
 # ------------------------------------------------------------
 # Input Handling
 # ------------------------------------------------------------
@@ -54,6 +58,7 @@ class SleepUntil(Control):
 
 BLOCKING_STEPS = (
     AwaitInput,
+    WaitForInput,
     Sleep,
     SleepUntil,
     Stop,

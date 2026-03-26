@@ -9,7 +9,7 @@ from yakoon.base.capabilities.discovery import (
 )
 from yakoon.base.runtime.commands import Request
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions import Session
+from yakoon.platform.runtime.sessions import Session
 
 
 class DefaultLookupResolverService:

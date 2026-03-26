@@ -9,7 +9,6 @@ from yakoon.base.capabilities.interaction import (
 )
 from yakoon.base.capabilities.presenters import PresentResult
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions import Session
 from yakoon.base.ui import (
     Field,
     FieldsBlock,
@@ -18,6 +17,7 @@ from yakoon.base.ui import (
     View,
     v_error_system,
 )
+from yakoon.platform.runtime.sessions import Session
 
 
 class ConsoleInteractionService:

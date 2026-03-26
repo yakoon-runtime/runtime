@@ -1,9 +1,8 @@
 from .port import SessionService
-from .session import CommandSession, Session
+from .session import CommandSession
 
 __all__ = [
     # .sessions
-    "Session",
     "CommandSession",
     # .port
     "SessionService",

@@ -1,6 +1,9 @@
-from yakoon.base.api import Command, Request
-from yakoon.base.api.command import CommandScope
 from yakoon.base.catalogs import ControllerCatalogService
+from yakoon.base.runtime.commands import (
+    Command,
+    CommandScope,
+    Request,
+)
 from yakoon.base.runtime.sessions.port import SessionService
 
 

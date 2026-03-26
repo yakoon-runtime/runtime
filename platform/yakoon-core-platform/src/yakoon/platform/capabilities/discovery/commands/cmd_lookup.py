@@ -7,7 +7,6 @@ from yakoon.base.runtime.commands import (
     CommandVisibility,
     Request,
 )
-from yakoon.base.runtime.sessions import Session
 
 
 class CmdLookup(Command):
@@ -16,7 +15,7 @@ class CmdLookup(Command):
     scope = CommandScope.GLOBAL
     visibility = CommandVisibility.INTERNAL
 
-    async def run(self, session: Session, request: Request):
+    async def run(self, request: Request):
 
         presenter = await self.get_presenter(session)
         store = self.services.get(LookupCandidateStoreService)

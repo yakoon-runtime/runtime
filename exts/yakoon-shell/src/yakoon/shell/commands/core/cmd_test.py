@@ -1,9 +1,10 @@
-from yakoon.base.api import Command, Request
-from yakoon.base.api.command import (
+from yakoon.base.capabilities.interaction import PolicyService
+from yakoon.base.runtime.commands import (
+    Command,
     CommandKind,
     CommandVisibility,
+    Request,
 )
-from yakoon.base.capabilities.interaction import PolicyService
 from yakoon.base.runtime.flow import compile_view
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.steps.step import InputStep

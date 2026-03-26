@@ -5,9 +5,7 @@ from collections import deque
 
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.engine import DispatchInput
-from yakoon.base.runtime.flow import Flow, FlowKind, FlowState
 from yakoon.base.runtime.input import InputEvent
-from yakoon.base.runtime.sessions import Session
 from yakoon.base.runtime.steps import (
     AwaitInput,
     Sleep,
@@ -15,9 +13,12 @@ from yakoon.base.runtime.steps import (
     Stop,
     YieldToScheduler,
 )
+from yakoon.base.runtime.steps.controls import WaitForInput
 from yakoon.base.ui import v_error_domain, v_error_fatal, v_error_system
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.runtime import DomainError, PlatformError
+from yakoon.platform.runtime.flow import Flow, FlowKind, FlowState
+from yakoon.platform.runtime.sessions import Session
 
 
 class Scheduler:
@@ -203,11 +204,18 @@ class Scheduler:
 
     async def _handle_outcome(self, session: Session, flow: Flow, outcome):
 
-        match outcome:
+        control = outcome.control
+        if control is None:
+            return
+
+        match control:
 
             case YieldToScheduler():
                 flow.state = FlowState.READY
                 self.schedule_flow(flow, session)
+
+            case WaitForInput():
+                flow.state = FlowState.WAITING_INPUT
 
             case Stop():
                 session.del_flow(flow)

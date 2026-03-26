@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from yakoon.base.runtime.sessions import Session
 from yakoon.base.values import Key
+from yakoon.platform.runtime.sessions import Session
 
 
 class SessionIdentityMap:

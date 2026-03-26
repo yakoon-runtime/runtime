@@ -1,14 +1,14 @@
 from yakoon.base.capabilities.identity import AuthenticationService, PermissionService
 from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.commands import Command, Request
-from yakoon.base.runtime.sessions import Session, SessionService
+from yakoon.base.runtime.sessions import SessionService
 
 
 class CmdSu(Command):
 
     key = "su"
 
-    async def run(self, session: Session, request: Request) -> None:  # noqa: ARG002
+    async def run(self, request: Request) -> None:  # noqa: ARG002
 
         presenter = await self.get_presenter(session)
         auth = self.services.get(AuthenticationService)

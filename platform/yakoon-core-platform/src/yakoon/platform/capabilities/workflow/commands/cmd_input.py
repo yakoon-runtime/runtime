@@ -1,7 +1,12 @@
-from yakoon.base.api import Command, Request
-from yakoon.base.api.command import CommandKind, CommandScope, CommandVisibility
 from yakoon.base.capabilities.interaction import InteractionService
 from yakoon.base.capabilities.workflow import WorkflowService
+from yakoon.base.runtime.commands import (
+    Command,
+    CommandKind,
+    CommandScope,
+    CommandVisibility,
+    Request,
+)
 
 
 class CmdWfInput(Command):

@@ -1,7 +1,11 @@
 import time
 
-from yakoon.base.api import Command, Request
-from yakoon.base.api.command import CommandKind, CommandVisibility
+from yakoon.base.runtime.commands import (
+    Command,
+    CommandKind,
+    CommandVisibility,
+    Request,
+)
 from yakoon.base.ui.builder import v_text
 
 

@@ -1,5 +1,10 @@
-from yakoon.base.api import Command, Request, show
-from yakoon.base.api.command import CommandKind, CommandScope, CommandVisibility
+from yakoon.base.runtime.commands import (
+    Command,
+    CommandKind,
+    CommandScope,
+    CommandVisibility,
+    Request,
+)
 from yakoon.base.ui import v_text
 
 
@@ -16,16 +21,14 @@ class CmdJobs(Command):
         action = request.arg(0)
 
         if not action:
-            async for step in self._list_jobs():
-                yield step
+            yield self._list_jobs()
 
         elif action == "stop":
-            async for step in self._stop_job(request):
-                yield step
+            yield self._stop_job(request)
 
         elif action == "use":
-            async for step in self._use_job(request):
-                yield step
+            yield self._use_job(request)
+
         else:
             yield show(v_text(f"Unbekannte Aktion: {action}"))
 

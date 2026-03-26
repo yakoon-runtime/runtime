@@ -4,7 +4,7 @@ from yakoon.base.capabilities.discovery import (
     NoMatch,
 )
 from yakoon.base.runtime.commands import Request
-from yakoon.base.runtime.sessions import Session
+from yakoon.platform.runtime.sessions import Session
 
 
 class DefaultDiscoveryService:

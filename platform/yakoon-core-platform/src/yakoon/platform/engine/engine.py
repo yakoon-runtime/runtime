@@ -14,18 +14,10 @@ from yakoon.base.runtime.commands import (
 )
 from yakoon.base.runtime.commands.context import CommandContext
 from yakoon.base.runtime.controllers import Controller
-from yakoon.base.runtime.flow import (
-    Flow,
-    FlowCursor,
-    FlowKind,
-    FlowState,
-)
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions.session import Session
 from yakoon.base.runtime.steps import (
     BLOCKING_STEPS,
     ClearFocus,
-    Control,
     Effect,
     Emit,
     Outcome,
@@ -34,9 +26,17 @@ from yakoon.base.runtime.steps import (
     YieldToScheduler,
 )
 from yakoon.base.runtime.steps.context import StepContext
+from yakoon.base.runtime.steps.effects import AutoFocus
 from yakoon.base.ui import v_error_system
 from yakoon.platform.runtime import CommandNotFound, PermissionDenied
 from yakoon.platform.runtime.error import CriticalError
+from yakoon.platform.runtime.flow import (
+    Flow,
+    FlowCursor,
+    FlowKind,
+    FlowState,
+)
+from yakoon.platform.runtime.sessions import Session
 
 from .directories import CommandDirectory, ControllerDirectory
 
@@ -169,7 +169,7 @@ class CommandEngine:
                 "internal_error",
             ) from exc
 
-    async def tick_flow(self, flow: Flow, session: Session) -> Control | None:
+    async def tick_flow(self, flow: Flow, session: Session) -> Outcome | None:
 
         cursor = flow.cursor
         request = Request(flow.request)
@@ -233,7 +233,8 @@ class CommandEngine:
                 # --------------------------------------------------
                 # 5. Effects
                 # --------------------------------------------------
-                await self._apply_effects(outcome.effects, session)
+                if outcome.effects:
+                    await self._apply_effects(outcome.effects, context.session, flow)
 
                 # --------------------------------------------------
                 # 6. Control (Scheduler)
@@ -242,7 +243,7 @@ class CommandEngine:
 
                 if control is not None:
                     if isinstance(control, BLOCKING_STEPS):
-                        return control
+                        return Outcome(control=control)
 
                 # --------------------------------------------------
                 # 7. Budget / Fairness
@@ -250,13 +251,13 @@ class CommandEngine:
                 steps += 1
 
                 if steps >= max_steps:
-                    return YieldToScheduler()
+                    return Outcome(control=YieldToScheduler())
 
                 if time.time() - start > max_time:
-                    return YieldToScheduler()
+                    return Outcome(control=YieldToScheduler())
 
         except StopAsyncIteration:
-            return Stop()
+            return Outcome(control=Stop())
 
         finally:
             session._runtime_flow_id = None  # type: ignore
@@ -290,39 +291,54 @@ class CommandEngine:
 
     async def _run_generator(self, gen, flow, context) -> Outcome:
 
-        value = None
+        send_value = None
 
         while True:
             try:
-                if value is None:
+                if send_value is None:
                     item = await anext(gen)
                 else:
-                    item = await gen.asend(value)
-                    value = None
+                    item = await gen.asend(send_value)
+                    send_value = None
 
             except StopAsyncIteration:
                 return Outcome()
 
             outcome = await self._execute_item(item, flow, context)
 
-            # VALUE
+            # ----------------------------------
+            # VALUE → zurück in Generator
+            # ----------------------------------
             if outcome.value is not None:
-                value = outcome.value
+                send_value = outcome.value
                 continue
 
-            # EFFECTS
-            await self._apply_effects(outcome.effects, context.session)
+            # ----------------------------------
+            # EFFECTS → sofort anwenden
+            # ----------------------------------
+            if outcome.effects:
+                await self._apply_effects(outcome.effects, context.session, flow)
 
-            # CONTROL
+            # ----------------------------------
+            # CONTROL → Scheduler übergeben
+            # ----------------------------------
             if outcome.control is not None:
                 return outcome
 
-    async def _apply_effects(self, effects: list[Effect], session: Session):
+            # ----------------------------------
+            # sonst: weiterlaufen
+            # ----------------------------------
+            continue
+
+    async def _apply_effects(self, effects: list[Effect], session: Session, flow):
 
         for effect in effects:
 
             if isinstance(effect, Emit):
                 await session.emit(effect.view)
+
+            elif isinstance(effect, AutoFocus):
+                session.set_focus(flow.id)
 
             elif isinstance(effect, SetFocus):
                 session.set_focus(effect.flow_id)
@@ -342,7 +358,8 @@ class CommandEngine:
                 return None
 
             _, event = flow.input_queue.popleft()
-            return await flow.cursor.send(event)
+            value = await flow.cursor.send(event)
+            return value
 
         # ----------------------------------
         # Normal: nächstes Item vom Generator

@@ -1,6 +1,5 @@
-from yakoon.base.api import Command, Request
-from yakoon.base.api.flow import show
 from yakoon.base.catalogs import ControllerCatalogService
+from yakoon.base.runtime.commands import Command, Request
 from yakoon.base.runtime.sessions import SessionService
 
 

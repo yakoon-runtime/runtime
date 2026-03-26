@@ -5,9 +5,10 @@ from .controls import (
     Sleep,
     SleepUntil,
     Stop,
+    WaitForInput,
     YieldToScheduler,
 )
-from .effects import ClearFocus, Effect, Emit, SetFocus
+from .effects import AutoFocus, ClearFocus, Effect, Emit, SetFocus
 from .outcome import Outcome
 from .step import (
     Ask,
@@ -39,8 +40,10 @@ __all__ = (
     "Sleep",
     "SleepUntil",
     "Stop",
+    "WaitForInput",
     "YieldToScheduler",
     # .effects
+    "AutoFocus",
     "ClearFocus",
     "Effect",
     "Emit",

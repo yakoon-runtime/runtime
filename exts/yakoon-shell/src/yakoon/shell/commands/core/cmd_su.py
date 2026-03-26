@@ -1,5 +1,4 @@
-from yakoon.base.api import Command, Request
-from yakoon.base.capabilities.workflow import WorkflowService
+from yakoon.base.runtime.commands import Command, Request
 
 
 class CmdSu(Command):

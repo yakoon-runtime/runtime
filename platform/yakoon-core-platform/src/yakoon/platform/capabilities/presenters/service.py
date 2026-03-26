@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions import Session
+from yakoon.platform.runtime.sessions import Session
 
 from .presenter import DefaultPresenter
 

@@ -6,7 +6,7 @@ from yakoon.base.capabilities.presenters.view import PresenterView
 from yakoon.base.rendering import RenderContext, RenderService
 from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions import Session
+from yakoon.platform.runtime.sessions import Session
 
 from .view import DefaultPresenterView
 

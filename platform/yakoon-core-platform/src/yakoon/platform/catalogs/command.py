@@ -10,7 +10,7 @@ from yakoon.base.runtime.commands import (
     CommandVisibility,
 )
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions import Session
+from yakoon.platform.runtime.sessions import Session
 
 
 class DefaultCommandCatalogService:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from yakoon.base.runtime.commands import Request
-from yakoon.base.runtime.sessions import Session
+from yakoon.base.runtime.sessions import CommandSession
 
 from .discovery import DiscoveryResult
 from .lookup import LookupCandidatesPayload
@@ -11,13 +11,17 @@ from .parser import LookupIndex
 
 
 class LookupResolverService(Protocol):
-    async def resolve(self, session: Session, request: Request) -> str | None: ...
+    async def resolve(
+        self, session: CommandSession, request: Request
+    ) -> str | None: ...
 
 
 class DiscoveryService:
 
     def register(self, priority: int, strategy: DiscoveryStrategy) -> None: ...
-    async def discover(self, session: Session, request: Request) -> DiscoveryResult: ...
+    async def discover(
+        self, session: CommandSession, request: Request
+    ) -> DiscoveryResult: ...
 
 
 class LookupParser(Protocol):
@@ -36,4 +40,6 @@ class LookupCandidateStoreService:
 
 
 class DiscoveryStrategy(Protocol):
-    async def discover(self, session: Session, request: Request) -> DiscoveryResult: ...
+    async def discover(
+        self, session: CommandSession, request: Request
+    ) -> DiscoveryResult: ...

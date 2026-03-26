@@ -1,14 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
 
-from yakoon.base.api.controller import Controller
+from yakoon.base.runtime.commands.commandset import CommandSet
+from yakoon.base.runtime.controllers.controller import Controller
 
 from ..commands.cmdset import WorkflowCommands
-
-if TYPE_CHECKING:
-    from yakoon.base.api import CommandSet
 
 
 class WorkflowController(Controller):

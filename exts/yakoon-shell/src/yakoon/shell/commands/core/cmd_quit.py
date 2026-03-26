@@ -1,5 +1,4 @@
-from yakoon.base.api import Command, Request, ask
-from yakoon.base.capabilities.interaction.port import PolicyService
+from yakoon.base.runtime.commands import Command, Request
 
 
 class CmdQuit(Command):

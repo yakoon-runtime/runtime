@@ -1,8 +1,7 @@
 from dataclasses import dataclass
-from typing import cast
 
 from yakoon.base.runtime.controllers.controller import Controller
-from yakoon.base.runtime.sessions import CommandSession, Session
+from yakoon.base.runtime.sessions import CommandSession
 
 
 @dataclass(frozen=True, slots=True)
@@ -11,6 +10,8 @@ class CommandContext:
     session: CommandSession
     controller: Controller
 
-    @property
+
+"""    @property
     def system(self) -> Session:
         return cast(Session, self.session)
+"""

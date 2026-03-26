@@ -1,8 +1,13 @@
-from yakoon.base.api import Command, Request
-from yakoon.base.api.command import CommandKind, CommandScope, CommandVisibility
 from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.capabilities.workflow import WorkflowService
 from yakoon.base.engine import CommandQueueService
+from yakoon.base.runtime.commands import (
+    Command,
+    CommandKind,
+    CommandScope,
+    CommandVisibility,
+    Request,
+)
 from yakoon.base.ui import v_error_system
 
 

@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from yakoon.base.api import Command, CommandSet
+from yakoon.base.runtime.commands import Command, CommandSet
 
 from .cmd_exit import CmdExit
 from .cmd_man import CmdMan

@@ -10,6 +10,7 @@ from yakoon.base.capabilities.presenters import (
 from yakoon.base.ids import NamespaceService
 from yakoon.base.runtime.controllers import resolve_resource
 
+from .operations import Operations
 from .types import (
     CommandKind,
     CommandScope,
@@ -56,6 +57,12 @@ class Command(ABC):
         if not self.context.controller.services:
             raise RuntimeError("Controller services cannot be None")
         return self.context.controller.services
+
+    @property
+    def op(self):
+        if not hasattr(self, "_op"):
+            self._op = Operations(self)
+        return self._op
 
     async def get_namespace(self, kind: str, space: str | None) -> Namespace:
         """Resolve the namespace for the current session."""

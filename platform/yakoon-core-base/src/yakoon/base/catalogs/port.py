@@ -3,7 +3,7 @@ from typing import Protocol
 
 from yakoon.base.catalogs import CommandInfo, ControllerInfo
 from yakoon.base.runtime.commands import CommandKind
-from yakoon.base.runtime.sessions import Session
+from yakoon.base.runtime.sessions import CommandSession
 
 
 class CommandCatalogService(Protocol):
@@ -11,7 +11,7 @@ class CommandCatalogService(Protocol):
     def all(self) -> tuple[CommandInfo, ...]: ...
     def for_controller(self, controller_id: str) -> Sequence[CommandInfo]: ...
     def for_controller_visible(
-        self, controller_id: str, session: Session
+        self, controller_id: str, session: CommandSession
     ) -> Sequence[CommandInfo]: ...
     def for_resolve_context(
         self,
@@ -20,7 +20,7 @@ class CommandCatalogService(Protocol):
     def for_man_entries(
         self,
         controller_id: str,
-        session: Session,
+        session: CommandSession,
         mode: str,
         kind_filter: CommandKind | None = None,
     ) -> Sequence[CommandInfo]: ...

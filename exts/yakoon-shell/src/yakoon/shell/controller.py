@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
 
-from yakoon.base.api.controller import Controller, ResourceReferences
+from yakoon.base.runtime.commands import Command, CommandSet, Request
+from yakoon.base.runtime.controllers import Controller, ResourceReferences
+from yakoon.base.runtime.sessions import CommandSession
 
 from .commands.core.cmdset import ShellSystemCommands
-
-if TYPE_CHECKING:
-    from yakoon.base.api import Command, CommandSet, Request, Session
 
 
 class ShellCoreController(Controller):
@@ -35,7 +33,7 @@ class ShellCoreController(Controller):
         return (ShellSystemCommands,)
 
     async def on_before_run_command(
-        self, session: Session, request: Request, command: Command
+        self, session: CommandSession, request: Request, command: Command
     ) -> None:
         """Touch session before executing any command.
 

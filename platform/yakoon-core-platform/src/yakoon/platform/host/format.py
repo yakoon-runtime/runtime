@@ -1,4 +1,4 @@
-from yakoon.base.runtime.sessions import Session
+from yakoon.platform.runtime.sessions import Session
 
 
 def format_ps1(

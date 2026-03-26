@@ -7,9 +7,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 from yakoon.base.capabilities.identity import PermissionSet
-from yakoon.base.runtime.flow import Flow
 from yakoon.base.runtime.input import InputEvent
-from yakoon.base.runtime.sessions.session import Session
+from yakoon.base.runtime.sessions import CommandSession
 from yakoon.base.transports import IO
 from yakoon.base.ui import (
     Node,
@@ -22,6 +21,7 @@ from yakoon.base.ui import (
     ViewEvent,
 )
 from yakoon.base.values import Key
+from yakoon.platform.runtime.flow import Flow
 from yakoon.platform.runtime.trace import ExecutionTrace
 
 _OUTPUT_STREAM_POLICY_KEY = "output_stream_policy"
@@ -70,7 +70,7 @@ class SessionRuntime:
     execution: ExecutionTrace = field(default_factory=ExecutionTrace)
 
 
-class DefaultSession(Session):
+class Session(CommandSession):
     """
     Session output contract is strict:
       - emit/notify/fail accept ONLY View mappings (kind='view')
@@ -112,7 +112,7 @@ class DefaultSession(Session):
         self._runtime.permissions = permset
 
     @classmethod
-    def from_state(cls, state: SessionState) -> DefaultSession:
+    def from_state(cls, state: SessionState) -> Session:
         return cls(state)
 
     # ========================================================
