@@ -7,11 +7,7 @@ from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.engine import DispatchInput
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.steps import (
-    AwaitInput,
-    Sleep,
-    SleepUntil,
-    Stop,
-    YieldToScheduler,
+    Control,
 )
 from yakoon.base.ui import v_error_domain, v_error_fatal, v_error_system
 from yakoon.platform.engine import CommandEngine
@@ -72,6 +68,10 @@ class Scheduler:
 
         # Flow wieder schedulen (nicht Session!)
         self.schedule_flow(flow, session)
+
+    def schedule_sleep(self, flow, session, wake_at):
+        flow.wake_at = wake_at
+        heapq.heappush(self.sleeping, (wake_at, session, flow))
 
     # --------------------------------------------------------
     # MAIN LOOP
@@ -141,16 +141,7 @@ class Scheduler:
                 # ----------------------------------------------
                 # BLOCKED: AwaitInput
                 # ----------------------------------------------
-                if isinstance(control, AwaitInput):
-                    if not flow.input_queue:
-                        continue
-
-                # ----------------------------------------------
-                # BLOCKED: Sleep
-                # ----------------------------------------------
-                elif isinstance(control, (Sleep, SleepUntil)):
-                    if flow.wake_at is not None:
-                        heapq.heappush(self.sleeping, (flow.wake_at, session, flow))
+                if control and not control.is_runnable(flow):
                     continue
 
                 # ----------------------------------------------
@@ -230,13 +221,11 @@ class Scheduler:
         while self.sleeping and self.sleeping[0][0] <= now:
             _, session, flow = heapq.heappop(self.sleeping)
 
-            if not isinstance(flow.control, (Sleep, SleepUntil)):
+            control = flow.control
+            if not control:
                 continue
 
-            flow.control = YieldToScheduler()
-
-            #  Flow wieder einreihen
-            self.schedule_flow(flow, session)
+            control.on_wake(flow, self, session)
 
     async def _handle_outcome(self, session: Session, flow: Flow, outcome):
 
@@ -253,25 +242,8 @@ class Scheduler:
         # 2. Verhalten
         # ----------------------------------
 
-        if isinstance(control, YieldToScheduler):
-            self.schedule_flow(flow, session)
+        if isinstance(control, Control):
+            control.on_enter(flow, self, session)
+            return
 
-        elif isinstance(control, AwaitInput):
-            flow.input_version += 1
-            # NICHT schedulen → wartet passiv
-
-        elif isinstance(control, Sleep):
-            wake_at = time.time() + control.seconds
-            flow.wake_at = wake_at
-            heapq.heappush(self.sleeping, (wake_at, session, flow))
-
-        elif isinstance(control, SleepUntil):
-            flow.wake_at = control.timestamp
-            heapq.heappush(self.sleeping, (control.timestamp, session, flow))
-
-        elif isinstance(control, Stop):
-            session.del_flow(flow)
-            flow.scheduled = False
-
-        else:
-            raise RuntimeError(f"Unhandled control: {type(control)}")
+        raise RuntimeError(f"Unhandled control: {type(control)}")

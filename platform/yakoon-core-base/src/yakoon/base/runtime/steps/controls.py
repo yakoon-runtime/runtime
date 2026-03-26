@@ -8,19 +8,33 @@ if TYPE_CHECKING:
 
 
 class Control:
+    blocking = False
 
-    def label(self) -> str:
+    def is_runnable(self, flow) -> bool:
+        return True
+
+    def on_enter(self, flow, scheduler, session):
+        pass
+
+    def on_wake(self, flow, scheduler, session):
+        scheduler.schedule_flow(flow, session)
+
+    def label(self, flow) -> str:
         return self.__class__.__name__
 
 
 class YieldToScheduler(Control):
-    pass
+
+    def on_enter(self, flow, scheduler, session):
+        scheduler.schedule_flow(flow, session)
 
 
 class Stop(Control):
-    """Terminate the flow."""
+    blocking = True
 
-    pass
+    def on_enter(self, flow, scheduler, session):
+        session.del_flow(flow)
+        flow.scheduled = False
 
 
 # ------------------------------------------------------------
@@ -29,9 +43,16 @@ class Stop(Control):
 
 
 class AwaitInput(Control):
+    blocking = True
 
-    def label(self):
-        return "waiting for input"
+    def __init__(self, view=None):
+        self.view = view
+
+    def is_runnable(self, flow):
+        return bool(flow.input_queue)
+
+    def label(self, flow) -> str:
+        return "input"
 
 
 # ------------------------------------------------------------
@@ -40,29 +61,41 @@ class AwaitInput(Control):
 
 
 class Sleep(Control):
-    """Engine pauses for a duration."""
+    blocking = True
 
-    def __init__(self, seconds: int):
-        self.seconds = seconds
+    def __init__(self, wake_at: float):
+        self.wake_at = wake_at
 
-    def label(self):
-        remaining = int(self.seconds - time.time())
-        return f"sleeping ({remaining}s)"
+    def is_runnable(self, flow):
+        return False
+
+    def on_enter(self, flow, scheduler, session):
+        scheduler.schedule_sleep(flow, session, self.wake_at)
+
+    def on_wake(self, flow, scheduler, session):
+        flow.control = YieldToScheduler()
+        scheduler.schedule_flow(flow, session)
+
+    def label(self, flow) -> str:
+        remaining = max(0, int(self.wake_at - time.time()))
+        return f"sleep ({remaining}s)"
 
 
 class SleepUntil(Control):
-    """Engine pauses until timestamp."""
+    blocking = True
 
     def __init__(self, timestamp: float):
         self.timestamp = timestamp
 
-    def label(self):
-        return "sleeping"
+    def is_runnable(self, flow):
+        return False
 
+    def on_enter(self, flow, scheduler, session):
+        scheduler.schedule_sleep(flow, session, self.timestamp)
 
-BLOCKING_STEPS = (
-    AwaitInput,
-    Sleep,
-    SleepUntil,
-    Stop,
-)
+    def on_wake(self, flow, scheduler, session):
+        flow.control = YieldToScheduler()
+        scheduler.schedule_flow(flow, session)
+
+    def label(self, flow) -> str:
+        return "sleep"

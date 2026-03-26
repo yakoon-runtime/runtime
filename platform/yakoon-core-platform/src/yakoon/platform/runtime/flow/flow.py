@@ -20,6 +20,7 @@ class Flow:
     request: str
     cursor: FlowCursor
     control: Control | None = None
+
     pending_value: Any | None = None
     scheduled: bool = False
 

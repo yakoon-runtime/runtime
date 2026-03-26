@@ -9,9 +9,3 @@ class CommandContext:
 
     session: Session
     controller: Controller
-
-
-"""    @property
-    def system(self) -> Session:
-        return cast(Session, self.session)
-"""

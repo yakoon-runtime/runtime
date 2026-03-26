@@ -1,5 +1,4 @@
 from .controls import (
-    BLOCKING_STEPS,
     AwaitInput,
     Control,
     Sleep,
@@ -33,7 +32,6 @@ __all__ = (
     # .outcome
     "Outcome",
     # .controls
-    "BLOCKING_STEPS",
     "AwaitInput",
     "Control",
     "Sleep",

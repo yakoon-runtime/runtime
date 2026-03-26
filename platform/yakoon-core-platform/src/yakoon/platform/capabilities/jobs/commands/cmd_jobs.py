@@ -72,9 +72,9 @@ class CmdJobs(Command):
 
         focused = self.context.session.focused_flow
         for i, f in indexed:
-            label = getattr(f, "label", f.command_key)
-            state = f.control.label() if f.control else "running"
-            marker = " *" if focused and focused.id == f.id else ""
+            label = f.label() if hasattr(f, "label") else f.command_key
+            state = f.control.label(f) if f.control else "run"
+            marker = "  ←" if focused and focused.id == f.id else ""
 
             yield show(v_text(f"[{i}] {label} - {state}{marker}\n"))
 

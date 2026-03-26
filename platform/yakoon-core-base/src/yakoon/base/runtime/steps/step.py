@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
@@ -185,7 +186,7 @@ class Delay(PassiveStep):
         self.seconds = seconds
 
     async def run(self, flow: Flow, context: StepContext) -> Outcome:
-        return Outcome(control=Sleep(self.seconds))
+        return Outcome(control=Sleep(time.time() + self.seconds))
 
 
 class DelayUntil(PassiveStep):
