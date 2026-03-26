@@ -28,7 +28,6 @@ from yakoon.base.runtime.steps import (
     Control,
     Effect,
     Emit,
-    InputStep,
     Outcome,
     SetFocus,
     Stop,
@@ -284,11 +283,9 @@ class CommandEngine:
 
         if isinstance(item, tuple):
             step, event = item
-            flow.last_step = step
             return await step.resume(flow, event, context)
 
         # normaler Step
-        flow.last_step = item
         return await item.run(flow, context)
 
     async def _run_generator(self, gen, flow, context) -> Outcome:
@@ -337,22 +334,19 @@ class CommandEngine:
         self, flow: Flow, session: Session, command: Command, request: Request
     ):
 
+        # ----------------------------------
+        # Resume: Input direkt zurück in Generator
+        # ----------------------------------
         if flow.state == FlowState.WAITING_INPUT:
             if not flow.input_queue:
                 return None
 
-            step = flow.last_step
-            if not step:
-                raise RuntimeError("Missing last_step for resume")
+            _, event = flow.input_queue.popleft()
+            return await flow.cursor.send(event)
 
-            if isinstance(step, InputStep):
-                _, event = flow.input_queue.popleft()
-                return step, event
-
-            else:
-                event = flow.pop_event()
-                return await flow.cursor.send(event)
-
+        # ----------------------------------
+        # Normal: nächstes Item vom Generator
+        # ----------------------------------
         return await flow.cursor.next(command, request)
 
     def _create_command(

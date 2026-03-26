@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any
 
 from yakoon.base.runtime.input import InputEvent
 
@@ -19,7 +18,6 @@ class Flow:
     request: str
     cursor: FlowCursor
 
-    last_step: Any | None = None
     state: FlowState = FlowState.READY
     wake_at: float | None = None
     kind: FlowKind = FlowKind.USER
