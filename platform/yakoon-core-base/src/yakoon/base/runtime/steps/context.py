@@ -5,13 +5,14 @@ from typing import TypeVar
 
 from yakoon.base.runtime.commands import Request
 from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime.sessions.session import Session
 
 T = TypeVar("T")
 
 
 @dataclass()
 class StepContext:
-    # session: Session
+    session: Session
     request: Request
     services: ServiceDirectory
 

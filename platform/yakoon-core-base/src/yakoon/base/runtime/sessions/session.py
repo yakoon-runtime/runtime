@@ -5,7 +5,7 @@ from yakoon.base.ui import View, ViewEvent
 from yakoon.base.values import Key
 
 
-class CommandSession(Protocol):
+class Session(Protocol):
 
     @property
     def lang(self) -> str: ...

@@ -4,7 +4,7 @@ from collections.abc import Sequence
 
 from yakoon.base.runtime.commands import Command, CommandSet, Request
 from yakoon.base.runtime.controllers import Controller, ResourceReferences
-from yakoon.base.runtime.sessions import CommandSession
+from yakoon.base.runtime.sessions import Session
 
 from .commands.core.cmdset import ShellSystemCommands
 
@@ -33,7 +33,7 @@ class ShellCoreController(Controller):
         return (ShellSystemCommands,)
 
     async def on_before_run_command(
-        self, session: CommandSession, request: Request, command: Command
+        self, session: Session, request: Request, command: Command
     ) -> None:
         """Touch session before executing any command.
 

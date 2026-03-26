@@ -1,11 +1,8 @@
-"""
 from dataclasses import replace
-from typing import TYPE_CHECKING, TypeGuard
+from typing import TypeGuard
 
-if TYPE_CHECKING:
-    from yakoon.base.capabilities.presenters import PresenterView
-    from yakoon.base.runtime.input.types import InputEvent
-
+from yakoon.base.capabilities.presenters import PresenterView
+from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.steps import (
     AutoFocus,
     Delay,
@@ -18,7 +15,6 @@ from yakoon.base.runtime.steps import (
 )
 from yakoon.base.ui.builder import v_text
 from yakoon.base.ui.view import View, ViewHeader
-from yakoon.platform.runtime.error import DomainError
 
 
 def show(view: View | PresenterView):
@@ -115,4 +111,3 @@ class AskSpec:
         self.view = view
         self.policy = policy
         self.required = required
-"""

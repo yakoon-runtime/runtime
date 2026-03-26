@@ -9,7 +9,7 @@ from yakoon.base.runtime.services import ServiceDirectory
 
 if TYPE_CHECKING:
     from yakoon.base.runtime.commands import Command, CommandSet, Request
-    from yakoon.base.runtime.sessions import CommandSession
+    from yakoon.base.runtime.sessions import Session
 
 
 class Controller(ABC):
@@ -76,7 +76,7 @@ class Controller(ABC):
         """
         self.services = services
 
-    async def on_before_resolve(self, session: CommandSession) -> None:
+    async def on_before_resolve(self, session: Session) -> None:
         """Hook executed before command resolution.
 
         Intended use:
@@ -89,7 +89,7 @@ class Controller(ABC):
         return None
 
     async def on_before_run_command(
-        self, session: CommandSession, request: Request, command: Command
+        self, session: Session, request: Request, command: Command
     ) -> None:
         """Hook executed immediately before a command is run.
 
@@ -106,7 +106,7 @@ class Controller(ABC):
         return None
 
     async def on_after_run_command(
-        self, session: CommandSession, request: Request, command: Command
+        self, session: Session, request: Request, command: Command
     ) -> None:
         """Hook executed immediately after a command finished.
 
@@ -122,7 +122,7 @@ class Controller(ABC):
         """
         return None
 
-    async def on_cleanup(self, session: CommandSession) -> None:
+    async def on_cleanup(self, session: Session) -> None:
         """Hook executed after a command cycle, even if exceptions occurred.
 
         Intended use:

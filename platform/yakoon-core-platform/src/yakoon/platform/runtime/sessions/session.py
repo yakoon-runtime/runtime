@@ -8,7 +8,6 @@ from typing import Any
 
 from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.runtime.input import InputEvent
-from yakoon.base.runtime.sessions import CommandSession
 from yakoon.base.transports import IO
 from yakoon.base.ui import (
     Node,
@@ -70,7 +69,7 @@ class SessionRuntime:
     execution: ExecutionTrace = field(default_factory=ExecutionTrace)
 
 
-class Session(CommandSession):
+class Session:
     """
     Session output contract is strict:
       - emit/notify/fail accept ONLY View mappings (kind='view')

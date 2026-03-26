@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
     from yakoon.base.capabilities.presenters import PresentResult
-    from yakoon.base.runtime.sessions import CommandSession
+    from yakoon.base.runtime.sessions import Session
     from yakoon.base.ui import FieldsBlock, OutputStreaming, View, ViewEvent
 
     from .policy import FieldPolicy, PolicyValidationResult, RawValue
@@ -27,7 +27,7 @@ class InteractionService(Protocol):
 
     async def play_view(
         self,
-        session: CommandSession,
+        session: Session,
         *,
         view: View,
         stream: OutputStreaming | None = None,
@@ -35,7 +35,7 @@ class InteractionService(Protocol):
 
     async def run_fields(
         self,
-        session: CommandSession,
+        session: Session,
         *,
         view_id: str,
         block: FieldsBlock,
@@ -45,23 +45,21 @@ class InteractionService(Protocol):
 
 class DialogService(Protocol):
 
-    def state(self, session: CommandSession) -> DialogState: ...
-    def edge_event(self, session: CommandSession) -> Event: ...
+    def state(self, session: Session) -> DialogState: ...
+    def edge_event(self, session: Session) -> Event: ...
 
-    def resolve_input(
-        self, session: CommandSession, values: dict[str, object]
-    ) -> bool: ...
-    def resolve_cancelled(self, session: CommandSession) -> None: ...
+    def resolve_input(self, session: Session, values: dict[str, object]) -> bool: ...
+    def resolve_cancelled(self, session: Session) -> None: ...
 
-    def cancel_input(self, session: CommandSession) -> None: ...
-    def cleanup(self, session: CommandSession) -> None: ...
+    def cancel_input(self, session: Session) -> None: ...
+    def cleanup(self, session: Session) -> None: ...
 
-    def is_waiting(self, session: CommandSession) -> bool: ...
-    def get_view(self, session: CommandSession) -> View: ...
-    def get_event(self, session: CommandSession) -> ViewEvent: ...
+    def is_waiting(self, session: Session) -> bool: ...
+    def get_view(self, session: Session) -> View: ...
+    def get_event(self, session: Session) -> ViewEvent: ...
     def wait_view(
         self,
-        session: CommandSession,
+        session: Session,
         *,
         view: View,
         timeout: float | None = None,

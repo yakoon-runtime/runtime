@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 
 from yakoon.base.runtime.flow import FlowKind, FlowState
 from yakoon.base.runtime.input import InputEvent
+from yakoon.base.runtime.steps.controls import Control
 
 from .cursor import FlowCursor
 
@@ -17,6 +18,7 @@ class Flow:
     controller_id: str
     request: str
     cursor: FlowCursor
+    control: Control
 
     state: FlowState = FlowState.READY
     wake_at: float | None = None
