@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import replace
-from typing import TYPE_CHECKING, Any
+from typing import Any, Protocol
 
 from yakoon.base.capabilities.interaction.port import PolicyService
 from yakoon.base.runtime.input import InputEvent
@@ -10,12 +10,20 @@ from yakoon.base.runtime.steps import Emit, SetFocus
 from yakoon.base.ui import FieldError, View
 from yakoon.base.ui.view import ViewHeader
 
-if TYPE_CHECKING:
-    from yakoon.base.runtime.flow import Flow
-
 from .context import StepContext
 from .controls import AwaitInput, Sleep, SleepUntil
 from .outcome import Outcome
+
+# ============================================================
+# FLOW PROTOCOL
+# ============================================================
+
+
+class Flow(Protocol):
+    id: str
+
+    def pop_event(self) -> InputEvent | None: ...
+
 
 # ============================================================
 # Step Base

@@ -227,7 +227,7 @@ class CommandEngine:
                 # EFFECTS
                 # ----------------------------------
                 if outcome.effects:
-                    await self._apply_effects(outcome.effects, context.session, flow)
+                    await self._apply_effects(outcome.effects, context.session, flow)  # type: ignore
 
                 # ----------------------------------
                 # CONTROL
