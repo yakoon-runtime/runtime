@@ -1,5 +1,5 @@
 from .cursor import FlowCursor
-from .flow import Flow, FlowKind, FlowState
+from .flow import Flow, FlowKind
 
 __all__ = [
     # .cursor
@@ -7,5 +7,4 @@ __all__ = [
     # .flow
     "Flow",
     "FlowKind",
-    "FlowState",
 ]

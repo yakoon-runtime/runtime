@@ -13,11 +13,10 @@ from yakoon.base.runtime.steps import (
     Stop,
     YieldToScheduler,
 )
-from yakoon.base.runtime.steps.controls import WaitForInput
 from yakoon.base.ui import v_error_domain, v_error_fatal, v_error_system
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.runtime import DomainError, PlatformError
-from yakoon.platform.runtime.flow import Flow, FlowKind, FlowState
+from yakoon.platform.runtime.flow import Flow, FlowKind
 from yakoon.platform.runtime.sessions import Session
 
 
@@ -28,6 +27,9 @@ class Scheduler:
     MAX_STEPS_PER_CYCLE = 20  # konservativ
     MAX_TIME_PER_CYCLE = 0.01  # 10 ms
     MAX_ITERATIONS = 1000
+
+    MAX_STEPS_PER_FLOW = 10
+    MAX_TIME_PER_FLOW = 0.002
     # --------------------------------------------------------
 
     def __init__(self, engine: CommandEngine):
@@ -80,8 +82,9 @@ class Scheduler:
 
         while self._running:
 
-            steps = 0  # Quota-Counter pro Zyklus
+            steps = 0
             iterations = 0
+
             self._wake_sleeping()
 
             # --------------------------------------------------
@@ -104,6 +107,9 @@ class Scheduler:
 
             start = time.time()
 
+            # --------------------------------------------------
+            # Main processing loop
+            # --------------------------------------------------
             while (
                 self.ready_user or self.ready_system
             ) and steps < self.MAX_STEPS_PER_CYCLE:
@@ -111,15 +117,17 @@ class Scheduler:
                 if time.time() - start > self.MAX_TIME_PER_CYCLE:
                     break
 
-                # --------------------------------------------------
-                # Work vorhanden
-                # --------------------------------------------------
+                # ----------------------------------------------
+                # Flow holen (System priorisiert)
+                # ----------------------------------------------
                 if self.ready_system:
                     session, flow = self.ready_system.popleft()
                 elif self.ready_user:
                     session, flow = self.ready_user.popleft()
                 else:
                     break
+
+                flow.scheduled = False
 
                 iterations += 1
                 if iterations > self.MAX_ITERATIONS:
@@ -128,34 +136,54 @@ class Scheduler:
                     )
                     break
 
-                if flow.state == FlowState.READY:
-                    pass  # normal
+                control = flow.control
 
-                # WAITING_INPUT = passiv
-                elif flow.state == FlowState.WAITING_INPUT:
+                # ----------------------------------------------
+                # BLOCKED: AwaitInput
+                # ----------------------------------------------
+                if isinstance(control, AwaitInput):
                     if not flow.input_queue:
                         continue
 
-                elif flow.state == FlowState.SLEEPING:
+                # ----------------------------------------------
+                # BLOCKED: Sleep
+                # ----------------------------------------------
+                elif isinstance(control, (Sleep, SleepUntil)):
                     if flow.wake_at is not None:
                         heapq.heappush(self.sleeping, (flow.wake_at, session, flow))
                     continue
 
-                else:
-                    # unbekannter Zustand → loggen
-                    self.engine.services.get(AuditLogService).warning(
-                        f"Flow in unexpected state: {flow.state}", session
-                    )
-                    continue
+                # ----------------------------------------------
+                # EXECUTE (mit per-flow Budget)
+                # ----------------------------------------------
+                flow_steps = 0
+                flow_start = time.time()
 
                 try:
-                    # EIN Flow pro Tick
-                    outcome = await self.engine.tick_flow(flow, session)
+                    while True:
 
-                    steps += 1
+                        outcome = await self.engine.tick_flow(flow, session)
 
-                    if outcome:
-                        await self._handle_outcome(session, flow, outcome)
+                        flow_steps += 1
+                        steps += 1
+
+                        # ----------------------------------
+                        # Outcome behandeln
+                        # ----------------------------------
+                        if outcome:
+                            await self._handle_outcome(session, flow, outcome)
+                            break  # Flow ist fertig / blockiert
+
+                        # ----------------------------------
+                        # Budget prüfen (Flow)
+                        # ----------------------------------
+                        if flow_steps >= self.MAX_STEPS_PER_FLOW:
+                            self.schedule_flow(flow, session)
+                            break
+
+                        if time.time() - flow_start > self.MAX_TIME_PER_FLOW:
+                            self.schedule_flow(flow, session)
+                            break
 
                 except DomainError as e:
                     if session.focused_flow:
@@ -169,14 +197,22 @@ class Scheduler:
                     self.engine.services.get(AuditLogService).error(e, session)
                     await session.emit(v_error_fatal("Fatal error", title="Fatal"))
 
-            # WICHTIG: Kontrolle zurück an EventLoop
+            # --------------------------------------------------
+            # Yield zurück an Event Loop
+            # --------------------------------------------------
             if (
                 steps >= self.MAX_STEPS_PER_CYCLE
                 or time.time() - start > self.MAX_TIME_PER_CYCLE
             ):
                 await asyncio.sleep(0)
 
-    def schedule_flow(self, flow: Flow, session: Session):
+    def schedule_flow(self, flow, session):
+
+        if flow.scheduled:
+            return
+
+        flow.scheduled = True
+
         if flow.kind == FlowKind.SYSTEM:
             self.ready_system.append((session, flow))
         else:
@@ -194,10 +230,10 @@ class Scheduler:
         while self.sleeping and self.sleeping[0][0] <= now:
             _, session, flow = heapq.heappop(self.sleeping)
 
-            if flow.state != FlowState.SLEEPING:
+            if not isinstance(flow.control, (Sleep, SleepUntil)):
                 continue
 
-            flow.state = FlowState.READY
+            flow.control = YieldToScheduler()
 
             #  Flow wieder einreihen
             self.schedule_flow(flow, session)
@@ -208,30 +244,34 @@ class Scheduler:
         if control is None:
             return
 
-        match control:
+        # ----------------------------------
+        # 1. Single Source of Truth
+        # ----------------------------------
+        flow.control = control
 
-            case YieldToScheduler():
-                flow.state = FlowState.READY
-                self.schedule_flow(flow, session)
+        # ----------------------------------
+        # 2. Verhalten
+        # ----------------------------------
 
-            case WaitForInput():
-                flow.state = FlowState.WAITING_INPUT
+        if isinstance(control, YieldToScheduler):
+            self.schedule_flow(flow, session)
 
-            case Stop():
-                session.del_flow(flow)
+        elif isinstance(control, AwaitInput):
+            flow.input_version += 1
+            # NICHT schedulen → wartet passiv
 
-            case AwaitInput():
-                flow.state = FlowState.WAITING_INPUT
-                flow.input_version += 1
+        elif isinstance(control, Sleep):
+            wake_at = time.time() + control.seconds
+            flow.wake_at = wake_at
+            heapq.heappush(self.sleeping, (wake_at, session, flow))
 
-            case Sleep(seconds=s):
-                flow.state = FlowState.SLEEPING
-                wake_at = time.time() + s
-                heapq.heappush(self.sleeping, (wake_at, session, flow))
+        elif isinstance(control, SleepUntil):
+            flow.wake_at = control.timestamp
+            heapq.heappush(self.sleeping, (control.timestamp, session, flow))
 
-            case SleepUntil(timestamp=t):
-                flow.state = FlowState.SLEEPING
-                heapq.heappush(self.sleeping, (t, session, flow))
+        elif isinstance(control, Stop):
+            session.del_flow(flow)
+            flow.scheduled = False
 
-            case _:
-                raise RuntimeError(f"Unhandled outcome: {type(outcome)}")
+        else:
+            raise RuntimeError(f"Unhandled control: {type(control)}")

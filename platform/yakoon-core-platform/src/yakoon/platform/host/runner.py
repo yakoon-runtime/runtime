@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from yakoon.base.engine import CommandDispatch
-from yakoon.base.runtime.flow import FlowState
 from yakoon.base.runtime.input import InputEvent
+from yakoon.base.runtime.steps.controls import AwaitInput
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.host.scheduler import Scheduler
 from yakoon.platform.runtime.sessions import Session
@@ -31,7 +31,7 @@ class Runner:
         # --------------------------------------------------
         # 2. Flow wartet auf InputStep (Ask/Form)
         # --------------------------------------------------
-        if flow.state == FlowState.WAITING_INPUT:
+        if isinstance(flow.control, AwaitInput):
             self.scheduler.resume_input(self.session, event)
             return
 

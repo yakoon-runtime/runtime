@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from yakoon.base.ui import View
+    pass
 
 
 class Control:
-    pass
+
+    def label(self) -> str:
+        return self.__class__.__name__
 
 
 class YieldToScheduler(Control):
@@ -20,21 +23,15 @@ class Stop(Control):
     pass
 
 
-class WaitForInput(Control):
-    pass
-
-
 # ------------------------------------------------------------
 # Input Handling
 # ------------------------------------------------------------
 
 
 class AwaitInput(Control):
-    """Pause execution and request user input."""
 
-    def __init__(self, view: View | None, *, silent: bool = False):
-        self.view = view
-        self.silent = silent
+    def label(self):
+        return "waiting for input"
 
 
 # ------------------------------------------------------------
@@ -48,6 +45,10 @@ class Sleep(Control):
     def __init__(self, seconds: int):
         self.seconds = seconds
 
+    def label(self):
+        remaining = int(self.seconds - time.time())
+        return f"sleeping ({remaining}s)"
+
 
 class SleepUntil(Control):
     """Engine pauses until timestamp."""
@@ -55,10 +56,12 @@ class SleepUntil(Control):
     def __init__(self, timestamp: float):
         self.timestamp = timestamp
 
+    def label(self):
+        return "sleeping"
+
 
 BLOCKING_STEPS = (
     AwaitInput,
-    WaitForInput,
     Sleep,
     SleepUntil,
     Stop,

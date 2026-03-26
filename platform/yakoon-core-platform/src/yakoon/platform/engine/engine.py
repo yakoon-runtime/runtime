@@ -1,4 +1,3 @@
-import time
 from uuid import uuid4
 
 from yakoon.base.capabilities.audit import AuditLogService
@@ -16,16 +15,15 @@ from yakoon.base.runtime.commands.context import CommandContext
 from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.runtime.steps import (
-    BLOCKING_STEPS,
     ClearFocus,
     Effect,
     Emit,
     Outcome,
     SetFocus,
     Stop,
-    YieldToScheduler,
 )
 from yakoon.base.runtime.steps.context import StepContext
+from yakoon.base.runtime.steps.controls import AwaitInput
 from yakoon.base.runtime.steps.effects import AutoFocus
 from yakoon.base.ui import v_error_system
 from yakoon.platform.runtime import CommandNotFound, PermissionDenied
@@ -34,7 +32,6 @@ from yakoon.platform.runtime.flow import (
     Flow,
     FlowCursor,
     FlowKind,
-    FlowState,
 )
 from yakoon.platform.runtime.sessions import Session
 
@@ -190,71 +187,57 @@ class CommandEngine:
 
         command = self._create_command(command_type, controller, session)
 
-        steps = 0
-        start = time.time()
-
-        max_steps, max_time = self._get_inline_budget(flow)
-
         try:
             session._runtime_flow_id = flow.id  # type: ignore
 
             while True:
 
-                # --------------------------------------------------
-                # 1. nächstes Item holen
-                # --------------------------------------------------
                 item = await self._next_step(flow, session, command, request)
                 if item is None:
-                    return None
+                    continue
 
-                # --------------------------------------------------
-                # 2. ausführen (zentral!)
-                # --------------------------------------------------
                 outcome = await self._execute_item(item, flow, context)
 
-                # --------------------------------------------------
-                # 3. VALUE LOOP
-                # --------------------------------------------------
-                while outcome.value is not None:
+                # ----------------------------------
+                # VALUE LOOP
+                # ----------------------------------
+                while True:
 
-                    value = outcome.value
-                    outcome.value = None
+                    # 1. pending_value zuerst!
+                    if flow.pending_value is not None:
+                        value = flow.pending_value
+                        flow.pending_value = None
 
-                    item = await cursor.send(value)
+                        item = await cursor.send(value)
+                        outcome = await self._execute_item(item, flow, context)
+                        continue
 
-                    outcome = await self._execute_item(item, flow, context)
+                    # 2. normales value
+                    if outcome.value is not None:
+                        value = outcome.value
+                        outcome.value = None
 
-                # --------------------------------------------------
-                # 4. Safety
-                # --------------------------------------------------
-                if not isinstance(outcome, Outcome):
-                    raise RuntimeError(f"Invalid step result: {type(outcome)}")
+                        item = await cursor.send(value)
+                        outcome = await self._execute_item(item, flow, context)
+                        continue
 
-                # --------------------------------------------------
-                # 5. Effects
-                # --------------------------------------------------
+                    break
+
+                # ----------------------------------
+                # EFFECTS
+                # ----------------------------------
                 if outcome.effects:
                     await self._apply_effects(outcome.effects, context.session, flow)
 
-                # --------------------------------------------------
-                # 6. Control (Scheduler)
-                # --------------------------------------------------
-                control = outcome.control
+                # ----------------------------------
+                # CONTROL
+                # ----------------------------------
+                if outcome.control is not None:
+                    return outcome
 
-                if control is not None:
-                    if isinstance(control, BLOCKING_STEPS):
-                        return Outcome(control=control)
-
-                # --------------------------------------------------
-                # 7. Budget / Fairness
-                # --------------------------------------------------
-                steps += 1
-
-                if steps >= max_steps:
-                    return Outcome(control=YieldToScheduler())
-
-                if time.time() - start > max_time:
-                    return Outcome(control=YieldToScheduler())
+                # ----------------------------------
+                # BUDGET (optional erstmal ignorieren)
+                # ----------------------------------
 
         except StopAsyncIteration:
             return Outcome(control=Stop())
@@ -265,13 +248,6 @@ class CommandEngine:
     # ----------------------------------------------------
     # INTERNAL
     # ----------------------------------------------------
-
-    def _get_inline_budget(self, flow: Flow):
-        base_steps = 20
-        base_time = 0.005
-        if flow.kind == FlowKind.SYSTEM:
-            return base_steps * 3, base_time * 2
-        return base_steps, base_time
 
     async def _execute_item(self, item, flow, context) -> Outcome:
 
@@ -346,23 +322,24 @@ class CommandEngine:
             elif isinstance(effect, ClearFocus):
                 session.set_focus(None)
 
-    async def _next_step(
-        self, flow: Flow, session: Session, command: Command, request: Request
-    ):
+    async def _next_step(self, flow, session, command, request):
 
         # ----------------------------------
-        # Resume: Input direkt zurück in Generator
+        # Resume: Input
         # ----------------------------------
-        if flow.state == FlowState.WAITING_INPUT:
+        if isinstance(flow.control, AwaitInput):
+
             if not flow.input_queue:
                 return None
 
             _, event = flow.input_queue.popleft()
-            value = await flow.cursor.send(event)
-            return value
+
+            flow.control = None
+            flow.pending_value = event
+            return Outcome()
 
         # ----------------------------------
-        # Normal: nächstes Item vom Generator
+        # NEXT
         # ----------------------------------
         return await flow.cursor.next(command, request)
 

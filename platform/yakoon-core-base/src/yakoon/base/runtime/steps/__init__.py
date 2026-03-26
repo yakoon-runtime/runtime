@@ -5,7 +5,6 @@ from .controls import (
     Sleep,
     SleepUntil,
     Stop,
-    WaitForInput,
     YieldToScheduler,
 )
 from .effects import AutoFocus, ClearFocus, Effect, Emit, SetFocus
@@ -40,7 +39,6 @@ __all__ = (
     "Sleep",
     "SleepUntil",
     "Stop",
-    "WaitForInput",
     "YieldToScheduler",
     # .effects
     "AutoFocus",

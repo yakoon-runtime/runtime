@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass, field
+from typing import Any
 
-from yakoon.base.runtime.flow import FlowKind, FlowState
+from yakoon.base.runtime.flow import FlowKind
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.steps.controls import Control
 
@@ -18,9 +19,10 @@ class Flow:
     controller_id: str
     request: str
     cursor: FlowCursor
-    control: Control
+    control: Control | None = None
+    pending_value: Any | None = None
+    scheduled: bool = False
 
-    state: FlowState = FlowState.READY
     wake_at: float | None = None
     kind: FlowKind = FlowKind.USER
 

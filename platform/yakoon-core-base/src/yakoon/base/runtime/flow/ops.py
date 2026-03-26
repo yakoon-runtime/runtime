@@ -5,13 +5,13 @@ from yakoon.base.capabilities.presenters import PresenterView
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.steps import (
     AutoFocus,
+    AwaitInput,
     Delay,
     DelayUntil,
     Emit,
     Outcome,
     Receive,
     Show,
-    WaitForInput,
 )
 from yakoon.base.ui.builder import v_text
 from yakoon.base.ui.view import View, ViewHeader
@@ -35,10 +35,10 @@ def ask(
 
     if isinstance(view, View):
         view = update_header(view)
-        return Outcome(effects=[AutoFocus(), Emit(view)], control=WaitForInput())
+        return Outcome(effects=[AutoFocus(), Emit(view)], control=AwaitInput())
     elif _is_pv(view):
         view = update_header(view.view)
-        return Outcome(effects=[AutoFocus(), Emit(view)], control=WaitForInput())
+        return Outcome(effects=[AutoFocus(), Emit(view)], control=AwaitInput())
 
     raise TypeError(f"ask() expected View or PresenterView, got {type(view).__name__}")
 
