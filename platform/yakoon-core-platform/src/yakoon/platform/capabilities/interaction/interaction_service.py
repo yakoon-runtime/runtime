@@ -13,8 +13,8 @@ from yakoon.base.ui import (
     Field,
     FieldsBlock,
     OutputStreaming,
-    OutputStreamService,
     View,
+    ViewDispatcher,
     v_error_system,
 )
 from yakoon.platform.runtime.sessions import Session
@@ -25,12 +25,12 @@ class ConsoleInteractionService:
     def __init__(self, services: ServiceDirectory) -> None:
         self._services = services
         self._policy = services.get(PolicyService)
-        self._stream_service: OutputStreamService | None = None
+        self._stream_service: ViewDispatcher | None = None
 
     @property
-    def streams(self) -> OutputStreamService:
+    def streams(self) -> ViewDispatcher:
         if self._stream_service is None:
-            self._stream_service = self._services.get(OutputStreamService)
+            self._stream_service = self._services.get(ViewDispatcher)
         return self._stream_service
 
     async def play_view(

@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from .. import Block, View
 
 
-class OutputStreamService(Protocol):
+class ViewDispatcher(Protocol):
 
     async def begin_view(
         self,

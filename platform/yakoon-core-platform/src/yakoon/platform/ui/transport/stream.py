@@ -8,18 +8,15 @@ from dataclasses import dataclass
 from yakoon.base.ui import (
     Block,
     EffectiveStreaming,
-    Node,
     OutputStreaming,
     OutputStreamPolicy,
-    Patch,
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
-    PatchReset,
     View,
-    ViewEvent,
 )
-from yakoon.platform.runtime.sessions import Session
+from yakoon.platform.runtime import Session
+from yakoon.platform.ui import ViewEmitter, ViewTraversal
 
 _WS = re.compile(r"\S+|\s+")
 
@@ -79,10 +76,10 @@ class DefaultOutputStreamService:
 
     BATCH_SIZE = 64
 
-    ROOT_ID = ":root"
-
     def __init__(self) -> None:
         self._streams: dict[str, _ViewStream] = {}
+        self._traversal = ViewTraversal()
+        self._emitter = ViewEmitter()
 
     # ---------------------------------------------------------
 
@@ -122,16 +119,12 @@ class DefaultOutputStreamService:
 
         self._streams[vid] = stream
 
-        root = f"{vid}{self.ROOT_ID}"
+        root = self._traversal.root_id(vid)
         stream.node_depth[root] = -1
         stream.published_nodes.add(root)
 
-        await session.emit(
-            ViewEvent(
-                id=vid,
-                patch=Patch(ops=[PatchReset()], final=False),
-            )
-        )
+        event = self._emitter.begin(vid)
+        await session.emit(event)
 
     # ---------------------------------------------------------
 
@@ -153,12 +146,8 @@ class DefaultOutputStreamService:
 
         await self._flush(stream)
 
-        await session.emit(
-            ViewEvent(
-                id=vid,
-                patch=Patch(ops=[], final=True),
-            )
-        )
+        event = self._emitter.finish(vid)
+        await session.emit(event)
 
         self._streams.pop(vid, None)
 
@@ -186,12 +175,9 @@ class DefaultOutputStreamService:
             return
 
         stream.event_queue.clear()
-        await session.emit(
-            ViewEvent(
-                id=view_id,
-                patch=Patch(ops=[], final=True),
-            )
-        )
+
+        event = self._emitter.finish(view_id)
+        await session.emit(event)
 
         self._streams.pop(view_id, None)
 
@@ -219,11 +205,11 @@ class DefaultOutputStreamService:
         if block_id is None:
             raise RuntimeError("Block without id passed to streamer")
 
-        parent = parent_id or f"{vid}{self.ROOT_ID}"
+        parent = self._traversal.resolve_parent(vid, parent_id)
         parent_depth = stream.node_depth.get(parent, -1)
         depth = parent_depth + 1
 
-        node = Node.from_block(
+        node, children, text_fields = self._traversal.prepare_block(
             block,
             parent=parent,
             depth=depth,
@@ -233,7 +219,8 @@ class DefaultOutputStreamService:
 
         stream.event_queue.append(PatchAppendStructure(nodes=[node]))
 
-        for i, child in enumerate(block.children()):
+        # children
+        for i, child in enumerate(children):
             await self.emit_block(
                 session,
                 view=view,
@@ -243,10 +230,8 @@ class DefaultOutputStreamService:
                 override=override,
             )
 
-        for key in getattr(block, "__stream_fields__", ()):
-
-            value = getattr(block, key)
-
+        # textfields
+        for key, value in text_fields:
             if isinstance(value, str) and value:
 
                 min_size = max(self.MIN_CHUNK_SIZE, int(self.MAX_CHUNK_SIZE * 0.2))
@@ -334,12 +319,8 @@ class DefaultOutputStreamService:
 
         ops = ops[: self.BATCH_SIZE]
 
-        await stream.session.emit(
-            ViewEvent(
-                id=stream.view_id,
-                patch=Patch(ops=ops, final=False),
-            )
-        )
+        event = self._emitter.emit(stream.view_id, ops)
+        await stream.session.emit(event)
 
         stream.last_flush = time.monotonic()
 
