@@ -1,70 +1,9 @@
 from __future__ import annotations
 
-from asyncio import Event, Future
-from collections.abc import Awaitable, Callable
-from typing import TYPE_CHECKING, Protocol
+from collections.abc import Callable
+from typing import Protocol
 
-if TYPE_CHECKING:
-    from yakoon.base.capabilities.presenters import PresentResult
-    from yakoon.base.runtime.sessions import Session
-    from yakoon.base.ui import FieldsBlock, OutputStreaming, View, ViewEvent
-
-    from .policy import FieldPolicy, PolicyValidationResult, RawValue
-    from .types import DialogState
-
-
-class InteractionService(Protocol):
-    """
-    Executes one rendered interaction document.
-
-    Responsibilities:
-      - play a view block-by-block
-      - emit passive blocks immediately
-      - wait on FieldsBlock(prompt)
-      - validate and retry via DialogService / PolicyService
-      - continue after interaction
-    """
-
-    async def play_view(
-        self,
-        session: Session,
-        *,
-        view: View,
-        stream: OutputStreaming | None = None,
-    ) -> PresentResult | None: ...
-
-    async def run_fields(
-        self,
-        session: Session,
-        *,
-        view_id: str,
-        block: FieldsBlock,
-        stream: OutputStreaming | None = None,
-    ) -> PresentResult: ...
-
-
-class DialogService(Protocol):
-
-    def state(self, session: Session) -> DialogState: ...
-    def edge_event(self, session: Session) -> Event: ...
-
-    def resolve_input(self, session: Session, values: dict[str, object]) -> bool: ...
-    def resolve_cancelled(self, session: Session) -> None: ...
-
-    def cancel_input(self, session: Session) -> None: ...
-    def cleanup(self, session: Session) -> None: ...
-
-    def is_waiting(self, session: Session) -> bool: ...
-    def get_view(self, session: Session) -> View: ...
-    def get_event(self, session: Session) -> ViewEvent: ...
-    def wait_view(
-        self,
-        session: Session,
-        *,
-        view: View,
-        timeout: float | None = None,
-        on_timeout: Callable[[], Awaitable[None]] | None = None,
-    ) -> Future: ...
+from .policy import FieldPolicy, PolicyValidationResult, RawValue
 
 
 class PolicyService(Protocol):

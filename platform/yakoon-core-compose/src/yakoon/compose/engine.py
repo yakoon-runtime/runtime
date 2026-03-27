@@ -21,6 +21,7 @@ from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.runtime.sessions import SessionService
 from yakoon.base.ui import FieldType, ViewDispatcher, ViewSpecParser
+from yakoon.base.ui.transport import OutputStream
 from yakoon.base.values import Namespace
 from yakoon.platform.catalogs import (
     DefaultCommandCatalogService,
@@ -42,6 +43,7 @@ from yakoon.platform.stores.event.backends.memory import MemoryBackend
 from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.stores.event.store import DefaultEntityStore
 from yakoon.platform.ui import DefaultViewDispatcher, DefaultViewSpecParser
+from yakoon.platform.ui.transport import DefaultOutputStream
 
 CapabilityMode: TypeAlias = Literal["default"]
 CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
@@ -204,6 +206,7 @@ def _compose_services(
     services.register_static(RenderService, DefaultRenderService(services))
     services.register_static(RenderEngine, JinjaRenderEngine())
     services.register_static(ViewDispatcher, DefaultViewDispatcher())
+    services.register_static(OutputStream, DefaultOutputStream())
 
     # register event store.
     services.register_static(ports.EntityStore, store)

@@ -25,7 +25,7 @@ from yakoon.base.runtime.steps import (
 from yakoon.base.runtime.steps.context import StepContext
 from yakoon.base.runtime.steps.controls import AwaitInput
 from yakoon.base.runtime.steps.effects import AutoFocus
-from yakoon.base.ui import v_error_system
+from yakoon.base.ui import OutputStream, v_error_system
 from yakoon.platform.runtime import CommandNotFound, PermissionDenied
 from yakoon.platform.runtime.error import CriticalError
 from yakoon.platform.runtime.flow import (
@@ -51,6 +51,7 @@ class CommandEngine:
         self._controllers = controllers
         self._services = services
         self._commands = commands
+        self._output = services.get(OutputStream)
 
     @property
     def services(self) -> ServiceDirectory:
@@ -87,7 +88,9 @@ class CommandEngine:
 
         controller = self._controllers.get(controller_id)
         if not controller:
-            await session.emit(v_error_system("Kein aktiver Controller gesetzt."))
+            await self._output.send_view(
+                session, v_error_system("Kein aktiver Controller gesetzt.")
+            )
             return None
 
         command_type: type[Command] | None = None
@@ -311,7 +314,7 @@ class CommandEngine:
         for effect in effects:
 
             if isinstance(effect, Emit):
-                await session.emit(effect.view)
+                await self._output.send_view(session, effect.view)
 
             elif isinstance(effect, AutoFocus):
                 session.set_focus(flow.id)

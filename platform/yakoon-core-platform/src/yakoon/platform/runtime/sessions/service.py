@@ -6,10 +6,10 @@ from yakoon.base.stores.event.entity import (
     SnapshotHint,
 )
 from yakoon.base.values import Key
-from yakoon.platform.runtime.sessions import Session, SessionState
 from yakoon.platform.stores.event.store import EntityStore
 
 from .identity import SessionIdentityMap
+from .session import Session, SessionState
 
 
 class DefaultSessionService:

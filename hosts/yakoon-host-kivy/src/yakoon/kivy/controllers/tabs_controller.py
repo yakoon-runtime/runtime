@@ -1,7 +1,6 @@
 from kivy.clock import Clock
 from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.runtime.sessions import SessionService
-from yakoon.base.ui.stream import OutputStreamPolicy
 from yakoon.base.values import Key
 from yakoon.kivy.host import KivyHost
 from yakoon.kivy.runner import SessionRunner
@@ -118,7 +117,6 @@ class TabsController:
             ui_state_provider=UIStateProvider(session),
         )
         session.bind_io(output)
-        session.set_output_stream_policy(OutputStreamPolicy(enabled=True))
 
         # Pro Tab: eigener Host + eigener RunnerThread
         page = self.state.pages[tab_id]  # das ChatWidget für diesen Tab

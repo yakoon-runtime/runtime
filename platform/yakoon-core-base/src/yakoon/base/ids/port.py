@@ -1,7 +1,10 @@
 from typing import Protocol
 
-from yakoon.base.runtime.sessions import Session
 from yakoon.base.values import Namespace
+
+
+class Session(Protocol):
+    pass
 
 
 class NamespaceService(Protocol):

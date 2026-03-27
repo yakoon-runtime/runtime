@@ -16,9 +16,7 @@ class DefaultPresenter:
     Unified presenter.
 
     Responsibilities:
-      - render a state into a UI document
-      - normalize the resulting block sequence
-      - delegate actual playback to InteractionService
+      - render a view into a UI document
     """
 
     def __init__(

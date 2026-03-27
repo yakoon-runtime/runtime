@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from yakoon.base.engine.types import DispatchInput
+from .types import DispatchInput
 
 
 class CommandQueueService(Protocol):

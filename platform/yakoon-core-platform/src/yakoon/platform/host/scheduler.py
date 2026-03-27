@@ -9,7 +9,7 @@ from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.steps import (
     Control,
 )
-from yakoon.base.ui import v_error_domain, v_error_fatal, v_error_system
+from yakoon.base.ui import OutputStream, v_error_domain, v_error_fatal, v_error_system
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.runtime import DomainError, PlatformError
 from yakoon.platform.runtime.flow import Flow, FlowKind
@@ -30,6 +30,7 @@ class Scheduler:
 
     def __init__(self, engine: CommandEngine):
         self.engine = engine
+        self.output = engine.services.get(OutputStream)
 
         # Flow-basierte Queue: (session, flow)
         self.ready_user = deque()
@@ -52,10 +53,15 @@ class Scheduler:
                 self.schedule_flow(flow, session)
 
         except PlatformError as e:
-            await session.emit(v_error_system(e.message, error_kind=e.code))  # type: ignore
+            await self.output.send_view(
+                session, v_error_system(e.message, error_kind=e.code)
+            )
+
         except Exception as e:
             self.engine.services.get(AuditLogService).error(e, session)
-            await session.emit(v_error_system("Fatal error", error_kind="fatal"))
+            await self.output.send_view(
+                session, v_error_system("Fatal error", error_kind="fatal")
+            )
 
     def resume_input(self, session: Session, event: InputEvent):
 
@@ -179,14 +185,20 @@ class Scheduler:
                 except DomainError as e:
                     if session.focused_flow:
                         session.del_flow(session.focused_flow)
-                    await session.emit(v_error_domain(e.message, error_code=e.code))  # type: ignore
+                    await self.output.send_view(
+                        session, v_error_domain(e.message, error_code=e.code)
+                    )
 
                 except PlatformError as e:
-                    await session.emit(v_error_system(e.message, error_kind=e.code))  # type: ignore
+                    await self.output.send_view(
+                        session, v_error_system(e.message, error_code=e.code)
+                    )
 
                 except Exception as e:
                     self.engine.services.get(AuditLogService).error(e, session)
-                    await session.emit(v_error_fatal("Fatal error", title="Fatal"))
+                    await self.output.send_view(
+                        session, v_error_fatal("Fatal error", title="Fatal")
+                    )
 
             # --------------------------------------------------
             # Yield zurück an Event Loop

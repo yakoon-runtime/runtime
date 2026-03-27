@@ -1,15 +1,10 @@
 from __future__ import annotations
 
-import re
 import time
-from collections.abc import Iterator
 from dataclasses import dataclass
 
 from yakoon.base.ui import (
     Block,
-    EffectiveStreaming,
-    OutputStreaming,
-    OutputStreamPolicy,
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
@@ -18,45 +13,24 @@ from yakoon.base.ui import (
 from yakoon.platform.runtime import Session
 from yakoon.platform.ui import ViewEmitter, ViewTraversal
 
-_WS = re.compile(r"\S+|\s+")
+# ---------------------------------------------------------
+# HARD transport limit (NOT UX!)
+# ---------------------------------------------------------
+MAX_TEXT_PAYLOAD = 4096
 
 
-def iter_chunks(text: str, min_size: int, max_size: int) -> Iterator[str]:
-    tokens = _WS.findall(text)
-    buf = ""
-
-    for tok in tokens:
-
-        if len(tok) > max_size:
-            if buf:
-                yield buf
-                buf = ""
-
-            for i in range(0, len(tok), max_size):
-                yield tok[i : i + max_size]
-
-            continue
-
-        if buf and len(buf) + len(tok) > max_size:
-            yield buf
-            buf = tok
-            continue
-
-        buf += tok
-
-        if len(buf) >= min_size:
-            yield buf
-            buf = ""
-
-    if buf:
-        yield buf
+def split_payload(text: str, max_size: int):
+    for i in range(0, len(text), max_size):
+        yield text[i : i + max_size]
 
 
+# ---------------------------------------------------------
+# INTERNAL STREAM STATE
+# ---------------------------------------------------------
 @dataclass
 class _ViewStream:
     session: Session
     view_id: str
-    interval: float
 
     event_queue: list
 
@@ -66,15 +40,13 @@ class _ViewStream:
     last_flush: float
 
 
+# ---------------------------------------------------------
+# DISPATCHER
+# ---------------------------------------------------------
 class DefaultViewDispatcher:
 
-    MIN_INTERVAL = 0.05
-    MAX_INTERVAL = 0.25
-
-    MIN_CHUNK_SIZE = 8
-    MAX_CHUNK_SIZE = 96
-
     BATCH_SIZE = 64
+    MAX_BUFFER_DELAY = 0.05  # technical flush
 
     def __init__(self) -> None:
         self._streams: dict[str, _ViewStream] = {}
@@ -83,34 +55,18 @@ class DefaultViewDispatcher:
 
     # ---------------------------------------------------------
 
-    def effective(
-        self,
-        base: OutputStreamPolicy,
-        override: OutputStreaming | None,
-    ) -> EffectiveStreaming:
-        return self._effective(base, override)
-
-    # ---------------------------------------------------------
-
     async def begin_view(
         self,
         session: Session,
         view: View,
-        *,
-        override: OutputStreaming | None = None,
     ) -> None:
 
-        policy = session.get_output_stream_policy()
-
-        vid = override.id if override and override.id else view.id
+        vid = view.id
         assert vid is not None
-
-        interval = max(self.MIN_INTERVAL, min(policy.interval, self.MAX_INTERVAL))
 
         stream = _ViewStream(
             session=session,
             view_id=vid,
-            interval=interval,
             event_queue=[],
             node_depth={},
             published_nodes=set(),
@@ -123,8 +79,7 @@ class DefaultViewDispatcher:
         stream.node_depth[root] = -1
         stream.published_nodes.add(root)
 
-        event = self._emitter.begin(vid)
-        await session.emit(event)
+        await session.emit(self._emitter.begin(vid))
 
     # ---------------------------------------------------------
 
@@ -132,34 +87,20 @@ class DefaultViewDispatcher:
         self,
         session: Session,
         view: View,
-        *,
-        override: OutputStreaming | None = None,
     ) -> None:
 
-        vid = override.id if override and override.id else view.id
+        vid = view.id
         assert vid is not None
 
         stream = self._streams.get(vid)
-
         if stream is None:
             return
 
         await self._flush(stream)
 
-        event = self._emitter.finish(vid)
-        await session.emit(event)
+        await session.emit(self._emitter.finish(vid))
 
         self._streams.pop(vid, None)
-
-    # ---------------------------------------------------------
-
-    async def flush_view(self, view_id: str) -> None:
-
-        stream = self._streams.get(view_id)
-        if stream is None:
-            return
-
-        await self._flush(stream)
 
     # ---------------------------------------------------------
 
@@ -170,14 +111,12 @@ class DefaultViewDispatcher:
     ) -> None:
 
         stream = self._streams.get(view_id)
-
         if stream is None:
             return
 
         stream.event_queue.clear()
 
-        event = self._emitter.finish(view_id)
-        await session.emit(event)
+        await session.emit(self._emitter.finish(view_id))
 
         self._streams.pop(view_id, None)
 
@@ -191,19 +130,17 @@ class DefaultViewDispatcher:
         block: Block,
         parent_id: str | None = None,
         suffix: str | int = 0,
-        override: OutputStreaming | None = None,
     ) -> None:
 
-        vid = override.id if override and override.id else view.id
+        vid = view.id
         assert vid is not None
 
         stream = self._streams.get(vid)
         if stream is None:
             return
 
-        block_id = block.id
-        if block_id is None:
-            raise RuntimeError("Block without id passed to streamer")
+        if block.id is None:
+            raise RuntimeError("Block without id passed to dispatcher")
 
         parent = self._traversal.resolve_parent(vid, parent_id)
         parent_depth = stream.node_depth.get(parent, -1)
@@ -217,39 +154,54 @@ class DefaultViewDispatcher:
 
         stream.node_depth[node.id] = depth
 
+        # -------------------------------------------------
+        # STRUCTURE
+        # -------------------------------------------------
         stream.event_queue.append(PatchAppendStructure(nodes=[node]))
 
-        # children
+        # -------------------------------------------------
+        # CHILDREN (recursive)
+        # -------------------------------------------------
         for i, child in enumerate(children):
             await self.emit_block(
                 session,
                 view=view,
                 block=child,
-                # parent_id=block_id,
                 parent_id=node.id,
                 suffix=i,
-                override=override,
             )
 
-        # textfields
+        # -------------------------------------------------
+        # TEXT (NO UX chunking!)
+        # -------------------------------------------------
         for key, value in text_fields:
-            if isinstance(value, str) and value:
+            if not value:
+                continue
 
-                min_size = max(self.MIN_CHUNK_SIZE, int(self.MAX_CHUNK_SIZE * 0.2))
-
-                for chunk in iter_chunks(value, min_size, self.MAX_CHUNK_SIZE):
-
+            if len(value) <= MAX_TEXT_PAYLOAD:
+                stream.event_queue.append(
+                    PatchAppendText(
+                        block_id=node.id,
+                        key=key,
+                        text=value,
+                    )
+                )
+            else:
+                for chunk in split_payload(value, MAX_TEXT_PAYLOAD):
                     stream.event_queue.append(
                         PatchAppendText(
-                            block_id=block_id,
+                            block_id=node.id,
                             key=key,
                             text=chunk,
                         )
                     )
 
+        # -------------------------------------------------
+        # FINISH
+        # -------------------------------------------------
         stream.event_queue.append(
             PatchFinishNode(
-                block_id=block_id,
+                block_id=node.id,
             )
         )
 
@@ -265,7 +217,7 @@ class DefaultViewDispatcher:
             await self._flush(stream)
             return
 
-        if now - stream.last_flush >= stream.interval:
+        if now - stream.last_flush >= self.MAX_BUFFER_DELAY:
             await self._flush(stream)
 
     # ---------------------------------------------------------
@@ -284,7 +236,6 @@ class DefaultViewDispatcher:
         for op in stream.event_queue:
 
             if isinstance(op, PatchAppendStructure):
-
                 node = op.nodes[0]
 
                 if node.parent not in stream.published_nodes:
@@ -296,7 +247,6 @@ class DefaultViewDispatcher:
                 continue
 
             if isinstance(op, PatchAppendText):
-
                 if op.block_id not in stream.published_nodes:
                     remaining.append(op)
                     continue
@@ -305,7 +255,6 @@ class DefaultViewDispatcher:
                 continue
 
             if isinstance(op, PatchFinishNode):
-
                 if op.block_id not in stream.published_nodes:
                     remaining.append(op)
                     continue
@@ -320,44 +269,6 @@ class DefaultViewDispatcher:
 
         ops = ops[: self.BATCH_SIZE]
 
-        event = self._emitter.emit(stream.view_id, ops)
-        await stream.session.emit(event)
+        await stream.session.emit(self._emitter.emit(stream.view_id, ops))
 
         stream.last_flush = time.monotonic()
-
-    # ---------------------------------------------------------
-
-    def _effective(
-        self,
-        policy: OutputStreamPolicy,
-        override: OutputStreaming | None,
-    ) -> EffectiveStreaming:
-
-        if override is None:
-            enabled = bool(policy.enabled)
-            interval = float(policy.interval)
-            chunk_size = int(policy.chunk_tokens)
-            sid = None
-        else:
-            enabled = bool(policy.enabled) and bool(override.enabled)
-            interval = (
-                override.interval if override.interval is not None else policy.interval
-            )
-            chunk_size = (
-                override.chunk_tokens
-                if override.chunk_tokens is not None
-                else policy.chunk_tokens
-            )
-            sid = override.id
-
-        interval = max(self.MIN_INTERVAL, min(self.MAX_INTERVAL, interval))
-        chunk_size = max(self.MIN_CHUNK_SIZE, min(self.MAX_CHUNK_SIZE, chunk_size))
-
-        return EffectiveStreaming(
-            enabled=enabled,
-            id=sid,
-            interval=interval,
-            chunk_size=chunk_size,
-            jitter=0.0,
-            punctuation_pause=0.0,
-        )

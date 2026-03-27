@@ -3,7 +3,7 @@ import asyncio
 from yakoon.base.interations import ConsoleInteraction
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.transports import Transport
-from yakoon.base.ui import ViewDocument, ViewEvent
+from yakoon.base.ui import ViewEvent, ViewQuery
 from yakoon.console.output import ConsoleOutput
 from yakoon.console.ui import TerminalSurface, TerminalUI
 
@@ -19,7 +19,7 @@ class ConsoleClient:
         self._current_values = {}
 
         # NEW: Single Source of Truth
-        self.document = ViewDocument()
+        self.document = ViewQuery()
 
     async def run(self):
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import uuid
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -10,20 +9,11 @@ from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.transports import IO
 from yakoon.base.ui import (
-    Node,
-    OutputStreamPolicy,
-    Patch,
-    PatchAppendStructure,
-    PatchAppendText,
-    PatchReset,
-    View,
     ViewEvent,
 )
 from yakoon.base.values import Key
 from yakoon.platform.runtime.flow import Flow
 from yakoon.platform.runtime.trace import ExecutionTrace
-
-_OUTPUT_STREAM_POLICY_KEY = "output_stream_policy"
 
 
 @dataclass
@@ -229,88 +219,15 @@ class Session:
 
     async def emit(
         self,
-        payload: View | ViewEvent,
+        event: ViewEvent,
         *,
         job_id: str | None = None,
         channel: str = "main",
     ) -> None:
         job_id = job_id or self._runtime_flow_id or "system"
-        if isinstance(payload, ViewEvent):
-            event = payload
-        else:
-            view = self._ensure_view(payload)
-            event = self._view_to_event(view, job_id=job_id, channel=channel)
+        if type(event) is not ViewEvent:
+            raise RuntimeError(f"Expected ViewEvent, got {type(event).__name__}")
 
         if self._runtime.io is None:
             raise RuntimeError("io cannot be None")
         await self._runtime.io.view(event)
-
-    # ----------------------------
-    # Steaming output
-    # ----------------------------
-
-    def set_output_stream_policy(self, policy: OutputStreamPolicy) -> None:
-        self._runtime.meta[_OUTPUT_STREAM_POLICY_KEY] = policy
-
-    def get_output_stream_policy(self) -> OutputStreamPolicy:
-        pol = self._runtime.meta.get(_OUTPUT_STREAM_POLICY_KEY)
-        if isinstance(pol, OutputStreamPolicy):
-            return pol
-        return OutputStreamPolicy()
-
-    # ========================================================
-    # INTERAL API
-    # ========================================================
-
-    # ----------------------------
-    # Strict View output
-    # ----------------------------
-
-    def _ensure_view(self, payload: View) -> View:
-        if not isinstance(payload, View):
-            raise TypeError("Session output must be a View object.")
-        if payload.kind != "view":
-            raise TypeError("Session output must be a View with kind='view'.")
-        return payload
-
-    def _view_to_event(self, view: View, *, job_id: str, channel: str) -> ViewEvent:
-        view_id = view.id or f"view.{uuid.uuid4().hex}"
-
-        nodes = []
-        text_nodes = []
-        for block in view.blocks:
-            block_id = block.id or f"{view_id}:{uuid.uuid4().hex}"
-            node = Node.from_block(
-                block,
-                parent=f"{view_id}:root",
-                depth=0,
-                block_id=block_id,
-            )
-            nodes.append(node)
-
-            text = getattr(block, "text", None)
-            if isinstance(text, str) and text:
-                text_nodes.append(
-                    PatchAppendText(
-                        block_id=block_id,
-                        key="text",
-                        text=text,
-                    )
-                )
-
-        return ViewEvent(
-            id=view_id,
-            header=view.header,
-            patch=Patch(
-                ops=[
-                    PatchReset(),
-                    PatchAppendStructure(nodes=nodes),
-                    *text_nodes,
-                ],
-                final=True,
-            ),
-            meta={
-                "job_id": job_id,
-                "channel": channel,
-            },
-        )

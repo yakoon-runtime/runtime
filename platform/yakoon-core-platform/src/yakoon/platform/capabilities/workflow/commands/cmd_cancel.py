@@ -1,4 +1,3 @@
-from yakoon.base.capabilities.interaction import DialogService
 from yakoon.base.capabilities.workflow import WorkflowService
 from yakoon.base.engine import CommandQueueService
 from yakoon.base.runtime.commands import (
@@ -42,7 +41,7 @@ class CmdWfCancel(Command):
         rt.remove(batch.batch_id)
 
         # 3) Dialog ggf. schließen
-        dialogs = self.services.get(DialogService)
+        dialogs = self.services.get()
         if dialogs.is_waiting(session):
             dialogs.cancel_input(session)
 

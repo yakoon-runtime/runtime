@@ -7,7 +7,6 @@ class SessionBus:
 
     def __init__(self):
         self._clients: set[ClientConnection] = set()
-        self._flow = None
         self._history = []
 
     # -------------------------------------------------
@@ -17,25 +16,12 @@ class SessionBus:
     def join(self, client: ClientConnection):
         self._clients.add(client)
 
-        if self._flow:
-            client.set_flow_control(self._flow)
-
         # Snapshot / Replay
         for event in self._history:
             client.queue(event)
 
     def leave(self, client: ClientConnection):
         self._clients.discard(client)
-
-    # -------------------------------------------------
-    # flow control
-    # -------------------------------------------------
-
-    def set_flow_control(self, flow):
-        self._flow = flow
-
-        for client in self._clients:
-            client.set_flow_control(flow)
 
     # -------------------------------------------------
     # broadcast
