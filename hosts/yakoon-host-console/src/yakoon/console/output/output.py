@@ -71,9 +71,9 @@ class ConsoleOutput:
         for op in event.patch.ops:
 
             if isinstance(op, PatchReset):
-                pass
-                # self._nodes.clear()
-                # self._renderers.clear()
+                # pass
+                self._nodes.clear()
+                self._renderers.clear()
 
             elif isinstance(op, PatchAppendStructure):
                 for spec in op.nodes:

@@ -5,7 +5,7 @@ view:
   blocks:
     {% if mode == "shell" %}
 
-    - type: text
+    - type: text   
       text: "Commands"
 
     - type: list

@@ -41,11 +41,11 @@ class DefaultPermissionService:
             "workflow:wf.cancel|rx",
             "shell:use|rx",
             "discovery:lookup|rx",
-            #
-            "pg:delay_5|rx",
-            "pg:use_pres|rx",
-            "pg:use_ask|rx",
-            "pg:use_sub|rx",
+            # demo
+            "demo:demo.delay|rx",
+            "demo:demo.presenter|rx",
+            "demo:demo.ask.simple|rx",
+            "demo:demo.subflow|rx",
         ]
 
     def register_role(self, name: str, specs: list[str]) -> None:
