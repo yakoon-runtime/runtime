@@ -66,7 +66,7 @@ class _ViewStream:
     last_flush: float
 
 
-class DefaultOutputStreamService:
+class DefaultViewDispatcher:
 
     MIN_INTERVAL = 0.05
     MAX_INTERVAL = 0.25
@@ -225,7 +225,8 @@ class DefaultOutputStreamService:
                 session,
                 view=view,
                 block=child,
-                parent_id=block_id,
+                # parent_id=block_id,
+                parent_id=node.id,
                 suffix=i,
                 override=override,
             )
