@@ -54,7 +54,7 @@ class Scheduler:
 
         except PlatformError as e:
             await self.output.send_view(
-                session, v_error_system(e.message, error_kind=e.code)
+                session, v_error_system(e.message, error_code=e.code)
             )
 
         except Exception as e:
