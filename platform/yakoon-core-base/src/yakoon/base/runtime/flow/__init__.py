@@ -1,4 +1,4 @@
-from .ops import ask, delay, receive, show, text
+from .ops import apply_errors, apply_values, ask, delay, receive, show, text, validate
 from .types import FlowKind
 from .view import compile_view
 
@@ -12,5 +12,8 @@ __all__ = [
     "delay",
     "receive",
     "show",
+    "validate",
+    "apply_errors",
+    "apply_values",
     "text",
 ]

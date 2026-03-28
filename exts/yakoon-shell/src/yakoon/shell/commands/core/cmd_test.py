@@ -57,23 +57,22 @@ class CmdTest(Command):
         await session.emit(v_text(f"Hello started ... {name}"))
         while True:
 
-            event: InputEvent = yield Receive(wait=True)
+            event: InputEvent = yield receive(wait=True)
             name = event.to_text()
             await session.emit(v_text(f"Hello {name}"))
 
-            yield Delay(5)
+            yield delay(5)
 
     async def delay_run(self, request: Request):
 
-        yield Show(v_text("\nStart"))
-        yield Delay(10)
-        yield Show(v_text("\nDone"))
+        yield show(v_text("\nStart"))
+        yield delay(10)
+        yield show(v_text("\nDone"))
 
     async def __run(self, request: Request):
 
         messages = ["Test print..."]
         await session.emit(v_text(str(messages)))
-        yield Advance()
 
         policy = self.services.get(PolicyService)
         presenter = await self.get_presenter(session=session)

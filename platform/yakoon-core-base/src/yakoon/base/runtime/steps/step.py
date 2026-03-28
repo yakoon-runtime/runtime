@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from dataclasses import replace
 from typing import Any, Protocol
 
@@ -11,7 +10,7 @@ from yakoon.base.ui import FieldError, View
 from yakoon.base.ui.view import ViewHeader
 
 from .context import StepContext
-from .controls import AwaitInput, Sleep, SleepUntil
+from .controls import AwaitInput
 from .outcome import Outcome
 
 # ============================================================
@@ -181,26 +180,3 @@ class Receive(PassiveStep):
             return Outcome(control=AwaitInput(None))
 
         return Outcome(value=self.default)
-
-
-# ------------------------------------------------------------
-# Delay
-# ------------------------------------------------------------
-
-
-class Delay(PassiveStep):
-
-    def __init__(self, seconds: int):
-        self.seconds = seconds
-
-    async def run(self, flow: Flow, context: StepContext) -> Outcome:
-        return Outcome(control=Sleep(time.time() + self.seconds))
-
-
-class DelayUntil(PassiveStep):
-
-    def __init__(self, timestamp: float):
-        self.timestamp = timestamp
-
-    async def run(self, flow: Flow, context: StepContext) -> Outcome:
-        return Outcome(control=SleepUntil(self.timestamp))

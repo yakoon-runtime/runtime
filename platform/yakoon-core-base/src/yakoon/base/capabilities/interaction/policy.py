@@ -36,4 +36,4 @@ class PolicyValidationError:
 class PolicyValidationResult:
     ok: bool
     value: object | None = None
-    errors: list[PolicyValidationError] = ()
+    errors: tuple[PolicyValidationError, ...] = ()

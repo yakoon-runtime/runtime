@@ -28,9 +28,6 @@ class ViewQuery:
 
     def apply(self, event: ViewEvent):
 
-        if event.header:
-            self.header = event.header
-
         for op in event.patch.ops:
 
             # -------------------------
@@ -74,6 +71,13 @@ class ViewQuery:
 
                 key = (op.block_id, op.key)
                 self._text[key] = self._text.get(key, "") + op.text
+
+        # -------------------------
+        # HEADER
+        # -------------------------
+
+        if event.header:
+            self.header = event.header
 
     # ---------------------------------------------------------
     # PUBLIC

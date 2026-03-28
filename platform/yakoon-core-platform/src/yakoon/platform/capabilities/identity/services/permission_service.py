@@ -45,6 +45,7 @@ class DefaultPermissionService:
             "demo:demo.delay|rx",
             "demo:demo.presenter|rx",
             "demo:demo.ask.simple|rx",
+            "demo:demo.ask.validate|rx",
             "demo:demo.subflow|rx",
         ]
 

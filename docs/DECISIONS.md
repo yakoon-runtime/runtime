@@ -7,6 +7,30 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+Hier ist dein Eintrag — präzise, klar und mit sauberer Trennung der Konzepte:
+
+---
+
+## 26-03-28
+**Klare Trennung: Flow, Effects und Domain-Logik**
+Das System unterscheidet nun strikt zwischen drei Ebenen:
+* **Flow (DSL / yield)**
+  Beschreibt die zeitliche Struktur und Interaktion (z. B. `ask`, `show`, `delay`).
+  Nur hier wird gesteuert, wann ein Flow pausiert oder fortgesetzt wird.
+* **Effects (Nebenwirkungen)**
+  Technische Begleitaktionen wie `Emit`, `AutoFocus` etc.
+  Effects sind **nicht steuernd für den Flow**, sondern reine Ausführung von Nebenwirkungen.
+* **Domain-Logik (Business)**
+  Fachliche Verarbeitung wie `validate`, `calculate_invoice` etc.
+  Diese Logik ist **Teil des Commands**, aber **kein Teil der DSL und keine Engine-Verantwortung**.
+**WICHTIG:**
+* Nur Interaktion mit der Außenwelt wird als DSL (`yield`) modelliert
+* Domain-Logik darf **nicht** als Step oder Effect modelliert werden
+* Die Engine bleibt rein ausführend und kennt keine Business-Regeln
+
+Konsequenz:
+Das System bleibt offen, flexibel und vermeidet die Entwicklung zu einem Workflow-Framework.
+
 ## 26-03-22 
 **Flow-basierten Scheduler**
 Der Scheduler arbeitet nun flow statt sessionbassiert. 
