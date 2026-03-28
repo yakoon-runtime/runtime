@@ -184,7 +184,7 @@ class CommandEngine:
             while True:
 
                 # ----------------------------------
-                # 1. RESUME FIRST
+                # 1. RESUME
                 # ----------------------------------
                 if flow.pending_value is not None:
                     value = flow.pending_value
@@ -205,44 +205,32 @@ class CommandEngine:
                     outcome = await self._execute_item(item, flow, session)
 
                 # ----------------------------------
-                # 3. VALUE LOOP (nur für chaining!)
-                # ----------------------------------
-                while True:
-
-                    if flow.pending_value is not None:
-                        value = flow.pending_value
-                        flow.pending_value = None
-
-                        item = await cursor.send(value)
-                        outcome = await self._execute_item(item, flow, session)
-                        continue
-
-                    if outcome.value is not None:
-                        value = outcome.value
-                        outcome.value = None
-
-                        item = await cursor.send(value)
-                        outcome = await self._execute_item(item, flow, session)
-                        continue
-
-                    break
-
-                # ----------------------------------
-                # 4. EFFECTS
+                # 3. EFFECTS
                 # ----------------------------------
                 if outcome.effects:
                     await self._apply_effects(outcome.effects, session, flow)
 
                 # ----------------------------------
-                # 5. CONTROL → STOP
+                # 4. CONTROL → STOP
                 # ----------------------------------
                 if outcome.control is not None:
                     return outcome
 
-                # VALUE
-                # if outcome.value is not None:
-                #    item = await cursor.send(outcome.value)
-                #    outcome = await self._execute_item(item, flow, session)
+                # ----------------------------------
+                # 5. VALUE (genau EIN Schritt!)
+                # ----------------------------------
+                if outcome.value is not None:
+                    item = await cursor.send(outcome.value)
+                    outcome = await self._execute_item(item, flow, session)
+
+                    # Effects vom Value-Step müssen noch verarbeitet werden!
+                    if outcome.effects:
+                        await self._apply_effects(outcome.effects, session, flow)
+
+                    if outcome.control is not None:
+                        return outcome
+
+                    continue
 
         except StopAsyncIteration:
             return Outcome(control=Stop())
