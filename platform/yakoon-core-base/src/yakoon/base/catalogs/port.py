@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from yakoon.base.catalogs import CommandInfo, ControllerInfo
-from yakoon.base.runtime.commands import CommandKind
+from yakoon.base.commands import CommandKind
 from yakoon.base.runtime.sessions import Session
 
 

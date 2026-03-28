@@ -1,12 +1,12 @@
 from yakoon.base.capabilities.interaction import PolicyService
-from yakoon.base.runtime.commands import (
+from yakoon.base.commands import (
     Command,
     CommandKind,
     CommandVisibility,
     Request,
 )
+from yakoon.base.presentation import v_text
 from yakoon.base.runtime.input import InputEvent
-from yakoon.base.ui import v_text
 from yakoon.platform.runtime import DomainError
 
 

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from typing import cast
 
+from yakoon.base.naming import Key
 from yakoon.base.stores.event.entity import (
     SnapshotHint,
 )
-from yakoon.base.values import Key
 from yakoon.platform.stores.event.store import EntityStore
 
 from .identity import SessionIdentityMap

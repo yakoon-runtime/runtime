@@ -5,8 +5,8 @@ from collections.abc import Awaitable, Callable
 from typing import Protocol
 
 from yakoon.base.host import InputEvent, Interaction
-from yakoon.base.ui import FieldsBlock
-from yakoon.base.ui.view import View
+from yakoon.base.presentation import FieldsBlock
+from yakoon.base.presentation.view import View
 
 
 class HostUI(Protocol):

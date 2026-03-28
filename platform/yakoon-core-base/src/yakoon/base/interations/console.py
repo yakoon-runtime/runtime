@@ -1,5 +1,5 @@
-from yakoon.base.host import Interaction
-from yakoon.base.ui import View
+from yakoon.base.dispatch import Interaction
+from yakoon.base.presentation import View
 
 
 class ConsoleInteraction(Interaction):

@@ -1,6 +1,6 @@
 from yakoon.base.capabilities.identity import AccountService, AuthResult, SecretVerifier
+from yakoon.base.naming import Namespace
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.values import Namespace
 
 
 class DefaultAuthenticationService:

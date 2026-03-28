@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
-from yakoon.base.values import Key
+from yakoon.base.naming import Key
 
 
 @dataclass

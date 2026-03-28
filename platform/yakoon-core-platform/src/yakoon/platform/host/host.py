@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from yakoon.base.capabilities.identity.port import PermissionService
 from yakoon.base.clients.connection import ClientConnection
+from yakoon.base.naming.key import Key
 from yakoon.base.runtime.sessions import SessionService
-from yakoon.base.values.key import Key
 from yakoon.platform.host.scheduler import Scheduler
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
+from yakoon.platform.runtime.sessions import Session as PlatformSession
 
 if TYPE_CHECKING:
-    from yakoon.platform.engine.engine import CommandEngine
+    from yakoon.platform.engine import CommandEngine
 
 from .runner import Runner
 
@@ -79,7 +80,7 @@ class RuntimeHost:
 
         await runner.on_input(event)
 
-    async def create_session(self):
+    async def create_session(self) -> PlatformSession:
 
         key = self.next_session_key()
 
@@ -89,7 +90,7 @@ class RuntimeHost:
         permissions = self.engine.services.get(PermissionService)
         permissions.set_bootstrap_permissions(session)
 
-        return session
+        return cast(PlatformSession, session)
 
     def next_session_key(self) -> Key:
 

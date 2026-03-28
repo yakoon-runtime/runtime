@@ -11,9 +11,9 @@ from yakoon.base.capabilities.discovery import (
     Resolved,
 )
 from yakoon.base.catalogs import CommandCatalogService, ControllerCatalogService
+from yakoon.base.commands import Request
+from yakoon.base.controllers import resolve_resource
 from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime.commands import Request
-from yakoon.base.runtime.controllers import resolve_resource
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.platform.runtime.sessions import Session
 

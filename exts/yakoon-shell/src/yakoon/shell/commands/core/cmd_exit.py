@@ -1,12 +1,12 @@
 from typing import Protocol, cast
 
 from yakoon.base.catalogs import ControllerCatalogService
-from yakoon.base.flow import text
-from yakoon.base.runtime.commands import (
+from yakoon.base.commands import (
     Command,
     CommandScope,
     Request,
 )
+from yakoon.base.flow import text
 from yakoon.base.runtime.sessions.port import SessionService
 
 

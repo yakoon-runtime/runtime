@@ -1,13 +1,13 @@
 from yakoon.base.capabilities.workflow import WorkflowService
-from yakoon.base.engine import CommandQueueService
-from yakoon.base.runtime.commands import (
+from yakoon.base.commands import (
     Command,
     CommandKind,
     CommandScope,
     CommandVisibility,
     Request,
 )
-from yakoon.base.ui import v_error_system
+from yakoon.base.dispatch import CommandQueueService
+from yakoon.base.presentation import v_error_system
 
 
 class CmdWfCancel(Command):

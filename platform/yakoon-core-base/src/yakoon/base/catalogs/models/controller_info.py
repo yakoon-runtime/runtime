@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from yakoon.base.runtime.controllers.resources import ResourceReferences
+from yakoon.base.controllers.resources import ResourceReferences
 
 
 @dataclass(frozen=True, slots=True)

@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from yakoon.base.runtime.controllers import Controller
+from yakoon.base.controllers import Controller
 
 
 class ControllerDirectory:

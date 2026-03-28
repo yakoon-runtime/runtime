@@ -4,7 +4,7 @@ from collections.abc import Sequence
 
 from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.catalogs import CommandCatalog, CommandInfo, ControllerCatalogService
-from yakoon.base.runtime.commands import (
+from yakoon.base.commands import (
     CommandKind,
     CommandScope,
     CommandVisibility,

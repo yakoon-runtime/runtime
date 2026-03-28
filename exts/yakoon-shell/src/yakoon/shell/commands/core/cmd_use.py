@@ -1,8 +1,8 @@
 from typing import Protocol, cast
 
 from yakoon.base.catalogs import ControllerCatalogService
+from yakoon.base.commands import Command, Request
 from yakoon.base.flow import show, text
-from yakoon.base.runtime.commands import Command, Request
 from yakoon.base.runtime.sessions import SessionService
 
 

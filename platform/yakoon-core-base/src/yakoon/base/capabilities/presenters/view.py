@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from yakoon.base.ui import Block, Field, View, ViewHeader
+    from yakoon.base.presentation import Block, Field, View, ViewHeader
 
 
 @dataclass

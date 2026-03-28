@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from yakoon.base.engine import CommandDispatch
+from yakoon.base.dispatch import CommandDispatch
 from yakoon.base.flow.primitives import AwaitInput
 from yakoon.base.runtime.input import InputEvent
 from yakoon.platform.engine import CommandEngine

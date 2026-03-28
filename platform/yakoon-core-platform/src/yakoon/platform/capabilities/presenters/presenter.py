@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from yakoon.base.capabilities.presenters.view import PresenterView
-from yakoon.base.rendering import RenderContext, RenderService
+from yakoon.base.capabilities.presenters import PresenterView
+from yakoon.base.presentation.rendering import RenderContext, RenderService
 from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.platform.runtime.sessions import Session

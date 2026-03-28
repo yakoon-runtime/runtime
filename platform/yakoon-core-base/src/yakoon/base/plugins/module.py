@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from yakoon.base.runtime.controllers import Controller
+    from yakoon.base.controllers import Controller
     from yakoon.base.runtime.services import ServiceDirectory
 
 

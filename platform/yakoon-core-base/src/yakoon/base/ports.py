@@ -13,6 +13,7 @@ from yakoon.base.stores.event.entity import (
 if TYPE_CHECKING:
     from collections.abc import Mapping, Sequence
 
+    from yakoon.base.naming import Key, Namespace
     from yakoon.base.stores.event.entity import (
         GetResult,
         IndexSpec,
@@ -22,7 +23,6 @@ if TYPE_CHECKING:
         RetentionPolicy,
         SnapshotHint,
     )
-    from yakoon.base.values import Key, Namespace
 
 
 class PatchError(Exception):

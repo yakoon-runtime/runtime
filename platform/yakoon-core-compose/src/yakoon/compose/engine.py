@@ -12,17 +12,16 @@ from yakoon.base.catalogs import (
     ControllerCatalogService,
     ControllerInfo,
 )
-from yakoon.base.engine import CommandQueueService
-from yakoon.base.ids import NamespaceService
+from yakoon.base.controllers import Controller
+from yakoon.base.dispatch import CommandQueueService
+from yakoon.base.naming import Namespace, NamespaceService
 from yakoon.base.plugins import ModuleRegistry
-from yakoon.base.rendering import RenderEngine, RenderService
+from yakoon.base.presentation import FieldType, ViewDispatcher, ViewSpecParser
+from yakoon.base.presentation.rendering import RenderEngine, RenderService
+from yakoon.base.presentation.transport import OutputStream
 from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime.controllers import Controller
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.runtime.sessions import SessionService
-from yakoon.base.ui import FieldType, ViewDispatcher, ViewSpecParser
-from yakoon.base.ui.transport import OutputStream
-from yakoon.base.values import Namespace
 from yakoon.platform.catalogs import (
     DefaultCommandCatalogService,
     DefaultControllerCatalogService,
@@ -33,17 +32,20 @@ from yakoon.platform.engine import (
     ControllerDirectory,
     DefaultCommandQueueService,
 )
-from yakoon.platform.ids import DefaultNamespaceService
+from yakoon.platform.naming import DefaultNamespaceService
 from yakoon.platform.plugins import DefaultModuleManager, DefaultModuleRegistry
-from yakoon.platform.rendering import DefaultRenderService, JinjaRenderEngine
+from yakoon.platform.presentation import DefaultViewDispatcher, DefaultViewSpecParser
+from yakoon.platform.presentation.rendering import (
+    DefaultRenderService,
+    JinjaRenderEngine,
+)
+from yakoon.platform.presentation.transport import DefaultOutputStream
 from yakoon.platform.resources import DefaultResourceLoader
 from yakoon.platform.runtime import DefaultSessionService
 from yakoon.platform.services.lookup import NoLookupResolverService
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
 from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.stores.event.store import DefaultEntityStore
-from yakoon.platform.ui import DefaultViewDispatcher, DefaultViewSpecParser
-from yakoon.platform.ui.transport import DefaultOutputStream
 
 CapabilityMode: TypeAlias = Literal["default"]
 CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]

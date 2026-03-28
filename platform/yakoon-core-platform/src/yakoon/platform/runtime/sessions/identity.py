@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.values import Key
+from yakoon.base.naming import Key
 
 from .session import Session
 

@@ -1,12 +1,12 @@
 import time
 
-from yakoon.base.runtime.commands import (
+from yakoon.base.commands import (
     Command,
     CommandKind,
     CommandVisibility,
     Request,
 )
-from yakoon.base.ui.builder import v_text
+from yakoon.base.presentation.builder import v_text
 
 
 class CmdSpeedTest(Command):

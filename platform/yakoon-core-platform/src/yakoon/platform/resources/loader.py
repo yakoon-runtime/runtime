@@ -2,8 +2,8 @@ import importlib.resources as ir
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
+from yakoon.base.controllers.resources import ResourceRef
 from yakoon.base.resources.resource import _clean_rel
-from yakoon.base.runtime.controllers.resources import ResourceRef
 
 
 @dataclass(slots=True)

@@ -12,9 +12,9 @@ from yakoon.base.capabilities.workflow import (
     WorkflowStatus,
 )
 from yakoon.base.catalogs import ControllerCatalogService
-from yakoon.base.engine import CommandQueueService
+from yakoon.base.controllers import resolve_resource
+from yakoon.base.dispatch import CommandQueueService
 from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime.controllers import resolve_resource
 from yakoon.base.runtime.services import ServiceDirectory
 
 from ..runtime.compiler import compile_run_command

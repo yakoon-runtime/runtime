@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.runtime.commands import Request
+from yakoon.base.commands import Request
 from yakoon.base.runtime.sessions import Session
 
 from .discovery import DiscoveryResult

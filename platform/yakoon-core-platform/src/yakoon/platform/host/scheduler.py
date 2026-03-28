@@ -4,10 +4,15 @@ import time
 from collections import deque
 
 from yakoon.base.capabilities.audit import AuditLogService
-from yakoon.base.engine import DispatchInput
+from yakoon.base.dispatch import DispatchInput
 from yakoon.base.flow.primitives import Control
+from yakoon.base.presentation import (
+    OutputStream,
+    v_error_domain,
+    v_error_fatal,
+    v_error_system,
+)
 from yakoon.base.runtime.input import InputEvent
-from yakoon.base.ui import OutputStream, v_error_domain, v_error_fatal, v_error_system
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.flow import Flow, FlowKind
 from yakoon.platform.runtime import DomainError, PlatformError

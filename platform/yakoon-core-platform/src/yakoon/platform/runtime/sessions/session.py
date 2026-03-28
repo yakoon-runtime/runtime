@@ -6,12 +6,12 @@ from datetime import UTC, datetime
 from typing import Any
 
 from yakoon.base.capabilities.identity import PermissionSet
-from yakoon.base.runtime.input import InputEvent
-from yakoon.base.transports import IO
-from yakoon.base.ui import (
+from yakoon.base.naming import Key
+from yakoon.base.presentation import (
     ViewEvent,
 )
-from yakoon.base.values import Key
+from yakoon.base.runtime.input import InputEvent
+from yakoon.base.transports import IO
 from yakoon.platform.flow import Flow
 from yakoon.platform.runtime.trace import ExecutionTrace
 

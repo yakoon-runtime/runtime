@@ -7,7 +7,7 @@ from yakoon.base.capabilities.discovery import (
     LookupCandidateStoreService,
     Resolved,
 )
-from yakoon.base.runtime.commands import Request
+from yakoon.base.commands import Request
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.platform.runtime.sessions import Session
 

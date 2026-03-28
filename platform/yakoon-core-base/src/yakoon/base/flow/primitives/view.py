@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from yakoon.base.ui import View, ViewHeader
+from yakoon.base.presentation import View, ViewHeader
 
 if TYPE_CHECKING:
     from yakoon.base.capabilities.presenters import BlockGroup

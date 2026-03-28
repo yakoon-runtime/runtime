@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.values.key import Key
+from yakoon.base.naming import Key
 
 from .session import Session
 

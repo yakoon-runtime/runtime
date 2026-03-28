@@ -1,4 +1,4 @@
-from yakoon.base.runtime.commands import Command, Request
+from yakoon.base.commands import Command, Request
 
 
 class CmdSu(Command):

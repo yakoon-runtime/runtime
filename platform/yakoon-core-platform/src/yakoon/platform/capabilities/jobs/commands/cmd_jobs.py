@@ -1,12 +1,12 @@
-from yakoon.base.flow import show
-from yakoon.base.runtime.commands import (
+from yakoon.base.commands import (
     Command,
     CommandKind,
     CommandScope,
     CommandVisibility,
     Request,
 )
-from yakoon.base.ui import v_text
+from yakoon.base.flow import show
+from yakoon.base.presentation import v_text
 
 
 class CmdJobs(Command):

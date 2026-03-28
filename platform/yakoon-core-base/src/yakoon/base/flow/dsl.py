@@ -4,9 +4,9 @@ from typing import Any, TypeGuard
 
 from yakoon.base.capabilities.interaction import PolicyService
 from yakoon.base.capabilities.presenters import PresenterView
+from yakoon.base.presentation import FieldError, View, ViewHeader, v_text
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.ui import FieldError, View, ViewHeader, v_text
 
 from .primitives import AutoFocus, AwaitInput, Emit, Outcome, Sleep, SleepUntil
 

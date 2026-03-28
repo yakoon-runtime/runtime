@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
+    from yakoon.base.naming import Key, Namespace
     from yakoon.base.runtime.sessions import Session
-    from yakoon.base.values import Key, Namespace
 
 from . import Account, AuthResult
 

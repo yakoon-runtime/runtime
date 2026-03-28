@@ -1,5 +1,5 @@
 from yakoon.base.capabilities.workflow import WorkflowService
-from yakoon.base.runtime.commands import (
+from yakoon.base.commands import (
     Command,
     CommandKind,
     CommandScope,

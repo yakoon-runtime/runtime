@@ -3,7 +3,10 @@ from uuid import uuid4
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import Permission, PermissionService
-from yakoon.base.engine import CommandDispatch, DispatchInput
+from yakoon.base.commands import Command, Request
+from yakoon.base.commands.context import CommandContext
+from yakoon.base.controllers import Controller
+from yakoon.base.dispatch import CommandDispatch, DispatchInput
 from yakoon.base.flow.primitives import (
     AutoFocus,
     AwaitInput,
@@ -14,11 +17,8 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.runtime.commands import Command, Request
-from yakoon.base.runtime.commands.context import CommandContext
-from yakoon.base.runtime.controllers import Controller
+from yakoon.base.presentation import OutputStream, v_error_system
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.ui import OutputStream, v_error_system
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
     CommandNotFound,

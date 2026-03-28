@@ -6,13 +6,13 @@ from yakoon.base.catalogs import (
     CommandInfo,
     ControllerCatalogService,
 )
-from yakoon.base.flow import show
-from yakoon.base.runtime.commands import (
+from yakoon.base.commands import (
     Command,
     CommandScope,
     Request,
 )
-from yakoon.base.runtime.controllers import resolve_resource
+from yakoon.base.controllers import resolve_resource
+from yakoon.base.flow import show
 
 
 class _ControllerAccess(Protocol):

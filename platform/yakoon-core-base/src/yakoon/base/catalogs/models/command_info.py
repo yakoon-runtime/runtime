@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from yakoon.base.runtime.commands import (
+from yakoon.base.commands import (
     CommandKind,
     CommandScope,
     CommandVisibility,

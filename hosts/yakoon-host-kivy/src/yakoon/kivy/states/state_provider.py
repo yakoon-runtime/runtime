@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from yakoon.platform.host import format_ps1
+from yakoon.platform.host.cli import format_ps1
 from yakoon.platform.runtime.sessions.session import Session
 
 

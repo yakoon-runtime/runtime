@@ -1,6 +1,6 @@
 from collections import deque
 
-from yakoon.base.engine.types import CommandDispatch, DispatchInput
+from yakoon.base.dispatch.types import CommandDispatch, DispatchInput
 
 
 class DefaultCommandQueueService:

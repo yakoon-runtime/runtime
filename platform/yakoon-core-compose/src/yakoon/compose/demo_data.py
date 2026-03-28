@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from yakoon.base.capabilities.identity import Account, AccountData, AccountService
+from yakoon.base.naming import Key, Namespace
 from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.values import Key, Namespace
 
 
 async def seed_demo_system_data(

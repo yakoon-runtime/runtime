@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from yakoon.base.runtime.commands import Command, CommandSet, Request
-from yakoon.base.runtime.controllers import Controller, ResourceReferences
+from yakoon.base.commands import Command, CommandSet, Request
+from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.base.runtime.sessions import Session
 
 from .commands.core.cmdset import ShellSystemCommands

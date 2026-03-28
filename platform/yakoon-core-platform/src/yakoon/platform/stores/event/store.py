@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
+from yakoon.base.naming import Key, Namespace
 from yakoon.base.ports import EntityStore, IndexRegistry, PatchStrategy
 from yakoon.base.stores.event.entity import (
     DomainId,
@@ -26,7 +27,6 @@ from yakoon.base.stores.event.entity import (
     SnapshotHint,
     SpaceId,
 )
-from yakoon.base.values import Key, Namespace
 from yakoon.platform.stores.event.backend import EntityStoreBackend, RevisionRow
 
 
