@@ -56,6 +56,23 @@ class AwaitInput(Control):
 
 
 # ------------------------------------------------------------
+# Event Handling
+# ------------------------------------------------------------
+
+
+class AwaitEvent(Control):
+    def label(self, flow):
+        return "wait"
+
+    def is_runnable(self, flow):
+        return bool(flow.input_queue)
+
+    def on_enter(self, flow, scheduler, session):
+        # nichts tun → passiv warten
+        pass
+
+
+# ------------------------------------------------------------
 # Time Control
 # ------------------------------------------------------------
 

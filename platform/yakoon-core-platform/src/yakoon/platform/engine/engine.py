@@ -17,6 +17,7 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
+from yakoon.base.flow.primitives.control import AwaitEvent
 from yakoon.base.presentation import OutputStream, v_error_system
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
@@ -181,18 +182,32 @@ class CommandEngine:
 
             while True:
 
-                item = await self._next_step(flow, session, command, request)
-                if item is None:
-                    continue
+                # ----------------------------------
+                # 1. RESUME FIRST
+                # ----------------------------------
+                if flow.pending_value is not None:
+                    value = flow.pending_value
+                    flow.pending_value = None
 
-                outcome = await self._execute_item(item, flow, session)
+                    item = await cursor.send(value)
+                    outcome = await self._execute_item(item, flow, session)
+
+                else:
+                    # ----------------------------------
+                    # 2. NORMAL STEP
+                    # ----------------------------------
+                    item = await self._next_step(flow, session, command, request)
+
+                    if item is None:
+                        continue
+
+                    outcome = await self._execute_item(item, flow, session)
 
                 # ----------------------------------
-                # VALUE LOOP
+                # 3. VALUE LOOP (nur für chaining!)
                 # ----------------------------------
                 while True:
 
-                    # 1. pending_value zuerst!
                     if flow.pending_value is not None:
                         value = flow.pending_value
                         flow.pending_value = None
@@ -201,7 +216,6 @@ class CommandEngine:
                         outcome = await self._execute_item(item, flow, session)
                         continue
 
-                    # 2. normales value
                     if outcome.value is not None:
                         value = outcome.value
                         outcome.value = None
@@ -213,20 +227,16 @@ class CommandEngine:
                     break
 
                 # ----------------------------------
-                # EFFECTS
+                # 4. EFFECTS
                 # ----------------------------------
                 if outcome.effects:
-                    await self._apply_effects(outcome.effects, session, flow)  # type: ignore
+                    await self._apply_effects(outcome.effects, session, flow)
 
                 # ----------------------------------
-                # CONTROL
+                # 5. CONTROL → STOP
                 # ----------------------------------
                 if outcome.control is not None:
                     return outcome
-
-                # ----------------------------------
-                # BUDGET (optional erstmal ignorieren)
-                # ----------------------------------
 
         except StopAsyncIteration:
             return Outcome(control=Stop())
@@ -307,10 +317,10 @@ class CommandEngine:
             elif isinstance(effect, ClearFocus):
                 session.set_focus(None)
 
-    async def _next_step(self, flow, session, command, request):
+    async def _next_step(self, flow: Flow, session, command, request):
 
         # ----------------------------------
-        # Resume: Input
+        # Resume: Input / Event
         # ----------------------------------
         if isinstance(flow.control, AwaitInput):
 
@@ -322,6 +332,20 @@ class CommandEngine:
             flow.control = None
             flow.pending_value = event
             return Outcome()
+
+        # ----------------------------------
+        # Resume: Input / Event
+        # ----------------------------------
+        if isinstance(flow.control, AwaitEvent):
+
+            if not flow.input_queue:
+                return None
+
+            _, event = flow.input_queue.popleft()
+
+            flow.control = None
+            flow.pending_value = event
+            return None
 
         # ----------------------------------
         # NEXT

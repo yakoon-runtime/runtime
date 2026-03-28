@@ -4,6 +4,7 @@ from typing import Any, TypeGuard
 
 from yakoon.base.capabilities.interaction import PolicyService
 from yakoon.base.capabilities.presenters import PresenterView
+from yakoon.base.flow.primitives import AwaitEvent
 from yakoon.base.presentation import FieldError, View, ViewHeader, v_text
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.services import ServiceDirectory
@@ -54,8 +55,8 @@ def ask_until_valid(view: PresenterView, services: ServiceDirectory, *, on_error
         return result.values
 
 
-def receive(default: InputEvent | None = None, wait: bool = False):
-    return Receive(default, wait)
+def receive():
+    return Outcome(control=AwaitEvent())
 
 
 def text(message: str):

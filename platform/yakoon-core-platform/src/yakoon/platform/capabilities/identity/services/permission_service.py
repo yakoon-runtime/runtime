@@ -47,6 +47,7 @@ class DefaultPermissionService:
             "demo:demo.ask.simple|rx",
             "demo:demo.ask.validate|rx",
             "demo:demo.subflow|rx",
+            "demo:demo.receive.simple|rx",
         ]
 
     def register_role(self, name: str, specs: list[str]) -> None:
