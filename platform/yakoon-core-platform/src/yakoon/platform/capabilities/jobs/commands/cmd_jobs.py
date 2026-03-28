@@ -1,3 +1,4 @@
+from yakoon.base.flow import show
 from yakoon.base.runtime.commands import (
     Command,
     CommandKind,
@@ -5,7 +6,6 @@ from yakoon.base.runtime.commands import (
     CommandVisibility,
     Request,
 )
-from yakoon.base.runtime.flow import show
 from yakoon.base.ui import v_text
 
 

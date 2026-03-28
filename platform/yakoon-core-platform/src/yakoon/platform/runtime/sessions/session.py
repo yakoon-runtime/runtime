@@ -12,7 +12,7 @@ from yakoon.base.ui import (
     ViewEvent,
 )
 from yakoon.base.values import Key
-from yakoon.platform.runtime.flow import Flow
+from yakoon.platform.flow import Flow
 from yakoon.platform.runtime.trace import ExecutionTrace
 
 

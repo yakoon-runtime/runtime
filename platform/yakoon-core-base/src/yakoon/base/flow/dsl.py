@@ -2,21 +2,13 @@ import time
 from dataclasses import dataclass, replace
 from typing import Any, TypeGuard
 
-from yakoon.base.capabilities.interaction.port import PolicyService
+from yakoon.base.capabilities.interaction import PolicyService
 from yakoon.base.capabilities.presenters import PresenterView
 from yakoon.base.runtime.input import InputEvent
-from yakoon.base.runtime.services.directory import ServiceDirectory
-from yakoon.base.runtime.steps import (
-    AutoFocus,
-    AwaitInput,
-    Emit,
-    Outcome,
-    Receive,
-    Sleep,
-    SleepUntil,
-)
-from yakoon.base.ui import View, ViewHeader, v_text
-from yakoon.base.ui.field import FieldError
+from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.ui import FieldError, View, ViewHeader, v_text
+
+from .primitives import AutoFocus, AwaitInput, Emit, Outcome, Sleep, SleepUntil
 
 
 def show(view: View | PresenterView):

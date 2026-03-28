@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import inspect
 
+from yakoon.base.flow.primitives import Outcome
+
 
 class FlowCursor:
 
@@ -20,8 +22,6 @@ class FlowCursor:
 
 
 def _ensure_step(run_fn):
-
-    from yakoon.base.runtime.steps import Outcome
 
     def factory(command, request):
 

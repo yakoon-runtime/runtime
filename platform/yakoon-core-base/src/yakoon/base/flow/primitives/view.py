@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from yakoon.base.runtime.steps import Ask, Show
 from yakoon.base.ui import View, ViewHeader
 
 if TYPE_CHECKING:

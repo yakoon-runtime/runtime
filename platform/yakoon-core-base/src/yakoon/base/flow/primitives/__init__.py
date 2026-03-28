@@ -1,4 +1,4 @@
-from .controls import (
+from .control import (
     AwaitInput,
     Control,
     Sleep,
@@ -6,25 +6,11 @@ from .controls import (
     Stop,
     YieldToScheduler,
 )
-from .effects import AutoFocus, ClearFocus, Effect, Emit, SetFocus
+from .effect import AutoFocus, ClearFocus, Effect, Emit, SetFocus
 from .outcome import Outcome
-from .step import (
-    Ask,
-    InputStep,
-    PassiveStep,
-    Receive,
-    Show,
-    Step,
-)
+from .view import compile_view
 
-__all__ = (
-    # .steps
-    "Ask",
-    "InputStep",
-    "PassiveStep",
-    "Receive",
-    "Show",
-    "Step",
+__all__ = [
     # .outcome
     "Outcome",
     # .controls
@@ -40,4 +26,6 @@ __all__ = (
     "Effect",
     "Emit",
     "SetFocus",
-)
+    # .view
+    "compile_view",
+]

@@ -4,11 +4,11 @@ from collections import deque
 from dataclasses import dataclass, field
 from typing import Any
 
-from yakoon.base.runtime.flow import FlowKind
+from yakoon.base.flow.primitives import Control
 from yakoon.base.runtime.input import InputEvent
-from yakoon.base.runtime.steps.controls import Control
 
 from .cursor import FlowCursor
+from .types import FlowKind
 
 
 @dataclass

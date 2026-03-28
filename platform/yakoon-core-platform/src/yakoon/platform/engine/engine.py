@@ -3,18 +3,10 @@ from uuid import uuid4
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.discovery import LookupResolverService
 from yakoon.base.capabilities.identity import Permission, PermissionService
-from yakoon.base.engine import (
-    CommandDispatch,
-    DispatchInput,
-)
-from yakoon.base.runtime.commands import (
-    Command,
-    Request,
-)
-from yakoon.base.runtime.commands.context import CommandContext
-from yakoon.base.runtime.controllers import Controller
-from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.steps import (
+from yakoon.base.engine import CommandDispatch, DispatchInput
+from yakoon.base.flow.primitives import (
+    AutoFocus,
+    AwaitInput,
     ClearFocus,
     Effect,
     Emit,
@@ -22,18 +14,18 @@ from yakoon.base.runtime.steps import (
     SetFocus,
     Stop,
 )
-from yakoon.base.runtime.steps.context import StepContext
-from yakoon.base.runtime.steps.controls import AwaitInput
-from yakoon.base.runtime.steps.effects import AutoFocus
+from yakoon.base.runtime.commands import Command, Request
+from yakoon.base.runtime.commands.context import CommandContext
+from yakoon.base.runtime.controllers import Controller
+from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.base.ui import OutputStream, v_error_system
-from yakoon.platform.runtime import CommandNotFound, PermissionDenied
-from yakoon.platform.runtime.error import CriticalError
-from yakoon.platform.runtime.flow import (
-    Flow,
-    FlowCursor,
-    FlowKind,
+from yakoon.platform.flow import Flow, FlowCursor, FlowKind
+from yakoon.platform.runtime import (
+    CommandNotFound,
+    CriticalError,
+    PermissionDenied,
+    Session,
 )
-from yakoon.platform.runtime.sessions import Session
 
 from .directories import CommandDirectory, ControllerDirectory
 
@@ -174,12 +166,6 @@ class CommandEngine:
         cursor = flow.cursor
         request = Request(flow.request)
 
-        context = StepContext(
-            session=session,
-            request=request,
-            services=self.services,
-        )
-
         controller = self._controllers.get(flow.controller_id)
         if not controller:
             raise RuntimeError("Controller not found")
@@ -199,7 +185,7 @@ class CommandEngine:
                 if item is None:
                     continue
 
-                outcome = await self._execute_item(item, flow, context)
+                outcome = await self._execute_item(item, flow, session)
 
                 # ----------------------------------
                 # VALUE LOOP
@@ -212,7 +198,7 @@ class CommandEngine:
                         flow.pending_value = None
 
                         item = await cursor.send(value)
-                        outcome = await self._execute_item(item, flow, context)
+                        outcome = await self._execute_item(item, flow, session)
                         continue
 
                     # 2. normales value
@@ -221,7 +207,7 @@ class CommandEngine:
                         outcome.value = None
 
                         item = await cursor.send(value)
-                        outcome = await self._execute_item(item, flow, context)
+                        outcome = await self._execute_item(item, flow, session)
                         continue
 
                     break
@@ -230,7 +216,7 @@ class CommandEngine:
                 # EFFECTS
                 # ----------------------------------
                 if outcome.effects:
-                    await self._apply_effects(outcome.effects, context.session, flow)  # type: ignore
+                    await self._apply_effects(outcome.effects, session, flow)  # type: ignore
 
                 # ----------------------------------
                 # CONTROL
@@ -252,23 +238,19 @@ class CommandEngine:
     # INTERNAL
     # ----------------------------------------------------
 
-    async def _execute_item(self, item, flow, context) -> Outcome:
+    async def _execute_item(self, item, flow, session) -> Outcome:
 
         # Generator = First-Class
         if hasattr(item, "__aiter__"):
-            return await self._run_generator(item, flow, context)
+            return await self._run_generator(item, flow, session)
 
         if isinstance(item, Outcome):
             return item
 
-        if isinstance(item, tuple):
-            step, event = item
-            return await step.resume(flow, event, context)
-
         # normaler Step
-        return await item.run(flow, context)
+        return await item.run(flow)
 
-    async def _run_generator(self, gen, flow, context) -> Outcome:
+    async def _run_generator(self, gen, flow, session) -> Outcome:
 
         send_value = None
 
@@ -283,7 +265,7 @@ class CommandEngine:
             except StopAsyncIteration:
                 return Outcome()
 
-            outcome = await self._execute_item(item, flow, context)
+            outcome = await self._execute_item(item, flow, session)
 
             # ----------------------------------
             # VALUE → zurück in Generator
@@ -296,7 +278,7 @@ class CommandEngine:
             # EFFECTS → sofort anwenden
             # ----------------------------------
             if outcome.effects:
-                await self._apply_effects(outcome.effects, context.session, flow)
+                await self._apply_effects(outcome.effects, session, flow)
 
             # ----------------------------------
             # CONTROL → Scheduler übergeben
