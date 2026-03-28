@@ -19,7 +19,7 @@ class ConsoleClient:
         self._current_values = {}
 
         # NEW: Single Source of Truth
-        self.document = ViewQuery()
+        self.view_query = ViewQuery()
 
     async def run(self):
 
@@ -70,9 +70,9 @@ class ConsoleClient:
         async def on_view(event: ViewEvent):
 
             # ------------------------
-            # Document aktualisieren (zentral!)
+            # Query aktualisieren (zentral!)
             # ------------------------
-            self.document.apply(event)
+            self.view_query.apply(event)
 
             # ------------------------
             # Rendern
@@ -100,12 +100,12 @@ class ConsoleClient:
 
         self._reset_form()
 
-        if not self.document.expects_input():
+        if not self.view_query.expects_input():
             ui.reset_prompt()
             return
 
         # Fields direkt aus Document
-        self._current_fields = self.document.get_fields()
+        self._current_fields = self.view_query.get_fields()
         self._current_index = 0
         self._current_values = {}
 
