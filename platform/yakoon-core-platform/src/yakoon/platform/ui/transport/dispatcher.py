@@ -78,8 +78,10 @@ class DefaultViewDispatcher:
         root = self._traversal.root_id(vid)
         stream.node_depth[root] = -1
         stream.published_nodes.add(root)
+        if view.header is None:
+            raise RuntimeError("view.header cannot be None.")
 
-        await session.emit(self._emitter.begin(vid))
+        await session.emit(self._emitter.begin(view.header, vid))
 
     # ---------------------------------------------------------
 

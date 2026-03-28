@@ -37,6 +37,7 @@ class ViewQuery:
             # RESET
             # -------------------------
             if isinstance(op, PatchReset):
+                self.header = None
                 self.blocks.clear()
                 self._fields.clear()
                 self._required_fields.clear()
@@ -78,10 +79,10 @@ class ViewQuery:
     # PUBLIC
     # ---------------------------------------------------------
 
-    def expects_input(self):
-        return self.header and self.header.expects_input
+    def expects_input(self) -> bool:
+        return bool(self.header and self.header.expects_input)
 
-    def has_fields(self):
+    def has_fields(self) -> bool:
         return bool(self._fields)
 
     def get_first_field(self):
