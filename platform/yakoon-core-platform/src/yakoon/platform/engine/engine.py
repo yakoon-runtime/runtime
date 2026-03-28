@@ -144,6 +144,7 @@ class CommandEngine:
                 kind=self._resolve_flow_kind(request),
             )
             session.add_flow(flow)
+            session.set_focus(flow.id)
 
         except CommandNotFound:
             raise
@@ -237,6 +238,11 @@ class CommandEngine:
                 # ----------------------------------
                 if outcome.control is not None:
                     return outcome
+
+                # VALUE
+                # if outcome.value is not None:
+                #    item = await cursor.send(outcome.value)
+                #    outcome = await self._execute_item(item, flow, session)
 
         except StopAsyncIteration:
             return Outcome(control=Stop())

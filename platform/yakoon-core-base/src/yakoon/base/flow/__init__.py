@@ -1,4 +1,15 @@
-from .dsl import apply_errors, apply_values, ask, delay, receive, show, text, validate
+from .dsl import (
+    apply_errors,
+    apply_values,
+    ask,
+    cooperate,
+    delay,
+    poll,
+    receive,
+    show,
+    text,
+    validate,
+)
 
 __all__ = [
     # .dsl
@@ -10,4 +21,6 @@ __all__ = [
     "apply_errors",
     "apply_values",
     "text",
+    "poll",
+    "cooperate",
 ]
