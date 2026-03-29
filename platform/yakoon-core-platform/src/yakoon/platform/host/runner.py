@@ -38,21 +38,22 @@ class Runner:
         flow = self.session.interaction_flow
 
         # --------------------------------------------------
-        # 1. Kein Flow → Command Dispatch
+        # 1. Flow vorhanden + AwaitInput
         # --------------------------------------------------
-        if not flow:
-            await self.scheduler.dispatch(self.session, CommandDispatch(text))
-            return
-
-        # --------------------------------------------------
-        # 2. Flow wartet auf InputStep (Ask/Form)
-        # --------------------------------------------------
-        if isinstance(flow.control, AwaitInput):
+        if flow and isinstance(flow.control, AwaitInput):
             self.scheduler.resume_input(self.session, event)
+            self.scheduler.schedule_flow(flow, self.session)
             return
 
         # --------------------------------------------------
-        # 3. Normaler Flow → Event (Receive)
+        # 2. Flow vorhanden → Receive
         # --------------------------------------------------
-        self.session.send_event(event)
-        self.scheduler.schedule_flow(flow, self.session)
+        if flow:
+            self.session.send_event(event)
+            self.scheduler.schedule_flow(flow, self.session)
+            return
+
+        # --------------------------------------------------
+        # 3. Kein Flow → Command Dispatch
+        # --------------------------------------------------
+        await self.scheduler.dispatch(self.session, CommandDispatch(text))
