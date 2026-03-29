@@ -6,7 +6,7 @@ from yakoon.base.commands import (
     CommandScope,
     Request,
 )
-from yakoon.base.flow import text
+from yakoon.base.flow import write
 from yakoon.base.runtime.sessions.port import SessionService
 
 
@@ -32,7 +32,7 @@ class CmdExit(Command):
         # --------------------------------------------------
         if access.has_interaction():
             access.set_interaction(None)
-            yield text("↩ Fokus verlassen")
+            yield write("↩ Fokus verlassen")
             return
 
         # --------------------------------------------------
@@ -48,4 +48,4 @@ class CmdExit(Command):
             await self.services.get(SessionService).save(sys_session)
             current = shell.id
 
-        yield text(f"Kontroller: {current}")
+        yield write(f"Kontroller: {current}")

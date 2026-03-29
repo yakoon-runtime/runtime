@@ -97,6 +97,13 @@ class Sleep(Control):
         remaining = max(0, int(self.wake_at - time.time()))
         return f"sleep ({remaining}s)"
 
+    @classmethod
+    def for_duration(cls, seconds: float) -> Sleep:
+        if seconds < 0:
+            raise ValueError("Sleep duration must be >= 0")
+
+        return cls(time.time() + seconds)
+
 
 class SleepUntil(Control):
     blocking = True
@@ -116,3 +123,7 @@ class SleepUntil(Control):
 
     def label(self, flow) -> str:
         return "sleep"
+
+    @classmethod
+    def until(cls, timestamp: float) -> SleepUntil:
+        return cls(timestamp)

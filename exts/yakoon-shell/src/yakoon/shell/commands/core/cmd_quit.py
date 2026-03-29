@@ -1,9 +1,7 @@
 from typing import Protocol, cast
 
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import apply_errors, ask, validate
-from yakoon.base.flow.dsl import ValidationResult
-from yakoon.base.runtime.input import InputEvent
+from yakoon.base.flow.patterns import form
 
 
 class _SessionMarkAccess(Protocol):
@@ -19,15 +17,11 @@ class CmdQuit(Command):
         presenter = await self.get_presenter()
         view = await presenter.render("really_quit")
 
-        while True:
-            event: InputEvent = yield ask(view)
-            result: ValidationResult = validate(view, event, self.services)
-            if not result.ok:
-                view = apply_errors(view, result.errors)
-                continue
-            break
+        result = yield form(view, self.services)
 
         answer = bool(result.values.get("quit"))
         if answer:
             access = cast(_SessionMarkAccess, self.ctx.session)
             access.mark("exit_app")
+
+        # yield write("END.")

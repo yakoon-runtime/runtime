@@ -2,7 +2,7 @@ from typing import Protocol, cast
 
 from yakoon.base.catalogs import ControllerCatalogService
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import show, text
+from yakoon.base.flow import show, write
 from yakoon.base.runtime.sessions import SessionService
 
 
@@ -42,7 +42,7 @@ class CmdUse(Command):
             else:
                 access.set_active_controller(name)
                 await self.services.get(SessionService).save(session)
-                yield text(f"Aktiver Kontroller: {name}")
+                yield write(f"Aktiver Kontroller: {name}")
 
         else:
             result = await presenter.render("name_not_found", name=name)

@@ -1,12 +1,9 @@
 from .dsl import (
-    apply_errors,
-    apply_values,
     ask,
     delay,
     receive,
     show,
-    text,
-    validate,
+    write,
 )
 
 __all__ = [
@@ -15,8 +12,5 @@ __all__ = [
     "delay",
     "receive",
     "show",
-    "validate",
-    "apply_errors",
-    "apply_values",
-    "text",
+    "write",
 ]
