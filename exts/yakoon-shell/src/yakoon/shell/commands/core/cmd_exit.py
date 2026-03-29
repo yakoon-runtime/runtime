@@ -13,6 +13,8 @@ from yakoon.base.runtime.sessions.port import SessionService
 class _ControllerAccess(Protocol):
     def get_active_controller(self) -> str: ...
     def set_active_controller(self, controller_id: str) -> None: ...
+    def set_interaction(self, flow_id: str | None): ...
+    def has_interaction(self) -> bool: ...
 
 
 class CmdExit(Command):
@@ -26,6 +28,16 @@ class CmdExit(Command):
         # privileged access: controller management
         access = cast(_ControllerAccess, sys_session)
 
+        # 1. Fokus verlassen (höchste Priorität)
+        # --------------------------------------------------
+        if access.has_interaction():
+            access.set_interaction(None)
+            yield text("↩ Fokus verlassen")
+            return
+
+        # --------------------------------------------------
+        # 2. Controller verlassen
+        # --------------------------------------------------
         controllers = self.services.get(ControllerCatalogService)
         shell = controllers.shell()[0]
 

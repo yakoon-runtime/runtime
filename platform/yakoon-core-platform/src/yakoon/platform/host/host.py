@@ -46,8 +46,8 @@ class RuntimeHost:
             session = await self.create_session()
             session.bind_io(BusOutput(self.bus))
             runner = Runner(
-                engine=self.engine,
                 session=session,
+                engine=self.engine,
                 scheduler=self.scheduler,
             )
             self._sessions[session.key] = runner

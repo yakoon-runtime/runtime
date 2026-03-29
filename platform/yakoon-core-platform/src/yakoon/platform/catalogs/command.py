@@ -71,6 +71,10 @@ class DefaultCommandCatalogService:
             out.extend(self._by_controller[cid])
         return tuple(out)
 
+    def globals(self) -> tuple[CommandInfo, ...]:
+        self._ensure_built()
+        return tuple(c for c in self._global if c.scope == CommandScope.GLOBAL)
+
     def for_resolve_context(
         self,
         controller_id: str,

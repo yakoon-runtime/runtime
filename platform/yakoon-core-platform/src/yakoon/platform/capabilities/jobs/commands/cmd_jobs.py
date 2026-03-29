@@ -70,7 +70,7 @@ class CmdJobs(Command):
 
         yield show(v_text("Aktive Jobs:\n"))
 
-        focused = self.context.session.focused_flow
+        focused = self.context.session.interaction_flow
         for i, f in indexed:
             label = f.label() if hasattr(f, "label") else f.command_key
             state = f.control.label(f) if f.control else "run"
@@ -96,5 +96,5 @@ class CmdJobs(Command):
             yield show(v_text(f"Job {index} nicht gefunden"))
             return
 
-        self.context.session.set_focus(flow.id)
+        self.context.session.set_interaction(flow.id)
         yield show(v_text(f"Fokus auf Job {index} gesetzt"))

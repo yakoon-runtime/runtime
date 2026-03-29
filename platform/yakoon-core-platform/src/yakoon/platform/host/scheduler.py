@@ -68,7 +68,7 @@ class Scheduler:
 
     def resume_input(self, session: Session, event: InputEvent):
 
-        flow = session.focused_flow
+        flow = session.interaction_flow
         if not flow:
             return
 
@@ -186,8 +186,8 @@ class Scheduler:
                             break
 
                 except DomainError as e:
-                    if session.focused_flow:
-                        session.del_flow(session.focused_flow)
+                    if session.interaction_flow:
+                        session.del_flow(session.interaction_flow)
                     await self.output.send_view(
                         session, v_error_domain(e.message, error_code=e.code)
                     )

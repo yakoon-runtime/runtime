@@ -7,7 +7,7 @@ from yakoon.base.catalogs import CommandCatalogService
 from yakoon.base.runtime.services import ServiceDirectory
 
 if TYPE_CHECKING:
-    from yakoon.base.runtime import Command, CommandSet
+    from yakoon.base.commands import Command, CommandSet
 
 
 class CommandDirectory:

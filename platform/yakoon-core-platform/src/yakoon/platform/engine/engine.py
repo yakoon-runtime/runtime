@@ -145,7 +145,6 @@ class CommandEngine:
                 kind=self._resolve_flow_kind(request),
             )
             session.add_flow(flow)
-            session.set_focus(flow.id)
 
         except CommandNotFound:
             raise
@@ -269,13 +268,13 @@ class CommandEngine:
                 await self._output.send_view(session, effect.view)
 
             elif isinstance(effect, AutoFocus):
-                session.set_focus(flow.id)
+                session.set_interaction(flow.id)
 
             elif isinstance(effect, SetFocus):
-                session.set_focus(effect.flow_id)
+                session.set_interaction(effect.flow_id)
 
             elif isinstance(effect, ClearFocus):
-                session.set_focus(None)
+                session.set_interaction(None)
 
     async def _next_step(self, flow: Flow, session, command, request):
 

@@ -1,30 +1,46 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
+from yakoon.base.catalogs.port import CommandCatalogService
+from yakoon.base.commands import Request
 from yakoon.base.dispatch import CommandDispatch
 from yakoon.base.flow.primitives import AwaitInput
 from yakoon.base.runtime.input import InputEvent
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.host.scheduler import Scheduler
-from yakoon.platform.runtime.sessions import Session
+from yakoon.platform.runtime import Session
 
 
-@dataclass
 class Runner:
+    scheduler: Scheduler
     engine: CommandEngine
     session: Session
-    scheduler: Scheduler
+
+    def __init__(self, session: Session, engine: CommandEngine, scheduler: Scheduler):
+        self.session = session
+        self.engine = engine
+        self.scheduler = scheduler
+
+        catalog = engine.services.get(CommandCatalogService)
+        self._global_commands = {cmd.key for cmd in catalog.globals()}
 
     async def on_input(self, event: InputEvent):
 
-        flow = self.session.focused_flow
+        text = event.to_text()
+        request = Request(text)
+
+        # --------------------------------------------------
+        # 0. System Command (immer Vorrang)
+        # --------------------------------------------------
+        if request.command in self._global_commands:
+            await self.scheduler.dispatch(self.session, CommandDispatch(text))
+            return
+
+        flow = self.session.interaction_flow
 
         # --------------------------------------------------
         # 1. Kein Flow → Command Dispatch
         # --------------------------------------------------
         if not flow:
-            text = event.to_text()
             await self.scheduler.dispatch(self.session, CommandDispatch(text))
             return
 
