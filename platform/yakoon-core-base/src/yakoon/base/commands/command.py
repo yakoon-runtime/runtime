@@ -45,18 +45,18 @@ class Command(ABC):
     requires_workflow: bool = False
 
     # Runtime-provided
-    context: CommandContext
+    ctx: CommandContext
 
     @property
     def services(self) -> ServiceDirectory:
         """Service directory exposed by the active controller."""
-        if not self.context:
+        if not self.ctx:
             raise RuntimeError("Context cannot be None")
-        if not self.context.controller:
+        if not self.ctx.controller:
             raise RuntimeError("Context controller cannot be None")
-        if not self.context.controller.services:
+        if not self.ctx.controller.services:
             raise RuntimeError("Controller services cannot be None")
-        return self.context.controller.services
+        return self.ctx.controller.services
 
     @property
     def op(self):
@@ -67,21 +67,21 @@ class Command(ABC):
     async def get_namespace(self, kind: str, space: str | None) -> Namespace:
         """Resolve the namespace for the current session."""
         namespaces = self.services.get(NamespaceService)
-        return await namespaces.from_session(self.context.session, kind, space)
+        return await namespaces.from_session(self.ctx.session, kind, space)
 
     async def get_presenter(self) -> Presenter:
-        if not self.context:
+        if not self.ctx:
             raise RuntimeError("Context cannot be None")
-        if not self.context.controller:
+        if not self.ctx.controller:
             raise RuntimeError("Context controller cannot be None")
-        controller = self.context.controller
+        controller = self.ctx.controller
         presenter_service = self.services.get(PresenterService)
 
         resources = controller.resources
         if not resources.contracts:
             raise RuntimeError("Controller has no contracts root defined.")
 
-        session = self.context.session
+        session = self.ctx.session
         ref = resolve_resource(
             resources,
             i18n_root=resources.contracts,

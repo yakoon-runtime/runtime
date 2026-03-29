@@ -31,7 +31,7 @@ class Flow:
     input_version: int = 0
 
     def has_stack(self):
-        return bool(self.cursor.stack)
+        return bool(self.cursor._stack)
 
     def push_event(self, data: InputEvent):
         self.input_queue.append((self.input_version, data))

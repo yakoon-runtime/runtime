@@ -45,7 +45,7 @@ class CmdMan(Command):
             return
 
         # privileged access: controller management
-        session = self.context.session
+        session = self.ctx.session
         access = cast(_ControllerAccess, session)
 
         active_controller_id = access.get_active_controller()
@@ -133,7 +133,7 @@ class CmdMan(Command):
         command_service = self.services.get(CommandCatalogService)
 
         # privileged access: controller management
-        session = self.context.session
+        session = self.ctx.session
         access = cast(_ControllerAccess, session)
 
         shell = controller_service.shell()[0]

@@ -26,8 +26,6 @@ class DefaultPermissionService:
             "jobs:jobs|rx",
             "shell:welcome|rx",
             "shell:version|rx",
-            "shell:test|rx",
-            "shell:speed-test|rwx",
             "shell:man|rx",
             "shell:exit|rx",
             "shell:quit|rx",

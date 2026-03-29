@@ -192,7 +192,7 @@ class CommandEngine:
                     item = await cursor.send(value)
                 except StopAsyncIteration:
                     cursor.pop()
-                    if not cursor.current():
+                    if not cursor.has_stack():
                         return Outcome(control=Stop())
                     return None
 
@@ -248,7 +248,7 @@ class CommandEngine:
             # aktueller Generator ist fertig
             cursor.pop()
 
-            if not cursor.stack:
+            if not cursor.has_stack():
                 return Outcome(control=Stop())
 
             return None
@@ -312,10 +312,10 @@ class CommandEngine:
         return await flow.cursor.next(command, request)
 
     def _create_command(
-        self, command_type: type, controller: Controller, session: Session
+        self, command_type: type[Command], controller: Controller, session: Session
     ) -> Command:
         command = command_type()
-        command.context = CommandContext(session, controller)
+        command.ctx = CommandContext(session, controller)
         return command
 
     async def _find_matching_command(

@@ -7,10 +7,10 @@ class CmdSu(Command):
 
     async def run(self, request: Request):
         wf = self.services.get(WorkflowService)  # TODO:
-        if not self.context:
+        if not self.ctx:
             raise RuntimeError("Cannot cannot be None.")
 
-        controller_id = self.context.controller.id
+        controller_id = self.ctx.controller.id
         batch_id = wf.start(
             session, controller_id, command_key=self.key, enqueue_first=False
         )

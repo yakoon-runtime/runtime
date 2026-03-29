@@ -27,9 +27,7 @@ def show(view: View | PresenterView):
     raise TypeError(f"show() expected View or PresenterView, got {type(view).__name__}")
 
 
-def ask(
-    view: View | PresenterView, *, policy: str | None = None, required: bool = False
-):
+def ask(view: View | PresenterView):
 
     def update_header(view: View) -> View:
         header = replace(view.header or ViewHeader(), expects_input=True)

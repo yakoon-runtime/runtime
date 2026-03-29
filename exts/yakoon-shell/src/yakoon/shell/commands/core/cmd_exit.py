@@ -24,7 +24,7 @@ class CmdExit(Command):
 
     async def run(self, request: Request):
 
-        sys_session = self.context.session
+        sys_session = self.ctx.session
         # privileged access: controller management
         access = cast(_ControllerAccess, sys_session)
 

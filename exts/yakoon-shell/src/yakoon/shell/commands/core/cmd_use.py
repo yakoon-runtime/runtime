@@ -17,7 +17,7 @@ class CmdUse(Command):
 
     async def run(self, request: Request):
 
-        session = self.context.session
+        session = self.ctx.session
         controllers = self.services.get(ControllerCatalogService)
         presenter = await self.get_presenter()
         access = cast(_ControllerAccess, session)
@@ -35,7 +35,7 @@ class CmdUse(Command):
             result = await presenter.render("show", controllers=infos)
             yield show(result.view)
         elif infos:
-            # internes Protocol verwenden.
+
             if name == access.get_active_controller():
                 result = await presenter.render("already_in_shell", controller=infos[0])
                 yield show(result.view)

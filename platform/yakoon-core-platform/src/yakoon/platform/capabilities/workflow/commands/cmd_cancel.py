@@ -25,10 +25,10 @@ class CmdWfCancel(Command):
         queue = self.services.get(CommandQueueService)
 
         rt = wfsvc.runtime(session)
-        if not self.context:
+        if not self.ctx:
             raise RuntimeError("Context cannot be None.")
 
-        batch_id = self.context.batch_id
+        batch_id = self.ctx.batch_id
         batch = rt.get(batch_id or "")
         if not batch:
             await session.emit(v_error_system("Kein aktiver Workflow."))

@@ -14,7 +14,7 @@ class CmdVersion(Command):
     async def run(self, request: Request):
 
         presenter = await self.get_presenter()
-        pview = await presenter.render(
+        view = await presenter.render(
             "show",
             version=get_platform_version(),
             python=platform.python_version(),
@@ -22,7 +22,7 @@ class CmdVersion(Command):
             uptime=get_uptime(),
             time=datetime.now(UTC).isoformat(),
         )
-        yield show(pview.view)
+        yield show(view)
 
 
 _start_time = time.time()

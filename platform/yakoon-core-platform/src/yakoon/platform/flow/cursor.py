@@ -8,33 +8,36 @@ from yakoon.base.flow.primitives import Outcome
 class FlowCursor:
 
     def __init__(self):
-        self.stack = []
+        self._stack = []
 
     async def next(self, command, request):
 
         # initialisieren
-        if not self.stack:
+        if not self._stack:
             gen = _ensure_step(command.run)(command, request)
-            self.stack.append(gen)
+            self._stack.append(gen)
 
-        gen = self.stack[-1]
+        gen = self._stack[-1]
         return await anext(gen)
 
+    def has_stack(self) -> bool:
+        return bool(self._stack)
+
     async def send(self, value):
-        gen = self.stack[-1]
+        gen = self._stack[-1]
         return await gen.asend(value)
 
     def push(self, gen):
-        self.stack.append(gen)
+        self._stack.append(gen)
 
     def pop(self):
-        if self.stack:
-            self.stack.pop()
+        if self._stack:
+            self._stack.pop()
 
     def current(self):
-        if not self.stack:
+        if not self._stack:
             raise RuntimeError("Cursor stack is empty")
-        return self.stack[-1]
+        return self._stack[-1]
 
 
 def _ensure_step(run_fn):

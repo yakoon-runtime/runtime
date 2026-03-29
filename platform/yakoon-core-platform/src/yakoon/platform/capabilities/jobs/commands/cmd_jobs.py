@@ -38,7 +38,7 @@ class CmdJobs(Command):
     # --------------------------------------------------------
 
     def _enumerate_flows(self):
-        session = self.context.session
+        session = self.ctx.session
         flows = [f for f in session.flows() if f.command_key != self.key]
         return list(enumerate(flows, start=1))
 
@@ -70,7 +70,7 @@ class CmdJobs(Command):
 
         yield show(v_text("Aktive Jobs:\n"))
 
-        focused = self.context.session.interaction_flow
+        focused = self.ctx.session.interaction_flow
         for i, f in indexed:
             label = f.label() if hasattr(f, "label") else f.command_key
             state = f.control.label(f) if f.control else "run"
@@ -85,7 +85,7 @@ class CmdJobs(Command):
         if not flow:
             yield show(v_text(f"Job {index} nicht gefunden"))
 
-        self.context.session.del_flow(flow)
+        self.ctx.session.del_flow(flow)
         yield show(v_text(f"Job {index} gestoppt"))
 
     async def _use_job(self, request: Request):
@@ -96,5 +96,5 @@ class CmdJobs(Command):
             yield show(v_text(f"Job {index} nicht gefunden"))
             return
 
-        self.context.session.set_interaction(flow.id)
+        self.ctx.session.set_interaction(flow.id)
         yield show(v_text(f"Fokus auf Job {index} gesetzt"))

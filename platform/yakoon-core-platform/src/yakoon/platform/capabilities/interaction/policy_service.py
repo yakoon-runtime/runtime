@@ -60,9 +60,7 @@ class DefaultPolicyService:
         if pol.required and raw_str == "":
             return PolicyValidationResult(
                 ok=False,
-                errors=[
-                    PolicyValidationError("", "Wert ist erforderlich."),
-                ],
+                errors=(PolicyValidationError("", "Wert ist erforderlich."),),
             )
 
         if raw_str == "":
@@ -73,18 +71,14 @@ class DefaultPolicyService:
         except ValueError as e:
             return PolicyValidationResult(
                 ok=False,
-                errors=[
-                    PolicyValidationError("", str(e)),
-                ],
+                errors=(PolicyValidationError("", str(e)),),
             )
 
         if pol.pattern:
             if not re.fullmatch(pol.pattern, str(coerced)):
                 return PolicyValidationResult(
                     ok=False,
-                    errors=[
-                        PolicyValidationError("", "Ungültiges Format."),
-                    ],
+                    errors=(PolicyValidationError("", "Ungültiges Format."),),
                 )
 
         return PolicyValidationResult(

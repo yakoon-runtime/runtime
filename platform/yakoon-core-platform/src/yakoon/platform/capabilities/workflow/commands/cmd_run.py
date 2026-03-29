@@ -20,10 +20,10 @@ class CmdWfRun(Command):
     async def run(self, request: Request) -> None:  # noqa: ARG002
 
         key = request.arg(0)  # "kunden_anlage" oder "shell:kunden_anlage"
-        if not self.context:
+        if not self.ctx:
             raise RuntimeError("Context cannot be None.")
 
-        controller_id = self.context.controller.id  # kommt aus deinem Dispatcher
+        controller_id = self.ctx.controller.id  # kommt aus deinem Dispatcher
 
         wfsvc = self.services.get(WorkflowService)
         wfsvc.start(session, controller_id, key)
