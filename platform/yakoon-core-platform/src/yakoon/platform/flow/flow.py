@@ -30,6 +30,9 @@ class Flow:
     input_queue: deque = field(default_factory=deque)
     input_version: int = 0
 
+    def has_stack(self):
+        return bool(self.cursor.stack)
+
     def push_event(self, data: InputEvent):
         self.input_queue.append((self.input_version, data))
 

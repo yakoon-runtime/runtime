@@ -2,9 +2,7 @@ from .dsl import (
     apply_errors,
     apply_values,
     ask,
-    cooperate,
     delay,
-    poll,
     receive,
     show,
     text,
@@ -21,6 +19,4 @@ __all__ = [
     "apply_errors",
     "apply_values",
     "text",
-    "poll",
-    "cooperate",
 ]

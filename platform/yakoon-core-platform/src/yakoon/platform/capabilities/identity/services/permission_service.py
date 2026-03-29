@@ -43,7 +43,6 @@ class DefaultPermissionService:
             "discovery:lookup|rx",
             # demo
             "demo:demo.delay|rx",
-            "demo:demo.poll|rx",
             "demo:demo.presenter|rx",
             "demo:demo.ask.simple|rx",
             "demo:demo.ask.validate|rx",

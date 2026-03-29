@@ -220,14 +220,16 @@ class Session:
     async def emit(
         self,
         event: ViewEvent,
-        *,
-        job_id: str | None = None,
-        channel: str = "main",
     ) -> None:
-        job_id = job_id or self._runtime_flow_id or "system"
         if type(event) is not ViewEvent:
             raise RuntimeError(f"Expected ViewEvent, got {type(event).__name__}")
 
         if self._runtime.io is None:
             raise RuntimeError("io cannot be None")
+
+        if not event.channel:
+            raise RuntimeError("ViewEvent missing channel")
+        if not event.job_id:
+            raise RuntimeError("ViewEvent missing job_id")
+
         await self._runtime.io.view(event)

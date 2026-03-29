@@ -27,5 +27,8 @@ class ViewEvent:
     patch: Patch = field(default_factory=Patch)
     meta: dict = field(default_factory=dict)
 
+    channel: str = "main"
+    job_id: str = "system"
+
     def is_final(self) -> bool:
         return self.patch.final

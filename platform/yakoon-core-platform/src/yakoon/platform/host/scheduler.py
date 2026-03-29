@@ -160,9 +160,9 @@ class Scheduler:
                 flow_start = time.time()
 
                 try:
-                    while True:
 
-                        outcome = await self.engine.tick_flow(flow, session)
+                    while True:
+                        outcome = await self.engine.step_flow(flow, session)
 
                         flow_steps += 1
                         steps += 1

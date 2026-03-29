@@ -16,7 +16,6 @@ from .primitives import (
     Outcome,
     Sleep,
     SleepUntil,
-    YieldToScheduler,
 )
 
 
@@ -61,24 +60,6 @@ def ask_until_valid(view: PresenterView, services: ServiceDirectory, *, on_error
             continue
 
         return result.values
-
-
-def poll():
-
-    class Poll:
-
-        async def run(self, flow):
-            if flow.input_queue:
-                _, event = flow.input_queue.popleft()
-                return Outcome(value=event)
-
-            return Outcome(value=None)
-
-    return Poll()
-
-
-def cooperate():
-    return Outcome(control=YieldToScheduler())
 
 
 def receive():

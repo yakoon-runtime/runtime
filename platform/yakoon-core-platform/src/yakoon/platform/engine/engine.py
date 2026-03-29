@@ -1,3 +1,4 @@
+import inspect
 from uuid import uuid4
 
 from yakoon.base.capabilities.audit import AuditLogService
@@ -163,7 +164,7 @@ class CommandEngine:
                 "internal_error",
             ) from exc
 
-    async def tick_flow(self, flow: Flow, session: Session) -> Outcome | None:
+    async def step_flow(self, flow: Flow, session: Session) -> Outcome | None:
 
         cursor = flow.cursor
         request = Request(flow.request)
@@ -181,59 +182,77 @@ class CommandEngine:
         try:
             session._runtime_flow_id = flow.id  # type: ignore
 
-            while True:
+            # ----------------------------------
+            # 1. RESUME (pending_value)
+            # ----------------------------------
+            if flow.pending_value is not None:
+                value = flow.pending_value
+                flow.pending_value = None
 
-                # ----------------------------------
-                # 1. RESUME
-                # ----------------------------------
-                if flow.pending_value is not None:
-                    value = flow.pending_value
-                    flow.pending_value = None
-
+                try:
                     item = await cursor.send(value)
-                    outcome = await self._execute_item(item, flow, session)
+                except StopAsyncIteration:
+                    cursor.pop()
+                    if not cursor.current():
+                        return Outcome(control=Stop())
+                    return None
 
-                else:
-                    # ----------------------------------
-                    # 2. NORMAL STEP
-                    # ----------------------------------
-                    item = await self._next_step(flow, session, command, request)
+            # ----------------------------------
+            # 2. NORMAL STEP
+            # ----------------------------------
+            else:
+                item = await self._next_step(flow, session, command, request)
 
-                    if item is None:
-                        continue
+                if item is None:
+                    return None
 
-                    outcome = await self._execute_item(item, flow, session)
+            # ----------------------------------
+            # 3. SUBGENERATOR (SUBFLOW / CALL)
+            # ----------------------------------
+            if inspect.isasyncgen(item):
+                cursor.push(item)
+                return None
 
-                # ----------------------------------
-                # 3. EFFECTS
-                # ----------------------------------
-                if outcome.effects:
-                    await self._apply_effects(outcome.effects, session, flow)
+            # ----------------------------------
+            # 4. OUTCOME direkt
+            # ----------------------------------
+            if isinstance(item, Outcome):
+                outcome = item
+            else:
+                outcome = await item.run(flow)
 
-                # ----------------------------------
-                # 4. CONTROL → STOP
-                # ----------------------------------
-                if outcome.control is not None:
-                    return outcome
+            # ----------------------------------
+            # 5. EFFECTS
+            # ----------------------------------
+            if outcome.effects:
+                await self._apply_effects(outcome.effects, session, flow)
 
-                # ----------------------------------
-                # 5. VALUE (genau EIN Schritt!)
-                # ----------------------------------
-                if outcome.value is not None:
-                    item = await cursor.send(outcome.value)
-                    outcome = await self._execute_item(item, flow, session)
+            # ----------------------------------
+            # 6. VALUE (nur speichern!)
+            # ----------------------------------
+            if outcome.value is not None:
+                flow.pending_value = outcome.value
+                return None
 
-                    # Effects vom Value-Step müssen noch verarbeitet werden!
-                    if outcome.effects:
-                        await self._apply_effects(outcome.effects, session, flow)
+            # ----------------------------------
+            # 7. CONTROL (Scheduler übernimmt)
+            # ----------------------------------
+            if outcome.control is not None:
+                return outcome
 
-                    if outcome.control is not None:
-                        return outcome
-
-                    continue
+            # ----------------------------------
+            # 8. Kein Ergebnis → nächster Step später
+            # ----------------------------------
+            return None
 
         except StopAsyncIteration:
-            return Outcome(control=Stop())
+            # aktueller Generator ist fertig
+            cursor.pop()
+
+            if not cursor.stack:
+                return Outcome(control=Stop())
+
+            return None
 
         finally:
             session._runtime_flow_id = None  # type: ignore
@@ -241,59 +260,6 @@ class CommandEngine:
     # ----------------------------------------------------
     # INTERNAL
     # ----------------------------------------------------
-
-    async def _execute_item(self, item, flow, session) -> Outcome:
-
-        # Generator = First-Class
-        if hasattr(item, "__aiter__"):
-            return await self._run_generator(item, flow, session)
-
-        if isinstance(item, Outcome):
-            return item
-
-        # normaler Step
-        return await item.run(flow)
-
-    async def _run_generator(self, gen, flow, session) -> Outcome:
-
-        send_value = None
-
-        while True:
-            try:
-                if send_value is None:
-                    item = await anext(gen)
-                else:
-                    item = await gen.asend(send_value)
-                    send_value = None
-
-            except StopAsyncIteration:
-                return Outcome()
-
-            outcome = await self._execute_item(item, flow, session)
-
-            # ----------------------------------
-            # VALUE → zurück in Generator
-            # ----------------------------------
-            if outcome.value is not None:
-                send_value = outcome.value
-                continue
-
-            # ----------------------------------
-            # EFFECTS → sofort anwenden
-            # ----------------------------------
-            if outcome.effects:
-                await self._apply_effects(outcome.effects, session, flow)
-
-            # ----------------------------------
-            # CONTROL → Scheduler übergeben
-            # ----------------------------------
-            if outcome.control is not None:
-                return outcome
-
-            # ----------------------------------
-            # sonst: weiterlaufen
-            # ----------------------------------
-            continue
 
     async def _apply_effects(self, effects: list[Effect], session: Session, flow):
 
@@ -325,7 +291,7 @@ class CommandEngine:
 
             flow.control = None
             flow.pending_value = event
-            return Outcome()
+            return None
 
         # ----------------------------------
         # Resume: Input / Event
