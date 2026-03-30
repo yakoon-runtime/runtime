@@ -45,7 +45,6 @@ from yakoon.base.presentation import View, ViewHeader, v_text
 from .primitives import (
     AutoFocus,
     AwaitEvent,
-    AwaitInput,
     Emit,
     Outcome,
     Sleep,
@@ -99,14 +98,14 @@ def ask(view: View | PresenterView) -> Outcome:
         view = update_header(view)
         return Outcome(
             effects=[AutoFocus(), Emit(view)],
-            control=AwaitInput(),
+            # control=AwaitInput(),
         )
 
     if _is_pv(view):
         view = update_header(view.view)
         return Outcome(
             effects=[AutoFocus(), Emit(view)],
-            control=AwaitInput(),
+            # control=AwaitInput(),
         )
 
     raise TypeError(f"ask() expected View or PresenterView, got {type(view).__name__}")

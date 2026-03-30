@@ -73,7 +73,7 @@ class Scheduler:
             return
 
         # Queue statt single input
-        flow.input_queue.append((flow.input_version, event))
+        flow.input_queue.append((0, event))
 
         # Flow wieder schedulen (nicht Session!)
         self.schedule_flow(flow, session)

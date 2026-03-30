@@ -20,6 +20,7 @@ from yakoon.base.flow.primitives import (
 )
 from yakoon.base.flow.primitives.control import AwaitEvent
 from yakoon.base.presentation import OutputStream, v_error_system
+from yakoon.base.runtime.input.event import InputEvent
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
@@ -182,27 +183,20 @@ class CommandEngine:
             session._runtime_flow_id = flow.id  # type: ignore
 
             # ----------------------------------
-            # 1. RESUME (pending_value)
+            # 2. NORMAL STEP
             # ----------------------------------
-            if flow.pending_value is not None:
-                value = flow.pending_value
-                flow.pending_value = None
+            item = await self._next_step(flow, session, command, request)
 
+            if item is None:
+                return None
+
+            if isinstance(item, InputEvent):
                 try:
-                    item = await cursor.send(value)
+                    item = await cursor.send(item)
                 except StopAsyncIteration:
                     cursor.pop()
                     if not cursor.has_stack():
                         return Outcome(control=Stop())
-                    return None
-
-            # ----------------------------------
-            # 2. NORMAL STEP
-            # ----------------------------------
-            else:
-                item = await self._next_step(flow, session, command, request)
-
-                if item is None:
                     return None
 
             # ----------------------------------
@@ -225,13 +219,6 @@ class CommandEngine:
             # ----------------------------------
             if outcome.effects:
                 await self._apply_effects(outcome.effects, session, flow)
-
-            # ----------------------------------
-            # 6. VALUE (nur speichern!)
-            # ----------------------------------
-            if outcome.value is not None:
-                flow.pending_value = outcome.value
-                return None
 
             # ----------------------------------
             # 7. CONTROL (Scheduler übernimmt)
@@ -281,7 +268,7 @@ class CommandEngine:
         # ----------------------------------
         # Resume: Input / Event
         # ----------------------------------
-        if isinstance(flow.control, AwaitInput):
+        if isinstance(flow.control, (AwaitInput, AwaitEvent)):
 
             if not flow.input_queue:
                 return None
@@ -289,22 +276,9 @@ class CommandEngine:
             _, event = flow.input_queue.popleft()
 
             flow.control = None
-            flow.pending_value = event
-            return None
 
-        # ----------------------------------
-        # Resume: Input / Event
-        # ----------------------------------
-        if isinstance(flow.control, AwaitEvent):
-
-            if not flow.input_queue:
-                return None
-
-            _, event = flow.input_queue.popleft()
-
-            flow.control = None
-            flow.pending_value = event
-            return None
+            # Rückgabewert bei receive()
+            return event
 
         # ----------------------------------
         # NEXT

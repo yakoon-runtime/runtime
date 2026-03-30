@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from yakoon.base.capabilities.presenters import PresenterView
-from yakoon.base.flow.primitives.outcome import Outcome
 from yakoon.base.runtime.services import ServiceDirectory
 
-from ...dsl import ask
+from ...dsl import ask, receive
 from ..internal.validate import apply_errors, validate
 
 # --------------------------------------------------------
@@ -32,12 +31,14 @@ async def form(
     """
 
     while True:
-        event = yield ask(view)
+        yield ask(view)
+
+        event = yield receive()
 
         result = validate(view, event, services)
 
         if result.ok:
-            yield Outcome(value=result)
+            yield result
             break
 
         view = apply_errors(view, result.errors)
