@@ -1,6 +1,5 @@
 from .control import (
     AwaitEvent,
-    AwaitInput,
     Control,
     Sleep,
     SleepUntil,
@@ -15,7 +14,6 @@ __all__ = [
     # .outcome
     "Outcome",
     # .controls
-    "AwaitInput",
     "AwaitEvent",
     "Control",
     "Sleep",

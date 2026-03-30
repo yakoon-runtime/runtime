@@ -10,7 +10,6 @@ from yakoon.base.naming import Key
 from yakoon.base.presentation import (
     ViewEvent,
 )
-from yakoon.base.runtime.input import InputEvent
 from yakoon.base.transports import IO
 from yakoon.platform.flow import Flow
 from yakoon.platform.runtime.trace import ExecutionTrace
@@ -148,18 +147,6 @@ class Session:
         if not self._focus_flow_id:
             return None
         return self.get_flow(self._focus_flow_id)
-
-    # ----------------------------
-    # event
-    # ----------------------------
-
-    def send_event(self, event: InputEvent) -> bool:
-        flow = self.interaction_flow
-        if not flow:
-            return False
-
-        flow.push_event(event)
-        return True
 
     # ----------------------------
     # TOUCH

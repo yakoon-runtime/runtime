@@ -100,14 +100,12 @@ def ask(view: View | PresenterView) -> Outcome:
         view = update_header(view)
         return Outcome(
             effects=[AutoFocus(), EmitView(view)],
-            # control=AwaitInput(),
         )
 
     if _is_pv(view):
         view = update_header(view.view)
         return Outcome(
             effects=[AutoFocus(), EmitView(view)],
-            # control=AwaitInput(),
         )
 
     raise TypeError(f"ask() expected View or PresenterView, got {type(view).__name__}")

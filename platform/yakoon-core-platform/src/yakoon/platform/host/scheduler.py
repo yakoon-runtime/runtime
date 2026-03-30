@@ -12,7 +12,6 @@ from yakoon.base.presentation import (
     v_error_fatal,
     v_error_system,
 )
-from yakoon.base.runtime.input import InputEvent
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.flow import Flow, FlowKind
 from yakoon.platform.runtime import DomainError, PlatformError
@@ -65,17 +64,6 @@ class Scheduler:
             await self.output.send_view(
                 session, v_error_system("Fatal error", error_kind="fatal")
             )
-
-    def resume_input(self, session: Session, event: InputEvent):
-
-        flow = session.interaction_flow
-        if not flow:
-            return
-
-        session.send_event(event)
-
-        # Flow wieder schedulen
-        self.schedule_flow(flow, session)
 
     def schedule_sleep(self, flow, session, wake_at):
         flow.wake_at = wake_at
@@ -147,7 +135,7 @@ class Scheduler:
                 control = flow.control
 
                 # ----------------------------------------------
-                # BLOCKED: AwaitInput
+                # BLOCKED: AwaitEvent
                 # ----------------------------------------------
                 if control and not control.is_runnable(flow):
                     continue

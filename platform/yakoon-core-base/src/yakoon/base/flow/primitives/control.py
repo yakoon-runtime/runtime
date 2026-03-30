@@ -38,24 +38,6 @@ class Stop(Control):
 
 
 # ------------------------------------------------------------
-# Input Handling
-# ------------------------------------------------------------
-
-
-class AwaitInput(Control):
-    blocking = True
-
-    def __init__(self, view=None):
-        self.view = view
-
-    def is_runnable(self, flow):
-        return flow.has_mail()
-
-    def label(self, flow) -> str:
-        return "input"
-
-
-# ------------------------------------------------------------
 # Event Handling
 # ------------------------------------------------------------
 
@@ -71,10 +53,23 @@ class AwaitEvent(Control):
         return "wait"
 
     def is_runnable(self, flow):
-        return bool(flow.inbox[self.channel])
+        return flow.has_mail(self.channel)
 
     def on_enter(self, flow, scheduler, session):
-        # Event liegt schon vor - neue Runde drehen
+        # IMPORTANT:
+        # If an event is already present, we must explicitly reschedule the flow.
+        #
+        # This is required for intra-tick scenarios like:
+        #   yield send(...)
+        #   data = yield receive(...)
+        #
+        # In this case, no external scheduler trigger exists.
+        # Without this reschedule, the flow would remain blocked
+        # even though the event is already available.
+        #
+        # Note:
+        # This does NOT violate the "one step per tick" rule.
+        # It only ensures the next tick is scheduled.
         if flow.has_mail(self.channel):
             scheduler.schedule_flow(flow, session)
 

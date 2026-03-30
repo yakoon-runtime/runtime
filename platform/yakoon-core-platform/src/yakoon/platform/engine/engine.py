@@ -11,7 +11,6 @@ from yakoon.base.dispatch import CommandDispatch, DispatchInput
 from yakoon.base.flow.primitives import (
     AutoFocus,
     AwaitEvent,
-    AwaitInput,
     ClearFocus,
     Effect,
     EmitEvent,
@@ -268,20 +267,6 @@ class CommandEngine:
                 session.set_interaction(None)
 
     async def _next_step(self, flow: Flow, session, command, request):
-
-        # ----------------------------------
-        # Resume: Input / Event
-        # ----------------------------------
-        if isinstance(flow.control, AwaitInput):
-
-            channel = "default"
-
-            event = flow.pop_event(channel)
-            if event is None:
-                return None
-
-            flow.control = None
-            return event
 
         # ----------------------------------
         # Resume: Input / Event

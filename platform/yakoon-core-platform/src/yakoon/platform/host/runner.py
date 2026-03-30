@@ -3,7 +3,6 @@ from __future__ import annotations
 from yakoon.base.catalogs.port import CommandCatalogService
 from yakoon.base.commands import Request
 from yakoon.base.dispatch import CommandDispatch
-from yakoon.base.flow.primitives import AwaitInput
 from yakoon.base.runtime.input import InputEvent
 from yakoon.platform.engine import CommandEngine
 from yakoon.platform.host.scheduler import Scheduler
@@ -26,34 +25,16 @@ class Runner:
     async def on_input(self, event: InputEvent):
 
         text = event.to_text()
-        request = Request(text)
 
-        # --------------------------------------------------
-        # 0. System Command (immer Vorrang)
-        # --------------------------------------------------
+        request = Request(text)
         if request.command in self._global_commands:
             await self.scheduler.dispatch(self.session, CommandDispatch(text))
             return
 
         flow = self.session.interaction_flow
-
-        # --------------------------------------------------
-        # 1. Flow vorhanden + AwaitInput
-        # --------------------------------------------------
-        if flow and isinstance(flow.control, AwaitInput):
-            self.scheduler.resume_input(self.session, event)
-            self.scheduler.schedule_flow(flow, self.session)
-            return
-
-        # --------------------------------------------------
-        # 2. Flow vorhanden → Receive
-        # --------------------------------------------------
         if flow:
-            self.session.send_event(event)
+            flow.push_event(event)
             self.scheduler.schedule_flow(flow, self.session)
             return
 
-        # --------------------------------------------------
-        # 3. Kein Flow → Command Dispatch
-        # --------------------------------------------------
         await self.scheduler.dispatch(self.session, CommandDispatch(text))
