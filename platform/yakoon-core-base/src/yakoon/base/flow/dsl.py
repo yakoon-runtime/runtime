@@ -41,11 +41,13 @@ from typing import TypeGuard
 
 from yakoon.base.capabilities.presenters import PresenterView
 from yakoon.base.presentation import View, ViewHeader, v_text
+from yakoon.base.runtime.input.event import InputEvent
 
 from .primitives import (
     AutoFocus,
     AwaitEvent,
-    Emit,
+    EmitEvent,
+    EmitView,
     Outcome,
     Sleep,
     SleepUntil,
@@ -63,10 +65,10 @@ def show(view: View | PresenterView) -> Outcome:
     Does NOT expect input.
     """
     if isinstance(view, View):
-        return Outcome(effects=[Emit(view)])
+        return Outcome(effects=[EmitView(view)])
 
     if _is_pv(view):
-        return Outcome(effects=[Emit(view.view)])
+        return Outcome(effects=[EmitView(view.view)])
 
     raise TypeError(f"show() expected View or PresenterView, got {type(view).__name__}")
 
@@ -97,21 +99,26 @@ def ask(view: View | PresenterView) -> Outcome:
     if isinstance(view, View):
         view = update_header(view)
         return Outcome(
-            effects=[AutoFocus(), Emit(view)],
+            effects=[AutoFocus(), EmitView(view)],
             # control=AwaitInput(),
         )
 
     if _is_pv(view):
         view = update_header(view.view)
         return Outcome(
-            effects=[AutoFocus(), Emit(view)],
+            effects=[AutoFocus(), EmitView(view)],
             # control=AwaitInput(),
         )
 
     raise TypeError(f"ask() expected View or PresenterView, got {type(view).__name__}")
 
 
-def receive() -> Outcome:
+# --------------------------------------------------------
+# RECEIVE
+# --------------------------------------------------------
+
+
+def receive(channel: str = "default") -> Outcome:
     """
     Wait for the next event.
 
@@ -119,7 +126,21 @@ def receive() -> Outcome:
     - no UI emitted
     - no input expectation enforced
     """
-    return Outcome(control=AwaitEvent())
+    return Outcome(control=AwaitEvent(channel))
+
+
+# --------------------------------------------------------
+# SEND
+# --------------------------------------------------------
+
+
+def send(channel: str, event):
+    if not isinstance(event, InputEvent):
+        event = InputEvent(event)
+    return Outcome(
+        effects=[EmitEvent(channel, event)],
+        # control=YieldToScheduler(),  # entscheidend
+    )
 
 
 # --------------------------------------------------------

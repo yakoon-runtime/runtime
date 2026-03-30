@@ -45,6 +45,7 @@ class DefaultPermissionService:
             "demo:demo.ask.simple|rx",
             "demo:demo.ask.validate|rx",
             "demo:demo.subflow|rx",
+            "demo:demo.send.simple|rx",
             "demo:demo.receive.simple|rx",
         ]
 

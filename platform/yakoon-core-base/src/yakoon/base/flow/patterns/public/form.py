@@ -38,7 +38,6 @@ async def form(
         result = validate(view, event, services)
 
         if result.ok:
-            yield result
-            break
-
-        view = apply_errors(view, result.errors)
+            yield result  # complete(result)
+        else:
+            view = apply_errors(view, result.errors)

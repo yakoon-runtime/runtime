@@ -23,5 +23,3 @@ class CmdQuit(Command):
         if answer:
             access = cast(_SessionMarkAccess, self.ctx.session)
             access.mark("exit_app")
-
-        # yield write("END.")

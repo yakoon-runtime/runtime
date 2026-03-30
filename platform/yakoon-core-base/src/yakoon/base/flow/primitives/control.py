@@ -49,7 +49,7 @@ class AwaitInput(Control):
         self.view = view
 
     def is_runnable(self, flow):
-        return bool(flow.input_queue)
+        return flow.has_mail()
 
     def label(self, flow) -> str:
         return "input"
@@ -61,15 +61,22 @@ class AwaitInput(Control):
 
 
 class AwaitEvent(Control):
+
+    blocking = True
+
+    def __init__(self, channel: str = "default"):
+        self.channel = channel
+
     def label(self, flow):
         return "wait"
 
     def is_runnable(self, flow):
-        return bool(flow.input_queue)
+        return bool(flow.inbox[self.channel])
 
     def on_enter(self, flow, scheduler, session):
-        # nichts tun → passiv warten
-        pass
+        # Event liegt schon vor - neue Runde drehen
+        if flow.has_mail(self.channel):
+            scheduler.schedule_flow(flow, session)
 
 
 # ------------------------------------------------------------

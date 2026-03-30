@@ -1,10 +1,19 @@
+from yakoon.base.runtime.input.event import InputEvent
+
+
 class Effect:
     pass
 
 
-class Emit(Effect):
+class EmitView(Effect):
     def __init__(self, view):
         self.view = view
+
+
+class EmitEvent(Effect):
+    def __init__(self, channel: str, event: InputEvent):
+        self.channel = channel
+        self.event = event
 
 
 class SetFocus(Effect):

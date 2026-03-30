@@ -72,10 +72,9 @@ class Scheduler:
         if not flow:
             return
 
-        # Queue statt single input
-        flow.input_queue.append((0, event))
+        session.send_event(event)
 
-        # Flow wieder schedulen (nicht Session!)
+        # Flow wieder schedulen
         self.schedule_flow(flow, session)
 
     def schedule_sleep(self, flow, session, wake_at):

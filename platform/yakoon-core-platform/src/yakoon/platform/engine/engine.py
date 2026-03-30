@@ -10,17 +10,18 @@ from yakoon.base.controllers import Controller
 from yakoon.base.dispatch import CommandDispatch, DispatchInput
 from yakoon.base.flow.primitives import (
     AutoFocus,
+    AwaitEvent,
     AwaitInput,
     ClearFocus,
     Effect,
-    Emit,
+    EmitEvent,
+    EmitView,
     Outcome,
     SetFocus,
     Stop,
 )
-from yakoon.base.flow.primitives.control import AwaitEvent
 from yakoon.base.presentation import OutputStream, v_error_system
-from yakoon.base.runtime.input.event import InputEvent
+from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
@@ -183,7 +184,7 @@ class CommandEngine:
             session._runtime_flow_id = flow.id  # type: ignore
 
             # ----------------------------------
-            # 2. NORMAL STEP
+            # 21. NORMAL STEP
             # ----------------------------------
             item = await self._next_step(flow, session, command, request)
 
@@ -200,14 +201,14 @@ class CommandEngine:
                     return None
 
             # ----------------------------------
-            # 3. SUBGENERATOR (SUBFLOW / CALL)
+            # 2. SUBGENERATOR (SUBFLOW / CALL)
             # ----------------------------------
             if inspect.isasyncgen(item):
                 cursor.push(item)
                 return None
 
             # ----------------------------------
-            # 4. OUTCOME direkt
+            # 3. OUTCOME direkt
             # ----------------------------------
             if isinstance(item, Outcome):
                 outcome = item
@@ -215,19 +216,19 @@ class CommandEngine:
                 outcome = await item.run(flow)
 
             # ----------------------------------
-            # 5. EFFECTS
+            # 4. EFFECTS
             # ----------------------------------
             if outcome.effects:
                 await self._apply_effects(outcome.effects, session, flow)
 
             # ----------------------------------
-            # 7. CONTROL (Scheduler übernimmt)
+            # 5. CONTROL (Scheduler übernimmt)
             # ----------------------------------
             if outcome.control is not None:
                 return outcome
 
             # ----------------------------------
-            # 8. Kein Ergebnis → nächster Step später
+            # 6. Kein Ergebnis → nächster Step später
             # ----------------------------------
             return None
 
@@ -251,11 +252,14 @@ class CommandEngine:
 
         for effect in effects:
 
-            if isinstance(effect, Emit):
+            if isinstance(effect, EmitView):
                 await self._output.send_view(session, effect.view)
 
             elif isinstance(effect, AutoFocus):
                 session.set_interaction(flow.id)
+
+            elif isinstance(effect, EmitEvent):
+                flow.inbox[effect.channel].append(effect.event)
 
             elif isinstance(effect, SetFocus):
                 session.set_interaction(effect.flow_id)
@@ -268,16 +272,29 @@ class CommandEngine:
         # ----------------------------------
         # Resume: Input / Event
         # ----------------------------------
-        if isinstance(flow.control, (AwaitInput, AwaitEvent)):
+        if isinstance(flow.control, AwaitInput):
 
-            if not flow.input_queue:
+            channel = "default"
+
+            event = flow.pop_event(channel)
+            if event is None:
                 return None
 
-            _, event = flow.input_queue.popleft()
+            flow.control = None
+            return event
+
+        # ----------------------------------
+        # Resume: Input / Event
+        # ----------------------------------
+        if isinstance(flow.control, AwaitEvent):
+
+            channel = flow.control.channel
+
+            event = flow.pop_event(channel)
+            if event is None:
+                return None
 
             flow.control = None
-
-            # Rückgabewert bei receive()
             return event
 
         # ----------------------------------
