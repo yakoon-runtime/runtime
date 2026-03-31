@@ -3,7 +3,7 @@ from typing import Literal, TypeAlias
 from yakoon.base import ports
 from yakoon.base.capabilities.discovery import LookupResolver
 from yakoon.base.capabilities.identity import PermissionService
-from yakoon.base.capabilities.interaction import FieldPolicy, PolicyService
+from yakoon.base.capabilities.interaction import FieldPolicy, FieldPolicyEngine
 from yakoon.base.catalogs import (
     CommandCatalog,
     CommandInfo,
@@ -129,7 +129,7 @@ def _compose_permission_roles(container: Container):
 
 
 def _compose_policies(container: Container):
-    policy = container.get(PolicyService)
+    policy = container.get(FieldPolicyEngine)
     policy.register_defaults()
     policy.register_policies(
         [

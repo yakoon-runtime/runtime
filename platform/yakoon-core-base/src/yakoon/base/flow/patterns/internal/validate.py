@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any
 
-from yakoon.base.capabilities.interaction import PolicyService
+from yakoon.base.capabilities.interaction import FieldPolicyEngine
 from yakoon.base.projection import Projection, ProjectionQuery
 from yakoon.base.projection.model import FieldError
 from yakoon.base.runtime import Container
@@ -28,7 +28,7 @@ def validate(
     container: Container,
 ) -> ValidationResult:
 
-    policy = container.get(PolicyService)
+    policy = container.get(FieldPolicyEngine)
 
     values: dict[str, Any] = {}
     errors: dict[str, list[FieldError]] = {}

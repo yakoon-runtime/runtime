@@ -3,15 +3,15 @@ from collections.abc import Callable
 
 from yakoon.base.capabilities.interaction import (
     FieldPolicy,
-    PolicyValidationError,
-    PolicyValidationResult,
+    FieldPolicyValidationError,
+    FieldPolicyValidationResult,
     RawValue,
 )
 from yakoon.base.projection.model import FieldType
 from yakoon.base.values import SecretValue
 
 
-class DefaultPolicyService:
+class DefaultFieldPolicyEngine:
     def __init__(self):
         self._policies: dict[str, FieldPolicy] = {}
         self._validators: dict[str, Callable] = {}
@@ -51,37 +51,39 @@ class DefaultPolicyService:
             ]
         )
 
-    def validate(self, *, policy_key: str, raw: RawValue) -> PolicyValidationResult:
+    def validate(
+        self, *, policy_key: str, raw: RawValue
+    ) -> FieldPolicyValidationResult:
         pol = self.get_policy(policy_key)
 
         raw_str = "" if raw is None else str(raw).strip()
 
         # required (policy-level default)
         if pol.required and raw_str == "":
-            return PolicyValidationResult(
+            return FieldPolicyValidationResult(
                 ok=False,
-                errors=(PolicyValidationError("", "Wert ist erforderlich."),),
+                errors=(FieldPolicyValidationError("", "Wert ist erforderlich."),),
             )
 
         if raw_str == "":
-            return PolicyValidationResult(ok=True, value=None)
+            return FieldPolicyValidationResult(ok=True, value=None)
 
         try:
             coerced = self._coerce_policy(pol, raw_str)
         except ValueError as e:
-            return PolicyValidationResult(
+            return FieldPolicyValidationResult(
                 ok=False,
-                errors=(PolicyValidationError("", str(e)),),
+                errors=(FieldPolicyValidationError("", str(e)),),
             )
 
         if pol.pattern:
             if not re.fullmatch(pol.pattern, str(coerced)):
-                return PolicyValidationResult(
+                return FieldPolicyValidationResult(
                     ok=False,
-                    errors=(PolicyValidationError("", "Ungültiges Format."),),
+                    errors=(FieldPolicyValidationError("", "Ungültiges Format."),),
                 )
 
-        return PolicyValidationResult(
+        return FieldPolicyValidationResult(
             ok=True,
             value=self._wrap_secret_policy(pol, coerced),
         )

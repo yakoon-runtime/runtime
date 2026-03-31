@@ -1,12 +1,12 @@
 from typing import Any
 
 from yakoon.base.capabilities.interaction import (
-    PolicyService,
+    FieldPolicyEngine,
 )
 from yakoon.base.plugins import ModuleExport, ModuleMeta
 from yakoon.base.runtime import Container
 
-from . import DefaultPolicyService
+from . import DefaultFieldPolicyEngine
 
 meta = ModuleMeta(
     name="yakoon.interaction",
@@ -28,7 +28,7 @@ def register(container: Container) -> ModuleExport:
         provide(port_type, instance)
         public_ports.append(port_type)
 
-    publish(PolicyService, DefaultPolicyService())
+    publish(FieldPolicyEngine, DefaultFieldPolicyEngine())
 
     return ModuleExport(
         meta,

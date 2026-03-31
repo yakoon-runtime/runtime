@@ -27,13 +27,13 @@ CoercedValue: TypeAlias = object
 
 
 @dataclass(frozen=True, slots=True)
-class PolicyValidationError:
+class FieldPolicyValidationError:
     field_key: str
     message: str
 
 
 @dataclass(frozen=True, slots=True)
-class PolicyValidationResult:
+class FieldPolicyValidationResult:
     ok: bool
     value: object | None = None
-    errors: tuple[PolicyValidationError, ...] = ()
+    errors: tuple[FieldPolicyValidationError, ...] = ()
