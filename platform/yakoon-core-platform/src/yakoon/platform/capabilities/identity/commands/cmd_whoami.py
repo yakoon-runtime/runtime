@@ -12,7 +12,12 @@ class CmdWhoAmI(Command):
 
         username = self.ctx.session.get_username()
         if username:
-            projection = await projector.project("show_user", user=username)
+            projection = await projector.project(
+                "show_user",
+                state={
+                    "user": username,
+                },
+            )
         else:
             projection = await projector.project("show_hint")
 

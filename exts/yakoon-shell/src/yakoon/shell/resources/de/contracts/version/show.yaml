@@ -6,10 +6,10 @@ projection:
   blocks:
     - type: kv
       items:
-      - ["Platform Version", "{{ version  }}"]
-      - ["Python", "{{ python }}"]
-      - ["Hostname", "{{ hostname }}"]
-      - ["Uptime", "{{ uptime }}"]
-      - ["Time (UTC)", "{{ time }}"]
+      - ["Platform Version", "{{ state.version  }}"]
+      - ["Python", "{{ state.python }}"]
+      - ["Hostname", "{{ state.hostname }}"]
+      - ["Uptime", "{{ state.uptime }}"]
+      - ["Time (UTC)", "{{ state.time }}"]
   meta:
     code: "shell.version.show"

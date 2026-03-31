@@ -40,3 +40,23 @@ class ProjectionHeader:
     error_code: str | None = None
     meta: dict[str, Any] | ProjectionMeta | None = None
     expects_input: bool = False
+
+
+class _ProjectionHeader:
+
+    # WHAT is this state?
+    role: Role = "info"
+
+    # HOW should the client interpret interaction?
+    intent: Literal["info", "input", "progress", "transition"] = "info"
+
+    # Human communication
+    title: str | None = None
+    subtitle: str | None = None
+
+    # Error semantics
+    error_kind: ErrorKind | None = None
+    error_code: str | None = None
+
+    # Extension point (careful usage)
+    meta: dict[str, Any] | None = None

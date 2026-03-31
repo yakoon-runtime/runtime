@@ -5,4 +5,4 @@ projection:
   title: "Commands"
   blocks:
     - type: text
-      text: Das Programm "{{prg_name}}" wurde nicht gefunden.
+      text: Das Programm "{{state.prg_name}}" wurde nicht gefunden.

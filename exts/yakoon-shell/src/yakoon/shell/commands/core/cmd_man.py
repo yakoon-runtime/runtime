@@ -40,7 +40,12 @@ class CmdMan(Command):
         command_key = request.arg(0)
         if not command_key:
             projector = await self.create_projector()
-            projection = await projector.project("no_manual_entry", command_key="")
+            projection = await projector.project(
+                "no_manual_entry",
+                state={
+                    "command_key": "",
+                },
+            )
             yield present(projection)
             return
 
@@ -92,8 +97,12 @@ class CmdMan(Command):
         # ----------------------------------------------------
         if not cmd_info:
             projector = await self.create_projector()
+
             projection = await projector.project(
-                "no_manual_entry", command_key=command_key
+                "no_manual_entry",
+                state={
+                    "command_key": command_key,
+                },
             )
             yield present(projection)
             return
@@ -126,7 +135,8 @@ class CmdMan(Command):
             # use the own projector.
             projector = await self.create_projector()
             projection = await projector.project(
-                "no_manual_entry", command_key=command_key
+                "no_manual_entry",
+                state={"command_key": command_key},
             )
             yield present(projection)
 
@@ -177,9 +187,11 @@ class CmdMan(Command):
 
             projection = await projector.project(
                 "show_help",
-                mode="shell",
-                shell_commands=shell_commands,
-                controllers=controllers,
+                state={
+                    "mode": "shell",
+                    "shell_commands": shell_commands,
+                    "controllers": controllers,
+                },
             )
             yield present(projection)
             return
@@ -209,7 +221,11 @@ class CmdMan(Command):
 
         commands = sorted(merged.values(), key=lambda c: c.key)
         projection = await projector.project(
-            "show_help", mode="program", commands=commands
+            "show_help",
+            state={
+                "mode": "program",
+                "commands": commands,
+            },
         )
         yield present(projection)
 

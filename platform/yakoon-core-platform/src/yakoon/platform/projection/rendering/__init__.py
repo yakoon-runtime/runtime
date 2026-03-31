@@ -1,5 +1,5 @@
 from .engine import JinjaRenderEngine
-from .service import TemplateProjectionRenderer
+from .renderer import TemplateProjectionRenderer
 
 __all__ = [
     "TemplateProjectionRenderer",

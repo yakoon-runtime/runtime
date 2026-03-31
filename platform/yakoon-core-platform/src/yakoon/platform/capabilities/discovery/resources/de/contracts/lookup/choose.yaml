@@ -5,14 +5,14 @@ projection:
   title: "Meintest du …?"
   blocks:
     - type: text
-      text: "{{ query }}"
+      text: "{{ state.query }}"
 
     - type: rule
       style: strong
 
     - type: list
       items:
-        {% for c in candidates %}
+        {% for c in state.candidates %}
         - head:
             - { type: code, code: "{{ c['command_key'] }}" }
             - { type: text, text: " (" }

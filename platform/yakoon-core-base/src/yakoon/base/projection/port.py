@@ -19,7 +19,7 @@ class Projector(Protocol):
     async def project(
         self,
         name: str,
-        **data: Any,
+        state: dict[str, Any] | None = None,
     ) -> Projection: ...
 
 

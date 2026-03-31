@@ -36,7 +36,18 @@ class CmdSu(Command):
             permissions.apply_account_permissions(session, account)
 
             await self.container.get(SessionStore).save(session)
-            await projector.project("success", user=username)
+            await projector.project(
+                "success",
+                state={
+                    "user": username,
+                },
+            )
 
         else:
-            await projector.project("failed", user=username, reason=result.reason)
+            await projector.project(
+                "failed",
+                state={
+                    "user": username,
+                    "reason": result.reason,
+                },
+            )

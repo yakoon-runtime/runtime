@@ -38,8 +38,10 @@ class CmdLookup(Command):
         if payload:
             await projector.project(
                 "choose",
-                query=payload.query,
-                candidates=list(payload.candidates),
+                state={
+                    "query": payload.query,
+                    "candidates": list(payload.candidates),
+                },
             )
 
         return

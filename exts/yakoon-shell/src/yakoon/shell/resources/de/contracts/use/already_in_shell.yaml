@@ -5,4 +5,4 @@ projection:
   title: "Commands"
   blocks:
     - type: text
-      text: Programm "{{controller.id}}" ist bereits aktiv.
+      text: Programm "{{state.controller.id}}" ist bereits aktiv.

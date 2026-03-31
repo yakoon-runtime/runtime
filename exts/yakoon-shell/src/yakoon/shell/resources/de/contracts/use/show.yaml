@@ -6,4 +6,4 @@ projection:
   blocks:
     - type: text
       text: > 
-        {{ controllers | map(attribute='id') | join('  ') }}
+        {{ state.controllers | map(attribute='id') | join('  ') }}

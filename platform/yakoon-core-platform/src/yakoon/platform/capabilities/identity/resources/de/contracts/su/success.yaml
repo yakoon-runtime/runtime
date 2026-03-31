@@ -5,4 +5,4 @@ projection:
   title: "Commands"
   blocks:
     - type: text
-      text: su {{user}}
+      text: su {{state.user}}

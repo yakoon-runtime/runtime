@@ -16,11 +16,13 @@ class CmdVersion(Command):
         projector = await self.create_projector()
         projection = await projector.project(
             "show",
-            version=get_platform_version(),
-            python=platform.python_version(),
-            hostname=platform.node(),
-            uptime=get_uptime(),
-            time=datetime.now(UTC).isoformat(),
+            state={
+                "version": get_platform_version(),
+                "python": platform.python_version(),
+                "hostname": platform.node(),
+                "uptime": get_uptime(),
+                "time": datetime.now(UTC).isoformat(),
+            },
         )
         yield present(projection)
 

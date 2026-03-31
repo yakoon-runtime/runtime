@@ -3,14 +3,14 @@ projection:
   role: info
   title: "Commands"
   blocks:
-    {% if mode == "shell" %}
+    {% if state.mode == "shell" %}
 
     - type: text   
       text: "Commands"
 
     - type: list
       items:
-        {% for c in shell_commands %}
+        {% for c in state.shell_commands %}
         - head: "{{ c.key }}" 
         {% endfor %}
 
@@ -22,18 +22,18 @@ projection:
 
     - type: list
       items:
-        {% for p in controllers %}
+        {% for p in state.controllers %}
           - head: "{{ p.id }}"
         {% endfor %}
 
-    {% elif mode == "program" %}
+    {% elif state.mode == "program" %}
 
     - type: text
       text: "Commands"
 
     - type: list
       items:
-        {% for c in commands %}
+        {% for c in state.commands %}
         - head: "{{ c.key }}"
         {% endfor %}
 

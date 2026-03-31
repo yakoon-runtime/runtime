@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import yaml
 
 from yakoon.base.projection.model import Projection
@@ -14,8 +16,8 @@ class TemplateProjectionRenderer:
     def __init__(self, container: Container) -> None:
         self._container = container
 
-    async def render_projection(
-        self, ctx: RenderContext, name: str, **data
+    async def render(
+        self, ctx: RenderContext, name: str, state: dict[str, Any]
     ) -> Projection:
         loader = self._container.get(ResourceLoader)
         source = loader.load_text(ctx.resource.child(name))
@@ -27,15 +29,17 @@ class TemplateProjectionRenderer:
         meta = {"name": name, "resource": ctx.resource.path}
 
         reserved = {"_meta"}  # later: _host, _ui, _env, _i18n ...?
-        collisions = reserved.intersection(data.keys())
+        collisions = reserved.intersection(state.keys())
         if collisions:
             raise KeyError(
                 f"Template context keys reserved by platform: {sorted(collisions)}. "
                 "Please rename your payload fields."
             )
 
-        context = dict(data)
-        context["_meta"] = meta
+        context = {
+            "state": state,
+            "_meta": meta,
+        }
 
         rendered_text = await engine.render_str(source, context=context)
 
@@ -45,5 +49,5 @@ class TemplateProjectionRenderer:
             raise TypeError("Root template must be a mapping")
 
         # 3) parse/validate into View
-        View = self._container.get(ProjectionParser)
-        return View.parse_spec(rendered_text)
+        parser = self._container.get(ProjectionParser)
+        return parser.parse_spec(rendered_text)

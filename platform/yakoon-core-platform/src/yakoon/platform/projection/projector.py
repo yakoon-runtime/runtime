@@ -34,11 +34,16 @@ class TemplateProjector:
     async def project(
         self,
         name: str,
-        **data: Any,
+        state: dict[str, Any] | None = None,
     ) -> Projection:
-        projection = await self._renderer.render_projection(self._ctx, name, **data)
+
+        if state is None:
+            state = {}
+
+        projection = await self._renderer.render(self._ctx, name, state)
         if projection.id is None:
             raise RuntimeError(
                 "Renderer returned a Projection without id (parser invariant violated)"
             )
+
         return projection

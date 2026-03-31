@@ -6,8 +6,8 @@ from .context import RenderContext
 
 
 class ProjectionRenderer(Protocol):
-    async def render_projection(
-        self, ctx: RenderContext, state: str, **data
+    async def render(
+        self, ctx: RenderContext, name: str, state: dict[str, Any]
     ) -> Projection: ...
 
 

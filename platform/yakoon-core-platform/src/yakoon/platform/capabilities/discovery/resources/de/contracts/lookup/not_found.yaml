@@ -5,7 +5,7 @@ projection:
   title: "Nichts gefunden"
   blocks:
     - type: text
-      text: "{{ query }}"
+      text: "{{ state.query }}"
     
     - type: text
       text: "Versuch’s mit einem anderen Begriff oder nutze `man --internal`."

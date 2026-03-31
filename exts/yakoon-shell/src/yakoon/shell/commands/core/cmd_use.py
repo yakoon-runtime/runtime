@@ -32,13 +32,21 @@ class CmdUse(Command):
                 infos.append(controller)
 
         if infos and not name:
-            projection = await projector.project("show", controllers=infos)
+            projection = await projector.project(
+                "show",
+                state={
+                    "controllers": infos,
+                },
+            )
             yield present(projection)
         elif infos:
 
             if name == access.get_active_controller():
                 projection = await projector.project(
-                    "already_in_shell", controller=infos[0]
+                    "already_in_shell",
+                    state={
+                        "controller": infos[0],
+                    },
                 )
                 yield present(projection)
             else:
@@ -47,5 +55,10 @@ class CmdUse(Command):
                 yield write(f"Aktiver Kontroller: {name}")
 
         else:
-            projector = await projector.project("name_not_found", prg_name=name)
+            projector = await projector.project(
+                "name_not_found",
+                state={
+                    "prg_name": name,
+                },
+            )
             yield present(projector)
