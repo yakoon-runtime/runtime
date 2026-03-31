@@ -10,7 +10,7 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea
 
 from yakoon.base.projection.model import Field
-from yakoon.base.runtime.input import InputEvent
+from yakoon.base.runtime import InputEvent
 
 
 class TerminalUI:

@@ -2,7 +2,7 @@ import asyncio
 
 from yakoon.base.interations import ConsoleInteraction
 from yakoon.base.projection import ProjectionEvent, ProjectionQuery
-from yakoon.base.runtime.input import InputEvent
+from yakoon.base.runtime import InputEvent
 from yakoon.base.transports import Transport
 from yakoon.console.output import ConsoleOutput
 from yakoon.console.ui import TerminalSurface, TerminalUI

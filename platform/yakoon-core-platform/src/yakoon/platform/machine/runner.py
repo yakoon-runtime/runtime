@@ -3,7 +3,7 @@ from __future__ import annotations
 from yakoon.base.catalogs.port import CommandRegistry
 from yakoon.base.commands import Request
 from yakoon.base.dispatch import CommandDispatch
-from yakoon.base.runtime.input import InputEvent
+from yakoon.base.runtime import InputEvent
 from yakoon.platform.machine import CommandEngine
 from yakoon.platform.machine.scheduler import Scheduler
 from yakoon.platform.runtime import Session

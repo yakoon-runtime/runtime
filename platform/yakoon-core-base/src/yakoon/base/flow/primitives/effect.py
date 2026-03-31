@@ -1,4 +1,4 @@
-from yakoon.base.runtime.input.event import InputEvent
+from yakoon.base.runtime import InputEvent
 
 
 class Effect:

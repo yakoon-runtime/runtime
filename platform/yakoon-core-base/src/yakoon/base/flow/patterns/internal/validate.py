@@ -6,8 +6,7 @@ from typing import Any
 from yakoon.base.capabilities.interaction import FieldPolicyEngine
 from yakoon.base.projection import Projection, ProjectionQuery
 from yakoon.base.projection.model import FieldError
-from yakoon.base.runtime import Container
-from yakoon.base.runtime.input import InputEvent
+from yakoon.base.runtime import Container, InputEvent
 
 
 @dataclass

@@ -21,8 +21,7 @@ from yakoon.base.flow.primitives import (
 )
 from yakoon.base.projection.model import v_error_system
 from yakoon.base.projection.transport import Output
-from yakoon.base.runtime import Container
-from yakoon.base.runtime.input import InputEvent
+from yakoon.base.runtime import Container, InputEvent
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
     CommandNotFound,

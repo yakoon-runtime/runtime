@@ -39,7 +39,7 @@ Commands = Orchestration
 from dataclasses import replace
 
 from yakoon.base.projection.model import Projection, ProjectionHeader, v_text
-from yakoon.base.runtime.input.event import InputEvent
+from yakoon.base.runtime import InputEvent
 
 from .primitives import (
     AutoFocus,
