@@ -1,11 +1,22 @@
 from __future__ import annotations
 
-from .block import Block
-from .event import ViewEvent
-from .patch import PatchAppendStructure, PatchAppendText, PatchReset
+from .model import Block, Field, Projection
+from .transport import (
+    PatchAppendStructure,
+    PatchAppendText,
+    PatchReset,
+    ProjectionEvent,
+)
 
 
-class ViewQuery:
+class ProjectionQuery:
+    """
+    Unified query model for Projection.
+
+    Can be constructed from:
+    - Projection (snapshot)
+    - ProjectionEvent stream (incremental)
+    """
 
     def __init__(self, *, include_text: bool = False):
         self.include_text = include_text
@@ -16,23 +27,51 @@ class ViewQuery:
         self.blocks: list[Block] = []
 
         # indexed
-        self._fields = []
-        self._required_fields = []
+        self._fields: list[Field] = []
+        self._required_fields: list[Field] = []
 
-        # optional
+        # optional text buffer
         self._text: dict[tuple[str, str], str] | None = {} if include_text else None
 
     # ---------------------------------------------------------
-    # APPLY
+    # FACTORIES
     # ---------------------------------------------------------
 
-    def apply(self, event: ViewEvent):
+    @classmethod
+    def from_projection(
+        cls, projection: Projection, *, include_text: bool = False
+    ) -> ProjectionQuery:
+        q = cls(include_text=include_text)
+
+        q.header = projection.header
+
+        for block in projection.blocks:
+            q._append_block(block)
+
+        return q
+
+    # ---------------------------------------------------------
+    # INTERNAL BUILDING
+    # ---------------------------------------------------------
+
+    def _append_block(self, block: Block):
+        self.blocks.append(block)
+
+        for field in getattr(block, "fields", []):
+            self._fields.append(field)
+
+            if getattr(field, "required", False):
+                self._required_fields.append(field)
+
+    # ---------------------------------------------------------
+    # APPLY (Streaming Mode)
+    # ---------------------------------------------------------
+
+    def apply(self, event: ProjectionEvent):
 
         for op in event.patch.ops:
 
-            # -------------------------
             # RESET
-            # -------------------------
             if isinstance(op, PatchReset):
                 self.header = None
                 self.blocks.clear()
@@ -42,9 +81,7 @@ class ViewQuery:
                 if self._text is not None:
                     self._text.clear()
 
-            # -------------------------
             # STRUCTURE
-            # -------------------------
             elif isinstance(op, PatchAppendStructure):
 
                 for node in op.nodes:
@@ -52,18 +89,9 @@ class ViewQuery:
                     if not block:
                         continue
 
-                    self.blocks.append(block)
+                    self._append_block(block)
 
-                    # Index direkt aufbauen
-                    for field in getattr(block, "fields", []):
-                        self._fields.append(field)
-
-                        if getattr(field, "required", False):
-                            self._required_fields.append(field)
-
-            # -------------------------
             # TEXT (optional)
-            # -------------------------
             elif isinstance(op, PatchAppendText):
 
                 if self._text is None:
@@ -72,44 +100,55 @@ class ViewQuery:
                 key = (op.block_id, op.key)
                 self._text[key] = self._text.get(key, "") + op.text
 
-        # -------------------------
         # HEADER
-        # -------------------------
-
         if event.header:
             self.header = event.header
 
     # ---------------------------------------------------------
-    # PUBLIC
+    # STATE
     # ---------------------------------------------------------
 
     def expects_input(self) -> bool:
         return bool(self.header and self.header.expects_input)
 
+    def has_blocks(self) -> bool:
+        return bool(self.blocks)
+
     def has_fields(self) -> bool:
         return bool(self._fields)
 
-    def get_first_field(self):
+    # ---------------------------------------------------------
+    # FIELD QUERIES
+    # ---------------------------------------------------------
+
+    def fields(self) -> list[Field]:
+        return self._fields
+
+    def bound_fields(self) -> list[Field]:
+        return [f for f in self._fields if getattr(f, "var", None)]
+
+    def required_fields(self) -> list[Field]:
+        return self._required_fields
+
+    def first_field(self) -> Field | None:
         return self._fields[0] if self._fields else None
 
     # ---------------------------------------------------------
-    # QUERIES (O(1))
+    # BLOCK QUERIES
     # ---------------------------------------------------------
 
-    def get_blocks(self):
+    def get_blocks(self) -> list[Block]:
         return self.blocks
 
-    def get_fields(self):
-        return self._fields
-
-    def get_required_fields(self):
-        return self._required_fields
-
-    def get_blocks_by_type(self, type_name):
+    def get_blocks_by_type(self, type_name: str) -> list[Block]:
         return [b for b in self.blocks if getattr(b, "type", None) == type_name]
+
+    # ---------------------------------------------------------
+    # TEXT (optional)
+    # ---------------------------------------------------------
 
     def get_text(self, block_id: str, key: str) -> str:
         if self._text is None:
-            raise RuntimeError("Text not enabled in ViewQuery")
+            raise RuntimeError("Text not enabled in ProjectionQuery")
 
         return self._text.get((block_id, key), "")

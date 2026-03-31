@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.catalogs import CommandCatalogService
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.catalogs import CommandRegistry
+from yakoon.base.runtime import Container
 
 if TYPE_CHECKING:
     from yakoon.base.commands import Command, CommandSet
@@ -15,14 +15,14 @@ class CommandDirectory:
     Engine-only command type registry.
 
     Holds real command types per controller and materializes Command instances.
-    Resolve semantics (scope/order) live in CommandCatalogService (CommandInfo-only).
+    Resolve semantics (scope/order) live in CommandIndexBuilder (CommandInfo-only).
 
     Internal structure:
         controller_id -> (command_key -> CommandType)
     """
 
-    def __init__(self, services: ServiceDirectory) -> None:
-        self._services = services
+    def __init__(self, container: Container) -> None:
+        self._container = container
         self._types: dict[str, dict[str, type[Command]]] = {}
 
     # ---------------------------------------------------------------------
@@ -71,13 +71,13 @@ class CommandDirectory:
         NOTE:
             The input controller_id is the *resolve context*.
             The returned owner_id is the *defining controller* of the resolved command
-            (can differ due to GLOBAL/SHELL scope rules handled by CommandCatalogService).
+            (can differ due to GLOBAL/SHELL scope rules handled by CommandIndexBuilder).
         """
         key = command_key.strip()
         if not key:
             return None
 
-        catalog = self._services.get(CommandCatalogService)
+        catalog = self._container.get(CommandRegistry)
 
         # resolve_info() decides WHICH defining controller owns that command (CommandInfo.controller_id)
         ci = catalog.resolve_info(controller_id, key)
@@ -98,13 +98,13 @@ class CommandDirectory:
 
     def validate(self) -> None:
         """
-        Validate registry-level integrity + cross-check against CommandCatalogService.
+        Validate registry-level integrity + cross-check against CommandIndexBuilder.
 
         Ensures:
           - every CommandInfo has a corresponding real command type
           - optionally, no real type exists without a CommandInfo (prevents "ghost commands")
         """
-        catalog = self._services.get(CommandCatalogService)
+        catalog = self._container.get(CommandRegistry)
 
         missing: list[str] = []
         for ci in catalog.all():

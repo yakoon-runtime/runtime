@@ -8,18 +8,18 @@ from yakoon.base.capabilities.discovery import (
     Resolved,
 )
 from yakoon.base.commands import Request
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 from yakoon.platform.runtime.sessions import Session
 
 
 class DefaultLookupResolverService:
 
-    def __init__(self, services: ServiceDirectory):
-        self._services = services
+    def __init__(self, container: Container):
+        self._container = container
 
     async def resolve(self, session: Session, request: Request) -> str | None:
-        discovery = self._services.get(DiscoveryService)
-        store = self._services.get(LookupCandidateStoreService)
+        discovery = self._container.get(DiscoveryService)
+        store = self._container.get(LookupCandidateStoreService)
 
         query = request.raw
         result = await discovery.discover(session, request)

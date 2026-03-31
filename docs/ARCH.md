@@ -56,7 +56,7 @@ Damit existiert bereits ein stabiler, deterministischer Steuerkanal – ein zus�
 * führt `dispatch(session, input)` aus
 * kennt keine UI
 * arbeitet Commands ab
-* nutzt Services (Queue, Dialog, Workflow, Presenter)
+* nutzt Services (Queue, Dialog, Workflow, Projector)
 * emittet Output über `session.emit(...)`
 
 #### 3.2 WorkflowService
@@ -89,7 +89,7 @@ Er hält:
 
 DialogService ersetzt Command-Returns als Steuermechanismus.
 
-#### 3.5 Presenter/Templates
+#### 3.5 Projector/Templates
 
 Templates bleiben relevant für **Textausgaben**:
 

@@ -1,5 +1,27 @@
-from .stream import OutputStream
+from .event import ProjectionEvent
+from .node import Node
+from .patch import (
+    Patch,
+    PatchAppendStructure,
+    PatchAppendText,
+    PatchFinishNode,
+    PatchOp,
+    PatchReset,
+)
+from .stream import Output
 
 __all__ = [
-    "OutputStream",
+    # . stream
+    "Output",
+    # .node
+    "Node",
+    # .patch
+    "PatchReset",
+    "PatchAppendText",
+    "PatchAppendStructure",
+    "PatchFinishNode",
+    "PatchOp",
+    "Patch",
+    # .event
+    "ProjectionEvent",
 ]

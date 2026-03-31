@@ -14,10 +14,10 @@ class CmdQuit(Command):
 
     async def run(self, request: Request):
 
-        presenter = await self.get_presenter()
-        view = await presenter.render("really_quit")
+        projector = await self.create_projector()
+        projection = await projector.project("really_quit")
 
-        result = yield form(view, self.services)
+        result = yield form(projection, self.container)
 
         answer = bool(result.values.get("quit"))
         if answer:

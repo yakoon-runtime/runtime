@@ -1,7 +1,7 @@
 from kivy.clock import Clock
 from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.naming import Key
-from yakoon.base.runtime.sessions import SessionService
+from yakoon.base.runtime.sessions import SessionStore
 from yakoon.kivy.host import KivyHost
 from yakoon.kivy.runner import SessionRunner
 from yakoon.kivy.runtime.output.output import KivyOutput
@@ -47,7 +47,7 @@ class TabsController:
         return tab_id
 
     async def _create_tab_session(self, tab_id: str):
-        sessions = self.runner.engine.services.get(SessionService)
+        sessions = self.runner.engine.services.get(SessionStore)
         perms = self.runner.engine.services.get(PermissionService)
 
         tab_id = f"kivy:tab:{tab_id}"

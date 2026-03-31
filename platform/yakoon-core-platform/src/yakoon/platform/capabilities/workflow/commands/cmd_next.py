@@ -22,6 +22,6 @@ class CmdWfNext(Command):
         batch_id = request.arg(0)
         step_id = request.arg(1)
 
-        wfsvc = self.services.get(WorkflowService)
+        wfsvc = self.container.get(WorkflowService)
         wfsvc.set_value(session, batch_id, "batch_id", batch_id)
         wfsvc.complete_run_step(session, batch_id=batch_id, step_id=step_id)

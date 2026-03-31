@@ -5,8 +5,8 @@ from yakoon.base.commands import (
     CommandVisibility,
     Request,
 )
-from yakoon.base.flow import show
-from yakoon.base.projection import v_text
+from yakoon.base.flow import present
+from yakoon.base.projection.model import v_text
 
 
 class CmdJobs(Command):
@@ -31,7 +31,7 @@ class CmdJobs(Command):
             yield self._use_job(request)
 
         else:
-            yield show(v_text(f"Unbekannte Aktion: {action}"))
+            yield present(v_text(f"Unbekannte Aktion: {action}"))
 
     # --------------------------------------------------------
     # Helpers
@@ -65,10 +65,10 @@ class CmdJobs(Command):
         indexed = self._enumerate_flows()
 
         if not indexed:
-            yield show(v_text("Keine Jobs aktiv."))
+            yield present(v_text("Keine Jobs aktiv."))
             return
 
-        yield show(v_text("Aktive Jobs:\n"))
+        yield present(v_text("Aktive Jobs:\n"))
 
         focused = self.ctx.session.interaction_flow
         for i, f in indexed:
@@ -76,25 +76,25 @@ class CmdJobs(Command):
             state = f.control.label(f) if f.control else "run"
             marker = "  ←" if focused and focused.id == f.id else ""
 
-            yield show(v_text(f"[{i}] {label} - {state}{marker}\n"))
+            yield present(v_text(f"[{i}] {label} - {state}{marker}\n"))
 
     async def _stop_job(self, request: Request):
 
         flow, index = self._get_flow_by_index(request)
 
         if not flow:
-            yield show(v_text(f"Job {index} nicht gefunden"))
+            yield present(v_text(f"Job {index} nicht gefunden"))
 
         self.ctx.session.del_flow(flow)
-        yield show(v_text(f"Job {index} gestoppt"))
+        yield present(v_text(f"Job {index} gestoppt"))
 
     async def _use_job(self, request: Request):
 
         flow, index = self._get_flow_by_index(request)
 
         if not flow:
-            yield show(v_text(f"Job {index} nicht gefunden"))
+            yield present(v_text(f"Job {index} nicht gefunden"))
             return
 
         self.ctx.session.set_interaction(flow.id)
-        yield show(v_text(f"Fokus auf Job {index} gesetzt"))
+        yield present(v_text(f"Fokus auf Job {index} gesetzt"))

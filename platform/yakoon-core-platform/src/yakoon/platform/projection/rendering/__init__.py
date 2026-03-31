@@ -1,7 +1,7 @@
 from .engine import JinjaRenderEngine
-from .service import DefaultRenderService
+from .service import TemplateProjectionRenderer
 
 __all__ = [
-    "DefaultRenderService",
+    "TemplateProjectionRenderer",
     "JinjaRenderEngine",
 ]

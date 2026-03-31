@@ -1,7 +1,7 @@
 import asyncio
 
 from yakoon.base.interations import ConsoleInteraction
-from yakoon.base.projection import ViewEvent, ViewQuery
+from yakoon.base.projection import ProjectionEvent, ProjectionQuery
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.transports import Transport
 from yakoon.console.output import ConsoleOutput
@@ -19,7 +19,7 @@ class ConsoleClient:
         self._current_values = {}
 
         # NEW: Single Source of Truth
-        self.view_query = ViewQuery()
+        self.query = ProjectionQuery()
 
     async def run(self):
 
@@ -67,12 +67,12 @@ class ConsoleClient:
 
         interaction = ConsoleInteraction(ui)
 
-        async def on_view(event: ViewEvent):
+        async def on_view(event: ProjectionEvent):
 
             # ------------------------
             # Query aktualisieren (zentral!)
             # ------------------------
-            self.view_query.apply(event)
+            self.query.apply(event)
 
             # ------------------------
             # Rendern
@@ -100,12 +100,12 @@ class ConsoleClient:
 
         self._reset_form()
 
-        if not self.view_query.expects_input():
+        if not self.query.expects_input():
             ui.reset_prompt()
             return
 
         # Fields direkt aus Document
-        self._current_fields = self.view_query.get_fields()
+        self._current_fields = self.query.fields()
         self._current_index = 0
         self._current_values = {}
 

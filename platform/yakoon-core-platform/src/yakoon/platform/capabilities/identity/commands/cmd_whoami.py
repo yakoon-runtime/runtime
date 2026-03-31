@@ -1,16 +1,19 @@
 from yakoon.base.commands import Command, Request
+from yakoon.base.flow import present
 
 
 class CmdWhoAmI(Command):
 
     key = "whoami"
 
-    async def run(self, request: Request) -> None:  # noqa: ARG002
+    async def run(self, request: Request):
 
-        presenter = await self.get_presenter(session)
+        projector = await self.create_projector()
 
-        username = session.get_username()
+        username = self.ctx.session.get_username()
         if username:
-            await presenter.present("show_user", user=username)
+            projection = await projector.project("show_user", user=username)
         else:
-            await presenter.present("show_hint")
+            projection = await projector.project("show_hint")
+
+        yield present(projection)

@@ -7,7 +7,7 @@ class Session(Protocol):
     pass
 
 
-class NamespaceService(Protocol):
+class NamespaceResolver(Protocol):
     async def from_session(
         self, session: Session, kind: str, space: str | None
     ) -> Namespace: ...

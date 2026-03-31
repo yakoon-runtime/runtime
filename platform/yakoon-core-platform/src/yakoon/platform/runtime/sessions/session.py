@@ -8,7 +8,7 @@ from typing import Any
 from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.naming import Key
 from yakoon.base.projection import (
-    ViewEvent,
+    ProjectionEvent,
 )
 from yakoon.base.transports import IO
 from yakoon.platform.flow import Flow
@@ -209,9 +209,9 @@ class Session:
 
     async def emit(
         self,
-        event: ViewEvent,
+        event: ProjectionEvent,
     ) -> None:
-        if type(event) is not ViewEvent:
+        if type(event) is not ProjectionEvent:
             raise RuntimeError(f"Expected ViewEvent, got {type(event).__name__}")
 
         if self._runtime.io is None:

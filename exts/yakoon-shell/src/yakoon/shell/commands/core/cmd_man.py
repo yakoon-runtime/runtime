@@ -1,10 +1,9 @@
 from typing import Protocol, cast
 
-from yakoon.base.capabilities.presenters import PresenterService
 from yakoon.base.catalogs import (
-    CommandCatalogService,
     CommandInfo,
-    ControllerCatalogService,
+    CommandRegistry,
+    ControllerRegistry,
 )
 from yakoon.base.commands import (
     Command,
@@ -12,7 +11,8 @@ from yakoon.base.commands import (
     Request,
 )
 from yakoon.base.controllers import resolve_resource
-from yakoon.base.flow import show
+from yakoon.base.flow import present
+from yakoon.base.projection.port import ProjectorFactory
 
 
 class _ControllerAccess(Protocol):
@@ -34,14 +34,14 @@ class CmdMan(Command):
             yield self.show_manual(request)
 
     async def show_manual(self, request: Request):
-        controller_service = self.services.get(ControllerCatalogService)
-        command_service = self.services.get(CommandCatalogService)
+        controller_service = self.container.get(ControllerRegistry)
+        command_service = self.container.get(CommandRegistry)
 
         command_key = request.arg(0)
         if not command_key:
-            presenter = await self.get_presenter()
-            view = await presenter.render("no_manual_entry", command_key="")
-            yield show(view)
+            projector = await self.create_projector()
+            projection = await projector.project("no_manual_entry", command_key="")
+            yield present(projection)
             return
 
         # privileged access: controller management
@@ -91,9 +91,11 @@ class CmdMan(Command):
         # 3) Render or show "no entry"
         # ----------------------------------------------------
         if not cmd_info:
-            presenter = await self.get_presenter()
-            view = await presenter.render("no_manual_entry", command_key=command_key)
-            yield show(view)
+            projector = await self.create_projector()
+            projection = await projector.project(
+                "no_manual_entry", command_key=command_key
+            )
+            yield present(projection)
             return
 
         # controller has to exist - command was found before.
@@ -107,7 +109,7 @@ class CmdMan(Command):
         if not resources.package:
             raise RuntimeError("ResourceReferences has no package")
 
-        presenter_service = self.services.get(PresenterService)
+        projector_service = self.container.get(ProjectorFactory)
 
         try:
             ref = resolve_resource(
@@ -116,21 +118,23 @@ class CmdMan(Command):
                 lang=session.lang,
                 key=cmd_info.key,
             )
-            presenter = await presenter_service.create_presenter(ref, session)
-            view = await presenter.render("man_page")
-            yield show(view)
+            projector = await projector_service.create(ref, session)
+            projection = await projector.project("man_page")
+            yield present(projection)
 
         except LookupError:
-            # use the own presenter.
-            presenter = await self.get_presenter()
-            view = await presenter.render("no_manual_entry", command_key=command_key)
-            yield show(view)
+            # use the own projector.
+            projector = await self.create_projector()
+            projection = await projector.project(
+                "no_manual_entry", command_key=command_key
+            )
+            yield present(projection)
 
     async def show_index(self, request: Request):
 
-        presenter = await self.get_presenter()
-        controller_service = self.services.get(ControllerCatalogService)
-        command_service = self.services.get(CommandCatalogService)
+        projector = await self.create_projector()
+        controller_service = self.container.get(ControllerRegistry)
+        command_service = self.container.get(CommandRegistry)
 
         # privileged access: controller management
         session = self.ctx.session
@@ -171,13 +175,13 @@ class CmdMan(Command):
                 key=lambda c: c.id,
             )
 
-            view = await presenter.render(
+            projection = await projector.project(
                 "show_help",
                 mode="shell",
                 shell_commands=shell_commands,
                 controllers=controllers,
             )
-            yield show(view)
+            yield present(projection)
             return
 
         # ----------------------------
@@ -204,8 +208,10 @@ class CmdMan(Command):
         merged.update(program_by_key)
 
         commands = sorted(merged.values(), key=lambda c: c.key)
-        view = await presenter.render("show_help", mode="program", commands=commands)
-        yield show(view)
+        projection = await projector.project(
+            "show_help", mode="program", commands=commands
+        )
+        yield present(projection)
 
     def resolve_man_mode(self, request: Request) -> str:
         if request.has_option("internal"):

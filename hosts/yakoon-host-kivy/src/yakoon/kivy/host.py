@@ -6,7 +6,7 @@ from typing import Protocol
 
 from yakoon.base.host import InputEvent, Interaction
 from yakoon.base.projection import FieldsBlock
-from yakoon.base.projection.view import View
+from yakoon.base.projection.model import Projection
 
 
 class HostUI(Protocol):
@@ -40,8 +40,8 @@ class KivyHost(Interaction):
             return
         loop.call_soon_threadsafe(fut.set_result, text)
 
-    async def prompt(self, *, ps1: str, view: View) -> None:
-        block = self._find_fields_block(view)
+    async def prompt(self, *, ps1: str, projection: Projection) -> None:
+        block = self._find_fields_block(projection)
         if block is None:
             self._ui.clear_assist()
             return
@@ -94,8 +94,8 @@ class KivyHost(Interaction):
     async def exit(self) -> None:
         return
 
-    def _find_fields_block(self, view: View) -> FieldsBlock | None:
-        for block in view.blocks:
+    def _find_fields_block(self, projection: Projection) -> FieldsBlock | None:
+        for block in projection.blocks:
             if isinstance(block, FieldsBlock) and block.state != "done":
                 return block
         return None

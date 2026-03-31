@@ -3,33 +3,33 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from yakoon.base.projection.view import View
+    from yakoon.base.projection.model import Projection
     from yakoon.platform.runtime import Session
 
-from .dispatcher import DefaultViewDispatcher
+from .dispatcher import EventProjectionDispatcher
 
 
-class DefaultOutputStream:
+class EventStreamOutput:
 
     def __init__(self):
-        self.dispatcher = DefaultViewDispatcher()
+        self.dispatcher = EventProjectionDispatcher()
 
-    async def send_view(self, session: Session, view: View):
-        if not view.id:
+    async def send_projection(self, session: Session, projection: Projection):
+        if not projection.id:
             raise RuntimeError("View without id.")
 
-        await self.dispatcher.begin_view(session, view)
+        await self.dispatcher.begin_projection(session, projection)
 
         try:
-            for i, block in enumerate(view.blocks):
+            for i, block in enumerate(projection.blocks):
                 await self.dispatcher.emit_block(
                     session,
-                    view=view,
+                    projection=projection,
                     block=block,
                     suffix=i,
                 )
         except Exception:
-            await self.dispatcher.abort_view(session, view.id)
+            await self.dispatcher.abort_projection(session, projection.id)
             raise
         else:
-            await self.dispatcher.finish_view(session, view)
+            await self.dispatcher.finish_projection(session, projection)

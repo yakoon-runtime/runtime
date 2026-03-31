@@ -2,7 +2,7 @@ kind: ui_contract
 id: crm.person
 mode: replace   # replace | append (für den ganzen Contract)
 
-view:
+projection:
   kind: message
   role: info
   title: "Person anlegen"

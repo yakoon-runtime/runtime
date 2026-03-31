@@ -1,7 +1,7 @@
-from .command import DefaultCommandCatalogService
-from .controller import DefaultControllerCatalogService
+from .command import CommandIndexBuilder
+from .controller import ControllerIndexBuilder
 
 __all__ = [
-    "DefaultCommandCatalogService",
-    "DefaultControllerCatalogService",
+    "CommandIndexBuilder",
+    "ControllerIndexBuilder",
 ]

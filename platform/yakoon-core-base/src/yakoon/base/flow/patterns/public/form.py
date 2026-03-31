@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from yakoon.base.capabilities.presenters import PresenterView
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.projection import Projection
+from yakoon.base.runtime import Container
 
 from ...dsl import ask, receive
 from ..internal.validate import apply_errors, validate
@@ -12,8 +12,8 @@ from ..internal.validate import apply_errors, validate
 
 
 async def form(
-    view: PresenterView,
-    services: ServiceDirectory,
+    projection: Projection,
+    container: Container,
 ):
     """
     Generic form interaction pattern.
@@ -31,13 +31,13 @@ async def form(
     """
 
     while True:
-        yield ask(view)
+        yield ask(projection)
 
         event = yield receive()
 
-        result = validate(view, event, services)
+        result = validate(projection, event, container)
 
         if result.ok:
             yield result  # complete(result)
         else:
-            view = apply_errors(view, result.errors)
+            projection = apply_errors(projection, result.errors)

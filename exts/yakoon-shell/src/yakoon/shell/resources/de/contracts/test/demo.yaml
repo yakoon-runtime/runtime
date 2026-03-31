@@ -1,7 +1,7 @@
 
-kind: view
+kind: projection
 
-view:
+projection:
   role: info
   title: "Commands"
   blocks:

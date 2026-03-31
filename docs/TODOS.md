@@ -1,4 +1,4 @@
-kind: view
+kind: projection
 state:
   role: info
   title: "Test – Inline Head"

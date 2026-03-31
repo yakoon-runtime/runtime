@@ -5,10 +5,10 @@ class Session(Protocol):
     pass
 
 
-class View(Protocol):
+class Projection(Protocol):
     pass
 
 
-class OutputStream(Protocol):
+class Output(Protocol):
 
-    async def send_view(self, session: Session, view: View): ...
+    async def send_projection(self, session: Session, projection: Projection): ...

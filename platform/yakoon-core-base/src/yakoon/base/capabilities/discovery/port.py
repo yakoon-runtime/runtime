@@ -10,7 +10,7 @@ from .lookup import LookupCandidatesPayload
 from .parser import LookupIndex
 
 
-class LookupResolverService(Protocol):
+class LookupResolver(Protocol):
     async def resolve(self, session: Session, request: Request) -> str | None: ...
 
 

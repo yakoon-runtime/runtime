@@ -3,27 +3,31 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from yakoon.base.projection import View, ViewHeader
+from yakoon.base.projection import Projection, ProjectionHeader
 
 if TYPE_CHECKING:
-    from yakoon.base.capabilities.presenters import BlockGroup
+    from yakoon.base.capabilities.projection import BlockGroup
 
 
 async def compile_view(
-    view_id, view_header: ViewHeader | None, *, groups: list[BlockGroup], policy_service
+    projection_id,
+    view_header: ProjectionHeader | None,
+    *,
+    groups: list[BlockGroup],
+    policy_service,
 ):
 
     for group in groups:
 
         header = replace(
-            view_header or ViewHeader(),
+            view_header or ProjectionHeader(),
             expects_input=(group.type == "fields"),
         )
 
-        subview = View(
+        subview = Projection(
             "view",
             header=header,
-            id=view_id,
+            id=projection_id,
             blocks=group.blocks,
         )
 

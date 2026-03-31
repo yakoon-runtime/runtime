@@ -5,7 +5,8 @@ from collections.abc import Sequence
 
 from .block import Block, FieldsBlock, InputMode, TextBlock
 from .field import Field
-from .view import ErrorKind, Role, View, ViewHeader
+from .header import ErrorKind, Role
+from .model import Projection, ProjectionHeader
 
 
 def _view(
@@ -15,10 +16,10 @@ def _view(
     title: str | None = None,
     error_kind: ErrorKind | None = None,
     error_code: str | None = None,
-    view_id: str | None = None,
-) -> View:
+    projection_id: str | None = None,
+) -> Projection:
 
-    header = ViewHeader(
+    header = ProjectionHeader(
         role=role,
         title=title,
         error_kind=error_kind,
@@ -26,9 +27,9 @@ def _view(
         meta=None,
     )
 
-    return View(
+    return Projection(
         kind="view",
-        id=view_id or f"view.{uuid.uuid4().hex}",
+        id=projection_id or f"view.{uuid.uuid4().hex}",
         header=header,
         blocks=list(blocks),
     )
@@ -41,16 +42,16 @@ def v_text(
     title: str | None = None,
     error_kind: ErrorKind | None = None,
     error_code: str | None = None,
-    view_id: str | None = None,
-) -> View:
-    view_id = view_id or f"view.{uuid.uuid4().hex}"
-    block_id = f"{view_id}:b{0}"
+    projection_id: str | None = None,
+) -> Projection:
+    projection_id = projection_id or f"view.{uuid.uuid4().hex}"
+    block_id = f"{projection_id}:b{0}"
     return _view(
         role=role,
         title=title,
         error_kind=error_kind,
         error_code=error_code,
-        view_id=view_id,
+        projection_id=projection_id,
         blocks=[
             TextBlock(
                 text=text,
@@ -64,30 +65,34 @@ def v_info(
     text: str,
     *,
     title: str | None = None,
-    view_id: str | None = None,
-) -> View:
-    return v_text(text, role="info", title=title, view_id=view_id)
+    projection_id: str | None = None,
+) -> Projection:
+    return v_text(text, role="info", title=title, projection_id=projection_id)
 
 
-def v_error_domain(text: str, *, title=None, error_code=None, view_id=None) -> View:
+def v_error_domain(
+    text: str, *, title=None, error_code=None, projection_id=None
+) -> Projection:
     return v_text(
         text,
         role="error",
         title=title,
         error_kind="domain",
         error_code=error_code,
-        view_id=view_id,
+        projection_id=projection_id,
     )
 
 
-def v_error_fatal(text: str, *, title=None, error_code=None, view_id=None) -> View:
+def v_error_fatal(
+    text: str, *, title=None, error_code=None, projection_id=None
+) -> Projection:
     return v_text(
         text,
         role="error",
         title=title,
         error_kind="fatal",
         error_code=error_code,
-        view_id=view_id,
+        projection_id=projection_id,
     )
 
 
@@ -97,15 +102,15 @@ def v_error_system(
     title: str | None = None,
     error_kind: ErrorKind = "system",
     error_code: str | None = None,
-    view_id: str | None = None,
-) -> View:
+    projection_id: str | None = None,
+) -> Projection:
     return v_text(
         text,
         role="error",
         title=title,
         error_kind=error_kind,
         error_code=error_code,
-        view_id=view_id,
+        projection_id=projection_id,
     )
 
 
@@ -113,27 +118,27 @@ def v_success(
     text: str,
     *,
     title: str | None = None,
-    view_id: str | None = None,
-) -> View:
-    return v_text(text, role="success", title=title, view_id=view_id)
+    projection_id: str | None = None,
+) -> Projection:
+    return v_text(text, role="success", title=title, projection_id=projection_id)
 
 
 def v_warning(
     text: str,
     *,
     title: str | None = None,
-    view_id: str | None = None,
-) -> View:
-    return v_text(text, role="warning", title=title, view_id=view_id)
+    projection_id: str | None = None,
+) -> Projection:
+    return v_text(text, role="warning", title=title, projection_id=projection_id)
 
 
 def v_help(
     text: str,
     *,
     title: str | None = None,
-    view_id: str | None = None,
-) -> View:
-    return v_text(text, role="help", title=title, view_id=view_id)
+    projection_id: str | None = None,
+) -> Projection:
+    return v_text(text, role="help", title=title, projection_id=projection_id)
 
 
 def v_blocks(
@@ -142,14 +147,14 @@ def v_blocks(
     role: Role = "info",
     title: str | None = None,
     error_kind: ErrorKind | None = None,
-    view_id: str | None = None,
-) -> View:
+    projection_id: str | None = None,
+) -> Projection:
     return _view(
         blocks=blocks,
         role=role,
         title=title,
         error_kind=error_kind,
-        view_id=view_id,
+        projection_id=projection_id,
     )
 
 
@@ -159,12 +164,12 @@ def v_fields(
     input_mode: InputMode,
     role: Role = "info",
     title: str | None = None,
-    view_id: str | None = None,
-) -> View:
+    projection_id: str | None = None,
+) -> Projection:
     return _view(
         role=role,
         title=title,
-        view_id=view_id,
+        projection_id=projection_id,
         blocks=[
             FieldsBlock(
                 id="0",

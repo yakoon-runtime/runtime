@@ -31,7 +31,7 @@ def compose_kivy_app() -> KivyComposition:
             "discovery": "default",
             "identity": "default",
             "interaction": "default",
-            "presenters": "default",
+            "projectors": "default",
             "workflow": "default",
         },
     )

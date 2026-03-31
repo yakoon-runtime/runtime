@@ -1,10 +1,12 @@
-from yakoon.base.projection import (
+from yakoon.base.projection.model import (
     Block,
+    Projection,
+)
+from yakoon.base.projection.transport import (
     Node,
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
-    View,
 )
 
 
@@ -16,17 +18,17 @@ class ViewTraversal:
     # Root
     # ---------------------------------------------------------
 
-    def root_id(self, view_id: str) -> str:
-        return f"{view_id}{self.ROOT_SUFFIX}"
+    def root_id(self, projection_id: str) -> str:
+        return f"{projection_id}{self.ROOT_SUFFIX}"
 
     # ---------------------------------------------------------
     # Parent Resolution
     # ---------------------------------------------------------
 
-    def resolve_parent(self, view_id: str, parent_id: str | None) -> str:
+    def resolve_parent(self, projection_id: str, parent_id: str | None) -> str:
         if parent_id is not None:
             return parent_id
-        return self.root_id(view_id)
+        return self.root_id(projection_id)
 
     def prepare_block(self, block: Block, parent: str, depth: int):
         node = self.build_node(block, parent, depth)
@@ -37,11 +39,11 @@ class ViewTraversal:
 
         return node, children, text_fields
 
-    def iter_ops(self, view: View):
+    def iter_ops(self, projection: Projection):
 
-        root = f"{view.id}{self.ROOT_SUFFIX}"
+        root = f"{projection.id}{self.ROOT_SUFFIX}"
 
-        for block in view.blocks:
+        for block in projection.blocks:
             yield from self._iter_block(block, parent=root, depth=0)
 
     def _iter_block(self, block: Block, parent: str, depth: int):

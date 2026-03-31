@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.catalogs.port import CommandCatalogService
+from yakoon.base.catalogs.port import CommandRegistry
 from yakoon.base.commands import Request
 from yakoon.base.dispatch import CommandDispatch
 from yakoon.base.runtime.input import InputEvent
@@ -19,7 +19,7 @@ class Runner:
         self.engine = engine
         self.scheduler = scheduler
 
-        catalog = engine.services.get(CommandCatalogService)
+        catalog = engine.container.get(CommandRegistry)
         self._global_commands = {cmd.key for cmd in catalog.globals()}
 
     async def on_input(self, event: InputEvent):

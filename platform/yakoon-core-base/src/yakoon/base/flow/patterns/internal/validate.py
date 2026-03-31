@@ -4,10 +4,10 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from yakoon.base.capabilities.interaction import PolicyService
-from yakoon.base.capabilities.presenters import PresenterView
-from yakoon.base.projection import FieldError
+from yakoon.base.projection import Projection, ProjectionQuery
+from yakoon.base.projection.model import FieldError
+from yakoon.base.runtime import Container
 from yakoon.base.runtime.input import InputEvent
-from yakoon.base.runtime.services import ServiceDirectory
 
 
 @dataclass
@@ -23,19 +23,20 @@ class ValidationResult:
 
 
 def validate(
-    view: PresenterView,
+    projection: Projection,
     event: InputEvent,
-    services: ServiceDirectory,
+    container: Container,
 ) -> ValidationResult:
 
-    policy = services.get(PolicyService)
+    policy = container.get(PolicyService)
 
     values: dict[str, Any] = {}
     errors: dict[str, list[FieldError]] = {}
 
     raw_values = event.to_values()
 
-    for field in view.fields():
+    query = ProjectionQuery.from_projection(projection)
+    for field in query.bound_fields():
         if field.var is None:
             continue
 
@@ -64,14 +65,14 @@ def validate(
 
 
 def apply_errors(
-    pv: PresenterView,
+    projection: Projection,
     errors: dict[str, list[FieldError]],
-) -> PresenterView:
+) -> Projection:
 
-    view = pv.view
     new_blocks = []
 
-    for block in view.blocks:
+    query = ProjectionQuery.from_projection(projection)
+    for block in query.get_blocks():
         fields = getattr(block, "fields", None)
 
         if not fields:
@@ -88,4 +89,4 @@ def apply_errors(
 
         new_blocks.append(replace(block, fields=updated_fields))
 
-    return pv.body_only(new_blocks)
+    return projection.body_only(new_blocks)

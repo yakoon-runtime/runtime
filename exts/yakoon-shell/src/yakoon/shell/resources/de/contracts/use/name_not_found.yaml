@@ -1,8 +1,8 @@
-kind: view
+kind: projection
 
-view:
+projection:
   role: info
   title: "Commands"
   blocks:
     - type: text
-      text: Das Programm "{{name}}" wurde nicht gefunden.
+      text: Das Programm "{{prg_name}}" wurde nicht gefunden.

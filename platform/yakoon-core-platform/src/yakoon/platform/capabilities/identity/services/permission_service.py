@@ -41,7 +41,7 @@ class DefaultPermissionService:
             "discovery:lookup|rx",
             # demo
             "demo:demo.delay|rx",
-            "demo:demo.presenter|rx",
+            "demo:demo.projector|rx",
             "demo:demo.ask.simple|rx",
             "demo:demo.ask.validate|rx",
             "demo:demo.subflow|rx",

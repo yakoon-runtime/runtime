@@ -10,11 +10,14 @@ from yakoon.base.capabilities.discovery import (
     NoMatch,
     Resolved,
 )
-from yakoon.base.catalogs import CommandCatalogService, ControllerCatalogService
+from yakoon.base.catalogs import (
+    CommandRegistry,
+    ControllerRegistry,
+)
 from yakoon.base.commands import Request
 from yakoon.base.controllers import resolve_resource
 from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 from yakoon.platform.runtime.sessions import Session
 
 
@@ -31,10 +34,10 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
 
     def __init__(
         self,
-        services: ServiceDirectory,
+        container: Container,
         lookup_filename: str = "lookup",
     ) -> None:
-        self._services = services
+        self._services = container
         self._lookup_filename = lookup_filename
 
     async def discover(self, session: Session, request: Request) -> DiscoveryResult:
@@ -86,7 +89,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         if not active_id:
             return []
 
-        commands = self._services.get(CommandCatalogService)
+        commands = self._services.get(CommandRegistry)
         resolve_space = commands.for_resolve_context(active_id)
 
         owner_ids: list[str] = []
@@ -99,7 +102,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         return owner_ids
 
     def _load_lookup_text(self, session: Session, owner_id: str) -> str | None:
-        controllers = self._services.get(ControllerCatalogService)
+        controllers = self._services.get(ControllerRegistry)
         loader = self._services.get(ResourceLoader)
 
         ctrl = controllers.get(owner_id)
@@ -126,7 +129,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         return idx
 
     def _visible_keys(self, session: Session, owner_id: str) -> set[str]:
-        commands = self._services.get(CommandCatalogService)
+        commands = self._services.get(CommandRegistry)
         return {c.key for c in commands.for_controller_visible(owner_id, session)}
 
     def _match_owner(

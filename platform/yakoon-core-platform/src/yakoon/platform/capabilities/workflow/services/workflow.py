@@ -11,19 +11,19 @@ from yakoon.base.capabilities.workflow import (
     WorkflowRuntime,
     WorkflowStatus,
 )
-from yakoon.base.catalogs import ControllerCatalogService
+from yakoon.base.catalogs import ControllerRegistry
 from yakoon.base.controllers import resolve_resource
-from yakoon.base.dispatch import CommandQueueService
+from yakoon.base.dispatch import CommandQueue
 from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 
 from ..runtime.compiler import compile_run_command
 
 
 class DefaultWorkflowService:
 
-    def __init__(self, services: ServiceDirectory):
-        self.services = services
+    def __init__(self, container: Container):
+        self.container = container
 
     # ---- runtime access ----
 
@@ -38,7 +38,7 @@ class DefaultWorkflowService:
     # ---- loading (no caching) ----
 
     def get_def(self, controller_id: str, command_key: str) -> WorkflowDef:
-        catalog = self.services.get(ControllerCatalogService)
+        catalog = self.container.get(ControllerRegistry)
         info = catalog.get(controller_id)
         if not info:
             raise RuntimeError("ControllerInfo cannot be None.")
@@ -54,12 +54,12 @@ class DefaultWorkflowService:
             key=command_key,
         )
 
-        file_loader = self.services.get(ResourceLoader)
+        file_loader = self.container.get(ResourceLoader)
         raw_text = file_loader.load_text(ref)
         if not raw_text:
             raise RuntimeError("Workflow definition not found.")
 
-        compiler = self.services.get(WorkflowCompiler)
+        compiler = self.container.get(WorkflowCompiler)
         wf = compiler.compile(command_key, raw_text)
 
         return wf
@@ -196,7 +196,7 @@ class DefaultWorkflowService:
 
         self._ensure_running(batch)
 
-        queue = self.services.get(CommandQueueService)
+        queue = self.container.get(CommandQueue)
 
         if step.end:
             self._enqueue_end(rt, batch_id, batch)
@@ -377,5 +377,5 @@ class DefaultWorkflowService:
         batch.status = WorkflowStatus.CANCELLED
         batch.error = None
 
-        queue = self.services.get(CommandQueueService)
+        queue = self.container.get(CommandQueue)
         queue.cancel_batch(session, batch_id)

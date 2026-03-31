@@ -25,5 +25,5 @@ class CmdWfRun(Command):
 
         controller_id = self.ctx.controller.id  # kommt aus deinem Dispatcher
 
-        wfsvc = self.services.get(WorkflowService)
+        wfsvc = self.container.get(WorkflowService)
         wfsvc.start(session, controller_id, key)

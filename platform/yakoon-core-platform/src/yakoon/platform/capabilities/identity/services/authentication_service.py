@@ -1,19 +1,19 @@
 from yakoon.base.capabilities.identity import AccountService, AuthResult, SecretVerifier
 from yakoon.base.naming import Namespace
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 
 
 class DefaultAuthenticationService:
 
-    def __init__(self, services: ServiceDirectory):
-        self._services = services
+    def __init__(self, container: Container):
+        self._container = container
 
     async def authenticate(
         self, namespace: Namespace, username: str, secret: str
     ) -> AuthResult:
 
-        accounts = self._services.get(AccountService)
-        verifier = self._services.get(SecretVerifier)
+        accounts = self._container.get(AccountService)
+        verifier = self._container.get(SecretVerifier)
 
         acc = await accounts.get_by_username(namespace, username)
         if not acc:

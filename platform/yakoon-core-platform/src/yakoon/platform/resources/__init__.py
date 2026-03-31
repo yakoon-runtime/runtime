@@ -1,5 +1,5 @@
-from .loader import DefaultResourceLoader
+from .loader import FileResourceLoader
 
 __all__ = [
-    "DefaultResourceLoader",
+    "FileResourceLoader",
 ]

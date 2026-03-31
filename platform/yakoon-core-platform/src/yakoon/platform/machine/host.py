@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, cast
 from yakoon.base.capabilities.identity.port import PermissionService
 from yakoon.base.clients.connection import ClientConnection
 from yakoon.base.naming.key import Key
-from yakoon.base.runtime.sessions import SessionService
+from yakoon.base.runtime.sessions import SessionStore
 from yakoon.platform.machine.scheduler import Scheduler
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
 from yakoon.platform.runtime.sessions import Session as PlatformSession
@@ -84,10 +84,10 @@ class RuntimeHost:
 
         key = self.next_session_key()
 
-        sessions = self.engine.services.get(SessionService)
+        sessions = self.engine.container.get(SessionStore)
         session, _ = await sessions.get_or_create(key)
 
-        permissions = self.engine.services.get(PermissionService)
+        permissions = self.engine.container.get(PermissionService)
         permissions.set_bootstrap_permissions(session)
 
         return cast(PlatformSession, session)

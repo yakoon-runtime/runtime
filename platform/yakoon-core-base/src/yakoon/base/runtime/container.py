@@ -6,13 +6,11 @@ from typing import TypeVar, cast
 T = TypeVar("T")
 
 
-class ServiceDirectory:
-    """A directory for registering and retrieving services, statically or lazily."""
+class Container:
+    """A container for registering and retrieving services, statically or lazily."""
 
-    def __init__(
-        self, parent: ServiceDirectory | None = None, allow_override: bool = False
-    ):
-        """Initializes the ServiceDirectory.
+    def __init__(self, parent: Container | None = None, allow_override: bool = False):
+        """Initializes the Container.
 
         Args:
             parent: Optional parent directory for service lookup.
@@ -20,7 +18,7 @@ class ServiceDirectory:
         """
         self._parent = parent
         self._allow_override = allow_override
-        self._services: dict[object, object] = {}
+        self._container: dict[object, object] = {}
         self._factories: dict[object, Callable[[], Awaitable[object]]] = {}
 
     def register_static(self, key: object, service: object) -> None:
@@ -40,7 +38,7 @@ class ServiceDirectory:
         if not self._allow_override and self._parent and self._parent.contains(key):
             raise ValueError(f"Service override not allowed: {key}")
 
-        self._services[key] = service
+        self._container[key] = service
 
     def register_lazy(
         self, key: object, factory: Callable[[], Awaitable[object]]
@@ -61,16 +59,16 @@ class ServiceDirectory:
 
     def contains(self, key: object) -> bool:
         """Returns True if the key is registered in this directory or its parent."""
-        return key in self._services or (
+        return key in self._container or (
             self._parent.contains(key) if self._parent else False
         )
 
-    def fork(self, allow_override: bool = False) -> ServiceDirectory:
-        """Creates a new ServiceDirectory with this directory as parent."""
-        return ServiceDirectory(parent=self, allow_override=allow_override)
+    def fork(self, allow_override: bool = False) -> Container:
+        """Creates a new Container with this directory as parent."""
+        return Container(parent=self, allow_override=allow_override)
 
     def has(self, key: type[T]) -> bool:
-        if key in self._services:
+        if key in self._container:
             return True
         if key in self._factories:
             return True
@@ -94,11 +92,11 @@ class ServiceDirectory:
             KeyError: If no service is registered for the key.
         """
         try:
-            if key in self._services:
-                return cast(T, self._services[key])
+            if key in self._container:
+                return cast(T, self._container[key])
             if key in self._factories:
                 registry = self._factories[key]()
-                self._services[key] = registry
+                self._container[key] = registry
                 return cast(T, registry)
             if self._parent:
                 return self._parent.get(key)

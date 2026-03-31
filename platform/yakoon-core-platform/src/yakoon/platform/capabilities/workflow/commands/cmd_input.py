@@ -21,7 +21,7 @@ class CmdWfInput(Command):
         batch_id = request.arg(0)
         step_id = request.arg(1)
 
-        wfsvc = self.services.get(WorkflowService)
+        wfsvc = self.container.get(WorkflowService)
 
         step = wfsvc.get_step(session, batch_id=batch_id, step_id=step_id)
         s = step.input

@@ -3,12 +3,14 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from yakoon.base.projection import (
+from yakoon.base.projection.model import (
     Block,
+    Projection,
+)
+from yakoon.base.projection.transport import (
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
-    View,
 )
 from yakoon.platform.projection import ViewEmitter, ViewTraversal
 from yakoon.platform.runtime import Session
@@ -30,7 +32,7 @@ def split_payload(text: str, max_size: int):
 @dataclass
 class _ViewStream:
     session: Session
-    view_id: str
+    projection_id: str
 
     event_queue: list
 
@@ -43,7 +45,7 @@ class _ViewStream:
 # ---------------------------------------------------------
 # DISPATCHER
 # ---------------------------------------------------------
-class DefaultViewDispatcher:
+class EventProjectionDispatcher:
 
     BATCH_SIZE = 64
     MAX_BUFFER_DELAY = 0.05  # technical flush
@@ -55,18 +57,18 @@ class DefaultViewDispatcher:
 
     # ---------------------------------------------------------
 
-    async def begin_view(
+    async def begin_projection(
         self,
         session: Session,
-        view: View,
+        projection: Projection,
     ) -> None:
 
-        vid = view.id
+        vid = projection.id
         assert vid is not None
 
         stream = _ViewStream(
             session=session,
-            view_id=vid,
+            projection_id=vid,
             event_queue=[],
             node_depth={},
             published_nodes=set(),
@@ -78,20 +80,20 @@ class DefaultViewDispatcher:
         root = self._traversal.root_id(vid)
         stream.node_depth[root] = -1
         stream.published_nodes.add(root)
-        if view.header is None:
+        if projection.header is None:
             raise RuntimeError("view.header cannot be None.")
 
-        await session.emit(self._emitter.begin(view.header, vid))
+        await session.emit(self._emitter.begin(projection.header, vid))
 
     # ---------------------------------------------------------
 
-    async def finish_view(
+    async def finish_projection(
         self,
         session: Session,
-        view: View,
+        projection: Projection,
     ) -> None:
 
-        vid = view.id
+        vid = projection.id
         assert vid is not None
 
         stream = self._streams.get(vid)
@@ -106,21 +108,21 @@ class DefaultViewDispatcher:
 
     # ---------------------------------------------------------
 
-    async def abort_view(
+    async def abort_projection(
         self,
         session: Session,
-        view_id: str,
+        projection_id: str,
     ) -> None:
 
-        stream = self._streams.get(view_id)
+        stream = self._streams.get(projection_id)
         if stream is None:
             return
 
         stream.event_queue.clear()
 
-        await session.emit(self._emitter.finish(view_id))
+        await session.emit(self._emitter.finish(projection_id))
 
-        self._streams.pop(view_id, None)
+        self._streams.pop(projection_id, None)
 
     # ---------------------------------------------------------
 
@@ -128,13 +130,13 @@ class DefaultViewDispatcher:
         self,
         session: Session,
         *,
-        view: View,
+        projection: Projection,
         block: Block,
         parent_id: str | None = None,
         suffix: str | int = 0,
     ) -> None:
 
-        vid = view.id
+        vid = projection.id
         assert vid is not None
 
         stream = self._streams.get(vid)
@@ -167,7 +169,7 @@ class DefaultViewDispatcher:
         for i, child in enumerate(children):
             await self.emit_block(
                 session,
-                view=view,
+                projection=projection,
                 block=child,
                 parent_id=node.id,
                 suffix=i,
@@ -229,7 +231,7 @@ class DefaultViewDispatcher:
         if not stream.event_queue:
             return
 
-        if stream.view_id not in self._streams:
+        if stream.projection_id not in self._streams:
             return
 
         ops = []
@@ -271,6 +273,6 @@ class DefaultViewDispatcher:
 
         ops = ops[: self.BATCH_SIZE]
 
-        await stream.session.emit(self._emitter.emit(stream.view_id, ops))
+        await stream.session.emit(self._emitter.emit(stream.projection_id, ops))
 
         stream.last_flush = time.monotonic()

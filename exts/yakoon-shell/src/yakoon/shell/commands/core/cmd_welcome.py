@@ -1,5 +1,5 @@
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import show
+from yakoon.base.flow import present
 
 
 class CmdWelcome(Command):
@@ -8,6 +8,6 @@ class CmdWelcome(Command):
 
     async def run(self, request: Request):
 
-        presenter = await self.get_presenter()
-        view = await presenter.render("show")
-        yield show(view)
+        projector = await self.create_projector()
+        projection = await projector.project("show")
+        yield present(projection)

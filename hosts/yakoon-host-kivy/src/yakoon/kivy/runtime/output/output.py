@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.projection import View
+from yakoon.base.projection import Projection
 from yakoon.kivy.runtime.context.view_context import ViewContext
 from yakoon.kivy.runtime.output.output_adapter import OutputAdapter
 
@@ -11,10 +11,10 @@ class KivyOutput:
         self._on_context = on_context
         self._ui_state_provider = ui_state_provider
 
-    async def view(self, view: View) -> None:
+    async def view(self, projection: Projection) -> None:
         ctx = ViewContext(
             session=self._session,
-            envelope=view,
+            envelope=projection,
             ui_state_provider=self._ui_state_provider,
         )
         self._on_context(ctx)

@@ -1,7 +1,7 @@
 from .directories import CommandDirectory, ControllerDirectory
 from .engine import CommandEngine
 from .host import RuntimeHost
-from .queue import DefaultCommandQueueService
+from .queue import InMemoryCommandQueue
 from .runner import Runner
 from .scheduler import Scheduler
 
@@ -12,7 +12,7 @@ __all__ = [
     # . engine
     "CommandEngine",
     # . queue
-    "DefaultCommandQueueService",
+    "InMemoryCommandQueue",
     # .runner
     "Runner",
     # .host

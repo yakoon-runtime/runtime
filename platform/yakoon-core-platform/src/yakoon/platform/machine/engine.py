@@ -2,7 +2,7 @@ import inspect
 from uuid import uuid4
 
 from yakoon.base.capabilities.audit import AuditLogService
-from yakoon.base.capabilities.discovery import LookupResolverService
+from yakoon.base.capabilities.discovery import LookupResolver
 from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.commands import Command, Request
 from yakoon.base.commands.context import CommandContext
@@ -19,9 +19,10 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.projection import OutputStream, v_error_system
+from yakoon.base.projection.model import v_error_system
+from yakoon.base.projection.transport import Output
+from yakoon.base.runtime import Container
 from yakoon.base.runtime.input import InputEvent
-from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
     CommandNotFound,
@@ -40,17 +41,17 @@ class CommandEngine:
     def __init__(
         self,
         controllers: ControllerDirectory,
-        services: ServiceDirectory,
+        container: Container,
         commands: CommandDirectory,
     ):
         self._controllers = controllers
-        self._services = services
+        self._container = container
         self._commands = commands
-        self._output = services.get(OutputStream)
+        self._output = container.get(Output)
 
     @property
-    def services(self) -> ServiceDirectory:
-        return self._services
+    def container(self) -> Container:
+        return self._container
 
     # ----------------------------------------------------
     # PUBLIC API
@@ -83,7 +84,7 @@ class CommandEngine:
 
         controller = self._controllers.get(controller_id)
         if not controller:
-            await self._output.send_view(
+            await self._output.send_projection(
                 session, v_error_system("Kein aktiver Controller gesetzt.")
             )
             return None
@@ -98,7 +99,7 @@ class CommandEngine:
             # Command finden
             result = await self._find_matching_command(controller_id, request)
             if not result:
-                resolver = self.services.get(LookupResolverService)
+                resolver = self.container.get(LookupResolver)
                 resolved = await resolver.resolve(session, request)
                 if resolved:
                     request = Request(resolved)
@@ -126,7 +127,7 @@ class CommandEngine:
             # )
 
             # Permission check
-            perm_service = self.services.get(PermissionService)
+            perm_service = self.container.get(PermissionService)
             fq = Permission.fq_key(resolved_controller.id, command_type.key)
             if not perm_service.can_execute(session, fq):
                 raise PermissionDenied()
@@ -151,7 +152,7 @@ class CommandEngine:
             raise
 
         except PermissionDenied:
-            self.services.get(AuditLogService).security(
+            self.container.get(AuditLogService).security(
                 session,
                 "command",
                 command_type.key if command_type else request.command,
@@ -252,7 +253,7 @@ class CommandEngine:
         for effect in effects:
 
             if isinstance(effect, EmitView):
-                await self._output.send_view(session, effect.view)
+                await self._output.send_projection(session, effect.view)
 
             elif isinstance(effect, AutoFocus):
                 session.set_interaction(flow.id)

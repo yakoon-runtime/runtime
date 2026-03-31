@@ -2,7 +2,7 @@ from yakoon.base.naming import Namespace
 from yakoon.platform.runtime.sessions import Session
 
 
-class DefaultNamespaceService:
+class DomainNamespaceResolver:
 
     _domain: str = "System"
 

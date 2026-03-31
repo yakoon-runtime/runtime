@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from yakoon.base.capabilities.identity import Account, AccountData
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.runtime.services.directory import ServiceDirectory
+from yakoon.base.runtime.container import Container
 from yakoon.base.stores.event.entity import (
     IndexKey,
     IndexSpec,
@@ -34,14 +34,14 @@ class DefaultAccountService:
     Keeps the public API stable.
     """
 
-    def __init__(self, services: ServiceDirectory) -> None:
-        self.services = services
+    def __init__(self, container: Container) -> None:
+        self.container = container
         self._store: EntityStore | None = None
 
     @property
     def store(self) -> EntityStore:
         if not self._store:
-            self._store = self.services.get(EntityStore)
+            self._store = self.container.get(EntityStore)
         return self._store
 
     async def get_by_key(self, key: Key) -> Account | None:

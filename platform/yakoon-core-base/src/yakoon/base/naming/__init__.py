@@ -1,9 +1,9 @@
 from .key import Key
 from .namespace import Namespace
-from .port import NamespaceService, ShardedCounterService
+from .port import NamespaceResolver, ShardedCounterService
 
 __all__ = [
-    "NamespaceService",
+    "NamespaceResolver",
     "Namespace",
     "Key",
     "ShardedCounterService",

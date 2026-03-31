@@ -33,7 +33,7 @@ This matches the existing runtime behavior and avoids introducing a second “tr
 ### 3.1 Engine
 - Executes `dispatch(session, input)`
 - Runs commands
-- Uses services (queue, dialog, workflow, presenter)
+- Uses services (queue, dialog, workflow, projector)
 - Emits output via `session.emit(...)`
 - Has no UI knowledge
 
@@ -64,7 +64,7 @@ It provides:
 
 DialogService replaces command return values as the runtime’s “need input” signal.
 
-### 3.5 Presenter / Templates
+### 3.5 Projector / Templates
 Templates remain the primary tool for **text outputs**:
 
 - confirmations, errors, lists, status

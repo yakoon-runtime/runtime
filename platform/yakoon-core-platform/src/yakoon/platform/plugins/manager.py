@@ -3,7 +3,7 @@ from typing import Literal, TypeAlias
 
 from yakoon.base.plugins import ModuleRegistry
 from yakoon.base.plugins.module import LoadedModule, ModuleExport
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 
 CapabilityMode: TypeAlias = Literal["default"]
 CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
@@ -12,7 +12,7 @@ CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
 class DefaultModuleManager:
     def __init__(
         self,
-        root: ServiceDirectory,
+        root: Container,
         *,
         capability_prefix: str = "yakoon.platform.capabilities",
     ):
@@ -40,7 +40,7 @@ class DefaultModuleManager:
             loaded.append(
                 LoadedModule(
                     export=export,
-                    services=child,
+                    container=child,
                     module_name=module_name,
                 )
             )

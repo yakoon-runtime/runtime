@@ -1,13 +1,13 @@
 from typing import Protocol, cast
 
-from yakoon.base.catalogs import ControllerCatalogService
+from yakoon.base.catalogs import ControllerRegistry
 from yakoon.base.commands import (
     Command,
     CommandScope,
     Request,
 )
 from yakoon.base.flow import write
-from yakoon.base.runtime.sessions.port import SessionService
+from yakoon.base.runtime.sessions.port import SessionStore
 
 
 class _ControllerAccess(Protocol):
@@ -38,14 +38,14 @@ class CmdExit(Command):
         # --------------------------------------------------
         # 2. Controller verlassen
         # --------------------------------------------------
-        controllers = self.services.get(ControllerCatalogService)
+        controllers = self.container.get(ControllerRegistry)
         shell = controllers.shell()[0]
 
         current = access.get_active_controller()
 
         if shell.id != current:
             access.set_active_controller(shell.id)
-            await self.services.get(SessionService).save(sys_session)
+            await self.container.get(SessionStore).save(sys_session)
             current = shell.id
 
         yield write(f"Kontroller: {current}")

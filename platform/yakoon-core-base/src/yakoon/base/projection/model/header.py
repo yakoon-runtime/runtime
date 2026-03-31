@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Literal
-
-from .block import Block
 
 Role = Literal["info", "success", "warning", "error", "help"]
 ErrorKind = Literal[
@@ -20,12 +18,12 @@ class ViewUI:
 
 
 @dataclass(frozen=True, slots=True)
-class ViewMeta:
+class ProjectionMeta:
     ui: ViewUI | None = None
 
 
 @dataclass(frozen=True, slots=True)
-class ViewHeader:
+class ProjectionHeader:
     """
     Document-level presentation metadata.
 
@@ -40,37 +38,5 @@ class ViewHeader:
     subtitle: str | None = None
     error_kind: ErrorKind | None = None
     error_code: str | None = None
-    meta: dict[str, Any] | ViewMeta | None = None
+    meta: dict[str, Any] | ProjectionMeta | None = None
     expects_input: bool = False
-
-
-@dataclass(frozen=True, slots=True)
-class View:
-    """
-    Canonical UI document.
-
-    A view is one structured document:
-      - header: document-level framing
-      - blocks: document body
-    """
-
-    kind: Literal["view"] = "view"
-    id: str | None = None
-    header: ViewHeader | None = None
-    blocks: list[Block] = field(default_factory=list)
-
-    def with_body(self, blocks: list[Block]) -> View:
-        return View(
-            kind=self.kind,
-            id=self.id,
-            header=self.header,
-            blocks=blocks,
-        )
-
-    def body_only(self, blocks: list[Block]) -> View:
-        return View(
-            kind=self.kind,
-            id=self.id,
-            header=None,
-            blocks=blocks,
-        )

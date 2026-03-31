@@ -6,7 +6,7 @@ from .port import (
     DiscoveryStrategy,
     LookupCandidateStoreService,
     LookupParser,
-    LookupResolverService,
+    LookupResolver,
 )
 
 __all__ = [
@@ -20,7 +20,7 @@ __all__ = [
     "LookupIndex",
     "LookupParser",
     "LookupCandidateStoreService",
-    "LookupResolverService",
+    "LookupResolver",
     "DiscoveryStrategy",
     "DiscoveryService",
 ]

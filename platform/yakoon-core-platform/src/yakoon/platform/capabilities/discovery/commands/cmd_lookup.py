@@ -17,26 +17,26 @@ class CmdLookup(Command):
 
     async def run(self, request: Request):
 
-        presenter = await self.get_presenter(session)
-        store = self.services.get(LookupCandidateStoreService)
+        projector = await self.create_projector()
+        store = self.container.get(LookupCandidateStoreService)
 
         token = request.option("token")
         if not token:
             return
 
         # if not token:
-        #    await presenter.present("not_found", query=request.raw)
+        #    await projector.project("not_found", query=request.raw)
         #   return
 
         payload = store.get(token)
         store.delete(token)
 
         # if not payload:
-        #    await presenter.present("not_found", query=request.raw)
+        #    await projector.project("not_found", query=request.raw)
         #    return
 
         if payload:
-            await presenter.present(
+            await projector.project(
                 "choose",
                 query=payload.query,
                 candidates=list(payload.candidates),

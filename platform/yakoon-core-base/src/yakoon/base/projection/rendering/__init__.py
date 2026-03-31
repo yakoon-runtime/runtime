@@ -1,8 +1,8 @@
 from .context import RenderContext
-from .port import RenderEngine, RenderService
+from .port import ProjectionRenderer, RenderEngine
 
 __all__ = [
     "RenderContext",
     "RenderEngine",
-    "RenderService",
+    "ProjectionRenderer",
 ]

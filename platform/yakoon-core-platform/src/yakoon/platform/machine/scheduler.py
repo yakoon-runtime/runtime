@@ -6,12 +6,12 @@ from collections import deque
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.dispatch import DispatchInput
 from yakoon.base.flow.primitives import Control
-from yakoon.base.projection import (
-    OutputStream,
+from yakoon.base.projection.model import (
     v_error_domain,
     v_error_fatal,
     v_error_system,
 )
+from yakoon.base.projection.transport import Output
 from yakoon.platform.flow import Flow, FlowKind
 from yakoon.platform.machine import CommandEngine
 from yakoon.platform.runtime import DomainError, PlatformError
@@ -32,7 +32,7 @@ class Scheduler:
 
     def __init__(self, engine: CommandEngine):
         self.engine = engine
-        self.output = engine.services.get(OutputStream)
+        self.output = engine.container.get(Output)
 
         # Flow-basierte Queue: (session, flow)
         self.ready_user = deque()
@@ -55,13 +55,13 @@ class Scheduler:
                 self.schedule_flow(flow, session)
 
         except PlatformError as e:
-            await self.output.send_view(
+            await self.output.send_projection(
                 session, v_error_system(e.message, error_code=e.code)
             )
 
         except Exception as e:
-            self.engine.services.get(AuditLogService).error(e, session)
-            await self.output.send_view(
+            self.engine.container.get(AuditLogService).error(e, session)
+            await self.output.send_projection(
                 session, v_error_system("Fatal error", error_kind="fatal")
             )
 
@@ -127,7 +127,7 @@ class Scheduler:
 
                 iterations += 1
                 if iterations > self.MAX_ITERATIONS:
-                    self.engine.services.get(AuditLogService).warning(
+                    self.engine.container.get(AuditLogService).warning(
                         "Scheduler iteration limit reached", session
                     )
                     break
@@ -175,18 +175,18 @@ class Scheduler:
                 except DomainError as e:
                     if session.interaction_flow:
                         session.del_flow(session.interaction_flow)
-                    await self.output.send_view(
+                    await self.output.send_projection(
                         session, v_error_domain(e.message, error_code=e.code)
                     )
 
                 except PlatformError as e:
-                    await self.output.send_view(
+                    await self.output.send_projection(
                         session, v_error_system(e.message, error_code=e.code)
                     )
 
                 except Exception as e:
-                    self.engine.services.get(AuditLogService).error(e, session)
-                    await self.output.send_view(
+                    self.engine.container.get(AuditLogService).error(e, session)
+                    await self.output.send_projection(
                         session, v_error_fatal("Fatal error", title="Fatal")
                     )
 

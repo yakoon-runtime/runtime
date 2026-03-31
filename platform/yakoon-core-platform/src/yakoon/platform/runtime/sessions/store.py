@@ -12,7 +12,7 @@ from .identity import SessionIdentityMap
 from .session import Session, SessionState
 
 
-class DefaultSessionService:
+class EntityStoreSessionService:
     """
     Session lifecycle service.
 

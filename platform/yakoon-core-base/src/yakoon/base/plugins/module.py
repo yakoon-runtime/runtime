@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from yakoon.base.controllers import Controller
-    from yakoon.base.runtime.services import ServiceDirectory
+    from yakoon.base.runtime import Container
 
 
 @dataclass(frozen=True)
@@ -19,11 +19,11 @@ class ModuleMeta:
 class ModuleExport:
     meta: ModuleMeta
     controllers: list[type[Controller]]
-    public_services: list[type[Any]] = field(default_factory=list)
+    public_ports: list[type[Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
 class LoadedModule:
     export: ModuleExport
-    services: ServiceDirectory
+    container: Container
     module_name: str

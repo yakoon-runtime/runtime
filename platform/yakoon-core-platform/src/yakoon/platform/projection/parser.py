@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import yaml
 
-from yakoon.base.projection import (
+from yakoon.base.projection.model import (
     Block,
     ErrorKind,
     Field,
@@ -23,6 +23,8 @@ from yakoon.base.projection import (
     KvItemBlock,
     ListBlock,
     ListItemBlock,
+    Projection,
+    ProjectionHeader,
     Role,
     RuleBlock,
     RuleStyle,
@@ -30,8 +32,6 @@ from yakoon.base.projection import (
     SpacerBlock,
     TableBlock,
     TextBlock,
-    View,
-    ViewHeader,
 )
 
 RULE_STYLES = ("subtle", "normal", "strong")
@@ -50,15 +50,15 @@ class ViewSpecValidationError(ViewSpecError):
     pass
 
 
-class DefaultViewSpecParser:
+class YamlProjectionParser:
     """
-    Parse a single view file.
+    Parse a single projection file.
 
     Root:
-      kind: view
-      view: { role?, title?, subtitle?, error_kind?, blocks }
+      kind: projection
+      projection: { role?, title?, subtitle?, error_kind?, blocks }
 
-    One file == one view. No sections. No bundles.
+    One file == one projection. No sections. No bundles.
 
     Interactive input is represented as a normal block:
       - type: fields
@@ -76,20 +76,20 @@ class DefaultViewSpecParser:
             "spacer": self._parse_spacer_block,
         }
 
-    def parse_spec(self, yaml_text: str) -> View:
+    def parse_spec(self, yaml_text: str) -> Projection:
         raw = self._load_yaml_mapping(yaml_text)
 
         kind = raw.get("kind")
-        if kind != "view":
+        if kind != "projection":
             raise ViewSpecValidationError(
-                f"Unknown root kind: {kind!r} (expected 'view')"
+                f"Unknown root kind: {kind!r} (expected 'projection')"
             )
 
-        view = raw.get("view")
-        if not isinstance(view, dict):
-            raise ViewSpecValidationError("view must be a mapping")
+        projection = raw.get("projection")
+        if not isinstance(projection, dict):
+            raise ViewSpecValidationError("projection must be a mapping")
 
-        return self._parse_view_body(view)
+        return self._parse_projection_body(projection)
 
     def _load_yaml_mapping(self, yaml_text: str) -> dict[str, Any]:
         try:
@@ -101,48 +101,48 @@ class DefaultViewSpecParser:
             raise ViewSpecParseError("Root must be a mapping")
         return raw
 
-    def _parse_view_body(self, view: dict[str, Any]) -> View:
-        if "fields" in view:
+    def _parse_projection_body(self, projection: dict[str, Any]) -> Projection:
+        if "fields" in projection:
             raise ViewSpecValidationError(
-                "view.fields is no longer supported; use a block with type='fields' inside view.blocks"
+                "projection.fields is no longer supported; use a block with type='fields' inside projection.blocks"
             )
-        if "input_mode" in view:
+        if "input_mode" in projection:
             raise ViewSpecValidationError(
-                "view.input_mode is no longer supported; use input_mode on a 'fields' block"
+                "projection.input_mode is no longer supported; use input_mode on a 'fields' block"
             )
 
-        view_id = view.get("id")
-        if view_id is not None and not isinstance(view_id, str):
+        projection_id = projection.get("id")
+        if projection_id is not None and not isinstance(projection_id, str):
             raise ViewSpecValidationError("id must be a string or null")
-        if view_id is None:
-            view_id = f"view.{uuid4().hex}"
+        if projection_id is None:
+            projection_id = f"prj.{uuid4().hex}"
 
-        role = view.get("role", "info")
+        role = projection.get("role", "info")
         if role not in ("info", "success", "warning", "error", "help"):
             raise ViewSpecValidationError(f"Invalid role: {role!r}")
 
-        title = view.get("title")
+        title = projection.get("title")
         if title is not None and not isinstance(title, str):
             raise ViewSpecValidationError("title must be a string or null")
 
-        subtitle = view.get("subtitle")
+        subtitle = projection.get("subtitle")
         if subtitle is not None and not isinstance(subtitle, str):
             raise ViewSpecValidationError("subtitle must be a string or null")
 
-        error_kind = view.get("error_kind")
+        error_kind = projection.get("error_kind")
         if error_kind is not None and error_kind not in ("validation", "system"):
             raise ViewSpecValidationError(
                 "error_kind must be 'validation', 'system', or null"
             )
 
-        blocks_raw = view.get("blocks")
+        blocks_raw = projection.get("blocks")
         if not isinstance(blocks_raw, list) or not blocks_raw:
-            raise ViewSpecValidationError("view.blocks must be a non-empty list")
+            raise ViewSpecValidationError("projection.blocks must be a non-empty list")
 
         blocks = [self._parse_block(b) for b in blocks_raw]
-        blocks = self._ensure_block_ids(view_id, blocks)
+        blocks = self._ensure_block_ids(projection_id, blocks)
 
-        header = ViewHeader(
+        header = ProjectionHeader(
             role=cast(Role, role),
             title=title,
             subtitle=subtitle,
@@ -150,14 +150,14 @@ class DefaultViewSpecParser:
             meta=None,
         )
 
-        return View(
-            kind="view",
-            id=view_id,
+        return Projection(
+            kind="projection",
+            id=projection_id,
             header=header,
             blocks=blocks,
         )
 
-    def _ensure_block_ids(self, view_id: str, blocks: list[Block]) -> list[Block]:
+    def _ensure_block_ids(self, projection_id: str, blocks: list[Block]) -> list[Block]:
 
         def assign(block: Block, path: str) -> Block:
             bid = block.id or path
@@ -179,7 +179,7 @@ class DefaultViewSpecParser:
 
             return block
 
-        return [assign(b, f"{view_id}.{i}") for i, b in enumerate(blocks)]
+        return [assign(b, f"{projection_id}.{i}") for i, b in enumerate(blocks)]
 
     def _parse_fields_block(
         self, block_id: str | None, b: dict[str, Any]

@@ -2,26 +2,29 @@ from __future__ import annotations
 
 import yaml
 
-from yakoon.base.projection import View, ViewSpecParser
+from yakoon.base.projection.model import Projection
+from yakoon.base.projection.port import ProjectionParser
 from yakoon.base.projection.rendering import RenderContext, RenderEngine
 from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 
 
-class DefaultRenderService:
+class TemplateProjectionRenderer:
 
-    def __init__(self, services: ServiceDirectory) -> None:
-        self._services = services
+    def __init__(self, container: Container) -> None:
+        self._container = container
 
-    async def render_view(self, ctx: RenderContext, state: str, **data) -> View:
-        loader = self._services.get(ResourceLoader)
-        source = loader.load_text(ctx.resource.child(state))
+    async def render_projection(
+        self, ctx: RenderContext, name: str, **data
+    ) -> Projection:
+        loader = self._container.get(ResourceLoader)
+        source = loader.load_text(ctx.resource.child(name))
 
         # 1) render full template text (Jinja)
-        engine = self._services.get(RenderEngine)
+        engine = self._container.get(RenderEngine)
 
         # reserved namespaces owned by the platform
-        meta = {"state": state, "resource": ctx.resource.path}
+        meta = {"name": name, "resource": ctx.resource.path}
 
         reserved = {"_meta"}  # later: _host, _ui, _env, _i18n ...?
         collisions = reserved.intersection(data.keys())
@@ -42,5 +45,5 @@ class DefaultRenderService:
             raise TypeError("Root template must be a mapping")
 
         # 3) parse/validate into View
-        View = self._services.get(ViewSpecParser)
+        View = self._container.get(ProjectionParser)
         return View.parse_spec(rendered_text)

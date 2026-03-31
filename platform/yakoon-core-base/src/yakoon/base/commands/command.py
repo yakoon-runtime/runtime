@@ -3,12 +3,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from yakoon.base.capabilities.presenters import (
-    Presenter,
-    PresenterService,
-)
 from yakoon.base.controllers import resolve_resource
-from yakoon.base.naming import NamespaceService
+from yakoon.base.naming import NamespaceResolver
+from yakoon.base.projection.port import (
+    Projector,
+    ProjectorFactory,
+)
 
 from .types import (
     CommandKind,
@@ -19,7 +19,7 @@ from .types import (
 if TYPE_CHECKING:
 
     from yakoon.base.naming import Namespace
-    from yakoon.base.runtime.services import ServiceDirectory
+    from yakoon.base.runtime import Container
 
     from .context import CommandContext
     from .request import Request
@@ -47,28 +47,28 @@ class Command(ABC):
     ctx: CommandContext
 
     @property
-    def services(self) -> ServiceDirectory:
-        """Service directory exposed by the active controller."""
+    def container(self) -> Container:
+        """Container exposed by the active controller."""
         if not self.ctx:
             raise RuntimeError("Context cannot be None")
         if not self.ctx.controller:
             raise RuntimeError("Context controller cannot be None")
-        if not self.ctx.controller.services:
+        if not self.ctx.controller.container:
             raise RuntimeError("Controller services cannot be None")
-        return self.ctx.controller.services
+        return self.ctx.controller.container
 
     async def get_namespace(self, kind: str, space: str | None) -> Namespace:
         """Resolve the namespace for the current session."""
-        namespaces = self.services.get(NamespaceService)
+        namespaces = self.container.get(NamespaceResolver)
         return await namespaces.from_session(self.ctx.session, kind, space)
 
-    async def get_presenter(self) -> Presenter:
+    async def create_projector(self) -> Projector:
         if not self.ctx:
             raise RuntimeError("Context cannot be None")
         if not self.ctx.controller:
             raise RuntimeError("Context controller cannot be None")
         controller = self.ctx.controller
-        presenter_service = self.services.get(PresenterService)
+        projector_service = self.container.get(ProjectorFactory)
 
         resources = controller.resources
         if not resources.contracts:
@@ -82,7 +82,7 @@ class Command(ABC):
             key=self.key,
         )
 
-        return await presenter_service.create_presenter(ref, session)
+        return await projector_service.create(ref, session)
 
     @abstractmethod
     def run(self, request: Request):

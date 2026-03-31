@@ -7,7 +7,7 @@ from yakoon.base.resources.resource import _clean_rel
 
 
 @dataclass(slots=True)
-class DefaultResourceLoader:
+class FileResourceLoader:
     """
     Generic loader for any resource under a package.
 

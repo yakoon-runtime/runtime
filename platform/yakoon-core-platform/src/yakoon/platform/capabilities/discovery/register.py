@@ -4,10 +4,10 @@ from yakoon.base.capabilities.discovery import (
     DiscoveryService,
     LookupCandidateStoreService,
     LookupParser,
-    LookupResolverService,
+    LookupResolver,
 )
 from yakoon.base.plugins import ModuleExport, ModuleMeta
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 
 from .controllers import DiscoveryController
 from .services import (
@@ -25,30 +25,30 @@ meta = ModuleMeta(
 )
 
 
-def register(services: ServiceDirectory) -> ModuleExport:
+def register(container: Container) -> ModuleExport:
 
-    public_services: list[type] = []
+    public_ports: list[type] = []
 
     discovery = DefaultDiscoveryService()
-    discovery.register(1, LookupAliasTagStrategy(services))
+    discovery.register(1, LookupAliasTagStrategy(container))
 
     # provide: internal module service (not exported to platform)
     def provide(port_type: type[Any], instance: Any) -> None:
-        services.register_static(port_type, instance)
+        container.register_static(port_type, instance)
 
     # publish: public capability port exported to the platform
     def publish(port_type: type, instance: object) -> None:
         provide(port_type, instance)
-        public_services.append(port_type)
+        public_ports.append(port_type)
 
     provide(LookupCandidateStoreService, DefaultLookupCandidateStoreService())
     provide(LookupParser, DefaultLookupParser())
 
-    publish(LookupResolverService, DefaultLookupResolverService(services))
+    publish(LookupResolver, DefaultLookupResolverService(container))
     publish(DiscoveryService, discovery)
 
     return ModuleExport(
         meta,
         controllers=[DiscoveryController],
-        public_services=public_services,
+        public_ports=public_ports,
     )

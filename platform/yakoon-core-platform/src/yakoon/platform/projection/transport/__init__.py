@@ -1,7 +1,7 @@
-from .dispatcher import DefaultViewDispatcher
-from .stream import DefaultOutputStream
+from .dispatcher import EventProjectionDispatcher
+from .stream import EventStreamOutput
 
 __all__ = [
-    "DefaultViewDispatcher",
-    "DefaultOutputStream",
+    "EventProjectionDispatcher",
+    "EventStreamOutput",
 ]

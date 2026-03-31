@@ -4,7 +4,7 @@ import time
 from datetime import UTC, datetime
 
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import show
+from yakoon.base.flow import present
 
 
 class CmdVersion(Command):
@@ -13,8 +13,8 @@ class CmdVersion(Command):
 
     async def run(self, request: Request):
 
-        presenter = await self.get_presenter()
-        view = await presenter.render(
+        projector = await self.create_projector()
+        projection = await projector.project(
             "show",
             version=get_platform_version(),
             python=platform.python_version(),
@@ -22,7 +22,7 @@ class CmdVersion(Command):
             uptime=get_uptime(),
             time=datetime.now(UTC).isoformat(),
         )
-        yield show(view)
+        yield present(projection)
 
 
 _start_time = time.time()

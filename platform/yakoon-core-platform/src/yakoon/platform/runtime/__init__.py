@@ -5,10 +5,10 @@ from .error import (
     PermissionDenied,
     PlatformError,
 )
-from .sessions import DefaultSessionService, Session
+from .sessions import EntityStoreSessionService, Session
 
 __all__ = [
-    "DefaultSessionService",
+    "EntityStoreSessionService",
     "Session",
     "PlatformError",
     "CommandNotFound",

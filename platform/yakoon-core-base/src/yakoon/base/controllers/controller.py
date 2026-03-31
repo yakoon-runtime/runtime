@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 
 from .resources import ResourceReferences
 
@@ -17,7 +17,7 @@ class Controller(ABC):
     """Abstract base class for controllers.
 
     A controller is the composition root for a "program context" in the engine:
-      - it provides services via a ServiceDirectory
+      - it provides services via a Container
       - it defines available commands via CommandSets
       - it provides template and workflow sources
       - it exposes lifecycle hooks around resolution and execution
@@ -53,7 +53,7 @@ class Controller(ABC):
         The platform is expected to inject a fully configured directory via
         `connect_services()` before command execution.
         """
-        self.services: ServiceDirectory | None = None
+        self.container: Container | None = None
 
     @property
     @abstractmethod
@@ -69,13 +69,13 @@ class Controller(ABC):
         """
         raise NotImplementedError
 
-    def connect_services(self, services: ServiceDirectory) -> None:
-        """Inject the service directory.
+    def set_container(self, container: Container) -> None:
+        """Inject the container.
 
         Args:
-            services: The fully configured service directory provided by the platform.
+            container: The fully configured container provided by the platform.
         """
-        self.services = services
+        self.container = container
 
     async def on_before_resolve(self, session: Session) -> None:
         """Hook executed before command resolution.

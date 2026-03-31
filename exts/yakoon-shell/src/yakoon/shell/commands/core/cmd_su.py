@@ -6,7 +6,7 @@ class CmdSu(Command):
     key = "su"
 
     async def run(self, request: Request):
-        wf = self.services.get(WorkflowService)  # TODO:
+        wf = self.container.get(WorkflowService)  # TODO:
         if not self.ctx:
             raise RuntimeError("Cannot cannot be None.")
 

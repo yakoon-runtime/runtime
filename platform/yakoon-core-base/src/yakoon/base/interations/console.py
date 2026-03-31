@@ -1,5 +1,5 @@
 from yakoon.base.dispatch import Interaction
-from yakoon.base.projection import View
+from yakoon.base.projection import Projection
 
 
 class ConsoleInteraction(Interaction):
@@ -10,8 +10,8 @@ class ConsoleInteraction(Interaction):
     async def show_prompt(self, ps1: str) -> None:
         self.ui.set_prompt(ps1)
 
-    async def show_view(self, view: View) -> None:
-        self.ui.render_view(view)
+    async def show_projection(self, projection: Projection) -> None:
+        self.ui.render_projection(projection)
 
     async def exit(self) -> None:
         await self.ui.stop()

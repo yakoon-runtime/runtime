@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import asyncio
 
-from yakoon.base.projection import (
+from yakoon.base.projection.percept import PerceptualStream
+from yakoon.base.projection.transport import (
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
     PatchReset,
-    PerceptualStream,
-    ViewEvent,
+    ProjectionEvent,
 )
 from yakoon.console.renderer import BaseRenderer, RendererBuilder
 
@@ -67,7 +67,7 @@ class ConsoleOutput:
     async def cancel(self):
         self._cancelled = True
 
-    async def view(self, event: ViewEvent) -> None:
+    async def view(self, event: ProjectionEvent) -> None:
         for op in event.patch.ops:
 
             if isinstance(op, PatchReset):

@@ -23,13 +23,12 @@ async def run_console() -> None:
             "identity": "default",
             "interaction": "default",
             "jobs": "default",
-            "presenters": "default",
             "workflow": "default",
         },
     )
 
-    await initialize_storage(engine.services)
-    await seed_demo_system_data(engine.services)
+    await initialize_storage(engine.container)
+    await seed_demo_system_data(engine.container)
 
     # -------------------------------------------------
     # Host runtime

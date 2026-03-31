@@ -8,7 +8,7 @@ from yakoon.base.catalogs import (
 )
 
 
-class DefaultControllerCatalogService:
+class ControllerIndexBuilder:
     """
     Read-only snapshot about controller metadata.
     No controller instance, no directory references.

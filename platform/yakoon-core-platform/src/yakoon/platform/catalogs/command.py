@@ -3,20 +3,20 @@ from __future__ import annotations
 from collections.abc import Sequence
 
 from yakoon.base.capabilities.identity import Permission, PermissionService
-from yakoon.base.catalogs import CommandCatalog, CommandInfo, ControllerCatalogService
+from yakoon.base.catalogs import CommandCatalog, CommandInfo, ControllerRegistry
 from yakoon.base.commands import (
     CommandKind,
     CommandScope,
     CommandVisibility,
 )
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 from yakoon.platform.runtime.sessions import Session
 
 
-class DefaultCommandCatalogService:
+class CommandIndexBuilder:
 
-    def __init__(self, services: ServiceDirectory, catalog: CommandCatalog):
-        self._services = services
+    def __init__(self, container: Container, catalog: CommandCatalog):
+        self._container = container
         self._catalog = catalog
         self._by_controller: dict[str, list[CommandInfo]] = {}
         self._global: tuple[CommandInfo, ...] = ()
@@ -29,7 +29,7 @@ class DefaultCommandCatalogService:
         by_controller: dict[str, list[CommandInfo]] = {}
         global_cmds: dict[str, CommandInfo] = {}
 
-        controllers = self._services.get(ControllerCatalogService)
+        controllers = self._container.get(ControllerRegistry)
 
         for c in self._catalog.all():
             if not c.controller_id:
@@ -62,7 +62,7 @@ class DefaultCommandCatalogService:
 
     def _ensure_built(self) -> None:
         if not self._built:
-            raise RuntimeError("CommandCatalogService.build() was not called.")
+            raise RuntimeError("CommandIndexBuilder.build() was not called.")
 
     def all(self) -> tuple[CommandInfo, ...]:
         self._ensure_built()
@@ -87,7 +87,7 @@ class DefaultCommandCatalogService:
         """
         self._ensure_built()
 
-        controller_infos = self._services.get(ControllerCatalogService)
+        controller_infos = self._container.get(ControllerRegistry)
         controller = controller_infos.get(controller_id)
         is_shell = bool(controller and controller.is_shell)
 
@@ -118,7 +118,7 @@ class DefaultCommandCatalogService:
     ) -> Sequence[CommandInfo]:
         self._ensure_built()
         out: list[CommandInfo] = []
-        perm_service = self._services.get(PermissionService)
+        perm_service = self._container.get(PermissionService)
         for cmd in self.for_controller(controller_id):
             fq_key = Permission.fq_key(controller_id, cmd.key)
             if perm_service.can_read(session, fq_key):

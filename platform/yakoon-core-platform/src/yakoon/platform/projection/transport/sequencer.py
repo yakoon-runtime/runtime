@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from yakoon.base.projection import View, ViewEvent
+from yakoon.base.projection import Projection, ProjectionEvent
 from yakoon.platform.projection.builder.emitter import ViewEmitter
 from yakoon.platform.projection.builder.traversal import ViewTraversal
 
@@ -11,23 +11,23 @@ class ViewSequencer:
         self.traversal = ViewTraversal()
         self.emitter = ViewEmitter()
 
-    def sequence(self, view: View) -> Iterator[ViewEvent]:
+    def sequence(self, projection: Projection) -> Iterator[ProjectionEvent]:
         """
         Produces a complete, batched ViewEvent sequence:
         BEGIN → FULL PATCH → FINISH
         """
 
-        if not view.id:
-            raise RuntimeError("View must have id.")
-        if not view.header:
-            raise RuntimeError("View must have an header.")
+        if not projection.id:
+            raise RuntimeError("Projection must have id.")
+        if not projection.header:
+            raise RuntimeError("Projection must have an header.")
 
         # starts the protocol
-        yield self.emitter.begin(view.header, view.id)
+        yield self.emitter.begin(projection.header, projection.id)
 
         # emit all operations.
-        ops = list(self.traversal.iter_ops(view))
-        yield self.emitter.emit(view.id, ops)
+        ops = list(self.traversal.iter_ops(projection))
+        yield self.emitter.emit(projection.id, ops)
 
         ## ends the protocol.
-        yield self.emitter.finish(view.id)
+        yield self.emitter.finish(projection.id)

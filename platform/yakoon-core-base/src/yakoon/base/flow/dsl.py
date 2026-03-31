@@ -37,10 +37,8 @@ Commands = Orchestration
 """
 
 from dataclasses import replace
-from typing import TypeGuard
 
-from yakoon.base.capabilities.presenters import PresenterView
-from yakoon.base.projection import View, ViewHeader, v_text
+from yakoon.base.projection.model import Projection, ProjectionHeader, v_text
 from yakoon.base.runtime.input.event import InputEvent
 
 from .primitives import (
@@ -58,26 +56,20 @@ from .primitives import (
 # --------------------------------------------------------
 
 
-def show(view: View | PresenterView) -> Outcome:
+def present(projection: Projection) -> Outcome:
     """
     Emit a view to the UI.
 
     Does NOT expect input.
     """
-    if isinstance(view, View):
-        return Outcome(effects=[EmitView(view)])
-
-    if _is_pv(view):
-        return Outcome(effects=[EmitView(view.view)])
-
-    raise TypeError(f"show() expected View or PresenterView, got {type(view).__name__}")
+    return Outcome(effects=[EmitView(projection)])
 
 
 def write(message: str) -> Outcome:
     """
     Convenience helper for emitting plain text.
     """
-    return show(v_text(message))
+    return present(v_text(message))
 
 
 # --------------------------------------------------------
@@ -85,30 +77,21 @@ def write(message: str) -> Outcome:
 # --------------------------------------------------------
 
 
-def ask(view: View | PresenterView) -> Outcome:
+def ask(projection: Projection) -> Outcome:
     """
     Emit a view and wait for structured user input.
 
     Automatically marks the view as expecting input and focuses it.
     """
 
-    def update_header(view: View) -> View:
-        header = replace(view.header or ViewHeader(), expects_input=True)
-        return replace(view, header=header)
+    def update_header(projection: Projection) -> Projection:
+        header = replace(projection.header or ProjectionHeader(), expects_input=True)
+        return replace(projection, header=header)
 
-    if isinstance(view, View):
-        view = update_header(view)
-        return Outcome(
-            effects=[AutoFocus(), EmitView(view)],
-        )
-
-    if _is_pv(view):
-        view = update_header(view.view)
-        return Outcome(
-            effects=[AutoFocus(), EmitView(view)],
-        )
-
-    raise TypeError(f"ask() expected View or PresenterView, got {type(view).__name__}")
+    projection = update_header(projection)
+    return Outcome(
+        effects=[AutoFocus(), EmitView(projection)],
+    )
 
 
 # --------------------------------------------------------
@@ -158,12 +141,3 @@ def delay_until(timestamp: float) -> Outcome:
     Suspend the flow until a specific point in time.
     """
     return Outcome(control=SleepUntil.until(timestamp))
-
-
-# --------------------------------------------------------
-# INTERNALS
-# --------------------------------------------------------
-
-
-def _is_pv(v: object) -> TypeGuard[PresenterView]:
-    return hasattr(v, "view")

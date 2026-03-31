@@ -3,7 +3,7 @@ from collections import deque
 from yakoon.base.dispatch.types import CommandDispatch, DispatchInput
 
 
-class DefaultCommandQueueService:
+class InMemoryCommandQueue:
     """
     Session-scoped command queue used to schedule follow-up commands.
 

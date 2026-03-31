@@ -185,7 +185,7 @@ die Art und Weise dar Ausgabe in Chunks. Derzeit unterstützt der Stream:
 
 ## 26-03-08
 **Neue Pipeline für UI**
-Presenter
+Projector
   → render state
   → normalize / merge blocks
   → hand block sequence to DefaultInputService
@@ -202,7 +202,7 @@ Streamer
 **Felder werden normale Blöcke**
 Fields als normale Blocks → beseitigt die künstliche Input/Output-Trennung
 InteractionService als Ablaufsteuerung → genau der richtige Ort für wait / validate / continue
-Streamer auf Transport reduziert → Presenter bestimmt Struktur, Streamer überträgt nur
+Streamer auf Transport reduziert → Projector bestimmt Struktur, Streamer überträgt nur
 
 ## 26-03-06
 **Einführung von Capabilities vs. Fachlichkeit**
@@ -320,7 +320,7 @@ Vorteile:
 - Testbarkeit steigt
 - Architektur wird klarer und ehrlicher
 
-kind: view
+kind: projection
 state:
   role: info
   title: ...
@@ -455,7 +455,7 @@ Der Kernel ist vollständig UI-agnostisch. Dialoglogik und Darstellung sind saub
 **Einführung des Policy-Systems**
 * Einführung eines zentralen `PolicyService`.
 * Feldtyp, Validierung und Coercion werden über Policies definiert.
-* Workflows und Presenter arbeiten nur noch mit Policy-Referenzen (z.B. `system:string`, `system:bool`).
+* Workflows und Projector arbeiten nur noch mit Policy-Referenzen (z.B. `system:string`, `system:bool`).
 * `system:bool` unterstützt flexible Eingaben (y/n, ja/nein, true/false, 1/0).
 * Validierung ist vollständig aus Prompt-/Workflow-Code ausgelagert.
 Input ist nun deklarativ typisiert und konsistent validiert.
@@ -587,12 +587,12 @@ Im Prompt des Hosts wird der aktuelle Mode angezeigt.
 Bei den Überlegungen zur Architektur der zukünftigen Platform, ist der Gedanke gereift, sich an Unix/Linux anzulehnen. Dabei stellt die Platform das System und die Commandline die Shell dar. Die Shell unterstützt das Starten und Beenden von Programmen (Controllern). Dies geschieht über 'use'. Verlassen der Anwedungen über 'exit'. Die Platform darf somit nur noch Infrastuktur und Dienste bereitstellen. Alles andere muss von Anwendungen (Programs) unterstützt werden. Um die Abstraktion zu verfollständigen, wurde die 'shell' in ein eigenes package verschoben. 'yakoon.shell'. Die Shell unterstützt somit das "Starten" von Programmen über 'use' und befindet sie sich dann im ProgramMode.
 
 ## [2025-01-30]
-**ServiceDirectory und 'protocol'**
-Die ServiceDirectory wurde umgebaut, um mit 'type' statt 'str' als Schlüssel arbeiten zu können. Zudem werden nun typisierte Rückgaben geliefert. Konsumenten können nun 'protocol'-classes dazu nutzen Dienste an der ServiceDirectory zu registrieren und mittels 'protocol' abzurufen.
+**Container und 'protocol'**
+Die Container wurde umgebaut, um mit 'type' statt 'str' als Schlüssel arbeiten zu können. Zudem werden nun typisierte Rückgaben geliefert. Konsumenten können nun 'protocol'-classes dazu nutzen Dienste an der Container zu registrieren und mittels 'protocol' abzurufen.
 
 ## [2025-01-30]
-**Presenter ist nun Service**
-Der 'Presenter' wurde zu einem Service umgebaut und ist nun in 'platform' und nicht länger im 'base' zu finden. 
+**Projector ist nun Service**
+Der 'Projector' wurde zu einem Service umgebaut und ist nun in 'platform' und nicht länger im 'base' zu finden. 
 
 ## [2025-01-28]
 **Template als Ressources nutzbar**
@@ -605,7 +605,7 @@ Folgende Entscheidungen wurden getroffen:
 2. Die Anwendung wird auf 4 eigenständige Module mit eigenem '.toml' aufgeteilt: 'base', 'platform', 'hosts' und 'compose'.
 3. Abhängigkeiten werden nicht weiter über die Engine sondern über das Module 'compose' aufgelöst
 4. Dienste werden genutzt, um Informationen innerhalb der Anwendung auszutauschen.
-5. Dienste werden in die Platform verschoben und 'base' erhält Zugriff über die 'ServiceDirectory'. Dort legen die Dienste in Form von 'protocol'-files vor.
+5. Dienste werden in die Platform verschoben und 'base' erhält Zugriff über die 'Container'. Dort legen die Dienste in Form von 'protocol'-files vor.
 6. Das System wurde aufgeräumt und technische Schuld beglichen. 
 
 ## [2025-01-28]
@@ -712,8 +712,8 @@ Markdown bleibt als Importformat denkbar – z. B. per Drag&Drop mit automatis
 Wir verwerfen Markdown als Speicherformat für Räume zugunsten einer SQL-basierten Lösung. Gründe: fehlende Zustandsfähigkeit, kein Multiuser-Support, keine Queries. Ziel ist eine skalierbare, persistente Welt mit dynamischer Erweiterbarkeit.
 
 ## [2025-05-29]
-**Commands & Presenter**
-Alle Commands verwenden das Presenter-System mit klarer template_key-Definition pro SaasCommand. Die Darstellung erfolgt vollständig über sprachfähige Jinja2-Templates, getrennt vom Code. Die Struktur verbessert Lesbarkeit, Mehrsprachigkeit und Konsistenz. Ausgabe-Logik ist vollständig kapselbar, testbar und flexibel. Der Presenter ersetzt direkte Ausgaben (session.emit, session.fail) durch eine semantische Schicht. Pfadangaben erfolgen explizit über get_template_path() – kein Hidden-Routing.
+**Commands & Projector**
+Alle Commands verwenden das Projector-System mit klarer template_key-Definition pro SaasCommand. Die Darstellung erfolgt vollständig über sprachfähige Jinja2-Templates, getrennt vom Code. Die Struktur verbessert Lesbarkeit, Mehrsprachigkeit und Konsistenz. Ausgabe-Logik ist vollständig kapselbar, testbar und flexibel. Der Projector ersetzt direkte Ausgaben (session.emit, session.fail) durch eine semantische Schicht. Pfadangaben erfolgen explizit über get_template_path() – kein Hidden-Routing.
 
 ## [2025-05-29]
 **Umgang mit KI (Intent Mapping)**
@@ -731,8 +731,8 @@ if intent.is_valid():
 Entscheidung: Die KI wird nicht direkt zur Steuerung der Plattform genutzt, sondern dient ausschließlich der Interpretation von Benutzereingaben. Aus diesen ermittelt sie das passende SaasCommand, die zugehörige Domain und mögliche Argumente. Begründung: Die Plattform bleibt ausführende Instanz mit vollständiger Kontrolle. Die KI agiert als Intent-Resolver, nicht als Logikträger – das verhindert Automatisierungsfehler, Halluzinationen und wahrt Systemintegrität.
 
 ## [2025-05-29]
-**Presenter**
-Ein Presenter wurde eingeführt, um die gesamte Template-Struktur zu kapseln. Dieser Presenter arbeitet mit der Session ist so somit in der Lage direkt Templates an Clients zu versenden. Grund: Die Verwendung von Templates reduziert sich auf eine Erstellung des Presenters + pres.emit("key", **data). Zudem wurden die Prompts angebunden. pres.prompts.emit("key")
+**Projector**
+Ein Projector wurde eingeführt, um die gesamte Template-Struktur zu kapseln. Dieser Projector arbeitet mit der Session ist so somit in der Lage direkt Templates an Clients zu versenden. Grund: Die Verwendung von Templates reduziert sich auf eine Erstellung des Projectors + pres.emit("key", **data). Zudem wurden die Prompts angebunden. pres.prompts.emit("key")
 
 ## [2025-05-28]
 **Templates vs. Translater**

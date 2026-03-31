@@ -1,48 +1,53 @@
 from typing import Literal, TypeAlias
 
 from yakoon.base import ports
-from yakoon.base.capabilities.discovery import LookupResolverService
+from yakoon.base.capabilities.discovery import LookupResolver
 from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.capabilities.interaction import FieldPolicy, PolicyService
 from yakoon.base.catalogs import (
     CommandCatalog,
-    CommandCatalogService,
     CommandInfo,
     ControllerCatalog,
-    ControllerCatalogService,
     ControllerInfo,
 )
+from yakoon.base.catalogs.port import CommandRegistry, ControllerRegistry
 from yakoon.base.controllers import Controller
-from yakoon.base.dispatch import CommandQueueService
-from yakoon.base.naming import Namespace, NamespaceService
+from yakoon.base.dispatch import CommandQueue
+from yakoon.base.naming import Namespace, NamespaceResolver
 from yakoon.base.plugins import ModuleRegistry
-from yakoon.base.projection import FieldType, ViewDispatcher, ViewSpecParser
-from yakoon.base.projection.rendering import RenderEngine, RenderService
-from yakoon.base.projection.transport import OutputStream
+from yakoon.base.projection.model import FieldType
+from yakoon.base.projection.percept import ProjectionDispatcher
+from yakoon.base.projection.port import ProjectionParser, ProjectorFactory
+from yakoon.base.projection.rendering import ProjectionRenderer, RenderEngine
+from yakoon.base.projection.transport import Output
 from yakoon.base.resources import ResourceLoader
-from yakoon.base.runtime.services import ServiceDirectory
-from yakoon.base.runtime.sessions import SessionService
+from yakoon.base.runtime import Container
+from yakoon.base.runtime.sessions import SessionStore
 from yakoon.platform.catalogs import (
-    DefaultCommandCatalogService,
-    DefaultControllerCatalogService,
+    CommandIndexBuilder,
+    ControllerIndexBuilder,
 )
 from yakoon.platform.machine import (
     CommandDirectory,
     CommandEngine,
     ControllerDirectory,
-    DefaultCommandQueueService,
+    InMemoryCommandQueue,
 )
-from yakoon.platform.naming import DefaultNamespaceService
+from yakoon.platform.naming import DomainNamespaceResolver
 from yakoon.platform.plugins import DefaultModuleManager, DefaultModuleRegistry
-from yakoon.platform.projection import DefaultViewDispatcher, DefaultViewSpecParser
-from yakoon.platform.projection.rendering import (
-    DefaultRenderService,
-    JinjaRenderEngine,
+from yakoon.platform.projection import (
+    EventProjectionDispatcher,
+    TemplateProjectorFactory,
+    YamlProjectionParser,
 )
-from yakoon.platform.projection.transport import DefaultOutputStream
-from yakoon.platform.resources import DefaultResourceLoader
-from yakoon.platform.runtime import DefaultSessionService
-from yakoon.platform.services.lookup import NoLookupResolverService
+from yakoon.platform.projection.rendering import (
+    JinjaRenderEngine,
+    TemplateProjectionRenderer,
+)
+from yakoon.platform.projection.transport import EventStreamOutput
+from yakoon.platform.resources import FileResourceLoader
+from yakoon.platform.runtime import EntityStoreSessionService
+from yakoon.platform.services.lookup import NoLookupResolver
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
 from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.stores.event.store import DefaultEntityStore
@@ -61,7 +66,7 @@ def compose_engine(
 
     directory = ControllerDirectory()
 
-    bootstrap = ServiceDirectory()
+    bootstrap = Container()
     bootstrap.register_static(ModuleRegistry, DefaultModuleRegistry())
 
     manager = DefaultModuleManager(
@@ -75,12 +80,12 @@ def compose_engine(
 
     controllers: list[Controller] = []
     for lm in loaded:
-        for port_type in lm.export.public_services:
-            bootstrap.register_static(port_type, lm.services.get(port_type))
+        for port_type in lm.export.public_ports:
+            bootstrap.register_static(port_type, lm.container.get(port_type))
 
         for controller_type in lm.export.controllers:
             ctrl = controller_type()
-            ctrl.connect_services(lm.services)
+            ctrl.set_container(lm.container)
             controllers.append(ctrl)
 
     directory.register(controllers)
@@ -90,7 +95,7 @@ def compose_engine(
     commands = _compose_commands(bootstrap, directory)
     store = _compose_store()
 
-    _compose_services(
+    _compose_ports(
         bootstrap,
         store,
         controller_catalog,
@@ -105,8 +110,8 @@ def compose_engine(
     return CommandEngine(directory, bootstrap, commands)
 
 
-def _compose_permission_roles(services: ServiceDirectory):
-    permissions = services.get(PermissionService)
+def _compose_permission_roles(container: Container):
+    permissions = container.get(PermissionService)
     permissions.register_role(
         "admin",
         [
@@ -123,8 +128,8 @@ def _compose_permission_roles(services: ServiceDirectory):
     )
 
 
-def _compose_policies(services: ServiceDirectory):
-    policy = services.get(PolicyService)
+def _compose_policies(container: Container):
+    policy = container.get(PolicyService)
     policy.register_defaults()
     policy.register_policies(
         [
@@ -183,40 +188,42 @@ def _compose_command_catalog(directory: ControllerDirectory) -> CommandCatalog:
 
 
 def _compose_commands(
-    services: ServiceDirectory, directory: ControllerDirectory
+    container: Container, directory: ControllerDirectory
 ) -> CommandDirectory:
-    commands = CommandDirectory(services)
+    commands = CommandDirectory(container)
     for controller in directory.get_all():
         commands.register(controller.id, controller.commandsets)
 
     return commands
 
 
-def _compose_services(
-    services: ServiceDirectory,
+def _compose_ports(
+    container: Container,
     store: DefaultEntityStore,
     controller_catalog: ControllerCatalog,
     command_catalog: CommandCatalog,
-) -> ServiceDirectory:
+) -> Container:
 
-    # core platform services
-    services.register_static(NamespaceService, DefaultNamespaceService())
-    services.register_static(SessionService, DefaultSessionService(store))
-    services.register_static(CommandQueueService, DefaultCommandQueueService())
-    services.register_static(ViewSpecParser, DefaultViewSpecParser())
-    services.register_static(ResourceLoader, DefaultResourceLoader())
-    services.register_static(RenderService, DefaultRenderService(services))
-    services.register_static(RenderEngine, JinjaRenderEngine())
-    services.register_static(ViewDispatcher, DefaultViewDispatcher())
-    services.register_static(OutputStream, DefaultOutputStream())
+    # core platform
+    container.register_static(NamespaceResolver, DomainNamespaceResolver())
+    container.register_static(SessionStore, EntityStoreSessionService(store))
+    container.register_static(CommandQueue, InMemoryCommandQueue())
+    container.register_static(ResourceLoader, FileResourceLoader())
+    container.register_static(RenderEngine, JinjaRenderEngine())
+
+    container.register_static(ProjectorFactory, TemplateProjectorFactory(container))
+    container.register_static(ProjectionParser, YamlProjectionParser())
+    container.register_static(ProjectionRenderer, TemplateProjectionRenderer(container))
+    container.register_static(ProjectionDispatcher, EventProjectionDispatcher())
+    container.register_static(Output, EventStreamOutput())
 
     # register event store.
-    services.register_static(ports.EntityStore, store)
-    services.register_static(ports.IndexRegistry, store)
+    container.register_static(ports.EntityStore, store)
+    container.register_static(ports.IndexRegistry, store)
 
     # optional lookup feature (can be overridden by plugin export.public_services)
-    if not services.has(LookupResolverService):
-        services.register_static(LookupResolverService, NoLookupResolverService())
+    if not container.has(LookupResolver):
+        container.register_static(LookupResolver, NoLookupResolver())
 
     # counters / sharding
     # services.register_static(
@@ -225,18 +232,18 @@ def _compose_services(
     # )
 
     # catalogs (info-only surface)
-    services.register_static(
-        ControllerCatalogService,
-        DefaultControllerCatalogService(controller_catalog),
+    container.register_static(
+        ControllerRegistry,
+        ControllerIndexBuilder(controller_catalog),
     )
-    services.register_static(
-        CommandCatalogService,
-        DefaultCommandCatalogService(services, command_catalog),
+    container.register_static(
+        CommandRegistry,
+        CommandIndexBuilder(container, command_catalog),
     )
 
-    services.get(CommandCatalogService).build()
+    container.get(CommandRegistry).build()
 
-    return services
+    return container
 
 
 def _compose_store() -> DefaultEntityStore:
@@ -256,8 +263,8 @@ def _compose_store() -> DefaultEntityStore:
     return store
 
 
-async def initialize_storage(services: ServiceDirectory) -> None:
-    index = services.get(ports.IndexRegistry)
+async def initialize_storage(container: Container) -> None:
+    index = container.get(ports.IndexRegistry)
 
     from yakoon.platform.capabilities.identity.services.account_service import (
         IDX_ACCOUNT_USERNAME_SPEC,

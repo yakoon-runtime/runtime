@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from yakoon.base.projection import ViewEvent
+    from yakoon.base.projection import ProjectionEvent
 
 
 class IO(Protocol):
 
     async def view(
         self,
-        event: ViewEvent,
+        event: ProjectionEvent,
     ) -> None: ...

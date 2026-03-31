@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.projection import View, v_text
+from yakoon.base.projection.model import Projection, v_text
 
 from ...dsl import ask
 
@@ -10,7 +10,7 @@ from ...dsl import ask
 
 
 def confirm(
-    view: View,
+    projection: Projection,
     *,
     yes: set[str] | None = None,
     no: set[str] | None = None,
@@ -19,14 +19,14 @@ def confirm(
     Generic confirmation pattern.
 
     Flow:
-    - ask(view)
+    - ask(projection)
     - wait for user input
     - map input to True / False
     - repeat until valid
 
     Args:
-        view:
-            The view shown to the user (question, prompt, etc.)
+        projection:
+            The projection shown to the user (question, prompt, etc.)
 
         yes:
             Accepted inputs for "yes" (default: {"y", "yes"})
@@ -42,7 +42,7 @@ def confirm(
     no = no or {"n", "no", "0", "nein"}
 
     while True:
-        event = yield ask(view)
+        event = yield ask(projection)
 
         if not event:
             continue
@@ -56,7 +56,7 @@ def confirm(
             return False
 
         # fallback: ask again with hint
-        view = _invalid_input(view)
+        projection = _invalid_input(projection)
 
 
 # --------------------------------------------------------
@@ -64,7 +64,7 @@ def confirm(
 # --------------------------------------------------------
 
 
-def _invalid_input(view: View) -> View:
+def _invalid_input(projection: Projection) -> Projection:
     """
     Default fallback when input is not understood.
 

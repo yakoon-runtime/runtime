@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from yakoon.base.capabilities.identity import Account, AccountData, AccountService
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.runtime.services import ServiceDirectory
+from yakoon.base.runtime import Container
 
 
 async def seed_demo_system_data(
-    services: ServiceDirectory, *, space: str = "develop"
+    container: Container, *, space: str = "develop"
 ) -> None:
 
-    accounts = services.get(AccountService)
+    accounts = container.get(AccountService)
     ns = Namespace(domain="system", kind="account", space=space)
 
     a1 = Account(

@@ -1,9 +1,9 @@
 from typing import Protocol, cast
 
-from yakoon.base.catalogs import ControllerCatalogService
+from yakoon.base.catalogs import ControllerRegistry
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import show, write
-from yakoon.base.runtime.sessions import SessionService
+from yakoon.base.flow import present, write
+from yakoon.base.runtime.sessions import SessionStore
 
 
 class _ControllerAccess(Protocol):
@@ -18,8 +18,8 @@ class CmdUse(Command):
     async def run(self, request: Request):
 
         session = self.ctx.session
-        controllers = self.services.get(ControllerCatalogService)
-        presenter = await self.get_presenter()
+        controllers = self.container.get(ControllerRegistry)
+        projector = await self.create_projector()
         access = cast(_ControllerAccess, session)
 
         infos = []
@@ -32,18 +32,20 @@ class CmdUse(Command):
                 infos.append(controller)
 
         if infos and not name:
-            result = await presenter.render("show", controllers=infos)
-            yield show(result.view)
+            projection = await projector.project("show", controllers=infos)
+            yield present(projection)
         elif infos:
 
             if name == access.get_active_controller():
-                result = await presenter.render("already_in_shell", controller=infos[0])
-                yield show(result.view)
+                projection = await projector.project(
+                    "already_in_shell", controller=infos[0]
+                )
+                yield present(projection)
             else:
                 access.set_active_controller(name)
-                await self.services.get(SessionService).save(session)
+                await self.container.get(SessionStore).save(session)
                 yield write(f"Aktiver Kontroller: {name}")
 
         else:
-            result = await presenter.render("name_not_found", name=name)
-            yield show(result.view)
+            projector = await projector.project("name_not_found", prg_name=name)
+            yield present(projector)

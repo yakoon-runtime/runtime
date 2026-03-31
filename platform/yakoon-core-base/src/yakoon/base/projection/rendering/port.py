@@ -1,12 +1,14 @@
 from typing import Any, Protocol
 
-from yakoon.base.projection import View
+from yakoon.base.projection import Projection
 
 from .context import RenderContext
 
 
-class RenderService(Protocol):
-    async def render_view(self, ctx: RenderContext, state: str, **data) -> View: ...
+class ProjectionRenderer(Protocol):
+    async def render_projection(
+        self, ctx: RenderContext, state: str, **data
+    ) -> Projection: ...
 
 
 class RenderEngine(Protocol):

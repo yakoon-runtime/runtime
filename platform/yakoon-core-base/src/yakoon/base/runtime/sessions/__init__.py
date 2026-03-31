@@ -1,9 +1,9 @@
-from .port import SessionService
+from .port import SessionStore
 from .session import Session
 
 __all__ = [
     # .sessions
     "Session",
     # .port
-    "SessionService",
+    "SessionStore",
 ]

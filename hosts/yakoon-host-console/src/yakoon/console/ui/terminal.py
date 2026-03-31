@@ -9,7 +9,7 @@ from prompt_toolkit.layout.containers import ConditionalContainer
 from prompt_toolkit.styles import Style
 from prompt_toolkit.widgets import TextArea
 
-from yakoon.base.projection import Field
+from yakoon.base.projection.model import Field
 from yakoon.base.runtime.input import InputEvent
 
 

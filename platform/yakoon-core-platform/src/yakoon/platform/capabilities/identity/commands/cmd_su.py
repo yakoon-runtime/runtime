@@ -1,7 +1,7 @@
 from yakoon.base.capabilities.identity import AuthenticationService, PermissionService
 from yakoon.base.commands import Command, Request
-from yakoon.base.naming import NamespaceService
-from yakoon.base.runtime.sessions import SessionService
+from yakoon.base.naming import NamespaceResolver
+from yakoon.base.runtime.sessions import SessionStore
 
 
 class CmdSu(Command):
@@ -10,10 +10,10 @@ class CmdSu(Command):
 
     async def run(self, request: Request) -> None:  # noqa: ARG002
 
-        presenter = await self.get_presenter(session)
-        auth = self.services.get(AuthenticationService)
-        namespaces = self.services.get(NamespaceService)
-        permissions = self.services.get(PermissionService)
+        projector = await self.create_projector(session)
+        auth = self.container.get(AuthenticationService)
+        namespaces = self.container.get(NamespaceResolver)
+        permissions = self.container.get(PermissionService)
 
         # TODO: Woher bekommt ein Plugin einen stabilen Namespace?
         ns = await namespaces.from_session(session, "account", "develop")
@@ -21,11 +21,11 @@ class CmdSu(Command):
         username = (
             request.arg(0)
             or request.option("user")
-            or (await presenter.require_first("ask_user"))
+            or (await projector.require_first("ask_user"))
         )
         secret = request.option("password")
         if not secret:
-            secret = await presenter.require_first("ask_secret")
+            secret = await projector.require_first("ask_secret")
             if secret:
                 secret = secret.reveal()
 
@@ -35,8 +35,8 @@ class CmdSu(Command):
             session.set_identity(account.key, account.username)
             permissions.apply_account_permissions(session, account)
 
-            await self.services.get(SessionService).save(session)
-            await presenter.present("success", user=username)
+            await self.container.get(SessionStore).save(session)
+            await projector.project("success", user=username)
 
         else:
-            await presenter.present("failed", user=username, reason=result.reason)
+            await projector.project("failed", user=username, reason=result.reason)
