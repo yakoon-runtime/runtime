@@ -1,6 +1,6 @@
 from typing import Any, Protocol
 
-from yakoon.base.presentation import View
+from yakoon.base.projection import View
 
 from .context import RenderContext
 

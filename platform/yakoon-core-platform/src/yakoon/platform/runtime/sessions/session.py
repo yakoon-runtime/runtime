@@ -7,7 +7,7 @@ from typing import Any
 
 from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.naming import Key
-from yakoon.base.presentation import (
+from yakoon.base.projection import (
     ViewEvent,
 )
 from yakoon.base.transports import IO

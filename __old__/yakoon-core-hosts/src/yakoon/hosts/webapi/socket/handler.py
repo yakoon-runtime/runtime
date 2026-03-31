@@ -3,7 +3,7 @@ import uuid
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
-from yakoon.platform.engine.directories import Engine, Output
+from yakoon.platform.machine.directories import Engine, Output
 
 engine = Engine(None)
 

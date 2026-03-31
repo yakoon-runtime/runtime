@@ -7,7 +7,7 @@ from yakoon.base.commands import (
     Request,
 )
 from yakoon.base.dispatch import CommandQueueService
-from yakoon.base.presentation import v_error_system
+from yakoon.base.projection import v_error_system
 
 
 class CmdWfCancel(Command):

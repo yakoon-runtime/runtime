@@ -7,7 +7,7 @@ from yakoon.base.capabilities.interaction import (
     PolicyValidationResult,
     RawValue,
 )
-from yakoon.base.presentation import FieldType
+from yakoon.base.projection import FieldType
 from yakoon.base.values import SecretValue
 
 

@@ -1,4 +1,4 @@
-from yakoon.base.presentation import (
+from yakoon.base.projection import (
     Block,
     Node,
     PatchAppendStructure,

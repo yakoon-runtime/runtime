@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 
-from yakoon.base.presentation import (
+from yakoon.base.projection import (
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,

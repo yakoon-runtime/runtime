@@ -1,5 +1,5 @@
 from yakoon.hosts.telnet.utils.ansi import format_codes_to_ansi
-from yakoon.platform.engine.directories import Engine, Output
+from yakoon.platform.machine.directories import Engine, Output
 
 engine = Engine(None)
 

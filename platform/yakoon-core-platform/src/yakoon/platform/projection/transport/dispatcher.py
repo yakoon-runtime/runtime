@@ -3,14 +3,14 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from yakoon.base.presentation import (
+from yakoon.base.projection import (
     Block,
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
     View,
 )
-from yakoon.platform.presentation import ViewEmitter, ViewTraversal
+from yakoon.platform.projection import ViewEmitter, ViewTraversal
 from yakoon.platform.runtime import Session
 
 # ---------------------------------------------------------

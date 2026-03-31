@@ -19,7 +19,7 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.presentation import OutputStream, v_error_system
+from yakoon.base.projection import OutputStream, v_error_system
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.services import ServiceDirectory
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind

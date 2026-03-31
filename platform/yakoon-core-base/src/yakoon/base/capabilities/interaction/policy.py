@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any, TypeAlias
 
-from yakoon.base.presentation import FieldType
+from yakoon.base.projection import FieldType
 
 
 @dataclass(frozen=True, slots=True)

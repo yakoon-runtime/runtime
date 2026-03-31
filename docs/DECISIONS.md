@@ -7,9 +7,23 @@
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
 --
 
+===
+A server-driven, event-sourced UI runtime with declarative projection
+„SAM verarbeitet Actions und erzeugt daraus strukturierte Projektionen eines Systemzustands.“
+===
+
 Hier ist dein Eintrag — präzise, klar und mit sauberer Trennung der Konzepte:
 
 ---
+
+## 31-03-28
+**Was ist ein View**
+Ein View ist eine Projektion:
+A Projection is a deterministic, complete representation of the current UI state of a flow.
+It contains no behavior, no temporal logic, and no sequencing.
+It is the result of rendering the current flow state.
+- One file - one state 
+
 
 ## 26-03-28
 **Klare Trennung: Flow, Effects und Domain-Logik**

@@ -7,12 +7,12 @@ from yakoon.base.capabilities.identity.port import PermissionService
 from yakoon.base.clients.connection import ClientConnection
 from yakoon.base.naming.key import Key
 from yakoon.base.runtime.sessions import SessionService
-from yakoon.platform.host.scheduler import Scheduler
+from yakoon.platform.machine.scheduler import Scheduler
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
 from yakoon.platform.runtime.sessions import Session as PlatformSession
 
 if TYPE_CHECKING:
-    from yakoon.platform.engine import CommandEngine
+    from yakoon.platform.machine import CommandEngine
 
 from .runner import Runner
 

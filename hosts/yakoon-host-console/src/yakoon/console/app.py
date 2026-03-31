@@ -3,7 +3,7 @@ import asyncio
 from yakoon.compose.demo_data import seed_demo_system_data
 from yakoon.compose.engine import compose_engine, initialize_storage
 from yakoon.console.client import ConsoleClient
-from yakoon.platform.host import RuntimeHost
+from yakoon.platform.machine import RuntimeHost
 from yakoon.platform.runtime.bus import SessionBus
 from yakoon.platform.transport import LocalTransport
 

@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import yaml
 
-from yakoon.base.presentation import (
+from yakoon.base.projection import (
     Block,
     ErrorKind,
     Field,

@@ -4,8 +4,8 @@ from yakoon.base.catalogs.port import CommandCatalogService
 from yakoon.base.commands import Request
 from yakoon.base.dispatch import CommandDispatch
 from yakoon.base.runtime.input import InputEvent
-from yakoon.platform.engine import CommandEngine
-from yakoon.platform.host.scheduler import Scheduler
+from yakoon.platform.machine import CommandEngine
+from yakoon.platform.machine.scheduler import Scheduler
 from yakoon.platform.runtime import Session
 
 

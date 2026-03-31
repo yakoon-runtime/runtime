@@ -6,14 +6,14 @@ from collections import deque
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.dispatch import DispatchInput
 from yakoon.base.flow.primitives import Control
-from yakoon.base.presentation import (
+from yakoon.base.projection import (
     OutputStream,
     v_error_domain,
     v_error_fatal,
     v_error_system,
 )
-from yakoon.platform.engine import CommandEngine
 from yakoon.platform.flow import Flow, FlowKind
+from yakoon.platform.machine import CommandEngine
 from yakoon.platform.runtime import DomainError, PlatformError
 from yakoon.platform.runtime.sessions import Session
 

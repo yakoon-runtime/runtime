@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from yakoon.base.presentation.view import View
+from yakoon.base.projection.view import View
 
 from .types import DispatchInput
 

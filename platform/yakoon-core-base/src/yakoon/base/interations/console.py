@@ -1,5 +1,5 @@
 from yakoon.base.dispatch import Interaction
-from yakoon.base.presentation import View
+from yakoon.base.projection import View
 
 
 class ConsoleInteraction(Interaction):

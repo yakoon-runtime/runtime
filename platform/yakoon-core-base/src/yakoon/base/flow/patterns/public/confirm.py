@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.presentation import View, v_text
+from yakoon.base.projection import View, v_text
 
 from ...dsl import ask
 

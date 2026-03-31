@@ -1,8 +1,8 @@
 from collections.abc import Iterator
 
-from yakoon.base.presentation import View, ViewEvent
-from yakoon.platform.presentation.builder.emitter import ViewEmitter
-from yakoon.platform.presentation.builder.traversal import ViewTraversal
+from yakoon.base.projection import View, ViewEvent
+from yakoon.platform.projection.builder.emitter import ViewEmitter
+from yakoon.platform.projection.builder.traversal import ViewTraversal
 
 
 class ViewSequencer:

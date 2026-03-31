@@ -1,4 +1,4 @@
-from yakoon.base.presentation import Patch, PatchOp, PatchReset, ViewEvent, ViewHeader
+from yakoon.base.projection import Patch, PatchOp, PatchReset, ViewEvent, ViewHeader
 
 
 class ViewEmitter:

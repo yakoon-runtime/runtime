@@ -5,7 +5,7 @@ from typing import Any
 
 from yakoon.base.capabilities.interaction import PolicyService
 from yakoon.base.capabilities.presenters import PresenterView
-from yakoon.base.presentation import FieldError
+from yakoon.base.projection import FieldError
 from yakoon.base.runtime.input import InputEvent
 from yakoon.base.runtime.services import ServiceDirectory
 

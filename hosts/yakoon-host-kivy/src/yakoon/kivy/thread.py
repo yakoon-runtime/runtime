@@ -6,7 +6,7 @@ from typing import Any
 
 from yakoon.base.host.ports import InputEvent
 from yakoon.kivy.host import KivyHost
-from yakoon.platform.host.runner import Runner
+from yakoon.platform.machine.runner import Runner
 
 
 class TabRunnerThread:

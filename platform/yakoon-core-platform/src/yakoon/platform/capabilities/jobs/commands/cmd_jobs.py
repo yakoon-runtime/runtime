@@ -6,7 +6,7 @@ from yakoon.base.commands import (
     Request,
 )
 from yakoon.base.flow import show
-from yakoon.base.presentation import v_text
+from yakoon.base.projection import v_text
 
 
 class CmdJobs(Command):

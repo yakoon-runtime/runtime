@@ -40,7 +40,7 @@ from dataclasses import replace
 from typing import TypeGuard
 
 from yakoon.base.capabilities.presenters import PresenterView
-from yakoon.base.presentation import View, ViewHeader, v_text
+from yakoon.base.projection import View, ViewHeader, v_text
 from yakoon.base.runtime.input.event import InputEvent
 
 from .primitives import (

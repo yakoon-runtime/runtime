@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import yaml
 
-from yakoon.base.presentation import View, ViewSpecParser
-from yakoon.base.presentation.rendering import RenderContext, RenderEngine
+from yakoon.base.projection import View, ViewSpecParser
+from yakoon.base.projection.rendering import RenderContext, RenderEngine
 from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime.services import ServiceDirectory
 

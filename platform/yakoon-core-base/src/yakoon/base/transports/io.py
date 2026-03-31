@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from yakoon.base.presentation import ViewEvent
+    from yakoon.base.projection import ViewEvent
 
 
 class IO(Protocol):

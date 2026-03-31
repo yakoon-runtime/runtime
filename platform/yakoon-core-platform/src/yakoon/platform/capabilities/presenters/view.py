@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from yakoon.base.capabilities.presenters import BlockGroup
-from yakoon.base.presentation import View
-from yakoon.base.presentation.block import Block
-from yakoon.base.presentation.field import Field
-from yakoon.base.presentation.view import ViewHeader
+from yakoon.base.projection import View
+from yakoon.base.projection.block import Block
+from yakoon.base.projection.field import Field
+from yakoon.base.projection.view import ViewHeader
 
 
 class DefaultPresenterView:

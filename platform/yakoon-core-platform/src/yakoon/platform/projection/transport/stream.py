@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from yakoon.base.presentation.view import View
+    from yakoon.base.projection.view import View
     from yakoon.platform.runtime import Session
 
 from .dispatcher import DefaultViewDispatcher
