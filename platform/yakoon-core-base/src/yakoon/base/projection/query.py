@@ -13,9 +13,8 @@ class ProjectionQuery:
     """
     Unified query model for Projection.
 
-    Can be constructed from:
-    - Projection (snapshot)
-    - ProjectionEvent stream (incremental)
+    - blocks  = primary structure
+    - regions = derived grouping (by node.region)
     """
 
     def __init__(self, *, include_text: bool = False):
@@ -23,7 +22,10 @@ class ProjectionQuery:
 
         self.header = None
 
-        # primary
+        #  primary structure
+        self.regions: dict[str | None, list[Block]] = {}
+
+        # compatibility (flattened)
         self.blocks: list[Block] = []
 
         # indexed
@@ -46,7 +48,10 @@ class ProjectionQuery:
         q.header = projection.header
 
         for block in projection.blocks:
-            q._append_block(block)
+            q._append_block(
+                block,
+                region=getattr(block, "region", None),
+            )
 
         return q
 
@@ -54,9 +59,16 @@ class ProjectionQuery:
     # INTERNAL BUILDING
     # ---------------------------------------------------------
 
-    def _append_block(self, block: Block):
+    def _append_block(self, block: Block, *, region: str | None = None):
         self.blocks.append(block)
 
+        # regional (truth)
+        if region not in self.regions:
+            self.regions[region] = []
+
+        self.regions[region].append(block)
+
+        # field indexing
         for field in getattr(block, "fields", []):
             self._fields.append(field)
 
@@ -75,6 +87,7 @@ class ProjectionQuery:
             if isinstance(op, PatchReset):
                 self.header = None
                 self.blocks.clear()
+                self.regions.clear()
                 self._fields.clear()
                 self._required_fields.clear()
 
@@ -89,9 +102,11 @@ class ProjectionQuery:
                     if not block:
                         continue
 
-                    self._append_block(block)
+                    region = getattr(node, "region", None)
 
-            # TEXT (optional)
+                    self._append_block(block, region=region)
+
+            # TEXT
             elif isinstance(op, PatchAppendText):
 
                 if self._text is None:
@@ -109,10 +124,13 @@ class ProjectionQuery:
     # ---------------------------------------------------------
 
     def expects_input(self) -> bool:
-        return bool(self.header and self.header.expects_input)
+        return bool(self._fields)
 
     def has_blocks(self) -> bool:
         return bool(self.blocks)
+
+    def has_regions(self) -> bool:
+        return bool(self.regions)
 
     def has_fields(self) -> bool:
         return bool(self._fields)
@@ -142,6 +160,19 @@ class ProjectionQuery:
 
     def get_blocks_by_type(self, type_name: str) -> list[Block]:
         return [b for b in self.blocks if getattr(b, "type", None) == type_name]
+
+    # ---------------------------------------------------------
+    # REGION QUERIES
+    # ---------------------------------------------------------
+
+    def get_regions(self) -> dict[str | None, list[Block]]:
+        return self.regions
+
+    def get_region(self, name: str) -> list[Block]:
+        return self.regions.get(name, [])
+
+    def has_region(self, name: str) -> bool:
+        return name in self.regions
 
     # ---------------------------------------------------------
     # TEXT (optional)

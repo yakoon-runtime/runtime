@@ -3,13 +3,18 @@ kind: projection
 projection:
   role: info
   title: "Commands"
+
+  regions:
+    main:
+
   blocks:
     - type: kv
+      region: main
       items:
       - ["Platform Version", "{{ state.version  }}"]
       - ["Python", "{{ state.python }}"]
       - ["Hostname", "{{ state.hostname }}"]
       - ["Uptime", "{{ state.uptime }}"]
       - ["Time (UTC)", "{{ state.time }}"]
-  meta:
-    code: "shell.version.show"
+
+

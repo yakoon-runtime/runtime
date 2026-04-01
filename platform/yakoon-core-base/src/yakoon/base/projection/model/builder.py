@@ -28,8 +28,8 @@ def _view(
     )
 
     return Projection(
-        kind="view",
-        id=projection_id or f"view.{uuid.uuid4().hex}",
+        kind="projection",
+        id=projection_id or f"prj.{uuid.uuid4().hex}",
         header=header,
         blocks=list(blocks),
     )

@@ -43,8 +43,10 @@ Inline = InlineText | InlineCode | InlineLink
 @dataclass(frozen=True, slots=True)
 class TextBlock:
     type: Literal["text"] = "text"
-    text: str | list[Inline] = ""
     id: str | None = None
+    region: str | None = None
+
+    text: str | list[Inline] = ""
     style: str | None = None
 
     __stream_fields__ = ("text",)
@@ -57,6 +59,8 @@ class TextBlock:
 class RuleBlock:
     type: Literal["rule"] = "rule"
     id: str | None = None
+    region: str | None = None
+
     style: RuleStyle = "normal"
 
     def children(self) -> tuple[Block, ...]:
@@ -67,6 +71,8 @@ class RuleBlock:
 class SpacerBlock:
     type: Literal["spacer"] = "spacer"
     id: str | None = None
+    region: str | None = None
+
     size: int = 1
 
     def children(self) -> tuple[Block, ...]:
@@ -76,8 +82,10 @@ class SpacerBlock:
 @dataclass(frozen=True, slots=True)
 class ListBlock:
     type: Literal["list"] = "list"
-    items: list[ListItemBlock] = field(default_factory=list)
     id: str | None = None
+    region: str | None = None
+
+    items: list[ListItemBlock] = field(default_factory=list)
 
     def children(self):
         return tuple(self.items)
@@ -86,9 +94,11 @@ class ListBlock:
 @dataclass(frozen=True, slots=True)
 class ListItemBlock:
     type: Literal["list_item"] = "list_item"
+    id: str | None = None
+    region: str | None = None
+
     head: str | list[Inline] = ""
     blocks: list[Block] | None = None
-    id: str | None = None
 
     __stream_fields__ = ("head",)
 
@@ -99,8 +109,10 @@ class ListItemBlock:
 @dataclass(frozen=True, slots=True)
 class KvBlock:
     type: Literal["kv"] = "kv"
-    items: list[KvItemBlock] = field(default_factory=list)
     id: str | None = None
+    region: str | None = None
+
+    items: list[KvItemBlock] = field(default_factory=list)
 
     def children(self):
         return tuple(self.items)
@@ -109,9 +121,11 @@ class KvBlock:
 @dataclass(frozen=True, slots=True)
 class KvItemBlock:
     type: Literal["kv_item"] = "kv_item"
+    id: str | None = None
+    region: str | None = None
+
     key: str = ""
     value: str | list[Block] = ""
-    id: str | None = None
 
     __stream_fields__ = ("value",)
 
@@ -122,9 +136,11 @@ class KvItemBlock:
 @dataclass(frozen=True, slots=True)
 class TableBlock:
     type: Literal["table"] = "table"
+    id: str | None = None
+    region: str | None = None
+
     headers: list[str] | None = None
     rows: list[list[str]] = field(default_factory=list)
-    id: str | None = None
 
     def children(self) -> tuple[Block, ...]:
         return ()
@@ -145,12 +161,13 @@ class FieldsBlock:
     """
 
     type: Literal["fields"] = "fields"
+    id: str | None = None
+    region: str | None = None
+
     fields: list[Field] = field(default_factory=list)
     input_mode: InputMode = "prompt"
 
     title: str | None = None
-    id: str | None = None
-
     step_key: str | None = None
     batch_id: str | None = None
 

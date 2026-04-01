@@ -3,7 +3,24 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
-Role = Literal["info", "success", "warning", "error", "help"]
+# Bedeutung für den Menschen
+Role = Literal[
+    "info",  # neutral
+    "success",  # abgeschlossen
+    "warning",  # Aufmerksamkeit
+    "error",  # Problem
+    "help",  # Erklärend
+]
+
+# Verhalten des Systems
+# Was wird vom Nutzer / System erwartet? (interaktional)
+Intent = Literal[
+    "info",  # nur anzeigen
+    "input",  # Eingabe erwartet
+    "progress",  # Läuft weiter
+    "transition",  # Zustand wechelt
+]
+
 ErrorKind = Literal[
     "validation",  # Field / Input
     "domain",  # Business / erwartbar
@@ -48,7 +65,7 @@ class _ProjectionHeader:
     role: Role = "info"
 
     # HOW should the client interpret interaction?
-    intent: Literal["info", "input", "progress", "transition"] = "info"
+    intent: Intent = "info"
 
     # Human communication
     title: str | None = None

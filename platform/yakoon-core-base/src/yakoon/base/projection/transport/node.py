@@ -1,16 +1,34 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, field, fields
 from typing import Any
 
 
 @dataclass(slots=True)
 class Node:
+    """
+    Transport node representing a block in the projection stream.
+
+    Structure:
+    - id / parent / depth → tree structure
+    - region              → layout grouping (orthogonal!)
+    - props               → block payload
+    """
+
     id: str
     type: str
     parent: str | None
-    props: dict[str, Any]
     depth: int
+
+    # layout dimension
+    region: str | None = None
+
+    # payload
+    props: dict[str, Any] = field(default_factory=dict)
+
+    # ---------------------------------------------------------
+    # Factory
+    # ---------------------------------------------------------
 
     @classmethod
     def from_block(
@@ -19,6 +37,7 @@ class Node:
         *,
         parent: str | None,
         depth: int,
+        region: str | None,
         block_id: str | None = None,
     ) -> Node:
 
@@ -32,12 +51,14 @@ class Node:
             if f.name not in ("id", "type")
         }
 
+        # original block (for Query / reconstruction)
         props["block"] = block
 
         return cls(
             id=block_id,
             type=block.type,
             parent=parent,
-            props=props,
             depth=depth,
+            region=region,
+            props=props,
         )

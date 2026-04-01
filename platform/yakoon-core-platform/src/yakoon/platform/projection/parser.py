@@ -102,6 +102,10 @@ class YamlProjectionParser:
         return raw
 
     def _parse_projection_body(self, projection: dict[str, Any]) -> Projection:
+
+        # ---------------------------------------------------------
+        # Guards (alt, behalten)
+        # ---------------------------------------------------------
         if "fields" in projection:
             raise ViewSpecValidationError(
                 "projection.fields is no longer supported; use a block with type='fields' inside projection.blocks"
@@ -111,12 +115,18 @@ class YamlProjectionParser:
                 "projection.input_mode is no longer supported; use input_mode on a 'fields' block"
             )
 
+        # ---------------------------------------------------------
+        # ID
+        # ---------------------------------------------------------
         projection_id = projection.get("id")
         if projection_id is not None and not isinstance(projection_id, str):
             raise ViewSpecValidationError("id must be a string or null")
         if projection_id is None:
             projection_id = f"prj.{uuid4().hex}"
 
+        # ---------------------------------------------------------
+        # HEADER (unverändert)
+        # ---------------------------------------------------------
         role = projection.get("role", "info")
         if role not in ("info", "success", "warning", "error", "help"):
             raise ViewSpecValidationError(f"Invalid role: {role!r}")
@@ -135,13 +145,6 @@ class YamlProjectionParser:
                 "error_kind must be 'validation', 'system', or null"
             )
 
-        blocks_raw = projection.get("blocks")
-        if not isinstance(blocks_raw, list) or not blocks_raw:
-            raise ViewSpecValidationError("projection.blocks must be a non-empty list")
-
-        blocks = [self._parse_block(b) for b in blocks_raw]
-        blocks = self._ensure_block_ids(projection_id, blocks)
-
         header = ProjectionHeader(
             role=cast(Role, role),
             title=title,
@@ -150,11 +153,61 @@ class YamlProjectionParser:
             meta=None,
         )
 
+        # ---------------------------------------------------------
+        #  REGIONS
+        # ---------------------------------------------------------
+        regions_raw = projection.get("regions") or {}
+
+        if not isinstance(regions_raw, dict):
+            raise ViewSpecValidationError("projection.regions must be a mapping")
+
+        regions: dict[str, dict] = {}
+
+        for name, value in regions_raw.items():
+            if not isinstance(name, str) or not name:
+                raise ViewSpecValidationError("region names must be non-empty strings")
+
+            if value is None:
+                value = {}
+
+            if not isinstance(value, dict):
+                raise ViewSpecValidationError(
+                    f"region '{name}' must be a mapping (or null)"
+                )
+
+            regions[name] = value
+
+        allowed_regions = set(regions.keys())
+
+        # ---------------------------------------------------------
+        # BLOCKS
+        # ---------------------------------------------------------
+        blocks_raw = projection.get("blocks")
+        if not isinstance(blocks_raw, list) or not blocks_raw:
+            raise ViewSpecValidationError("projection.blocks must be a non-empty list")
+
+        blocks = [self._parse_block(b) for b in blocks_raw]
+
+        # ---------------------------------------------------------
+        # VALIDATION
+        # ---------------------------------------------------------
+        for block in blocks:
+            self._validate_block_region(block, allowed_regions)
+
+        # ---------------------------------------------------------
+        # IDs (bestehend, korrekt)
+        # ---------------------------------------------------------
+        blocks = self._ensure_block_ids(projection_id, blocks)
+
+        # ---------------------------------------------------------
+        # BUILD
+        # ---------------------------------------------------------
         return Projection(
             kind="projection",
             id=projection_id,
             header=header,
             blocks=blocks,
+            regions=regions,
         )
 
     def _ensure_block_ids(self, projection_id: str, blocks: list[Block]) -> list[Block]:
@@ -391,7 +444,31 @@ class YamlProjectionParser:
         if handler is None:
             raise ViewSpecValidationError(f"Unknown block type: {t!r}")
 
-        return handler(bid, b)
+        block = handler(bid, b)
+
+        # region übernehmen
+        region = b.get("region")
+        if region is not None:
+            if not isinstance(region, str) or not region:
+                raise ViewSpecValidationError("block.region must be a non-empty string")
+
+            if hasattr(block, "region"):
+                block = replace(block, region=region)
+
+        return block
+
+    def _validate_block_region(self, block: Block, allowed: set[str]):
+
+        region = getattr(block, "region", None)
+
+        if region is not None:
+            if region not in allowed:
+                raise ViewSpecValidationError(
+                    f"Unknown region {region!r} (must be defined in projection.regions)"
+                )
+
+        for child in block.children():
+            self._validate_block_region(child, allowed)
 
     def _parse_text_block(self, bid: str | None, b: dict[str, Any]) -> TextBlock:
         return TextBlock(

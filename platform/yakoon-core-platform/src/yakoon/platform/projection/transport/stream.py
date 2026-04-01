@@ -10,26 +10,38 @@ from .dispatcher import EventProjectionDispatcher
 
 
 class EventStreamOutput:
+    """
+    High-level projection streaming.
+
+    Responsibilities:
+    - lifecycle (begin / abort / finish)
+    - region-aware dispatching
+    - error safety
+    """
 
     def __init__(self):
         self.dispatcher = EventProjectionDispatcher()
 
     async def send_projection(self, session: Session, projection: Projection):
         if not projection.id:
-            raise RuntimeError("View without id.")
+            raise RuntimeError("Projection without id.")
 
         await self.dispatcher.begin_projection(session, projection)
 
         try:
-            for i, block in enumerate(projection.blocks):
+            # block-driven entry
+            for block in projection.blocks:
                 await self.dispatcher.emit_block(
                     session,
                     projection=projection,
                     block=block,
-                    suffix=i,
+                    region=getattr(block, "region", None),
                 )
+
         except Exception:
+            # sauber abbrechen (keine halb-fertigen Streams)
             await self.dispatcher.abort_projection(session, projection.id)
             raise
+
         else:
             await self.dispatcher.finish_projection(session, projection)

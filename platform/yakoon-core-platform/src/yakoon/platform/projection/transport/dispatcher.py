@@ -3,10 +3,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from yakoon.base.projection.model import (
-    Block,
-    Projection,
-)
+from yakoon.base.projection.model import Block, Projection
 from yakoon.base.projection.transport import (
     PatchAppendStructure,
     PatchAppendText,
@@ -56,6 +53,8 @@ class EventProjectionDispatcher:
         self._emitter = ViewEmitter()
 
     # ---------------------------------------------------------
+    # LIFECYCLE
+    # ---------------------------------------------------------
 
     async def begin_projection(
         self,
@@ -65,6 +64,9 @@ class EventProjectionDispatcher:
 
         vid = projection.id
         assert vid is not None
+
+        if projection.header is None:
+            raise RuntimeError("projection.header cannot be None")
 
         stream = _ViewStream(
             session=session,
@@ -80,8 +82,6 @@ class EventProjectionDispatcher:
         root = self._traversal.root_id(vid)
         stream.node_depth[root] = -1
         stream.published_nodes.add(root)
-        if projection.header is None:
-            raise RuntimeError("view.header cannot be None.")
 
         await session.emit(self._emitter.begin(projection.header, vid))
 
@@ -125,6 +125,33 @@ class EventProjectionDispatcher:
         self._streams.pop(projection_id, None)
 
     # ---------------------------------------------------------
+    # ENTRY (regions-aware)
+    # ---------------------------------------------------------
+
+    async def emit_projection(
+        self,
+        session: Session,
+        *,
+        projection: Projection,
+    ) -> None:
+        """
+        Emit full projection (regions-aware).
+        """
+
+        vid = projection.id
+        assert vid is not None
+
+        for block in projection.blocks:
+            await self.emit_block(
+                session,
+                projection=projection,
+                block=block,
+                region=getattr(block, "region", None),
+            )
+
+    # ---------------------------------------------------------
+    # CORE EMIT
+    # ---------------------------------------------------------
 
     async def emit_block(
         self,
@@ -133,7 +160,7 @@ class EventProjectionDispatcher:
         projection: Projection,
         block: Block,
         parent_id: str | None = None,
-        suffix: str | int = 0,
+        region: str | None = None,
     ) -> None:
 
         vid = projection.id
@@ -154,6 +181,7 @@ class EventProjectionDispatcher:
             block,
             parent=parent,
             depth=depth,
+            region=region,  # type: ignore
         )
 
         stream.node_depth[node.id] = depth
@@ -164,19 +192,22 @@ class EventProjectionDispatcher:
         stream.event_queue.append(PatchAppendStructure(nodes=[node]))
 
         # -------------------------------------------------
-        # CHILDREN (recursive)
+        # CHILDREN
         # -------------------------------------------------
-        for i, child in enumerate(children):
+        for child in children:
+
+            child_region = getattr(child, "region", None)
+
             await self.emit_block(
                 session,
                 projection=projection,
                 block=child,
                 parent_id=node.id,
-                suffix=i,
+                region=child_region if child_region is not None else region,
             )
 
         # -------------------------------------------------
-        # TEXT (NO UX chunking!)
+        # TEXT
         # -------------------------------------------------
         for key, value in text_fields:
             if not value:
@@ -203,14 +234,12 @@ class EventProjectionDispatcher:
         # -------------------------------------------------
         # FINISH
         # -------------------------------------------------
-        stream.event_queue.append(
-            PatchFinishNode(
-                block_id=node.id,
-            )
-        )
+        stream.event_queue.append(PatchFinishNode(block_id=node.id))
 
         await self._maybe_flush(stream)
 
+    # ---------------------------------------------------------
+    # BUFFER / FLUSH
     # ---------------------------------------------------------
 
     async def _maybe_flush(self, stream: _ViewStream) -> None:
