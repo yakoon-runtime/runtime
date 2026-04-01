@@ -24,11 +24,10 @@ class ProjectionEvent:
     kind: Literal["view_event"] = "view_event"
     id: str = ""
     header: ProjectionHeader | None = None
+
+    job_id: str = "system"
     patch: Patch = field(default_factory=Patch)
     meta: dict = field(default_factory=dict)
-
-    channel: str = "main"
-    job_id: str = "system"
 
     def is_final(self) -> bool:
         return self.patch.final

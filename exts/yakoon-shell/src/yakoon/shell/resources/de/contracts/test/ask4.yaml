@@ -8,7 +8,6 @@ projection:
       text: "Weitere Eingaben"
 
     - type: fields
-      input_mode: prompt
       fields:
         - { var: var_a, policy: customer.age, title: "Zahl (1 von 2)", required: true }
         - { var: var_b, policy: system:int, title: "Zahl (2 von 2)" } 
@@ -17,7 +16,6 @@ projection:
       text: "Es folgt eine neue Eingabe"
   
     - type: fields
-      input_mode: prompt
       fields:
         - { var: x, policy: system:int, title: "Neue Zahl", required: true }
       

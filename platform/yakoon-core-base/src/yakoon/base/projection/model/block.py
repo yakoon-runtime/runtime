@@ -154,10 +154,6 @@ FieldsState = Literal["idle", "active", "done"]
 class FieldsBlock:
     """
     Interactive field collection inside the UI document.
-
-    input_mode:
-      - prompt: sequential / blocking interaction
-      - form:   visible input controls, no implicit wait
     """
 
     type: Literal["fields"] = "fields"
@@ -165,7 +161,6 @@ class FieldsBlock:
     region: str | None = None
 
     fields: list[Field] = field(default_factory=list)
-    input_mode: InputMode = "prompt"
 
     title: str | None = None
     step_key: str | None = None

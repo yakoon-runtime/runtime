@@ -8,6 +8,5 @@ projection:
       text: "Geben Sie einen Benutzernamen ein."
 
     - type: fields
-      input_mode: prompt
       fields:
         - { var: auth.user, policy: system:string, title: "Username" } 

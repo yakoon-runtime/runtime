@@ -30,6 +30,7 @@ def split_payload(text: str, max_size: int):
 class _ViewStream:
     session: Session
     projection_id: str
+    job_id: str
 
     event_queue: list
 
@@ -60,6 +61,8 @@ class EventProjectionDispatcher:
         self,
         session: Session,
         projection: Projection,
+        *,
+        job_id: str,
     ) -> None:
 
         vid = projection.id
@@ -71,6 +74,7 @@ class EventProjectionDispatcher:
         stream = _ViewStream(
             session=session,
             projection_id=vid,
+            job_id=job_id,
             event_queue=[],
             node_depth={},
             published_nodes=set(),
@@ -83,7 +87,13 @@ class EventProjectionDispatcher:
         stream.node_depth[root] = -1
         stream.published_nodes.add(root)
 
-        await session.emit(self._emitter.begin(projection.header, vid))
+        await session.emit(
+            self._emitter.begin(
+                header=projection.header,
+                vid=vid,
+                job_id=stream.job_id,
+            )
+        )
 
     # ---------------------------------------------------------
 
@@ -102,7 +112,12 @@ class EventProjectionDispatcher:
 
         await self._flush(stream)
 
-        await session.emit(self._emitter.finish(vid))
+        await session.emit(
+            self._emitter.finish(
+                vid=vid,
+                job_id=stream.job_id,
+            )
+        )
 
         self._streams.pop(vid, None)
 
@@ -120,22 +135,26 @@ class EventProjectionDispatcher:
 
         stream.event_queue.clear()
 
-        await session.emit(self._emitter.finish(projection_id))
+        await session.emit(
+            self._emitter.finish(
+                vid=projection_id,
+                job_id=stream.job_id,
+            )
+        )
 
         self._streams.pop(projection_id, None)
 
     # ---------------------------------------------------------
-    # ENTRY (regions-aware)
+    # ENTRY
     # ---------------------------------------------------------
 
     async def emit_projection(
         self,
         session: Session,
-        *,
         projection: Projection,
     ) -> None:
         """
-        Emit full projection (regions-aware).
+        Emit full projection (block-aware).
         """
 
         vid = projection.id
@@ -181,7 +200,7 @@ class EventProjectionDispatcher:
             block,
             parent=parent,
             depth=depth,
-            region=region,  # type: ignore
+            region=region,
         )
 
         stream.node_depth[node.id] = depth
@@ -302,6 +321,12 @@ class EventProjectionDispatcher:
 
         ops = ops[: self.BATCH_SIZE]
 
-        await stream.session.emit(self._emitter.emit(stream.projection_id, ops))
+        await stream.session.emit(
+            self._emitter.emit(
+                vid=stream.projection_id,
+                ops=ops,
+                job_id=stream.job_id,
+            )
+        )
 
         stream.last_flush = time.monotonic()

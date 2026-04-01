@@ -11,4 +11,6 @@ class Projection(Protocol):
 
 class Output(Protocol):
 
-    async def send_projection(self, session: Session, projection: Projection): ...
+    async def send_projection(
+        self, session: Session, projection: Projection, job_id: str = "system"
+    ): ...

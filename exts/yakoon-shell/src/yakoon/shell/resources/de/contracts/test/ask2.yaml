@@ -8,7 +8,6 @@ projection:
       text: "Geben Sie ihr Alter ein."
 
     - type: fields
-      input_mode: prompt
       fields:
         - { var: result, policy: customer.age, title: "Alter", required: true }
 

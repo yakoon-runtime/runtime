@@ -8,7 +8,6 @@ projection:
       text: "Wirklich beenden?"
 
     - type: fields
-      input_mode: prompt
       fields:
         - var: quit
           policy: system:bool

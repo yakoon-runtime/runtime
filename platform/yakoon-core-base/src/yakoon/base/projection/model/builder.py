@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Sequence
 
-from .block import Block, FieldsBlock, InputMode, TextBlock
+from .block import Block, FieldsBlock, TextBlock
 from .field import Field
 from .header import ErrorKind, Role
 from .model import Projection, ProjectionHeader
@@ -161,7 +161,6 @@ def v_blocks(
 def v_fields(
     fields: list[Field],
     *,
-    input_mode: InputMode,
     role: Role = "info",
     title: str | None = None,
     projection_id: str | None = None,
@@ -174,7 +173,6 @@ def v_fields(
             FieldsBlock(
                 id="0",
                 fields=fields,
-                input_mode=input_mode,
             )
         ],
     )

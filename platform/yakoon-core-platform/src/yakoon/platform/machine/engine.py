@@ -247,12 +247,16 @@ class CommandEngine:
     # INTERNAL
     # ----------------------------------------------------
 
-    async def _apply_effects(self, effects: list[Effect], session: Session, flow):
+    async def _apply_effects(self, effects: list[Effect], session: Session, flow: Flow):
 
         for effect in effects:
 
             if isinstance(effect, EmitView):
-                await self._output.send_projection(session, effect.view)
+                await self._output.send_projection(
+                    session,
+                    effect.view,
+                    job_id=flow.id,
+                )
 
             elif isinstance(effect, AutoFocus):
                 session.set_interaction(flow.id)

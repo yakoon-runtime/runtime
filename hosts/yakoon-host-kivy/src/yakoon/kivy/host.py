@@ -53,7 +53,9 @@ class KivyHost(Interaction):
 
         values = await self._read_fields(
             ps1=ps1,
-            fields=block.fields[:1] if block.input_mode == "prompt" else block.fields,
+            fields=block.fields[
+                :1
+            ],  # if block._input__mode == "prompt" else block.fields,
         )
         await self._submit(InputEvent(values))
 

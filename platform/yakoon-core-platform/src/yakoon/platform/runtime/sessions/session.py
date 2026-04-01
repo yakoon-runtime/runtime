@@ -215,11 +215,8 @@ class Session:
             raise RuntimeError(f"Expected ViewEvent, got {type(event).__name__}")
 
         if self._runtime.io is None:
-            raise RuntimeError("io cannot be None")
-
-        if not event.channel:
-            raise RuntimeError("ViewEvent missing channel")
+            raise RuntimeError("runtime.io cannot be None")
         if not event.job_id:
-            raise RuntimeError("ViewEvent missing job_id")
+            raise RuntimeError("event missing job_id")
 
         await self._runtime.io.view(event)

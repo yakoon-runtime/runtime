@@ -19,7 +19,6 @@ projection:
 
   # Jetzt wird der Prompt geöffnet (funktioniert ja schon alles)
   - type: fields
-    input_mode: prompt # form -> Oder es werden InputFelder vom Host gezeichnet. (kein Warten)
     fields:
       - { var: var_a, policy: customer.age, title: "Zahl (1 von 2)", required: true }
       - { var: var_b, policy: system:int, title: "Zahl (2 von 2)" } 

@@ -22,26 +22,38 @@ class EventStreamOutput:
     def __init__(self):
         self.dispatcher = EventProjectionDispatcher()
 
-    async def send_projection(self, session: Session, projection: Projection):
+    async def send_projection(
+        self,
+        session: Session,
+        projection: Projection,
+        *,
+        job_id: str = "system",
+    ):
         if not projection.id:
             raise RuntimeError("Projection without id.")
 
-        await self.dispatcher.begin_projection(session, projection)
+        await self.dispatcher.begin_projection(
+            session,
+            projection,
+            job_id=job_id,
+        )
 
         try:
-            # block-driven entry
-            for block in projection.blocks:
-                await self.dispatcher.emit_block(
-                    session,
-                    projection=projection,
-                    block=block,
-                    region=getattr(block, "region", None),
-                )
+            await self.dispatcher.emit_projection(
+                session,
+                projection,
+            )
 
         except Exception:
             # sauber abbrechen (keine halb-fertigen Streams)
-            await self.dispatcher.abort_projection(session, projection.id)
+            await self.dispatcher.abort_projection(
+                session,
+                projection.id,
+            )
             raise
 
         else:
-            await self.dispatcher.finish_projection(session, projection)
+            await self.dispatcher.finish_projection(
+                session,
+                projection,
+            )

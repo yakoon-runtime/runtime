@@ -18,7 +18,6 @@ from yakoon.base.projection.model import (
     InlineCode,
     InlineLink,
     InlineText,
-    InputMode,
     KvBlock,
     KvItemBlock,
     ListBlock,
@@ -104,15 +103,11 @@ class YamlProjectionParser:
     def _parse_projection_body(self, projection: dict[str, Any]) -> Projection:
 
         # ---------------------------------------------------------
-        # Guards (alt, behalten)
+        # Guards
         # ---------------------------------------------------------
         if "fields" in projection:
             raise ViewSpecValidationError(
                 "projection.fields is no longer supported; use a block with type='fields' inside projection.blocks"
-            )
-        if "input_mode" in projection:
-            raise ViewSpecValidationError(
-                "projection.input_mode is no longer supported; use input_mode on a 'fields' block"
             )
 
         # ---------------------------------------------------------
@@ -241,14 +236,6 @@ class YamlProjectionParser:
         if not isinstance(fields_raw, list) or not fields_raw:
             raise ViewSpecValidationError("FieldsBlock.fields must be a non-empty list")
 
-        input_mode = b.get("input_mode", "prompt")
-        if input_mode is None:
-            input_mode = "prompt"
-        if not isinstance(input_mode, str) or input_mode not in ("prompt", "form"):
-            raise ViewSpecValidationError(
-                "FieldsBlock.input_mode must be 'prompt' or 'form'"
-            )
-
         title = b.get("title")
         if title is not None and not isinstance(title, str):
             raise ViewSpecValidationError("FieldsBlock.title must be a string or null")
@@ -315,7 +302,6 @@ class YamlProjectionParser:
             type="fields",
             id=block_id,
             fields=parsed_fields,
-            input_mode=cast(InputMode, input_mode),
             title=title,
             step_key=step_key,
             batch_id=batch_id,

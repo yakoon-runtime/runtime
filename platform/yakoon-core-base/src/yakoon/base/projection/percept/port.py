@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Protocol
 if TYPE_CHECKING:
     from yakoon.platform.runtime import Session
 
-    from ..model import Block, Projection
+    from ..model import Projection
 
 
 class ProjectionDispatcher(Protocol):
@@ -14,16 +14,14 @@ class ProjectionDispatcher(Protocol):
         self,
         session: Session,
         projection: Projection,
+        *,
+        job_id: str,
     ) -> None: ...
 
-    async def emit_block(
+    async def emit_projection(
         self,
         session: Session,
-        *,
         projection: Projection,
-        block: Block,
-        parent_id: str | None = None,
-        suffix: str | int = 0,
     ) -> None: ...
 
     async def abort_projection(

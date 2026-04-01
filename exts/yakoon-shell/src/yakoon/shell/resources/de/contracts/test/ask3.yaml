@@ -8,6 +8,5 @@ projection:
       text: "Noch eine Bemerkung..."
 
     - type: fields
-      input_mode: prompt
       fields:
         - { key: the_key, var: result, policy: system:string, title: "Bemerkung" } 
