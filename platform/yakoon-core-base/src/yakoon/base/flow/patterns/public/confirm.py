@@ -3,7 +3,7 @@ from __future__ import annotations
 from yakoon.base.projection.model import Projection
 from yakoon.base.projection.model.block import TextBlock
 
-from ...dsl import ask
+from ...dsl import focus
 
 # --------------------------------------------------------
 # PUBLIC API
@@ -43,7 +43,7 @@ def confirm(
     no = no or {"n", "no", "0", "nein"}
 
     while True:
-        event = yield ask(projection)
+        event = yield focus(projection)
 
         if not event:
             continue

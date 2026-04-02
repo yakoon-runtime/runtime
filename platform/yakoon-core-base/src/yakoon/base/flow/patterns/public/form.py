@@ -3,7 +3,7 @@ from __future__ import annotations
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import Container
 
-from ...dsl import ask, receive
+from ...dsl import focus, receive
 from ..internal.validate import apply_errors, validate
 
 # --------------------------------------------------------
@@ -31,7 +31,7 @@ async def form(
     """
 
     while True:
-        yield ask(projection)
+        yield focus(projection)
 
         event = yield receive()
 

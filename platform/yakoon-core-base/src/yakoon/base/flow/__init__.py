@@ -1,6 +1,6 @@
 from .dsl import (
-    ask,
     delay,
+    focus,
     present,
     receive,
     send,
@@ -9,7 +9,7 @@ from .dsl import (
 
 __all__ = [
     # .dsl
-    "ask",
+    "focus",
     "send",
     "delay",
     "receive",

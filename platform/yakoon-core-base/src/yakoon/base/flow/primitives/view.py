@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 async def compile_view(
     projection_id,
-    view_header: ProjectionHeader | None,
+    header: ProjectionHeader | None,
     *,
     groups: list[BlockGroup],
     policy_service,
@@ -20,8 +20,7 @@ async def compile_view(
     for group in groups:
 
         header = replace(
-            view_header or ProjectionHeader(),
-            expects_input=(group.type == "fields"),
+            header or ProjectionHeader(),
         )
 
         subview = Projection.create(

@@ -1,5 +1,5 @@
 """
-DSL - Flow Primitives
+DSL - Runtime Interaction Language
 
 This module defines the *core language* of the runtime.
 
@@ -36,10 +36,8 @@ Patterns = Behavior
 Commands = Orchestration
 """
 
-from dataclasses import replace
-
 from yakoon.base.flow.primitives.builder import create_projection
-from yakoon.base.projection.model import Block, Projection, ProjectionHeader
+from yakoon.base.projection.model import Block, Projection
 from yakoon.base.runtime import InputEvent
 
 from .primitives import (
@@ -52,96 +50,89 @@ from .primitives import (
     SleepUntil,
 )
 
-# --------------------------------------------------------
-# OUTPUT
-# --------------------------------------------------------
-
 
 def present(projection: Projection) -> Outcome:
     """
-    Emit a view to the UI.
+    Emit a projection to the UI.
 
-    Does NOT expect input.
+    This represents a pure state update. It does not affect
+    input routing or flow control.
     """
+
     return Outcome(effects=[EmitView(projection)])
 
 
 def write(block: Block) -> Outcome:
     """
     Emit a single block as a projection.
+
+    Convenience wrapper around present(), creating a minimal
+    projection containing only the given block.
     """
+
     if not isinstance(block, Block):
         raise TypeError("write() expects a Block instance")
     projection = create_projection(blocks=[block])
     return present(projection)
 
 
-# --------------------------------------------------------
-# INPUT
-# --------------------------------------------------------
-
-
-def ask(projection: Projection) -> Outcome:
+def focus(projection: Projection) -> Outcome:
     """
-    Emit a view and wait for structured user input.
+    Emit a projection and give this flow focus.
 
-    Automatically marks the view as expecting input and focuses it.
+    This marks the flow as the active receiver of subsequent
+    input events. The projection itself defines how input is
+    presented (e.g. structured fields or free input).
     """
 
-    def update_header(projection: Projection) -> Projection:
-        header = replace(projection.header or ProjectionHeader(), expects_input=True)
-        return replace(projection, header=header)
-
-    projection = update_header(projection)
     return Outcome(
         effects=[AutoFocus(), EmitView(projection)],
     )
 
 
-# --------------------------------------------------------
-# RECEIVE
-# --------------------------------------------------------
-
-
 def receive(channel: str = "default") -> Outcome:
     """
-    Wait for the next event.
+    Wait for the next input event.
 
-    Lower-level than ask():
-    - no UI emitted
-    - no input expectation enforced
+    Suspends the flow until an event is received on the given
+    channel. Does not emit UI or modify state.
     """
+
     return Outcome(control=AwaitEvent(channel))
 
 
-# --------------------------------------------------------
-# SEND
-# --------------------------------------------------------
-
-
 def send(channel: str, event):
+    """
+    Emit an event to a channel.
+
+    Wraps the given value as an InputEvent (if necessary) and
+    sends it to the specified channel.
+    """
+
     if not isinstance(event, InputEvent):
         event = InputEvent(event)
     return Outcome(
         effects=[EmitEvent(channel, event)],
-        # control=YieldToScheduler(),  # entscheidend
     )
-
-
-# --------------------------------------------------------
-# SCHEDULING
-# --------------------------------------------------------
 
 
 def delay(wake_at: float) -> Outcome:
     """
-    Suspend the flow for a relative duration.
+    Suspend the flow for a duration.
+
+    Pauses execution and resumes after the specified relative
+    time has elapsed.
     """
+
     return Outcome(control=Sleep.for_duration(wake_at))
 
 
 def delay_until(timestamp: float) -> Outcome:
     """
-    Suspend the flow until a specific point in time.
+    Suspend the flow until a specific timestamp.
+
+    Pauses execution and resumes when the given absolute time
+    is reached.
     """
+
     return Outcome(control=SleepUntil.until(timestamp))

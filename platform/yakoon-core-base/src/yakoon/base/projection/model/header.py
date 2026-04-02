@@ -56,7 +56,6 @@ class ProjectionHeader:
     error_kind: ErrorKind | None = None
     error_code: str | None = None
     meta: dict[str, Any] | ProjectionMeta | None = None
-    expects_input: bool = False
 
 
 class _ProjectionHeader:
