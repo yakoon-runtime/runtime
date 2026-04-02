@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import replace
 from typing import Any, cast
-from uuid import uuid4
 
 import yaml
 
@@ -117,7 +116,7 @@ class YamlProjectionParser:
         if projection_id is not None and not isinstance(projection_id, str):
             raise ViewSpecValidationError("id must be a string or null")
         if projection_id is None:
-            projection_id = f"prj.{uuid4().hex}"
+            projection_id = Projection.create_id()
 
         # ---------------------------------------------------------
         # HEADER (unverändert)

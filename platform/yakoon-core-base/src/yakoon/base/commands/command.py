@@ -72,7 +72,7 @@ class Command(ABC):
 
         resources = controller.resources
         if not resources.contracts:
-            raise RuntimeError("Controller has no contracts root defined.")
+            raise RuntimeError("Controller has no contracts root defined")
 
         session = self.ctx.session
         ref = resolve_resource(

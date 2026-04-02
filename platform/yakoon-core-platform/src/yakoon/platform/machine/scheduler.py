@@ -6,16 +6,17 @@ from collections import deque
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.dispatch import DispatchInput
 from yakoon.base.flow.primitives import Control
-from yakoon.base.projection.model import (
-    v_error_domain,
-    v_error_fatal,
-    v_error_system,
-)
 from yakoon.base.projection.transport import Output
 from yakoon.platform.flow import Flow, FlowKind
 from yakoon.platform.machine import CommandEngine
 from yakoon.platform.runtime import DomainError, PlatformError
 from yakoon.platform.runtime.sessions import Session
+
+from .errors import (
+    domain_error_projection,
+    fatal_error_projection,
+    system_error_projection,
+)
 
 
 class Scheduler:
@@ -56,13 +57,13 @@ class Scheduler:
 
         except PlatformError as e:
             await self.output.send_projection(
-                session, v_error_system(e.message, error_code=e.code)
+                session, system_error_projection(e.message, error_code=e.code)
             )
 
         except Exception as e:
             self.engine.container.get(AuditLogService).error(e, session)
             await self.output.send_projection(
-                session, v_error_system("Fatal error", error_kind="fatal")
+                session, fatal_error_projection("Fatal error", error_code="fatal")
             )
 
     def schedule_sleep(self, flow, session, wake_at):
@@ -176,18 +177,19 @@ class Scheduler:
                     if session.interaction_flow:
                         session.del_flow(session.interaction_flow)
                     await self.output.send_projection(
-                        session, v_error_domain(e.message, error_code=e.code)
+                        session, domain_error_projection(e.message, error_code=e.code)
                     )
 
                 except PlatformError as e:
                     await self.output.send_projection(
-                        session, v_error_system(e.message, error_code=e.code)
+                        session, system_error_projection(e.message, error_code=e.code)
                     )
 
                 except Exception as e:
                     self.engine.container.get(AuditLogService).error(e, session)
                     await self.output.send_projection(
-                        session, v_error_fatal("Fatal error", title="Fatal")
+                        session,
+                        fatal_error_projection("Fatal error", error_code="fatal"),
                     )
 
             # --------------------------------------------------

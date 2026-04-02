@@ -38,7 +38,8 @@ Commands = Orchestration
 
 from dataclasses import replace
 
-from yakoon.base.projection.model import Projection, ProjectionHeader, v_text
+from yakoon.base.flow.primitives.builder import create_projection
+from yakoon.base.projection.model import Block, Projection, ProjectionHeader
 from yakoon.base.runtime import InputEvent
 
 from .primitives import (
@@ -65,11 +66,14 @@ def present(projection: Projection) -> Outcome:
     return Outcome(effects=[EmitView(projection)])
 
 
-def write(message: str) -> Outcome:
+def write(block: Block) -> Outcome:
     """
-    Convenience helper for emitting plain text.
+    Emit a single block as a projection.
     """
-    return present(v_text(message))
+    if not isinstance(block, Block):
+        raise TypeError("write() expects a Block instance")
+    projection = create_projection(blocks=[block])
+    return present(projection)
 
 
 # --------------------------------------------------------

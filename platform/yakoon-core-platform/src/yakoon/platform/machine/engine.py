@@ -19,7 +19,6 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.projection.model import v_error_system
 from yakoon.base.projection.transport import Output
 from yakoon.base.runtime import Container, InputEvent
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
@@ -31,6 +30,7 @@ from yakoon.platform.runtime import (
 )
 
 from .directories import CommandDirectory, ControllerDirectory
+from .errors import system_error_projection
 
 
 class CommandEngine:
@@ -77,14 +77,15 @@ class CommandEngine:
         if not controller_id:
             shell = self._controllers.find_shell()
             if not shell:
-                raise RuntimeError("Shell was not found.")
+                raise RuntimeError("dispatch() found no shell controller")
             session.set_active_controller(shell.id)
             controller_id = shell.id
 
         controller = self._controllers.get(controller_id)
         if not controller:
             await self._output.send_projection(
-                session, v_error_system("Kein aktiver Controller gesetzt.")
+                session,
+                system_error_projection("dispatch() found no active controller"),
             )
             return None
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from yakoon.base.projection.model import Projection, v_text
+from yakoon.base.projection.model import Projection
+from yakoon.base.projection.model.block import TextBlock
 
 from ...dsl import ask
 
@@ -70,4 +71,8 @@ def _invalid_input(projection: Projection) -> Projection:
 
     Keeps the pattern generic by simply appending a hint.
     """
-    return v_text("Bitte mit 'yes' oder 'no' antworten.")
+    return Projection.create(
+        blocks=[
+            TextBlock(text="Bitte mit 'yes' oder 'no' antworten."),
+        ]
+    )

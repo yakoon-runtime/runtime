@@ -6,7 +6,6 @@ from .block import (
     InlineCode,
     InlineLink,
     InlineText,
-    InputMode,
     KvBlock,
     KvItemBlock,
     ListBlock,
@@ -17,7 +16,6 @@ from .block import (
     TableBlock,
     TextBlock,
 )
-from .builder import v_error_domain, v_error_fatal, v_error_system, v_info, v_text
 from .field import Field, FieldError, FieldType, SelectOption
 from .header import (
     ErrorKind,
@@ -31,7 +29,6 @@ from .model import (
 )
 
 __all__ = [
-    "InputMode",
     # .header
     "Role",
     "ViewUI",
@@ -62,10 +59,4 @@ __all__ = [
     "TableBlock",
     "FieldsBlock",
     "FieldsState",
-    # .builder
-    "v_text",
-    "v_error_system",
-    "v_error_fatal",
-    "v_error_domain",
-    "v_info",
 ]

@@ -7,7 +7,6 @@ from yakoon.base.commands import (
     Request,
 )
 from yakoon.base.dispatch import CommandQueue
-from yakoon.base.projection.model import v_error_system
 
 
 class CmdWfCancel(Command):
@@ -26,12 +25,12 @@ class CmdWfCancel(Command):
 
         rt = wfsvc.runtime(session)
         if not self.ctx:
-            raise RuntimeError("Context cannot be None.")
+            raise RuntimeError("Context cannot be None")
 
         batch_id = self.ctx.batch_id
         batch = rt.get(batch_id or "")
         if not batch:
-            await session.emit(v_error_system("Kein aktiver Workflow."))
+            await session.emit(p_error_system("Kein aktiver Workflow"))
             return
 
         # 1) Queue abbrechen
@@ -46,4 +45,4 @@ class CmdWfCancel(Command):
             dialogs.cancel_input(session)
 
         # 4) Feedback (optional)
-        await session.emit(v_error_system("Workflow abort."))
+        await session.emit(p_error_system("Workflow abort."))

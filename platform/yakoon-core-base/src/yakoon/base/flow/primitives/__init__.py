@@ -1,3 +1,4 @@
+from .builder import create_projection
 from .control import (
     AwaitEvent,
     Control,
@@ -29,4 +30,5 @@ __all__ = [
     "SetFocus",
     # .view
     "compile_view",
+    "create_projection",
 ]

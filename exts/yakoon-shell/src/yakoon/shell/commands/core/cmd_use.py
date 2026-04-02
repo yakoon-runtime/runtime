@@ -2,7 +2,8 @@ from typing import Protocol, cast
 
 from yakoon.base.catalogs import ControllerRegistry
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import present, write
+from yakoon.base.flow import present
+from yakoon.base.flow.patterns import write_text
 from yakoon.base.runtime.sessions import SessionStore
 
 
@@ -52,7 +53,7 @@ class CmdUse(Command):
             else:
                 access.set_active_controller(name)
                 await self.container.get(SessionStore).save(session)
-                yield write(f"Aktiver Kontroller: {name}")
+                yield write_text(f"Aktiver Kontroller: {name}")
 
         else:
             projector = await projector.project(

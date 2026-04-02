@@ -25,6 +25,6 @@ class RendererBuilder:
     def create(self, node) -> BaseRenderer:
         cls = self._types.get(node.type)
         if not cls:
-            raise RuntimeError(f"No renderer for {node.type}.")
+            raise RuntimeError(f"No renderer for {node.type}")
 
         return cls(node, self._surface)

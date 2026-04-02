@@ -146,7 +146,6 @@ class TableBlock:
         return ()
 
 
-InputMode = Literal["prompt", "form"]
 FieldsState = Literal["idle", "active", "done"]
 
 

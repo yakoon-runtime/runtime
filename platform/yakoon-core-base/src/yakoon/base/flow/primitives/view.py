@@ -24,10 +24,8 @@ async def compile_view(
             expects_input=(group.type == "fields"),
         )
 
-        subview = Projection(
-            "view",
+        subview = Projection.create(
             header=header,
-            id=projection_id,
             blocks=group.blocks,
         )
 

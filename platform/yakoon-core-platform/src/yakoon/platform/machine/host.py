@@ -76,7 +76,7 @@ class RuntimeHost:
     async def receive_input(self, connection, event):
         runner = self._connections.get(connection)
         if runner is None:
-            raise RuntimeError("No runner for connection.")
+            raise RuntimeError("receive_input() has no runner for connection")
 
         await runner.on_input(event)
 

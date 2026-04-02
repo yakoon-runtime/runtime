@@ -5,8 +5,7 @@ from yakoon.base.commands import (
     CommandVisibility,
     Request,
 )
-from yakoon.base.flow import present
-from yakoon.base.projection.model import v_text
+from yakoon.base.flow.patterns import write_text
 
 
 class CmdJobs(Command):
@@ -31,7 +30,7 @@ class CmdJobs(Command):
             yield self._use_job(request)
 
         else:
-            yield present(v_text(f"Unbekannte Aktion: {action}"))
+            yield write_text(f"Unbekannte Aktion: {action}")
 
     # --------------------------------------------------------
     # Helpers
@@ -65,10 +64,10 @@ class CmdJobs(Command):
         indexed = self._enumerate_flows()
 
         if not indexed:
-            yield present(v_text("Keine Jobs aktiv."))
+            yield write_text("Keine Jobs aktiv.")
             return
 
-        yield present(v_text("Aktive Jobs:\n"))
+        yield write_text("Aktive Jobs:\n")
 
         focused = self.ctx.session.interaction_flow
         for i, f in indexed:
@@ -76,25 +75,25 @@ class CmdJobs(Command):
             state = f.control.label(f) if f.control else "run"
             marker = "  ←" if focused and focused.id == f.id else ""
 
-            yield present(v_text(f"[{i}] {label} - {state}{marker}\n"))
+            yield write_text(f"[{i}] {label} - {state}{marker}\n")
 
     async def _stop_job(self, request: Request):
 
         flow, index = self._get_flow_by_index(request)
 
         if not flow:
-            yield present(v_text(f"Job {index} nicht gefunden"))
+            yield write_text(f"Job {index} nicht gefunden")
 
         self.ctx.session.del_flow(flow)
-        yield present(v_text(f"Job {index} gestoppt"))
+        yield write_text(f"Job {index} gestoppt")
 
     async def _use_job(self, request: Request):
 
         flow, index = self._get_flow_by_index(request)
 
         if not flow:
-            yield present(v_text(f"Job {index} nicht gefunden"))
+            yield write_text(f"Job {index} nicht gefunden")
             return
 
         self.ctx.session.set_interaction(flow.id)
-        yield present(v_text(f"Fokus auf Job {index} gesetzt"))
+        yield write_text(f"Fokus auf Job {index} gesetzt")
