@@ -65,7 +65,7 @@ class Projection:
             kind=self.kind,
             id=self.id,
             header=self.header,
-            blocks=list(self.blocks),
+            blocks=list(blocks),
             regions=self.regions,
         )
 

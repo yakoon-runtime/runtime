@@ -3,7 +3,7 @@ from __future__ import annotations
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import Container
 
-from ...dsl import focus, receive
+from ...dsl import focus, receive, send
 from ..internal.validate import apply_errors, validate
 
 # --------------------------------------------------------
@@ -14,6 +14,7 @@ from ..internal.validate import apply_errors, validate
 async def form(
     projection: Projection,
     container: Container,
+    channel_id: str,
 ):
     """
     Generic form interaction pattern.
@@ -36,8 +37,8 @@ async def form(
         event = yield receive()
 
         result = validate(projection, event, container)
-
         if result.ok:
-            yield result  # complete(result)
+            yield send(channel_id, result)
+            return
         else:
             projection = apply_errors(projection, result.errors)

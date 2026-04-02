@@ -39,14 +39,17 @@ class DefaultPermissionService:
             "workflow:wf.cancel|rx",
             "shell:use|rx",
             "discovery:lookup|rx",
-            # demo
-            "demo:demo.delay|rx",
-            "demo:demo.projector|rx",
-            "demo:demo.focus.simple|rx",
-            "demo:demo.validate|rx",
-            "demo:demo.subflow|rx",
-            "demo:demo.send.simple|rx",
-            "demo:demo.receive.simple|rx",
+            # demo DSL
+            "demo.dsl:demo.focus.simple|rx",
+            "demo.dsl:demo.send.simple|rx",
+            "demo.dsl:demo.receive.simple|rx",
+            "demo.dsl:demo.delay.simple|rx",
+            "demo.dsl:demo.present.simple|rx",
+            # demo patterns
+            "demo.patterns:demo.validate.simple|rx",
+            "demo.patterns:demo.subflow.simple|rx",
+            "demo.patterns:demo.form.simple|rx",
+            "demo.patterns:demo.confirm.simple|rx",
         ]
 
     def register_role(self, name: str, specs: list[str]) -> None:

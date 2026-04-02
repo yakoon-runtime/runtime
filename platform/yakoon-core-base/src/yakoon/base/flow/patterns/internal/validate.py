@@ -88,4 +88,4 @@ def apply_errors(
 
         new_blocks.append(replace(block, fields=updated_fields))
 
-    return projection.body_only(new_blocks)
+    return projection.with_body(new_blocks)
