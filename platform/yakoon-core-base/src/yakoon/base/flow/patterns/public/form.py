@@ -38,7 +38,7 @@ async def form(
 
         result = validate(projection, event, container)
         if result.ok:
-            yield send(channel_id, result)
+            yield send(channel_id, result.values)
             return
         else:
             projection = apply_errors(projection, result.errors)

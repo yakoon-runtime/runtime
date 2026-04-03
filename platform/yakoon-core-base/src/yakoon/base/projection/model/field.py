@@ -12,12 +12,13 @@ class SelectOption:
 
 
 class FieldType(StrEnum):
-    STRING = "string"
     INT = "int"
-    FLOAT = "float"
     BOOL = "bool"
     DATE = "date"
-    SELECT = "select"
+    TIME = "time"
+    FLOAT = "float"
+    STRING = "string"
+    DATETIME = "datetime"
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,6 +42,7 @@ class Field:
     default: str = ""
     pattern: str = ""
 
+    error: str | None = None
     ui: dict[str, Any] | None = None
 
     type: FieldType | None = None

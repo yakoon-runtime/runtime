@@ -41,6 +41,50 @@ def validate(
 
         raw = raw_values.get(field.var)
 
+        # ----------------------------------------
+        # 1. SELECT / OPTIONS (Closed world)
+        # ----------------------------------------
+        if field.options and isinstance(raw, str):
+
+            # build lookup (case-insensitive)
+            label_map = {opt.label.lower(): opt.value for opt in field.options}
+            value_map = {opt.value.lower(): opt.value for opt in field.options}
+
+            raw_lower = raw.lower()
+
+            # resolve input
+            if raw_lower in label_map:
+                resolved = label_map[raw_lower]
+            elif raw_lower in value_map:
+                resolved = value_map[raw_lower]
+            else:
+                if field.error:
+                    errors[field.var] = [FieldError(message=field.error)]
+                else:
+                    errors[field.var] = [FieldError(message="Invalid option")]
+                continue
+
+            # policy prüft nur Typ, NICHT Erweiterung
+            result = policy.validate(
+                policy_key=field.policy,
+                raw=resolved,
+            )
+
+            if result.ok:
+                values[field.var] = result.value
+            else:
+                if field.error:
+                    errors[field.var] = [FieldError(message=field.error)]
+                else:
+                    errors[field.var] = [
+                        FieldError(message=e.message) for e in result.errors
+                    ]
+
+            continue
+
+        # ----------------------------------------
+        # 2. FREITEXT (open world)
+        # ----------------------------------------
         result = policy.validate(
             policy_key=field.policy,
             raw=raw,
@@ -49,7 +93,12 @@ def validate(
         if result.ok:
             values[field.var] = result.value
         else:
-            errors[field.var] = [FieldError(message=e.message) for e in result.errors]
+            if field.error:
+                errors[field.var] = [FieldError(message=field.error)]
+            else:
+                errors[field.var] = [
+                    FieldError(message=e.message) for e in result.errors
+                ]
 
     return ValidationResult(
         ok=not errors,

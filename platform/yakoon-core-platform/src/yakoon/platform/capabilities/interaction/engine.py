@@ -42,6 +42,9 @@ class DefaultFieldPolicyEngine:
                 FieldPolicy(key="system:masked", type=FieldType.STRING, secret=True),
                 FieldPolicy(key="system:int", type=FieldType.INT),
                 FieldPolicy(key="system:bool", type=FieldType.BOOL),
+                FieldPolicy(key="system:date", type=FieldType.DATE),
+                FieldPolicy(key="system:time", type=FieldType.TIME),
+                FieldPolicy(key="system:float", type=FieldType.FLOAT),
                 FieldPolicy(
                     key="system:email",
                     type=FieldType.STRING,
@@ -115,15 +118,26 @@ class DefaultFieldPolicyEngine:
                 return False
             raise ValueError("Bitte ja/nein eingeben.")
 
+        # ISO - 2026-11-29
         if t == FieldType.DATE:
             # minimal: ISO only (YYYY-MM-DD). Later: locale parsing.
             if re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
                 return raw
             raise ValueError("Bitte Datum im Format YYYY-MM-DD eingeben.")
 
-        if t == FieldType.SELECT:
-            # Keep as string key, membership checked later above
-            return raw
+        # ISO - 01:59
+        if t == FieldType.TIME:
+            if re.fullmatch(r"^([01]\d|2[0-3]):([0-5]\d)$", raw):
+                return raw
+            raise ValueError("Bitte Zeit im Format HH:MM eingeben.")
+
+        # ISO - 2026-04-03T14:30
+        if t == FieldType.DATETIME:
+            if re.fullmatch(r"^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):([0-5]\d)$", raw):
+                return raw
+            raise ValueError(
+                "Bitte Datum und Uhrzeit im Format YYYY-MM-DDTHH:MM eingeben."
+            )
 
         return raw
 

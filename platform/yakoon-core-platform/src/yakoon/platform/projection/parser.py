@@ -351,6 +351,12 @@ class YamlProjectionParser:
                 f"fields[{field_id}] hint/default/pattern must be strings"
             )
 
+        error_message = fd.get("error")
+        if error_message is not None and not isinstance(error_message, str):
+            raise ViewSpecValidationError(
+                f"fields[{field_id}].error must be a string or null"
+            )
+
         ui_raw = fd.get("ui")
         if ui_raw is not None and not isinstance(ui_raw, dict):
             raise ViewSpecValidationError(
@@ -378,10 +384,6 @@ class YamlProjectionParser:
         options_raw = fd.get("options")
         options: list[SelectOption] | None = None
         if options_raw is not None:
-            if field_type != FieldType.SELECT:
-                raise ViewSpecValidationError(
-                    f"fields[{field_id}].options is only allowed for select fields"
-                )
             if not isinstance(options_raw, list):
                 raise ViewSpecValidationError(
                     f"fields[{field_id}].options must be a list"
@@ -410,6 +412,7 @@ class YamlProjectionParser:
             hint=hint,
             default=default,
             pattern=pattern,
+            error=error_message,
             ui=ui or None,
             type=field_type,
             options=options,

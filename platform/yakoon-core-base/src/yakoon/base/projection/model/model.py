@@ -38,7 +38,7 @@ class Projection:
 
         return cls(
             id=pid,
-            header=header,
+            header=header or ProjectionHeader(),
             blocks=blocks_with_ids,
         )
 

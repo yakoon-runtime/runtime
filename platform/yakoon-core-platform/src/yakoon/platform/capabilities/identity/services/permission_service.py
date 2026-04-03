@@ -49,7 +49,7 @@ class DefaultPermissionService:
             "demo.patterns:demo.validate.simple|rx",
             "demo.patterns:demo.subflow.simple|rx",
             "demo.patterns:demo.form.simple|rx",
-            "demo.patterns:demo.confirm.simple|rx",
+            "demo.patterns:demo.form.select|rx",
         ]
 
     def register_role(self, name: str, specs: list[str]) -> None:
