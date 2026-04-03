@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from yakoon.base.projection import Projection
-from yakoon.base.runtime import Container
 
+from ...context import DslContext
 from ...dsl import focus, receive, send
 from ..internal.validate import apply_errors, validate
 
@@ -12,8 +12,8 @@ from ..internal.validate import apply_errors, validate
 
 
 async def form(
+    context: DslContext,
     projection: Projection,
-    container: Container,
     channel_id: str,
 ):
     """
@@ -36,7 +36,7 @@ async def form(
 
         event = yield receive()
 
-        result = validate(projection, event, container)
+        result = validate(context, projection, event)
         if result.ok:
             yield send(channel_id, result.values)
             return

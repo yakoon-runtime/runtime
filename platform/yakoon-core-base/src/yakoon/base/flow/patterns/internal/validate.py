@@ -3,10 +3,11 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from typing import Any
 
-from yakoon.base.capabilities.interaction import FieldPolicyEngine
 from yakoon.base.projection import Projection, ProjectionQuery
 from yakoon.base.projection.model import FieldError
-from yakoon.base.runtime import Container, InputEvent
+from yakoon.base.runtime import InputEvent
+
+from ...context import DslContext
 
 
 @dataclass
@@ -22,12 +23,10 @@ class ValidationResult:
 
 
 def validate(
+    context: DslContext,
     projection: Projection,
     event: InputEvent,
-    container: Container,
 ) -> ValidationResult:
-
-    policy = container.get(FieldPolicyEngine)
 
     values: dict[str, Any] = {}
     errors: dict[str, list[FieldError]] = {}
@@ -65,7 +64,7 @@ def validate(
                 continue
 
             # policy prüft nur Typ, NICHT Erweiterung
-            result = policy.validate(
+            result = context.policies.validate(
                 policy_key=field.policy,
                 raw=resolved,
             )
@@ -85,7 +84,7 @@ def validate(
         # ----------------------------------------
         # 2. FREITEXT (open world)
         # ----------------------------------------
-        result = policy.validate(
+        result = context.policies.validate(
             policy_key=field.policy,
             raw=raw,
         )

@@ -18,8 +18,8 @@ class Projection:
       - blocks: document body
     """
 
+    id: str
     kind: Literal["projection"] = "projection"
-    id: str | None = None
     header: ProjectionHeader | None = None
     blocks: list[Block] = field(default_factory=list)
     regions: dict[str, Any] = field(default_factory=dict)

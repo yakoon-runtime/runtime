@@ -3,6 +3,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
+from yakoon.base.capabilities.interaction.port import FieldPolicyEngine
 from yakoon.base.controllers import resolve_resource
 from yakoon.base.naming import NamespaceResolver
 from yakoon.base.projection.port import (
@@ -45,6 +46,10 @@ class Command(ABC):
 
     # Runtime-provided
     ctx: CommandContext
+
+    @property
+    def policies(self) -> FieldPolicyEngine:
+        return self.container.get(FieldPolicyEngine)
 
     @property
     def container(self) -> Container:
