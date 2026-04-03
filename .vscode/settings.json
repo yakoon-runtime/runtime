@@ -14,6 +14,7 @@
     // exts
     "exts/yakoon-shell/src",
     // hosts
+    "hosts/yakoon-host-ws/src",
     "hosts/yakoon-host-console/src",
     "hosts/yakoon-host-kivy/src",
   ],

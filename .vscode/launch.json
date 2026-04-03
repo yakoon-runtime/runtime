@@ -1,19 +1,26 @@
 {
     "version": "0.2.0",
     "configurations": [
-    
-
         {
-            "name": "Yakoon: Run Console",
+            "name": "Yakoon: Run Host Console",
             "type": "debugpy",
             "request": "launch",
             "module": "yakoon.console.app",
             "console": "integratedTerminal",
             "env": {
-                 "DEV_MODE": "true"
+                "DEV_MODE": "true"
             },
         },
-
+        {
+            "name": "Yakoon: Run Host Websocket",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "yakoon.host_ws.app",
+            "console": "integratedTerminal",
+            "env": {
+                "DEV_MODE": "true"
+            },
+        },
         {
             "name": "Yakoon: Run Kivy",
             "type": "debugpy",
@@ -21,11 +28,9 @@
             "module": "yakoon.kivy.app",
             "console": "integratedTerminal",
             "env": {
-                 "DEV_MODE": "true"
+                "DEV_MODE": "true"
             },
         },
-
-
         {
             "name": "Yakoon: Run Telnet",
             "type": "debugpy",
@@ -33,10 +38,9 @@
             "module": "yakoon.saas.bootstrap.apps.telnet.run",
             "console": "integratedTerminal",
             "env": {
-                 "DEV_MODE": "true"
+                "DEV_MODE": "true"
             },
         },
-
         {
             "name": "Yakoon: Run WebAPI",
             "type": "debugpy",
@@ -44,10 +48,8 @@
             "module": "yakoon.saas.bootstrap.apps.webapi.run",
             "console": "integratedTerminal",
             "env": {
-                 "DEV_MODE": "true"
+                "DEV_MODE": "true"
             },
         },
-      
-
     ]
 }

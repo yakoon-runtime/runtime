@@ -9,6 +9,7 @@ pip install \
 # hosts
 pip install \
   -e hosts/yakoon-host-console \
+  -e hosts/yakoon-host-ws \
   -e hosts/yakoon-host-kivy \
 
 # extensions

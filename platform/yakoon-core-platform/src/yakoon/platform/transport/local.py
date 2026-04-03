@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from yakoon.base.clients import ClientConnection
 
 if TYPE_CHECKING:
-    from yakoon.platform.host import RuntimeHost
+    from yakoon.platform.machine import RuntimeHost
 
 
 class LocalTransport:
