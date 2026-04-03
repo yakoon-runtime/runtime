@@ -211,12 +211,11 @@ class Session:
         self,
         event: ProjectionEvent,
     ) -> None:
-        if type(event) is not ProjectionEvent:
-            raise RuntimeError(f"Expected ViewEvent, got {type(event).__name__}")
 
-        if self._runtime.io is None:
-            raise RuntimeError("runtime.io cannot be None")
-        if not event.job_id:
-            raise RuntimeError("event missing job_id")
+        assert (
+            type(event) is ProjectionEvent
+        ), f"event must be a type of {type(event).__name__}"
+        assert self._runtime.io is not None, "runtime.io must not be None"
+        assert event.job_id, "event.job_id must be set"
 
         await self._runtime.io.view(event)
