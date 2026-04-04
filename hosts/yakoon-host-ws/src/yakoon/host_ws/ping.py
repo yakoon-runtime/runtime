@@ -3,6 +3,8 @@ import json
 
 import websockets
 
+from yakoon.base.projection.model.deserialize import apply_projection
+
 
 async def test():
     async with websockets.connect("ws://localhost:8765") as ws:
@@ -25,7 +27,10 @@ async def send_man():
 
         while True:
             msg = await ws.recv()
-            print("RECV:", msg)
+            data = json.loads(msg)
+
+            if data["type"] == "projection":
+                apply_projection(data["payload"])
 
 
 asyncio.run(send_man())

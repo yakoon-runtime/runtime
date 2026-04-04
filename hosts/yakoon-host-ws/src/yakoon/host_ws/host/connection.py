@@ -1,6 +1,8 @@
 import asyncio
 import json
 
+from yakoon.base.projection.model.serialize import serialize_event
+
 
 class WebSocketConnection:
 
@@ -18,7 +20,7 @@ class WebSocketConnection:
             json.dumps(
                 {
                     "type": "projection",
-                    "payload": str(event),
+                    "payload": serialize_event(event),
                 }  # später sauber serialisieren
             )
         )

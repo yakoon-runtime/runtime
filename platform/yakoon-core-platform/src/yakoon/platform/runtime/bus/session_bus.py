@@ -44,7 +44,8 @@ class SessionBus:
         for client in self._clients:
             try:
                 await client.send(event)
-            except Exception:
+            except Exception as e:
+                print(e)
                 dead.append(client)
 
         # cleanup broken clients
