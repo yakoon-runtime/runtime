@@ -13,19 +13,16 @@ class ProjectionQuery:
     """
     Unified query model for Projection.
 
-    - blocks  = primary structure
-    - regions = derived grouping (by node.region)
+    - blocks = flat list
     """
 
     def __init__(self, *, include_text: bool = False):
         self.include_text = include_text
 
         self.header = None
+        self._projection: Projection | None = None
 
-        #  primary structure
-        self.regions: dict[str | None, list[Block]] = {}
-
-        # compatibility (flattened)
+        # flat
         self.blocks: list[Block] = []
 
         # indexed
@@ -45,29 +42,27 @@ class ProjectionQuery:
     ) -> ProjectionQuery:
         q = cls(include_text=include_text)
 
+        q._projection = projection
         q.header = projection.header
 
+        # ---------------------------------------------------------
+        # Blocks EINORDNEN
+        # ---------------------------------------------------------
         for block in projection.blocks:
-            q._append_block(
-                block,
-                region=getattr(block, "region", None),
-            )
+            q._append_block(block)
 
         return q
 
     # ---------------------------------------------------------
-    # INTERNAL BUILDING
+    # INTERNAL
     # ---------------------------------------------------------
 
-    def _append_block(self, block: Block, *, region: str | None = None):
+    def _append_block(self, block: Block):
         self.blocks.append(block)
 
-        # regional (truth)
-        if region not in self.regions:
-            self.regions[region] = []
-
-        self.regions[region].append(block)
-
+        projection = self._projection
+        if projection is None:
+            return
         # field indexing
         for field in getattr(block, "fields", []):
             self._fields.append(field)
@@ -76,7 +71,7 @@ class ProjectionQuery:
                 self._required_fields.append(field)
 
     # ---------------------------------------------------------
-    # APPLY (Streaming Mode)
+    # APPLY (Streaming)
     # ---------------------------------------------------------
 
     def apply(self, event: ProjectionEvent):
@@ -87,7 +82,6 @@ class ProjectionQuery:
             if isinstance(op, PatchReset):
                 self.header = None
                 self.blocks.clear()
-                self.regions.clear()
                 self._fields.clear()
                 self._required_fields.clear()
 
@@ -102,9 +96,7 @@ class ProjectionQuery:
                     if not block:
                         continue
 
-                    region = getattr(node, "region", None)
-
-                    self._append_block(block, region=region)
+                    self._append_block(block)
 
             # TEXT
             elif isinstance(op, PatchAppendText):
@@ -115,7 +107,7 @@ class ProjectionQuery:
                 key = (op.block_id, op.key)
                 self._text[key] = self._text.get(key, "") + op.text
 
-        # HEADER
+        # HEADER UPDATE
         if event.header:
             self.header = event.header
 
@@ -129,9 +121,6 @@ class ProjectionQuery:
     def has_blocks(self) -> bool:
         return bool(self.blocks)
 
-    def has_regions(self) -> bool:
-        return bool(self.regions)
-
     def has_fields(self) -> bool:
         return bool(self._fields)
 
@@ -141,9 +130,6 @@ class ProjectionQuery:
 
     def fields(self) -> list[Field]:
         return self._fields
-
-    def bound_fields(self) -> list[Field]:
-        return [f for f in self._fields if getattr(f, "var", None)]
 
     def required_fields(self) -> list[Field]:
         return self._required_fields
@@ -160,19 +146,6 @@ class ProjectionQuery:
 
     def get_blocks_by_type(self, type_name: str) -> list[Block]:
         return [b for b in self.blocks if getattr(b, "type", None) == type_name]
-
-    # ---------------------------------------------------------
-    # REGION QUERIES
-    # ---------------------------------------------------------
-
-    def get_regions(self) -> dict[str | None, list[Block]]:
-        return self.regions
-
-    def get_region(self, name: str) -> list[Block]:
-        return self.regions.get(name, [])
-
-    def has_region(self, name: str) -> bool:
-        return name in self.regions
 
     # ---------------------------------------------------------
     # TEXT (optional)

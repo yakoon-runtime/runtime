@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass, field, replace
-from typing import Any, Literal
+from typing import Literal
 
 from .block import Block
 from .header import ProjectionHeader
@@ -21,8 +21,8 @@ class Projection:
     id: str
     kind: Literal["projection"] = "projection"
     header: ProjectionHeader | None = None
+
     blocks: list[Block] = field(default_factory=list)
-    regions: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def create(
@@ -66,7 +66,6 @@ class Projection:
             id=self.id,
             header=self.header,
             blocks=list(blocks),
-            regions=self.regions,
         )
 
     def body_only(self, blocks: list[Block]) -> Projection:
@@ -75,5 +74,4 @@ class Projection:
             id=self.id,
             header=None,
             blocks=list(blocks),
-            regions=self.regions,
         )

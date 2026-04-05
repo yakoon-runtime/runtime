@@ -165,7 +165,6 @@ class EventProjectionDispatcher:
                 session,
                 projection=projection,
                 block=block,
-                region=getattr(block, "region", None),
             )
 
     # ---------------------------------------------------------
@@ -179,7 +178,6 @@ class EventProjectionDispatcher:
         projection: Projection,
         block: Block,
         parent_id: str | None = None,
-        region: str | None = None,
     ) -> None:
 
         vid = projection.id
@@ -200,7 +198,6 @@ class EventProjectionDispatcher:
             block,
             parent=parent,
             depth=depth,
-            region=region,
         )
 
         stream.node_depth[node.id] = depth
@@ -215,14 +212,11 @@ class EventProjectionDispatcher:
         # -------------------------------------------------
         for child in children:
 
-            child_region = getattr(child, "region", None)
-
             await self.emit_block(
                 session,
                 projection=projection,
                 block=child,
                 parent_id=node.id,
-                region=child_region if child_region is not None else region,
             )
 
         # -------------------------------------------------

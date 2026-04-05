@@ -4,12 +4,9 @@ projection:
   role: info
   title: "Commands"
 
-  regions:
-    main:
 
   blocks:
     - type: kv
-      region: main
       items:
       - ["Platform Version", "{{ state.version  }}"]
       - ["Python", "{{ state.python }}"]

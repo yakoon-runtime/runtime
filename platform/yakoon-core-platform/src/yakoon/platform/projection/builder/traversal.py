@@ -27,10 +27,8 @@ class ViewTraversal:
     # Block decomposition (zentrale Funktion)
     # ---------------------------------------------------------
 
-    def prepare_block(
-        self, block: Block, *, parent: str, depth: int, region: str | None
-    ):
-        node = self.build_node(block, parent, depth, region)
+    def prepare_block(self, block: Block, *, parent: str, depth: int):
+        node = self.build_node(block, parent, depth)
 
         # eager extraction (keine doppelte iteration!)
         children = list(block.children())
@@ -45,13 +43,11 @@ class ViewTraversal:
         block: Block,
         parent: str,
         depth: int,
-        region: str | None,
     ) -> Node:
         return Node.from_block(
             block,
             parent=parent,
             depth=depth,
-            region=region,
         )
 
     # ---------------------------------------------------------

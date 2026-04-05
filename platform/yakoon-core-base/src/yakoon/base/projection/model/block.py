@@ -42,9 +42,8 @@ Inline = InlineText | InlineCode | InlineLink
 
 @dataclass(frozen=True, slots=True)
 class TextBlock:
-    type: Literal["text"] = "text"
     id: str | None = None
-    region: str | None = None
+    type: Literal["text"] = "text"
 
     text: str | list[Inline] = ""
     style: str | None = None
@@ -57,9 +56,8 @@ class TextBlock:
 
 @dataclass(frozen=True, slots=True)
 class RuleBlock:
-    type: Literal["rule"] = "rule"
     id: str | None = None
-    region: str | None = None
+    type: Literal["rule"] = "rule"
 
     style: RuleStyle = "normal"
 
@@ -69,9 +67,8 @@ class RuleBlock:
 
 @dataclass(frozen=True, slots=True)
 class SpacerBlock:
-    type: Literal["spacer"] = "spacer"
     id: str | None = None
-    region: str | None = None
+    type: Literal["spacer"] = "spacer"
 
     size: int = 1
 
@@ -81,9 +78,8 @@ class SpacerBlock:
 
 @dataclass(frozen=True, slots=True)
 class ListBlock:
-    type: Literal["list"] = "list"
     id: str | None = None
-    region: str | None = None
+    type: Literal["list"] = "list"
 
     items: list[ListItemBlock] = field(default_factory=list)
 
@@ -93,9 +89,8 @@ class ListBlock:
 
 @dataclass(frozen=True, slots=True)
 class ListItemBlock:
+    id: str | None
     type: Literal["list_item"] = "list_item"
-    id: str | None = None
-    region: str | None = None
 
     head: str | list[Inline] = ""
     blocks: list[Block] | None = None
@@ -108,9 +103,8 @@ class ListItemBlock:
 
 @dataclass(frozen=True, slots=True)
 class KvBlock:
-    type: Literal["kv"] = "kv"
     id: str | None = None
-    region: str | None = None
+    type: Literal["kv"] = "kv"
 
     items: list[KvItemBlock] = field(default_factory=list)
 
@@ -120,9 +114,8 @@ class KvBlock:
 
 @dataclass(frozen=True, slots=True)
 class KvItemBlock:
+    id: str | None
     type: Literal["kv_item"] = "kv_item"
-    id: str | None = None
-    region: str | None = None
 
     key: str = ""
     value: str | list[Block] = ""
@@ -135,9 +128,8 @@ class KvItemBlock:
 
 @dataclass(frozen=True, slots=True)
 class TableBlock:
-    type: Literal["table"] = "table"
     id: str | None = None
-    region: str | None = None
+    type: Literal["table"] = "table"
 
     headers: list[str] | None = None
     rows: list[list[str]] = field(default_factory=list)
@@ -155,9 +147,8 @@ class FieldsBlock:
     Interactive field collection inside the UI document.
     """
 
-    type: Literal["fields"] = "fields"
     id: str | None = None
-    region: str | None = None
+    type: Literal["fields"] = "fields"
 
     fields: list[Field] = field(default_factory=list)
 

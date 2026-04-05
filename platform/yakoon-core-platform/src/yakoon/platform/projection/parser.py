@@ -65,7 +65,6 @@ class YamlProjectionParser:
     def __init__(self) -> None:
         self._block_parsers: dict[str, BlockParser] = {
             "text": self._parse_text_block,
-            "list_item": self._parse_list_item_block,
             "list": self._parse_list_block,
             "kv": self._parse_kv_block,
             "table": self._parse_table_block,
@@ -119,7 +118,7 @@ class YamlProjectionParser:
             projection_id = Projection.create_id()
 
         # ---------------------------------------------------------
-        # HEADER (unverändert)
+        # HEADER
         # ---------------------------------------------------------
         role = projection.get("role", "info")
         if role not in ("info", "success", "warning", "error", "help"):
@@ -148,32 +147,6 @@ class YamlProjectionParser:
         )
 
         # ---------------------------------------------------------
-        #  REGIONS
-        # ---------------------------------------------------------
-        regions_raw = projection.get("regions") or {}
-
-        if not isinstance(regions_raw, dict):
-            raise ViewSpecValidationError("projection.regions must be a mapping")
-
-        regions: dict[str, dict] = {}
-
-        for name, value in regions_raw.items():
-            if not isinstance(name, str) or not name:
-                raise ViewSpecValidationError("region names must be non-empty strings")
-
-            if value is None:
-                value = {}
-
-            if not isinstance(value, dict):
-                raise ViewSpecValidationError(
-                    f"region '{name}' must be a mapping (or null)"
-                )
-
-            regions[name] = value
-
-        allowed_regions = set(regions.keys())
-
-        # ---------------------------------------------------------
         # BLOCKS
         # ---------------------------------------------------------
         blocks_raw = projection.get("blocks")
@@ -181,12 +154,6 @@ class YamlProjectionParser:
             raise ViewSpecValidationError("projection.blocks must be a non-empty list")
 
         blocks = [self._parse_block(b) for b in blocks_raw]
-
-        # ---------------------------------------------------------
-        # VALIDATION
-        # ---------------------------------------------------------
-        for block in blocks:
-            self._validate_block_region(block, allowed_regions)
 
         # ---------------------------------------------------------
         # IDs (bestehend, korrekt)
@@ -201,7 +168,6 @@ class YamlProjectionParser:
             id=projection_id,
             header=header,
             blocks=blocks,
-            regions=regions,
         )
 
     def _ensure_block_ids(self, projection_id: str, blocks: list[Block]) -> list[Block]:
@@ -231,6 +197,10 @@ class YamlProjectionParser:
     def _parse_fields_block(
         self, block_id: str | None, b: dict[str, Any]
     ) -> FieldsBlock:
+
+        # ---------------------------------------------------------
+        # Fields / Titel
+        # ---------------------------------------------------------
         fields_raw = b.get("fields")
         if not isinstance(fields_raw, list) or not fields_raw:
             raise ViewSpecValidationError("FieldsBlock.fields must be a non-empty list")
@@ -425,6 +395,8 @@ class YamlProjectionParser:
         t = b.get("type")
         if not isinstance(t, str) or not t:
             raise ViewSpecValidationError("Each block must define a non-empty 'type'")
+        if t in ("list_item",):
+            raise ViewSpecValidationError(f"{t} is not allowed at root level")
 
         bid = self._validate_block_id(b.get("id"))
 
@@ -432,53 +404,41 @@ class YamlProjectionParser:
         if handler is None:
             raise ViewSpecValidationError(f"Unknown block type: {t!r}")
 
+        # Handler bleibt unverändert
         block = handler(bid, b)
-
-        # region übernehmen
-        region = b.get("region")
-        if region is not None:
-            if not isinstance(region, str) or not region:
-                raise ViewSpecValidationError("block.region must be a non-empty string")
-
-            if hasattr(block, "region"):
-                block = replace(block, region=region)
 
         return block
 
-    def _validate_block_region(self, block: Block, allowed: set[str]):
-
-        region = getattr(block, "region", None)
-
-        if region is not None:
-            if region not in allowed:
-                raise ViewSpecValidationError(
-                    f"Unknown region {region!r} (must be defined in projection.regions)"
-                )
-
-        for child in block.children():
-            self._validate_block_region(child, allowed)
-
     def _parse_text_block(self, bid: str | None, b: dict[str, Any]) -> TextBlock:
+
         return TextBlock(
             type="text",
             id=bid,
             text=self._parse_text_content(b.get("text", "")),
         )
 
-    def _parse_list_item_block(
-        self, bid: str | None, b: dict[str, Any]
-    ) -> ListItemBlock:
+    def _parse_list_item_block(self, bid: str, b: dict[str, Any]) -> ListItemBlock:
         head = self._parse_text_content(b.get("head", ""))
 
         blocks_raw = b.get("blocks")
         if blocks_raw is None:
-            return ListItemBlock(type="list_item", id=bid, head=head, blocks=None)
+            return ListItemBlock(
+                type="list_item",
+                id=bid,
+                head=head,
+                blocks=None,
+            )
 
         if not isinstance(blocks_raw, list):
             raise ViewSpecValidationError("ListItemBlock.blocks must be a list or null")
 
         nested = [self._parse_block(x) for x in blocks_raw]
-        return ListItemBlock(type="list_item", id=bid, head=head, blocks=nested)
+        return ListItemBlock(
+            type="list_item",
+            id=bid,
+            head=head,
+            blocks=nested,
+        )
 
     def _parse_list_block(self, bid: str | None, b: dict[str, Any]) -> ListBlock:
         items_raw = b.get("items", [])
@@ -507,16 +467,16 @@ class YamlProjectionParser:
             parsed_items.append(
                 KvItemBlock(
                     key=str(key),
-                    value=(
-                        str(value)
-                        if isinstance(value, (str, int, float, bool))
-                        else value
-                    ),
-                    id=None,
+                    value=str(value),
+                    id=None,  # wird später gesetzt
                 )
             )
 
-        return KvBlock(type="kv", id=bid, items=parsed_items)
+        return KvBlock(
+            type="kv",
+            id=bid,
+            items=parsed_items,
+        )
 
     def _parse_table_block(self, bid: str | None, b: dict[str, Any]) -> TableBlock:
         headers = b.get("headers")
@@ -548,7 +508,12 @@ class YamlProjectionParser:
         if headers is None and any(len(r) != width for r in parsed_rows):
             raise ViewSpecValidationError("All rows must have equal length")
 
-        return TableBlock(type="table", id=bid, headers=headers, rows=parsed_rows)
+        return TableBlock(
+            type="table",
+            id=bid,
+            headers=headers,
+            rows=parsed_rows,
+        )
 
     def _parse_rule_block(self, bid: str | None, b: dict[str, Any]) -> RuleBlock:
         return RuleBlock(
@@ -563,7 +528,12 @@ class YamlProjectionParser:
             raise ViewSpecValidationError(
                 "SpacerBlock.size must be a non-negative integer"
             )
-        return SpacerBlock(type="spacer", id=bid, size=size)
+
+        return SpacerBlock(
+            type="spacer",
+            id=bid,
+            size=size,
+        )
 
     def _parse_text_content(self, value: Any) -> str | list[Inline]:
         if isinstance(value, str):
@@ -618,11 +588,21 @@ class YamlProjectionParser:
 
     def _parse_list_item(self, node: Any) -> ListItemBlock:
         if isinstance(node, str):
-            return ListItemBlock(type="list_item", head=node, blocks=None, id=None)
+            return ListItemBlock(
+                type="list_item",
+                head=node,
+                blocks=None,
+                id=None,
+            )
 
         if isinstance(node, list):
             head = [self._parse_inline(x) for x in node]
-            return ListItemBlock(type="list_item", head=head, blocks=None, id=None)
+            return ListItemBlock(
+                type="list_item",
+                head=head,
+                blocks=None,
+                id=None,
+            )
 
         if not isinstance(node, dict):
             raise ViewSpecValidationError(
@@ -634,10 +614,20 @@ class YamlProjectionParser:
 
         blocks_raw = node.get("blocks")
         if blocks_raw is None:
-            return ListItemBlock(type="list_item", head=head, blocks=None, id=iid)
+            return ListItemBlock(
+                type="list_item",
+                head=head,
+                blocks=None,
+                id=iid,
+            )
 
         if not isinstance(blocks_raw, list):
             raise ViewSpecValidationError("ListItemBlock.blocks must be a list or null")
 
         nested = [self._parse_block(b) for b in blocks_raw]
-        return ListItemBlock(type="list_item", head=head, blocks=nested, id=iid)
+        return ListItemBlock(
+            type="list_item",
+            head=head,
+            blocks=nested,
+            id=iid,
+        )

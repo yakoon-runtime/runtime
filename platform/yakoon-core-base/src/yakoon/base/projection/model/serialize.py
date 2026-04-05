@@ -67,7 +67,6 @@ def serialize_node(n):
         "type": n.type,
         "parent": n.parent,
         "depth": n.depth,
-        "region": n.region,
         "props": serialize_props(n.props),
     }
 

@@ -15,7 +15,7 @@ class EventStreamOutput:
 
     Responsibilities:
     - lifecycle (begin / abort / finish)
-    - region-aware dispatching
+    - block-aware dispatching
     - error safety
     """
 

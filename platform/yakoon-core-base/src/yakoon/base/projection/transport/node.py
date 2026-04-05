@@ -11,7 +11,6 @@ class Node:
 
     Structure:
     - id / parent / depth → tree structure
-    - region              → layout grouping (orthogonal!)
     - props               → block payload
     """
 
@@ -19,9 +18,6 @@ class Node:
     type: str
     parent: str | None
     depth: int
-
-    # layout dimension
-    region: str | None = None
 
     # payload
     props: dict[str, Any] = field(default_factory=dict)
@@ -37,7 +33,6 @@ class Node:
         *,
         parent: str | None,
         depth: int,
-        region: str | None,
         block_id: str | None = None,
     ) -> Node:
 
@@ -59,6 +54,5 @@ class Node:
             type=block.type,
             parent=parent,
             depth=depth,
-            region=region,
             props=props,
         )
