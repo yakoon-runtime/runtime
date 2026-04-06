@@ -18,7 +18,7 @@ class Flow:
 
     command_key: str
     controller_id: str
-    request: str
+    event: InputEvent
     cursor: FlowCursor
     control: Control | None = None
 

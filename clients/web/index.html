@@ -4,21 +4,7 @@
 <head>
     <meta charset="utf-8" />
     <title>SAM Client</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            display: flex;
-            height: 100vh;
-            margin: 0;
-        }
-
-        .panel {
-            flex: 1;
-            border-right: 1px solid #ccc;
-            padding: 10px;
-            overflow: auto;
-        }
-    </style>
+    <link rel="stylesheet" href="./assets/base.css" />
 </head>
 
 <body>
@@ -31,8 +17,7 @@
         <button onclick="sendCommand()">Send</button>
     </div>
 
-    <script src="windows.js"></script>
-    <script src="app.js"></script>
+    <script type="module" src="./js/app.js"></script>
 
 </body>
 

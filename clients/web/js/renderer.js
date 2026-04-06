@@ -1,8 +1,4 @@
-// =========================
-// Renderer
-// =========================
-
-class Renderer {
+export class Renderer {
     constructor(container) {
         this.container = container;
         this.nodes = {};
@@ -66,40 +62,17 @@ class Renderer {
 
             let dom;
 
-            // -------------------------
-            // TEXT
-            // -------------------------
             if (node.type === "text") {
                 dom = document.createElement("div");
                 renderTextContent(node.props.text, dom);
-            }
-
-            // -------------------------
-            // LIST
-            // -------------------------
-            else if (node.type === "list") {
+            } else if (node.type === "list") {
                 dom = document.createElement("ul");
-            }
-
-            // -------------------------
-            // LIST ITEM
-            // -------------------------
-            else if (node.type === "list_item") {
+            } else if (node.type === "list_item") {
                 dom = document.createElement("li");
                 renderTextContent(node.props.head, dom);
-            }
-
-            // -------------------------
-            // RULE
-            // -------------------------
-            else if (node.type === "rule") {
+            } else if (node.type === "rule") {
                 dom = document.createElement("hr");
-            }
-
-            // -------------------------
-            // FALLBACK
-            // -------------------------
-            else {
+            } else {
                 dom = document.createElement("div");
             }
 
@@ -109,9 +82,7 @@ class Renderer {
     }
 }
 
-// =========================
-// Inline Rendering
-// =========================
+// helpers
 
 function renderInline(inline) {
     if (inline.type === "text") {
@@ -145,100 +116,17 @@ function renderInline(inline) {
     return document.createTextNode("[unknown inline]");
 }
 
-
 function renderTextContent(text, container) {
     if (!text) return;
 
     container.style.whiteSpace = "pre-wrap";
 
-    // String
     if (typeof text === "string") {
         container.textContent = text;
         return;
     }
 
-    // Inline[]
     for (const inline of text) {
         container.appendChild(renderInline(inline));
     }
 }
-
-
-// =========================
-// Renderer Mapping
-// =========================
-/*
-const renderers = {
-    commands: new Renderer(document.getElementById("commands")),
-    chat: new Renderer(document.getElementById("chat")),
-};
-*/
-
-const renderers = new Map();
-
-function routeProjection(jobId) {
-    let r = renderers.get(jobId);
-
-    if (!r) {
-        const container = getOrCreateWindow(jobId);
-
-        // 
-        r = new Renderer(container);
-
-        renderers.set(jobId, r);
-    }
-
-    return r;
-}
-
-// =========================
-// WebSocket
-// =========================
-
-const ws = new WebSocket("ws://localhost:8765");
-
-ws.onopen = () => {
-    ws.send(JSON.stringify({ type: "connect" }));
-
-    ws.send(JSON.stringify({
-        type: "input",
-        channel: "command",
-        payload: { text: "welcome" } // man
-    }));
-};
-
-ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
-
-    if (data.type === "projection") {
-        const r = routeProjection(data.payload.id);
-        r.apply(data.payload);
-    }
-};
-
-
-// =========================
-// Input (Command Bar)
-// =========================
-
-function sendCommand() {
-    const input = document.getElementById("command-input");
-    const text = input.value;
-
-    if (!text) return;
-
-    ws.send(JSON.stringify({
-        type: "input",
-        channel: "command",
-        payload: { text }
-    }));
-
-    input.value = "";
-}
-
-document.getElementById("command-input")
-    ?.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            sendCommand();
-        }
-    });

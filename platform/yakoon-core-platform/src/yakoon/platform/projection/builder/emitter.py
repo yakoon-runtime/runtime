@@ -1,15 +1,22 @@
 from yakoon.base.projection import ProjectionEvent, ProjectionHeader
 from yakoon.base.projection.transport import Patch, PatchOp, PatchReset
+from yakoon.base.runtime import InputContext
 
 
 class ViewEmitter:
 
     def begin(
-        self, header: ProjectionHeader, *, vid: str, job_id: str
+        self,
+        header: ProjectionHeader,
+        *,
+        vid: str,
+        ctx: InputContext | None,
+        job_id: str,
     ) -> ProjectionEvent:
         return ProjectionEvent(
             id=vid,
             header=header,
+            ctx=ctx,
             patch=Patch(ops=[PatchReset()], final=False),
             job_id=job_id,
         )

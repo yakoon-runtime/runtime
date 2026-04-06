@@ -1,20 +1,56 @@
+from yakoon.base.projection import ProjectionEvent
 from yakoon.base.projection.transport.patch import (
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
     PatchReset,
 )
+from yakoon.base.runtime.input.context import InputContext, InputContextRef
 
 
-def serialize_event(event):
+def serialize_event(event: ProjectionEvent):
     document = {
         "id": event.id,
         "job": event.job_id,
         "header": serialize_header(event.header),
+        "context": serialize_context(event.ctx),
         "patch": serialize_patch(event.patch),
         "final": event.patch.final,
     }
     return document
+
+
+def serialize_context(context: InputContext | None) -> dict | None:
+    if context is None:
+        return None
+
+    data: dict[str, object] = {}
+
+    if context.context_id is not None:
+        data["context_id"] = context.context_id
+    if context.command is not None:
+        data["command"] = context.command
+
+    if context.open_contexts:
+        data["open_contexts"] = [
+            serialize_context_ref(ref) for ref in context.open_contexts
+        ]
+
+    if context.ui:
+        data["ui"] = context.ui
+
+    return data or None
+
+
+def serialize_context_ref(ref: InputContextRef) -> dict:
+    data: dict[str, object] = {}
+
+    if ref.context_id is not None:
+        data["context_id"] = ref.context_id
+    if ref.command is not None:
+        data["command"] = ref.command
+
+    return data
 
 
 def serialize_header(header):

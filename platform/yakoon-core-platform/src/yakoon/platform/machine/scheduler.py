@@ -57,13 +57,17 @@ class Scheduler:
 
         except PlatformError as e:
             await self.output.send_projection(
-                session, system_error_projection(e.message, error_code=e.code)
+                session=session,
+                projection=system_error_projection(e.message, error_code=e.code),
+                ctx=event.context,
             )
 
         except Exception as e:
             self.engine.container.get(AuditLogService).error(e, session)
             await self.output.send_projection(
-                session, fatal_error_projection("Fatal error", error_code="fatal")
+                session=session,
+                projection=fatal_error_projection("Fatal error", error_code="fatal"),
+                ctx=event.context,
             )
 
     def schedule_sleep(self, flow, session, wake_at):
@@ -117,6 +121,7 @@ class Scheduler:
                 # ----------------------------------------------
                 # Flow holen (System priorisiert)
                 # ----------------------------------------------
+                session: Session
                 if self.ready_system:
                     session, flow = self.ready_system.popleft()
                 elif self.ready_user:
@@ -174,22 +179,35 @@ class Scheduler:
                             break
 
                 except DomainError as e:
+                    ctx = None
                     if session.interaction_flow:
+                        ctx = session.interaction_flow.event.context
                         session.del_flow(session.interaction_flow)
                     await self.output.send_projection(
-                        session, domain_error_projection(e.message, error_code=e.code)
+                        session=session,
+                        projection=domain_error_projection(
+                            e.message, error_code=e.code
+                        ),
+                        ctx=ctx,
                     )
 
                 except PlatformError as e:
                     await self.output.send_projection(
-                        session, system_error_projection(e.message, error_code=e.code)
+                        session=Session,
+                        projection=system_error_projection(
+                            e.message, error_code=e.code
+                        ),
+                        ctx=None,
                     )
 
                 except Exception as e:
                     self.engine.container.get(AuditLogService).error(e, session)
                     await self.output.send_projection(
-                        session,
-                        fatal_error_projection("Fatal error", error_code="fatal"),
+                        session=session,
+                        projection=fatal_error_projection(
+                            "Fatal error", error_code="fatal"
+                        ),
+                        ctx=None,
                     )
 
             # --------------------------------------------------

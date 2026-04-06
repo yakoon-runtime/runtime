@@ -9,6 +9,7 @@ from yakoon.base.projection.transport import (
     PatchAppendText,
     PatchFinishNode,
 )
+from yakoon.base.runtime import InputContext
 from yakoon.platform.projection import ViewEmitter, ViewTraversal
 from yakoon.platform.runtime import Session
 
@@ -62,6 +63,7 @@ class EventProjectionDispatcher:
         session: Session,
         projection: Projection,
         *,
+        ctx: InputContext | None,
         job_id: str,
     ) -> None:
 
@@ -90,6 +92,7 @@ class EventProjectionDispatcher:
         await session.emit(
             self._emitter.begin(
                 header=projection.header,
+                ctx=ctx,
                 vid=vid,
                 job_id=stream.job_id,
             )

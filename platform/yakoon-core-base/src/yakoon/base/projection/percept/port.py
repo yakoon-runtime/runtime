@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol
 
+from yakoon.base.runtime import InputContext
+
 if TYPE_CHECKING:
     from yakoon.platform.runtime import Session
 
@@ -15,6 +17,7 @@ class ProjectionDispatcher(Protocol):
         session: Session,
         projection: Projection,
         *,
+        ctx: InputContext,
         job_id: str,
     ) -> None: ...
 

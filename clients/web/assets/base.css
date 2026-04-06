@@ -1,0 +1,51 @@
+body {
+    font-family: sans-serif;
+    display: flex;
+    height: 100vh;
+    margin: 0;
+}
+
+.panel {
+    flex: 1;
+    border-right: 1px solid #ccc;
+    padding: 10px;
+    overflow: auto;
+}
+
+.content {
+    padding: 6px;
+}
+
+.window {
+    position: absolute;
+    width: 400px;
+    height: 300px;
+
+    border: 1px solid #0e48bb;
+    border-radius: 6px;
+    background: #fff;
+    overflow: auto;
+}
+
+.window.active {
+    border: 2px solid #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.4);
+}
+
+.window-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    border: none;
+    background: transparent;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.window-close:hover {
+    color: red;
+}
+
+.content {
+    padding: 6px;
+}

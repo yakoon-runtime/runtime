@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
+from yakoon.base.runtime.input.context import InputContext
+
 from ..model import ProjectionHeader
 from .patch import Patch
 
@@ -24,6 +26,7 @@ class ProjectionEvent:
     kind: Literal["view_event"] = "view_event"
     id: str = ""
     header: ProjectionHeader | None = None
+    ctx: InputContext | None = None
 
     job_id: str = "system"
     patch: Patch = field(default_factory=Patch)

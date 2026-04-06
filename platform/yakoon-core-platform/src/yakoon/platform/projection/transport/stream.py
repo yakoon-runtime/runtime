@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from yakoon.base.runtime.input.context import InputContext
+
 if TYPE_CHECKING:
     from yakoon.base.projection.model import Projection
     from yakoon.platform.runtime import Session
@@ -27,14 +29,16 @@ class EventStreamOutput:
         session: Session,
         projection: Projection,
         *,
+        ctx: InputContext | None,
         job_id: str = "system",
     ):
         if not projection.id:
             raise RuntimeError("Projection without id.")
 
         await self.dispatcher.begin_projection(
-            session,
-            projection,
+            session=session,
+            projection=projection,
+            ctx=ctx,
             job_id=job_id,
         )
 

@@ -83,8 +83,11 @@ class CommandEngine:
         controller = self._controllers.get(controller_id)
         if not controller:
             await self._output.send_projection(
-                session,
-                system_error_projection("dispatch() found no active controller"),
+                session=session,
+                projection=system_error_projection(
+                    "dispatch() found no active controller"
+                ),
+                ctx=event.context,
             )
             return None
 
@@ -141,7 +144,7 @@ class CommandEngine:
                 uuid4().hex,
                 command_type.key,
                 resolved_controller.id,
-                request.raw,
+                event,
                 FlowCursor(),
                 kind=self._resolve_flow_kind(request),
             )
@@ -167,7 +170,7 @@ class CommandEngine:
     async def step_flow(self, flow: Flow, session: Session) -> Outcome | None:
 
         cursor = flow.cursor
-        request = Request(flow.request)
+        request = Request(flow.event.raw)
 
         controller = self._controllers.get(flow.controller_id)
         if not controller:
@@ -253,8 +256,9 @@ class CommandEngine:
 
             if isinstance(effect, EmitView):
                 await self._output.send_projection(
-                    session,
-                    effect.view,
+                    session=session,
+                    projection=effect.view,
+                    ctx=flow.event.context,
                     job_id=flow.id,
                 )
 

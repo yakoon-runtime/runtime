@@ -1,6 +1,7 @@
 import json
 
 from yakoon.base.runtime import InputEvent
+from yakoon.base.runtime.input.context import InputContext
 
 
 async def handle(host, connection, ws):
@@ -32,10 +33,19 @@ async def handle(host, connection, ws):
 
 
 def map_to_input_event(data):
+    payload = data.get("payload", {})
 
-    # data = {
-    #    "channel": data.get("channel"),
-    #    "payload": data.get("payload"),
-    # }
-    data = data.get("payload").get("text")
-    return InputEvent(data)
+    # --- RAW ---
+    raw = payload.get("raw")
+
+    # --- CONTEXT ---
+    ctx_data = payload.get("context") or {}
+
+    context = InputContext(
+        command=ctx_data.get("command"),
+        context_id=ctx_data.get("context_id"),
+        open_contexts=[],  # optional später
+        ui=ctx_data.get("ui") or {},
+    )
+
+    return InputEvent(raw=raw, context=context)
