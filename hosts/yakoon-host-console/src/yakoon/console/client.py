@@ -2,7 +2,7 @@ import asyncio
 
 from yakoon.base.interations import ConsoleInteraction
 from yakoon.base.projection import ProjectionEvent, ProjectionQuery
-from yakoon.base.runtime import InputEvent
+from yakoon.base.runtime import InputContext, InputEvent
 from yakoon.base.transports import Transport
 from yakoon.console.output import ConsoleOutput
 from yakoon.console.ui import TerminalSurface, TerminalUI
@@ -30,11 +30,13 @@ class ConsoleClient:
 
             raw = event.raw
 
+            context = InputContext("abc")
+
             # ------------------------
             # Command Mode
             # ------------------------
             if not self._current_fields:
-                await connection.send_input(InputEvent(raw))
+                await connection.send_input(InputEvent(raw, context))
                 return
 
             # ------------------------

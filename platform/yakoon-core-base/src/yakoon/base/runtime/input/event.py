@@ -3,11 +3,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from .context import InputContext
+
 
 @dataclass(frozen=True, slots=True)
 class InputEvent:
 
     raw: Any  # str | dict | später mehr
+    context: InputContext | None = None
 
     # ------------------------
     # Interpretation
