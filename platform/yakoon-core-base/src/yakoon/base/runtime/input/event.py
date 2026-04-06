@@ -11,6 +11,7 @@ class InputEvent:
 
     raw: Any  # str | dict | später mehr
     context: InputContext | None = None
+    batch_id: str | None = None
 
     # ------------------------
     # Interpretation

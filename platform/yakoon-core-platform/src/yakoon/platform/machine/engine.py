@@ -7,7 +7,6 @@ from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.commands import Command, Request
 from yakoon.base.commands.context import CommandContext
 from yakoon.base.controllers import Controller
-from yakoon.base.dispatch import CommandDispatch, DispatchInput
 from yakoon.base.flow.primitives import (
     AutoFocus,
     AwaitEvent,
@@ -56,14 +55,14 @@ class CommandEngine:
     # PUBLIC API
     # ----------------------------------------------------
 
-    async def dispatch(self, session: Session, di: DispatchInput) -> None:
+    async def dispatch(self, session: Session, event: InputEvent) -> None:
 
         # session.execution.reset()
         # session.execution.step(ExecStep.EXECUTION_START)
-        if not isinstance(di, CommandDispatch):
+        if not isinstance(event, InputEvent):
             return None
 
-        request = Request(di.text)
+        request = Request(event.to_text())
         if not request.command:
             return None
 

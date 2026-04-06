@@ -4,9 +4,9 @@ import time
 from collections import deque
 
 from yakoon.base.capabilities.audit import AuditLogService
-from yakoon.base.dispatch import DispatchInput
 from yakoon.base.flow.primitives import Control
 from yakoon.base.projection.transport import Output
+from yakoon.base.runtime.input.event import InputEvent
 from yakoon.platform.flow import Flow, FlowKind
 from yakoon.platform.machine import CommandEngine
 from yakoon.platform.runtime import DomainError, PlatformError
@@ -47,9 +47,9 @@ class Scheduler:
     # Public API
     # --------------------------------------------------------
 
-    async def dispatch(self, session: Session, dispatch_input: DispatchInput):
+    async def dispatch(self, session: Session, event: InputEvent):
         try:
-            await self.engine.dispatch(session, dispatch_input)
+            await self.engine.dispatch(session, event)
 
             # alle Flows der Session schedulen
             for flow in session.flows():

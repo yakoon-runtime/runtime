@@ -1,6 +1,6 @@
 from collections import deque
 
-from yakoon.base.dispatch.types import CommandDispatch, DispatchInput
+from yakoon.base.runtime import InputEvent
 
 
 class InMemoryCommandQueue:
@@ -29,7 +29,7 @@ class InMemoryCommandQueue:
         Internally, commands are stored per session key to ensure strict
         isolation between concurrent sessions.
         """
-        self._q: dict[str, deque[DispatchInput]] = {}
+        self._q: dict[str, deque[InputEvent]] = {}
 
     def enqueue_commands(
         self, session, cmds: list[str], batch_id: str | None = None
@@ -50,9 +50,9 @@ class InMemoryCommandQueue:
         q = self._q.setdefault(skey, deque())
 
         for c in reversed(cmds):
-            q.appendleft(CommandDispatch(text=c, batch_id=batch_id))
+            q.appendleft(InputEvent(raw=c, batch_id=batch_id))
 
-    def next_input(self, session) -> DispatchInput | None:
+    def next_input(self, session) -> InputEvent | None:
         """
         Retrieves and removes the next scheduled command for the given session.
 

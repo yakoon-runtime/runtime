@@ -1,14 +1,13 @@
 from typing import Protocol
 
 from yakoon.base.projection.model import Projection
-
-from .types import DispatchInput
+from yakoon.base.runtime import InputEvent
 
 
 class CommandQueue(Protocol):
     def enqueue_commands(self, session, cmds: list[str]) -> None: ...
     def cancel_batch(self, session, batch_id: str) -> None: ...
-    def next_input(self, session) -> DispatchInput | None: ...
+    def next_input(self, session) -> InputEvent | None: ...
     def has_pending(self, session) -> bool: ...
 
 
