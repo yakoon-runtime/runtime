@@ -1,21 +1,14 @@
 import { Renderer } from "./renderer.js";
 import { resolveContext } from "./projection-router.js";
-import { getOrCreateContext, getActiveContext, clearActiveContext } from "./context-manager.js";
+import { getOrCreateContext, getActiveContext } from "./context-manager.js";
 
 // =========================
-// CANVAS
+// QUERY UI-Parts
 // =========================
 
-const canvas = document.getElementById("canvas");
+const sidebar = document.getElementById("sidebar");
+const toggleBtn = document.getElementById("toggle-sidebar");
 
-document.addEventListener("mousedown", (e) => {
-    const isWindow = e.target.closest(".window");
-    const isInput = e.target.closest("#input-bar");
-
-    if (!isWindow && !isInput) {
-        clearActiveContext();
-    }
-});
 
 // =========================
 // WebSocket
@@ -60,9 +53,13 @@ function handleProjection(payload) {
 // =========================
 
 function sendCommand() {
-    const input = document.getElementById("command-input");
-    const text = input.value;
+    const input = document.getElementById("commandbar-input");
+    if (!input) {
+        console.error("Input not found");
+        return;
+    }
 
+    const text = input.value;
     if (!text) return;
 
     let contextId = getActiveContext();
@@ -94,9 +91,22 @@ function createInputEvent(command, context_id) {
     });
 }
 
-document.getElementById("command-input")
+document.getElementById("commandbar-input")
     ?.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
             sendCommand();
         }
     });
+
+
+
+
+document.getElementById("toggle-sidebar")
+    .addEventListener("click", () => {
+        console.log(sidebar.classList);
+        sidebar.classList.toggle("hidden");
+    });
+
+
+document.getElementById("commandbar-button")
+    .addEventListener("click", sendCommand);

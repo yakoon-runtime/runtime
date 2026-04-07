@@ -9,16 +9,31 @@
 
 <body>
 
-    <div id="canvas"></div>
+    <div id="app">
+        <div id="sidebar"></div>
 
-    <div id="input-bar"
-        style="position: fixed; bottom: 0; left: 0; right: 0; padding: 10px; border-top: 1px solid #ccc;">
-        <input id="command-input" type="text" placeholder="Enter command..." style="width: 80%;" />
-        <button onclick="sendCommand()">Send</button>
+        <div id="main">
+
+            <div id="topbar">
+                <button id="toggle-sidebar">☰</button>
+            </div>
+
+            <div id="stream"></div>
+
+        </div>
+
+    </div>
+
+    <!-- GLOBAL -->
+    <div id="commandbar">
+        <input id="commandbar-input" placeholder="Was möchtest du tun?" />
+        <button id="commandbar-button">Send</button>
     </div>
 
     <script type="module" src="./js/app.js"></script>
 
 </body>
+
+
 
 </html>

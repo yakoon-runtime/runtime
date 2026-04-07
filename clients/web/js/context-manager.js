@@ -1,26 +1,24 @@
-import { getOrCreateWindow } from "./windows.js";
 import { Renderer } from "./renderer.js";
 
 const contexts = new Map();
 let activeContextId = null;
 
+const stream = document.getElementById("stream");
+
 export function getOrCreateContext(contextId) {
     let ctx = contexts.get(contextId);
 
     if (!ctx) {
-        const win = getOrCreateWindow(contextId);
+        const container = document.createElement("div");
+        container.className = "turn";
+
+        stream.appendChild(container);
 
         ctx = {
             id: contextId,
-            root: win.root,
-            container: win.content,
-            renderer: new Renderer(win.content),
+            container,
+            renderer: new Renderer(container),
         };
-
-        // Close-Logik
-        win.closeBtn.addEventListener("click", () => {
-            removeContext(contextId);
-        });
 
         contexts.set(contextId, ctx);
     }
@@ -28,24 +26,8 @@ export function getOrCreateContext(contextId) {
     return ctx;
 }
 
-export function removeContext(contextId) {
-    const ctx = contexts.get(contextId);
-    if (!ctx) return;
-
-    // DOM entfernen
-    ctx.root.remove();
-
-    // aus Map löschen
-    contexts.delete(contextId);
-
-    // ggf. active reset
-    if (activeContextId === contextId) {
-        activeContextId = null;
-    }
-}
-
 // ==================
-// CONTEXT
+// CONTEXT (nur logisch)
 // ==================
 
 export function setActiveContext(contextId) {
@@ -58,8 +40,4 @@ export function getActiveContext() {
 
 export function clearActiveContext() {
     activeContextId = null;
-
-    document.querySelectorAll(".window").forEach(w => {
-        w.classList.remove("active");
-    });
 }
