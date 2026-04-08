@@ -1,4 +1,5 @@
-export function connect(onProjection) {
+
+export function createWS(onProjection) {
     const ws = new WebSocket("ws://localhost:8765");
 
     ws.onopen = () => {

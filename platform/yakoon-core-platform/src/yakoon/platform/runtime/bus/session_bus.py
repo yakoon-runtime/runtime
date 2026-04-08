@@ -17,8 +17,8 @@ class SessionBus:
         self._clients.add(client)
 
         # Snapshot / Replay
-        for event in self._history:
-            client.queue(event)
+        # for event in self._history:
+        #    client.queue(event)
 
     def leave(self, client: ClientConnection):
         self._clients.discard(client)
@@ -34,9 +34,9 @@ class SessionBus:
             self._history.clear()
 
         # append history
-        self._history.append(event)
-        if len(self._history) > self.MAX_HISTORY:
-            self._history.pop(0)
+        # self._history.append(event)
+        # if len(self._history) > self.MAX_HISTORY:
+        #    self._history.pop(0)
 
         # send to clients
         dead = []

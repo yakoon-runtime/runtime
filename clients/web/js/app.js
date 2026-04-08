@@ -1,112 +1,84 @@
-import { Renderer } from "./renderer.js";
-import { resolveContext } from "./projection-router.js";
-import { getOrCreateContext, getActiveContext } from "./context-manager.js";
-
-// =========================
-// QUERY UI-Parts
-// =========================
-
-const sidebar = document.getElementById("sidebar");
-const toggleBtn = document.getElementById("toggle-sidebar");
+import { createWS } from "./stream.js";
+import { createContextManager } from "./context-manager.js";
+import { createRouter } from "./projection-router.js";
 
 
-// =========================
-// WebSocket
-// =========================
+function initApp() {
 
-const ws = new WebSocket("ws://localhost:8765");
+    const dom = {
+        stream: document.getElementById("stream"),
+        input: document.getElementById("commandbar-input"),
+        button: document.getElementById("commandbar-button"),
+    };
 
-ws.onopen = () => {
-    ws.send(JSON.stringify({ type: "connect" }));
+    function handleProjection(payload) {
 
-    // initial command
-    ws.send(createInputEvent("welcome", "ctx-1"));
-};
+        const contextId = router.resolve(payload);
 
-ws.onmessage = (msg) => {
-    const data = JSON.parse(msg.data);
+        // Fallback
+        if (!contextId) {
+            console.warn("Fallback context used for projection", payload.id);
+        }
 
-    if (data.type === "projection") {
-        handleProjection(data.payload);
-    }
-};
-
-// =========================
-// Projection Handling
-// =========================
-
-function handleProjection(payload) {
-    const contextId = resolveContext(payload);
-
-    if (!contextId) {
-        console.warn("No context for projection:", payload.id);
-        return;
+        const ctx = contextManager.getOrCreate(contextId);
+        ctx.renderer.apply(payload);
     }
 
-    const ctx = getOrCreateContext(contextId);
+    const ws = createWS(handleProjection);
+    const dispatch = createDispatcher(ws);
+    const contextManager = createContextManager(dom.stream, dispatch);
+    const router = createRouter();
 
-    ctx.renderer.apply(payload);
+    wireCommandBar(dom, dispatch, contextManager);
 }
 
-// =========================
-// Input (Command Bar)
-// =========================
+function createDispatcher(ws) {
+    function send(command, payload = {}, contextId) {
 
-function sendCommand() {
-    const input = document.getElementById("commandbar-input");
-    if (!input) {
-        console.error("Input not found");
-        return;
-    }
-
-    const text = input.value;
-    if (!text) return;
-
-    let contextId = getActiveContext();
-
-    if (!contextId) {
-        contextId = createNewContextId();
-    }
-
-    ws.send(createInputEvent(text, contextId));
-
-    input.value = "";
-}
-
-function createNewContextId() {
-    return "ctx-" + Date.now();
-}
-
-function createInputEvent(command, context_id) {
-    return JSON.stringify({
-        type: "input",
-        channel: "command",
-        payload: {
-            raw: command,
-            context: {
-                command: command,
-                context_id: context_id
+        console.log("SEND", command);
+        ws.send(JSON.stringify({
+            type: "input",
+            channel: "command",
+            payload: {
+                raw: command,
+                context: {
+                    context_id: contextId,
+                    command
+                }
             }
-        }
-    });
+        }));
+    }
+
+    return {
+        command: send
+    };
 }
 
-document.getElementById("commandbar-input")
-    ?.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            sendCommand();
-        }
+function wireCommandBar(dom, dispatch, contextManager) {
+
+    function createNewContextId() {
+        return "ctx-" + Date.now();
+    }
+
+    function send() {
+        const value = dom.input.value;
+        if (!value) return;
+
+        const contextId =
+            contextManager.getActive() ||
+            createNewContextId();
+
+        dispatch.command(value, {}, contextId);
+
+        dom.input.value = "";
+    }
+
+    dom.input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") send();
     });
 
+    dom.button.addEventListener("click", send);
+}
 
-
-
-document.getElementById("toggle-sidebar")
-    .addEventListener("click", () => {
-        console.log(sidebar.classList);
-        sidebar.classList.toggle("hidden");
-    });
-
-
-document.getElementById("commandbar-button")
-    .addEventListener("click", sendCommand);
+/* Start Application */
+initApp();

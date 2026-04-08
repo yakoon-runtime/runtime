@@ -21,7 +21,11 @@ async def send_man():
 
         await ws.send(
             json.dumps(
-                {"type": "input", "channel": "command", "payload": {"text": "man"}}
+                {
+                    "type": "input",
+                    "channel": "command",
+                    "payload": {"text": "welcome"},  # welcome command.
+                }
             )
         )
 

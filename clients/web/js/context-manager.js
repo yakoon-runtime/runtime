@@ -1,43 +1,49 @@
 import { Renderer } from "./renderer.js";
+export function createContextManager(streamEl, dispatch) {
 
-const contexts = new Map();
-let activeContextId = null;
+    const contexts = new Map();
+    let activeContextId = null;
 
-const stream = document.getElementById("stream");
+    function register(contextId, el) {
+        if (contexts.has(contextId)) {
+            return contexts.get(contextId);
+        }
 
-export function getOrCreateContext(contextId) {
-    let ctx = contexts.get(contextId);
-
-    if (!ctx) {
-        const container = document.createElement("div");
-        container.className = "turn";
-
-        stream.appendChild(container);
-
-        ctx = {
+        const ctx = {
             id: contextId,
-            container,
-            renderer: new Renderer(container),
+            container: el,
+            renderer: new Renderer(el, dispatch, contextId, api)
         };
 
         contexts.set(contextId, ctx);
+        return ctx;
     }
 
-    return ctx;
-}
+    function getOrCreate(contextId) {
 
-// ==================
-// CONTEXT (nur logisch)
-// ==================
+        if (contexts.has(contextId)) {
+            return contexts.get(contextId);
+        }
 
-export function setActiveContext(contextId) {
-    activeContextId = contextId;
-}
+        const container = document.createElement("div");
+        container.className = "turn";
+        container.dataset.contextId = contextId;
 
-export function getActiveContext() {
-    return activeContextId;
-}
+        streamEl.appendChild(container);
 
-export function clearActiveContext() {
-    activeContextId = null;
+        return register(contextId, container);
+    }
+
+    const api = {
+        register,
+        getOrCreate,
+        getActive() {
+            return activeContextId;
+        },
+        setActive(id) {
+            activeContextId = id;
+        }
+    };
+
+    return api;
 }

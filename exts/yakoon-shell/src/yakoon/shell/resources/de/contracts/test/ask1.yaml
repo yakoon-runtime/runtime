@@ -5,11 +5,13 @@ projection:
   title: "Commands"
   blocks:
     - type: text
-      text: "Geben Sie ihren Benuternamen ein."
-
+      text: "Suche nach Projekten:"
     - type: fields
       fields:
-        - { var: result, policy: system:string, title: "Username" } 
+        - { var: result, policy: system:string, title: "Projektname" } 
+        - { var: xresult, policy: system:string, title: "Test" } 
 
-    - type: text
-      text: "Vielen Dank! \nIhre Daten werden verarbeitet.\n"
+    - type: actions
+      actions:
+        - label: Speichern
+          command: project.save

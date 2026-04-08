@@ -7,6 +7,8 @@ from typing import Any, cast
 import yaml
 
 from yakoon.base.projection.model import (
+    Action,
+    ActionBlock,
     Block,
     ErrorKind,
     Field,
@@ -69,6 +71,7 @@ class YamlProjectionParser:
             "kv": self._parse_kv_block,
             "table": self._parse_table_block,
             "fields": self._parse_fields_block,
+            "actions": self._parse_actions_block,
             "rule": self._parse_rule_block,
             "spacer": self._parse_spacer_block,
         }
@@ -630,4 +633,52 @@ class YamlProjectionParser:
             head=head,
             blocks=nested,
             id=iid,
+        )
+
+    def _parse_actions_block(
+        self, block_id: str | None, b: dict[str, Any]
+    ) -> ActionBlock:
+
+        actions_raw = b.get("actions")
+        if not isinstance(actions_raw, list) or not actions_raw:
+            raise ViewSpecValidationError(
+                "ActionBlock.actions must be a non-empty list"
+            )
+
+        parsed_actions: list[Action] = []
+
+        for i, item in enumerate(actions_raw):
+            if not isinstance(item, dict):
+                raise ViewSpecValidationError(f"actions[{i}] must be a mapping")
+
+            label = item.get("label")
+            if not isinstance(label, str) or not label:
+                raise ViewSpecValidationError(
+                    f"actions[{i}].label must be a non-empty string"
+                )
+
+            command = item.get("command")
+            if not isinstance(command, str) or not command:
+                raise ViewSpecValidationError(
+                    f"actions[{i}].command must be a non-empty string"
+                )
+
+            payload = item.get("payload")
+            if payload is not None and not isinstance(payload, dict):
+                raise ViewSpecValidationError(
+                    f"actions[{i}].payload must be a mapping or null"
+                )
+
+            parsed_actions.append(
+                Action(
+                    label=label,
+                    command=command,
+                    payload=payload,
+                )
+            )
+
+        return ActionBlock(
+            type="actions",
+            id=block_id,
+            actions=parsed_actions,
         )

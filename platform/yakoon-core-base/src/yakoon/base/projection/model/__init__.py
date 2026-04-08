@@ -1,4 +1,6 @@
+from .action import Action
 from .block import (
+    ActionBlock,
     Block,
     FieldsBlock,
     FieldsState,
@@ -37,7 +39,9 @@ __all__ = [
     "ProjectionMeta",
     # .projection
     "Projection",
-    # .fields
+    # .action
+    "Action",
+    # .field
     "Field",
     "FieldType",
     "FieldError",
@@ -59,4 +63,5 @@ __all__ = [
     "TableBlock",
     "FieldsBlock",
     "FieldsState",
+    "ActionBlock",
 ]

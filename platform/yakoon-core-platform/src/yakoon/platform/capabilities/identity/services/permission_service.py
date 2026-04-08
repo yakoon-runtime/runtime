@@ -29,6 +29,7 @@ class DefaultPermissionService:
             "shell:man|rx",
             "shell:exit|rx",
             "shell:quit|rx",
+            "shell:test|rx",
             "shell:su|rx",
             "crm-customer:customer-create|rx",
             "crm-customer:wf:crm.customer.store|rx",

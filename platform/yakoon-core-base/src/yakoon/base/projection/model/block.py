@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from .action import Action
 from .field import Field
 
 RuleStyle = Literal["subtle", "normal", "strong"]
@@ -163,6 +164,17 @@ class FieldsBlock:
         return ()
 
 
+@dataclass(frozen=True, slots=True)
+class ActionBlock:
+    id: str | None = None
+    type: Literal["actions"] = "actions"
+
+    actions: list[Action] = field(default_factory=list)
+
+    def children(self) -> tuple[Block, ...]:
+        return ()
+
+
 Block = (
     TextBlock
     | RuleBlock
@@ -173,4 +185,5 @@ Block = (
     | KvBlock
     | TableBlock
     | FieldsBlock
+    | ActionBlock
 )

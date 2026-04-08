@@ -1,6 +1,10 @@
 export class Renderer {
-    constructor(container) {
+
+    constructor(container, dispatch, contextId, contextManager) {
         this.container = container;
+        this.dispatch = dispatch;
+        this.contextId = contextId;
+        this.contextManager = contextManager;
         this.nodes = {};
         this.children = {};
     }
@@ -43,7 +47,6 @@ export class Renderer {
     }
 
     render() {
-        this.container.innerHTML = "";
 
         const root = Object.values(this.nodes).find(n =>
             n.parent?.endsWith(":root")
@@ -51,40 +54,73 @@ export class Renderer {
 
         if (!root) return;
 
+        // IMMER diesen Container kontrollieren
+        this.container.innerHTML = "";
         this.renderNode(root.parent, this.container);
     }
 
     renderNode(parentId, el) {
+
         const kids = this.children[parentId] || [];
 
         for (const id of kids) {
             const node = this.nodes[id];
 
+            // Block-Wrapper
+            const blockEl = document.createElement("div");
+            blockEl.className = "block";
+
+            const contentEl = document.createElement("div");
+            contentEl.className = "block-content";
+
+            const regionEl = document.createElement("div");
+            regionEl.className = "block-region";
+
+            blockEl.appendChild(contentEl);
+            blockEl.appendChild(regionEl);
+
             let dom;
 
             if (node.type === "text") {
                 dom = document.createElement("div");
-                renderTextContent(node.props.text, dom);
+                renderTextContent(node.props.text, this.dispatch, dom, this.contextId);
+
+            } else if (node.type === "fields") {
+                dom = renderFields(node);
+
+            } else if (node.type === "actions") {
+                dom = renderActions(node, this.dispatch, this.contextId, this.contextManager);
+
             } else if (node.type === "list") {
                 dom = document.createElement("ul");
+
             } else if (node.type === "list_item") {
                 dom = document.createElement("li");
-                renderTextContent(node.props.head, dom);
+                renderTextContent(node.props.head, this.dispatch, dom, this.contextId);
+
             } else if (node.type === "rule") {
                 dom = document.createElement("hr");
+
             } else {
                 dom = document.createElement("div");
             }
 
-            el.appendChild(dom);
-            this.renderNode(id, dom);
+            // Content geht in contentEl
+            contentEl.appendChild(dom);
+
+            // Block in Tree
+            el.appendChild(blockEl);
+
+            //  Kinder weiterhin unter content rendern
+            this.renderNode(id, contentEl);
         }
     }
+
 }
 
 // helpers
 
-function renderInline(inline) {
+function renderInline(inline, dispatch, contextId) {
     if (inline.type === "text") {
         return document.createTextNode(inline.text);
     }
@@ -99,15 +135,9 @@ function renderInline(inline) {
         const el = document.createElement("span");
         el.textContent = inline.text;
 
-        el.style.cursor = "pointer";
-        el.style.textDecoration = "underline";
 
         el.onclick = () => {
-            ws.send(JSON.stringify({
-                type: "input",
-                channel: inline.channel,
-                payload: inline.payload
-            }));
+            dispatch.command(inline.command, inline.payload || {}, contextId);
         };
 
         return el;
@@ -116,7 +146,7 @@ function renderInline(inline) {
     return document.createTextNode("[unknown inline]");
 }
 
-function renderTextContent(text, container) {
+function renderTextContent(text, dispatch, container, contextId) {
     if (!text) return;
 
     container.style.whiteSpace = "pre-wrap";
@@ -127,6 +157,84 @@ function renderTextContent(text, container) {
     }
 
     for (const inline of text) {
-        container.appendChild(renderInline(inline));
+        container.appendChild(renderInline(inline, dispatch, contextId));
     }
+}
+
+
+function renderFields(node, dispatch, contextId) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "fields";
+
+    for (const field of node.props.fields || []) {
+
+        // FIELD BLOCK
+        const fieldBlock = document.createElement("div");
+        fieldBlock.className = "field-block";
+
+        const content = document.createElement("div");
+        const region = document.createElement("div");
+        region.className = "field-region";
+
+        // --- dein bestehender Field-Code ---
+        const row = document.createElement("div");
+        row.className = "field";
+
+        const label = document.createElement("label");
+        label.textContent = field.title || field.var || "";
+        row.appendChild(label);
+
+        const input = document.createElement("input");
+        input.value = field.value ?? field.default ?? "";
+        input.placeholder = field.hint || "";
+        row.appendChild(input);
+
+        if (field.errors?.length) {
+            const err = document.createElement("div");
+            err.className = "field-error";
+            err.textContent = field.errors[0].message;
+            row.appendChild(err);
+        }
+
+        content.appendChild(row);
+
+        // Struktur zusammensetzen
+        fieldBlock.appendChild(content);
+        fieldBlock.appendChild(region);
+
+        wrapper.appendChild(fieldBlock);
+    }
+
+    return wrapper;
+}
+
+function renderActions(node, dispatch, contextId, contextManager) {
+
+    const wrapper = document.createElement("div");
+
+    // eigener Context für diese Ausgabe
+    const regionContextId = createSubContextId(contextId, "actions", node.id);
+
+    for (const action of node.props.actions || []) {
+        const btn = document.createElement("button");
+        btn.textContent = action.label;
+
+        btn.onclick = () => {
+            dispatch.command(action.command, {}, regionContextId);
+        };
+
+        wrapper.appendChild(btn);
+    }
+
+    const region = document.createElement("div");
+    wrapper.appendChild(region);
+
+    //  Context direkt registrieren (KEIN Suchen!)
+    contextManager.register(regionContextId, region);
+
+    return wrapper;
+}
+
+function createSubContextId(parent, type, nodeId) {
+    return [parent, type, nodeId].join("::");
 }
