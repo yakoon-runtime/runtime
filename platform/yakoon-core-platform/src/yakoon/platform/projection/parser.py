@@ -312,6 +312,12 @@ class YamlProjectionParser:
                 f"fields[{field_id}].var must be a non-empty string"
             )
 
+        lookup = fd.get("lookup", None)
+        if lookup and not isinstance(lookup, str):
+            raise ViewSpecValidationError(
+                f"fields[{field_id}].lookup must be string or null"
+            )
+
         hint = fd.get("hint", "")
         default = fd.get("default", "")
         pattern = fd.get("pattern", "")
@@ -389,6 +395,7 @@ class YamlProjectionParser:
             ui=ui or None,
             type=field_type,
             options=options,
+            lookup=lookup,
         )
 
     def _parse_block(self, b: Any) -> Block:

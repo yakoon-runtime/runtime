@@ -6,10 +6,10 @@ projection:
   blocks:
     - type: text
       text: "Suche nach Projekten:"
+
     - type: fields
       fields:
-        - { var: result, policy: system:string, title: "Projektname" } 
-        - { var: xresult, policy: system:string, title: "Test" } 
+        - { var: result, policy: system:string, title: "Projektname", lookup: city.show.all } 
 
     - type: actions
       actions:

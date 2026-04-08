@@ -7,6 +7,7 @@ from .cmd_man import CmdMan
 from .cmd_quit import CmdQuit
 from .cmd_su import CmdSu
 from .cmd_test import CmdTest
+from .cmd_test_city import CmdTestCity
 from .cmd_use import CmdUse
 from .cmd_version import CmdVersion
 from .cmd_welcome import CmdWelcome
@@ -27,4 +28,5 @@ class ShellSystemCommands(CommandSet):
             CmdMan,
             CmdSu,
             CmdTest,
+            CmdTestCity,
         ]

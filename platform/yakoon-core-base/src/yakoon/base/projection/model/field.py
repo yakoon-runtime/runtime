@@ -46,6 +46,7 @@ class Field:
     ui: dict[str, Any] | None = None
 
     type: FieldType | None = None
+    lookup: str | None = None
     options: list[SelectOption] | None = None
 
     # ------------------------
@@ -53,6 +54,7 @@ class Field:
     # ------------------------
 
     value: Any | None = None
+    query: Any | None = None
     errors: tuple[FieldError, ...] = ()
 
     def with_value(self, value: Any) -> Field:

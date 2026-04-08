@@ -22,6 +22,7 @@ function initApp() {
 
         const ctx = contextManager.getOrCreate(contextId);
         ctx.renderer.apply(payload);
+        scrollToBottom();
     }
 
     const ws = createWS(handleProjection);
@@ -30,6 +31,14 @@ function initApp() {
     const router = createRouter();
 
     wireCommandBar(dom, dispatch, contextManager);
+}
+
+function scrollToBottom() {
+    const el = document.getElementById("stream");
+    if (!el) return;
+
+    //el.scrollTop = el.scrollHeight;
+    el.lastElementChild?.scrollIntoView({ behavior: "smooth" });
 }
 
 function createDispatcher(ws) {

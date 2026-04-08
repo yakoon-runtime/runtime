@@ -86,7 +86,7 @@ export class Renderer {
                 renderTextContent(node.props.text, this.dispatch, dom, this.contextId);
 
             } else if (node.type === "fields") {
-                dom = renderFields(node);
+                dom = renderFields(node, this.dispatch, this.contextId, this.contextManager);
 
             } else if (node.type === "actions") {
                 dom = renderActions(node, this.dispatch, this.contextId, this.contextManager);
@@ -162,13 +162,12 @@ function renderTextContent(text, dispatch, container, contextId) {
 }
 
 
-function renderFields(node, dispatch, contextId) {
+function renderFields(node, dispatch, contextId, contextManager) {
     const wrapper = document.createElement("div");
     wrapper.className = "fields";
 
     for (const field of node.props.fields || []) {
 
-        // FIELD BLOCK
         const fieldBlock = document.createElement("div");
         fieldBlock.className = "field-block";
 
@@ -176,7 +175,16 @@ function renderFields(node, dispatch, contextId) {
         const region = document.createElement("div");
         region.className = "field-region";
 
-        // --- dein bestehender Field-Code ---
+        // eigener Context
+        const fieldContextId = createSubContextId(
+            contextId,
+            "field",
+            field.var || Math.random().toString(36)
+        );
+
+        contextManager.register(fieldContextId, region);
+
+        // --- UI ---
         const row = document.createElement("div");
         row.className = "field";
 
@@ -184,10 +192,32 @@ function renderFields(node, dispatch, contextId) {
         label.textContent = field.title || field.var || "";
         row.appendChild(label);
 
+        // 👉 Input Wrapper (für Icon)
+        const inputWrap = document.createElement("div");
+        inputWrap.className = "input-wrap";
+
         const input = document.createElement("input");
-        input.value = field.value ?? field.default ?? "";
+        input.value = field.query ?? field.default ?? "";
         input.placeholder = field.hint || "";
-        row.appendChild(input);
+
+        inputWrap.appendChild(input);
+
+        // 👉 Lookup integriert (KEIN BUTTON)
+        if (field.lookup) {
+            inputWrap.classList.add("has-lookup");
+
+            const icon = document.createElement("span");
+            icon.className = "lookup-icon";
+            icon.textContent = "▾";
+
+            icon.onclick = () => {
+                dispatch.command(field.lookup, {}, fieldContextId);
+            };
+
+            inputWrap.appendChild(icon);
+        }
+
+        row.appendChild(inputWrap);
 
         if (field.errors?.length) {
             const err = document.createElement("div");
@@ -198,7 +228,6 @@ function renderFields(node, dispatch, contextId) {
 
         content.appendChild(row);
 
-        // Struktur zusammensetzen
         fieldBlock.appendChild(content);
         fieldBlock.appendChild(region);
 
@@ -207,7 +236,6 @@ function renderFields(node, dispatch, contextId) {
 
     return wrapper;
 }
-
 function renderActions(node, dispatch, contextId, contextManager) {
 
     const wrapper = document.createElement("div");
