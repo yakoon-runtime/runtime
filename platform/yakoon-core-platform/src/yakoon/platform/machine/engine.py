@@ -2,7 +2,6 @@ import inspect
 from uuid import uuid4
 
 from yakoon.base.capabilities.audit import AuditLogService
-from yakoon.base.capabilities.discovery import LookupResolver
 from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.commands import Command, Request
 from yakoon.base.commands.context import CommandContext
@@ -62,8 +61,7 @@ class CommandEngine:
         if not isinstance(event, InputEvent):
             return None
 
-        request = Request(event.to_text())
-        if not request.command:
+        if not event.command:
             return None
 
         # session.execution.step(
@@ -99,26 +97,25 @@ class CommandEngine:
             await controller.on_before_resolve(session)
 
             # Command finden
-            result = await self._find_matching_command(controller_id, request)
-            if not result:
-                resolver = self.container.get(LookupResolver)
-                resolved = await resolver.resolve(session, request)
-                if resolved:
-                    request = Request(resolved)
-                    result = await self._find_matching_command(controller_id, request)
+            result = await self._find_matching_command(controller_id, event)
+            # if not result:
+            #    resolver = self.container.get(LookupResolver)
+            #    resolved = await resolver.resolve(session, event)
+            #    if resolved:
+            #        result = await self._find_matching_command(controller_id, event)
 
             if not result:
-                raise CommandNotFound(request.command)
+                raise CommandNotFound(event.command)
 
             resolved_controller, command_type = result
             if not resolved_controller:
                 raise RuntimeError(
-                    f"Resolved controller is None for command '{request.raw}'"
+                    f"Resolved controller is None for command '{event.command}'"
                 )
 
             if not command_type:
                 raise RuntimeError(
-                    f"Resolved command is None for input '{request.raw}' "
+                    f"Resolved command is None for input '{event.command}' "
                     f"(controller='{resolved_controller.id}')"
                 )
 
@@ -146,7 +143,7 @@ class CommandEngine:
                 resolved_controller.id,
                 event,
                 FlowCursor(),
-                kind=self._resolve_flow_kind(request),
+                kind=self.DEFAULT_FLOW_KIND,
             )
             session.add_flow(flow)
 
@@ -157,7 +154,7 @@ class CommandEngine:
             self.container.get(AuditLogService).security(
                 session,
                 "command",
-                command_type.key if command_type else request.command,
+                command_type.key if command_type else event.command,
             )
             raise
 
@@ -170,7 +167,6 @@ class CommandEngine:
     async def step_flow(self, flow: Flow, session: Session) -> Outcome | None:
 
         cursor = flow.cursor
-        request = Request(flow.event.raw)
 
         controller = self._controllers.get(flow.controller_id)
         if not controller:
@@ -188,8 +184,7 @@ class CommandEngine:
             # ----------------------------------
             # 21. NORMAL STEP
             # ----------------------------------
-            item = await self._next_step(flow, session, command, request)
-
+            item = await self._next_step(flow, session, command, flow.event)
             if item is None:
                 return None
 
@@ -274,7 +269,7 @@ class CommandEngine:
             elif isinstance(effect, ClearFocus):
                 session.set_interaction(None)
 
-    async def _next_step(self, flow: Flow, session, command, request):
+    async def _next_step(self, flow: Flow, session, command, event: InputEvent):
 
         # ----------------------------------
         # Resume: Input / Event
@@ -283,16 +278,17 @@ class CommandEngine:
 
             channel = flow.control.channel
 
-            event = flow.pop_event(channel)
-            if event is None:
+            next_event = flow.pop_event(channel)
+            if next_event is None:
                 return None
 
             flow.control = None
-            return event
+            return next_event
 
         # ----------------------------------
         # NEXT
         # ----------------------------------
+        request = Request(event.command, event.tokens)
         return await flow.cursor.next(command, request)
 
     def _create_command(
@@ -303,27 +299,12 @@ class CommandEngine:
         return command
 
     async def _find_matching_command(
-        self, controller_id, request: Request
+        self, controller_id, event: InputEvent
     ) -> tuple[Controller | None, type[Command] | None] | None:
 
         result: tuple[str, type[Command]] | None = self._commands.find(
-            controller_id, request.command
+            controller_id, event.command
         )
         if result and isinstance(result, tuple):
             controller_id, command = result
             return self._controllers.get(controller_id), command
-
-    def _resolve_flow_kind(self, request: Request):
-        """
-        usage:
-        --job background
-        """
-        job = request.option("job")
-        if not job:
-            return self.DEFAULT_FLOW_KIND
-
-        job = job.lower()
-        if job in FlowKind._value2member_map_:
-            return FlowKind(job)
-
-        return self.DEFAULT_FLOW_KIND

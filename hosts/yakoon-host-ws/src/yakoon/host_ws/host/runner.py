@@ -48,4 +48,4 @@ def map_to_input_event(data):
         ui=ctx_data.get("ui") or {},
     )
 
-    return InputEvent(raw=raw, context=context)
+    return InputEvent.from_raw(raw=raw, context=context)

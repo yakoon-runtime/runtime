@@ -1,44 +1,26 @@
 from __future__ import annotations
 
+import shlex
 from dataclasses import dataclass
-from typing import Any
 
 from .context import InputContext
 
 
 @dataclass(frozen=True, slots=True)
 class InputEvent:
-
-    raw: Any  # str | dict | später mehr
+    command: str
+    tokens: list[str]
     context: InputContext | None = None
     batch_id: str | None = None
 
-    # ------------------------
-    # Interpretation
-    # ------------------------
+    @classmethod
+    def from_raw(cls, raw: str, context=None, batch_id=None):
+        parts = shlex.split(raw, posix=True)
+        if not parts:
+            return cls("", [], context, batch_id)
 
-    def is_text(self) -> bool:
-        return isinstance(self.raw, str)
+        return cls(parts[0].lower(), parts[1:], context, batch_id)
 
-    def is_form(self) -> bool:
-        return isinstance(self.raw, dict)
-
-    def to_text(self) -> str:
-        if isinstance(self.raw, str):
-            return self.raw
-        return ""
-
-    def to_values(self) -> dict[str, Any]:
-        if isinstance(self.raw, dict):
-            return self.raw
-        return {}
-
-    def get(self, name: str, default: Any = None) -> Any:
-        data = self.to_values()
-        return data.get(name, default)
-
-    def require(self, name: str) -> Any:
-        data = self.to_values()
-        if name not in data:
-            raise KeyError(f"Missing input field: {name}")
-        return data[name]
+    @classmethod
+    def from_tokens(cls, command: str, tokens: list[str], context=None, batch_id=None):
+        return cls(command, tokens, context, batch_id)

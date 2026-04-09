@@ -1,16 +1,14 @@
-import shlex
 from typing import Any
 
 
 class Request:
-    """Parse and query a single command-line style input string.
+    """Parse and query a single command-line style input.
 
-    Tokenization uses `shlex.split(..., posix=True)` and is therefore
-    quoting-aware.
+    Tokenization is expected to be done before (e.g. via InputEvent).
 
     Conventions:
-        - First token is the command (lowercased).
-        - Remaining tokens are arguments.
+        - Command is provided separately.
+        - Tokens represent all arguments.
         - Options follow `--name value`.
         - Flags are options without a value.
         - Positional arguments exclude option keys and option values.
@@ -18,33 +16,18 @@ class Request:
     This class intentionally represents exactly one command.
     """
 
-    def __init__(self, raw: str) -> None:
-        """Create a Request from raw user input.
+    def __init__(self, command: str, tokens: list[str]) -> None:
+        """Create a Request from normalized input.
 
         Args:
-            raw: The raw input string (may contain leading/trailing whitespace).
+            command: The command name (already extracted).
+            tokens: Tokenized arguments (order preserved).
 
         Notes:
-            If the input is empty/whitespace, the command and args are empty.
+            Tokens must already be split (e.g. via shlex).
         """
-        self._raw: str = raw.strip()
-
-        if not self._raw:
-            self._command: str = ""
-            self._args: list[str] = []
-            return
-
-        parts = shlex.split(self._raw, posix=True)
-        self._command = parts[0].lower() if parts else ""
-        self._args = parts[1:] if len(parts) > 1 else []
-
-    @property
-    def raw(self) -> str:
-        """The original input string (trimmed).
-
-        This is the canonical source for any derived parsing.
-        """
-        return self._raw
+        self._command: str = command
+        self._args: list[str] = tokens or []
 
     @property
     def command(self) -> str:

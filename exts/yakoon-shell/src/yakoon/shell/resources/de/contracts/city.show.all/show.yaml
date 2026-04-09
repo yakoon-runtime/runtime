@@ -6,11 +6,16 @@ projection:
   blocks:
     - type: text
       text: "Hier sind alle verfügbaren Städt:"
+
+    - type: actions
+      actions:
+        - label: "<"
+          command: city.show.all --offset {{state.prev_offset}}
+        - label: ">"
+          command: city.show.all --offset {{state.next_offset}}
+
     - type: list
       items:
-      - "Augsburg"
-      - "Berlin"
-      - "München"
-      - "Nürnberg"
-      - "Regensburg"
-      
+        {% for item in state["items"] %}
+          - "{{ item }}"
+        {% endfor %}

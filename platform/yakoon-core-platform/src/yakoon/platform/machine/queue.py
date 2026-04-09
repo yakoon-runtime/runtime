@@ -50,7 +50,7 @@ class InMemoryCommandQueue:
         q = self._q.setdefault(skey, deque())
 
         for c in reversed(cmds):
-            q.appendleft(InputEvent(raw=c, batch_id=batch_id))
+            q.appendleft(InputEvent.from_raw(raw=c, batch_id=batch_id))
 
     def next_input(self, session) -> InputEvent | None:
         """

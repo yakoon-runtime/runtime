@@ -4,7 +4,7 @@ export function createContextManager(streamEl, dispatch) {
     const contexts = new Map();
     let activeContextId = null;
 
-    function register(contextId, el) {
+    function register(contextId, el, meta = {}) {
         if (contexts.has(contextId)) {
             return contexts.get(contextId);
         }
@@ -12,11 +12,20 @@ export function createContextManager(streamEl, dispatch) {
         const ctx = {
             id: contextId,
             container: el,
-            renderer: new Renderer(el, dispatch, contextId, api)
+            renderer: new Renderer(el, dispatch, contextId, api),
+            meta
         };
 
         contexts.set(contextId, ctx);
         return ctx;
+    }
+
+    function has(contextId) {
+        return contexts.has(contextId);
+    }
+
+    function getMeta(contextId) {
+        return contexts.get(contextId)?.meta;
     }
 
     function getOrCreate(contextId) {
@@ -35,8 +44,10 @@ export function createContextManager(streamEl, dispatch) {
     }
 
     const api = {
+        has,
         register,
         getOrCreate,
+        getMeta,
         getActive() {
             return activeContextId;
         },

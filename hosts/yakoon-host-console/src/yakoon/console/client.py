@@ -2,7 +2,7 @@ import asyncio
 
 from yakoon.base.interations import ConsoleInteraction
 from yakoon.base.projection import ProjectionEvent, ProjectionQuery
-from yakoon.base.runtime import InputContext, InputEvent
+from yakoon.base.runtime import InputEvent
 from yakoon.base.transports import Transport
 from yakoon.console.output import ConsoleOutput
 from yakoon.console.ui import TerminalSurface, TerminalUI
@@ -24,19 +24,15 @@ class ConsoleClient:
     async def run(self):
 
         async def cancel() -> None:
-            await connection.send_input(InputEvent("__cancel__"))
+            await connection.send_input(InputEvent.from_raw("__cancel__"))
 
         async def submit(event: InputEvent) -> None:
-
-            raw = event.raw
-
-            context = InputContext("abc")
 
             # ------------------------
             # Command Mode
             # ------------------------
             if not self._current_fields:
-                await connection.send_input(InputEvent(raw, context))
+                await connection.send_input(event)
                 return
 
             # ------------------------
@@ -48,6 +44,7 @@ class ConsoleClient:
 
             field = self._current_fields[self._current_index]
 
+            # TODO: Vorher einfach raw....
             self._current_values[field.var] = raw
             self._current_index += 1
 

@@ -20,9 +20,14 @@ function initApp() {
             console.warn("Fallback context used for projection", payload.id);
         }
 
+        const exists = contextManager.has(contextId);
+
         const ctx = contextManager.getOrCreate(contextId);
         ctx.renderer.apply(payload);
-        scrollToBottom();
+
+        if (!exists) {
+            scrollToBottom();
+        }
     }
 
     const ws = createWS(handleProjection);

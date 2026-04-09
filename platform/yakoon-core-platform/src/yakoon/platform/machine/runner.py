@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from yakoon.base.catalogs.port import CommandRegistry
-from yakoon.base.commands import Request
 from yakoon.base.runtime import InputEvent
 from yakoon.platform.machine import CommandEngine
 from yakoon.platform.machine.scheduler import Scheduler
@@ -23,10 +22,7 @@ class Runner:
 
     async def on_input(self, event: InputEvent):
 
-        text = event.to_text()
-
-        request = Request(text)
-        if request.command in self._global_commands:
+        if event.command in self._global_commands:
             await self.scheduler.dispatch(self.session, event)
             return
 

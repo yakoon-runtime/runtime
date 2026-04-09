@@ -670,17 +670,10 @@ class YamlProjectionParser:
                     f"actions[{i}].command must be a non-empty string"
                 )
 
-            payload = item.get("payload")
-            if payload is not None and not isinstance(payload, dict):
-                raise ViewSpecValidationError(
-                    f"actions[{i}].payload must be a mapping or null"
-                )
-
             parsed_actions.append(
                 Action(
                     label=label,
                     command=command,
-                    payload=payload,
                 )
             )
 

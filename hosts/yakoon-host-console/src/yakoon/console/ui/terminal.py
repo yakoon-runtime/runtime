@@ -146,7 +146,7 @@ class TerminalUI:
             self.surface.new_view()
 
         if self.on_submit:
-            asyncio.create_task(self.on_submit(InputEvent(text)))
+            asyncio.create_task(self.on_submit(InputEvent.from_raw(text)))
 
     # --------------------------------------------------------
     # Public API
