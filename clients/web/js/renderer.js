@@ -1,10 +1,10 @@
 export class Renderer {
 
-    constructor(container, dispatch, contextId, contextManager) {
+    constructor(container, dispatch, regionIndex) {
         this.container = container;
         this.dispatch = dispatch;
-        this.contextId = contextId;
-        this.contextManager = contextManager;
+        this.regionIndex = regionIndex;
+
         this.nodes = {};
         this.children = {};
     }
@@ -56,17 +56,16 @@ export class Renderer {
 
         // IMMER diesen Container kontrollieren
         this.container.innerHTML = "";
-        this.renderNode(root.parent, this.container, this.contextId);
+        this.renderNode(root.parent, this.container);
     }
 
-    renderNode(parentId, el, currentContextId) {
+    renderNode(parentId, el) {
 
         const kids = this.children[parentId] || [];
 
         for (const id of kids) {
             const node = this.nodes[id];
 
-            // Block-Wrapper
             const blockEl = document.createElement("div");
             blockEl.className = "block";
 
@@ -76,53 +75,34 @@ export class Renderer {
             const regionEl = document.createElement("div");
             regionEl.className = "block-region";
 
+            // 🔥 Region-ID erzeugen
+            const regionId = "r-" + crypto.randomUUID();
+            regionEl.dataset.regionId = regionId;
+
+            // 🔥 registrieren
+            this.regionIndex.set(regionId, regionEl);
+
             blockEl.appendChild(contentEl);
             blockEl.appendChild(regionEl);
 
             let dom;
-            let nextContextId = currentContextId;
 
-            // CONTEXT-ENTSCHEIDUNG ZENTRAL
-
-            if (node.type === "fields") {
-
-                // eigener Context für Fields
-                nextContextId = createSubContextId(currentContextId, "field", node.id);
-                this.contextManager.register(nextContextId, regionEl, {
-                    type: "field"
-                });
-
-            } else if (node.type === "actions") {
-
-                // Field-Regel
-                const meta = this.contextManager.getMeta(currentContextId);
-                const isField = meta?.type === "field";
-
-                if (!isField) {
-                    nextContextId = createSubContextId(currentContextId, "actions", node.id);
-                    this.contextManager.register(nextContextId, regionEl, {
-                        type: "actions"
-                    });
-                }
-            }
-
-            // RENDERN (mit finalem Context)
             if (node.type === "text") {
                 dom = document.createElement("div");
-                renderTextContent(node.props.text, this.dispatch, dom, nextContextId);
+                renderTextContent(node.props.text, this.dispatch, dom, regionEl);
 
             } else if (node.type === "fields") {
-                dom = renderFields(node, this.dispatch, nextContextId, this.contextManager);
+                dom = renderFields(node, this.dispatch, regionEl, this.regionIndex);
 
             } else if (node.type === "actions") {
-                dom = renderActions(node, this.dispatch, nextContextId, this.contextManager);
+                dom = renderActions(node, this.dispatch, regionEl);
 
             } else if (node.type === "list") {
                 dom = document.createElement("ul");
 
             } else if (node.type === "list_item") {
                 dom = document.createElement("li");
-                renderTextContent(node.props.head, this.dispatch, dom, nextContextId);
+                renderTextContent(node.props.head, this.dispatch, dom, regionEl);
 
             } else if (node.type === "rule") {
                 dom = document.createElement("hr");
@@ -131,20 +111,27 @@ export class Renderer {
                 dom = document.createElement("div");
             }
 
-            // Content geht in contentEl
             contentEl.appendChild(dom);
-
-            // Block in Tree
             el.appendChild(blockEl);
 
-            // Context sauber weitergeben
-            this.renderNode(id, contentEl, nextContextId);
+            // 🔥 Kinder laufen im content weiter
+            this.renderNode(id, contentEl);
         }
     }
 
 }
 
 // helpers
+
+function findRegion(el) {
+    if (!(el instanceof Element)) {
+        return null;
+    }
+    return el.closest("[data-region-id]");
+}
+
+
+// RENDERER
 
 function renderInline(inline, dispatch, contextId) {
     if (inline.type === "text") {
@@ -172,7 +159,7 @@ function renderInline(inline, dispatch, contextId) {
     return document.createTextNode("[unknown inline]");
 }
 
-function renderTextContent(text, dispatch, container, contextId) {
+function renderTextContent(text, dispatch, container, regionEl) {
     if (!text) return;
 
     container.style.whiteSpace = "pre-wrap";
@@ -183,11 +170,12 @@ function renderTextContent(text, dispatch, container, contextId) {
     }
 
     for (const inline of text) {
-        container.appendChild(renderInline(inline, dispatch, contextId));
+        container.appendChild(renderInline(inline, dispatch, regionEl));
     }
 }
 
-function renderFields(node, dispatch, contextId, contextManager) {
+function renderFields(node, dispatch, parentRegionEl, regionIndex) {
+
     const wrapper = document.createElement("div");
     wrapper.className = "fields";
 
@@ -196,11 +184,13 @@ function renderFields(node, dispatch, contextId, contextManager) {
         const fieldBlock = document.createElement("div");
         fieldBlock.className = "field-block";
 
-        const content = document.createElement("div");
         const region = document.createElement("div");
         region.className = "field-region";
 
-        // --- UI ---
+        const regionId = "r-" + crypto.randomUUID();
+        region.dataset.regionId = regionId;
+        regionIndex.set(regionId, region);
+
         const row = document.createElement("div");
         row.className = "field";
 
@@ -217,17 +207,14 @@ function renderFields(node, dispatch, contextId, contextManager) {
 
         inputWrap.appendChild(input);
 
-        // Lookup integriert
         if (field.lookup) {
-            inputWrap.classList.add("has-lookup");
-
-            const icon = document.createElement("span");
+            const icon = document.createElement("button");
             icon.className = "lookup-icon";
+            icon.type = "button";
             icon.textContent = "▾";
 
             icon.onclick = () => {
-                // jetzt automatisch den richtigen Context
-                dispatch.command(field.lookup, {}, contextId);
+                dispatch.command(field.lookup, {}, region);
             };
 
             inputWrap.appendChild(icon);
@@ -235,16 +222,8 @@ function renderFields(node, dispatch, contextId, contextManager) {
 
         row.appendChild(inputWrap);
 
-        if (field.errors?.length) {
-            const err = document.createElement("div");
-            err.className = "field-error";
-            err.textContent = field.errors[0].message;
-            row.appendChild(err);
-        }
-
-        content.appendChild(row);
-
-        fieldBlock.appendChild(content);
+        // 🔥 direkt anhängen
+        fieldBlock.appendChild(row);
         fieldBlock.appendChild(region);
 
         wrapper.appendChild(fieldBlock);
@@ -253,7 +232,9 @@ function renderFields(node, dispatch, contextId, contextManager) {
     return wrapper;
 }
 
-function renderActions(node, dispatch, contextId, contextManager) {
+
+function renderActions(node, dispatch, regionEl) {
+
 
     const wrapper = document.createElement("div");
 
@@ -261,20 +242,18 @@ function renderActions(node, dispatch, contextId, contextManager) {
         const btn = document.createElement("button");
         btn.textContent = action.label;
 
-        btn.onclick = () => {
-            dispatch.command(action.command, {}, contextId);
+        btn.onclick = (e) => {
+            const region = findRegion(e.currentTarget)
+
+            if (!region) {
+                console.warn("No region found for action");
+                return;
+            }
+            dispatch.command(action.command, {}, region);
         };
 
         wrapper.appendChild(btn);
     }
 
-    // optionaler Container für spätere Inhalte (kein Context!)
-    const region = document.createElement("div");
-    wrapper.appendChild(region);
-
     return wrapper;
-}
-
-function createSubContextId(parent, type, nodeId) {
-    return [parent, type, nodeId].join("::");
 }

@@ -9,7 +9,7 @@ class CmdTestCity(Command):
     async def run(self, request: Request):
 
         offset = int(request.option("offset", 0))
-        limit = 10
+        limit = 5
 
         items, total = self.get_data(offset, limit)
 

@@ -31,13 +31,13 @@ def split_payload(text: str, max_size: int):
 class _ViewStream:
     session: Session
     projection_id: str
+    ctx: InputContext | None
     job_id: str
 
     event_queue: list
 
     node_depth: dict[str, int]
     published_nodes: set[str]
-
     last_flush: float
 
 
@@ -76,6 +76,7 @@ class EventProjectionDispatcher:
         stream = _ViewStream(
             session=session,
             projection_id=vid,
+            ctx=ctx,
             job_id=job_id,
             event_queue=[],
             node_depth={},
@@ -118,6 +119,7 @@ class EventProjectionDispatcher:
         await session.emit(
             self._emitter.finish(
                 vid=vid,
+                ctx=stream.ctx,
                 job_id=stream.job_id,
             )
         )
@@ -141,6 +143,7 @@ class EventProjectionDispatcher:
         await session.emit(
             self._emitter.finish(
                 vid=projection_id,
+                ctx=stream.ctx,
                 job_id=stream.job_id,
             )
         )
@@ -321,6 +324,7 @@ class EventProjectionDispatcher:
         await stream.session.emit(
             self._emitter.emit(
                 vid=stream.projection_id,
+                ctx=stream.ctx,
                 ops=ops,
                 job_id=stream.job_id,
             )

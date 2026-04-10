@@ -33,7 +33,14 @@ class InlineLink:
     href: str = ""
 
 
-Inline = InlineText | InlineCode | InlineLink
+@dataclass(frozen=True, slots=True)
+class InlineSelect:
+    type: Literal["select"] = "select"
+    text: str = ""
+    value: Any = None
+
+
+Inline = InlineText | InlineCode | InlineLink | InlineSelect
 
 
 # -----------------------------
