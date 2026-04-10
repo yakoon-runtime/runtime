@@ -75,11 +75,11 @@ export class Renderer {
             const regionEl = document.createElement("div");
             regionEl.className = "block-region";
 
-            // 🔥 Region-ID erzeugen
+            // Region-ID erzeugen
             const regionId = "r-" + crypto.randomUUID();
             regionEl.dataset.regionId = regionId;
 
-            // 🔥 registrieren
+            // registrieren
             this.regionIndex.set(regionId, regionEl);
 
             blockEl.appendChild(contentEl);
@@ -114,7 +114,7 @@ export class Renderer {
             contentEl.appendChild(dom);
             el.appendChild(blockEl);
 
-            // 🔥 Kinder laufen im content weiter
+            // Kinder laufen im content weiter
             this.renderNode(id, contentEl);
         }
     }
@@ -222,7 +222,7 @@ function renderFields(node, dispatch, parentRegionEl, regionIndex) {
 
         row.appendChild(inputWrap);
 
-        // 🔥 direkt anhängen
+        // direkt anhängen
         fieldBlock.appendChild(row);
         fieldBlock.appendChild(region);
 
