@@ -1,0 +1,12 @@
+<header role="info" title="Commands" />
+
+Wirklich beenden?
+
+<fields>
+  <field
+    var="quit"
+    policy="system:bool"
+    title="Ja/Nein"
+    required="true"
+  />
+</fields>

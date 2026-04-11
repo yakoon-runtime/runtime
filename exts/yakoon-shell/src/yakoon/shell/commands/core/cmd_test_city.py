@@ -30,7 +30,7 @@ class CmdTestCity(Command):
 
         projector = await self.create_projector()
 
-        projection = await projector.project("show", state=state)
+        projection = await projector.project("list", state=state)
         yield present(projection)
 
     def get_data(self, offset: int, limit: int) -> tuple[list[str], int]:

@@ -567,7 +567,7 @@ class YamlProjectionParser:
             code = node.get("code", "")
             if not isinstance(code, str):
                 raise ViewSpecValidationError("InlineCode.code must be a string")
-            return InlineCode(type="code", code=code)
+            return InlineCode(type="code", text=code)
 
         if t == "link":
             text = node.get("text", "")

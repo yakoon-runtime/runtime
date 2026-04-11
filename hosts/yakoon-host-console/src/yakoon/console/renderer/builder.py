@@ -1,3 +1,5 @@
+from .action import ActionsRenderer
+from .action_item import ActionRenderer
 from .base import BaseRenderer
 from .kv import KVRenderer
 from .kv_item import KVItemRenderer
@@ -20,6 +22,8 @@ class RendererBuilder:
             "list_item": ListItemRenderer,
             "kv": KVRenderer,
             "kv_item": KVItemRenderer,
+            "actions": ActionsRenderer,
+            "action": ActionRenderer,
         }
 
     def create(self, node) -> BaseRenderer:

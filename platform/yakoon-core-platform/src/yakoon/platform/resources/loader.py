@@ -26,7 +26,7 @@ class FileResourceLoader:
         self,
         ref: ResourceRef,
         *,
-        exts: tuple[str, ...] = (".yaml", ".yml", ".json"),
+        exts: tuple[str, ...] = (".sam",),
         encoding: str = "utf-8",
     ) -> str:
         # Optional: enforce allowed packages (security / sanity)

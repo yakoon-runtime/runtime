@@ -41,7 +41,7 @@ class CmdMan(Command):
         if not command_key:
             projector = await self.create_projector()
             projection = await projector.project(
-                "no_manual_entry",
+                "error",
                 state={
                     "command_key": "",
                 },
@@ -99,7 +99,7 @@ class CmdMan(Command):
             projector = await self.create_projector()
 
             projection = await projector.project(
-                "no_manual_entry",
+                "error",
                 state={
                     "command_key": command_key,
                 },
@@ -128,7 +128,7 @@ class CmdMan(Command):
                 key=cmd_info.key,
             )
             projector = await projector_service.create(ref, session)
-            projection = await projector.project("man_page")
+            projection = await projector.project("details")
             yield present(projection)
 
         except LookupError:
@@ -186,7 +186,7 @@ class CmdMan(Command):
             )
 
             projection = await projector.project(
-                "show_help",
+                "overview",
                 state={
                     "mode": "shell",
                     "shell_commands": shell_commands,

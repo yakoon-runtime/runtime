@@ -38,9 +38,9 @@ class Field:
     required: bool = False
     var: str | None = None
 
-    hint: str = ""
-    default: str = ""
-    pattern: str = ""
+    hint: str | None = None
+    default: str | None = None
+    pattern: str | None = None
 
     error: str | None = None
     ui: dict[str, Any] | None = None

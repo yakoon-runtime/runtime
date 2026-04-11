@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
-import yaml
-
 from yakoon.base.projection.model import Projection
-from yakoon.base.projection.port import ProjectionParser
+
+# from yakoon.base.projection.port import ProjectionParser # TODO: ProjectionMapper & DI
 from yakoon.base.projection.rendering import RenderContext, RenderEngine
 from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime import Container
+
+from ..parser import ProjectionMapper, build_ast, tokenize_text
 
 
 class TemplateProjectionRenderer:
@@ -41,13 +42,16 @@ class TemplateProjectionRenderer:
             "_meta": meta,
         }
 
+        # 1) Jinja render
         rendered_text = await engine.render_str(source, context=context)
 
-        # 2) validate YAML root early (nice error messages)
-        raw = yaml.safe_load(rendered_text)
-        if not isinstance(raw, dict):
-            raise TypeError("Root template must be a mapping")
+        # 2) tokenize
+        tokens = tokenize_text(rendered_text)
 
-        # 3) parse/validate into View
-        parser = self._container.get(ProjectionParser)
-        return parser.parse_spec(rendered_text)
+        # 3) build AST
+        ast = build_ast(tokens)
+
+        # 4) create mapping
+        mapper = ProjectionMapper()
+        projection = mapper.map_projection(ast)
+        return projection

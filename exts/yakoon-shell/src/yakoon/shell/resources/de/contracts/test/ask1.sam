@@ -1,0 +1,16 @@
+<header role="info" title="Commands" />
+
+Suche nach Projekten:
+
+<fields>
+  <field
+    var="result"
+    policy="system:string"
+    title="Projektname"
+    lookup="city.show.all"
+  />
+</fields>
+
+<actions>
+  <action command="project.save">Speichern</action>
+</actions>

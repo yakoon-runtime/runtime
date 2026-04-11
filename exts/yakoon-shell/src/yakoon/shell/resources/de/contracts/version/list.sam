@@ -1,0 +1,9 @@
+<header role="info" title="Commands" />
+
+<kv>
+  <item key="Platform Version">{{ state.version }}</item>
+  <item key="Python">{{ state.python }}</item>
+  <item key="Hostname">{{ state.hostname }}</item>
+  <item key="Uptime">{{ state.uptime }}</item>
+  <item key="Time (UTC)">{{ state.time }}</item>
+</kv>

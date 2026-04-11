@@ -34,7 +34,7 @@ class CmdUse(Command):
 
         if infos and not name:
             projection = await projector.project(
-                "show",
+                "active",
                 state={
                     "controllers": infos,
                 },
@@ -44,7 +44,7 @@ class CmdUse(Command):
 
             if name == access.get_active_controller():
                 projection = await projector.project(
-                    "already_in_shell",
+                    "using",
                     state={
                         "controller": infos[0],
                     },
@@ -57,7 +57,7 @@ class CmdUse(Command):
 
         else:
             projector = await projector.project(
-                "name_not_found",
+                "error",
                 state={
                     "prg_name": name,
                 },

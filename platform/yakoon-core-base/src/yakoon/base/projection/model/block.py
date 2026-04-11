@@ -5,47 +5,9 @@ from typing import Any, Literal
 
 from .action import Action
 from .field import Field
+from .inline import Inline
 
 RuleStyle = Literal["subtle", "normal", "strong"]
-
-
-# -----------------------------
-# Inline
-# -----------------------------
-
-
-@dataclass(frozen=True, slots=True)
-class InlineText:
-    type: Literal["text"] = "text"
-    text: str = ""
-
-
-@dataclass(frozen=True, slots=True)
-class InlineCode:
-    type: Literal["code"] = "code"
-    code: str = ""
-
-
-@dataclass(frozen=True, slots=True)
-class InlineLink:
-    type: Literal["link"] = "link"
-    text: str = ""
-    href: str = ""
-
-
-@dataclass(frozen=True, slots=True)
-class InlineSelect:
-    type: Literal["select"] = "select"
-    text: str = ""
-    value: Any = None
-
-
-Inline = InlineText | InlineCode | InlineLink | InlineSelect
-
-
-# -----------------------------
-# Blocks
-# -----------------------------
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,10 +62,10 @@ class ListItemBlock:
     id: str | None
     type: Literal["list_item"] = "list_item"
 
-    head: str | list[Inline] = ""
+    text: str | list[Inline] = ""
     blocks: list[Block] | None = None
 
-    __stream_fields__ = ("head",)
+    __stream_fields__ = ("text",)
 
     def children(self):
         return tuple(self.blocks or ())
@@ -126,7 +88,7 @@ class KvItemBlock:
     type: Literal["kv_item"] = "kv_item"
 
     key: str = ""
-    value: str | list[Block] = ""
+    value: list[Inline] = field(default_factory=list)
 
     __stream_fields__ = ("value",)
 

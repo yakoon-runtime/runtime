@@ -4,10 +4,6 @@ from .block import (
     Block,
     FieldsBlock,
     FieldsState,
-    Inline,
-    InlineCode,
-    InlineLink,
-    InlineText,
     KvBlock,
     KvItemBlock,
     ListBlock,
@@ -25,6 +21,14 @@ from .header import (
     ProjectionMeta,
     Role,
     ViewUI,
+)
+from .inline import (
+    Inline,
+    InlineCmd,
+    InlineCode,
+    InlineLink,
+    InlineSelect,
+    InlineText,
 )
 from .model import (
     Projection,
@@ -46,11 +50,14 @@ __all__ = [
     "FieldType",
     "FieldError",
     "SelectOption",
-    # .blocks
+    # .inline
     "Inline",
     "InlineText",
     "InlineCode",
     "InlineLink",
+    "InlineCmd",
+    "InlineSelect",
+    # .blocks
     "Block",
     "RuleStyle",
     "TextBlock",

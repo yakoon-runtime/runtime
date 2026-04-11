@@ -1,6 +1,7 @@
 from typing import Protocol, cast
 
 from yakoon.base.commands import Command, Request
+from yakoon.base.flow import receive
 from yakoon.base.flow.patterns import form
 
 
@@ -15,9 +16,11 @@ class CmdQuit(Command):
     async def run(self, request: Request):
 
         projector = await self.create_projector()
-        projection = await projector.project("really_quit")
+        projection = await projector.project("confirm")
 
-        result = yield form(projection, self.container)
+        yield form(self, projection, "form")
+
+        result = yield receive("form")
 
         answer = bool(result.values.get("quit"))
         if answer:

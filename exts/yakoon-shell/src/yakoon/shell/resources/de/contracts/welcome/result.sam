@@ -1,0 +1,18 @@
+
+<header role="info" title="Welcome"/>
+
+''    ''    '''''    ''   ''    ''''''    ''''''    '''    ''
+'    '    '     '   ''  ''    '      '  '      '   '  '   ''
+  '  '     '     '   '''''     '      '  '      '   '   '  ''
+  ''      '''''''   ''  ''    '      '  '      '   '    ''''
+  ''      '     '   ''   ''    ''''''    ''''''    '     '''
+
+Was du jetzt tun kannst:
+
+<rule/>
+
+<list>
+  <item>man          - Zeigt Manual für Befehle</item>
+  <item>use prg      - Startet ein Programm</item>
+  <item>version      - Zeigt Systeminformationen</item>
+</list>
