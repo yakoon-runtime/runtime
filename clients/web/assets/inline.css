@@ -1,0 +1,13 @@
+.inline-cmd {
+    cursor: pointer;
+    color: #4da3ff;
+}
+
+.inline-cmd:hover {
+    text-decoration: underline;
+}
+
+.inline-select {
+    cursor: pointer;
+    background: #eee;
+}

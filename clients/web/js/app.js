@@ -1,5 +1,5 @@
 import { createWS } from "./stream.js";
-import { Renderer } from "./renderer.js";
+import { Renderer, createBlock } from "./renderer.js";
 
 
 function initApp() {
@@ -34,7 +34,7 @@ function initApp() {
     }
 
     const ws = createWS(handleProjection);
-    const dispatch = createDispatcher(ws, regionIndex);
+    const dispatch = createDispatcher(ws, regionIndex, dom);
 
     wireCommandBar(dom, dispatch, regionIndex);
 }
@@ -47,13 +47,11 @@ function scrollToBottom() {
     el.lastElementChild?.scrollIntoView({ behavior: "smooth" });
 }
 
-function createDispatcher(ws, regionIndex) {
+function createDispatcher(ws, regionIndex, dom) {
 
     function send(command, payload = {}, regionEl) {
-
-        console.log("SEND", command);
-
         const regionId = regionEl.dataset.regionId;
+
         ws.send(JSON.stringify({
             type: "input",
             channel: "command",
@@ -67,35 +65,26 @@ function createDispatcher(ws, regionIndex) {
         }));
     }
 
+    function newTurn(command, payload = {}) {
+        const { blockEl, regionEl } = createBlock(regionIndex);
+
+        dom.stream.appendChild(blockEl);
+
+        send(command, payload, regionEl);
+    }
+
     return {
-        command: send
+        command: send,
+        newTurn
     };
 }
 
 function wireCommandBar(dom, dispatch, regionIndex) {
 
     function createRootBlock() {
-
-        const blockEl = document.createElement("div");
-        blockEl.className = "block";
-
-        const contentEl = document.createElement("div");
-        contentEl.className = "block-content";
-
-        const regionEl = document.createElement("div");
-        regionEl.className = "block-region";
-
-        // 🔥 regionId
-        const regionId = "r-" + crypto.randomUUID();
-        regionEl.dataset.regionId = regionId;
-
-        regionIndex.set(regionId, regionEl);
-
-        blockEl.appendChild(contentEl);
-        blockEl.appendChild(regionEl);
+        const { blockEl, regionEl } = createBlock(regionIndex);
 
         dom.stream.appendChild(blockEl);
-
         return regionEl;
     }
 

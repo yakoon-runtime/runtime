@@ -66,26 +66,11 @@ export class Renderer {
         for (const id of kids) {
             const node = this.nodes[id];
 
-            const blockEl = document.createElement("div");
-            blockEl.className = "block";
-
-            const contentEl = document.createElement("div");
-            contentEl.className = "block-content";
-
-            const regionEl = document.createElement("div");
-            regionEl.className = "block-region";
-
-            // Region-ID erzeugen
-            const regionId = "r-" + crypto.randomUUID();
-            regionEl.dataset.regionId = regionId;
-
-            // registrieren
-            this.regionIndex.set(regionId, regionEl);
-
-            blockEl.appendChild(contentEl);
-            blockEl.appendChild(regionEl);
+            const { blockEl, contentEl, regionEl } = createBlock(this.regionIndex);
+            el.appendChild(blockEl);
 
             let dom;
+
 
             if (node.type === "text") {
                 dom = document.createElement("div");
@@ -102,7 +87,7 @@ export class Renderer {
 
             } else if (node.type === "list_item") {
                 dom = document.createElement("li");
-                renderTextContent(node.props.head, this.dispatch, dom, regionEl);
+                renderTextContent(node.props.text, this.dispatch, dom, regionEl);
 
             } else if (node.type === "rule") {
                 dom = document.createElement("hr");
@@ -130,29 +115,94 @@ function findRegion(el) {
     return el.closest("[data-region-id]");
 }
 
+export function createBlock(regionIndex) {
+    const blockEl = document.createElement("div");
+    blockEl.className = "block";
+
+    const contentEl = document.createElement("div");
+    contentEl.className = "block-content";
+
+    const regionEl = document.createElement("div");
+    regionEl.className = "block-region";
+
+    const regionId = "r-" + crypto.randomUUID();
+    regionEl.dataset.regionId = regionId;
+
+    regionIndex.set(regionId, regionEl);
+
+    blockEl.appendChild(contentEl);
+    blockEl.appendChild(regionEl);
+
+    return { blockEl, contentEl, regionEl };
+}
 
 // RENDERER
 
 function renderInline(inline, dispatch, contextId) {
+
+    function createInlineEl(type, tag = "span") {
+        const el = document.createElement(tag);
+        el.classList.add("inline", `inline-${type}`);
+        return el;
+    }
+
     if (inline.type === "text") {
         return document.createTextNode(inline.text);
     }
 
     if (inline.type === "code") {
-        const el = document.createElement("code");
-        el.textContent = inline.code;
+        const el = createInlineEl("code", "code");
+
+        el.textContent = inline.text;
+        return el;
+    }
+
+    if (inline.type === "cmd") {
+        const el = createInlineEl("cmd");
+
+        el.textContent = inline.text;
+        el.onclick = () => {
+            dispatch.newTurn(inline.command);
+        }
+        return el;
+    }
+
+    if (inline.type === "select") {
+        const el = createInlineEl("select");
+
+        el.textContent = inline.text;
+
+        el.onclick = () => {
+            const field = el.closest(".field-block");
+            if (!field) {
+                console.warn("Select outside field-block");
+                return;
+            }
+
+            const input = field.querySelector("input");
+            if (!input) return;
+
+            // 1. sichtbarer Text
+            input.value = inline.text;
+
+            // 2. echter Wert
+            field.dataset.value = inline.value;
+
+            // 3. Lookup schließen
+            const region = el.closest("[data-region-id]");
+            if (region) region.innerHTML = "";
+        };
+
         return el;
     }
 
     if (inline.type === "action") {
-        const el = document.createElement("span");
+        const el = createInlineEl("action");
+
         el.textContent = inline.text;
-
-
         el.onclick = () => {
             dispatch.command(inline.command, inline.payload || {}, contextId);
         };
-
         return el;
     }
 
