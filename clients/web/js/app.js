@@ -12,16 +12,12 @@ function initApp() {
 
     // zentrale Maps
     const regionIndex = new Map();
-    const pendingJobs = new Map();
     const renderers = new Map();
 
     function handleProjection(payload) {
 
-        //const regionId = pendingJobs.get(payload.job);
-        const regionId = pendingJobs.get(payload.context.context_id);
-
+        const regionId = payload.context.origin
         const regionEl = regionIndex.get(regionId);
-
         if (!regionEl) {
             console.warn("Region not found for job:", payload.job);
             return;
@@ -29,21 +25,16 @@ function initApp() {
 
         //  Renderer holen oder erstellen
         let renderer = renderers.get(regionId);
-
         if (!renderer) {
             renderer = new Renderer(regionEl, dispatch, regionIndex);
             renderers.set(regionId, renderer);
         }
 
         renderer.apply(payload);
-
-        if (payload.final) {
-            pendingJobs.delete(payload.job);
-        }
     }
 
     const ws = createWS(handleProjection);
-    const dispatch = createDispatcher(ws, regionIndex, pendingJobs);
+    const dispatch = createDispatcher(ws, regionIndex);
 
     wireCommandBar(dom, dispatch, regionIndex);
 }
@@ -56,26 +47,21 @@ function scrollToBottom() {
     el.lastElementChild?.scrollIntoView({ behavior: "smooth" });
 }
 
-function createDispatcher(ws, regionIndex, pendingJobs) {
+function createDispatcher(ws, regionIndex) {
 
     function send(command, payload = {}, regionEl) {
 
-        const regionId = regionEl?.dataset.regionId;
-        const jobId = crypto.randomUUID();
-
-        // 🔥 merken
-        pendingJobs.set(jobId, regionId);
-
         console.log("SEND", command);
 
+        const regionId = regionEl.dataset.regionId;
         ws.send(JSON.stringify({
             type: "input",
             channel: "command",
             payload: {
                 raw: command,
                 context: {
-                    context_id: jobId,
-                    command
+                    command,
+                    origin: regionId,
                 }
             }
         }));

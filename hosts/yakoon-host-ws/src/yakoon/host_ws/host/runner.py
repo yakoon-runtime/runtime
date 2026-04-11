@@ -33,19 +33,13 @@ async def handle(host, connection, ws):
 
 
 def map_to_input_event(data):
+
     payload = data.get("payload", {})
+    context = payload.get("context") or {}
 
-    # --- RAW ---
-    raw = payload.get("raw")
-
-    # --- CONTEXT ---
-    ctx_data = payload.get("context") or {}
-
-    context = InputContext(
-        command=ctx_data.get("command"),
-        context_id=ctx_data.get("context_id"),
-        open_contexts=[],  # optional später
-        ui=ctx_data.get("ui") or {},
+    return InputEvent.from_raw(
+        raw=payload.get("raw"),
+        context=InputContext(
+            origin=context.get("origin"),
+        ),
     )
-
-    return InputEvent.from_raw(raw=raw, context=context)

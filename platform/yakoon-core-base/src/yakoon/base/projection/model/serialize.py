@@ -5,7 +5,7 @@ from yakoon.base.projection.transport.patch import (
     PatchFinishNode,
     PatchReset,
 )
-from yakoon.base.runtime.input.context import InputContext, InputContextRef
+from yakoon.base.runtime.input import InputContext
 
 
 def serialize_event(event: ProjectionEvent):
@@ -25,32 +25,10 @@ def serialize_context(context: InputContext | None) -> dict | None:
         return None
 
     data: dict[str, object] = {}
-
-    if context.context_id is not None:
-        data["context_id"] = context.context_id
-    if context.command is not None:
-        data["command"] = context.command
-
-    if context.open_contexts:
-        data["open_contexts"] = [
-            serialize_context_ref(ref) for ref in context.open_contexts
-        ]
-
-    if context.ui:
-        data["ui"] = context.ui
+    if context.origin is not None:
+        data["origin"] = context.origin
 
     return data or None
-
-
-def serialize_context_ref(ref: InputContextRef) -> dict:
-    data: dict[str, object] = {}
-
-    if ref.context_id is not None:
-        data["context_id"] = ref.context_id
-    if ref.command is not None:
-        data["command"] = ref.command
-
-    return data
 
 
 def serialize_header(header):
