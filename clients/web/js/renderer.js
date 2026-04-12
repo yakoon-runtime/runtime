@@ -1,6 +1,11 @@
-import { createElement } from "./helper.js";
+import { createElement, findRegion } from "./dom.js";
 
 export class Renderer {
+
+    static from(el) {
+        const root = el.closest('[data-renderer="true"]');
+        return root?._renderer || null;
+    }
 
     constructor(container, dispatch) {
         this.container = container;
@@ -83,11 +88,13 @@ export class Renderer {
                 break;
 
             case "fields":
-                el = renderFields(node, this.dispatch);
+                el = createElement("div", "fields");
+                renderFields(node, this.dispatch, el);
                 break;
 
             case "actions":
-                el = renderActions(node, this.dispatch);
+                el = createElement("div", "actions");
+                renderActions(node, this.dispatch, el);
                 break;
 
             case "list":
@@ -97,6 +104,15 @@ export class Renderer {
             case "list_item":
                 el = createElement("li", "list-item");
                 renderTextContent(node.props.text, this.dispatch, el);
+                break;
+
+            case "kv":
+                el = createElement("div", "kv");
+                break;
+
+            case "kv_item":
+                el = createElement("div", "kv-item");
+                renderKVItem(node, this.dispatch, el);
                 break;
 
             case "rule":
@@ -124,21 +140,6 @@ export class Renderer {
     }
 
 }
-
-// helpers
-
-function findRegion(el) {
-    if (!(el instanceof Element)) {
-        return null;
-    }
-    return el.closest("[data-region-id]");
-}
-
-function findRenderer(el) {
-    const region = el.closest('[data-renderer="true"]');
-    return region?._renderer || null;
-}
-
 
 // RENDERER
 
@@ -230,40 +231,45 @@ function renderTextContent(text, dispatch, container) {
     }
 }
 
-function renderFields(node, dispatch) {
+function renderKVItem(node, dispatch, container) {
 
-    const wrapper = createElement("div", "fields");
+    const key = createElement("div", "kv-key");
+    key.textContent = node.props.key;
+
+    const value = createElement("div", "kv-value");
+    renderTextContent(node.props.value, dispatch, value);
+
+    container.appendChild(key);
+    container.appendChild(value);
+}
+
+function renderFields(node, dispatch, container) {
 
     for (const field of node.props.fields || []) {
 
         const fieldBlock = createElement("div", "field-block");
-        const row = createElement("div", "field");
+        const row = createElement("div", "field-row");
 
-        const label = document.createElement("label");
+        const label = createElement("label", "field-label");
         label.textContent = field.title || field.var || "";
-        row.appendChild(label);
 
-        const inputWrap = createElement("div", "input-wrap");
+        const inputWrap = createElement("div", "field-wrap");
 
-        const input = document.createElement("input");
+        const input = createElement("input", "field-input");
         input.value = field.query ?? field.default ?? "";
         input.placeholder = field.hint || "";
 
+        const region = createElement("div", "field-region");
+        region.dataset.regionId = "r-" + crypto.randomUUID();
+
         inputWrap.appendChild(input);
 
-        // 👉 Region NUR hier
-        const region = createElement("div", "field-region");
-
-        const regionId = "r-" + crypto.randomUUID();
-        region.dataset.regionId = regionId;
-
         if (field.lookup) {
-            const icon = createElement("button", "lookup-icon");
-            icon.type = "button";
+            const icon = createElement("button", "field-lookup");
             icon.textContent = "▾";
 
             icon.onclick = () => {
-                const renderer = findRenderer(region);
+                const renderer = Renderer.from(region);
                 if (!renderer) return;
                 renderer.openInteraction(region, field.lookup);
             };
@@ -271,19 +277,17 @@ function renderFields(node, dispatch) {
             inputWrap.appendChild(icon);
         }
 
+        row.appendChild(label);
         row.appendChild(inputWrap);
 
         fieldBlock.appendChild(row);
         fieldBlock.appendChild(region);
 
-        wrapper.appendChild(fieldBlock);
+        container.appendChild(fieldBlock);
     }
-
-    return wrapper;
 }
 
-function renderActions(node, dispatch) {
-    const wrapper = createElement("div", "actions");
+function renderActions(node, dispatch, container) {
 
     for (const action of node.props.actions || []) {
         const btn = createElement("button", "action-button");
@@ -296,8 +300,6 @@ function renderActions(node, dispatch) {
             dispatch.command(action.command, {}, region);
         };
 
-        wrapper.appendChild(btn);
+        container.appendChild(btn);
     }
-
-    return wrapper;
 }

@@ -1,6 +1,6 @@
 import { createWS } from "./stream.js";
 import { Renderer } from "./renderer.js";
-import { createElement } from "./helper.js";
+import { createElement } from "./dom.js";
 
 
 function initApp() {
@@ -39,7 +39,7 @@ function initApp() {
     function createRootRegion() {
         const container = createElement("div", "turn");
 
-        const region = document.createElement("div");
+        const region = createElement("div", "turn-region");
         region.dataset.regionId = "r-" + crypto.randomUUID();
 
         container.appendChild(region);
@@ -108,5 +108,4 @@ function wireCommandBar(dom, dispatch, createRootRegion) {
     dom.button.addEventListener("click", send);
 }
 
-/* Start Application */
 initApp();

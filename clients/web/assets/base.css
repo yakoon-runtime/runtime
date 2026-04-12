@@ -75,6 +75,8 @@ body {
     border-radius: 6px;
 }
 
+.turn-region {}
+
 /* Text */
 .turn p {
     margin: 6px 0;

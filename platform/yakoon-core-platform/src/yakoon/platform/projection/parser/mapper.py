@@ -341,8 +341,9 @@ class ProjectionMapper:
 
             # TEXT
             if isinstance(node, TextNode):
-                if node.text:
-                    result.append(InlineText(text=node.text))
+                text = normalize_text(node.text)
+                if text:
+                    result.append(InlineText(text=text))
                 continue
 
             # ELEMENT
@@ -415,7 +416,7 @@ def is_whitespace(node: Node) -> bool:
 
 
 def normalize_text(text: str) -> str:
-    return text.strip()
+    return text.lstrip("\n").rstrip()
 
 
 def extract_text(node: Node) -> str:

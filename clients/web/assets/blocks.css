@@ -1,26 +1,13 @@
 /*
 =========================
-= BLOCKS
-=========================
-*/
-
-
-.block {
-    margin-bottom: 10px;
-}
-
-.block-region {
-    margin-top: 6px;
-}
-
-/*
-=========================
 = TEXT
 =========================
 */
 
 
-.text {}
+.text {
+    white-space: pre-wrap;
+}
 
 /*
 =========================
@@ -34,7 +21,7 @@
 
 /*
 =========================
-= ACTIONS
+= RULE
 =========================
 */
 
@@ -42,13 +29,36 @@
 
 /*
 =========================
-= ACTIONS
+= KEY VALUE
 =========================
 */
 
-.action {
-    display: inline;
+.kv {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
+
+.kv-item {
+    display: flex;
+    gap: 8px;
+}
+
+.kv-key {
+    font-weight: 600;
+    color: #555;
+    min-width: 30%;
+}
+
+.kv-value {
+    flex: 1;
+}
+
+/*
+=========================
+= ACTIONS
+=========================
+*/
 
 .actions {
     display: flex;
@@ -88,6 +98,7 @@
     margin-bottom: 4px;
 }
 
+
 /* Single Field */
 .field {
     display: flex;
@@ -95,13 +106,13 @@
     gap: 4px;
 }
 
-.field label {
+.field-label {
     font-size: 13px;
     color: #555;
 }
 
 /* Input */
-.field input {
+.field-input {
     padding: 8px 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -109,7 +120,7 @@
     outline: none;
 }
 
-.field input:focus {
+.field-input:focus {
     border-color: #007bff;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
 }
@@ -120,13 +131,12 @@
     color: #d32f2f;
 }
 
-
-.input-wrap {
+.field-wrap {
     position: relative;
     width: 100%;
 }
 
-.input-wrap input {
+.field-wrap input {
     width: 100%;
     padding-right: 28px;
     box-sizing: border-box;
@@ -139,7 +149,7 @@
     background: #fafafa;
 }
 
-.lookup-icon {
+.field-lookup {
     position: absolute;
     right: 4px;
     top: 50%;
@@ -164,7 +174,7 @@
 
 }
 
-.lookup-icon:hover {
+.field-lookup:hover {
     background: #e9ecef;
     border-color: #ccc;
 }
@@ -179,6 +189,10 @@
     cursor: pointer;
     color: #4da3ff;
 }
+
+.inline-action {}
+
+.inline-code {}
 
 .inline-cmd:hover {
     text-decoration: underline;
