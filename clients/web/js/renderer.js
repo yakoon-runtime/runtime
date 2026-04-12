@@ -1,9 +1,8 @@
 export class Renderer {
 
-    constructor(container, dispatch, regionIndex) {
+    constructor(container, dispatch) {
         this.container = container;
         this.dispatch = dispatch;
-        this.regionIndex = regionIndex;
 
         this.nodes = {};
         this.children = {};
@@ -82,7 +81,7 @@ export class Renderer {
                 break;
 
             case "fields":
-                el = renderFields(node, this.dispatch, this.regionIndex);
+                el = renderFields(node, this.dispatch);
                 break;
 
             case "actions":
@@ -214,7 +213,7 @@ function renderTextContent(text, dispatch, container) {
     }
 }
 
-function renderFields(node, dispatch, regionIndex) {
+function renderFields(node, dispatch) {
     const wrapper = document.createElement("div");
     wrapper.className = "fields";
 
@@ -245,7 +244,6 @@ function renderFields(node, dispatch, regionIndex) {
 
         const regionId = "r-" + crypto.randomUUID();
         region.dataset.regionId = regionId;
-        regionIndex.set(regionId, region);
 
         if (field.lookup) {
             const icon = document.createElement("button");

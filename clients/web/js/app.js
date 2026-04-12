@@ -10,31 +10,27 @@ function initApp() {
         button: document.getElementById("commandbar-button"),
     };
 
-    // zentrale Maps
-    const regionIndex = new Map();
-    const renderers = new Map();
-
     function handleProjection(payload) {
 
-        const regionId = payload.context.origin
-        const regionEl = regionIndex.get(regionId);
+        const regionId = payload.context.origin;
+
+        const regionEl = document.querySelector(`[data-region-id="${regionId}"]`);
         if (!regionEl) {
-            console.warn("Region not found for job:", payload.job);
+            console.warn("Stale response dropped:", regionId);
             return;
         }
 
-        //  Renderer holen oder erstellen
-        let renderer = renderers.get(regionId);
+        let renderer = regionEl._renderer;
         if (!renderer) {
-            renderer = new Renderer(regionEl, dispatch, regionIndex);
-            renderers.set(regionId, renderer);
+            renderer = new Renderer(regionEl, dispatch);
+            regionEl._renderer = renderer;
         }
 
         renderer.apply(payload);
     }
 
     const ws = createWS(handleProjection);
-    const dispatch = createDispatcher(ws, regionIndex, dom, createRootRegion);
+    const dispatch = createDispatcher(ws, createRootRegion);
 
     wireCommandBar(dom, dispatch, createRootRegion);
 
@@ -43,18 +39,13 @@ function initApp() {
         container.className = "turn";
 
         const region = document.createElement("div");
-
-        const regionId = "r-" + crypto.randomUUID();
-        region.dataset.regionId = regionId;
-
-        regionIndex.set(regionId, region);
+        region.dataset.regionId = "r-" + crypto.randomUUID();
 
         container.appendChild(region);
         dom.stream.appendChild(container);
 
         return region;
     }
-
 
 }
 
@@ -66,7 +57,7 @@ function scrollToBottom() {
     el.lastElementChild?.scrollIntoView({ behavior: "smooth" });
 }
 
-function createDispatcher(ws, regionIndex, dom, createRootRegion) {
+function createDispatcher(ws, createRootRegion) {
 
     function send(command, payload = {}, regionEl) {
         const regionId = regionEl.dataset.regionId;
