@@ -1,5 +1,5 @@
 import { createWS } from "./stream.js";
-import { Renderer, createBlock } from "./renderer.js";
+import { Renderer } from "./renderer.js";
 
 
 function initApp() {
@@ -34,9 +34,28 @@ function initApp() {
     }
 
     const ws = createWS(handleProjection);
-    const dispatch = createDispatcher(ws, regionIndex, dom);
+    const dispatch = createDispatcher(ws, regionIndex, dom, createRootRegion);
 
-    wireCommandBar(dom, dispatch, regionIndex);
+    wireCommandBar(dom, dispatch, createRootRegion);
+
+    function createRootRegion() {
+        const container = document.createElement("div");
+        container.className = "turn";
+
+        const region = document.createElement("div");
+
+        const regionId = "r-" + crypto.randomUUID();
+        region.dataset.regionId = regionId;
+
+        regionIndex.set(regionId, region);
+
+        container.appendChild(region);
+        dom.stream.appendChild(container);
+
+        return region;
+    }
+
+
 }
 
 function scrollToBottom() {
@@ -47,7 +66,7 @@ function scrollToBottom() {
     el.lastElementChild?.scrollIntoView({ behavior: "smooth" });
 }
 
-function createDispatcher(ws, regionIndex, dom) {
+function createDispatcher(ws, regionIndex, dom, createRootRegion) {
 
     function send(command, payload = {}, regionEl) {
         const regionId = regionEl.dataset.regionId;
@@ -65,12 +84,9 @@ function createDispatcher(ws, regionIndex, dom) {
         }));
     }
 
-    function newTurn(command, payload = {}) {
-        const { blockEl, regionEl } = createBlock(regionIndex);
-
-        dom.stream.appendChild(blockEl);
-
-        send(command, payload, regionEl);
+    function newTurn(command) {
+        const regionEl = createRootRegion();
+        send(command, {}, regionEl);
     }
 
     return {
@@ -79,24 +95,18 @@ function createDispatcher(ws, regionIndex, dom) {
     };
 }
 
-function wireCommandBar(dom, dispatch, regionIndex) {
-
-    function createRootBlock() {
-        const { blockEl, regionEl } = createBlock(regionIndex);
-
-        dom.stream.appendChild(blockEl);
-        return regionEl;
-    }
+function wireCommandBar(dom, dispatch, createRootRegion) {
 
     function send() {
         const value = dom.input.value;
         if (!value) return;
 
-        const regionEl = createRootBlock();
+        const regionEl = createRootRegion();
 
         dispatch.command(value, {}, regionEl);
 
         dom.input.value = "";
+        scrollToBottom();
     }
 
     dom.input.addEventListener("keydown", (e) => {

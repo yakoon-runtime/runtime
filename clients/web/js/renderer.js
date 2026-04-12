@@ -47,61 +47,66 @@ export class Renderer {
     }
 
     render() {
-
         const root = Object.values(this.nodes).find(n =>
             n.parent?.endsWith(":root")
         );
 
         if (!root) return;
 
-        // IMMER diesen Container kontrollieren
         this.container.innerHTML = "";
         this.renderNode(root.parent, this.container);
     }
 
-    renderNode(parentId, el) {
-
+    renderNode(parentId, container) {
         const kids = this.children[parentId] || [];
 
         for (const id of kids) {
             const node = this.nodes[id];
 
-            const { blockEl, contentEl, regionEl } = createBlock(this.regionIndex);
-            el.appendChild(blockEl);
+            const el = this.createElement(node);
+            container.appendChild(el);
 
-            let dom;
-
-
-            if (node.type === "text") {
-                dom = document.createElement("div");
-                renderTextContent(node.props.text, this.dispatch, dom, regionEl);
-
-            } else if (node.type === "fields") {
-                dom = renderFields(node, this.dispatch, regionEl, this.regionIndex);
-
-            } else if (node.type === "actions") {
-                dom = renderActions(node, this.dispatch, regionEl);
-
-            } else if (node.type === "list") {
-                dom = document.createElement("ul");
-
-            } else if (node.type === "list_item") {
-                dom = document.createElement("li");
-                renderTextContent(node.props.text, this.dispatch, dom, regionEl);
-
-            } else if (node.type === "rule") {
-                dom = document.createElement("hr");
-
-            } else {
-                dom = document.createElement("div");
-            }
-
-            contentEl.appendChild(dom);
-            el.appendChild(blockEl);
-
-            // Kinder laufen im content weiter
-            this.renderNode(id, contentEl);
+            // Kinder direkt in dieses Element rendern
+            this.renderNode(id, el);
         }
+    }
+
+    createElement(node) {
+        let el;
+
+        switch (node.type) {
+
+            case "text":
+                el = document.createElement("div");
+                renderTextContent(node.props.text, this.dispatch, el);
+                break;
+
+            case "fields":
+                el = renderFields(node, this.dispatch, this.regionIndex);
+                break;
+
+            case "actions":
+                el = renderActions(node, this.dispatch);
+                break;
+
+            case "list":
+                el = document.createElement("ul");
+                break;
+
+            case "list_item":
+                el = document.createElement("li");
+                renderTextContent(node.props.text, this.dispatch, el);
+                break;
+
+            case "rule":
+                el = document.createElement("hr");
+                break;
+
+            default:
+                el = document.createElement("div");
+        }
+
+        return el;
     }
 
 }
@@ -115,30 +120,11 @@ function findRegion(el) {
     return el.closest("[data-region-id]");
 }
 
-export function createBlock(regionIndex) {
-    const blockEl = document.createElement("div");
-    blockEl.className = "block";
 
-    const contentEl = document.createElement("div");
-    contentEl.className = "block-content";
-
-    const regionEl = document.createElement("div");
-    regionEl.className = "block-region";
-
-    const regionId = "r-" + crypto.randomUUID();
-    regionEl.dataset.regionId = regionId;
-
-    regionIndex.set(regionId, regionEl);
-
-    blockEl.appendChild(contentEl);
-    blockEl.appendChild(regionEl);
-
-    return { blockEl, contentEl, regionEl };
-}
 
 // RENDERER
 
-function renderInline(inline, dispatch, contextId) {
+function renderInline(inline, dispatch, regionEl) {
 
     function createInlineEl(type, tag = "span") {
         const el = document.createElement(tag);
@@ -201,15 +187,19 @@ function renderInline(inline, dispatch, contextId) {
 
         el.textContent = inline.text;
         el.onclick = () => {
-            dispatch.command(inline.command, inline.payload || {}, contextId);
+            const region = findRegion(el);
+            if (!region) return;
+
+            dispatch.command(inline.command, inline.payload || {}, region);
         };
+
         return el;
     }
 
     return document.createTextNode("[unknown inline]");
 }
 
-function renderTextContent(text, dispatch, container, regionEl) {
+function renderTextContent(text, dispatch, container) {
     if (!text) return;
 
     container.style.whiteSpace = "pre-wrap";
@@ -220,12 +210,11 @@ function renderTextContent(text, dispatch, container, regionEl) {
     }
 
     for (const inline of text) {
-        container.appendChild(renderInline(inline, dispatch, regionEl));
+        container.appendChild(renderInline(inline, dispatch, container));
     }
 }
 
-function renderFields(node, dispatch, parentRegionEl, regionIndex) {
-
+function renderFields(node, dispatch, regionIndex) {
     const wrapper = document.createElement("div");
     wrapper.className = "fields";
 
@@ -233,13 +222,6 @@ function renderFields(node, dispatch, parentRegionEl, regionIndex) {
 
         const fieldBlock = document.createElement("div");
         fieldBlock.className = "field-block";
-
-        const region = document.createElement("div");
-        region.className = "field-region";
-
-        const regionId = "r-" + crypto.randomUUID();
-        region.dataset.regionId = regionId;
-        regionIndex.set(regionId, region);
 
         const row = document.createElement("div");
         row.className = "field";
@@ -257,6 +239,14 @@ function renderFields(node, dispatch, parentRegionEl, regionIndex) {
 
         inputWrap.appendChild(input);
 
+        // 👉 Region NUR hier
+        const region = document.createElement("div");
+        region.className = "field-region";
+
+        const regionId = "r-" + crypto.randomUUID();
+        region.dataset.regionId = regionId;
+        regionIndex.set(regionId, region);
+
         if (field.lookup) {
             const icon = document.createElement("button");
             icon.className = "lookup-icon";
@@ -272,7 +262,6 @@ function renderFields(node, dispatch, parentRegionEl, regionIndex) {
 
         row.appendChild(inputWrap);
 
-        // direkt anhängen
         fieldBlock.appendChild(row);
         fieldBlock.appendChild(region);
 
@@ -282,23 +271,18 @@ function renderFields(node, dispatch, parentRegionEl, regionIndex) {
     return wrapper;
 }
 
-
-function renderActions(node, dispatch, regionEl) {
-
-
+function renderActions(node, dispatch) {
     const wrapper = document.createElement("div");
+    wrapper.className = "actions";
 
     for (const action of node.props.actions || []) {
         const btn = document.createElement("button");
         btn.textContent = action.label;
 
         btn.onclick = (e) => {
-            const region = findRegion(e.currentTarget)
+            const region = findRegion(e.currentTarget);
+            if (!region) return;
 
-            if (!region) {
-                console.warn("No region found for action");
-                return;
-            }
             dispatch.command(action.command, {}, region);
         };
 
