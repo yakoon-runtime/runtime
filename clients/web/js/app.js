@@ -1,5 +1,6 @@
 import { createWS } from "./stream.js";
 import { Renderer } from "./renderer.js";
+import { createElement } from "./helper.js";
 
 
 function initApp() {
@@ -24,6 +25,7 @@ function initApp() {
         if (!renderer) {
             renderer = new Renderer(regionEl, dispatch);
             regionEl._renderer = renderer;
+            regionEl.dataset.renderer = "true";
         }
 
         renderer.apply(payload);
@@ -35,8 +37,7 @@ function initApp() {
     wireCommandBar(dom, dispatch, createRootRegion);
 
     function createRootRegion() {
-        const container = document.createElement("div");
-        container.className = "turn";
+        const container = createElement("div", "turn");
 
         const region = document.createElement("div");
         region.dataset.regionId = "r-" + crypto.randomUUID();

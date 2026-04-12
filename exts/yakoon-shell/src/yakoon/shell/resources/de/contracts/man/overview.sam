@@ -1,19 +1,13 @@
 <header role="info" title="Commands" />
-
 {% if state.mode == "shell" %}
-
 Commands
-
 <list>
   {% for c in state.shell_commands %}
   <item><cmd command="{{ c.key }}">{{ c.key }}</cmd></item>
   {% endfor %}
 </list>
 
-<rule style="subtle" />
-
 Available programs
-
 <list>
   {% for p in state.controllers %}
   <item><cmd command="use {{ p.id }}">{{ p.id }}</cmd></item>

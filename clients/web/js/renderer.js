@@ -1,3 +1,5 @@
+import { createElement } from "./helper.js";
+
 export class Renderer {
 
     constructor(container, dispatch) {
@@ -76,7 +78,7 @@ export class Renderer {
         switch (node.type) {
 
             case "text":
-                el = document.createElement("div");
+                el = createElement("div", "text");
                 renderTextContent(node.props.text, this.dispatch, el);
                 break;
 
@@ -89,16 +91,16 @@ export class Renderer {
                 break;
 
             case "list":
-                el = document.createElement("ul");
+                el = createElement("ul", "list");
                 break;
 
             case "list_item":
-                el = document.createElement("li");
+                el = createElement("li", "list-item");
                 renderTextContent(node.props.text, this.dispatch, el);
                 break;
 
             case "rule":
-                el = document.createElement("hr");
+                el = createElement("hr", "rule");
                 break;
 
             default:
@@ -106,6 +108,19 @@ export class Renderer {
         }
 
         return el;
+    }
+
+    openInteraction(region, command) {
+        if (region.dataset.open === command) {
+            region.innerHTML = "";
+            delete region.dataset.open;
+            return;
+        }
+
+        region.innerHTML = "";
+        region.dataset.open = command;
+
+        this.dispatch.command(command, {}, region);
     }
 
 }
@@ -119,6 +134,10 @@ function findRegion(el) {
     return el.closest("[data-region-id]");
 }
 
+function findRenderer(el) {
+    const region = el.closest('[data-renderer="true"]');
+    return region?._renderer || null;
+}
 
 
 // RENDERER
@@ -201,8 +220,6 @@ function renderInline(inline, dispatch, regionEl) {
 function renderTextContent(text, dispatch, container) {
     if (!text) return;
 
-    container.style.whiteSpace = "pre-wrap";
-
     if (typeof text === "string") {
         container.textContent = text;
         return;
@@ -214,23 +231,19 @@ function renderTextContent(text, dispatch, container) {
 }
 
 function renderFields(node, dispatch) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "fields";
+
+    const wrapper = createElement("div", "fields");
 
     for (const field of node.props.fields || []) {
 
-        const fieldBlock = document.createElement("div");
-        fieldBlock.className = "field-block";
-
-        const row = document.createElement("div");
-        row.className = "field";
+        const fieldBlock = createElement("div", "field-block");
+        const row = createElement("div", "field");
 
         const label = document.createElement("label");
         label.textContent = field.title || field.var || "";
         row.appendChild(label);
 
-        const inputWrap = document.createElement("div");
-        inputWrap.className = "input-wrap";
+        const inputWrap = createElement("div", "input-wrap");
 
         const input = document.createElement("input");
         input.value = field.query ?? field.default ?? "";
@@ -239,20 +252,20 @@ function renderFields(node, dispatch) {
         inputWrap.appendChild(input);
 
         // 👉 Region NUR hier
-        const region = document.createElement("div");
-        region.className = "field-region";
+        const region = createElement("div", "field-region");
 
         const regionId = "r-" + crypto.randomUUID();
         region.dataset.regionId = regionId;
 
         if (field.lookup) {
-            const icon = document.createElement("button");
-            icon.className = "lookup-icon";
+            const icon = createElement("button", "lookup-icon");
             icon.type = "button";
             icon.textContent = "▾";
 
             icon.onclick = () => {
-                dispatch.command(field.lookup, {}, region);
+                const renderer = findRenderer(region);
+                if (!renderer) return;
+                renderer.openInteraction(region, field.lookup);
             };
 
             inputWrap.appendChild(icon);
@@ -270,11 +283,10 @@ function renderFields(node, dispatch) {
 }
 
 function renderActions(node, dispatch) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "actions";
+    const wrapper = createElement("div", "actions");
 
     for (const action of node.props.actions || []) {
-        const btn = document.createElement("button");
+        const btn = createElement("button", "action-button");
         btn.textContent = action.label;
 
         btn.onclick = (e) => {
