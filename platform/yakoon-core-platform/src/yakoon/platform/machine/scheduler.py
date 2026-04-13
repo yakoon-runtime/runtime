@@ -179,35 +179,36 @@ class Scheduler:
                             break
 
                 except DomainError as e:
-                    ctx = None
+                    event = flow.event
                     if session.interaction_flow:
-                        ctx = session.interaction_flow.event.context
                         session.del_flow(session.interaction_flow)
                     await self.output.send_projection(
                         session=session,
                         projection=domain_error_projection(
                             e.message, error_code=e.code
                         ),
-                        ctx=ctx,
+                        ctx=event.context,
                     )
 
                 except PlatformError as e:
+                    event = flow.event
                     await self.output.send_projection(
                         session=Session,
                         projection=system_error_projection(
                             e.message, error_code=e.code
                         ),
-                        ctx=None,
+                        ctx=event.context,
                     )
 
                 except Exception as e:
+                    event = flow.event
                     self.engine.container.get(AuditLogService).error(e, session)
                     await self.output.send_projection(
                         session=session,
                         projection=fatal_error_projection(
                             "Fatal error", error_code="fatal"
                         ),
-                        ctx=None,
+                        ctx=event.context,
                     )
 
             # --------------------------------------------------
