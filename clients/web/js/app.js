@@ -6,9 +6,11 @@ import { createElement } from "./dom.js";
 function initApp() {
 
     const dom = {
+        app: document.getElementById("app"),
         stream: document.getElementById("stream"),
         input: document.getElementById("commandbar-input"),
         button: document.getElementById("commandbar-button"),
+        sidebar: document.getElementById("toggle-sidebar"),
     };
 
     function handleProjection(payload) {
@@ -35,6 +37,7 @@ function initApp() {
     const dispatch = createDispatcher(ws, createRootRegion);
 
     wireCommandBar(dom, dispatch, createRootRegion);
+    registerSideBarToggle(dom);
 
     function createRootRegion() {
         const container = createElement("div", "turn");
@@ -106,6 +109,12 @@ function wireCommandBar(dom, dispatch, createRootRegion) {
     });
 
     dom.button.addEventListener("click", send);
+}
+
+function registerSideBarToggle(dom) {
+    dom.sidebar.onclick = () => {
+        dom.app.classList.toggle("sidebar-collapsed");
+    };
 }
 
 initApp();

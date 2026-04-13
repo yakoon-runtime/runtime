@@ -21,7 +21,7 @@ body {
     padding: 0;
 }
 
-#sidebar.hidden {
+#app.sidebar-collapsed #sidebar {
     width: 0;
     border-right: none;
 }
