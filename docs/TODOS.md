@@ -78,21 +78,21 @@ steps:
     prompt:
       type: text
       title: "Vorname"
-      var: customer.first_name
+      name: customer.first_name
     next: last_name
 
   - id: last_name
     prompt:
       type: text
       title: "Nachname"
-      var: customer.last_name
+      name: customer.last_name
     next: ask_mail
 
   - id: ask_mail
     prompt:
       type: select
       title: "E-Mail angeben?"
-      var: customer.mail_opt_in
+      name: customer.mail_opt_in
       options:
         - {label: "Ja", value: yes}
         - {label: "Nein", value: no}
@@ -104,27 +104,27 @@ steps:
     prompt:
       type: text
       title: "E-Mail"
-      var: customer.mail
+      name: customer.mail
     next: street
 
   - id: street
     prompt:
       type: text
       title: "Straße"
-      var: customer.street
+      name: customer.street
     next: zip
 
   - id: zip
     prompt:
       type: text
       title: "PLZ"
-      var: customer.zip
+      name: customer.zip
     next: zip_validate
 
   - id: zip_validate
     validate:
       rule: regex
-      var: customer.zip
+      name: customer.zip
       pattern: '^\d{5}$'
       error: "Bitte 5-stellige PLZ eingeben."
     branch:
@@ -135,14 +135,14 @@ steps:
     prompt:
       type: text
       title: "Ort"
-      var: customer.city
+      name: customer.city
     next: phone
 
   - id: phone
     prompt:
       type: text
       title: "Telefon"
-      var: customer.phone
+      name: customer.phone
     next: confirm
 
   - id: confirm

@@ -9,4 +9,4 @@ projection:
 
     - type: fields
       fields:
-        - { var: auth.user, policy: system:string, title: "Username" } 
+        - { name: auth.user, policy: system:string, title: "Username" } 

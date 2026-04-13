@@ -9,13 +9,13 @@ projection:
 
     - type: fields
       fields:
-        - { var: var_a, policy: customer.age, title: "Zahl (1 von 2)", required: true }
-        - { var: var_b, policy: system:int, title: "Zahl (2 von 2)" } 
+        - { name: var_a, policy: customer.age, title: "Zahl (1 von 2)", required: true }
+        - { name: var_b, policy: system:int, title: "Zahl (2 von 2)" } 
 
     - type: text
       text: "Es folgt eine neue Eingabe"
   
     - type: fields
       fields:
-        - { var: x, policy: system:int, title: "Neue Zahl", required: true }
+        - { name: x, policy: system:int, title: "Neue Zahl", required: true }
       

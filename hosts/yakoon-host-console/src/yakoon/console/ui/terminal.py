@@ -162,7 +162,7 @@ class TerminalUI:
     def set_prompt(self, field: Field):
 
         def format_label(field: Field) -> str:
-            label = field.title or field.var or ""
+            label = field.title or field.name or ""
 
             if field.required:
                 return f"{label}:*"

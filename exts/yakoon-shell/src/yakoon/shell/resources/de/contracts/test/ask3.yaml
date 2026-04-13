@@ -9,4 +9,4 @@ projection:
 
     - type: fields
       fields:
-        - { key: the_key, var: result, policy: system:string, title: "Bemerkung" } 
+        - { key: the_key, name: result, policy: system:string, title: "Bemerkung" } 

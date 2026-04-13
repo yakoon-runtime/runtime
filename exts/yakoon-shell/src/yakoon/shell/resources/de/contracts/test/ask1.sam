@@ -2,15 +2,16 @@
 
 Suche nach Projekten:
 
-<fields>
+<fields name="project">
   <field
-    var="result"
+    name="result"
     policy="system:string"
     title="Projektname"
+    param="project_name"
     lookup="city.show.all"
   />
 </fields>
 
 <actions>
-  <action command="project.save">Speichern</action>
+  <action command="test" scope="project">Speichern</action>
 </actions>

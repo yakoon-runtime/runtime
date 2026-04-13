@@ -284,14 +284,16 @@ class Mapper:
         if not label:
             raise ValueError("<action> requires label text")
 
+        scope = node.attrs.get("scope")
+
         return Action(
             label=label,
+            scope=scope,
             command=command,
         )
 
     def _map_fields(self, node: ElementNode) -> FieldsBlock:
         fields: list[Field] = []
-
         for child in node.children:
             if is_whitespace(child):
                 continue
@@ -302,8 +304,10 @@ class Mapper:
             assert isinstance(child, ElementNode)
             fields.append(self._map_field(child))
 
+        name = node.attrs.get("name")
         return FieldsBlock(
             type="fields",
+            name=name,
             id=None,
             fields=fields,
         )
@@ -313,7 +317,7 @@ class Mapper:
         if not policy:
             raise ValueError("<field> requires 'policy'")
 
-        var = node.attrs.get("var")
+        name = node.attrs.get("name")
         required = node.attrs.get("required", "false").lower() == "true"
         title = node.attrs.get("title")
         lookup = node.attrs.get("lookup")
@@ -322,7 +326,7 @@ class Mapper:
 
         return Field(
             policy=policy,
-            var=var,
+            name=name,
             required=required,
             title=title,
             lookup=lookup,

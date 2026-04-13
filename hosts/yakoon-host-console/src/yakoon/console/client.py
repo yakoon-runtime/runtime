@@ -45,7 +45,7 @@ class ConsoleClient:
             field = self._current_fields[self._current_index]
 
             # TODO: Vorher einfach raw....
-            self._current_values[field.var] = raw
+            self._current_values[field.name] = raw
             self._current_index += 1
 
             # nächstes Feld anzeigen

@@ -9,7 +9,7 @@ projection:
 
     - type: fields
       fields:
-        - { var: result, policy: customer.age, title: "Alter", required: true }
+        - { name: result, policy: customer.age, title: "Alter", required: true }
 
     - type: text
       text: "Vielen Dank! \nIhre Daten werden verarbeitet.\n"

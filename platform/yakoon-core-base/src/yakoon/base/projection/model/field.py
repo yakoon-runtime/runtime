@@ -36,7 +36,7 @@ class Field:
     policy: str
     title: str | None = None
     required: bool = False
-    var: str | None = None
+    name: str | None = None
 
     hint: str | None = None
     default: str | None = None

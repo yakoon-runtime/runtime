@@ -119,6 +119,7 @@ class FieldsBlock:
 
     id: str | None = None
     type: Literal["fields"] = "fields"
+    name: str | None = None
 
     fields: list[Field] = field(default_factory=list)
 
@@ -137,7 +138,6 @@ class FieldsBlock:
 class ActionBlock:
     id: str | None = None
     type: Literal["actions"] = "actions"
-
     actions: list[Action] = field(default_factory=list)
 
     def children(self) -> tuple[Block, ...]:

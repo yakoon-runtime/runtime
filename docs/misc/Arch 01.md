@@ -23,6 +23,6 @@ Workflow
   input:
     ui_ref: crm.person
     fields:
-      - { id: customer.first_name, var: customer.first_name }
-      - { id: customer.last_name,  var: customer.last_name }
+      - { id: customer.first_name, name: customer.first_name }
+      - { id: customer.last_name,  name: customer.last_name }
   next: ask_mail

@@ -4,7 +4,7 @@ Wirklich beenden?
 
 <fields>
   <field
-    var="quit"
+    name="quit"
     policy="system:bool"
     title="Ja/Nein"
     required="true"

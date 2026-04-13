@@ -7,7 +7,7 @@ from typing import Any
 
 @dataclass(frozen=True, slots=True)
 class InputFieldDef:
-    var: str
+    name: str
     policy: str = "system:string"
     title: str = ""
     required: bool = True
