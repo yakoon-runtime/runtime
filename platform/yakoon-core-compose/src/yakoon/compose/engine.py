@@ -16,7 +16,7 @@ from yakoon.base.controllers import Controller
 from yakoon.base.dispatch import CommandQueue
 from yakoon.base.naming import Namespace, NamespaceResolver
 from yakoon.base.plugins import ModuleRegistry
-from yakoon.base.projection import ProjectionParser, ProjectorFactory
+from yakoon.base.projection import ProjectorFactory
 from yakoon.base.projection.compiler import ProjectionCompiler
 from yakoon.base.projection.model import FieldType
 from yakoon.base.projection.percept import ProjectionDispatcher
@@ -40,7 +40,6 @@ from yakoon.platform.plugins import DefaultModuleManager, DefaultModuleRegistry
 from yakoon.platform.projection import (
     EventProjectionDispatcher,
     TemplateProjectorFactory,
-    YamlProjectionParser,
 )
 from yakoon.platform.projection.compiler import TemplateProjectionCompiler
 from yakoon.platform.projection.rendering import (
@@ -215,7 +214,6 @@ def _compose_ports(
     container.register_static(RenderEngine, JinjaRenderEngine())
 
     container.register_static(ProjectorFactory, TemplateProjectorFactory(container))
-    container.register_static(ProjectionParser, YamlProjectionParser())
     container.register_static(ProjectionRenderer, TemplateProjectionRenderer(container))
     container.register_static(ProjectionCompiler, TemplateProjectionCompiler())
 

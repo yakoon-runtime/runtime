@@ -25,14 +25,3 @@ class Projector(Protocol):
 
 class ProjectorFactory(Protocol):
     async def create(self, resource: ResourceRef, session) -> Projector: ...
-
-
-class ProjectionParser(Protocol):
-
-    def parse_spec(
-        self,
-        yaml_text: str,
-        *,
-        section_key: str | None = None,
-        base_id: str | None = None,
-    ) -> Projection: ...

@@ -1,14 +1,13 @@
-from ._parser import ViewSpecValidationError, YamlProjectionParser
-from .builder.emitter import ViewEmitter
-from .builder.traversal import ViewTraversal
+from .builder import ViewEmitter, ViewTraversal
 from .factory import TemplateProjectorFactory
 from .transport import EventProjectionDispatcher
 
 __all__ = [
-    "YamlProjectionParser",
-    "TemplateProjectorFactory",
-    "ViewSpecValidationError",
+    # .builder
     "ViewEmitter",
     "ViewTraversal",
+    # .factory
+    "TemplateProjectorFactory",
+    # .transport
     "EventProjectionDispatcher",
 ]

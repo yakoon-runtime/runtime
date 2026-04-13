@@ -1,5 +1,5 @@
 from .model import Projection, ProjectionHeader, ProjectionMeta
-from .port import ProjectionParser, Projector, ProjectorFactory
+from .port import Projector, ProjectorFactory
 from .query import ProjectionQuery
 from .transport import ProjectionEvent
 
@@ -14,6 +14,5 @@ __all__ = [
     "ProjectionEvent",
     # .port
     "Projector",
-    "ProjectionParser",
     "ProjectorFactory",
 ]
