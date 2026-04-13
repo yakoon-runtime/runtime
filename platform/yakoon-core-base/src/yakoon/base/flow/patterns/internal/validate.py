@@ -7,7 +7,7 @@ from yakoon.base.projection import Projection, ProjectionQuery
 from yakoon.base.projection.model import FieldError
 from yakoon.base.runtime import InputEvent
 
-from ...context import DslContext
+from ...port import DslContext
 
 
 @dataclass

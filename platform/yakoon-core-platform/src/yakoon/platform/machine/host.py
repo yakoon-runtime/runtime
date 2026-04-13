@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import TYPE_CHECKING, cast
 
-from yakoon.base.capabilities.identity.port import PermissionService
+from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.clients.connection import ClientConnection
 from yakoon.base.naming.key import Key
 from yakoon.base.runtime.sessions import SessionStore

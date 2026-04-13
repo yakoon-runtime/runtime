@@ -8,10 +8,7 @@ Hier sind alle verfügbaren Städte:
 
 <list>
 {% for item in state["items"] %}
- 
  <!-- <item>{{ item }}</item> -->
-
  <item><select value="{{ item }}">{{ item }}</select></item> 
-
 {% endfor %}
 </list>

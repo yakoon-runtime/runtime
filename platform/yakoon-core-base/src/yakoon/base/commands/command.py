@@ -3,10 +3,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from yakoon.base.capabilities.interaction.port import FieldPolicyEngine
+from yakoon.base.capabilities.interaction import FieldPolicyEngine
 from yakoon.base.controllers import resolve_resource
 from yakoon.base.naming import NamespaceResolver
-from yakoon.base.projection.port import (
+from yakoon.base.projection import (
     Projector,
     ProjectorFactory,
 )

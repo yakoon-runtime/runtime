@@ -13,11 +13,13 @@ def build_ast(tokens: list[Token]) -> ElementNode:
                 stack[-1].children.append(TextNode(text=t.content))
 
         elif t.type == "OPEN":
+            assert t.tag
             node = ElementNode(tag=t.tag, attrs=t.attrs or {})
             stack[-1].children.append(node)
             stack.append(node)
 
         elif t.type == "SELF":
+            assert t.tag
             node = ElementNode(tag=t.tag, attrs=t.attrs or {})
             stack[-1].children.append(node)
 

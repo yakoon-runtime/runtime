@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .models.controller_info import ControllerInfo
+    from .models import ControllerInfo
 
 
 class ControllerCatalog:

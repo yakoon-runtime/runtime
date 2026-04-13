@@ -17,13 +17,16 @@ from .types import (
 )
 
 __all__ = [
+    # .models
     "WorkflowError",
     "WorkflowBatch",
     "WorkflowRuntime",
     "WorkflowStatus",
     "WorkflowContextRequired",
+    # .port
     "WorkflowCompiler",
     "WorkflowService",
+    # .types
     "InputFieldDef",
     "InputBranchesDef",
     "InputDef",
@@ -31,6 +34,4 @@ __all__ = [
     "RunDef",
     "StepDef",
     "WorkflowDef",
-    "WorkflowError",
-    "WorkflowStatus",
 ]

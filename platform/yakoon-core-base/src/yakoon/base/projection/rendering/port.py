@@ -1,14 +1,12 @@
 from typing import Any, Protocol
 
-from yakoon.base.projection import Projection
-
 from .context import RenderContext
 
 
 class ProjectionRenderer(Protocol):
     async def render(
         self, ctx: RenderContext, name: str, state: dict[str, Any]
-    ) -> Projection: ...
+    ) -> str: ...
 
 
 class RenderEngine(Protocol):

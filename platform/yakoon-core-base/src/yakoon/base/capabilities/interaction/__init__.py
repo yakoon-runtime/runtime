@@ -7,9 +7,11 @@ from .policy import (
 from .port import FieldPolicyEngine
 
 __all__ = [
+    # .policy
     "FieldPolicy",
-    "FieldPolicyEngine",
     "FieldPolicyValidationError",
     "FieldPolicyValidationResult",
     "RawValue",
+    # .port
+    "FieldPolicyEngine",
 ]

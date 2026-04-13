@@ -11,7 +11,7 @@ from .patch import (
 from .stream import Output
 
 __all__ = [
-    # . stream
+    # .stream
     "Output",
     # .node
     "Node",

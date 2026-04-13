@@ -10,14 +10,18 @@ from .port import (
 )
 
 __all__ = [
+    # .discovery
     "Capability",
     "Resolved",
     "Candidates",
     "DiscoveryResult",
     "NoMatch",
+    # .lookup
     "LookupCandidatesPayload",
+    # .parser
     "LookupEntry",
     "LookupIndex",
+    # .port
     "LookupParser",
     "LookupCandidateStoreService",
     "LookupResolver",

@@ -1,7 +1,7 @@
-from .public.form import form
-from .public.write import write_text
+from .public import form, write_text
 
 __all__ = [
+    # .public
     "form",
     "write_text",
 ]

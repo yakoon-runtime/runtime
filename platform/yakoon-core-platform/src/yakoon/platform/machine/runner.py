@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.catalogs.port import CommandRegistry
+from yakoon.base.catalogs import CommandRegistry
 from yakoon.base.runtime import InputEvent
 from yakoon.platform.machine import CommandEngine
 from yakoon.platform.machine.scheduler import Scheduler

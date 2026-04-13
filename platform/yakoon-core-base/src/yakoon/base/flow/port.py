@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from yakoon.base.capabilities.interaction.port import FieldPolicyEngine
+from yakoon.base.capabilities.interaction import FieldPolicyEngine
 
 
 class DslContext(Protocol):

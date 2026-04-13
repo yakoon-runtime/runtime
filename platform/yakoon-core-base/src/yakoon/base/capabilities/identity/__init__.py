@@ -11,13 +11,19 @@ from .port import (
 )
 
 __all__ = [
+    # .account
     "Account",
     "AccountData",
+    # .auth_types
     "AuthResult",
+    # .perm_types
     "PermBit",
     "PermBits",
+    # .permission
     "Permission",
+    # .permission_set
     "PermissionSet",
+    # .port
     "AccountService",
     "AuthenticationService",
     "PermissionService",

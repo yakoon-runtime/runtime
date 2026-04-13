@@ -30,7 +30,7 @@ from yakoon.base.projection.model.inline import (
 from .nodes import ElementNode, Node, TextNode
 
 
-class ProjectionMapper:
+class Mapper:
 
     def __init__(self):
 

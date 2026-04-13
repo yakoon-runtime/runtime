@@ -7,17 +7,19 @@ from yakoon.base.capabilities.interaction import FieldPolicy, FieldPolicyEngine
 from yakoon.base.catalogs import (
     CommandCatalog,
     CommandInfo,
+    CommandRegistry,
     ControllerCatalog,
     ControllerInfo,
+    ControllerRegistry,
 )
-from yakoon.base.catalogs.port import CommandRegistry, ControllerRegistry
 from yakoon.base.controllers import Controller
 from yakoon.base.dispatch import CommandQueue
 from yakoon.base.naming import Namespace, NamespaceResolver
 from yakoon.base.plugins import ModuleRegistry
+from yakoon.base.projection import ProjectionParser, ProjectorFactory
+from yakoon.base.projection.compiler import ProjectionCompiler
 from yakoon.base.projection.model import FieldType
 from yakoon.base.projection.percept import ProjectionDispatcher
-from yakoon.base.projection.port import ProjectionParser, ProjectorFactory
 from yakoon.base.projection.rendering import ProjectionRenderer, RenderEngine
 from yakoon.base.projection.transport import Output
 from yakoon.base.resources import ResourceLoader
@@ -40,6 +42,7 @@ from yakoon.platform.projection import (
     TemplateProjectorFactory,
     YamlProjectionParser,
 )
+from yakoon.platform.projection.compiler import TemplateProjectionCompiler
 from yakoon.platform.projection.rendering import (
     JinjaRenderEngine,
     TemplateProjectionRenderer,
@@ -214,6 +217,8 @@ def _compose_ports(
     container.register_static(ProjectorFactory, TemplateProjectorFactory(container))
     container.register_static(ProjectionParser, YamlProjectionParser())
     container.register_static(ProjectionRenderer, TemplateProjectionRenderer(container))
+    container.register_static(ProjectionCompiler, TemplateProjectionCompiler())
+
     container.register_static(ProjectionDispatcher, EventProjectionDispatcher())
     container.register_static(Output, EventStreamOutput())
 

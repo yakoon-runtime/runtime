@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from yakoon.base.projection import Projection
 
-from ...context import DslContext
 from ...dsl import focus, receive, send
+from ...port import DslContext
 from ..internal.validate import apply_errors, validate
 
 # --------------------------------------------------------
