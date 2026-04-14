@@ -4,14 +4,13 @@ Suche nach Projekten:
 
 <fields name="project">
   <field
-    name="result"
+    name="project_name"
     policy="system:string"
     title="Projektname"
-    param="project_name"
     lookup="city.show.all"
   />
 </fields>
 
 <actions>
-  <action command="test" scope="project">Speichern</action>
+  <action command="test save" scope="project">Speichern</action>
 </actions>

@@ -8,6 +8,9 @@ class CmdTest(Command):
 
     async def run(self, request: Request):
 
+        operation = request.arg(0)
+        print(operation)
+
         projector = await self.create_projector()
         projection = await projector.project("ask1")
         yield present(projection)

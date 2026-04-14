@@ -1,4 +1,6 @@
-import { createElement, findRegion } from "./dom.js";
+import { createElement, findRegion, findScope } from "./dom.js";
+import { collectFields, buildCommand } from "./cmd.js";
+
 
 export class Renderer {
 
@@ -245,6 +247,10 @@ function renderKVItem(node, dispatch, container) {
 
 function renderFields(node, dispatch, container) {
 
+    if (node.props.name) {
+        container.dataset.scope = node.props.name;
+    }
+
     for (const field of node.props.fields || []) {
 
         const fieldBlock = createElement("div", "field-block");
@@ -256,6 +262,7 @@ function renderFields(node, dispatch, container) {
         const inputWrap = createElement("div", "field-wrap");
 
         const input = createElement("input", "field-input");
+        input.name = field.name;
         input.value = field.query ?? field.default ?? "";
         input.placeholder = field.hint || "";
 
@@ -297,7 +304,12 @@ function renderActions(node, dispatch, container) {
             const region = findRegion(e.currentTarget);
             if (!region) return;
 
-            dispatch.command(action.command, {}, region);
+            const root = findScope(e.currentTarget, action.scope);
+
+            const data = collectFields(root);
+            const cmd = buildCommand(action.command, data);
+
+            dispatch.command(cmd, {}, region);
         };
 
         container.appendChild(btn);

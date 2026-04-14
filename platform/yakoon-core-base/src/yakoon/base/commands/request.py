@@ -34,7 +34,6 @@ class Request:
         """The command name (first token), lowercased."""
         return self._command
 
-    @property
     def args(self) -> list[str]:
         """All argument tokens (everything after the command token)."""
         return self._args

@@ -1,20 +1,24 @@
 ## Reicht ein Commit-Kommentar – oder gehört das in DECISIONS.md?
 > Faustregel: Wenn du es jemand anderem erklären müsstest → rein damit.
 > Dokumentiert wird: Was? Und Warum?
----
+===
 > 1. S1: Pro Session genau ein aktiver Controller.
 > 2. Orchestrierung: Engine orchestriert, Host entscheidet über Lifecycle (Signal).
 > 3. Security: Permissions sind pro Command (rx), nicht über CommandSet-Gruppen.
---
-
-===
 A server-driven, event-sourced UI runtime with declarative projection
 „SAM verarbeitet Actions und erzeugt daraus strukturierte Projektionen eines Systemzustands.“
 ===
 
-Hier ist dein Eintrag — präzise, klar und mit sauberer Trennung der Konzepte:
 
----
+## 2026-04-14
+**Festgelegte formale Command-Signatur**
+Die Operation steckt im Command, nicht im Transport 
+- Daher ist kein GET/POST nötig
+- Operation wird als Subcommand modelliert
+- Somit ist Domain und Operation klar getrennt
+- Singletons Commands wie man, usw, su.. sind weiterhin gültig.
+**Signatur:**
+- <command> [operation] [args] [--params]
 
 ## 31-03-28
 **Was ist ein View**
@@ -24,8 +28,7 @@ It contains no behavior, no temporal logic, and no sequencing.
 It is the result of rendering the current flow state.
 - One file - one state 
 
-
-## 26-03-28
+## 2026-03-28
 **Klare Trennung: Flow, Effects und Domain-Logik**
 Das System unterscheidet nun strikt zwischen drei Ebenen:
 * **Flow (DSL / yield)**
@@ -45,19 +48,19 @@ Das System unterscheidet nun strikt zwischen drei Ebenen:
 Konsequenz:
 Das System bleibt offen, flexibel und vermeidet die Entwicklung zu einem Workflow-Framework.
 
-## 26-03-22 
+## 2026-03-22 
 **Flow-basierten Scheduler**
 Der Scheduler arbeitet nun flow statt sessionbassiert. 
 Scheduling erfoglt via Round-Robin, weil jeder Flow fair CPU-Zeit erhält.
 Kein Flow dominiert. Kein künstliches Clustering mehr.
 
-## 26-03-22 
+## 2026-03-22 
 **Flow lebt sein eigenes Leben**
 Ein Command erzeugt einen Flow, und dieser lebt sein eigenes Leben.
 **WICHTIG:** 
 - Steps dürfen keine Emits mehr machen (für AwaitInput)
 
-## 26-03-22 
+## 2026-03-22 
 **yield's im Commands**
 DomainError darf NICHT für Validierung benutzt werden.
 - Antipattern
@@ -68,7 +71,7 @@ DomainError darf NICHT für Validierung benutzt werden.
       yield step.reject(...)
       continue
 
-## 26-03-22 
+## 2026-03-22 
 **Flows in Commands**
 - Step liefert ausschließlich Outcomes
 - Command yieldet ausschließlich Outcomes
@@ -85,7 +88,7 @@ FlowTypen:
 - ERROR:
   - raise DomainError → Flow stop
 
-## ==26-03-19== 
+## ==2026-03-19== 
 **Stateless Engine**
 Die gesamte Engine wurde auf stateless umgestellt:
 + stateless engine
@@ -95,28 +98,28 @@ Die gesamte Engine wurde auf stateless umgestellt:
 - no tasks
 - no asycn-event
 
-## ==26-03-16== 
+## ==2026-03-16== 
 **Host / Client Architektur eingeführt**
 Die Plattform wurde von einer lokalen CLI-Anwendung zu einer echten Host/Client-Runtime umgebaut.
 Engine, Session, Runner und EventBus laufen im Host.
 Clients verbinden sich über Transport und kommunizieren ausschließlich über Events und InputEvents.
 Damit kann die Plattform künftig remote betrieben werden (Console, Web, SSH, Bots, AI, IoT).
 
-## 26-03-16
+## 2026-03-16
 **Runtime EventBus als Infrastruktur**
 Die Ausgabe der Engine erfolgt nicht mehr direkt an Renderer,
 sondern über einen Runtime EventBus.
 Sessions senden Events, die vom Bus an verbundene Clients verteilt werden.
 Damit können mehrere Clients gleichzeitig mit derselben Session arbeiten.
 
-## 26-03-16
+## 2026-03-16
 **Interaction als Eingabe-Port der Runtime**
 Die Benutzerinteraktion wurde als eigener Port (`Interaction`) modelliert.
 Der Runner spricht ausschließlich mit diesem Interface und kennt keine UI.
 Interaction orchestriert Eingaben (Prompt, Formulare) und wandelt sie in `InputEvent`.
 Damit kann dieselbe Runtime mit unterschiedlichen Eingabequellen arbeiten.
 
-## 26-03-16
+## 2026-03-16
 **Interaction vollständig UI-agnostisch**
 Interaction erhält keine UI-Objekte mehr, sondern arbeitet mit zwei Callbacks:
 * `read_input(prompt)`
@@ -124,14 +127,14 @@ Interaction erhält keine UI-Objekte mehr, sondern arbeitet mit zwei Callbacks:
 Dadurch wird die Interaktion unabhängig von konkreten Interfaces
 (Console, Web, Bot, AI, IoT).
 
-## 26-03-16
+## 2026-03-16
 **Base als öffentliches API der Plattform**
 Die Architektur trennt strikt zwischen `base` und `platform`.
 Clients und Plugins dürfen nur `base` referenzieren, niemals `platform`.
 Damit kann die Runtime serverseitig bleiben, während Clients und Plugins
 ohne Zugriff auf die interne Plattform entwickelt und ausgeliefert werden.
 
-## 26-03-16
+## 2026-03-16
 **PerceptualStream - Verzicht auf Loop**
 Der Stream arbeitet nur mit Step() und nicht mit Loop.
 Wenn der Stream selbst eine Loop enthält (z. B. asyncio), 
@@ -139,23 +142,23 @@ wird er an eine Runtime gebunden und ist nicht mehr portabel.
 Der PerceptualStream ist im Grunde ein Frame Scheduler und
 ist eine deterministischen Render-Engine.
 
-## 26-03-14
+## 2026-03-14
 **ViewHeader & Dokument**
 Der ViewHeader gehört nicht zum Dokumentinhalt, aber er gehört sehr wohl zur 
 Präsentationsentscheidung des Hosts. Der Renderer sollte ihn nicht sehen – der Host schon. 
 ViewHeader ist Host-Metadaten.
 
-## 26-03-13
+## 2026-03-13
 **Prompt_toolk**
 Promptoolkit wurde eingeführt um aus der console eine richtige App zu bauen. 
 
-## 26-03-14
+## 2026-03-14
 **UI ist kein Screen**
 UI ist ein Document, das wächst und sich verändert. 
 So wir das festgelegt wurde, war klar, die Anwendung darf nicht mehr als Chatlog
 arbeiten, sondern als Live-Runtime-Document.
 
-## 26-03-12
+## 2026-03-12
 **Einführung von LLM-Streaming**
 Large Language Models Streaming wird nun nicht mehr nur durch den Server geregelt, 
 sondern durch den PerceptionStream innerhalb des Outputs. 
@@ -174,7 +177,7 @@ die Art und Weise dar Ausgabe in Chunks. Derzeit unterstützt der Stream:
 - Streaming Scheduler - kennt Producer & Consumer
   - buffers → produce → queue → render
 
-## 26-03-10
+## 2026-03-10
 **Streaming invariants**
 - Struktur wird vor Text übertragen
 - Text wird nur für veröffentlichte Nodes gesendet
@@ -183,7 +186,7 @@ die Art und Weise dar Ausgabe in Chunks. Derzeit unterstützt der Stream:
 - Jitter verhindert mechanisches Timing
 - Punctuation erzeugt Lesepausen
 
-## 26-03-08
+## 2026-03-08
 **Neue Pipeline für UI**
 Presenter
   → render state
@@ -198,13 +201,13 @@ DefaultInputService
 Streamer
   → write exactly one block to the session
 
-## 26-03-08
+## 2026-03-08
 **Felder werden normale Blöcke**
 Fields als normale Blocks → beseitigt die künstliche Input/Output-Trennung
 InteractionService als Ablaufsteuerung → genau der richtige Ort für wait / validate / continue
 Streamer auf Transport reduziert → Presenter bestimmt Struktur, Streamer überträgt nur
 
-## 26-03-06
+## 2026-03-06
 **Einführung von Capabilities vs. Fachlichkeit**
 Plugins stellen nun nur noch fachliche Module und die Shell zur Verfügung.
 Alle andere Fähigkeiten werden in Form von Capabilities innerhalb von Base 
@@ -212,7 +215,7 @@ und Platform abgebildet. Capabilitites bringen zum Teil Controller und
 Dienste mit und greifen auf den gleichen Registrierungs-Mechanismus wie
 Plugins zurück.
 
-## 26-03-05
+## 2026-03-05
 **Einführung des Eventstores**
 Einführung eines eigenen EventStores, Dieser basiert auf:
 - Event-Sourcing light
@@ -254,7 +257,7 @@ Der EventStore unterstützt bereits:
 - get_many batching
 - MemoryBackend
 
-## 26-02-27
+## 2026-02-27
 **Streaming**
 Die Architektur wurde von einer hybriden Rendering-Lösung (Snapshot + Streaming) 
 auf ein reines **Streaming-First-Modell** umgestellt. Container-Blöcke (z. B. Listen, Key-Value-Paare) 
@@ -264,7 +267,7 @@ in der Streaming-Schicht liegt. Das Ergebnis: deterministisches Verhalten, klare
 und Skalierbarkeit für zukünftige Blocktypen wie Tabellen oder Formulare. 
 Die Umsetzung ist für `list` und `kv` abgeschlossen und validiert.
 
-## 26-02-23
+## 2026-02-23
 **input_mode wird fester Bestandteil von ViewFormDef**
 input_mode: Literal["prompt", "form"] = "prompt"
 Zwei Validierungsstrategien im InputService:
@@ -282,20 +285,20 @@ Der InputService delegiert abhängig vom input_mode:
 - Prompt-Modus erzwingen
 - Form-Modus erzwingen
 
-## 26-02-23
+## 2026-02-23
 **Steaming in Output**
 Die Platform unterstützt nun auch Streaming per Default. Der Host entscheidet dabei, 
 indem er Streaming in der Session erlaubt oder ablehnt. Somit entseht ein interaktives
 Gefühl beim Benutzer.
 
-## 26-02-23
+## 2026-02-23
 **GUI host & Eingabe lifecyle**
 Eingaben (offene Prompts) werden durch ein immer quitiert. Somit können Hosts ihr Frontend 
 entsprechend anpassen oder aufräumarbeiten erledigen. Dazu schickt die Platform 
 an die Sessionausgabe ein: 
 - `View(kind="view", input=None, message=None)'`
 
-## 26-02-22
+## 2026-02-22
 **State-based Template Architecture**
 Die bisherige Template-Struktur basierte auf:
 - kind: command_view
@@ -327,7 +330,7 @@ state:
   blocks: [...]
   fields: [...]
 
-## 2026-02-21
+## 202026-02-21
 **Workflow als Plugin entkoppelt**
 * WF-Commands (`wf.start`, `wf.input`, etc.) wurden aus der Shell entfernt.
 * Workflow ist nun ein eigenständiges Modul/Plugin.
@@ -336,7 +339,7 @@ state:
 * WF kann optional geladen werden (Vorbereitung für NoWorkflow-Plugin).
 Workflow ist jetzt ein Feature, kein Systemkern.
 
-## 2026-02-21
+## 202026-02-21
 **Plattform-Struktur neu geschnitten**
 Projektstruktur getrennt:
 * `platform` → Kern (Engine, Directories, Services, Policies)
@@ -347,7 +350,7 @@ Apps sind jetzt:
 * `crm`
 * `office`
 
-## 2026-02-21
+## 202026-02-21
 **Discovery & Lookup eingeführt**
 * Discovery-Strategie-Mechanismus implementiert.
 * Lookup ersetzt festen Alias-Mechanismus vollständig.
@@ -359,7 +362,7 @@ Apps sind jetzt:
 * Kein Lookup-Command-Roundtrip mehr notwendig.
 * UI-Darstellung bei Mehrdeutigkeit über separates Command gelöst.
 
-## 2026-02-21
+## 202026-02-21
 **Command-Suche in CommandCatalogService ausgelagert**
 Resolve-Logik vollständig aus `CommandDirectory` entfernt.
 `CommandCatalogService` enthält nun:
@@ -370,35 +373,35 @@ Resolve-Logik vollständig aus `CommandDirectory` entfernt.
 * Scope-Regeln (CONTROLLER, SHELL, GLOBAL) sind zentralisiert.
 * `CommandDirectory` materialisiert nur noch Commands.
 
-## 2026-02-20
+## 202026-02-20
 **Dispatch-System neu modelliert**
 - Union statt Vererbung.
 - Zwei explizite Transporttypen.
 - Keine implizite Payload-Semantik.
 
-## 2026-02-20
+## 202026-02-20
 **TemplateSource / WorkflowSource**
 TemplateSource und WorkflowSource wurden konzeptionell ersetzt.
 Dazu wurde ein einziges ResourceReferences-Objekt pro Controller eingeführt.
 Subpath wird nicht länger unterstützt. Dafür {lang} als placeholder.
 
-## 2026-02-19
+## 202026-02-19
 **Alias-Mechanismus**
 Der Alias-Mechanismus wurde entfernt, der dieser im Code definiert wurde. 
 Alias ist nun über Lookup multilanguagefähig.
 Lookup wird über Discovery-Strategien gelöst.
 
-## 2026-02-18
+## 202026-02-18
 **WorkflowCompileService entkoppelt**
 Der WorkflowCompileService übernimmt nun nur noch Parsing + Modellierung.
 Dafür wurde der FileLoader eingeführt. Dieser übernimmt alle Dateizugriff im System.
 
-## 2026-02-18
+## 202026-02-18
 **CommandScope eingeführt**
 - CommandScope ersetzt shell_builtins. Routing ist jetzt explizit und deklarativ.
 - Visibility von Scope getrennt; Scope ist nicht Sichtbarkeit.
 
-## 2026-02-17
+## 202026-02-17
 **Umstellung auf View**
 Der Output-Stack wurde radikal vereinfacht. IO ist nun vollständig View-getrieben.
 Die Architektur ist konsistent mit dem Input-/Workflow-Modell.
@@ -412,13 +415,13 @@ Die Runtime ist leichter verständlich und deutlich schlanker.
 - op wird ausschließlich über View.mode bestimmt.
 - Transport-Parameter wie channel, region, meta werden entfernt.
 
-## 2026-02-17
+## 202026-02-17
 **Vollständige Integration der Workflows**
 Die DSL arbeitet für Commands & Workflows übergreifend.
 InputResult als saubere Datenkapselung (statt PromptResult)
 InputView liefert view contracts für Ausgabe.
 
-## 2026-02-16
+## 202026-02-16
 **Weiterentwicklung der View- und Input-Architektur**
 Dieser Schritt dient zur Vorbereitung deklarativer Workflows.
 - inputs.<state>.fields wird als Liste von Field-Definitionen geführt.
@@ -429,7 +432,7 @@ Dieser Schritt dient zur Vorbereitung deklarativer Workflows.
 - Feldbasierte Flags wie secret werden nicht mehr direkt im Template gesetzt.
 Eine DSL für Commands und Workflows: Beide verwenden nun identische Felddefinitionen.
 
-## 2026-02-15
+## 202026-02-15
 **Unified Input Model (FormSpec Only)**
 * Auflösung der Trennung zwischen *Wizard* und *Form* im Kernel.
 * Einführung eines einheitlichen Input-Vertrags über **FormSpec**.
@@ -451,7 +454,7 @@ Eine DSL für Commands und Workflows: Beide verwenden nun identische Felddefinit
 * UI entscheidet selbstständig über Rendering (Wizard-sequenziell oder echtes Formular).
 Der Kernel ist vollständig UI-agnostisch. Dialoglogik und Darstellung sind sauber entkoppelt.
 
-## 2026-02-14
+## 202026-02-14
 **Einführung des Policy-Systems**
 * Einführung eines zentralen `PolicyService`.
 * Feldtyp, Validierung und Coercion werden über Policies definiert.
@@ -460,7 +463,7 @@ Der Kernel ist vollständig UI-agnostisch. Dialoglogik und Darstellung sind saub
 * Validierung ist vollständig aus Prompt-/Workflow-Code ausgelagert.
 Input ist nun deklarativ typisiert und konsistent validiert.
 
-## 2026-02-14
+## 202026-02-14
 **Strukturierte Run-Definition**
 * Einführung von `RunDef(key, args)`.
 * `run` + `args` klar getrennt.
@@ -469,7 +472,7 @@ Input ist nun deklarativ typisiert und konsistent validiert.
 * DSL wird strikt validiert.
 Workflow-Definition ist formaler, sicherer und weniger fehleranfällig.
 
-## 2026-02-14
+## 202026-02-14
 **Compiler-Refactoring**
 Zerlegung des Workflow-Compilers in Builder:
   * `RunBuilder`
@@ -480,7 +483,7 @@ Zerlegung des Workflow-Compilers in Builder:
 * Verbesserte Fehlermeldungen (`workflow:step` Präfix).
 * YAML 1.2 Bool-Handling eingeführt (kein `on:` → `True` Bug mehr).
 
-## 2026-02-14
+## 202026-02-14
 **Projektweite Formatierung & Linting**
 * Einführung von **Black** (Formatter).
 * Einführung von **Ruff** (Linter).
@@ -488,21 +491,21 @@ Zerlegung des Workflow-Compilers in Builder:
 * Frühzeitige Erkennung potenzieller Fehler.
 Einheitlicher Code-Stil und höhere Wartbarkeit.
 
-## [2026-02-10]
+## [202026-02-10]
 **Wenn ein Workflow darf nie mahr als der User**
 Bedeutet: Privilege Escalation als Feature ist nicht erlaubt und bewart das System später vor den ganz teuren Security-Debatten bewahrt. Wenn ein Workflow mehr darf als der User, bedeutet das faktisch, ein komplettes Policy-System bauen (Run-as, Delegation, Approvals, Audit, Scope, Least-Privilege-Rollen, Secrets, Revocation)
 - Workflows sind Orchestrierung, keine Berechtigungs-Abkürzung.
 
-## [2026-02-09]
+## [202026-02-09]
 **Einführung Workflow & Kontexts (batch.values)**
 Daten zwischen Commands werden nicht mehr implizit über Session-Zustand oder Command-Seiteneffekte weitergereicht, sondern explizit über einen Workflow-gebundenen Kontext (batch.values).
 Begründung: Workflows dienen der Orchestrierung von Commands. Ein expliziter, pro Workflow isolierter Kontext macht Datenflüsse nachvollziehbar, testbar und unabhängig von der Ausführungsumgebung (CLI, Wizard, Form, Remote Host). Commands sind reine Operationen ohne implizite Abhängigkeiten. Workflows definieren sowohl Ablauf als auch Datenfluss. Named Arguments ermöglichen robuste Command-Aufrufe ohne Positionsabhängigkeit.
 
-## [2026-02-06]
+## [202026-02-06]
 **Kivy-UI-Host**
 Der UI-Kivy-Host orientiert sich an dem Terminal von Gnome und ist multishellfähig.
 
-## [2026-02-06]
+## [202026-02-06]
 **Kiyy als Desktop-Technologien**
 Kivy ist ereignis- und flussorientiert - nicht formularzentriert. Kivy lässt in Render-Logik denken, Qt zwingt UI-Logik zu verwalten. Zudem bleibt Kivy Python-first und ist OpenSource ohne Grauzonen in der Lizenz, die später teurer wird. Kivy steht unter der MIT-Lizenz. QT dagegen hätte dazu beführt, ein Framework zu bedienen. Yakoon lebt aber von:
 - kontinuierlichen Outputs
@@ -511,7 +514,7 @@ Kivy ist ereignis- und flussorientiert - nicht formularzentriert. Kivy lässt in
 - Kivy zeichnet und kontrolliert den Render-Zyklus
 
 
-## [2026-02-06]
+## [202026-02-06]
 **Desktop-Technologien als Frontend**
 Für das Frontend wurden Desktoptechnologien gewählt. 
 Desktop heißt: Kontrolle über den Rechner. Eine Desktop-App ist kein „Client“, sie ist ein Agent.
@@ -522,67 +525,67 @@ Yakoon könnte später ein verteiltes Command-Graph-System werden. "Commands auf
 - Identitäten über Maschinen hinweg stabilisieren
 - Netzwerke von innen heraus bilden
 
-## [2026-02-05]
+## [202026-02-05]
 **DialogService**
 Der globale DialogManager wurde aufgelöst, um den letzten globalen Zustand aus der Engine zu entfernen. Danach wurde er in einen 'DialogService' überführt, der nun über die ServiceFactory austauschbar ist.
 
-## [2026-02-05]
+## [202026-02-05]
 **OutputAdapter**
 Die Session kann Metadaten durch Commands nach an den IO-Adapter leiten. Somit kann ein Command der Außenwelt mitteilen, um welche Information es sich bei dem ausgegebenen Text handelt. Die Engine legt sich bei der Ausgabe nicht fest, sondern rendert nur entsprechende Templates.
 
-## [2026-02-05]
+## [202026-02-05]
 **Service für Permission & Rollen**
 Permissions und Rollen müssen dem System über einen Service zur Verfügung gestellt werden. Damit kann das gesamte Handling in der Platform verbleiben. Die Logik, wie Rechte und Rollen zusammenarbeiten, befindet sich ebenfalls in diesem Service.
 
-## [2026-02-04]
+## [202026-02-04]
 **Batch & Workflow**
 Durch die Einführung des 'DispatchInput' kann der Host vereinfacht werden. Somit nimmt nun auch die Engine keinen einfachen input:str mehr auf, sondern verwendet intern den DispatchInput. Dieses beinhaltet immer die Benutzereingabe + eine batch_id. Warum ist eine batch_id notwendig? Wenn innerhalb eines batches (Workflow) ein Fehler auftritt (z.B: PermissionDenied), dann dürfen die folgenden Commands (innerhalb der Workflow-Serie) nicht mehr ausgeführt werden. Durch die batch_id kann die Engine diese Commands nun ablehnen und aus der Queue entfernen. => On failure inside batch → cancel remaining batch items. Failure umfasst: PermissionDenied, CmdNotFound, ValueError, InternalError (je nach Policy)
 
-## [2026-02-04]
+## [202026-02-04]
 **Permissions**
 Permissions werden als Unix-Rechte umgesetzt: rx (read/execute). Das vorherige Konzept über Commandsets wurde aufgelöst, weil es nicht skalierfähig war. Nun kann für jedes Commmand ein Recht (rx) - (spter rx:rx) erteilt oder auch entzogen werden. Der Account unterstützt nun Rollen und Permissions. Beide werden durch das Command 'su' in die aktuelle Session geladen. Durch die Einführung des IdentityMapService, bleiben die kompilierten Berechtigungen übe die Sitzung in der Session enthalten.
 
-## [2026-00-04]
+## [202026-00-04]
 **Hooks in Controller**
 Die Hooks in Controllern wurden reduziert. Auch wurden alle Hooks aus dem Controller entfernt, die nur von der Shell genutzt wurden. Das System (Engine) macht nun zwischen Controllern keinen Unterschied mehr.
 
-## [2026-02-04]
+## [202026-02-04]
 **IdentityMapService**
 Das gesamte System braucht verlässliche Sessions über die Dauer einer Sitzung. Bisher wurde durch jeden Dispatch eine neue Session aus dem Store geladen. Das hatte zur Folge, dass jeder prompt eine neue Session angefordert hat. Im Code führe das dazu, das nach jedem Prompt die Session.runtime leer war. Durch die IdentityMap ist nun sichergestellt, dass Sessions erhalten bleiben.
 
-## [2026-00-03]
+## [202026-00-03]
 **Domain-Models**
 Domain-Models arbeiten nicht länger mit Vererbung. Stattdessen halten Domain-Models ihre Daten in einem internen Objekt (runtime/data) auf Basis von 'dataclass'. Auch damit Aufwand in PersistensLayer (Store) entsteht, ist es ehrlich. Denn dort gehört die Logik hin und nicht in Form eines Light-OR-Mappers ins Model.
 
-## [2026-02-03]
+## [202026-02-03]
 **CmdQuit - Beenden des Hosts**
 Um die Eventloop sauber zu beenden, wird in der Session ein Signal gesetzt. Den Host zu benenden ist Zumutung des Hosts und nicht der Engine. Daher darf die Engine den Abbruch der Loop nicht entscheiden -> Signal. Der Host reagiert nur darauf. Ein anderer Host kann somit entscheiden ob er sich beendet oder das Signal ablehnt. Wichtig: Signale dürfen nicht persistiert werden.
 
-## [2026-02-03]
+## [202026-02-03]
 **Request trifft keine Entscheidung**
 Das Request nimmt nur die Benutereingabe auf. Entscheidet aber selbst nicht, was Command und SubCommand ist. Das ist immer Aufgabe des einzelnen Commands, zu interpretieren, welcher Parameter was bedeutet.
 
-## [2026-02-02]
+## [202026-02-02]
 **Workflow darf nicht selbst ausführen**
 Loops oder Rekursion im WorkflowCommand = zweiter Scheduler = Fehlerquelle. Das würde dazu führen, dass der Prompt den Workflow unterbricht und die Kontrolle verliert. Daher kommt ein 'CommandQueueService' zum Einsatz. Dieser wird über die HostLoop abgearbeitet.
 
-## [2026-02-02]
+## [202026-02-02]
 **Rename core Packages**
 Alle Core-Module tragen im Modulename nun '-core-', um sich von den anderen Modules abzugrenzen. Core ist einzigartig, weil es:, nicht optional ist, keine UX hat, kein Plugin ist, und die Runtime überhaupt erst möglich macht. Das ist eine ontologische Sonderstellung. Alles andere – auch Shell, Auth, Office, CRM – sind Programme, also prinzipiell gleichartig. Somit gilt: _Nur Core bekommt ein technisches Präfix._
 
-## [2026-02-01]
+## [202026-02-01]
 **Einführung eines WorkflowCommand**
 Über das WorkflowCommand können Commands intern commands ausführen. Somit können workflows umgesetzt werden. Der Grund für die Implementierung ist die Verwendung von Shortcuts wie 'su'. Dieses Command wird auf der shell laufen, aber dort intern zu einem anderem Plugin routen über 'use auth; su <user>; exit'. Somit können beliebige Commands aus der Shell aufgerufen werden, ohne dass die Shell überfrachtet wird oder globale gültige Commands (doppelte Keys) notwendig werden.
 
-## [2026-02-01]
+## [202026-02-01]
 **Shell hält die Hilfe**
 Die Shell benötigt eine das Command 'man', welches das gesamte Hilfesystem darstellt. Auf Template-Ebene liegt die Hilfe immer in den Command-Templates in der Sektion 'man' des Command-Templates.
 
-## [2026-01-31]
+## [202026-01-31]
 **Shell-Mode & Program-Mode**
 Im Prompt des Hosts wird der aktuelle Mode angezeigt.
 
-## [2026-01-30]
+## [202026-01-30]
 **Einführung einer Shell**
 Bei den Überlegungen zur Architektur der zukünftigen Platform, ist der Gedanke gereift, sich an Unix/Linux anzulehnen. Dabei stellt die Platform das System und die Commandline die Shell dar. Die Shell unterstützt das Starten und Beenden von Programmen (Controllern). Dies geschieht über 'use'. Verlassen der Anwedungen über 'exit'. Die Platform darf somit nur noch Infrastuktur und Dienste bereitstellen. Alles andere muss von Anwendungen (Programs) unterstützt werden. Um die Abstraktion zu verfollständigen, wurde die 'shell' in ein eigenes package verschoben. 'yakoon.shell'. Die Shell unterstützt somit das "Starten" von Programmen über 'use' und befindet sie sich dann im ProgramMode.
 

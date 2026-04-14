@@ -2,6 +2,9 @@ import { createWS } from "./stream.js";
 import { Renderer } from "./renderer.js";
 import { createElement } from "./dom.js";
 
+// -----------
+// APPLICATION
+// -----------
 
 function initApp() {
 
@@ -52,6 +55,10 @@ function initApp() {
     }
 
 }
+
+// -----------
+// INTERNALS
+// -----------
 
 function scrollToBottom() {
     const el = document.getElementById("stream");
