@@ -118,19 +118,28 @@ body {
     align-items: center;
     flex: 1;
 
-    border: 1px solid #4a6fa5;
     border-radius: 999px;
     overflow: hidden;
-
-    background: #f5f5f5;
     padding-right: 6px;
-    /* Platz für Button */
+
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    backdrop-filter: blur(6px);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.6),
+        0 1px 2px rgba(0, 0, 0, 0.04),
+        0 4px 12px rgba(0, 0, 0, 0.06);
+    transition: all 0.15s ease;
+}
+
+.commandbar-combo:hover {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 2px 6px rgba(0, 0, 0, 0.06),
+        0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 .commandbar-prompt {
-    background: #6e93b9;
-    color: #ffffff;
-
     padding: 12px 16px;
     font-weight: 500;
     letter-spacing: 0.2px;
@@ -138,7 +147,10 @@ body {
     border-top-left-radius: 999px;
     border-bottom-left-radius: 999px;
 
-    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    background: #e5e7eb;
+    color: #1f2937;
+
+    border-right: 1px solid #d1d5db;
 }
 
 #commandbar-input {
@@ -150,7 +162,12 @@ body {
     padding: 12px 16px;
     font-size: 15px;
 
+    color: #374151;
     background: transparent;
+}
+
+#commandbar-input::placeholder {
+    color: #9ca3af;
 }
 
 .commandbar-button {
@@ -161,23 +178,33 @@ body {
     border: none;
     border-radius: 50%;
 
-    background: #6e93b9;
-    color: white;
-
     display: flex;
     align-items: center;
     justify-content: center;
 
     cursor: pointer;
     flex-shrink: 0;
+
+    opacity: 0.9;
+    background: #e5e7eb;
+    color: #374151;
+
+    transition: all 0.15s ease;
 }
 
 .commandbar-button:hover {
-    background: #5a7ea5;
+    background: #d1d5db;
+    transform: scale(1.05);
+}
+
+.commandbar-button:active {
+    transform: scale(0.95);
 }
 
 .commandbar-combo:focus-within {
-    border-color: #007bff;
-    border: 1px solid #5f7fa8;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+    border-color: #d1d5db;
+
+    box-shadow:
+        0 0 0 2px rgba(0, 0, 0, 0.04),
+        0 2px 6px rgba(0, 0, 0, 0.06);
 }
