@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 
@@ -9,6 +9,7 @@ from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.naming import Key
 from yakoon.base.projection import (
     ProjectionEvent,
+    ProjectionState,
 )
 from yakoon.base.transports import IO
 from yakoon.platform.flow import Flow
@@ -218,4 +219,14 @@ class Session:
         assert self._runtime.io is not None, "runtime.io must not be None"
         assert event.job_id, "event.job_id must be set"
 
+        event = self._attach_state(event)
         await self._runtime.io.view(event)
+
+    def _attach_state(self, event: ProjectionEvent) -> ProjectionEvent:
+        return replace(
+            event,
+            state=ProjectionState(
+                user=self.get_username(),
+                controller=self.get_active_controller(),
+            ),
+        )

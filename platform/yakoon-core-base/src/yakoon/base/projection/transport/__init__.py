@@ -1,4 +1,4 @@
-from .event import ProjectionEvent
+from .event import ProjectionEvent, ProjectionState
 from .node import Node
 from .patch import (
     Patch,
@@ -24,4 +24,5 @@ __all__ = [
     "Patch",
     # .event
     "ProjectionEvent",
+    "ProjectionState",
 ]

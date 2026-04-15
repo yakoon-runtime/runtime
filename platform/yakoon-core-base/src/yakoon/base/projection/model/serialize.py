@@ -1,9 +1,10 @@
 from yakoon.base.projection import ProjectionEvent
-from yakoon.base.projection.transport.patch import (
+from yakoon.base.projection.transport import (
     PatchAppendStructure,
     PatchAppendText,
     PatchFinishNode,
     PatchReset,
+    ProjectionState,
 )
 from yakoon.base.runtime.input import InputContext
 
@@ -14,6 +15,7 @@ def serialize_event(event: ProjectionEvent):
         "job": event.job_id,
         "header": serialize_header(event.header),
         "context": serialize_context(event.ctx),
+        "state": serialize_state(event.state),
         "patch": serialize_patch(event.patch),
         "final": event.patch.final,
     }
@@ -27,6 +29,19 @@ def serialize_context(context: InputContext | None) -> dict | None:
     data: dict[str, object] = {}
     if context.origin is not None:
         data["origin"] = context.origin
+
+    return data or None
+
+
+def serialize_state(state: ProjectionState | None) -> dict | None:
+    if state is None:
+        return None
+
+    data: dict[str, object] = {}
+    if state.controller is not None:
+        data["controller"] = state.controller
+    if state.user is not None:
+        data["user"] = state.user
 
     return data or None
 

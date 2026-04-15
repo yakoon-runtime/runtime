@@ -16,9 +16,9 @@ function initApp() {
         sidebar: document.getElementById("toggle-sidebar"),
     };
 
-    function handleProjection(payload) {
+    function handleProjection(event) {
 
-        const regionId = payload.context.origin;
+        const regionId = event.context.origin;
 
         const regionEl = document.querySelector(`[data-region-id="${regionId}"]`);
         if (!regionEl) {
@@ -33,7 +33,11 @@ function initApp() {
             regionEl.dataset.renderer = "true";
         }
 
-        renderer.apply(payload);
+        if (event.state) {
+            updatePrompt(event.state);
+        }
+
+        renderer.apply(event);
     }
 
     const ws = createWS(handleProjection);
@@ -122,6 +126,26 @@ function registerSideBarToggle(dom) {
     dom.sidebar.onclick = () => {
         dom.app.classList.toggle("sidebar-collapsed");
     };
+}
+
+function updatePrompt(state) {
+
+    function formatController(name) {
+        if (!name) return "";
+
+        return name.charAt(0).toUpperCase() + name.slice(1);
+    }
+
+    const el = document.querySelector(".commandbar-prompt");
+
+    if (!el) return;
+
+    const user = state.user;
+    const controller = formatController(state.controller);
+
+    el.textContent = user
+        ? `${user}@${controller} `
+        : `${controller} `;
 }
 
 initApp();

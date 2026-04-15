@@ -10,6 +10,12 @@ from .patch import Patch
 
 
 @dataclass(frozen=True, slots=True)
+class ProjectionState:
+    user: str | None = None
+    controller: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ProjectionEvent:
     """
     Unified transport envelope for hosts.
@@ -27,10 +33,10 @@ class ProjectionEvent:
     id: str = ""
     header: ProjectionHeader | None = None
     ctx: InputContext | None = None
+    state: ProjectionState | None = None
 
     job_id: str = "system"
     patch: Patch = field(default_factory=Patch)
-    meta: dict = field(default_factory=dict)
 
     def is_final(self) -> bool:
         return self.patch.final
