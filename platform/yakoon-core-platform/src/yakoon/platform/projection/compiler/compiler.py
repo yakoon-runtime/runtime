@@ -1,7 +1,7 @@
 from yakoon.base.projection import Projection
 
 from .ast import build_ast
-from .mapper import Mapper
+from .mapper import create_mapper
 from .tokens import tokenize_text
 
 
@@ -12,7 +12,7 @@ class TemplateProjectionCompiler:
         tokens = tokenize_text(text)
         ast = build_ast(tokens)
 
-        mapper = Mapper()
+        mapper = create_mapper()
         projection = mapper.map_projection(ast)
 
         return projection

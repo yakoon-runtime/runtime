@@ -39,9 +39,9 @@ from yakoon.platform.naming import DomainNamespaceResolver
 from yakoon.platform.plugins import DefaultModuleManager, DefaultModuleRegistry
 from yakoon.platform.projection import (
     EventProjectionDispatcher,
+    TemplateProjectionCompiler,
     TemplateProjectorFactory,
 )
-from yakoon.platform.projection.compiler import TemplateProjectionCompiler
 from yakoon.platform.projection.rendering import (
     JinjaRenderEngine,
     TemplateProjectionRenderer,

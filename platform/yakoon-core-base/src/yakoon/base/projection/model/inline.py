@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from dataclasses import dataclass
 from typing import Any, Literal
 
@@ -13,28 +11,48 @@ class InlineText:
 @dataclass(frozen=True, slots=True)
 class InlineCode:
     type: Literal["code"] = "code"
-    text: str = ""
+    children: list["Inline"] | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class InlineLink:
     type: Literal["link"] = "link"
-    text: str = ""
     href: str = ""
+    children: list["Inline"] | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class InlineSelect:
     type: Literal["select"] = "select"
-    text: str = ""
     value: Any = None
+    children: list["Inline"] | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class InlineCmd:
     type: Literal["cmd"] = "cmd"
     command: str = ""
-    text: str = ""
+    children: list["Inline"] | None = None
 
 
-Inline = InlineText | InlineCode | InlineLink | InlineSelect | InlineCmd
+@dataclass(frozen=True, slots=True)
+class InlineStrong:
+    type: Literal["strong"] = "strong"
+    children: list["Inline"] | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class InlineEm:
+    type: Literal["em"] = "em"
+    children: list["Inline"] | None = None
+
+
+Inline = (
+    InlineText
+    | InlineCode
+    | InlineLink
+    | InlineSelect
+    | InlineCmd
+    | InlineStrong
+    | InlineEm
+)
