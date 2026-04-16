@@ -2,6 +2,8 @@
 <h2>Title</h2>
 <h3>Part</h3>
 
+<link href="https://example.com">Docs</link>
+
 <section>
   <mark type="important">important</mark><br/>
   <mark type="info">info</mark><br/>
