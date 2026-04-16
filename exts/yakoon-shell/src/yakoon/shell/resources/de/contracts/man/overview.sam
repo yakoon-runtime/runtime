@@ -2,8 +2,8 @@
 <h2>Title</h2>
 <h3>Part</h3>
 
-<mark type="important">important</mark>
-<mark type="info">info</mark>
+<mark type="important">important</mark><br/>
+<mark type="info">info</mark><br/>
 <mark type="success">Erfolg</mark>
 <mark type="error">Fehler</mark>
 

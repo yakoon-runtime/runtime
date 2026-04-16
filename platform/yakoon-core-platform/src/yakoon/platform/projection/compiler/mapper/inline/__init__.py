@@ -1,3 +1,4 @@
+from .br import map_br
 from .cmd import map_cmd
 from .code import map_code
 from .em import map_em
@@ -16,4 +17,5 @@ __all__ = [
     "map_select",
     "map_underline",
     "map_mark",
+    "map_br",
 ]

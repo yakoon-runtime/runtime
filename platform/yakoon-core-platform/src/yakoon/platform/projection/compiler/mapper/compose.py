@@ -10,6 +10,7 @@ from .block import (
 )
 from .core import Mapper
 from .inline import (
+    map_br,
     map_cmd,
     map_code,
     map_em,
@@ -33,6 +34,7 @@ def create_mapper() -> Mapper:
     mapper.register_inline("strong", map_strong)
     mapper.register_inline("u", map_underline)
     mapper.register_inline("mark", map_mark)
+    mapper.register_inline("br", map_br)
 
     # -------- BLOCKS --------
     mapper.register_block("kv", map_kv)

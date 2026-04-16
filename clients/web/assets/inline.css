@@ -16,24 +16,35 @@
     background: #eee;
 }
 
+/* MARK */
+
 .inline-mark {
-    background: #fff3a0;
-    padding: 0 4px;
-    border-radius: 4px;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-weight: 500;
+    line-height: 1.4;
 }
 
+/* Info – iOS blue */
 .mark-info {
-    background: #dbeafe;
+    background: rgba(0, 122, 255, 0.12);
+    color: #0051a8;
 }
 
+/* Important – warm yellow */
 .mark-important {
-    background: #fde68a;
+    background: rgba(255, 204, 0, 0.18);
+    color: #7a5a00;
 }
 
-.mark-error {
-    background: #fecaca;
-}
-
+/* Success – iOS green */
 .mark-success {
-    background: #bbf7d0;
+    background: rgba(52, 199, 89, 0.16);
+    color: #1c6b2a;
+}
+
+/* Error – iOS red */
+.mark-error {
+    background: rgba(255, 59, 48, 0.16);
+    color: #8a1c1c;
 }

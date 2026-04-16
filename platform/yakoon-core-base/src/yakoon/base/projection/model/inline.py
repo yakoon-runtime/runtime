@@ -60,6 +60,11 @@ class InlineMark:
     children: list["Inline"] | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class InlineBreak:
+    type: Literal["break"] = "break"
+
+
 Inline = (
     InlineText
     | InlineCode
@@ -70,4 +75,5 @@ Inline = (
     | InlineEm
     | InlineUnderline
     | InlineMark
+    | InlineBreak
 )

@@ -22,6 +22,7 @@ import "./inline/strong.js";
 import "./inline/em.js";
 import "./inline/underline.js";
 import "./inline/mark.js";
+import "./inline/br.js";
 
 
 export class Renderer {
