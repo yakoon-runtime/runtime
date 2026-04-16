@@ -1,5 +1,8 @@
-<header role="info" title="Commands" />
-{% if state.mode == "shell" %}
+<h1>Manual</h1>
+<h2>Title</h2>
+<h3>Part</h3>
+{%- if state.mode == "shell" -%}
+
 Commands
 <list>
   {% for c in state.shell_commands %}

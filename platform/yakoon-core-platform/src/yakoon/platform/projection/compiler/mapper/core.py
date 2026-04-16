@@ -113,6 +113,9 @@ class Mapper:
         for node in nodes:
 
             if isinstance(node, TextNode):
+                if not node.text.strip():
+                    continue
+
                 buffer.append(node)
                 continue
 
@@ -181,7 +184,7 @@ def is_whitespace(node: Node) -> bool:
 
 
 def normalize_text(text: str) -> str:
-    return text.lstrip("\n").rstrip()
+    return text  # .replace("\n", "")  # .lstrip("\n").rstrip()
 
 
 def extract_text(node: Node) -> str:

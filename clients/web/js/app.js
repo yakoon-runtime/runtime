@@ -1,5 +1,5 @@
 import { createWS } from "./stream.js";
-import { Renderer } from "./renderer.js";
+import { Renderer } from "./renderer/renderer.js";
 import { createElement } from "./dom.js";
 
 // -----------

@@ -1,3 +1,1 @@
-<header role="info" title="Commands" />
-
 {{ state.controllers | map(attribute='id') | join('  ') }}

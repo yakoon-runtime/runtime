@@ -25,6 +25,27 @@ class TextBlock:
 
 
 @dataclass(frozen=True, slots=True)
+class ParagraphBlock:
+    type: Literal["paragraph"] = "paragraph"
+    id: str | None = None
+    text: list[Inline] | None = None
+
+    def children(self):
+        return []
+
+
+@dataclass(frozen=True, slots=True)
+class HeadingBlock:
+    type: Literal["heading"] = "heading"
+    level: int = 1
+    id: str | None = None
+    text: list[Inline] | None = None
+
+    def children(self):
+        return []
+
+
+@dataclass(frozen=True, slots=True)
 class RuleBlock:
     id: str | None = None
     type: Literal["rule"] = "rule"
@@ -155,4 +176,6 @@ Block = (
     | TableBlock
     | FieldsBlock
     | ActionBlock
+    | ParagraphBlock
+    | HeadingBlock
 )

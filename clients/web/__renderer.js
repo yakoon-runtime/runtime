@@ -1,5 +1,5 @@
-import { createElement, findRegion, findScope } from "./dom.js";
-import { collectFields, buildCommand } from "./cmd.js";
+import { createElement, findRegion, findScope } from "./js/renderer/dom.js";
+import { collectFields, buildCommand } from "./js/cmd.js";
 
 
 export class Renderer {
