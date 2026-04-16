@@ -6,6 +6,7 @@ from .block import (
     map_list,
     map_paragraph,
     map_rule,
+    map_section,
     map_spacer,
 )
 from .core import Mapper
@@ -47,5 +48,6 @@ def create_mapper() -> Mapper:
     mapper.register_block("h1", map_heading(1))
     mapper.register_block("h2", map_heading(2))
     mapper.register_block("h3", map_heading(3))
+    mapper.register_block("section", map_section)
 
     return mapper

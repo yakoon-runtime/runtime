@@ -11,6 +11,7 @@ import "./block/fields.js";
 import "./block/actions.js";
 import "./block/paragraph.js";
 import "./block/heading.js";
+import "./block/section.js";
 
 // inline registrations (side effects)
 import "./inline/text.js";

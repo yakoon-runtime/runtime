@@ -5,6 +5,7 @@ from .kv import map_kv
 from .list import map_list
 from .paragraph import map_paragraph
 from .rule import map_rule
+from .section import map_section
 from .spacer import map_spacer
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "map_spacer",
     "map_paragraph",
     "map_heading",
+    "map_section",
 ]

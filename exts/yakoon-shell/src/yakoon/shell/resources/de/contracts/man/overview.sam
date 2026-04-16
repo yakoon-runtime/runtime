@@ -2,10 +2,19 @@
 <h2>Title</h2>
 <h3>Part</h3>
 
-<mark type="important">important</mark><br/>
-<mark type="info">info</mark><br/>
-<mark type="success">Erfolg</mark>
-<mark type="error">Fehler</mark>
+<section>
+  <mark type="important">important</mark><br/>
+  <mark type="info">info</mark><br/>
+</section>
+
+<section>
+  <mark type="success">Erfolg</mark>
+  <mark type="error">Fehler</mark>
+</section>
+
+<rule style="normal"/>
+<rule style="subtle"/>
+<rule style="strong"/>
 
 {%- if state.mode == "shell" -%}
 

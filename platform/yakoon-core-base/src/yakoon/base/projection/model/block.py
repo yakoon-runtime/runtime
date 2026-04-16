@@ -165,6 +165,16 @@ class ActionBlock:
         return ()
 
 
+@dataclass(frozen=True, slots=True)
+class SectionBlock:
+    type: Literal["section"] = "section"
+    id: str | None = None
+    blocks: list[Block] | None = None
+
+    def children(self):
+        return self.blocks or []
+
+
 Block = (
     TextBlock
     | RuleBlock
@@ -178,4 +188,5 @@ Block = (
     | ActionBlock
     | ParagraphBlock
     | HeadingBlock
+    | SectionBlock
 )

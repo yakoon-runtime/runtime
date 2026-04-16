@@ -12,6 +12,7 @@ from .block import (
     ParagraphBlock,
     RuleBlock,
     RuleStyle,
+    SectionBlock,
     SpacerBlock,
     TableBlock,
     TextBlock,
@@ -83,4 +84,5 @@ __all__ = [
     "FieldsBlock",
     "FieldsState",
     "ActionBlock",
+    "SectionBlock",
 ]
