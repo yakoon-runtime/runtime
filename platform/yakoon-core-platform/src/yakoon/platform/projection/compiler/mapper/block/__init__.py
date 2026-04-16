@@ -2,6 +2,7 @@ from .actions import map_actions
 from .fields import map_fields
 from .flow import map_flow
 from .heading import map_heading
+from .image import map_image
 from .kv import map_kv
 from .list import map_list
 from .paragraph import map_paragraph
@@ -22,4 +23,5 @@ __all__ = [
     "map_section",
     "map_stack",
     "map_flow",
+    "map_image",
 ]

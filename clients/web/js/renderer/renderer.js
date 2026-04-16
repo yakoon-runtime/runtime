@@ -14,6 +14,7 @@ import "./block/heading.js";
 import "./block/section.js";
 import "./block/stack.js";
 import "./block/flow.js";
+import "./block/image.js";
 
 // inline registrations (side effects)
 import "./inline/text.js";

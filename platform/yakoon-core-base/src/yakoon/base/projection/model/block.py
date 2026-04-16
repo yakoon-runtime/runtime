@@ -195,6 +195,18 @@ class FlowBlock:
         return self.blocks or []
 
 
+@dataclass(frozen=True, slots=True)
+class ImageBlock:
+    type: Literal["image"] = "image"
+    id: str | None = None
+
+    src: str = ""
+    alt: str | None = None
+
+    def children(self):
+        return []
+
+
 Block = (
     TextBlock
     | RuleBlock
@@ -211,4 +223,5 @@ Block = (
     | SectionBlock
     | StackBlock
     | FlowBlock
+    | ImageBlock
 )

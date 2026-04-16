@@ -6,6 +6,7 @@ from .block import (
     FieldsState,
     FlowBlock,
     HeadingBlock,
+    ImageBlock,
     KvBlock,
     KvItemBlock,
     ListBlock,
@@ -89,4 +90,5 @@ __all__ = [
     "SectionBlock",
     "StackBlock",
     "FlowBlock",
+    "ImageBlock",
 ]

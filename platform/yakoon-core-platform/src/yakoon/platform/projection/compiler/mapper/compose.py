@@ -3,6 +3,7 @@ from .block import (
     map_fields,
     map_flow,
     map_heading,
+    map_image,
     map_kv,
     map_list,
     map_paragraph,
@@ -53,5 +54,6 @@ def create_mapper() -> Mapper:
     mapper.register_block("section", map_section)
     mapper.register_block("stack", map_stack)
     mapper.register_block("flow", map_flow)
+    mapper.register_block("image", map_image)
 
     return mapper
