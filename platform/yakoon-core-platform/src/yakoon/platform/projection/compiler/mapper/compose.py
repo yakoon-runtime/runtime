@@ -1,6 +1,7 @@
 from .block import (
     map_actions,
     map_fields,
+    map_flow,
     map_heading,
     map_kv,
     map_list,
@@ -8,6 +9,7 @@ from .block import (
     map_rule,
     map_section,
     map_spacer,
+    map_stack,
 )
 from .core import Mapper
 from .inline import (
@@ -49,5 +51,7 @@ def create_mapper() -> Mapper:
     mapper.register_block("h2", map_heading(2))
     mapper.register_block("h3", map_heading(3))
     mapper.register_block("section", map_section)
+    mapper.register_block("stack", map_stack)
+    mapper.register_block("flow", map_flow)
 
     return mapper

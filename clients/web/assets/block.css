@@ -85,6 +85,24 @@
     background: rgba(0, 0, 0, 0.18);
 }
 
+/* STACK */
+.stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* FLOW */
+.flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.flow>* {
+    flex: 1 1 280px;
+}
+
 /*
 =========================
 = KEY VALUE

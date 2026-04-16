@@ -1,0 +1,10 @@
+from yakoon.base.projection.model import StackBlock
+
+
+def map_stack(mapper, node):
+    blocks = mapper._map_nodes(node.children)
+
+    return StackBlock(
+        id=None,
+        blocks=blocks,
+    )

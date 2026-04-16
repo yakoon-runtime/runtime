@@ -4,6 +4,7 @@ from .block import (
     Block,
     FieldsBlock,
     FieldsState,
+    FlowBlock,
     HeadingBlock,
     KvBlock,
     KvItemBlock,
@@ -14,6 +15,7 @@ from .block import (
     RuleStyle,
     SectionBlock,
     SpacerBlock,
+    StackBlock,
     TableBlock,
     TextBlock,
 )
@@ -85,4 +87,6 @@ __all__ = [
     "FieldsState",
     "ActionBlock",
     "SectionBlock",
+    "StackBlock",
+    "FlowBlock",
 ]

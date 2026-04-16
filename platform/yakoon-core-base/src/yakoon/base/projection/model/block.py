@@ -175,6 +175,26 @@ class SectionBlock:
         return self.blocks or []
 
 
+@dataclass(frozen=True, slots=True)
+class StackBlock:
+    type: Literal["stack"] = "stack"
+    id: str | None = None
+    blocks: list[Block] | None = None
+
+    def children(self):
+        return self.blocks or []
+
+
+@dataclass(frozen=True, slots=True)
+class FlowBlock:
+    type: Literal["flow"] = "flow"
+    id: str | None = None
+    blocks: list[Block] | None = None
+
+    def children(self):
+        return self.blocks or []
+
+
 Block = (
     TextBlock
     | RuleBlock
@@ -189,4 +209,6 @@ Block = (
     | ParagraphBlock
     | HeadingBlock
     | SectionBlock
+    | StackBlock
+    | FlowBlock
 )
