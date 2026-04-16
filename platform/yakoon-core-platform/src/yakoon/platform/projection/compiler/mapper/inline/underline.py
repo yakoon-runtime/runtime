@@ -1,4 +1,4 @@
-from yakoon.base.projection.model.inline import InlineUnderline
+from yakoon.base.projection.model import InlineUnderline
 
 
 def map_underline(mapper, node):

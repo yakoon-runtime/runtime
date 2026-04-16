@@ -53,6 +53,13 @@ class InlineUnderline:
     children: list["Inline"] | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class InlineMark:
+    type: Literal["mark"] = "mark"
+    variant: str | None = None
+    children: list["Inline"] | None = None
+
+
 Inline = (
     InlineText
     | InlineCode
@@ -62,4 +69,5 @@ Inline = (
     | InlineStrong
     | InlineEm
     | InlineUnderline
+    | InlineMark
 )

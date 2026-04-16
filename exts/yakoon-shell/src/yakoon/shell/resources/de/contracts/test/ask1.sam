@@ -1,7 +1,6 @@
 <p>Suche nach <strong>Projekten</strong></p>
 
 Das ist ein <u>Underline</u>
-
 <fields name="project">
   <field
     name="project_name"

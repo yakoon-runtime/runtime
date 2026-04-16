@@ -1,6 +1,12 @@
 <h1>Manual</h1>
 <h2>Title</h2>
 <h3>Part</h3>
+
+<mark type="important">important</mark>
+<mark type="info">info</mark>
+<mark type="success">Erfolg</mark>
+<mark type="error">Fehler</mark>
+
 {%- if state.mode == "shell" -%}
 
 Commands

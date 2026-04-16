@@ -1,4 +1,4 @@
-from yakoon.base.projection.model.inline import InlineStrong
+from yakoon.base.projection.model import InlineStrong
 
 
 def map_strong(mapper, node):

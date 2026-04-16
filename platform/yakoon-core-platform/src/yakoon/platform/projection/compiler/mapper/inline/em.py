@@ -1,4 +1,4 @@
-from yakoon.base.projection.model.inline import InlineEm
+from yakoon.base.projection.model import InlineEm
 
 
 def map_em(mapper, node):

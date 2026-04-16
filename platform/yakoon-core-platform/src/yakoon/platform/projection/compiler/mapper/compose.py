@@ -14,6 +14,7 @@ from .inline import (
     map_code,
     map_em,
     map_link,
+    map_mark,
     map_select,
     map_strong,
     map_underline,
@@ -31,6 +32,7 @@ def create_mapper() -> Mapper:
     mapper.register_inline("em", map_em)
     mapper.register_inline("strong", map_strong)
     mapper.register_inline("u", map_underline)
+    mapper.register_inline("mark", map_mark)
 
     # -------- BLOCKS --------
     mapper.register_block("kv", map_kv)

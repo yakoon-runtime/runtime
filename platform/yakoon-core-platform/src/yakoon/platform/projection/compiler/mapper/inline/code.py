@@ -1,4 +1,4 @@
-from yakoon.base.projection.model.inline import InlineCode
+from yakoon.base.projection.model import InlineCode
 
 
 def map_code(mapper, node):

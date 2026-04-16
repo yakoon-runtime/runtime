@@ -28,9 +28,13 @@ from .inline import (
     Inline,
     InlineCmd,
     InlineCode,
+    InlineEm,
     InlineLink,
+    InlineMark,
     InlineSelect,
+    InlineStrong,
     InlineText,
+    InlineUnderline,
 )
 from .model import (
     Projection,
@@ -59,6 +63,10 @@ __all__ = [
     "InlineLink",
     "InlineCmd",
     "InlineSelect",
+    "InlineEm",
+    "InlineStrong",
+    "InlineUnderline",
+    "InlineMark",
     # .blocks
     "Block",
     "ParagraphBlock",

@@ -1,4 +1,4 @@
-from yakoon.base.projection.model.inline import InlineSelect
+from yakoon.base.projection.model import InlineSelect
 
 
 def map_select(mapper, node):

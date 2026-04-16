@@ -1,4 +1,4 @@
-from yakoon.base.projection.model.inline import InlineLink
+from yakoon.base.projection.model import InlineLink
 
 
 def map_link(mapper, node):

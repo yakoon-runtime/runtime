@@ -1,4 +1,4 @@
-from yakoon.base.projection.model.inline import InlineCmd
+from yakoon.base.projection.model import InlineCmd
 
 
 def map_cmd(mapper, node):

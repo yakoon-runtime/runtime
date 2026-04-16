@@ -1,0 +1,39 @@
+.inline-cmd {
+    cursor: pointer;
+    color: #4da3ff;
+}
+
+.inline-action {}
+
+.inline-code {}
+
+.inline-cmd:hover {
+    text-decoration: underline;
+}
+
+.inline-select {
+    cursor: pointer;
+    background: #eee;
+}
+
+.inline-mark {
+    background: #fff3a0;
+    padding: 0 4px;
+    border-radius: 4px;
+}
+
+.mark-info {
+    background: #dbeafe;
+}
+
+.mark-important {
+    background: #fde68a;
+}
+
+.mark-error {
+    background: #fecaca;
+}
+
+.mark-success {
+    background: #bbf7d0;
+}
