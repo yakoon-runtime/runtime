@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
 
 from yakoon.base.projection import Projection
@@ -7,6 +8,7 @@ from yakoon.base.projection.compiler import ProjectionCompiler
 from yakoon.base.projection.rendering import ProjectionRenderer, RenderContext
 from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime import Container
+from yakoon.platform.projection.compiler.mapper.block.image import resolve_assets
 from yakoon.platform.runtime.sessions import Session
 
 
@@ -20,7 +22,8 @@ class TemplateProjector:
 
     def __init__(
         self,
-        resource: ResourceRef,
+        ref_contract: ResourceRef,
+        ref_asset: ResourceRef,
         session: Session,
         container: Container,
     ) -> None:
@@ -28,8 +31,9 @@ class TemplateProjector:
         self._renderer = container.get(ProjectionRenderer)
         self._compiler = container.get(ProjectionCompiler)
 
+        self._ref_asset = ref_asset
         self._ctx = RenderContext(
-            resource=resource,
+            resource=ref_contract,
             lang=session.lang,
         )
 
@@ -48,5 +52,9 @@ class TemplateProjector:
             raise RuntimeError(
                 "Renderer returned a Projection without id (parser invariant violated)"
             )
+
+        projection = replace(
+            projection, blocks=resolve_assets(projection.blocks, self._ref_asset)
+        )
 
         return projection

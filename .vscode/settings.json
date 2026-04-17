@@ -7,16 +7,17 @@
     "platform/yakoon-core-base/src",
     "platform/yakoon-core-compose/src",
     "platform/yakoon-core-platform/src",
-    // apps
-    "apps/yakoon-crm/src",
-    "apps/yakoon-office/src",
-    "apps/yakoon-playground/src",
-    // exts
-    "exts/yakoon-shell/src",
+    // plugins
+    "plugins/yakoon-crm/src",
+    "plugins/yakoon-office/src",
+    "plugins/yakoon-playground/src",
+    "plugins/yakoon-shell/src",
     // hosts
-    "hosts/yakoon-host-ws/src",
     "hosts/yakoon-host-console/src",
-    "hosts/yakoon-host-kivy/src",
+    // transport
+    "hosts/yakoon-transport-ws/src",
+    // apps
+    "apps/yakoon-app-web/src",
   ],
   "editor.formatOnSave": true,
   "[python]": {

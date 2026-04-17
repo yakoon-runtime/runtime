@@ -12,6 +12,16 @@
             },
         },
         {
+            "name": "Yakoon: Run Web-App",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "yakoon.app_web.run",
+            "console": "integratedTerminal",
+            "env": {
+                "DEV_MODE": "true"
+            },
+        },
+        {
             "name": "Yakoon: Run Host Websocket",
             "type": "debugpy",
             "request": "launch",

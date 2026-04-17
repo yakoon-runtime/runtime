@@ -80,14 +80,21 @@ class Command(ABC):
             raise RuntimeError("Controller has no contracts root defined")
 
         session = self.ctx.session
-        ref = resolve_resource(
+        ref_contract = resolve_resource(
             resources,
             i18n_root=resources.contracts,
             lang=session.lang,
             key=self.key,
         )
 
-        return await projector_service.create(ref, session)
+        ref_asset = resolve_resource(
+            resources,
+            i18n_root=resources.assets,
+            lang=session.lang,
+            key=self.key,
+        )
+
+        return await projector_service.create(ref_contract, ref_asset, session)
 
     @abstractmethod
     def run(self, request: Request):

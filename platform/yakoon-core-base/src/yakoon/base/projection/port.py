@@ -24,4 +24,10 @@ class Projector(Protocol):
 
 
 class ProjectorFactory(Protocol):
-    async def create(self, resource: ResourceRef, session) -> Projector: ...
+
+    async def create(
+        self,
+        ref_contract: ResourceRef,
+        ref_asset: ResourceRef,
+        session,
+    ) -> Projector: ...

@@ -17,11 +17,14 @@ class TemplateProjectorFactory:
 
     async def create(
         self,
-        resource: ResourceRef,
+        ref_contract: ResourceRef,
+        ref_asset: ResourceRef,
         session: Session,
     ) -> TemplateProjector:
+
         return TemplateProjector(
-            resource=resource,
+            ref_contract=ref_contract,
+            ref_asset=ref_asset,
             session=session,
             container=self._container,
         )

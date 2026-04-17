@@ -1,6 +1,8 @@
 
 export function createWS(onProjection) {
-    const ws = new WebSocket("ws://localhost:8765");
+
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+    const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
 
     ws.onopen = () => {
         ws.send(JSON.stringify({ type: "connect" }));

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import PurePosixPath
-from typing import Final
 
 from yakoon.base.resources.resource import ResourceRef, _clean_rel
 
@@ -54,6 +53,8 @@ class ResourceReferences:
     # Contracts / ViewSpecs (formerly templates)
     contracts: str | None = "resources/{lang}/contracts/"
 
+    assets: str | None = "resources/{lang}/assets/"
+
     # Man pages (can be inside contracts or separate; controller decides)
     man: str | None = "resources/{lang}/manuals/"
 
@@ -68,14 +69,8 @@ class ResourceReferences:
         return ResourceReferences(
             self.package,
             self.contracts,
+            self.assets,
             self.man,
             self.workflows,
             self.lookup,
         )
-
-
-# Optional: canonical names so you don't typo "contracts"/"man"/...
-RES_CONTRACTS: Final[str] = "contracts"
-RES_MAN: Final[str] = "man"
-RES_WORKFLOWS: Final[str] = "workflows"
-RES_LOOKUP: Final[str] = "lookup"
