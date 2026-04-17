@@ -9,6 +9,30 @@ A server-driven, event-sourced UI runtime with declarative projection
 „SAM verarbeitet Actions und erzeugt daraus strukturierte Projektionen eines Systemzustands.“
 ===
 
+## 2026-04-17
+**Optimierung wird ein eigener Schritt**
+Nicht nur „wir optimieren später“, sondern:
+Optimierung wird ein eigener, systematischer Schritt – kein Nebenprodukt
+Task: Performance & Optimization:
+1. Asset Delivery
+   - ETag / 304
+   - Cache-Control
+   - optional FileResponse
+2. Large Files
+   - Range Requests
+   - Streaming Verhalten prüfen
+3. Projection Pipeline
+   - Compile Kosten messen
+   - Resolver Kosten prüfen
+4. Transport
+   - WS message size
+   - batching / diffing
+5. Client Rendering
+   - DOM updates
+   - repaint cost
+6. Caching Strategy
+   - asset cache
+   - projection cache
 
 ## 2026-04-14
 **Festgelegte formale Command-Signatur**

@@ -1,3 +1,6 @@
+from yakoon.base.projection.compiler import ResolverContext
+from yakoon.base.projection.model import ImageBlock
+
 from .block import (
     map_actions,
     map_fields,
@@ -24,10 +27,16 @@ from .inline import (
     map_strong,
     map_underline,
 )
+from .resolver import ImageResolver
 
 
-def create_mapper() -> Mapper:
-    mapper = Mapper()
+def create_mapper(ctx: ResolverContext) -> Mapper:
+
+    resolvers = {
+        ImageBlock: ImageResolver(ctx.assets),
+    }
+
+    mapper = Mapper(resolvers)
 
     # -------- INLINE --------
     mapper.register_inline("cmd", map_cmd)

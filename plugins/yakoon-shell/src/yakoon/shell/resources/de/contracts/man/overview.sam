@@ -3,7 +3,7 @@
 <h3>Part</h3>
 
 
-<image src="chart.png" />
+<image ref="chart.png" />
 
 <link href="https://example.com">🔥 Docs</link>
 

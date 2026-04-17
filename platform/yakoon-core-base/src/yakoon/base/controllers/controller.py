@@ -45,7 +45,7 @@ class Controller(ABC):
     """If False, the controller cannot be activated as an interactive context."""
 
     resources: ResourceReferences = ResourceReferences("")
-    """Resource references used by classes for command input, output man pages, workflows etc."""
+    """Resource references used by classes for projections, output man pages, workflows etc."""
 
     def __init__(self) -> None:
         """Initialize a controller with an empty service directory.

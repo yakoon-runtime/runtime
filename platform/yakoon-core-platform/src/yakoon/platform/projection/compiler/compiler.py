@@ -1,4 +1,5 @@
 from yakoon.base.projection import Projection
+from yakoon.base.projection.compiler import ResolverContext
 
 from .ast import build_ast
 from .mapper import create_mapper
@@ -7,12 +8,12 @@ from .tokens import tokenize_text
 
 class TemplateProjectionCompiler:
 
-    def compile(self, text: str) -> Projection:
+    def compile(self, text: str, ctx: ResolverContext) -> Projection:
 
         tokens = tokenize_text(text)
         ast = build_ast(tokens)
 
-        mapper = create_mapper()
+        mapper = create_mapper(ctx)
         projection = mapper.map_projection(ast)
 
         return projection

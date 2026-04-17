@@ -200,7 +200,8 @@ class ImageBlock:
     type: Literal["image"] = "image"
     id: str | None = None
 
-    src: str = ""
+    ref: str = ""
+    src: str | None = None
     alt: str | None = None
 
     def children(self):

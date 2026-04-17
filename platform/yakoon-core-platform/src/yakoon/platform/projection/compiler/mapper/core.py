@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import replace
 
 from yakoon.base.projection import ProjectionHeader
@@ -13,6 +13,7 @@ from yakoon.base.projection.model import (
 )
 
 from ..nodes import ElementNode, Node, TextNode
+from .resolver import BlockResolver
 
 BlockMapper = Callable[["Mapper", ElementNode], Block]
 InlineMapper = Callable[["Mapper", ElementNode], Inline]
@@ -20,9 +21,10 @@ InlineMapper = Callable[["Mapper", ElementNode], Inline]
 
 class Mapper:
 
-    def __init__(self):
+    def __init__(self, resolvers: Mapping[type, BlockResolver]):
         self._block_mappers: dict[str, BlockMapper] = {}
         self._inline_mappers: dict[str, InlineMapper] = {}
+        self._resolvers = resolvers
 
     # -----------------
     # REGISTRATION
@@ -133,7 +135,14 @@ class Mapper:
             if not handler:
                 raise ValueError(f"Unknown block tag: {node.tag}")
 
-            blocks.append(handler(self, node))
+            block = handler(self, node)
+
+            if self._resolvers:
+                resolver = self._resolvers.get(type(block))
+                if resolver:
+                    block = resolver.resolve(block)
+
+            blocks.append(block)
 
         if buffer:
             blocks.append(self._flush_text(buffer))
