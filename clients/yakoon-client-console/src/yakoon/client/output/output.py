@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 
 from yakoon.base.projection.percept.perceptual import PerceptualStream
 from yakoon.base.projection.transport import (
@@ -28,11 +29,12 @@ class ConsoleOutput:
         self.terminal = terminal
         self._nodes: dict[str, Node] = {}
         self._builder = RendererFactory()
+        self.on_finished: Callable | None = None
 
         self._stream = PerceptualStream(
             on_text=self._on_text,
             on_block_finished=self._on_block_finish,
-            on_stream_finished=terminal.notify_ready,
+            on_stream_finished=self._handle_finished,
         )
 
     # ------------------------
@@ -86,6 +88,10 @@ class ConsoleOutput:
         pass
         # self.terminal.write("_on_block_finish " + node_id)
         # self.terminal.new_line()
+
+    def _handle_finished(self):
+        if self.on_finished:
+            self.on_finished()
 
     # ------------------------
     # Stream Loop

@@ -24,8 +24,6 @@ class SSHTerminal(Terminal):
     def data_received(self, data, datatype):
         self._buffer += data
 
-        self.reset_prompt()
-
         while "\n" in self._buffer:
             line, self._buffer = self._buffer.split("\n", 1)
             line = line.strip()
@@ -46,16 +44,5 @@ class SSHTerminal(Terminal):
     def new_line(self):
         self.stdout.write("\n")
 
-    def notify_ready(self):
-        pass  # optional
-
-    # ------------------------
-    # Prompt
-    # ------------------------
-
-    def set_prompt(self, field):
-        # minimal: ignorieren oder später erweitern
-        pass
-
-    def reset_prompt(self):
-        self.write("shell$ ")
+    def set_prompt(self, text: str):
+        self.write(text)

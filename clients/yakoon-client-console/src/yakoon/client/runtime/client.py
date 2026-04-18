@@ -5,9 +5,12 @@ from yakoon.base.runtime import InputEvent
 from yakoon.base.transports import Transport
 
 from ..output import ConsoleOutput
+from ..terminal import Terminal
 
 
 class Client:
+
+    SHELL_PROMPT = "shell$ "
 
     def __init__(self, transport: Transport):
         self.transport = transport
@@ -18,9 +21,7 @@ class Client:
 
         self.query = ProjectionQuery()
 
-    async def run(self, terminal):
-
-        renderer = ConsoleOutput(terminal)
+    async def run(self, terminal: Terminal):
 
         # ------------------------
         # View Handling
@@ -31,10 +32,15 @@ class Client:
             self.query.apply(event)
             await renderer.view(event)
 
-            if not event.is_final():
-                return
-
+        def on_stream_finished():
             self._handle_view_ready(terminal)
+
+        renderer = ConsoleOutput(terminal)
+        renderer.on_finished = on_stream_finished
+
+        # ------------------------
+        # Connection
+        # ------------------------
 
         connection = await self.transport.connect(on_view)
 
@@ -66,8 +72,7 @@ class Client:
             await connection.send_input(event)
 
         terminal.on_input = on_input
-
-        # terminal.reset_prompt()
+        terminal.set_prompt(self.SHELL_PROMPT)
 
         # ------------------------
         # Start
@@ -78,12 +83,12 @@ class Client:
 
     # --------------------------------------------------------
 
-    def _handle_view_ready(self, terminal):
+    def _handle_view_ready(self, terminal: Terminal):
 
         self._reset_form()
+        terminal.set_prompt(self.SHELL_PROMPT)
 
         if not self.query.expects_input():
-            # terminal.reset_prompt()
             return
 
         self._current_fields = self.query.fields()
@@ -91,7 +96,6 @@ class Client:
         self._current_values = {}
 
         if not self._current_fields:
-            # terminal.reset_prompt()
             return
 
         self._show_next_prompt(terminal)

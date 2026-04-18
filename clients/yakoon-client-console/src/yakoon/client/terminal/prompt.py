@@ -17,7 +17,7 @@ class PromptToolkitTerminal(Terminal):
 
     def __init__(self):
 
-        self._prompt = "shell$ "
+        self._prompt = ""
         self._current_field: Field | None = None
         self._has_errors = False
 
@@ -124,9 +124,9 @@ class PromptToolkitTerminal(Terminal):
         if self.app.is_running:
             self.app.exit()
 
-    # --------------------------------------------------------
-    # Terminal API (WICHTIG)
-    # --------------------------------------------------------
+    # ------------------------
+    # Terminal API
+    # ------------------------
 
     def write(self, text: str):
         self.view.buffer.insert_text(text)
@@ -135,8 +135,13 @@ class PromptToolkitTerminal(Terminal):
     def new_line(self):
         self.write("\n")
 
-    def notify_ready(self):
-        pass  # optional / später nutzbar
+    def set_prompt(self, text: str):
+        self._prompt = text
+        self._current_field = None
+        self._has_errors = False
+        self.errors.text = ""
+
+        self.app.invalidate()
 
     # --------------------------------------------------------
     # Input Handling
@@ -161,11 +166,7 @@ class PromptToolkitTerminal(Terminal):
     def add_history(self, command: str):
         self.history.append_string(command)
 
-    # --------------------------------------------------------
-    # Prompt + Errors
-    # --------------------------------------------------------
-
-    def set_prompt(self, field: Field):
+    def set_field_prompt(self, field: Field):
 
         def format_label(field: Field) -> str:
             label = field.title or field.name or ""
@@ -185,14 +186,6 @@ class PromptToolkitTerminal(Terminal):
         self._prompt = label + " "
 
         self._update_errors(field)
-
-        self.app.invalidate()
-
-    def reset_prompt(self):
-        self._prompt = "shell$ "
-        self._current_field = None
-        self._has_errors = False
-        self.errors.text = ""
 
         self.app.invalidate()
 
