@@ -18,8 +18,6 @@ class TextBlock:
     text: str | list[Inline] = ""
     style: str | None = None
 
-    __stream_fields__ = ("text",)
-
     def children(self) -> tuple[Block, ...]:
         return ()
 
@@ -86,8 +84,6 @@ class ListItemBlock:
     text: str | list[Inline] = ""
     blocks: list[Block] | None = None
 
-    __stream_fields__ = ("text",)
-
     def children(self):
         return tuple(self.blocks or ())
 
@@ -110,8 +106,6 @@ class KvItemBlock:
 
     key: str = ""
     value: list[Inline] = field(default_factory=list)
-
-    __stream_fields__ = ("value",)
 
     def children(self) -> tuple[Block, ...]:
         return ()

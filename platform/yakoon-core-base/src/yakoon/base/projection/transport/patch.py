@@ -16,19 +16,12 @@ class PatchAppendStructure:
 
 
 @dataclass(frozen=True, slots=True)
-class PatchAppendText:
-    op: Literal["append_text"] = "append_text"
-    block_id: str = ""
-    key: str = "text"
-    text: str = ""
-
-
-@dataclass(frozen=True, slots=True)
 class PatchFinishNode:
     block_id: str
+    op: Literal["finish_node"] = "finish_node"
 
 
-PatchOp = PatchReset | PatchAppendStructure | PatchAppendText | PatchFinishNode
+PatchOp = PatchReset | PatchAppendStructure | PatchFinishNode
 
 
 @dataclass(frozen=True, slots=True)

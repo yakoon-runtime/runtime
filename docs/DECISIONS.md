@@ -8,6 +8,20 @@
 A server-driven, event-sourced UI runtime with declarative projection
 „SAM verarbeitet Actions und erzeugt daraus strukturierte Projektionen eines Systemzustands.“
 ===
+## 2026-04-17
+**Langfristig möchte ich:**
+clients/
+  web/
+  console/
+  tauri/
+  ssh/
+apps/
+  yakoon-app-web
+  yakoon-app-console
+  yakoon-app-ssh
+platform/
+  runtime
+  transport
 
 ## 2026-04-17
 **Optimierung wird ein eigener Schritt**

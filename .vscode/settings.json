@@ -12,12 +12,11 @@
     "plugins/yakoon-office/src",
     "plugins/yakoon-playground/src",
     "plugins/yakoon-shell/src",
-    // hosts
-    "hosts/yakoon-host-console/src",
     // transport
-    "hosts/yakoon-transport-ws/src",
+    "transport/yakoon-transport-ws/src",
     // apps
     "apps/yakoon-app-web/src",
+    "apps/yakoon-app-console/src",
   ],
   "editor.formatOnSave": true,
   "[python]": {

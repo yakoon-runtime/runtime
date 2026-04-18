@@ -1,7 +1,6 @@
 from yakoon.base.projection import ProjectionEvent
 from yakoon.base.projection.transport import (
     PatchAppendStructure,
-    PatchAppendText,
     PatchFinishNode,
     PatchReset,
     ProjectionState,
@@ -75,13 +74,6 @@ def serialize_op(op):
         return {
             "op": "append_structure",
             "nodes": [serialize_node(n) for n in op.nodes],
-        }
-    if isinstance(op, PatchAppendText):
-        return {
-            "op": "append_text",
-            "block_id": op.block_id,
-            "key": op.key,
-            "text": op.text,
         }
     if isinstance(op, PatchFinishNode):
         return {

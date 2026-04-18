@@ -20,7 +20,7 @@ class TextBlockLike(Protocol):
 
 class StreamLabel(Label):
     """
-    Behavior-only: supports PatchAppendText targets.
+    Behavior-only: supports  targets.
     Styling stays in KV.
     """
 

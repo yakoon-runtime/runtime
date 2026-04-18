@@ -64,6 +64,7 @@ export class Renderer {
         }
 
         if (op.op === "append_structure") {
+            console.log("append_structure");
             for (const n of op.nodes) {
                 this.nodes[n.id] = n;
 
@@ -74,11 +75,6 @@ export class Renderer {
                     this.children[n.parent].push(n.id);
                 }
             }
-        }
-
-        if (op.op === "append_text") {
-            const node = this.nodes[op.block_id];
-            node.props[op.key] = op.text;
         }
     }
 

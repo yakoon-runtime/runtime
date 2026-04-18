@@ -21,7 +21,7 @@ pip install \
   -e plugins/yakoon-playground \
   -e plugins/yakoon-shell \
 
-
 # apps
 pip install \
+  -e apps/yakoon-app-console \
   -e apps/yakoon-app-web \

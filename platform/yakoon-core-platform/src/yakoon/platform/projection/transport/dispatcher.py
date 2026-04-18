@@ -6,22 +6,11 @@ from dataclasses import dataclass
 from yakoon.base.projection.model import Block, Projection
 from yakoon.base.projection.transport import (
     PatchAppendStructure,
-    PatchAppendText,
     PatchFinishNode,
 )
 from yakoon.base.runtime import InputContext
 from yakoon.platform.projection import ViewEmitter, ViewTraversal
 from yakoon.platform.runtime import Session
-
-# ---------------------------------------------------------
-# HARD transport limit (NOT UX!)
-# ---------------------------------------------------------
-MAX_TEXT_PAYLOAD = 4096
-
-
-def split_payload(text: str, max_size: int):
-    for i in range(0, len(text), max_size):
-        yield text[i : i + max_size]
 
 
 # ---------------------------------------------------------
@@ -200,7 +189,7 @@ class EventProjectionDispatcher:
         parent_depth = stream.node_depth.get(parent, -1)
         depth = parent_depth + 1
 
-        node, children, text_fields = self._traversal.prepare_block(
+        node, children = self._traversal.prepare_block(
             block,
             parent=parent,
             depth=depth,
@@ -224,31 +213,6 @@ class EventProjectionDispatcher:
                 block=child,
                 parent_id=node.id,
             )
-
-        # -------------------------------------------------
-        # TEXT
-        # -------------------------------------------------
-        for key, value in text_fields:
-            if not value:
-                continue
-
-            if len(value) <= MAX_TEXT_PAYLOAD:
-                stream.event_queue.append(
-                    PatchAppendText(
-                        block_id=node.id,
-                        key=key,
-                        text=value,
-                    )
-                )
-            else:
-                for chunk in split_payload(value, MAX_TEXT_PAYLOAD):
-                    stream.event_queue.append(
-                        PatchAppendText(
-                            block_id=node.id,
-                            key=key,
-                            text=chunk,
-                        )
-                    )
 
         # -------------------------------------------------
         # FINISH
@@ -295,14 +259,6 @@ class EventProjectionDispatcher:
                     continue
 
                 stream.published_nodes.add(node.id)
-                ops.append(op)
-                continue
-
-            if isinstance(op, PatchAppendText):
-                if op.block_id not in stream.published_nodes:
-                    remaining.append(op)
-                    continue
-
                 ops.append(op)
                 continue
 

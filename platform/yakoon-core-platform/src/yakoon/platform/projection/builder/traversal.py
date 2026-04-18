@@ -30,11 +30,9 @@ class ViewTraversal:
     def prepare_block(self, block: Block, *, parent: str, depth: int):
         node = self.build_node(block, parent, depth)
 
-        # eager extraction (keine doppelte iteration!)
         children = list(block.children())
-        text_fields = list(self.iter_text_fields(block))
 
-        return node, children, text_fields
+        return node, children
 
     # ---------------------------------------------------------
 
@@ -49,11 +47,3 @@ class ViewTraversal:
             parent=parent,
             depth=depth,
         )
-
-    # ---------------------------------------------------------
-
-    def iter_text_fields(self, block: Block):
-        for key in getattr(block, "__stream_fields__", ()):
-            value = getattr(block, key)
-            if isinstance(value, str) and value:
-                yield key, value

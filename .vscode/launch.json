@@ -2,60 +2,20 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Yakoon: Run Host Console",
+            "name": "Yakoon: App Console",
             "type": "debugpy",
             "request": "launch",
-            "module": "yakoon.console.app",
+            "module": "yakoon.app_console.main",
             "console": "integratedTerminal",
             "env": {
                 "DEV_MODE": "true"
             },
         },
         {
-            "name": "Yakoon: Run Web-App",
+            "name": "Yakoon: App Web",
             "type": "debugpy",
             "request": "launch",
-            "module": "yakoon.app_web.run",
-            "console": "integratedTerminal",
-            "env": {
-                "DEV_MODE": "true"
-            },
-        },
-        {
-            "name": "Yakoon: Run Host Websocket",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "yakoon.host_ws.app",
-            "console": "integratedTerminal",
-            "env": {
-                "DEV_MODE": "true"
-            },
-        },
-        {
-            "name": "Yakoon: Run Kivy",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "yakoon.kivy.app",
-            "console": "integratedTerminal",
-            "env": {
-                "DEV_MODE": "true"
-            },
-        },
-        {
-            "name": "Yakoon: Run Telnet",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "yakoon.saas.bootstrap.apps.telnet.run",
-            "console": "integratedTerminal",
-            "env": {
-                "DEV_MODE": "true"
-            },
-        },
-        {
-            "name": "Yakoon: Run WebAPI",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "yakoon.saas.bootstrap.apps.webapi.run",
+            "module": "yakoon.app_web.main",
             "console": "integratedTerminal",
             "env": {
                 "DEV_MODE": "true"

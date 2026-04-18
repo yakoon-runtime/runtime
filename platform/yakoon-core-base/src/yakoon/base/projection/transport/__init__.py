@@ -3,7 +3,6 @@ from .node import Node
 from .patch import (
     Patch,
     PatchAppendStructure,
-    PatchAppendText,
     PatchFinishNode,
     PatchOp,
     PatchReset,
@@ -17,7 +16,6 @@ __all__ = [
     "Node",
     # .patch
     "PatchReset",
-    "PatchAppendText",
     "PatchAppendStructure",
     "PatchFinishNode",
     "PatchOp",

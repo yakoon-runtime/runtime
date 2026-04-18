@@ -29,11 +29,11 @@ class PerceptualStream:
 
     # -------------------------------------------------
 
-    def __init__(self, on_text, on_block_finish=None, on_stream_finish=None):
+    def __init__(self, on_text, on_block_finished=None, on_stream_finished=None):
 
         self._on_text = on_text
-        self._on_block_finish = on_block_finish
-        self._on_stream_finish = on_stream_finish
+        self._on_block_finished = on_block_finished
+        self._on_stream_finished = on_stream_finished
 
         self._events: deque[StreamEvent] = deque()
 
@@ -178,15 +178,15 @@ class PerceptualStream:
             self._reset_internal()
             self._first = True
 
-            if self._on_stream_finish:
-                self._on_stream_finish()
+            if self._on_stream_finished:
+                self._on_stream_finished()
 
     # -------------------------------------------------
 
     def _handle_finish(self, event: FinishEvent):
 
-        if self._on_block_finish:
-            self._on_block_finish(event.node)
+        if self._on_block_finished:
+            self._on_block_finished(event.node)
 
         self._events.popleft()
 

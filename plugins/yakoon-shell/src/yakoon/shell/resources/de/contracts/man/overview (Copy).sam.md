@@ -1,0 +1,50 @@
+<h1>🎯 Manual</h1>
+<h2>❓ Title</h2>
+<h3>Part</h3>
+
+
+<image ref="chart.png" />
+
+<link href="https://example.com">🔥 Docs</link>
+
+<section>
+  <mark type="important">important</mark><br/>
+  <mark type="info">info</mark><br/>
+</section>
+
+<section>
+  <mark type="success">Erfolg</mark>
+  <mark type="error">Fehler</mark>
+</section>
+
+<rule style="normal"/>
+<rule style="subtle"/>
+<rule style="strong"/>
+
+{%- if state.mode == "shell" -%}
+
+Commands
+<list>
+  {% for c in state.shell_commands %}
+  <item><cmd command="{{ c.key }}">{{ c.key }}</cmd></item>
+  {% endfor %}
+</list>
+
+Available programs
+<list>
+  {% for p in state.controllers %}
+  <item><cmd command="use {{ p.id }}">{{ p.id }}</cmd></item>
+  {% endfor %}
+</list>
+
+{% elif state.mode == "program" %}
+
+Commands
+
+<list>
+  {% for c in state.commands %}
+  <item><cmd command="{{ c.key }}">{{ c.key }}</cmd></item>
+  {% endfor %}
+</list>
+
+{% endif %}
