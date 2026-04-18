@@ -21,7 +21,12 @@ pip install \
   -e plugins/yakoon-playground \
   -e plugins/yakoon-shell \
 
+# clients
+pip install \
+  -e clients/yakoon-client-console \
+
 # apps
 pip install \
   -e apps/yakoon-app-console \
+  -e apps/yakoon-app-ssh \
   -e apps/yakoon-app-web \

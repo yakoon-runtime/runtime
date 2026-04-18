@@ -14,8 +14,11 @@
     "plugins/yakoon-shell/src",
     // transport
     "transport/yakoon-transport-ws/src",
+    // clients
+    "apps/yakoon-client-console/src",
     // apps
     "apps/yakoon-app-web/src",
+    "apps/yakoon-app-ssh/src",
     "apps/yakoon-app-console/src",
   ],
   "editor.formatOnSave": true,
