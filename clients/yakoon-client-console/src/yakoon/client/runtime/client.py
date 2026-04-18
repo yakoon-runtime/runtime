@@ -50,6 +50,9 @@ class Client:
 
         async def on_input(text: str):
 
+            if not text:
+                terminal.set_prompt(self.SHELL_PROMPT)
+
             if not self._current_fields:
                 await connection.send_input(InputEvent.from_raw(text))
                 return

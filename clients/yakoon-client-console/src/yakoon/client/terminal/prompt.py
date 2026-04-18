@@ -82,8 +82,7 @@ class PromptToolkitTerminal(Terminal):
 
         @kb.add("c-c")
         def _(event):
-            if self.on_cancel:
-                asyncio.create_task(self.on_cancel())
+            asyncio.create_task(self.stop())
 
         # ------------------------
         # Layout (FIXED)
@@ -105,17 +104,9 @@ class PromptToolkitTerminal(Terminal):
             key_bindings=kb,
         )
 
-    # --------------------------------------------------------
-    # Lifecycle
-    # --------------------------------------------------------
-
-    # wird vom Client gesetzt
-    async def on_input(self, text):
-        pass
-
-    # wird vom Client gesetzt
-    async def on_chanel(self, text):
-        pass
+    # ------------------------
+    # Terminal API
+    # ------------------------
 
     async def run(self):
         await self.app.run_async()
@@ -124,9 +115,9 @@ class PromptToolkitTerminal(Terminal):
         if self.app.is_running:
             self.app.exit()
 
-    # ------------------------
-    # Terminal API
-    # ------------------------
+    async def on_input(self, text):
+        """Wird vom Client gesetzt"""
+        pass
 
     def write(self, text: str):
         self.view.buffer.insert_text(text)

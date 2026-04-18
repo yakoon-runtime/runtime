@@ -15,9 +15,8 @@ class SimpleTerminal(Terminal):
 
             # Input lesen
             line = await asyncio.to_thread(sys.stdin.readline)
-            if not line.strip():
-                continue
 
+            line = line.strip()
             await self.on_input(line.strip())
 
     async def stop(self):

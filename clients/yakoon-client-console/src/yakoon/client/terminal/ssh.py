@@ -8,7 +8,6 @@ class SSHTerminal(Terminal):
     def __init__(self, stdin, stdout):
         self.stdin = stdin
         self.stdout = stdout
-        self.on_input = None  # wird vom Client gesetzt
 
         self._running = True
         self._buffer = ""
@@ -16,27 +15,33 @@ class SSHTerminal(Terminal):
     # ------------------------
     # Lifecycle
     # ------------------------
-    async def run(self):
-        # nichts aktiv lesen – SSH pusht Daten
-        # self.reset_prompt()
-        await asyncio.Future()  # block forever
 
     def data_received(self, data, datatype):
         self._buffer += data
 
+        # Input lesen
         while "\n" in self._buffer:
             line, self._buffer = self._buffer.split("\n", 1)
+
             line = line.strip()
-
-            if self.on_input:
-                asyncio.create_task(self.on_input(line))
-
-    async def stop(self):
-        self._running = False
+            asyncio.create_task(self.on_input(line))
 
     # ------------------------
     # Terminal API
     # ------------------------
+
+    async def run(self):
+        # nichts aktiv lesen – SSH pusht Daten
+        await asyncio.Future()  # block forever
+
+    async def stop(self):
+        self._running = False
+        self.stdout.exit(0)
+        self.stdout.close()
+
+    async def on_input(self, text):
+        """Wird vom Client gesetzt"""
+        pass
 
     def write(self, text: str):
         self.stdout.write(text)
