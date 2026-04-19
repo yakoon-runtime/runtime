@@ -1,22 +1,24 @@
 import asyncio
 from collections.abc import Awaitable, Callable
 
+from yakoon.base.runtime.input import InputEvent
+
 
 class ClientConnection:
 
     def __init__(
         self,
-        send: Callable[[object], Awaitable[None]],
-        send_input: Callable[[object], Awaitable[None]],
+        emit: Callable[[object], Awaitable[None]],
+        dispatch: Callable[[InputEvent], Awaitable[None]],
     ):
-        self._send = send
-        self._send_input = send_input
+        self._emit = emit
+        self._dispatch = dispatch
 
-    async def send(self, event) -> None:
-        await self._send(event)
+    async def emit(self, event) -> None:
+        await self._emit(event)
 
-    async def send_input(self, event):
-        await self._send_input(event)
+    async def dispatch(self, event):
+        await self._dispatch(event)
 
     def queue(self, event):
-        asyncio.create_task(self.send(event))
+        asyncio.create_task(self.emit(event))

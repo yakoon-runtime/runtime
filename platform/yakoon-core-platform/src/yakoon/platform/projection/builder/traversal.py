@@ -1,5 +1,5 @@
 from yakoon.base.projection.model import Block
-from yakoon.base.projection.transport import Node
+from yakoon.base.projection.transfer import Node
 
 
 class ViewTraversal:

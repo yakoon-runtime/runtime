@@ -3,14 +3,10 @@ import asyncio
 from yakoon.base.projection import ProjectionEvent, ProjectionQuery
 from yakoon.base.runtime import InputEvent
 from yakoon.base.transport import Transport
-
-from ..output import ConsoleOutput
-from ..terminal import Terminal
+from yakoon.client.output import ConsoleOutput
 
 
 class Client:
-
-    SHELL_PROMPT = "shell$ "
 
     def __init__(self, transport: Transport):
         self.transport = transport
@@ -21,7 +17,9 @@ class Client:
 
         self.query = ProjectionQuery()
 
-    async def run(self, terminal: Terminal):
+    async def run(self, terminal):
+
+        renderer = ConsoleOutput(terminal)
 
         # ------------------------
         # View Handling
@@ -32,26 +30,18 @@ class Client:
             self.query.apply(event)
             await renderer.view(event)
 
-        def on_stream_finished():
+            if not event.is_final():
+                return
+
             self._handle_view_ready(terminal)
 
-        renderer = ConsoleOutput(terminal)
-        renderer.on_finished = on_stream_finished
-
-        # ------------------------
-        # Connection
-        # ------------------------
-
-        connection = await self.transport.connect(on_view)
+        connection = await self.transport.connect(on_emit=on_view)
 
         # ------------------------
         # Input Handling
         # ------------------------
 
         async def on_input(text: str):
-
-            if not text:
-                terminal.set_prompt(self.SHELL_PROMPT)
 
             if not self._current_fields:
                 await connection.dispatch(InputEvent.from_raw(text))
@@ -75,7 +65,6 @@ class Client:
             await connection.dispatch(event)
 
         terminal.on_input = on_input
-        terminal.set_prompt(self.SHELL_PROMPT)
 
         # ------------------------
         # Start
@@ -86,12 +75,12 @@ class Client:
 
     # --------------------------------------------------------
 
-    def _handle_view_ready(self, terminal: Terminal):
+    def _handle_view_ready(self, terminal):
 
         self._reset_form()
-        terminal.set_prompt(self.SHELL_PROMPT)
 
         if not self.query.expects_input():
+            # terminal.reset_prompt()
             return
 
         self._current_fields = self.query.fields()
@@ -99,6 +88,7 @@ class Client:
         self._current_values = {}
 
         if not self._current_fields:
+            # terminal.reset_prompt()
             return
 
         self._show_next_prompt(terminal)

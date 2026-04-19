@@ -1,12 +1,12 @@
 import json
 
 from yakoon.base.clients import ClientConnection
-from yakoon.base.projection.model.serialize import serialize_event
+from yakoon.base.projection.wire import serialize_event
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input.context import InputContext
 
 
-class WebSocketTransport:
+class WebSocketServerTransport:
 
     def __init__(self, host):
         self._host = host
@@ -30,8 +30,8 @@ class WebSocketTransport:
             await self._host.receive_input(connection, event)
 
         connection = ClientConnection(
-            send=send,
-            send_input=send_input,
+            emit=send,
+            dispatch=send_input,
         )
 
         # Runtime verbinden
@@ -52,7 +52,7 @@ class WebSocketTransport:
 
                     if data.get("type") == "input":
                         event = map_to_input_event(data)
-                        await connection.send_input(event)
+                        await connection.dispatch(event)
 
             finally:
                 await self._host.disconnect(connection)

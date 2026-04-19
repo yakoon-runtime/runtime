@@ -17,7 +17,7 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.projection.transport import Output
+from yakoon.base.projection.transfer import Output
 from yakoon.base.runtime import Container, InputEvent
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (

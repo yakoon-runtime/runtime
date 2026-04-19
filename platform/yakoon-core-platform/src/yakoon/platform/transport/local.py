@@ -22,8 +22,8 @@ class LocalTransport:
             await self._host.receive_input(connection, event)
 
         connection = ClientConnection(
-            send=on_emit,
-            send_input=send_input,
+            emit=on_emit,
+            dispatch=send_input,
         )
 
         await self._host.connect(

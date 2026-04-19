@@ -21,7 +21,7 @@ from yakoon.base.projection.compiler import ProjectionCompiler
 from yakoon.base.projection.model import FieldType
 from yakoon.base.projection.percept import ProjectionDispatcher
 from yakoon.base.projection.rendering import ProjectionRenderer, RenderEngine
-from yakoon.base.projection.transport import Output
+from yakoon.base.projection.transfer import Output
 from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime import Container
 from yakoon.base.runtime.sessions import SessionStore

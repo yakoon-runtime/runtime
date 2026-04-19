@@ -6,7 +6,7 @@ import asyncio
 from collections.abc import Callable
 
 from yakoon.base.projection.percept.perceptual import PerceptualStream
-from yakoon.base.projection.transport import (
+from yakoon.base.projection.transfer import (
     PatchAppendStructure,
     PatchFinishNode,
     PatchReset,

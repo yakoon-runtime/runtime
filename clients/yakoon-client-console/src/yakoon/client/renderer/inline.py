@@ -13,62 +13,62 @@ def render_inline(inlines):
 
     for inline in inlines:
 
-        t = inline.type
+        t = _get(inline, "type")
 
         # ------------------------
         # TEXT
         # ------------------------
         if t == "text":
-            parts.append(inline.text)
+            parts.append(_get(inline, "text", ""))
 
         # ------------------------
         # CODE
         # ------------------------
         elif t == "code":
-            inner = render_inline(inline.children or [])
+            inner = render_inline(_get(inline, "children") or [])
             parts.append(f"`{inner}`")
 
         # ------------------------
         # LINK
         # ------------------------
         elif t == "link":
-            label = render_inline(inline.children or [])
-            parts.append(f"{label} ({inline.href})")
+            label = render_inline(_get(inline, "children") or [])
+            parts.append(f"{label} ({_get(inline, 'href')})")
 
         # ------------------------
         # CMD
         # ------------------------
         elif t == "cmd":
-            label = render_inline(inline.children or [])
+            label = render_inline(_get(inline, "children") or [])
             parts.append(f"{label}")
 
         # ------------------------
         # STRONG
         # ------------------------
         elif t == "strong":
-            inner = render_inline(inline.children or [])
+            inner = render_inline(_get(inline, "children") or [])
             parts.append(f"*{inner}*")
 
         # ------------------------
         # EM
         # ------------------------
         elif t == "em":
-            inner = render_inline(inline.children or [])
+            inner = render_inline(_get(inline, "children") or [])
             parts.append(f"_{inner}_")
 
         # ------------------------
         # UNDERLINE
         # ------------------------
         elif t == "underline":
-            inner = render_inline(inline.children or [])
+            inner = render_inline(_get(inline, "children") or [])
             parts.append(inner)  # Terminal kann kein echtes underline
 
         # ------------------------
         # MARK
         # ------------------------
         elif t == "mark":
-            inner = render_inline(inline.children or [])
-            variant = inline.variant or ""
+            inner = render_inline(_get(inline, "children") or [])
+            variant = _get(inline, "variant") or ""
 
             if variant == "important":
                 parts.append(f"[!] {inner}")
@@ -83,7 +83,7 @@ def render_inline(inlines):
         # SELECT
         # ------------------------
         elif t == "select":
-            inner = render_inline(inline.children or [])
+            inner = render_inline(_get(inline, "children") or [])
             parts.append(inner)
 
         # ------------------------
@@ -99,3 +99,9 @@ def render_inline(inlines):
             parts.append(f"[{t}]")
 
     return "".join(parts)
+
+
+def _get(obj, key, default=None):
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)

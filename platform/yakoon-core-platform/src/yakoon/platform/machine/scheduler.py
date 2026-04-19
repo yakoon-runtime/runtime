@@ -5,7 +5,7 @@ from collections import deque
 
 from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.flow.primitives import Control
-from yakoon.base.projection.transport import Output
+from yakoon.base.projection.transfer import Output
 from yakoon.base.runtime.input.event import InputEvent
 from yakoon.platform.flow import Flow, FlowKind
 from yakoon.platform.machine import CommandEngine

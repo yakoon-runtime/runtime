@@ -1,5 +1,5 @@
 from yakoon.base.projection import ProjectionEvent
-from yakoon.base.projection.transport import (
+from yakoon.base.projection.transfer import (
     PatchAppendStructure,
     PatchFinishNode,
     PatchReset,
@@ -12,16 +12,16 @@ def serialize_event(event: ProjectionEvent):
     document = {
         "id": event.id,
         "job": event.job_id,
-        "header": serialize_header(event.header),
-        "context": serialize_context(event.ctx),
-        "state": serialize_state(event.state),
-        "patch": serialize_patch(event.patch),
+        "header": _serialize_header(event.header),
+        "context": _serialize_context(event.ctx),
+        "state": _serialize_state(event.state),
+        "patch": _serialize_patch(event.patch),
         "final": event.patch.final,
     }
     return document
 
 
-def serialize_context(context: InputContext | None) -> dict | None:
+def _serialize_context(context: InputContext | None) -> dict | None:
     if context is None:
         return None
 
@@ -32,7 +32,7 @@ def serialize_context(context: InputContext | None) -> dict | None:
     return data or None
 
 
-def serialize_state(state: ProjectionState | None) -> dict | None:
+def _serialize_state(state: ProjectionState | None) -> dict | None:
     if state is None:
         return None
 
@@ -45,7 +45,7 @@ def serialize_state(state: ProjectionState | None) -> dict | None:
     return data or None
 
 
-def serialize_header(header):
+def _serialize_header(header):
     if not header:
         return None
 
@@ -58,7 +58,7 @@ def serialize_header(header):
     }
 
 
-def serialize_patch(patch):
+def _serialize_patch(patch):
     return {
         "ops": [serialize_op(op) for op in patch.ops],
         "final": patch.final,
@@ -121,6 +121,8 @@ def to_json_safe(value):
     # Inline (dataclass!)
     if hasattr(value, "__dataclass_fields__"):
         result = {}
+
+        result["type"] = value.__class__.__name__.replace("Inline", "").lower()
 
         for field in value.__dataclass_fields__:
             result[field] = to_json_safe(getattr(value, field))

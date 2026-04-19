@@ -43,7 +43,7 @@ class SessionBus:
 
         for client in self._clients:
             try:
-                await client.send(event)
+                await client.emit(event)
             except Exception as e:
                 print(e)
                 dead.append(client)

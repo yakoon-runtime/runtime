@@ -11,7 +11,7 @@ from yakoon.base.projection import (
     ProjectionEvent,
     ProjectionState,
 )
-from yakoon.base.transports import IO
+from yakoon.base.transport import IO
 from yakoon.platform.flow import Flow
 from yakoon.platform.runtime.trace import ExecutionTrace
 

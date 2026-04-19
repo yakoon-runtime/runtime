@@ -4,7 +4,7 @@ import time
 from dataclasses import dataclass
 
 from yakoon.base.projection.model import Block, Projection
-from yakoon.base.projection.transport import (
+from yakoon.base.projection.transfer import (
     PatchAppendStructure,
     PatchFinishNode,
 )

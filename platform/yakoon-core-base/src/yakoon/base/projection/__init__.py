@@ -1,7 +1,7 @@
 from .model import Projection, ProjectionHeader, ProjectionMeta
 from .port import Projector, ProjectorFactory
 from .query import ProjectionQuery
-from .transport import ProjectionEvent, ProjectionState
+from .transfer import ProjectionEvent, ProjectionState
 
 __all__ = [
     # .projection

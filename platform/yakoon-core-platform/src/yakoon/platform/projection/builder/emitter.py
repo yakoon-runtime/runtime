@@ -1,5 +1,5 @@
 from yakoon.base.projection import ProjectionEvent, ProjectionHeader
-from yakoon.base.projection.transport import Patch, PatchOp, PatchReset
+from yakoon.base.projection.transfer import Patch, PatchOp, PatchReset
 from yakoon.base.runtime import InputContext
 
 
