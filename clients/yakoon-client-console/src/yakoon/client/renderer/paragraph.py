@@ -8,5 +8,4 @@ class ParagraphRenderer(BaseRenderer):
         self.node = node
 
     def render(self) -> str:
-        value = self.node.props.get("text") or []
-        return render_inline(value) + "\n"
+        return render_inline(self.node.props["text"]) + "\n"

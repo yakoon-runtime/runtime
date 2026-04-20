@@ -8,8 +8,8 @@ class HeadingRenderer(BaseRenderer):
         self.node = node
 
     def render(self) -> str:
-        level = self.node.props.get("level", 1)
-        text = render_inline(self.node.props.get("text") or [])
+        level = self.node.props["level"]
+        text = render_inline(self.node.props["text"])
 
         prefix = "#" * level
         return f"{prefix} {text}\n"
