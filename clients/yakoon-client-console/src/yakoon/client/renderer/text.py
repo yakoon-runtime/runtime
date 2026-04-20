@@ -1,5 +1,5 @@
 from .base import BaseRenderer
-from .inline import get_inline_text
+from .inline import render_inline
 
 
 class TextRenderer(BaseRenderer):
@@ -9,4 +9,4 @@ class TextRenderer(BaseRenderer):
 
     def render(self) -> str:
         value = self.node.props.get("text")
-        return get_inline_text(value) + "\n"
+        return render_inline(value) + "\n"

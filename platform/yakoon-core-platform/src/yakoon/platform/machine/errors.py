@@ -3,6 +3,7 @@ from __future__ import annotations
 from yakoon.base.flow.primitives import create_projection
 from yakoon.base.projection.model import (
     ErrorKind,
+    InlineText,
     Projection,
     Role,
     TextBlock,
@@ -74,7 +75,7 @@ def _p_text(
         error_code=error_code,
         blocks=[
             TextBlock(
-                text=text,
+                text=[InlineText("text", text)],
             )
         ],
     )

@@ -29,5 +29,4 @@ def map_list_item(mapper, node):
         type="list_item",
         id=None,
         text=inline,
-        blocks=None,
     )
