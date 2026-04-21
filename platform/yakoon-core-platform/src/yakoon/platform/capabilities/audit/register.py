@@ -30,6 +30,5 @@ def register(container: Container) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        controllers=[],
         public_ports=public_ports,
     )

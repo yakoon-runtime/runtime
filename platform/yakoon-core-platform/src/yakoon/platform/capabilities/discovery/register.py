@@ -9,7 +9,7 @@ from yakoon.base.capabilities.discovery import (
 from yakoon.base.plugins import ModuleExport, ModuleMeta
 from yakoon.base.runtime import Container
 
-from .controllers import DiscoveryController
+from .app import DiscoveryApplication
 from .services import (
     DefaultDiscoveryService,
     DefaultLookupCandidateStoreService,
@@ -49,6 +49,6 @@ def register(container: Container) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        controllers=[DiscoveryController],
+        app=DiscoveryApplication,
         public_ports=public_ports,
     )

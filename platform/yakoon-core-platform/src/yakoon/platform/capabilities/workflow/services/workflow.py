@@ -11,7 +11,6 @@ from yakoon.base.capabilities.workflow import (
     WorkflowRuntime,
     WorkflowStatus,
 )
-from yakoon.base.catalogs import ControllerRegistry
 from yakoon.base.controllers import resolve_resource
 from yakoon.base.dispatch import CommandQueue
 from yakoon.base.resources import ResourceLoader
@@ -38,7 +37,7 @@ class DefaultWorkflowService:
     # ---- loading (no caching) ----
 
     def get_def(self, controller_id: str, command_key: str) -> WorkflowDef:
-        catalog = self.container.get(ControllerRegistry)
+        catalog = self.container.get(ControllerQuery)
         info = catalog.get(controller_id)
         if not info:
             raise RuntimeError("ControllerInfo cannot be None.")

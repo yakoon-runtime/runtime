@@ -4,7 +4,6 @@ from yakoon.base.capabilities.workflow import WorkflowCompiler, WorkflowService
 from yakoon.base.plugins import ModuleExport, ModuleMeta
 from yakoon.base.runtime import Container
 
-from .controllers import WorkflowController
 from .services import DefaultWorkflowCompileService, DefaultWorkflowService
 
 meta = ModuleMeta(
@@ -33,6 +32,6 @@ def register(container: Container) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        controllers=[WorkflowController],
+        # controllers=[WorkflowController],
         public_ports=public_ports,
     )

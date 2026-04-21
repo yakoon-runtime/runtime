@@ -10,10 +10,7 @@ from yakoon.base.capabilities.discovery import (
     NoMatch,
     Resolved,
 )
-from yakoon.base.catalogs import (
-    CommandRegistry,
-    ControllerRegistry,
-)
+from yakoon.base.catalogs import CommandQuery
 from yakoon.base.commands import Request
 from yakoon.base.controllers import resolve_resource
 from yakoon.base.resources import ResourceLoader
@@ -85,11 +82,11 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         return head, tail
 
     def _resolve_owner_ids(self, session: Session) -> list[str]:
-        active_id = session.get_active_controller()
+        active_id = session.get_active_app()
         if not active_id:
             return []
 
-        commands = self._services.get(CommandRegistry)
+        commands = self._services.get(CommandQuery)
         resolve_space = commands.for_resolve_context(active_id)
 
         owner_ids: list[str] = []
@@ -102,7 +99,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         return owner_ids
 
     def _load_lookup_text(self, session: Session, owner_id: str) -> str | None:
-        controllers = self._services.get(ControllerRegistry)
+        controllers = self._services.get(ControllerQuery)
         loader = self._services.get(ResourceLoader)
 
         ctrl = controllers.get(owner_id)
@@ -129,8 +126,8 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         return idx
 
     def _visible_keys(self, session: Session, owner_id: str) -> set[str]:
-        commands = self._services.get(CommandRegistry)
-        return {c.key for c in commands.for_controller_visible(owner_id, session)}
+        commands = self._services.get(CommandQuery)
+        return {c.key for c in commands.for_app_visible(owner_id, session)}
 
     def _match_owner(
         self,

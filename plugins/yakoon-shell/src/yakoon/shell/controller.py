@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-
-from yakoon.base.commands import Command, CommandSet, Request
+from yakoon.base.commands import Command, Request
 from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.base.runtime.sessions import Session
 
@@ -18,19 +16,16 @@ class ShellCoreController(Controller):
       - templates and workflows rooted in yakoon.shell:core
     """
 
-    id: str = "shell"
+    id: str = "shell-core-controller"
     is_shell: bool = True
     is_listed: bool = True
     is_activatable: bool = True
 
+    commandsets = (ShellSystemCommands,)
+
     resources = ResourceReferences(
         package="yakoon.shell",
     )
-
-    @property
-    def commandsets(self) -> Sequence[type[CommandSet]]:
-        """Command sets exported by the shell controller."""
-        return (ShellSystemCommands,)
 
     async def on_before_run_command(
         self, session: Session, request: Request, command: Command
@@ -42,4 +37,4 @@ class ShellCoreController(Controller):
             shell commands (system and workflow), without duplicating it in each
             command.
         """
-        session.touch()
+        session.touch()  # type: ignore

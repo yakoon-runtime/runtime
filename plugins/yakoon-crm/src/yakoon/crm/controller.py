@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-
-from yakoon.base.commands import CommandSet
 from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.crm.customer.commands.cmdset import CrmCustomerCommands
 
@@ -18,11 +15,8 @@ class CrmCustomerCoreController(Controller):
 
     id: str = "crm-customer"
 
+    commandsets = (CrmCustomerCommands,)
+
     resources = ResourceReferences(
         package="yakoon.crm.customer",
     )
-
-    @property
-    def commandsets(self) -> Sequence[type[CommandSet]]:
-        """Command sets exported by this controller."""
-        return (CrmCustomerCommands,)

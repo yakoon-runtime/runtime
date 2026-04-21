@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
@@ -44,38 +44,13 @@ class Controller(ABC):
     is_activatable: bool = True
     """If False, the controller cannot be activated as an interactive context."""
 
+    commandsets: Sequence[type[CommandSet]]
+    """Command sets exported by this controller."""
+
     resources: ResourceReferences = ResourceReferences("")
     """Resource references used by classes for projections, output man pages, workflows etc."""
 
-    def __init__(self) -> None:
-        """Initialize a controller with an empty service directory.
-
-        The platform is expected to inject a fully configured directory via
-        `connect_services()` before command execution.
-        """
-        self.container: Container | None = None
-
-    @property
-    @abstractmethod
-    def commandsets(self) -> Sequence[type[CommandSet]]:
-        """Command sets exposed by this controller.
-
-        Returns:
-            A sequence of CommandSet types. Registries iterate these sets and register
-            their `commands()` into the command catalog for this controller.
-
-        Notes:
-            Prefer returning *types* (not instances) for determinism and cheaper wiring.
-        """
-        raise NotImplementedError
-
-    def set_container(self, container: Container) -> None:
-        """Inject the container.
-
-        Args:
-            container: The fully configured container provided by the platform.
-        """
-        self.container = container
+    container: Container
 
     async def on_before_resolve(self, session: Session) -> None:
         """Hook executed before command resolution.

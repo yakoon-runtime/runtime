@@ -38,7 +38,7 @@ class Command(ABC):
 
     # Execution metadata
     kind: CommandKind = CommandKind.USER
-    scope: CommandScope = CommandScope.CONTROLLER
+    scope: CommandScope = CommandScope.APP
     visibility: CommandVisibility = CommandVisibility.NORMAL
 
     # If True, dispatcher or command must enforce workflow context.
@@ -72,6 +72,7 @@ class Command(ABC):
             raise RuntimeError("Context cannot be None")
         if not self.ctx.controller:
             raise RuntimeError("Context controller cannot be None")
+
         controller = self.ctx.controller
         projector_service = self.container.get(ProjectorFactory)
 

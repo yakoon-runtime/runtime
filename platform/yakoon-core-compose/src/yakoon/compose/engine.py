@@ -1,21 +1,22 @@
 from typing import Literal, TypeAlias
 
 from yakoon.base import ports
+from yakoon.base.application import Application
+from yakoon.base.capabilities.audit.port import AuditLogService
 from yakoon.base.capabilities.discovery import LookupResolver
 from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.capabilities.interaction import FieldPolicy, FieldPolicyEngine
 from yakoon.base.catalogs import (
-    CommandCatalog,
+    AppInfo,
+    ApplicationQuery,
     CommandInfo,
-    CommandRegistry,
-    ControllerCatalog,
+    CommandQuery,
     ControllerInfo,
-    ControllerRegistry,
 )
-from yakoon.base.controllers import Controller
 from yakoon.base.dispatch import CommandQueue
 from yakoon.base.naming import Namespace, NamespaceResolver
 from yakoon.base.plugins import ModuleRegistry
+from yakoon.base.plugins.module import LoadedModule
 from yakoon.base.projection import ProjectorFactory
 from yakoon.base.projection.compiler import ProjectionCompiler
 from yakoon.base.projection.model import FieldType
@@ -26,15 +27,17 @@ from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime import Container
 from yakoon.base.runtime.sessions import SessionStore
 from yakoon.platform.catalogs import (
-    CommandIndexBuilder,
-    ControllerIndexBuilder,
+    AppQueryBuilder,
+    CommandQueryBuilder,
 )
 from yakoon.platform.machine import (
-    CommandDirectory,
     CommandEngine,
-    ControllerDirectory,
+    CommandResolver,
     InMemoryCommandQueue,
 )
+from yakoon.platform.machine.host import RuntimeHost
+from yakoon.platform.machine.runner import RunnerFactory
+from yakoon.platform.machine.scheduler import Scheduler
 from yakoon.platform.naming import DomainNamespaceResolver
 from yakoon.platform.plugins import DefaultModuleManager, DefaultModuleRegistry
 from yakoon.platform.projection import (
@@ -49,6 +52,7 @@ from yakoon.platform.projection.rendering import (
 from yakoon.platform.projection.transport import EventStreamOutput
 from yakoon.platform.resources import FileResourceLoader
 from yakoon.platform.runtime import EntityStoreSessionService
+from yakoon.platform.runtime.bus.session_bus import SessionBus
 from yakoon.platform.services.lookup import NoLookupResolver
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
 from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
@@ -59,57 +63,90 @@ CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
 
 
 def compose_engine(
+    bootstrap: Container,
     *,
     plugins: list[str] | None = None,
     capabilities: CapabilitySelection | None = None,
-) -> CommandEngine:
+) -> RuntimeHost:
+
     plugins = plugins or []
     capabilities = capabilities or {}
 
-    directory = ControllerDirectory()
-
-    bootstrap = Container()
     bootstrap.register_static(ModuleRegistry, DefaultModuleRegistry())
-
     manager = DefaultModuleManager(
         bootstrap,
         capability_prefix="yakoon.platform.capabilities",
     )
 
-    loaded = []
+    loaded: list[LoadedModule] = []
     loaded.extend(manager.load_capabilities(capabilities))
     loaded.extend(manager.load_modules(plugins))
 
-    controllers: list[Controller] = []
+    app_types: dict[AppInfo, type[Application]] = {}
+    app_infos: list[AppInfo] = []
     for lm in loaded:
+
         for port_type in lm.export.public_ports:
             bootstrap.register_static(port_type, lm.container.get(port_type))
 
-        for controller_type in lm.export.controllers:
-            ctrl = controller_type()
-            ctrl.set_container(lm.container)
-            controllers.append(ctrl)
+        app_type = lm.export.app
+        if app_type:
 
-    directory.register(controllers)
+            app_info = build_app_infos(app_type, lm.container)
+            app_types[app_info] = app_type
+            app_infos.append(app_info)
 
-    command_catalog = _compose_command_catalog(directory)
-    controller_catalog = _compose_controller_catalog(directory)
-    commands = _compose_commands(bootstrap, directory)
+    apps_query = AppQueryBuilder(app_infos)
+
     store = _compose_store()
 
     _compose_ports(
         bootstrap,
         store,
-        controller_catalog,
-        command_catalog,
+        apps_query,
     )
 
     _compose_permission_roles(bootstrap)
     _compose_policies(bootstrap)
 
-    commands.validate()
+    # fetch global servcies
+    command_query = bootstrap.get(CommandQuery)
+    permissions = bootstrap.get(PermissionService)
+    session_service = bootstrap.get(SessionStore)
+    audit = bootstrap.get(AuditLogService)
+    output = bootstrap.get(Output)
 
-    return CommandEngine(directory, bootstrap, commands)
+    # build resolver
+    resolver = CommandResolver(command_query)
+    for app_info in apps_query.all():
+        application = app_types[app_info]
+        for controller in application.controllers:
+            resolver.register(controller)
+
+    # create command engine
+    engine = CommandEngine(
+        apps=apps_query,
+        resolver=resolver,
+        permissions=permissions,
+        auditlogs=audit,
+        output=output,
+    )
+
+    # build scheduler
+    scheduler = Scheduler(engine, audit, output)
+
+    # create runner factory.
+    global_commands = {cmd.key for cmd in command_query.globals()}
+    runner_factory = RunnerFactory(engine, scheduler, global_commands)
+
+    # compose runtime host.
+    return RuntimeHost(
+        scheduler=scheduler,
+        runner=runner_factory,
+        bus=SessionBus(),
+        session_service=session_service,
+        permission_service=permissions,
+    )
 
 
 def _compose_permission_roles(container: Container):
@@ -117,16 +154,58 @@ def _compose_permission_roles(container: Container):
     permissions.register_role(
         "admin",
         [
-            "auth:su|rx",
-            "shell:use|rx",
+            "app-app:su|rx",
+            "shell-app:use|rx",
             "office.mailing:sendmail|rx",
         ],
     )
     permissions.register_role(
         "user",
         [
-            "shell:use|rx",
+            "shell-app:use|rx",
         ],
+    )
+
+
+def build_app_infos(app: type[Application], app_context: Container) -> AppInfo:
+
+    controller_infos: list[ControllerInfo] = []
+    for controller in app.controllers:
+
+        controller.container = app_context
+
+        command_infos: list[CommandInfo] = []
+        for commandset in controller.commandsets:
+            for command in commandset.commands:
+                command_infos.append(
+                    CommandInfo(
+                        key=command.key,
+                        app_id=app.id,
+                        controller_id=controller.id,
+                        kind=command.kind,
+                        scope=command.scope,
+                        visibility=command.visibility,
+                        category=commandset.group,
+                    )
+                )
+
+        controller_infos.append(
+            ControllerInfo(
+                id=controller.id,
+                is_shell=controller.is_shell,
+                is_listed=controller.is_listed,
+                is_activatable=controller.is_activatable,
+                resources=controller.resources.clone(),
+                commands=tuple(command_infos),
+            )
+        )
+
+    return AppInfo(
+        id=app.id,
+        is_shell=app.is_shell,
+        is_listed=app.is_listed,
+        is_activatable=app.is_activatable,
+        controllers=tuple(controller_infos),
     )
 
 
@@ -156,54 +235,10 @@ def _compose_policies(container: Container):
     )
 
 
-def _compose_controller_catalog(directory: ControllerDirectory) -> ControllerCatalog:
-    controllers_list: list[ControllerInfo] = []
-    for controller in directory.get_all():
-        controllers_list.append(
-            ControllerInfo(
-                controller.id,
-                controller.is_shell,
-                controller.is_activatable,
-                controller.is_listed,
-                controller.resources.clone(),
-            )
-        )
-    return ControllerCatalog(controllers_list)
-
-
-def _compose_command_catalog(directory: ControllerDirectory) -> CommandCatalog:
-    command_list: list[CommandInfo] = []
-    for controller in directory.get_all():
-        for sets in controller.commandsets:
-            for command in sets.commands():
-                command_list.append(
-                    CommandInfo(
-                        command.key,
-                        command.kind,
-                        command.scope,
-                        command.visibility,
-                        controller.id,
-                        sets.group,
-                    )
-                )
-    return CommandCatalog(command_list)
-
-
-def _compose_commands(
-    container: Container, directory: ControllerDirectory
-) -> CommandDirectory:
-    commands = CommandDirectory(container)
-    for controller in directory.get_all():
-        commands.register(controller.id, controller.commandsets)
-
-    return commands
-
-
 def _compose_ports(
     container: Container,
     store: DefaultEntityStore,
-    controller_catalog: ControllerCatalog,
-    command_catalog: CommandCatalog,
+    directory: AppQueryBuilder,
 ) -> Container:
 
     # core platform
@@ -228,23 +263,15 @@ def _compose_ports(
     if not container.has(LookupResolver):
         container.register_static(LookupResolver, NoLookupResolver())
 
-    # counters / sharding
-    # services.register_static(
-    #    ports.ShardedCounterService,
-    #    ShardedCounterService(ShardAllocator(stores.counters)),
-    # )
+    container.register_static(ApplicationQuery, directory)
 
-    # catalogs (info-only surface)
+    permissions = container.get(PermissionService)
     container.register_static(
-        ControllerRegistry,
-        ControllerIndexBuilder(controller_catalog),
-    )
-    container.register_static(
-        CommandRegistry,
-        CommandIndexBuilder(container, command_catalog),
+        CommandQuery,
+        CommandQueryBuilder(directory, permissions),
     )
 
-    container.get(CommandRegistry).build()
+    container.get(CommandQuery).build()
 
     return container
 

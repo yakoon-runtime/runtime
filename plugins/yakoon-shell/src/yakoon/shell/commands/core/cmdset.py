@@ -1,6 +1,4 @@
-from collections.abc import Sequence
-
-from yakoon.base.commands import Command, CommandSet
+from yakoon.base.commands import CommandSet
 
 from .cmd_exit import CmdExit
 from .cmd_man import CmdMan
@@ -17,16 +15,14 @@ class ShellSystemCommands(CommandSet):
 
     group = "system"
 
-    @classmethod
-    def commands(cls) -> Sequence[type[Command]]:
-        return [
-            CmdQuit,
-            CmdWelcome,
-            CmdVersion,
-            CmdUse,
-            CmdExit,
-            CmdMan,
-            CmdSu,
-            CmdTest,
-            CmdTestCity,
-        ]
+    commands = (
+        CmdQuit,
+        CmdWelcome,
+        CmdVersion,
+        CmdUse,
+        CmdExit,
+        CmdMan,
+        CmdSu,
+        CmdTest,
+        CmdTestCity,
+    )

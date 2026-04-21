@@ -16,7 +16,7 @@ def format_ps1(
         return default_name
 
     user = session.get_username()
-    controller = session.get_active_controller(active_controller)
+    controller = session.get_active_app(active_controller)
 
     if user:
         return f"{user}@{controller}$ "

@@ -10,12 +10,12 @@ from yakoon.base.plugins import ModuleExport, ModuleMeta
 from yakoon.base.runtime import Container
 
 from . import (
-    AuthCoreController,
     DefaultAccountService,
     DefaultAllowAllSecretVerifier,
     DefaultAuthenticationService,
     DefaultPermissionService,
 )
+from .app import AuthApplication
 
 meta = ModuleMeta(
     name="yakoon.identity",
@@ -45,8 +45,6 @@ def register(container: Container) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        controllers=[
-            AuthCoreController,
-        ],
+        app=AuthApplication,
         public_ports=public_ports,
     )

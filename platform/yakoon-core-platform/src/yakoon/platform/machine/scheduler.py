@@ -31,15 +31,21 @@ class Scheduler:
     MAX_TIME_PER_FLOW = 0.002
     # --------------------------------------------------------
 
-    def __init__(self, engine: CommandEngine):
-        self.engine = engine
-        self.output = engine.container.get(Output)
+    def __init__(
+        self,
+        engine: CommandEngine,
+        audit_service: AuditLogService,
+        output: Output,
+    ):
+        self._engine = engine
+        self._audit_service = audit_service
+        self._output = output
 
         # Flow-basierte Queue: (session, flow)
-        self.ready_user = deque()
-        self.ready_system = deque()
+        self._ready_user = deque()
+        self._ready_system = deque()
 
-        self.sleeping = []  # (wake_at, session, flow)
+        self._sleeping = []  # (wake_at, session, flow)
         self._event = asyncio.Event()
         self._running = False
 
@@ -49,22 +55,22 @@ class Scheduler:
 
     async def dispatch(self, session: Session, event: InputEvent):
         try:
-            await self.engine.dispatch(session, event)
+            await self._engine.dispatch(session, event)
 
             # alle Flows der Session schedulen
             for flow in session.flows():
                 self.schedule_flow(flow, session)
 
         except PlatformError as e:
-            await self.output.send_projection(
+            await self._output.send_projection(
                 session=session,
                 projection=system_error_projection(e.message, error_code=e.code),
                 ctx=event.context,
             )
 
         except Exception as e:
-            self.engine.container.get(AuditLogService).error(e, session)
-            await self.output.send_projection(
+            self._audit_service.error(e, session)
+            await self._output.send_projection(
                 session=session,
                 projection=fatal_error_projection("Fatal error", error_code="fatal"),
                 ctx=event.context,
@@ -72,7 +78,7 @@ class Scheduler:
 
     def schedule_sleep(self, flow, session, wake_at):
         flow.wake_at = wake_at
-        heapq.heappush(self.sleeping, (wake_at, session, flow))
+        heapq.heappush(self._sleeping, (wake_at, session, flow))
 
     # --------------------------------------------------------
     # MAIN LOOP
@@ -91,9 +97,9 @@ class Scheduler:
             # --------------------------------------------------
             # Nichts zu tun → warten
             # --------------------------------------------------
-            if not self.ready_user and not self.ready_system:
-                if self.sleeping:
-                    wake_at = self.sleeping[0][0]
+            if not self._ready_user and not self._ready_system:
+                if self._sleeping:
+                    wake_at = self._sleeping[0][0]
                     delay = max(0, wake_at - time.time())
 
                     try:
@@ -112,7 +118,7 @@ class Scheduler:
             # Main processing loop
             # --------------------------------------------------
             while (
-                self.ready_user or self.ready_system
+                self._ready_user or self._ready_system
             ) and steps < self.MAX_STEPS_PER_CYCLE:
 
                 if time.time() - start > self.MAX_TIME_PER_CYCLE:
@@ -122,10 +128,10 @@ class Scheduler:
                 # Flow holen (System priorisiert)
                 # ----------------------------------------------
                 session: Session
-                if self.ready_system:
-                    session, flow = self.ready_system.popleft()
-                elif self.ready_user:
-                    session, flow = self.ready_user.popleft()
+                if self._ready_system:
+                    session, flow = self._ready_system.popleft()
+                elif self._ready_user:
+                    session, flow = self._ready_user.popleft()
                 else:
                     break
 
@@ -133,7 +139,7 @@ class Scheduler:
 
                 iterations += 1
                 if iterations > self.MAX_ITERATIONS:
-                    self.engine.container.get(AuditLogService).warning(
+                    self._audit_service.warning(
                         "Scheduler iteration limit reached", session
                     )
                     break
@@ -155,7 +161,7 @@ class Scheduler:
                 try:
 
                     while True:
-                        outcome = await self.engine.step_flow(flow, session)
+                        outcome = await self._engine.step_flow(flow, session)
 
                         flow_steps += 1
                         steps += 1
@@ -182,7 +188,7 @@ class Scheduler:
                     event = flow.event
                     if session.interaction_flow:
                         session.del_flow(session.interaction_flow)
-                    await self.output.send_projection(
+                    await self._output.send_projection(
                         session=session,
                         projection=domain_error_projection(
                             e.message, error_code=e.code
@@ -192,7 +198,7 @@ class Scheduler:
 
                 except PlatformError as e:
                     event = flow.event
-                    await self.output.send_projection(
+                    await self._output.send_projection(
                         session=Session,
                         projection=system_error_projection(
                             e.message, error_code=e.code
@@ -202,8 +208,8 @@ class Scheduler:
 
                 except Exception as e:
                     event = flow.event
-                    self.engine.container.get(AuditLogService).error(e, session)
-                    await self.output.send_projection(
+                    self._audit_service.error(e, session)
+                    await self._output.send_projection(
                         session=session,
                         projection=fatal_error_projection(
                             "Fatal error", error_code="fatal"
@@ -228,9 +234,9 @@ class Scheduler:
         flow.scheduled = True
 
         if flow.kind == FlowKind.SYSTEM:
-            self.ready_system.append((session, flow))
+            self._ready_system.append((session, flow))
         else:
-            self.ready_user.append((session, flow))
+            self._ready_user.append((session, flow))
 
         self._event.set()
 
@@ -241,8 +247,8 @@ class Scheduler:
     def _wake_sleeping(self):
         now = time.time()
 
-        while self.sleeping and self.sleeping[0][0] <= now:
-            _, session, flow = heapq.heappop(self.sleeping)
+        while self._sleeping and self._sleeping[0][0] <= now:
+            _, session, flow = heapq.heappop(self._sleeping)
 
             control = flow.control
             if not control:

@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 
+from yakoon.base.commands import Command
+from yakoon.base.controllers import Controller
 from yakoon.base.flow.primitives import Control
 from yakoon.base.runtime import InputEvent
 
@@ -16,14 +18,15 @@ DEFAULT = "default"
 class Flow:
     id: str
 
-    command_key: str
-    controller_id: str
+    app_id: str
+    command_type: type[Command]
+    controller_type: type[Controller]
     event: InputEvent
+
     cursor: FlowCursor
     control: Control | None = None
 
     scheduled: bool = False
-
     wake_at: float | None = None
     kind: FlowKind = FlowKind.USER
 

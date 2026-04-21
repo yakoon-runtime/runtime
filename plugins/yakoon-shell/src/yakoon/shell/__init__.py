@@ -1,6 +1,7 @@
 from yakoon.base.plugins.module import ModuleExport, ModuleMeta
 from yakoon.base.runtime import Container
-from yakoon.shell.controller import ShellCoreController
+
+from .app import ShellApplication
 
 meta = ModuleMeta(
     name="yakoon.shell",
@@ -13,7 +14,5 @@ def register(container: Container) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        controllers=[
-            ShellCoreController,
-        ],
+        app=ShellApplication,
     )

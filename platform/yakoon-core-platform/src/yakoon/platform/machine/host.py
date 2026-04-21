@@ -1,41 +1,48 @@
 from __future__ import annotations
 
 import asyncio
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.clients.connection import ClientConnection
 from yakoon.base.naming.key import Key
 from yakoon.base.runtime.sessions import SessionStore
-from yakoon.platform.machine.scheduler import Scheduler
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
 from yakoon.platform.runtime.sessions import Session as PlatformSession
 
-if TYPE_CHECKING:
-    from yakoon.platform.machine import CommandEngine
-
-from .runner import Runner
+from .runner import Runner, RunnerFactory
+from .scheduler import Scheduler
 
 
 class RuntimeHost:
 
-    def __init__(self, engine: CommandEngine, bus: SessionBus):
-        self.engine = engine
-        self.bus = bus
+    def __init__(
+        self,
+        scheduler: Scheduler,
+        runner: RunnerFactory,
+        bus: SessionBus,
+        session_service: SessionStore,
+        permission_service: PermissionService,
+    ):
+        self._scheduler = scheduler
+        self._runner_factory = runner
+
+        self._bus = bus
+        self._session_service = session_service
+        self._permission_service = permission_service
 
         self._sessions: dict[Key, Runner] = {}
         self._connections: dict[ClientConnection, Runner] = {}
         self._session_counter = 0
-        self.scheduler = Scheduler(engine)
 
-        asyncio.create_task(self.scheduler.run())
+        asyncio.create_task(self._scheduler.run())
 
     async def connect(
         self,
         connection: ClientConnection,
         session_key: Key | None = None,
     ):
-        self.bus.join(connection)
+        self._bus.join(connection)
 
         # attach existing session
         if session_key and session_key in self._sessions:
@@ -44,12 +51,9 @@ class RuntimeHost:
         # create new session
         else:
             session = await self.create_session()
-            session.bind_io(BusOutput(self.bus))
-            runner = Runner(
-                session=session,
-                engine=self.engine,
-                scheduler=self.scheduler,
-            )
+            session.bind_io(BusOutput(self._bus))
+
+            runner = self._runner_factory.create(session)
             self._sessions[session.key] = runner
 
             # initial_command = InputEvent("")
@@ -68,7 +72,7 @@ class RuntimeHost:
             return
 
         # real session ist deth
-        session = runner.session
+        session = runner._session
 
         # self.engine.cleanup_session(session)
         self._sessions.pop(session.key, None)
@@ -84,11 +88,8 @@ class RuntimeHost:
 
         key = self.next_session_key()
 
-        sessions = self.engine.container.get(SessionStore)
-        session, _ = await sessions.get_or_create(key)
-
-        permissions = self.engine.container.get(PermissionService)
-        permissions.set_bootstrap_permissions(session)
+        session, _ = await self._session_service.get_or_create(key)
+        self._permission_service.set_bootstrap_permissions(session)
 
         return cast(PlatformSession, session)
 

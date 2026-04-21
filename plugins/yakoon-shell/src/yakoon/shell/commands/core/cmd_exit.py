@@ -1,6 +1,6 @@
 from typing import Protocol, cast
 
-from yakoon.base.catalogs import ControllerRegistry
+from yakoon.base.catalogs import ApplicationQuery
 from yakoon.base.commands import (
     Command,
     CommandScope,
@@ -11,8 +11,8 @@ from yakoon.base.runtime.sessions.port import SessionStore
 
 
 class _ControllerAccess(Protocol):
-    def get_active_controller(self) -> str: ...
-    def set_active_controller(self, controller_id: str) -> None: ...
+    def get_active_app(self) -> str: ...
+    def set_active_app(self, controller_id: str) -> None: ...
     def set_interaction(self, flow_id: str | None): ...
     def has_interaction(self) -> bool: ...
 
@@ -38,13 +38,13 @@ class CmdExit(Command):
         # --------------------------------------------------
         # 2. Controller verlassen
         # --------------------------------------------------
-        controllers = self.container.get(ControllerRegistry)
-        shell = controllers.shell()[0]
+        app_query = self.container.get(ApplicationQuery)
+        shell = app_query.shell()
 
-        current = access.get_active_controller()
+        current = access.get_active_app()
 
         if shell.id != current:
-            access.set_active_controller(shell.id)
+            access.set_active_app(shell.id)
             await self.container.get(SessionStore).save(sys_session)
             current = shell.id
 

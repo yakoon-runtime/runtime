@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-
-from yakoon.base.commands.commandset import CommandSet
 from yakoon.base.controllers.controller import Controller
 
 from ..commands.cmdset import WorkflowCommands
@@ -14,6 +11,4 @@ class WorkflowController(Controller):
     is_listed: bool = False
     is_activatable: bool = False
 
-    @property
-    def commandsets(self) -> Sequence[type[CommandSet]]:
-        return (WorkflowCommands,)
+    commandsets = (WorkflowCommands,)

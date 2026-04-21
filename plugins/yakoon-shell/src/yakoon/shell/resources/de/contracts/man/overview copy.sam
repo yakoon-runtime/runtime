@@ -32,8 +32,8 @@ Commands
 
 Available programs
 <list>
-  {% for p in state.controllers %}
-  <item><cmd command="use {{ p.id }}">{{ p.id }}</cmd></item>
+  {% for a in state.apps %}
+  <item><cmd command="use {{ a.id }}">{{ a.id }}</cmd></item>
   {% endfor %}
 </list>
 

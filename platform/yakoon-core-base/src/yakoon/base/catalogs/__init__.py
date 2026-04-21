@@ -1,17 +1,12 @@
-from .command import CommandCatalog
-from .controller import ControllerCatalog
-from .models import CommandInfo, ControllerInfo
-from .port import CommandRegistry, ControllerRegistry
+from .info import AppInfo, CommandInfo, ControllerInfo
+from .port import ApplicationQuery, CommandQuery
 
 __all__ = [
-    # .command
-    "CommandCatalog",
-    # .controller
-    "ControllerCatalog",
     # .models
+    "AppInfo",
     "CommandInfo",
     "ControllerInfo",
     # .port
-    "CommandRegistry",
-    "ControllerRegistry",
+    "CommandQuery",
+    "ApplicationQuery",
 ]

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from yakoon.base.controllers import Controller
+    from yakoon.base.application import Application
     from yakoon.base.runtime import Container
 
 
@@ -18,7 +18,7 @@ class ModuleMeta:
 @dataclass(frozen=True)
 class ModuleExport:
     meta: ModuleMeta
-    controllers: list[type[Controller]]
+    app: type[Application] | None = None
     public_ports: list[type[Any]] = field(default_factory=list)
 
 

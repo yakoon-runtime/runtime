@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-
-from yakoon.base.commands.commandset import CommandSet
 from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.office.commands.cmdset import MailingCommands
 
@@ -17,11 +14,8 @@ class OfficeMailingCoreController(Controller):
 
     id: str = "office.mailing"
 
+    commandsets = (MailingCommands,)
+
     resources = ResourceReferences(
         package="yakoon.office.mailing",
     )
-
-    @property
-    def commandsets(self) -> Sequence[type[CommandSet]]:
-        """Command sets exported by this controller."""
-        return (MailingCommands,)

@@ -19,7 +19,7 @@ from yakoon.platform.runtime.trace import ExecutionTrace
 @dataclass
 class SessionState:
     key: Key
-    active_controller_id: str | None = None
+    active_app_id: str | None = None
     account_key: str | None = None
     username: str | None = None
     last_active: datetime | None = None
@@ -167,14 +167,14 @@ class Session:
         return self._state.username
 
     # ----------------------------
-    # Contoller
+    # Application
     # ----------------------------
 
-    def set_active_controller(self, controller_id: str) -> None:
-        self._state.active_controller_id = controller_id
+    def set_active_app(self, app_id: str) -> None:
+        self._state.active_app_id = app_id
 
-    def get_active_controller(self, default=None) -> str | None:
-        return self._state.active_controller_id or default
+    def get_active_app(self, default=None) -> str | None:
+        return self._state.active_app_id or default
 
     # ----------------------------
     # Identity
@@ -227,6 +227,6 @@ class Session:
             event,
             state=ProjectionState(
                 user=self.get_username(),
-                controller=self.get_active_controller(),
+                controller=self.get_active_app(),
             ),
         )

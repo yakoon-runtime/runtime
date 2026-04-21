@@ -10,8 +10,10 @@ from yakoon.base.commands import (
 @dataclass(frozen=True, slots=True)
 class CommandInfo:
     key: str
+    app_id: str
+    controller_id: str
+
     kind: CommandKind
     scope: CommandScope
     visibility: CommandVisibility
-    controller_id: str
     category: str

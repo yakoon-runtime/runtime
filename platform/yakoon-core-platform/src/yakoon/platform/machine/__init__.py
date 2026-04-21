@@ -1,20 +1,20 @@
-from .directories import CommandDirectory, ControllerDirectory
 from .engine import CommandEngine
 from .host import RuntimeHost
 from .queue import InMemoryCommandQueue
-from .runner import Runner
+from .resolver import CommandResolver
+from .runner import Runner, RunnerFactory
 from .scheduler import Scheduler
 
 __all__ = [
-    # .directories
-    "ControllerDirectory",
-    "CommandDirectory",
     # . engine
     "CommandEngine",
+    # .resolver
+    "CommandResolver",
     # . queue
     "InMemoryCommandQueue",
     # .runner
     "Runner",
+    "RunnerFactory",
     # .host
     "RuntimeHost",
     # .scheduler

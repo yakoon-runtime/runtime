@@ -12,7 +12,7 @@ def render_inline(value):
         return ""
 
     if isinstance(value, str):
-        raise TypeError("Expected inline[], got str")
+        raise TypeError("\nExpected inline[], got str")
 
     factory = _get_factory()
 

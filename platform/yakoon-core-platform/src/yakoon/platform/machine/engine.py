@@ -5,7 +5,6 @@ from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.capabilities.identity import Permission, PermissionService
 from yakoon.base.commands import Command, Request
 from yakoon.base.commands.context import CommandContext
-from yakoon.base.controllers import Controller
 from yakoon.base.flow.primitives import (
     AutoFocus,
     AwaitEvent,
@@ -18,7 +17,8 @@ from yakoon.base.flow.primitives import (
     Stop,
 )
 from yakoon.base.projection.transfer import Output
-from yakoon.base.runtime import Container, InputEvent
+from yakoon.base.runtime import InputEvent
+from yakoon.platform.catalogs import AppQueryBuilder
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
     CommandNotFound,
@@ -27,8 +27,8 @@ from yakoon.platform.runtime import (
     Session,
 )
 
-from .directories import CommandDirectory, ControllerDirectory
 from .errors import system_error_projection
+from .resolver import CommandResolver
 
 
 class CommandEngine:
@@ -37,18 +37,17 @@ class CommandEngine:
 
     def __init__(
         self,
-        controllers: ControllerDirectory,
-        container: Container,
-        commands: CommandDirectory,
+        apps: AppQueryBuilder,
+        resolver: CommandResolver,
+        permissions: PermissionService,
+        auditlogs: AuditLogService,
+        output: Output,
     ):
-        self._controllers = controllers
-        self._container = container
-        self._commands = commands
-        self._output = container.get(Output)
-
-    @property
-    def container(self) -> Container:
-        return self._container
+        self._apps = apps
+        self._resolver = resolver
+        self._permissions = permissions
+        self._auditlogs = auditlogs
+        self._output = output
 
     # ----------------------------------------------------
     # PUBLIC API
@@ -58,9 +57,6 @@ class CommandEngine:
 
         # session.execution.reset()
         # session.execution.step(ExecStep.EXECUTION_START)
-        if not isinstance(event, InputEvent):
-            return None
-
         if not event.command:
             return None
 
@@ -69,21 +65,21 @@ class CommandEngine:
         #    command=request.raw,
         # )
 
-        # Active controller sicherstellen
-        controller_id = session.get_active_controller()
-        if not controller_id:
-            shell = self._controllers.find_shell()
+        # Active app sicherstellen
+        app_id = session.get_active_app()
+        if not app_id:
+            shell = self._apps.shell()
             if not shell:
-                raise RuntimeError("dispatch() found no shell controller")
-            session.set_active_controller(shell.id)
-            controller_id = shell.id
+                raise RuntimeError("dispatch() found no shell application")
+            session.set_active_app(shell.id)
+            app_id = shell.id
 
-        controller = self._controllers.get(controller_id)
-        if not controller:
+        app = self._apps.get(app_id)
+        if not app:
             await self._output.send_projection(
                 session=session,
                 projection=system_error_projection(
-                    "dispatch() found no active controller"
+                    "dispatch() found no active application"
                 ),
                 ctx=event.context,
             )
@@ -94,30 +90,20 @@ class CommandEngine:
         try:
 
             # Hook vor resolve
-            await controller.on_before_resolve(session)
+            # await application.on_before_resolve(session)
 
             # Command finden
-            result = await self._find_matching_command(controller_id, event)
+            result = self._resolver.resolve(app.id, event.command)
+            if not result:
+                raise CommandNotFound(event.command)
+
             # if not result:
             #    resolver = self.container.get(LookupResolver)
             #    resolved = await resolver.resolve(session, event)
             #    if resolved:
             #        result = await self._find_matching_command(controller_id, event)
 
-            if not result:
-                raise CommandNotFound(event.command)
-
-            resolved_controller, command_type = result
-            if not resolved_controller:
-                raise RuntimeError(
-                    f"Resolved controller is None for command '{event.command}'"
-                )
-
-            if not command_type:
-                raise RuntimeError(
-                    f"Resolved command is None for input '{event.command}' "
-                    f"(controller='{resolved_controller.id}')"
-                )
+            app_id, controller_type, command_type = result
 
             # session.execution.step(
             #    ExecStep.COMMAND_RESOLVED,
@@ -126,9 +112,8 @@ class CommandEngine:
             # )
 
             # Permission check
-            perm_service = self.container.get(PermissionService)
-            fq = Permission.fq_key(resolved_controller.id, command_type.key)
-            if not perm_service.can_execute(session, fq):
+            fq = Permission.fq_key(app_id, command_type.key)
+            if not self._permissions.can_execute(session, fq):
                 raise PermissionDenied()
 
             # session.execution.step(
@@ -138,11 +123,12 @@ class CommandEngine:
             # )
 
             flow = Flow(
-                uuid4().hex,
-                command_type.key,
-                resolved_controller.id,
-                event,
-                FlowCursor(),
+                id=uuid4().hex,
+                app_id=app_id,
+                command_type=command_type,
+                controller_type=controller_type,
+                event=event,
+                cursor=FlowCursor(),
                 kind=self.DEFAULT_FLOW_KIND,
             )
             session.add_flow(flow)
@@ -151,7 +137,7 @@ class CommandEngine:
             raise
 
         except PermissionDenied:
-            self.container.get(AuditLogService).security(
+            self._auditlogs.security(
                 session,
                 "command",
                 command_type.key if command_type else event.command,
@@ -168,15 +154,9 @@ class CommandEngine:
 
         cursor = flow.cursor
 
-        controller = self._controllers.get(flow.controller_id)
-        if not controller:
-            raise RuntimeError("Controller not found")
-
-        command_type = self._commands.get_type(flow.controller_id, flow.command_key)
-        if not command_type:
-            raise RuntimeError("Command not found")
-
-        command = self._create_command(command_type, controller, session)
+        command = flow.command_type()
+        controller = flow.controller_type()
+        command.ctx = CommandContext(session, controller)
 
         try:
             session._runtime_flow_id = flow.id  # type: ignore
@@ -184,7 +164,7 @@ class CommandEngine:
             # ----------------------------------
             # 21. NORMAL STEP
             # ----------------------------------
-            item = await self._next_step(flow, session, command, flow.event)
+            item = await self._next_step(flow, command, flow.event)
             if item is None:
                 return None
 
@@ -269,7 +249,7 @@ class CommandEngine:
             elif isinstance(effect, ClearFocus):
                 session.set_interaction(None)
 
-    async def _next_step(self, flow: Flow, session, command, event: InputEvent):
+    async def _next_step(self, flow: Flow, command, event: InputEvent):
 
         # ----------------------------------
         # Resume: Input / Event
@@ -290,21 +270,3 @@ class CommandEngine:
         # ----------------------------------
         request = Request(event.command, event.tokens)
         return await flow.cursor.next(command, request)
-
-    def _create_command(
-        self, command_type: type[Command], controller: Controller, session: Session
-    ) -> Command:
-        command = command_type()
-        command.ctx = CommandContext(session, controller)
-        return command
-
-    async def _find_matching_command(
-        self, controller_id, event: InputEvent
-    ) -> tuple[Controller | None, type[Command] | None] | None:
-
-        result: tuple[str, type[Command]] | None = self._commands.find(
-            controller_id, event.command
-        )
-        if result and isinstance(result, tuple):
-            controller_id, command = result
-            return self._controllers.get(controller_id), command

@@ -1,6 +1,4 @@
-from collections.abc import Sequence
-
-from yakoon.base.commands import Command, CommandSet
+from yakoon.base.commands import CommandSet
 from yakoon.playground.commands.patterns.cmd_demo_form_select import CmdDemoFormSelect
 
 from .cmd_demo_form_simple import CmdDemoFormSimple
@@ -12,11 +10,9 @@ class DemoCommandsPatterns(CommandSet):
 
     group = "patterns"
 
-    @classmethod
-    def commands(cls) -> Sequence[type[Command]]:
-        return [
-            CmdDemoSubflow,
-            CmdDemoValidateSimple,
-            CmdDemoFormSimple,
-            CmdDemoFormSelect,
-        ]
+    commands = (
+        CmdDemoSubflow,
+        CmdDemoValidateSimple,
+        CmdDemoFormSimple,
+        CmdDemoFormSelect,
+    )

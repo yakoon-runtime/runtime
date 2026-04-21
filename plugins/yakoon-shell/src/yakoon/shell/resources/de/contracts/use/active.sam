@@ -1,1 +1,1 @@
-{{ state.controllers | map(attribute='id') | join('  ') }}
+{{ state.apps | map(attribute='id') | join('  ') }}

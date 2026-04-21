@@ -1,6 +1,4 @@
-from collections.abc import Sequence
-
-from yakoon.base.commands import Command, CommandSet
+from yakoon.base.commands import CommandSet
 
 from .cmd_cancel import CmdWfCancel
 from .cmd_input import CmdWfInput
@@ -12,11 +10,9 @@ class WorkflowCommands(CommandSet):
 
     group = "workflow"
 
-    @classmethod
-    def commands(cls) -> Sequence[type[Command]]:
-        return [
-            CmdWfRun,
-            CmdWfInput,
-            CmdWfNext,
-            CmdWfCancel,
-        ]
+    commands = (
+        CmdWfRun,
+        CmdWfInput,
+        CmdWfNext,
+        CmdWfCancel,
+    )
