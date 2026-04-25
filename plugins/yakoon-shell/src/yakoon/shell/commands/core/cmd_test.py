@@ -1,5 +1,7 @@
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import present
+from yakoon.base.flow.primitives import Outcome
+
+# from yakoon.base.flow import present
 
 
 class CmdTest(Command):
@@ -11,6 +13,8 @@ class CmdTest(Command):
         # operation = request.arg(0)
         # print(operation)
 
-        projector = await self.create_projector()
-        projection = await projector.project("ask1")
-        yield present(projection)
+        yield Outcome(value={"user_name": "Stefan"})
+
+        # projector = await self.create_projector()
+        # projection = await projector.project("ask1")
+        # yield present(projection)

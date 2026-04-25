@@ -199,6 +199,11 @@ class CommandEngine:
                 outcome = item
             else:
                 outcome = await item.run(flow)
+            # ----------------------------------
+            # 3.1 OUTCOME value -> yield data
+            # ----------------------------------
+            if outcome.value is not None:
+                outcome.control = Stop()
 
             # ----------------------------------
             # 4. EFFECTS
@@ -322,3 +327,7 @@ class OnCreateCommand(Protocol):
     def __call__(
         self, session: Session, controller: type[Controller], command: type[Command]
     ) -> Command: ...
+
+
+class OnContinuePipeline(Protocol):
+    async def __call__(self, session: Session, event: InputEvent) -> None: ...

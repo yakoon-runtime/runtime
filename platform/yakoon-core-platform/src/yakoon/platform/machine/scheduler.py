@@ -279,9 +279,18 @@ class Scheduler:
 
         if isinstance(control, Control):
             control.on_enter(flow, self, session)
-            return
 
-        raise RuntimeError(f"Unhandled control: {type(control)}")
+        # ----------------------------------
+        # 3. Continue flow by new command
+        # ----------------------------------
+
+        if outcome.value is not None and flow.pipeline:
+            next_cmd = flow.next_command()
+            if next_cmd:
+                next_event = InputEvent(command=next_cmd, tokens=["test"])
+                await self.dispatch(session, next_event)
+
+        # raise RuntimeError(f"Unhandled control: {type(control)}")
 
 
 # ----------------------------------

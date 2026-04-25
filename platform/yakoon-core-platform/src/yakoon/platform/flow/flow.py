@@ -30,6 +30,10 @@ class Flow:
     wake_at: float | None = None
     kind: FlowKind = FlowKind.USER
 
+    pipeline_data = None
+    pipeline = []  # ["welcome"]
+    pipeline_index = 0
+
     inbox: dict[str, deque] = field(default_factory=lambda: defaultdict(deque))
 
     def has_stack(self):
@@ -48,3 +52,10 @@ class Flow:
         if not self.inbox[channel]:
             return None
         return self.inbox[channel].popleft()
+
+    def next_command(self):
+        if self.pipeline_index >= len(self.pipeline):
+            return None
+        cmd = self.pipeline[self.pipeline_index]
+        self.pipeline_index += 1
+        return cmd
