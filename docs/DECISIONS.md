@@ -8,6 +8,31 @@
 A server-driven, event-sourced UI runtime with declarative projection
 „SAM verarbeitet Actions und erzeugt daraus strukturierte Projektionen eines Systemzustands.“
 ===
+
+## 2026-04-25
+**Design Principle:**
+Capabilities are passed to the point of use.
+Oder auf Deutsch, schöner:
+- Fähigkeiten werden bis ans Ziel gereicht.
+- Gute Architektur minimiert Debug-Zwischenräume - kein Zwischenobjekt ohne eigenen Wert.
+
+## 2026-04-22
+**Komponierbaren Systemeinheiten**
+Muster in einem Satz: Jede Komponente definiert, was sie kann (Ports), nicht was sie ist – 
+und wird von außen zu größeren Einheiten zusammengesetzt.
+Wir stellen auf eine neue Architektur um und nennen sie:
+- rekursive, port-basierte Systemkomposition oder
+- Hierarchical Capability Composition Architecture
+
+## 2026-04-22
+**Umstellung auf Ports e2c**
+Daten werden gereicht. Verhalten wird injiziert.
+**Beispiel:** 
+- Session	- reinreichen
+- engine.dispatch	- Port
+- scheduler.*	- Ports
+
+
 ## 2026-04-17
 **Langfristig möchte ich:**
 clients/
@@ -368,7 +393,7 @@ state:
   blocks: [...]
   fields: [...]
 
-## 202026-02-21
+## 2026-02-21
 **Workflow als Plugin entkoppelt**
 * WF-Commands (`wf.start`, `wf.input`, etc.) wurden aus der Shell entfernt.
 * Workflow ist nun ein eigenständiges Modul/Plugin.
@@ -377,7 +402,7 @@ state:
 * WF kann optional geladen werden (Vorbereitung für NoWorkflow-Plugin).
 Workflow ist jetzt ein Feature, kein Systemkern.
 
-## 202026-02-21
+## 2026-02-21
 **Plattform-Struktur neu geschnitten**
 Projektstruktur getrennt:
 * `platform` → Kern (Engine, Directories, Services, Policies)
@@ -388,7 +413,9 @@ Apps sind jetzt:
 * `crm`
 * `office`
 
-## 202026-02-21
+
+Daten werden gereicht. Verhalten wird injiziert.
+## 2026-02-21
 **Discovery & Lookup eingeführt**
 * Discovery-Strategie-Mechanismus implementiert.
 * Lookup ersetzt festen Alias-Mechanismus vollständig.
@@ -400,7 +427,7 @@ Apps sind jetzt:
 * Kein Lookup-Command-Roundtrip mehr notwendig.
 * UI-Darstellung bei Mehrdeutigkeit über separates Command gelöst.
 
-## 202026-02-21
+## 2026-02-21
 **Command-Suche in CommandCatalogService ausgelagert**
 Resolve-Logik vollständig aus `CommandDirectory` entfernt.
 `CommandCatalogService` enthält nun:
@@ -411,35 +438,35 @@ Resolve-Logik vollständig aus `CommandDirectory` entfernt.
 * Scope-Regeln (CONTROLLER, SHELL, GLOBAL) sind zentralisiert.
 * `CommandDirectory` materialisiert nur noch Commands.
 
-## 202026-02-20
+## 2026-02-20
 **Dispatch-System neu modelliert**
 - Union statt Vererbung.
 - Zwei explizite Transporttypen.
 - Keine implizite Payload-Semantik.
 
-## 202026-02-20
+## 2026-02-20
 **TemplateSource / WorkflowSource**
 TemplateSource und WorkflowSource wurden konzeptionell ersetzt.
 Dazu wurde ein einziges ResourceReferences-Objekt pro Controller eingeführt.
 Subpath wird nicht länger unterstützt. Dafür {lang} als placeholder.
 
-## 202026-02-19
+## 2026-02-19
 **Alias-Mechanismus**
 Der Alias-Mechanismus wurde entfernt, der dieser im Code definiert wurde. 
 Alias ist nun über Lookup multilanguagefähig.
 Lookup wird über Discovery-Strategien gelöst.
 
-## 202026-02-18
+## 2026-02-18
 **WorkflowCompileService entkoppelt**
 Der WorkflowCompileService übernimmt nun nur noch Parsing + Modellierung.
 Dafür wurde der FileLoader eingeführt. Dieser übernimmt alle Dateizugriff im System.
 
-## 202026-02-18
+## 2026-02-18
 **CommandScope eingeführt**
 - CommandScope ersetzt shell_builtins. Routing ist jetzt explizit und deklarativ.
 - Visibility von Scope getrennt; Scope ist nicht Sichtbarkeit.
 
-## 202026-02-17
+## 2026-02-17
 **Umstellung auf View**
 Der Output-Stack wurde radikal vereinfacht. IO ist nun vollständig View-getrieben.
 Die Architektur ist konsistent mit dem Input-/Workflow-Modell.
@@ -453,13 +480,13 @@ Die Runtime ist leichter verständlich und deutlich schlanker.
 - op wird ausschließlich über View.mode bestimmt.
 - Transport-Parameter wie channel, region, meta werden entfernt.
 
-## 202026-02-17
+## 2026-02-17
 **Vollständige Integration der Workflows**
 Die DSL arbeitet für Commands & Workflows übergreifend.
 InputResult als saubere Datenkapselung (statt PromptResult)
 InputView liefert view contracts für Ausgabe.
 
-## 202026-02-16
+## 2026-02-16
 **Weiterentwicklung der View- und Input-Architektur**
 Dieser Schritt dient zur Vorbereitung deklarativer Workflows.
 - inputs.<state>.fields wird als Liste von Field-Definitionen geführt.
@@ -470,7 +497,7 @@ Dieser Schritt dient zur Vorbereitung deklarativer Workflows.
 - Feldbasierte Flags wie secret werden nicht mehr direkt im Template gesetzt.
 Eine DSL für Commands und Workflows: Beide verwenden nun identische Felddefinitionen.
 
-## 202026-02-15
+## 2026-02-15
 **Unified Input Model (FormSpec Only)**
 * Auflösung der Trennung zwischen *Wizard* und *Form* im Kernel.
 * Einführung eines einheitlichen Input-Vertrags über **FormSpec**.
@@ -492,7 +519,7 @@ Eine DSL für Commands und Workflows: Beide verwenden nun identische Felddefinit
 * UI entscheidet selbstständig über Rendering (Wizard-sequenziell oder echtes Formular).
 Der Kernel ist vollständig UI-agnostisch. Dialoglogik und Darstellung sind sauber entkoppelt.
 
-## 202026-02-14
+## 2026-02-14
 **Einführung des Policy-Systems**
 * Einführung eines zentralen `PolicyService`.
 * Feldtyp, Validierung und Coercion werden über Policies definiert.
@@ -501,7 +528,7 @@ Der Kernel ist vollständig UI-agnostisch. Dialoglogik und Darstellung sind saub
 * Validierung ist vollständig aus Prompt-/Workflow-Code ausgelagert.
 Input ist nun deklarativ typisiert und konsistent validiert.
 
-## 202026-02-14
+## 2026-02-14
 **Strukturierte Run-Definition**
 * Einführung von `RunDef(key, args)`.
 * `run` + `args` klar getrennt.
@@ -510,7 +537,7 @@ Input ist nun deklarativ typisiert und konsistent validiert.
 * DSL wird strikt validiert.
 Workflow-Definition ist formaler, sicherer und weniger fehleranfällig.
 
-## 202026-02-14
+## 2026-02-14
 **Compiler-Refactoring**
 Zerlegung des Workflow-Compilers in Builder:
   * `RunBuilder`
@@ -521,7 +548,7 @@ Zerlegung des Workflow-Compilers in Builder:
 * Verbesserte Fehlermeldungen (`workflow:step` Präfix).
 * YAML 1.2 Bool-Handling eingeführt (kein `on:` → `True` Bug mehr).
 
-## 202026-02-14
+## 2026-02-14
 **Projektweite Formatierung & Linting**
 * Einführung von **Black** (Formatter).
 * Einführung von **Ruff** (Linter).
@@ -529,21 +556,21 @@ Zerlegung des Workflow-Compilers in Builder:
 * Frühzeitige Erkennung potenzieller Fehler.
 Einheitlicher Code-Stil und höhere Wartbarkeit.
 
-## [202026-02-10]
+## [2026-02-10]
 **Wenn ein Workflow darf nie mahr als der User**
 Bedeutet: Privilege Escalation als Feature ist nicht erlaubt und bewart das System später vor den ganz teuren Security-Debatten bewahrt. Wenn ein Workflow mehr darf als der User, bedeutet das faktisch, ein komplettes Policy-System bauen (Run-as, Delegation, Approvals, Audit, Scope, Least-Privilege-Rollen, Secrets, Revocation)
 - Workflows sind Orchestrierung, keine Berechtigungs-Abkürzung.
 
-## [202026-02-09]
+## [2026-02-09]
 **Einführung Workflow & Kontexts (batch.values)**
 Daten zwischen Commands werden nicht mehr implizit über Session-Zustand oder Command-Seiteneffekte weitergereicht, sondern explizit über einen Workflow-gebundenen Kontext (batch.values).
 Begründung: Workflows dienen der Orchestrierung von Commands. Ein expliziter, pro Workflow isolierter Kontext macht Datenflüsse nachvollziehbar, testbar und unabhängig von der Ausführungsumgebung (CLI, Wizard, Form, Remote Host). Commands sind reine Operationen ohne implizite Abhängigkeiten. Workflows definieren sowohl Ablauf als auch Datenfluss. Named Arguments ermöglichen robuste Command-Aufrufe ohne Positionsabhängigkeit.
 
-## [202026-02-06]
+## [2026-02-06]
 **Kivy-UI-Host**
 Der UI-Kivy-Host orientiert sich an dem Terminal von Gnome und ist multishellfähig.
 
-## [202026-02-06]
+## [2026-02-06]
 **Kiyy als Desktop-Technologien**
 Kivy ist ereignis- und flussorientiert - nicht formularzentriert. Kivy lässt in Render-Logik denken, Qt zwingt UI-Logik zu verwalten. Zudem bleibt Kivy Python-first und ist OpenSource ohne Grauzonen in der Lizenz, die später teurer wird. Kivy steht unter der MIT-Lizenz. QT dagegen hätte dazu beführt, ein Framework zu bedienen. Yakoon lebt aber von:
 - kontinuierlichen Outputs
@@ -552,7 +579,7 @@ Kivy ist ereignis- und flussorientiert - nicht formularzentriert. Kivy lässt in
 - Kivy zeichnet und kontrolliert den Render-Zyklus
 
 
-## [202026-02-06]
+## [2026-02-06]
 **Desktop-Technologien als Frontend**
 Für das Frontend wurden Desktoptechnologien gewählt. 
 Desktop heißt: Kontrolle über den Rechner. Eine Desktop-App ist kein „Client“, sie ist ein Agent.
@@ -563,67 +590,67 @@ Yakoon könnte später ein verteiltes Command-Graph-System werden. "Commands auf
 - Identitäten über Maschinen hinweg stabilisieren
 - Netzwerke von innen heraus bilden
 
-## [202026-02-05]
+## [2026-02-05]
 **DialogService**
 Der globale DialogManager wurde aufgelöst, um den letzten globalen Zustand aus der Engine zu entfernen. Danach wurde er in einen 'DialogService' überführt, der nun über die ServiceFactory austauschbar ist.
 
-## [202026-02-05]
+## [2026-02-05]
 **OutputAdapter**
 Die Session kann Metadaten durch Commands nach an den IO-Adapter leiten. Somit kann ein Command der Außenwelt mitteilen, um welche Information es sich bei dem ausgegebenen Text handelt. Die Engine legt sich bei der Ausgabe nicht fest, sondern rendert nur entsprechende Templates.
 
-## [202026-02-05]
+## [2026-02-05]
 **Service für Permission & Rollen**
 Permissions und Rollen müssen dem System über einen Service zur Verfügung gestellt werden. Damit kann das gesamte Handling in der Platform verbleiben. Die Logik, wie Rechte und Rollen zusammenarbeiten, befindet sich ebenfalls in diesem Service.
 
-## [202026-02-04]
+## [2026-02-04]
 **Batch & Workflow**
 Durch die Einführung des 'DispatchInput' kann der Host vereinfacht werden. Somit nimmt nun auch die Engine keinen einfachen input:str mehr auf, sondern verwendet intern den DispatchInput. Dieses beinhaltet immer die Benutzereingabe + eine batch_id. Warum ist eine batch_id notwendig? Wenn innerhalb eines batches (Workflow) ein Fehler auftritt (z.B: PermissionDenied), dann dürfen die folgenden Commands (innerhalb der Workflow-Serie) nicht mehr ausgeführt werden. Durch die batch_id kann die Engine diese Commands nun ablehnen und aus der Queue entfernen. => On failure inside batch → cancel remaining batch items. Failure umfasst: PermissionDenied, CmdNotFound, ValueError, InternalError (je nach Policy)
 
-## [202026-02-04]
+## [2026-02-04]
 **Permissions**
 Permissions werden als Unix-Rechte umgesetzt: rx (read/execute). Das vorherige Konzept über Commandsets wurde aufgelöst, weil es nicht skalierfähig war. Nun kann für jedes Commmand ein Recht (rx) - (spter rx:rx) erteilt oder auch entzogen werden. Der Account unterstützt nun Rollen und Permissions. Beide werden durch das Command 'su' in die aktuelle Session geladen. Durch die Einführung des IdentityMapService, bleiben die kompilierten Berechtigungen übe die Sitzung in der Session enthalten.
 
-## [202026-00-04]
+## [2026-00-04]
 **Hooks in Controller**
 Die Hooks in Controllern wurden reduziert. Auch wurden alle Hooks aus dem Controller entfernt, die nur von der Shell genutzt wurden. Das System (Engine) macht nun zwischen Controllern keinen Unterschied mehr.
 
-## [202026-02-04]
+## [2026-02-04]
 **IdentityMapService**
 Das gesamte System braucht verlässliche Sessions über die Dauer einer Sitzung. Bisher wurde durch jeden Dispatch eine neue Session aus dem Store geladen. Das hatte zur Folge, dass jeder prompt eine neue Session angefordert hat. Im Code führe das dazu, das nach jedem Prompt die Session.runtime leer war. Durch die IdentityMap ist nun sichergestellt, dass Sessions erhalten bleiben.
 
-## [202026-00-03]
+## [2026-00-03]
 **Domain-Models**
 Domain-Models arbeiten nicht länger mit Vererbung. Stattdessen halten Domain-Models ihre Daten in einem internen Objekt (runtime/data) auf Basis von 'dataclass'. Auch damit Aufwand in PersistensLayer (Store) entsteht, ist es ehrlich. Denn dort gehört die Logik hin und nicht in Form eines Light-OR-Mappers ins Model.
 
-## [202026-02-03]
+## [2026-02-03]
 **CmdQuit - Beenden des Hosts**
 Um die Eventloop sauber zu beenden, wird in der Session ein Signal gesetzt. Den Host zu benenden ist Zumutung des Hosts und nicht der Engine. Daher darf die Engine den Abbruch der Loop nicht entscheiden -> Signal. Der Host reagiert nur darauf. Ein anderer Host kann somit entscheiden ob er sich beendet oder das Signal ablehnt. Wichtig: Signale dürfen nicht persistiert werden.
 
-## [202026-02-03]
+## [2026-02-03]
 **Request trifft keine Entscheidung**
 Das Request nimmt nur die Benutereingabe auf. Entscheidet aber selbst nicht, was Command und SubCommand ist. Das ist immer Aufgabe des einzelnen Commands, zu interpretieren, welcher Parameter was bedeutet.
 
-## [202026-02-02]
+## [2026-02-02]
 **Workflow darf nicht selbst ausführen**
 Loops oder Rekursion im WorkflowCommand = zweiter Scheduler = Fehlerquelle. Das würde dazu führen, dass der Prompt den Workflow unterbricht und die Kontrolle verliert. Daher kommt ein 'CommandQueueService' zum Einsatz. Dieser wird über die HostLoop abgearbeitet.
 
-## [202026-02-02]
+## [2026-02-02]
 **Rename core Packages**
 Alle Core-Module tragen im Modulename nun '-core-', um sich von den anderen Modules abzugrenzen. Core ist einzigartig, weil es:, nicht optional ist, keine UX hat, kein Plugin ist, und die Runtime überhaupt erst möglich macht. Das ist eine ontologische Sonderstellung. Alles andere – auch Shell, Auth, Office, CRM – sind Programme, also prinzipiell gleichartig. Somit gilt: _Nur Core bekommt ein technisches Präfix._
 
-## [202026-02-01]
+## [2026-02-01]
 **Einführung eines WorkflowCommand**
 Über das WorkflowCommand können Commands intern commands ausführen. Somit können workflows umgesetzt werden. Der Grund für die Implementierung ist die Verwendung von Shortcuts wie 'su'. Dieses Command wird auf der shell laufen, aber dort intern zu einem anderem Plugin routen über 'use auth; su <user>; exit'. Somit können beliebige Commands aus der Shell aufgerufen werden, ohne dass die Shell überfrachtet wird oder globale gültige Commands (doppelte Keys) notwendig werden.
 
-## [202026-02-01]
+## [2026-02-01]
 **Shell hält die Hilfe**
 Die Shell benötigt eine das Command 'man', welches das gesamte Hilfesystem darstellt. Auf Template-Ebene liegt die Hilfe immer in den Command-Templates in der Sektion 'man' des Command-Templates.
 
-## [202026-01-31]
+## [2026-01-31]
 **Shell-Mode & Program-Mode**
 Im Prompt des Hosts wird der aktuelle Mode angezeigt.
 
-## [202026-01-30]
+## [2026-01-30]
 **Einführung einer Shell**
 Bei den Überlegungen zur Architektur der zukünftigen Platform, ist der Gedanke gereift, sich an Unix/Linux anzulehnen. Dabei stellt die Platform das System und die Commandline die Shell dar. Die Shell unterstützt das Starten und Beenden von Programmen (Controllern). Dies geschieht über 'use'. Verlassen der Anwedungen über 'exit'. Die Platform darf somit nur noch Infrastuktur und Dienste bereitstellen. Alles andere muss von Anwendungen (Programs) unterstützt werden. Um die Abstraktion zu verfollständigen, wurde die 'shell' in ein eigenes package verschoben. 'yakoon.shell'. Die Shell unterstützt somit das "Starten" von Programmen über 'use' und befindet sie sich dann im ProgramMode.
 

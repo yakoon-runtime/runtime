@@ -1,7 +1,7 @@
 from yakoon.base.projection import Projection
-from yakoon.base.projection.compiler import ResolverContext
 
 from .ast import build_ast
+from .context import ResolverContext
 from .mapper import create_mapper
 from .tokens import tokenize_text
 

@@ -2,44 +2,55 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from yakoon.base.capabilities.identity import Permission, PermissionService
-from yakoon.base.catalogs import ApplicationQuery, CommandInfo
+from typing_extensions import Protocol
+
+from yakoon.base.capabilities.identity import Permission
 from yakoon.base.commands import (
+    Command,
     CommandKind,
     CommandScope,
     CommandVisibility,
 )
 from yakoon.platform.runtime.sessions import Session
 
+from .application import AppQueryBuilder
+
 
 class CommandQueryBuilder:
 
     def __init__(
         self,
-        app_query: ApplicationQuery,
-        permission_service: PermissionService,
+        app_query: AppQueryBuilder,
+        on_has_read_permission: OnHasReadPermission,
     ):
         self._app_query = app_query
-        self._permission_service = permission_service
-        self._by_controller: dict[str, list[CommandInfo]] = {}
-        self._by_shell: tuple[CommandInfo, ...] = ()
-        self._by_global: tuple[CommandInfo, ...] = ()
-        self._built = False
+        self.on_has_read_permission = on_has_read_permission
 
-    def build(self) -> None:
+        self._by_controller: dict[str, list[type[Command]]] = {}
+        self._by_shell: tuple[type[Command], ...] = ()
+        self._by_global: tuple[type[Command], ...] = ()
+        self._built = False
+        self._build()
+
+    def _build(self) -> None:
         if self._built:
             return
 
-        by_controller: dict[str, list[CommandInfo]] = {}
-        by_global: dict[str, CommandInfo] = {}
-        by_shell: dict[str, CommandInfo] = {}
+        by_controller: dict[str, list[type[Command]]] = {}
+        by_global: dict[str, type[Command]] = {}
+        by_shell: dict[str, type[Command]] = {}
 
         for app in self._app_query.all():
             for controller in app.controllers:
-                for c in controller.commands:
-                    if not c.controller_id:
-                        raise RuntimeError("CommandInfo.controller_id cannot be empty.")
 
+                commands = []
+                for commandset in controller.commandsets:
+                    for command in commandset.commands:
+                        command.app_id = app.id
+                        command.controller_id = controller.id
+                        commands.append(command)
+
+                for c in commands:
                     by_controller.setdefault(c.controller_id, []).append(c)
 
                     if c.scope == CommandScope.GLOBAL:
@@ -72,30 +83,30 @@ class CommandQueryBuilder:
         if not self._built:
             raise RuntimeError("CommandIndexBuilder.build() was not called.")
 
-    def all(self) -> tuple[CommandInfo, ...]:
+    def all(self) -> tuple[type[Command], ...]:
         self._ensure_built()
-        out: list[CommandInfo] = []
+        out: list[type[Command]] = []
         for cid in sorted(self._by_controller.keys()):
             out.extend(self._by_controller[cid])
         return tuple(out)
 
-    def globals(self) -> tuple[CommandInfo, ...]:
+    def globals(self) -> tuple[type[Command], ...]:
         self._ensure_built()
         return tuple(c for c in self._by_global if c.scope == CommandScope.GLOBAL)
 
     def for_resolve_context(
         self,
         app_id: str,
-    ) -> tuple[CommandInfo, ...]:
+    ) -> tuple[type[Command], ...]:
         """
-        Deterministic resolve order using only CommandInfo:
+        Deterministic resolve order using only type[Command]:
           1) active app APPLICATION
           2) active app SHELL (only if active app is shell)
           3) GLOBAL across all applications (unique by key)
         """
         self._ensure_built()
 
-        out: list[CommandInfo] = []
+        out: list[type[Command]] = []
 
         app = self._app_query.get(app_id)
         if not app:
@@ -116,10 +127,10 @@ class CommandQueryBuilder:
 
         return tuple(out)
 
-    def for_app(self, app_id: str) -> Sequence[CommandInfo]:
+    def for_app(self, app_id: str) -> Sequence[type[Command]]:
         self._ensure_built()
 
-        out: list[CommandInfo] = []
+        out: list[type[Command]] = []
 
         app = self._app_query.get(app_id)
         if not app:
@@ -129,12 +140,12 @@ class CommandQueryBuilder:
             out.extend(self._by_controller.get(c.id, ()))
         return tuple(out)
 
-    def for_app_visible(self, app_id: str, session: Session) -> Sequence[CommandInfo]:
+    def for_app_visible(self, app_id: str, session: Session) -> Sequence[type[Command]]:
         self._ensure_built()
-        out: list[CommandInfo] = []
+        out: list[type[Command]] = []
         for cmd in self.for_app(app_id):
             fq_key = Permission.fq_key(app_id, cmd.key)
-            if self._permission_service.can_read(session, fq_key):
+            if self.on_has_read_permission(session=session, perm_key=fq_key):
                 out.append(cmd)
         return out
 
@@ -144,9 +155,9 @@ class CommandQueryBuilder:
         session: Session,
         mode: str,
         kind_filter: CommandKind | None = None,
-    ) -> Sequence[CommandInfo]:
+    ) -> Sequence[type[Command]]:
         self._ensure_built()
-        out: list[CommandInfo] = []
+        out: list[type[Command]] = []
         allowed = self._allowed_visibilities(mode)
         for cmd in self.for_app_visible(app_id, session):
             if cmd.visibility not in allowed:
@@ -160,7 +171,7 @@ class CommandQueryBuilder:
         self,
         app_id: str,
         command_key: str,
-    ) -> CommandInfo | None:
+    ) -> type[Command] | None:
         key = command_key.strip()
         for ci in self.for_resolve_context(app_id):
             if ci.key == key:
@@ -179,3 +190,12 @@ class CommandQueryBuilder:
                 CommandVisibility.INTERNAL,
             }
         raise ValueError(mode)
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnHasReadPermission(Protocol):
+    def __call__(self, *, session: Session, perm_key: str) -> bool: ...

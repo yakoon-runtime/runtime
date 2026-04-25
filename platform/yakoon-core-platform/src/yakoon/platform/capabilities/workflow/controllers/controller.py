@@ -8,7 +8,5 @@ from ..commands.cmdset import WorkflowCommands
 class WorkflowController(Controller):
 
     id: str = "workflow"
-    is_listed: bool = False
-    is_activatable: bool = False
 
     commandsets = (WorkflowCommands,)

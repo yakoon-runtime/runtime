@@ -1,11 +1,13 @@
-from .module import LoadedModule, ModuleExport, ModuleMeta
-from .port import ModuleRegistry
+from .capability import CapabilityMode, CapabilitySelection
+from .module import LoadedModule, ModuleExport, ModuleImport, ModuleMeta
 
 __all__ = [
     # .module
     "ModuleExport",
+    "ModuleImport",
     "ModuleMeta",
     "LoadedModule",
-    # .port
-    "ModuleRegistry",
+    # .capability
+    "CapabilityMode",
+    "CapabilitySelection",
 ]

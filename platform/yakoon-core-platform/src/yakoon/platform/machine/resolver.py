@@ -1,38 +1,48 @@
 from __future__ import annotations
 
-from yakoon.base.catalogs import CommandQuery
+from collections.abc import Sequence
+from typing import Protocol
+
+from yakoon.base.application import Application
 from yakoon.base.commands import Command
 from yakoon.base.controllers import Controller
 
 
 class CommandResolver:
 
-    def __init__(self, query: CommandQuery):
-        self._query = query
+    def __init__(
+        self,
+        on_match_command: OnMatchCommand,
+        on_get_context: OnGetContext,
+    ):
+        self.on_match_command = on_match_command
+        self.on_get_context = on_get_context
+
         self._controllers: dict[str, type[Controller]] = {}
         self._types: dict[str, dict[str, type[Command]]] = {}
+        self._build()
 
-    def register(
-        self,
-        controller: type[Controller],
-    ) -> None:
+    def _build(self) -> None:
 
-        if controller.id in self._controllers:
-            raise ValueError(
-                f"Duplicate controller.id in controllers: '{controller.id}'"
-            )
+        for app in self.on_get_context():
+            for controller in app.controllers:
 
-        self._controllers[controller.id] = controller
-
-        by_key = self._types.setdefault(controller.id, {})
-        for cmd_set in controller.commandsets:
-            for cmd_type in cmd_set.commands:
-                key = cmd_type.key
-                if key in by_key:
+                if controller.id in self._controllers:
                     raise ValueError(
-                        f"Duplicate command key in controller '{controller.id}': '{key}'"
+                        f"Duplicate controller.id in controllers: '{controller.id}'"
                     )
-                by_key[key] = cmd_type
+
+                self._controllers[controller.id] = controller
+
+                by_key = self._types.setdefault(controller.id, {})
+                for cmd_set in controller.commandsets:
+                    for cmd_type in cmd_set.commands:
+                        key = cmd_type.key
+                        if key in by_key:
+                            raise ValueError(
+                                f"Duplicate command key in controller '{controller.id}': '{key}'"
+                            )
+                        by_key[key] = cmd_type
 
     def resolve(
         self,
@@ -45,7 +55,7 @@ class CommandResolver:
             return None
 
         matches: list[tuple[str, type[Controller], type[Command]]] = []
-        ci = self._query.for_context(app_id, key)
+        ci = self.on_match_command(app_id=app_id, command_key=key)
         if not ci:
             return None
 
@@ -74,3 +84,16 @@ class CommandResolver:
 
         owners = ", ".join(f"{app_id}:{c.id}:{cmd.key}" for app_id, c, cmd in matches)
         raise ValueError(f"Ambiguous command '{command_key}' → {owners}")
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnGetContext(Protocol):
+    def __call__(self) -> Sequence[Application]: ...
+
+
+class OnMatchCommand(Protocol):
+    def __call__(self, *, app_id: str, command_key: str) -> type[Command] | None: ...

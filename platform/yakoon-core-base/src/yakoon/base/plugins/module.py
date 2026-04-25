@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Protocol
+
+from yakoon.base.projection.model import Projection
+from yakoon.base.resources import ResourceRef
 
 if TYPE_CHECKING:
     from yakoon.base.application import Application
-    from yakoon.base.runtime import Container
+
+
+@dataclass(frozen=True)
+class ModuleImport:
+    on_project: OnProject
 
 
 @dataclass(frozen=True)
@@ -18,12 +25,21 @@ class ModuleMeta:
 @dataclass(frozen=True)
 class ModuleExport:
     meta: ModuleMeta
-    app: type[Application] | None = None
-    public_ports: list[type[Any]] = field(default_factory=list)
+    app: Application
 
 
 @dataclass(frozen=True, slots=True)
 class LoadedModule:
     export: ModuleExport
-    container: Container
     module_name: str
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnProject(Protocol):
+    async def __call__(
+        self, *, resource: ResourceRef, state: dict | None = None
+    ) -> Projection: ...

@@ -12,8 +12,6 @@ class DemoControllerPatterns(Controller):
     """
 
     id: str = "demo.patterns"
-    is_listed: bool = True
-    is_activatable: bool = True
 
     commandsets = (DemoCommandsPatterns,)
 

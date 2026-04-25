@@ -1,6 +1,4 @@
-from yakoon.base.plugins.module import ModuleExport, ModuleMeta
-from yakoon.base.runtime import Container
-from yakoon.office.controller import OfficeMailingCoreController
+from yakoon.base.plugins import ModuleExport, ModuleImport, ModuleMeta
 
 meta = ModuleMeta(
     name="yakoon.office",
@@ -9,11 +7,12 @@ meta = ModuleMeta(
 )
 
 
-def register(container: Container) -> ModuleExport:
+def register(ports: ModuleImport) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        controllers=[
-            OfficeMailingCoreController,
-        ],
+        app=None,
+        # controllers=[
+        #    OfficeMailingCoreController,
+        # ],
     )

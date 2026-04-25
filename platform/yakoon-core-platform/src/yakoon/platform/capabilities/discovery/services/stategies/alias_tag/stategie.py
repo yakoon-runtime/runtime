@@ -12,8 +12,6 @@ from yakoon.base.capabilities.discovery import (
 )
 from yakoon.base.catalogs import CommandQuery
 from yakoon.base.commands import Request
-from yakoon.base.controllers import resolve_resource
-from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime import Container
 from yakoon.platform.runtime.sessions import Session
 
@@ -110,7 +108,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
             ctrl.resources,
             i18n_root=ctrl.resources.lookup,
             lang=session.lang,
-            key=self._lookup_filename,
+            cmd_key=self._lookup_filename,
         )
 
         try:

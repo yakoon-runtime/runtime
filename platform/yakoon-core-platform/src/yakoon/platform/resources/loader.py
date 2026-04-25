@@ -1,82 +1,46 @@
 import importlib.resources as ir
 from dataclasses import dataclass
-from pathlib import PurePosixPath
 
-from yakoon.base.controllers.resources import ResourceRef
-from yakoon.base.resources.resource import _clean_rel
+from yakoon.base.controllers.resolver import clean_rel
+from yakoon.base.resources import ResourceRef
 
 
 @dataclass(slots=True)
-class FileResourceLoader:
-    """
-    Generic loader for any resource under a package.
+class PackageResourceLoader:
 
-    Lookup order:
-      1) host overrides (filesystem)  [optional, if you add it later]
-      2) plugin/module package resources
-      3) platform defaults (optional)
-    """
-
-    platform_package: str = ""
-    platform_root: str = ""  # e.g. "templates" or "resources"
-    # if you still want prefix filtering, keep sources; otherwise just use ref.package
-    allowed_packages: set[str] | None = None
-
-    def load_text(
+    def get_text(
         self,
-        ref: ResourceRef,
         *,
-        exts: tuple[str, ...] = (".sam",),
+        resource: ResourceRef,
         encoding: str = "utf-8",
     ) -> str:
-        # Optional: enforce allowed packages (security / sanity)
-        if (
-            self.allowed_packages is not None
-            and ref.package not in self.allowed_packages
-        ):
-            raise LookupError(f"Package not allowed: {ref.package}")
+        if not resource.package:
+            raise LookupError("Parameter resource.package cannot be None or Empty")
+        if not resource.path:
+            raise LookupError("Parameter resource.path cannot be None or Empty")
 
-        if not ref.package:
-            raise LookupError(f"ResourceRef package cannot be None or Empty: {ref}")
-
-        # 1) plugin/module package
-        text = self._try_package(ref.package, ref.path, exts=exts, encoding=encoding)
+        text = self._try_package(resource.package, resource.path, encoding=encoding)
         if text is not None:
             return text
 
-        # 2) platform defaults (optional)
-        if self.platform_package and self.platform_root:
-            platform_path = str(
-                PurePosixPath(self.platform_root) / _clean_rel(ref.path)
-            )
-            text = self._try_package(
-                self.platform_package, platform_path, exts=exts, encoding=encoding
-            )
-            if text is not None:
-                return text
-
-        raise LookupError(
-            f"Resource missing: {ref.package}:{ref.path} ({', '.join(exts)})"
-        )
+        raise LookupError(f"Resource missing: {resource.package}:{resource.path}")
 
     def _try_package(
         self,
         package: str,
-        rel_path_no_ext: str,
+        name: str,
         *,
-        exts: tuple[str, ...],
         encoding: str,
     ) -> str | None:
         base = ir.files(package)
-        rel = _clean_rel(rel_path_no_ext)
+        full_name = clean_rel(name)
 
-        for ext in exts:
-            candidate = base.joinpath(rel + ext)
-            try:
-                if candidate.is_file():
-                    return candidate.read_text(encoding=encoding)
-            except FileNotFoundError:
-                # importlib.resources can throw for missing paths depending on backend
-                pass
+        candidate = base.joinpath(full_name)
+        try:
+            if candidate.is_file():
+                return candidate.read_text(encoding=encoding)
+        except FileNotFoundError:
+            # importlib.resources can throw for missing paths depending on backend
+            pass
 
         return None

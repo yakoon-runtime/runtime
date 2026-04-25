@@ -8,7 +8,5 @@ from ..commands.cmdset import JobsCommands
 class JobsController(Controller):
 
     id: str = "jobs"
-    is_listed: bool = False
-    is_activatable: bool = False
 
     commandsets = (JobsCommands,)

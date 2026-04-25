@@ -12,8 +12,6 @@ class DemoControllerDsl(Controller):
     """
 
     id: str = "demo.dsl"
-    is_listed: bool = True
-    is_activatable: bool = True
 
     commandsets = (DemoCommandsDsl,)
 

@@ -1,10 +1,12 @@
 from .controller import Controller
-from .resources import ResourceReferences, resolve_resource
+from .resolver import resolve_resource
+from .resources import ResourceReferences
 
 __all__ = [
     # .controller
     "Controller",
     # .ressources
     "ResourceReferences",
+    # .resolver
     "resolve_resource",
 ]

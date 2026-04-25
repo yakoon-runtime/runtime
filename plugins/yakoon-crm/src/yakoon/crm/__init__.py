@@ -1,6 +1,4 @@
-from yakoon.base.plugins.module import ModuleExport, ModuleMeta
-from yakoon.base.runtime import Container
-from yakoon.crm.controller import CrmCustomerCoreController
+from yakoon.base.plugins import ModuleExport, ModuleImport, ModuleMeta
 
 meta = ModuleMeta(
     name="yakoon.crm",
@@ -9,11 +7,12 @@ meta = ModuleMeta(
 )
 
 
-def register(container: Container) -> ModuleExport:
+def register(ports: ModuleImport) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        controllers=[
-            CrmCustomerCoreController,
-        ],
+        app=None,
+        # controllers=[
+        #    CrmCustomerCoreController,
+        # ],
     )

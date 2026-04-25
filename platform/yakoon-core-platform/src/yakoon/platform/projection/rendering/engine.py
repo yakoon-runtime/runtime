@@ -21,20 +21,18 @@ class JinjaRenderEngine:
         )
         register_filters(self.env)
 
-    async def render_str(self, template_str: str, *, context: dict) -> str:
+    def render_str(self, template_str: str, *, context: dict) -> str:
         return self.env.from_string(template_str).render(**context)
 
-    async def render_any(self, obj: Any, *, context: dict) -> Any:
+    def render_any(self, obj: Any, *, context: dict) -> Any:
         if obj is None:
             return None
         if isinstance(obj, str):
-            return await self.render_str(obj, context=context)
+            return self.render_str(obj, context=context)
         if isinstance(obj, Mapping):
-            return {
-                k: await self.render_any(v, context=context) for k, v in obj.items()
-            }
+            return {k: self.render_any(v, context=context) for k, v in obj.items()}
         if isinstance(obj, Sequence) and not isinstance(obj, (str, bytes, bytearray)):
-            rendered = [await self.render_any(v, context=context) for v in obj]
+            rendered = [self.render_any(v, context=context) for v in obj]
             return tuple(rendered) if isinstance(obj, tuple) else rendered
         return obj
 

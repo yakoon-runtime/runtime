@@ -1,18 +1,11 @@
 from typing import Protocol, cast
 
-from yakoon.base.catalogs import (
-    ApplicationQuery,
-    CommandInfo,
-    CommandQuery,
-)
 from yakoon.base.commands import (
     Command,
     CommandScope,
     Request,
 )
-from yakoon.base.controllers import resolve_resource
 from yakoon.base.flow import present
-from yakoon.base.projection.port import ProjectorFactory
 
 
 class _ApplicationAccess(Protocol):
@@ -64,19 +57,19 @@ class CmdMan(Command):
         # ----------------------------------------------------
         # 1) Try active app first
         # ----------------------------------------------------
-        cmd_info: CommandInfo | None = None
+        command: type[Command] | None = None
         owner_app_id = active_app_id
 
         for c in command_service.for_app(active_app_id):
             if c.key == command_key:
-                cmd_info = c
+                command = c
                 break
 
         # ----------------------------------------------------
         # 2) If not found: try GLOBAL commands from all apps
         # ----------------------------------------------------
-        if not cmd_info:
-            global_hits: list[tuple[str, CommandInfo]] = []
+        if not command:
+            global_hits: list[tuple[str, type[Command]]] = []
 
             for ctrl in app_query.all():
                 if not app_query.is_listed(ctrl.id):
@@ -86,7 +79,7 @@ class CmdMan(Command):
                         global_hits.append((ctrl.id, c))
 
             if len(global_hits) == 1:
-                owner_app_id, cmd_info = global_hits[0]
+                owner_app_id, command = global_hits[0]
             elif len(global_hits) > 1:
                 raise RuntimeError(
                     f"Duplicate GLOBAL command key detected: {command_key}"
@@ -95,7 +88,7 @@ class CmdMan(Command):
         # ----------------------------------------------------
         # 3) Render or show "no entry"
         # ----------------------------------------------------
-        if not cmd_info:
+        if not command:
             projector = await self.create_projector()
 
             projection = await projector.project(
@@ -126,7 +119,7 @@ class CmdMan(Command):
                 resources,
                 i18n_root=resources.man,
                 lang=session.lang,
-                key=cmd_info.key,
+                cmd_key=command.key,
             )
             projector = await projector_service.create(ref, session)
             projection = await projector.project("details")
@@ -155,7 +148,7 @@ class CmdMan(Command):
         active_app_id = access.get_active_app()
         mode = self.resolve_man_mode(request)
 
-        globals_by_key: dict[str, CommandInfo] = {}
+        globals_by_key: dict[str, type[Command]] = {}
 
         # ----------------------------
         # Shell mode (no active or shell)
@@ -175,7 +168,7 @@ class CmdMan(Command):
                         globals_by_key[cmd.key] = cmd
 
             # merge, avoid duplicates
-            merged_by_key: dict[str, CommandInfo] = {c.key: c for c in shell_commands}
+            merged_by_key: dict[str, type[Command]] = {c.key: c for c in shell_commands}
             for k, v in globals_by_key.items():
                 merged_by_key.setdefault(k, v)
 
@@ -208,13 +201,13 @@ class CmdMan(Command):
                     globals_by_key[cmd.key] = cmd
 
         # 2) Collect commands from active app that are executable in program mode
-        program_by_key: dict[str, CommandInfo] = {}
+        program_by_key: dict[str, type[Command]] = {}
         for cmd in command_service.for_man_entries(active_app_id, session, mode=mode):
             if cmd.scope in (CommandScope.APP, CommandScope.GLOBAL):
                 program_by_key[cmd.key] = cmd
 
         # 3) Merge (active app wins on duplicates, but GLOBAL keys should be unique anyway)
-        merged: dict[str, CommandInfo] = {}
+        merged: dict[str, type[Command]] = {}
         merged.update(globals_by_key)
         merged.update(program_by_key)
 

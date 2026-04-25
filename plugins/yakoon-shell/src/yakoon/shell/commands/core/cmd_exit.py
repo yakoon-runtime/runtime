@@ -1,6 +1,5 @@
 from typing import Protocol, cast
 
-from yakoon.base.catalogs import ApplicationQuery
 from yakoon.base.commands import (
     Command,
     CommandScope,

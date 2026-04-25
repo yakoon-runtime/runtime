@@ -1,22 +1,6 @@
-from typing import Any
-
-from yakoon.base.capabilities.discovery import (
-    DiscoveryService,
-    LookupCandidateStoreService,
-    LookupParser,
-    LookupResolver,
-)
-from yakoon.base.plugins import ModuleExport, ModuleMeta
-from yakoon.base.runtime import Container
+from yakoon.base.plugins import ModuleExport, ModuleImport, ModuleMeta
 
 from .app import DiscoveryApplication
-from .services import (
-    DefaultDiscoveryService,
-    DefaultLookupCandidateStoreService,
-    DefaultLookupParser,
-    DefaultLookupResolverService,
-    LookupAliasTagStrategy,
-)
 
 meta = ModuleMeta(
     name="yakoon.discovery",
@@ -25,30 +9,15 @@ meta = ModuleMeta(
 )
 
 
-def register(container: Container) -> ModuleExport:
+def register(ports: ModuleImport) -> ModuleExport:
 
-    public_ports: list[type] = []
+    # provide(LookupCandidateStoreService, DefaultLookupCandidateStoreService())
+    # provide(LookupParser, DefaultLookupParser())
 
-    discovery = DefaultDiscoveryService()
-    discovery.register(1, LookupAliasTagStrategy(container))
-
-    # provide: internal module service (not exported to platform)
-    def provide(port_type: type[Any], instance: Any) -> None:
-        container.register_static(port_type, instance)
-
-    # publish: public capability port exported to the platform
-    def publish(port_type: type, instance: object) -> None:
-        provide(port_type, instance)
-        public_ports.append(port_type)
-
-    provide(LookupCandidateStoreService, DefaultLookupCandidateStoreService())
-    provide(LookupParser, DefaultLookupParser())
-
-    publish(LookupResolver, DefaultLookupResolverService(container))
-    publish(DiscoveryService, discovery)
+    # publish(LookupResolver, DefaultLookupResolverService(container))
+    # publish(DiscoveryService, discovery)
 
     return ModuleExport(
         meta,
-        app=DiscoveryApplication,
-        public_ports=public_ports,
+        app=DiscoveryApplication(platform_ports=ports),
     )

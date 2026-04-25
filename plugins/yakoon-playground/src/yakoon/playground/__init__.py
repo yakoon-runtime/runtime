@@ -1,7 +1,4 @@
-from yakoon.base.plugins.module import ModuleExport, ModuleMeta
-from yakoon.base.runtime import Container
-from yakoon.playground.controller_dsl import DemoControllerDsl
-from yakoon.playground.controller_patterns import DemoControllerPatterns
+from yakoon.base.plugins import ModuleExport, ModuleImport, ModuleMeta
 
 meta = ModuleMeta(
     name="yakoon.playground",
@@ -10,12 +7,13 @@ meta = ModuleMeta(
 )
 
 
-def register(container: Container) -> ModuleExport:
+def register(ports: ModuleImport) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        controllers=[
-            DemoControllerDsl,
-            DemoControllerPatterns,
-        ],
+        app=None,
+        # controllers=[
+        #    DemoControllerDsl,
+        #    DemoControllerPatterns,
+        # ],
     )

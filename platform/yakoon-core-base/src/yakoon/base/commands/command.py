@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
 from yakoon.base.capabilities.interaction import FieldPolicyEngine
-from yakoon.base.controllers import resolve_resource
 from yakoon.base.naming import NamespaceResolver
-from yakoon.base.projection import (
-    Projector,
-    ProjectorFactory,
-)
+from yakoon.base.projection.model.model import Projection
 
 from .types import (
     CommandKind,
@@ -22,12 +18,7 @@ if TYPE_CHECKING:
     from yakoon.base.naming import Namespace
     from yakoon.base.runtime import Container
 
-    from .context import CommandContext
     from .request import Request
-
-
-class WorkflowContextRequired(RuntimeError):
-    """Raised when a workflow-only command is invoked without a workflow batch."""
 
 
 class Command(ABC):
@@ -35,6 +26,9 @@ class Command(ABC):
 
     # Public identity
     key: str
+
+    app_id: str
+    controller_id: str
 
     # Execution metadata
     kind: CommandKind = CommandKind.USER
@@ -44,8 +38,7 @@ class Command(ABC):
     # If True, dispatcher or command must enforce workflow context.
     requires_workflow: bool = False
 
-    # Runtime-provided
-    ctx: CommandContext
+    on_project: OnProject
 
     @property
     def policies(self) -> FieldPolicyEngine:
@@ -67,7 +60,7 @@ class Command(ABC):
         namespaces = self.container.get(NamespaceResolver)
         return await namespaces.from_session(self.ctx.session, kind, space)
 
-    async def create_projector(self) -> Projector:
+    async def create_projector(self):
         if not self.ctx:
             raise RuntimeError("Context cannot be None")
         if not self.ctx.controller:
@@ -85,14 +78,14 @@ class Command(ABC):
             resources,
             i18n_root=resources.contracts,
             lang=session.lang,
-            key=self.key,
+            cmd_key=self.key,
         )
 
         ref_asset = resolve_resource(
             resources,
             i18n_root=resources.assets,
             lang=session.lang,
-            key=self.key,
+            cmd_key=self.key,
         )
 
         return await projector_service.create(ref_contract, ref_asset, session)
@@ -100,3 +93,12 @@ class Command(ABC):
     @abstractmethod
     def run(self, request: Request):
         raise NotImplementedError
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnProject(Protocol):
+    async def __call__(self, *, name: str, state: dict | None = None) -> Projection: ...

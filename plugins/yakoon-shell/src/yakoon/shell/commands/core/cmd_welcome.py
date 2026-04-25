@@ -8,6 +8,5 @@ class CmdWelcome(Command):
 
     async def run(self, request: Request):
 
-        projector = await self.create_projector()
-        projection = await projector.project("result")
+        projection = await self.on_project(name="result.sam")
         yield present(projection)

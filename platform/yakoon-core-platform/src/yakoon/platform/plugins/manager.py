@@ -1,23 +1,27 @@
+from __future__ import annotations
+
 import importlib
-from typing import Literal, TypeAlias
 
-from yakoon.base.plugins import ModuleRegistry
-from yakoon.base.plugins.module import LoadedModule, ModuleExport
-from yakoon.base.runtime import Container
+from typing_extensions import Protocol
 
-CapabilityMode: TypeAlias = Literal["default"]
-CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
+from yakoon.base.plugins import (
+    CapabilitySelection,
+    LoadedModule,
+    ModuleExport,
+    ModuleImport,
+    ModuleMeta,
+)
 
 
-class DefaultModuleManager:
+class ModuleManager:
     def __init__(
         self,
-        root: Container,
-        *,
+        module_import: ModuleImport,
+        on_register: OnRegister,
         capability_prefix: str = "yakoon.platform.capabilities",
     ):
-        self._root = root
-        self._registry = root.get(ModuleRegistry)
+        self.module_import = module_import
+        self.on_register = on_register
         self._capability_prefix = capability_prefix.rstrip(".")
 
     def load_modules(self, modules: list[str]) -> list[LoadedModule]:
@@ -26,21 +30,18 @@ class DefaultModuleManager:
         for module_name in modules:
             register_fn = self._resolve_register(module_name)
 
-            child = self._root.fork()
-
-            export = register_fn(child)
+            export = register_fn(self.module_import)
             if not isinstance(export, ModuleExport):
                 raise RuntimeError(
                     f"Module '{module_name}' register() must return ModuleExport, "
                     f"got {type(export)!r}"
                 )
 
-            self._registry.register(export.meta)
+            self.on_register(meta=export.meta)
 
             loaded.append(
                 LoadedModule(
                     export=export,
-                    container=child,
                     module_name=module_name,
                 )
             )
@@ -96,3 +97,12 @@ class DefaultModuleManager:
             )
 
         return register_fn
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnRegister(Protocol):
+    def __call__(self, *, meta: ModuleMeta): ...

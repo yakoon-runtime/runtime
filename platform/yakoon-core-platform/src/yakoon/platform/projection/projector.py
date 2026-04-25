@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Protocol
 
 from yakoon.base.projection import Projection
-from yakoon.base.projection.compiler import ProjectionCompiler
-from yakoon.base.projection.compiler.context import ResolverContext
-from yakoon.base.projection.rendering import ProjectionRenderer, RenderContext
 from yakoon.base.resources import ResourceRef
-from yakoon.base.runtime import Container
-from yakoon.platform.runtime.sessions import Session
+
+from .compiler import ResolverContext
 
 
 class TemplateProjector:
@@ -21,37 +18,42 @@ class TemplateProjector:
 
     def __init__(
         self,
-        ref_contract: ResourceRef,
-        ref_asset: ResourceRef,
-        session: Session,
-        container: Container,
+        on_render: OnRender,
+        on_compile: OnCompile,
     ) -> None:
-        self._session = session
-        self._renderer = container.get(ProjectionRenderer)
-        self._compiler = container.get(ProjectionCompiler)
-
-        self._ref_asset = ref_asset
-        self._ctx = RenderContext(
-            resource=ref_contract,
-            lang=session.lang,
-        )
+        self.on_render = on_render
+        self.on_compile = on_compile
 
     async def project(
         self,
-        name: str,
+        resource: ResourceRef,
+        # assets: ResourceRef,
         state: dict[str, Any] | None = None,
     ) -> Projection:
 
         if state is None:
             state = {}
 
-        text = await self._renderer.render(self._ctx, name, state)
-        context = ResolverContext(self._ref_asset)
+        text = self.on_render(resource=resource, context=state)
+        context = ResolverContext(assets=resource)  # TODO:
 
-        projection = self._compiler.compile(text, context)
+        projection = self.on_compile(text=text, ctx=context)
         if projection.id is None:
             raise RuntimeError(
                 "Renderer returned a Projection without id (parser invariant violated)"
             )
 
         return projection
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnRender(Protocol):
+    def __call__(self, *, resource: ResourceRef, context: dict[str, Any]) -> str: ...
+
+
+class OnCompile(Protocol):
+    def __call__(self, *, text: str, ctx: ResolverContext) -> Projection: ...

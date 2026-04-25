@@ -1,7 +1,7 @@
 from yakoon.base.plugins.module import ModuleMeta
 
 
-class DefaultModuleRegistry:
+class ModuleRegistry:
     def __init__(self):
         self._plugins: dict[str, ModuleMeta] = {}
 

@@ -1,7 +1,7 @@
 from dataclasses import replace
 from pathlib import PurePosixPath
 
-from yakoon.base.resources.resource import ResourceRef
+from yakoon.base.resources import ResourceRef
 
 
 class BlockResolver:
@@ -11,10 +11,10 @@ class BlockResolver:
 
 class ImageResolver(BlockResolver):
 
-    def __init__(self, ref: ResourceRef):
-        self._ref = ref
+    def __init__(self, resource: ResourceRef):
+        self.resource = resource
 
     def resolve(self, block):
-        full = str(PurePosixPath(self._ref.path) / block.ref)
+        full = str(PurePosixPath(self.resource.path) / block.ref)
 
-        return replace(block, src=f"/api/assets/{self._ref.package}/{full}")
+        return replace(block, src=f"/api/assets/{self.resource.package}/{full}")

@@ -1,6 +1,6 @@
 from collections.abc import Iterable, Sequence
 
-from yakoon.base.catalogs import AppInfo
+from yakoon.base.application import Application
 
 
 class AppQueryBuilder:
@@ -9,10 +9,10 @@ class AppQueryBuilder:
     Used by the Engine to remain agnostic of structure.
     """
 
-    def __init__(self, applications: Iterable[AppInfo]):
+    def __init__(self, applications: Iterable[Application]):
 
-        by_id: dict[str, AppInfo] = {}
-        shell: AppInfo | None = None
+        by_id: dict[str, Application] = {}
+        shell: Application | None = None
 
         for app in applications:
             if app.id in by_id:
@@ -33,25 +33,28 @@ class AppQueryBuilder:
         self._by_id = by_id
         self._shell = shell
 
-    def shell(self) -> AppInfo:
+    def shell(self) -> Application:
         return self._shell
 
     def ids(self) -> Sequence[str]:
         return tuple(sorted(self._by_id.keys()))
 
-    def all(self) -> Sequence[AppInfo]:
+    def all(self) -> Sequence[Application]:
         return tuple(self._by_id[cid] for cid in self.ids())
 
-    def get(self, app_id: str) -> AppInfo | None:
-        return self._by_id.get(app_id)
+    def get(self, app_id: str) -> Application:
+        app = self._by_id.get(app_id)
+        if not app:
+            raise ValueError(f"Appliation not found by id: {app_id}")
+        return app
 
     def has(self, app_id: str) -> bool:
         return bool(self._by_id.get(app_id, {}))
 
-    def activatable(self) -> Sequence[AppInfo]:
+    def activatable(self) -> Sequence[Application]:
         return tuple(c for c in self.all() if c.is_activatable)
 
-    def listed(self) -> Sequence[AppInfo]:
+    def listed(self) -> Sequence[Application]:
         return tuple(c for c in self.all() if c.is_listed)
 
     def is_shell(self, app_id: str) -> bool:

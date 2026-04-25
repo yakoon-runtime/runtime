@@ -11,9 +11,7 @@ from yakoon.base.capabilities.workflow import (
     WorkflowRuntime,
     WorkflowStatus,
 )
-from yakoon.base.controllers import resolve_resource
 from yakoon.base.dispatch import CommandQueue
-from yakoon.base.resources import ResourceLoader
 from yakoon.base.runtime import Container
 
 from ..runtime.compiler import compile_run_command
@@ -50,7 +48,7 @@ class DefaultWorkflowService:
             resources,
             i18n_root=resources.workflows,
             lang=None,
-            key=command_key,
+            cmd_key=command_key,
         )
 
         file_loader = self.container.get(ResourceLoader)

@@ -1,6 +1,5 @@
 from .models import (
     WorkflowBatch,
-    WorkflowContextRequired,
     WorkflowError,
     WorkflowRuntime,
     WorkflowStatus,
@@ -22,7 +21,6 @@ __all__ = [
     "WorkflowBatch",
     "WorkflowRuntime",
     "WorkflowStatus",
-    "WorkflowContextRequired",
     # .port
     "WorkflowCompiler",
     "WorkflowService",

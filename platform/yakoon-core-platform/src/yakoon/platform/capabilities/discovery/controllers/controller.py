@@ -10,10 +10,6 @@ class DiscoveryController(Controller):
 
     id: str = "discovery"
 
-    is_shell: bool = False
-    is_listed: bool = True
-    is_activatable: bool = True
-
     commandsets = (DiscoveryLookupCommands,)
 
     resources = ResourceReferences(

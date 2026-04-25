@@ -15,10 +15,6 @@ class AuthCoreController(Controller):
 
     id: str = "auth"
 
-    is_shell: bool = False
-    is_listed: bool = True
-    is_activatable: bool = True
-
     commandsets = (AuthSystemCommands,)
 
     resources = ResourceReferences(

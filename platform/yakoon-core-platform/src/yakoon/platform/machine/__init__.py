@@ -1,22 +1,12 @@
-from .engine import CommandEngine
 from .host import RuntimeHost
 from .queue import InMemoryCommandQueue
-from .resolver import CommandResolver
-from .runner import Runner, RunnerFactory
-from .scheduler import Scheduler
+from .wire import build_machine
 
 __all__ = [
-    # . engine
-    "CommandEngine",
-    # .resolver
-    "CommandResolver",
+    # . wre
+    "build_machine",
     # . queue
     "InMemoryCommandQueue",
-    # .runner
-    "Runner",
-    "RunnerFactory",
-    # .host
+    # . hosts
     "RuntimeHost",
-    # .scheduler
-    "Scheduler",
 ]

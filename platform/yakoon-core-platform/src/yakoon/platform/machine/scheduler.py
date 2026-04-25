@@ -1,16 +1,17 @@
+from __future__ import annotations
+
 import asyncio
 import heapq
 import time
 from collections import deque
+from typing import Protocol
 
-from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.flow.primitives import Control
-from yakoon.base.projection.transfer import Output
-from yakoon.base.runtime.input.event import InputEvent
+from yakoon.base.flow.primitives.outcome import Outcome
+from yakoon.base.projection import Projection
+from yakoon.base.runtime.input import InputContext, InputEvent
 from yakoon.platform.flow import Flow, FlowKind
-from yakoon.platform.machine import CommandEngine
-from yakoon.platform.runtime import DomainError, PlatformError
-from yakoon.platform.runtime.sessions import Session
+from yakoon.platform.runtime import DomainError, PlatformError, Session
 
 from .errors import (
     domain_error_projection,
@@ -33,13 +34,18 @@ class Scheduler:
 
     def __init__(
         self,
-        engine: CommandEngine,
-        audit_service: AuditLogService,
-        output: Output,
+        on_dispatch: OnDispatch,
+        on_step_flow: OnStepFlow,
+        on_projection: OnProjection,
+        on_audit_error: OnAuditError,
+        on_audit_warning: OnAuditWarning,
     ):
-        self._engine = engine
-        self._audit_service = audit_service
-        self._output = output
+        # Hooks
+        self.on_dispatch = on_dispatch
+        self.on_step_flow = on_step_flow
+        self.on_projection = on_projection
+        self.on_audit_error = on_audit_error
+        self.on_audit_warning = on_audit_warning
 
         # Flow-basierte Queue: (session, flow)
         self._ready_user = deque()
@@ -55,22 +61,22 @@ class Scheduler:
 
     async def dispatch(self, session: Session, event: InputEvent):
         try:
-            await self._engine.dispatch(session, event)
+            await self.on_dispatch(session=session, event=event)
 
             # alle Flows der Session schedulen
             for flow in session.flows():
                 self.schedule_flow(flow, session)
 
         except PlatformError as e:
-            await self._output.send_projection(
+            await self.on_projection(
                 session=session,
                 projection=system_error_projection(e.message, error_code=e.code),
                 ctx=event.context,
             )
 
         except Exception as e:
-            self._audit_service.error(e, session)
-            await self._output.send_projection(
+            self.on_audit_error(exc=e, session=session)
+            await self.on_projection(
                 session=session,
                 projection=fatal_error_projection("Fatal error", error_code="fatal"),
                 ctx=event.context,
@@ -139,8 +145,8 @@ class Scheduler:
 
                 iterations += 1
                 if iterations > self.MAX_ITERATIONS:
-                    self._audit_service.warning(
-                        "Scheduler iteration limit reached", session
+                    self.on_audit_warning(
+                        message="Scheduler iteration limit reached", session=session
                     )
                     break
 
@@ -161,7 +167,7 @@ class Scheduler:
                 try:
 
                     while True:
-                        outcome = await self._engine.step_flow(flow, session)
+                        outcome = await self.on_step_flow(flow=flow, session=session)
 
                         flow_steps += 1
                         steps += 1
@@ -188,7 +194,7 @@ class Scheduler:
                     event = flow.event
                     if session.interaction_flow:
                         session.del_flow(session.interaction_flow)
-                    await self._output.send_projection(
+                    await self.on_projection(
                         session=session,
                         projection=domain_error_projection(
                             e.message, error_code=e.code
@@ -198,8 +204,8 @@ class Scheduler:
 
                 except PlatformError as e:
                     event = flow.event
-                    await self._output.send_projection(
-                        session=Session,
+                    await self.on_projection(
+                        session=session,
                         projection=system_error_projection(
                             e.message, error_code=e.code
                         ),
@@ -208,8 +214,8 @@ class Scheduler:
 
                 except Exception as e:
                     event = flow.event
-                    self._audit_service.error(e, session)
-                    await self._output.send_projection(
+                    self.on_audit_error(exc=e, session=session)
+                    await self.on_projection(
                         session=session,
                         projection=fatal_error_projection(
                             "Fatal error", error_code="fatal"
@@ -226,7 +232,7 @@ class Scheduler:
             ):
                 await asyncio.sleep(0)
 
-    def schedule_flow(self, flow, session):
+    def schedule_flow(self, flow, session) -> None:
 
         if flow.scheduled:
             return
@@ -276,3 +282,34 @@ class Scheduler:
             return
 
         raise RuntimeError(f"Unhandled control: {type(control)}")
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnDispatch(Protocol):
+    async def __call__(self, *, session: Session, event: InputEvent) -> None: ...
+
+
+class OnStepFlow(Protocol):
+    async def __call__(self, *, flow: Flow, session: Session) -> Outcome | None: ...
+
+
+class OnAuditError(Protocol):
+    def __call__(self, *, exc: Exception, session: Session) -> None: ...
+
+
+class OnAuditWarning(Protocol):
+    def __call__(self, *, message: str, session: Session) -> None: ...
+
+
+class OnProjection(Protocol):
+    async def __call__(
+        self,
+        *,
+        session: Session,
+        projection: Projection,
+        ctx: InputContext | None,
+    ) -> None: ...

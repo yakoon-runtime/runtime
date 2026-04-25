@@ -1,5 +1,4 @@
 from yakoon.base.runtime import Container
-from yakoon.compose.demo_data import seed_demo_system_data
 from yakoon.compose.engine import compose_engine, initialize_storage
 from yakoon.platform.machine import RuntimeHost
 
@@ -27,6 +26,6 @@ async def create_runtime() -> RuntimeHost:
     )
 
     await initialize_storage(container)
-    await seed_demo_system_data(container)
+    # await seed_demo_system_data(container)
 
     return runtime

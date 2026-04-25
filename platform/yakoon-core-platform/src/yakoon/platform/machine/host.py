@@ -1,48 +1,41 @@
 from __future__ import annotations
 
 import asyncio
-from typing import cast
+from typing import Protocol
 
-from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.clients.connection import ClientConnection
 from yakoon.base.naming.key import Key
-from yakoon.base.runtime.sessions import SessionStore
-from yakoon.platform.runtime.bus import BusOutput, SessionBus
-from yakoon.platform.runtime.sessions import Session as PlatformSession
+from yakoon.platform.runtime import Session
 
-from .runner import Runner, RunnerFactory
-from .scheduler import Scheduler
+from .runner import Runner
 
 
 class RuntimeHost:
 
     def __init__(
         self,
-        scheduler: Scheduler,
-        runner: RunnerFactory,
-        bus: SessionBus,
-        session_service: SessionStore,
-        permission_service: PermissionService,
+        on_schedule: OnSchedule,
+        on_join_bus: OnJoinBus,
+        on_get_session: OnGetSession,
+        on_create_runner: OnCreateRunner,
     ):
-        self._scheduler = scheduler
-        self._runner_factory = runner
-
-        self._bus = bus
-        self._session_service = session_service
-        self._permission_service = permission_service
+        self.on_schedule = on_schedule
+        self.on_join_bus = on_join_bus
+        self.on_get_session = on_get_session
+        self.on_create_runner = on_create_runner
 
         self._sessions: dict[Key, Runner] = {}
         self._connections: dict[ClientConnection, Runner] = {}
         self._session_counter = 0
 
-        asyncio.create_task(self._scheduler.run())
+        asyncio.create_task(self.on_schedule())
 
     async def connect(
         self,
         connection: ClientConnection,
         session_key: Key | None = None,
     ):
-        self._bus.join(connection)
+        self.on_join_bus(client=connection)
 
         # attach existing session
         if session_key and session_key in self._sessions:
@@ -50,10 +43,9 @@ class RuntimeHost:
 
         # create new session
         else:
-            session = await self.create_session()
-            session.bind_io(BusOutput(self._bus))
+            session = await self.on_get_session()
 
-            runner = self._runner_factory.create(session)
+            runner = self.on_create_runner(session=session)
             self._sessions[session.key] = runner
 
             # initial_command = InputEvent("")
@@ -84,28 +76,29 @@ class RuntimeHost:
 
         await runner.on_input(event)
 
-    async def create_session(self) -> PlatformSession:
-
-        key = self.next_session_key()
-
-        session, _ = await self._session_service.get_or_create(key)
-        self._permission_service.set_bootstrap_permissions(session)
-
-        return cast(PlatformSession, session)
-
-    def next_session_key(self) -> Key:
-
-        self._session_counter += 1
-
-        return Key.from_parts(
-            "system",
-            "session",
-            "runtime",
-            str(self._session_counter),
-        )
-
     def _has_connections(self, runner: Runner) -> bool:
         return any(r is runner for r in self._connections.values())
 
     def _runner_key(self, runner: Runner) -> int:
         return id(runner)
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnSchedule(Protocol):
+    async def __call__(self): ...
+
+
+class OnJoinBus(Protocol):
+    def __call__(self, *, client: ClientConnection): ...
+
+
+class OnGetSession(Protocol):
+    async def __call__(self) -> Session: ...
+
+
+class OnCreateRunner(Protocol):
+    def __call__(self, *, session) -> Runner: ...

@@ -1,5 +1,5 @@
-from .loader import FileResourceLoader
+from .loader import PackageResourceLoader
 
 __all__ = [
-    "FileResourceLoader",
+    "PackageResourceLoader",
 ]

@@ -1,6 +1,6 @@
-from yakoon.base.projection.compiler import ResolverContext
 from yakoon.base.projection.model import ImageBlock
 
+from ..compiler import ResolverContext
 from .block import (
     map_actions,
     map_fields,

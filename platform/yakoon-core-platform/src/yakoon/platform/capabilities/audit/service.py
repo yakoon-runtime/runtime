@@ -11,13 +11,13 @@ class DefaultAuditLogService:
         self._warning = logging.getLogger("yakoon.warning")
         self._security = logging.getLogger("yakoon.security")
 
-    def audit(self, msg: str):
+    def audit(self, message: str):
         if settings.logging.log_commands:
-            self._audit.info(msg)
+            self._audit.info(message)
 
-    def warning(self, msg: str, session):
+    def warning(self, message: str, session):
         if settings.logging.log_warnings:
-            self._warning.warning(msg, extra={"session": session.key})
+            self._warning.warning(message, extra={"session": session.key})
 
     def error(self, exc: Exception, session=None):
         if settings.logging.log_errors:

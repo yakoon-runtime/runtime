@@ -10,10 +10,6 @@ class WorkflowNotFound(KeyError):
     pass
 
 
-class WorkflowContextRequired(Exception):
-    pass
-
-
 @dataclass
 class WorkflowBatch:
     batch_id: str
