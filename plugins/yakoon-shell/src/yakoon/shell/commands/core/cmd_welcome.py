@@ -8,5 +8,7 @@ class CmdWelcome(Command):
 
     async def run(self, request: Request):
 
-        projection = await self.on_project(name="result.sam")
+        projection = await self.on_project(
+            name="result.sam", state={"name": request.payload}
+        )
         yield present(projection)

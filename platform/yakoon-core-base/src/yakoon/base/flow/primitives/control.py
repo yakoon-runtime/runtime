@@ -3,6 +3,8 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
+from yakoon.base.runtime.input import InputEvent
+
 if TYPE_CHECKING:
     pass
 
@@ -13,10 +15,10 @@ class Control:
     def is_runnable(self, flow) -> bool:
         return True
 
-    def on_enter(self, flow, scheduler, session):
+    async def on_enter(self, flow, scheduler, session):
         pass
 
-    def on_wake(self, flow, scheduler, session):
+    async def on_wake(self, flow, scheduler, session):
         scheduler.schedule_flow(flow, session)
 
     def label(self, flow) -> str:
@@ -25,16 +27,40 @@ class Control:
 
 class YieldToScheduler(Control):
 
-    def on_enter(self, flow, scheduler, session):
+    async def on_enter(self, flow, scheduler, session):
         scheduler.schedule_flow(flow, session)
 
 
 class Stop(Control):
     blocking = True
 
-    def on_enter(self, flow, scheduler, session):
+    async def on_enter(self, flow, scheduler, session):
         session.del_flow(flow)
         flow.scheduled = False
+
+
+class Continue(Control):
+    blocking = False
+
+    def __init__(self, data):
+        self.data = data
+
+    async def on_enter(self, flow, scheduler, session):
+
+        if not flow.pipeline:
+            return
+
+        # 1. nächsten Command holen
+        next_cmd = flow.pipeline[0]
+        remaining = flow.pipeline[1:]
+
+        # 2. Event für nächsten Command vorbereiten
+        event = InputEvent(
+            command=next_cmd, tokens=[], payload=self.data  # später sauber lösen
+        )
+
+        # 3. Flow weiter schedulen
+        await scheduler.continue_flow(session, flow, event, remaining)
 
 
 # ------------------------------------------------------------
@@ -55,7 +81,7 @@ class AwaitEvent(Control):
     def is_runnable(self, flow):
         return flow.has_mail(self.channel)
 
-    def on_enter(self, flow, scheduler, session):
+    async def on_enter(self, flow, scheduler, session):
         # IMPORTANT:
         # If an event is already present, we must explicitly reschedule the flow.
         #
@@ -88,10 +114,10 @@ class Sleep(Control):
     def is_runnable(self, flow):
         return False
 
-    def on_enter(self, flow, scheduler, session):
+    async def on_enter(self, flow, scheduler, session):
         scheduler.schedule_sleep(flow, session, self.wake_at)
 
-    def on_wake(self, flow, scheduler, session):
+    async def on_wake(self, flow, scheduler, session):
         flow.control = YieldToScheduler()
         scheduler.schedule_flow(flow, session)
 
@@ -116,10 +142,10 @@ class SleepUntil(Control):
     def is_runnable(self, flow):
         return False
 
-    def on_enter(self, flow, scheduler, session):
+    async def on_enter(self, flow, scheduler, session):
         scheduler.schedule_sleep(flow, session, self.timestamp)
 
-    def on_wake(self, flow, scheduler, session):
+    async def on_wake(self, flow, scheduler, session):
         flow.control = YieldToScheduler()
         scheduler.schedule_flow(flow, session)
 

@@ -14,6 +14,8 @@ class CmdTest(Command):
         # print(operation)
 
         yield Outcome(value={"user_name": "Stefan"})
+        yield Outcome(value={"user_name": "Bob"})
+        yield Outcome(value={"user_name": "Mike"})
 
         # projector = await self.create_projector()
         # projection = await projector.project("ask1")

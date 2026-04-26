@@ -1,6 +1,7 @@
 from .builder import create_projection
 from .control import (
     AwaitEvent,
+    Continue,
     Control,
     Sleep,
     SleepUntil,
@@ -20,6 +21,7 @@ __all__ = [
     "Sleep",
     "SleepUntil",
     "Stop",
+    "Continue",
     "YieldToScheduler",
     # .effects
     "AutoFocus",

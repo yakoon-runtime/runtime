@@ -82,6 +82,20 @@ class Scheduler:
                 ctx=event.context,
             )
 
+    async def continue_flow(self, session, old_flow, event, pipeline):
+
+        # 1. Dispatch (resolve + permission + create command)
+        new_flow = await self.on_dispatch(session=session, event=event)
+        assert new_flow, "runtime error"
+
+        new_flow.pipeline = pipeline
+
+        # 1. schedule new flow
+        self.schedule_flow(new_flow, session)
+
+        # 2. schedule old flow
+        self.schedule_flow(old_flow, session)
+
     def schedule_sleep(self, flow, session, wake_at):
         flow.wake_at = wake_at
         heapq.heappush(self._sleeping, (wake_at, session, flow))
@@ -278,19 +292,10 @@ class Scheduler:
         # ----------------------------------
 
         if isinstance(control, Control):
-            control.on_enter(flow, self, session)
+            await control.on_enter(flow, self, session)
+            return
 
-        # ----------------------------------
-        # 3. Continue flow by new command
-        # ----------------------------------
-
-        if outcome.value is not None and flow.pipeline:
-            next_cmd = flow.next_command()
-            if next_cmd:
-                next_event = InputEvent(command=next_cmd, tokens=["test"])
-                await self.dispatch(session, next_event)
-
-        # raise RuntimeError(f"Unhandled control: {type(control)}")
+        raise RuntimeError(f"Unhandled control: {type(control)}")
 
 
 # ----------------------------------
@@ -299,7 +304,7 @@ class Scheduler:
 
 
 class OnDispatch(Protocol):
-    async def __call__(self, *, session: Session, event: InputEvent) -> None: ...
+    async def __call__(self, *, session: Session, event: InputEvent) -> Flow | None: ...
 
 
 class OnStepFlow(Protocol):

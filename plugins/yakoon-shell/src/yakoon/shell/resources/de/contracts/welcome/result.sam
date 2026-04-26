@@ -4,6 +4,10 @@
   ''      '''''''   ''  ''    '      '  '      '   '    ''''
   ''      '     '   ''   ''    ''''''    ''''''    '     '''
 
+{% if state.name %}
+  {{ state.name }}
+{% endif %}
+
 Was du jetzt tun kannst:
 <rule/>
 <list>

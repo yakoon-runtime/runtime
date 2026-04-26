@@ -12,6 +12,7 @@ from yakoon.base.flow.primitives import (
     AutoFocus,
     AwaitEvent,
     ClearFocus,
+    Continue,
     Effect,
     EmitEvent,
     EmitView,
@@ -40,6 +41,7 @@ class CommandEngine:
     def __init__(
         self,
         on_match_command: OnMatchCommand,
+        on_parse_input: OnParseInput,
         on_authorize: OnAuthorize,
         on_projection: OnProjection,
         on_audit_security: OnAuditSecurity,
@@ -48,6 +50,7 @@ class CommandEngine:
         on_get_shell_app: OnGetShellApp,
     ):
         self.on_match_command = on_match_command
+        self.on_parse_input = on_parse_input
         self.on_authorize = on_authorize
         self.on_projection = on_projection
         self.on_audit_security = on_audit_security
@@ -59,11 +62,12 @@ class CommandEngine:
     # PUBLIC API
     # ----------------------------------------------------
 
-    async def dispatch(self, session: Session, event: InputEvent) -> None:
+    async def dispatch(self, session: Session, event: InputEvent) -> Flow | None:
 
         # session.execution.reset()
         # session.execution.step(ExecStep.EXECUTION_START)
-        if not event.command:
+        event, pipeline_commands = self.on_parse_input(event=event)
+        if not event or not event.command:
             return None
 
         # session.execution.step(
@@ -99,7 +103,10 @@ class CommandEngine:
             # await application.on_before_resolve(session)
 
             # Command finden
-            result = self.on_match_command(app_id=app.id, command_key=event.command)
+            result = self.on_match_command(
+                app_id=app.id,
+                command_key=event.command,
+            )
             if not result:
                 raise CommandNotFound(event.command)
 
@@ -133,11 +140,13 @@ class CommandEngine:
                 app_id=app_id,
                 command_type=command_type,
                 controller_type=controller_type,
+                pipeline=pipeline_commands,
                 event=event,
                 cursor=FlowCursor(),
                 kind=self.DEFAULT_FLOW_KIND,
             )
             session.add_flow(flow)
+            return flow
 
         except CommandNotFound:
             raise
@@ -199,11 +208,16 @@ class CommandEngine:
                 outcome = item
             else:
                 outcome = await item.run(flow)
+
             # ----------------------------------
             # 3.1 OUTCOME value -> yield data
             # ----------------------------------
             if outcome.value is not None:
-                outcome.control = Stop()
+                if flow.pipeline:
+                    outcome.control = Continue(outcome.value)
+                else:
+                    # continue run
+                    pass
 
             # ----------------------------------
             # 4. EFFECTS
@@ -281,7 +295,7 @@ class CommandEngine:
         # ----------------------------------
         # NEXT
         # ----------------------------------
-        request = Request(event.command, event.tokens)
+        request = Request(event.command, event.tokens, event.payload)
         return await flow.cursor.next(command, request)
 
 
@@ -294,6 +308,10 @@ class OnMatchCommand(Protocol):
     def __call__(
         self, *, app_id: str, command_key: str
     ) -> tuple[str, type[Controller], type[Command]] | None: ...
+
+
+class OnParseInput(Protocol):
+    def __call__(self, *, event: InputEvent) -> tuple[InputEvent, list[str]]: ...
 
 
 class OnAuthorize(Protocol):
