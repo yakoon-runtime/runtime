@@ -1,5 +1,5 @@
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import present
+from yakoon.base.flow import out
 
 
 class CmdWelcome(Command):
@@ -11,4 +11,4 @@ class CmdWelcome(Command):
         projection = await self.on_project(
             name="result.sam", state={"name": request.payload}
         )
-        yield present(projection)
+        yield out(projection)

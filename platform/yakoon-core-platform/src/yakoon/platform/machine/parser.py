@@ -19,6 +19,7 @@ class InputParser:
         event = InputEvent(
             command=tokens[0],
             tokens=tokens[1:],
+            payload=event.payload,
             context=event.context,
         )
 

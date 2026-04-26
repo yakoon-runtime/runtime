@@ -4,7 +4,7 @@ import time
 from datetime import UTC, datetime
 
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import present
+from yakoon.base.flow import out
 
 
 class CmdVersion(Command):
@@ -13,9 +13,8 @@ class CmdVersion(Command):
 
     async def run(self, request: Request):
 
-        projector = await self.create_projector()
-        projection = await projector.project(
-            "list",
+        projection = await self.on_project(
+            name="list.sam",
             state={
                 "version": get_platform_version(),
                 "python": platform.python_version(),
@@ -24,7 +23,7 @@ class CmdVersion(Command):
                 "time": datetime.now(UTC).isoformat(),
             },
         )
-        yield present(projection)
+        yield out(projection)
 
 
 _start_time = time.time()

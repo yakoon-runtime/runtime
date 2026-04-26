@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from .action import Action
 from .field import Field
-from .inline import Inline
+from .inline import Inline, InlineText
 
 RuleStyle = Literal["subtle", "normal", "strong"]
 FieldsState = Literal["idle", "active", "done"]
@@ -26,6 +26,10 @@ class TextBlock:
 
     def children(self) -> tuple[Block, ...]:
         return ()
+
+    @classmethod
+    def create(cls, *, text) -> TextBlock:
+        return cls(text=[InlineText("text", text)])
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,6 +136,22 @@ class KvBlock:
 
     def children(self) -> tuple[Block, ...]:
         return tuple(self.items)
+
+
+# -----------------
+# DATA
+# -----------------
+
+
+@dataclass(frozen=True, slots=True)
+class DataBlock:
+    type: Literal["data"] = "data"
+    id: str | None = None
+
+    data: Any = None
+
+    def children(self) -> tuple[Block, ...]:
+        return ()
 
 
 # -----------------

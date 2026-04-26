@@ -1,7 +1,7 @@
 from typing import Protocol, cast
 
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import present
+from yakoon.base.flow import out
 from yakoon.base.flow.patterns import write_text
 from yakoon.base.runtime.sessions import SessionStore
 
@@ -39,7 +39,7 @@ class CmdUse(Command):
                     "apps": applications,
                 },
             )
-            yield present(projection)
+            yield out(projection)
 
         elif applications:
             if name == access.get_active_app():
@@ -49,7 +49,7 @@ class CmdUse(Command):
                         "app": applications[0],
                     },
                 )
-                yield present(projection)
+                yield out(projection)
             else:
                 access.set_active_app(name)
                 await self.container.get(SessionStore).save(session)
@@ -62,4 +62,4 @@ class CmdUse(Command):
                     "app": name,
                 },
             )
-            yield present(projector)
+            yield out(projector)

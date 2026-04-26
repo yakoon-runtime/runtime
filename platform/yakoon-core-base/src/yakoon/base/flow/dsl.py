@@ -36,6 +36,8 @@ Patterns = Behavior
 Commands = Orchestration
 """
 
+from warnings import deprecated
+
 from yakoon.base.flow.primitives.builder import create_projection
 from yakoon.base.projection.model import Block, Projection
 from yakoon.base.runtime import InputEvent
@@ -51,6 +53,11 @@ from .primitives import (
 )
 
 
+def out(value: Projection):
+    return Outcome(value=value)
+
+
+@deprecated("Use 'yield out(projection)' instead.")
 def present(projection: Projection) -> Outcome:
     """
     Emit a projection to the UI.
@@ -62,6 +69,7 @@ def present(projection: Projection) -> Outcome:
     return Outcome(effects=[EmitView(projection)])
 
 
+@deprecated("Use 'yield out(Projection(blocks=[...]))' instead.")
 def write(block: Block) -> Outcome:
     """
     Emit a single block as a projection.

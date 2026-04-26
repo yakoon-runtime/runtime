@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import Sequence
 from typing import Protocol
 from uuid import uuid4
 
@@ -210,14 +211,15 @@ class CommandEngine:
                 outcome = await item.run(flow)
 
             # ----------------------------------
-            # 3.1 OUTCOME value -> yield data
+            # 3.1 OUTCOME value
             # ----------------------------------
             if outcome.value is not None:
                 if flow.pipeline:
                     outcome.control = Continue(outcome.value)
                 else:
-                    # continue run
-                    pass
+                    if not outcome.effects:
+                        outcome.effects = [EmitView(outcome.value)]
+                        pass
 
             # ----------------------------------
             # 4. EFFECTS
@@ -252,7 +254,9 @@ class CommandEngine:
     # INTERNAL
     # ----------------------------------------------------
 
-    async def _apply_effects(self, effects: list[Effect], session: Session, flow: Flow):
+    async def _apply_effects(
+        self, effects: Sequence[Effect], session: Session, flow: Flow
+    ):
 
         for effect in effects:
 
