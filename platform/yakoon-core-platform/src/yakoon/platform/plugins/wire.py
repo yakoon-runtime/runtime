@@ -1,23 +1,42 @@
+from __future__ import annotations
+
 from collections.abc import Sequence
 
-from yakoon.base.plugins import CapabilitySelection, LoadedModule, ModuleImport
+from typing_extensions import Protocol
+
+from yakoon.base.plugins import CapabilitySelection, LoadedModule
+from yakoon.base.plugins.container import ModulePorts
 
 from .manager import ModuleManager
 from .registry import ModuleRegistry
 
 
-def load_modules(
-    module_import: ModuleImport,
-    plugins: list[str],
-    capabilities: CapabilitySelection,
-) -> Sequence[LoadedModule]:
+class PluginLoader:
 
-    modules: list[LoadedModule] = []
+    def __init__(
+        self,
+        plugins: list[str],
+        capabilities: CapabilitySelection,
+    ):
+        self._plugins = plugins
+        self._capabilities = capabilities
+        self._registry = ModuleRegistry()
+        self._manager = ModuleManager(
+            on_register=self._registry.register,
+        )
 
-    registry = ModuleRegistry()
-    manager = ModuleManager(module_import=module_import, on_register=registry.register)
+    def load(self) -> Sequence[LoadedModule]:
+        modules: list[LoadedModule] = []
+        modules.extend(self._manager.load_capabilities(self._capabilities))
+        modules.extend(self._manager.load_modules(self._plugins))
 
-    modules.extend(manager.load_capabilities(capabilities))
-    modules.extend(manager.load_modules(plugins))
+        return modules
 
-    return modules
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnGetImport(Protocol):
+    def __call__(self) -> ModulePorts: ...

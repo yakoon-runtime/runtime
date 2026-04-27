@@ -4,7 +4,6 @@ from collections import defaultdict, deque
 from dataclasses import dataclass, field
 
 from yakoon.base.commands import Command
-from yakoon.base.controllers import Controller
 from yakoon.base.flow.primitives import Control
 from yakoon.base.runtime import InputEvent
 
@@ -19,8 +18,7 @@ class Flow:
     id: str
 
     app_id: str
-    command_type: type[Command]
-    controller_type: type[Controller]
+    command: Command
     event: InputEvent
 
     cursor: FlowCursor

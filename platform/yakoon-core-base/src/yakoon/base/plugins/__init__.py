@@ -1,10 +1,9 @@
 from .capability import CapabilityMode, CapabilitySelection
-from .module import LoadedModule, ModuleExport, ModuleImport, ModuleMeta
+from .models import LoadedModule, ModuleExport, ModuleMeta
 
 __all__ = [
     # .module
     "ModuleExport",
-    "ModuleImport",
     "ModuleMeta",
     "LoadedModule",
     # .capability

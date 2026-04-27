@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.runtime import Container
+from yakoon.base.plugins.container import ModulePorts
+from yakoon.base.plugins.ports import OnProject
+from yakoon.base.resources import ResourceRef
 
+from .resolver import resolve_resource
 from .resources import ResourceReferences
 
 if TYPE_CHECKING:
@@ -41,7 +44,31 @@ class Controller(ABC):
     resources: ResourceReferences = ResourceReferences("")
     """Resource references used by classes for projections, output man pages, workflows etc."""
 
-    container: Container
+    ports: ModulePorts
+
+    def __init__(self, session: Session, command: type[Command]):
+        self.session = session
+        self.command = command
+
+    @abstractmethod
+    def create_command(
+        self,
+    ) -> Command: ...
+
+    async def project(self, name: str, state: dict | None = None):
+
+        path = resolve_resource(
+            i18n_root=self.resources.contracts,
+            lang=self.session.lang,
+            cmd_key=self.command.key,
+        )
+        resource = ResourceRef(
+            self.resources.package,
+            path,
+        ).child(name)
+        on_project = self.ports.on_get_port(OnProject)
+
+        return await on_project(resource=resource, state=state)
 
     async def on_before_resolve(self, session: Session) -> None:
         """Hook executed before command resolution.

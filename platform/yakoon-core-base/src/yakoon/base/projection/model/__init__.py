@@ -40,9 +40,7 @@ from .inline import (
     InlineText,
     InlineUnderline,
 )
-from .model import (
-    Projection,
-)
+from .model import Projection, to_text
 
 __all__ = [
     # .header
@@ -53,6 +51,7 @@ __all__ = [
     "ProjectionMeta",
     # .projection
     "Projection",
+    "to_text",
     # .action
     "Action",
     # .field

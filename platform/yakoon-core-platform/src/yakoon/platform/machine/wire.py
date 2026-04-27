@@ -53,7 +53,7 @@ def build_machine(
         return app.create_command(
             controller=controller,
             command=command,
-            lang=session.lang,
+            session=session,
         )
 
     # --- Input Parser ---

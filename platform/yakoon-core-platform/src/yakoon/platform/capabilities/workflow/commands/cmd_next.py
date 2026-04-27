@@ -15,7 +15,6 @@ class CmdWfNext(Command):
     kind = CommandKind.WORKFLOW
     scope = CommandScope.GLOBAL
     visibility = CommandVisibility.INTERNAL
-    requires_workflow = True
 
     async def run(self, request: Request) -> None:  # noqa: ARG002
 

@@ -13,7 +13,6 @@ class CmdCustomerValidate(Command):
 
     kind = CommandKind.WORKFLOW
     visibility = CommandVisibility.INTERNAL
-    requires_workflow = True
 
     async def run(self, request: Request) -> None:  # noqa: ARG002
 

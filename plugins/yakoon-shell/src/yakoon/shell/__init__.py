@@ -1,4 +1,4 @@
-from yakoon.base.plugins import ModuleExport, ModuleImport, ModuleMeta
+from yakoon.base.plugins import ModuleExport, ModuleMeta
 
 from .app import ShellApplication
 
@@ -9,9 +9,9 @@ meta = ModuleMeta(
 )
 
 
-def register(ports: ModuleImport) -> ModuleExport:
+def register() -> ModuleExport:
 
     return ModuleExport(
         meta,
-        app=ShellApplication(platform_ports=ports),
+        app=ShellApplication,
     )

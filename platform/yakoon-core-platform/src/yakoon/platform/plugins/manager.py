@@ -8,7 +8,6 @@ from yakoon.base.plugins import (
     CapabilitySelection,
     LoadedModule,
     ModuleExport,
-    ModuleImport,
     ModuleMeta,
 )
 
@@ -16,11 +15,9 @@ from yakoon.base.plugins import (
 class ModuleManager:
     def __init__(
         self,
-        module_import: ModuleImport,
         on_register: OnRegister,
         capability_prefix: str = "yakoon.platform.capabilities",
     ):
-        self.module_import = module_import
         self.on_register = on_register
         self._capability_prefix = capability_prefix.rstrip(".")
 
@@ -30,7 +27,7 @@ class ModuleManager:
         for module_name in modules:
             register_fn = self._resolve_register(module_name)
 
-            export = register_fn(self.module_import)
+            export = register_fn()
             if not isinstance(export, ModuleExport):
                 raise RuntimeError(
                     f"Module '{module_name}' register() must return ModuleExport, "

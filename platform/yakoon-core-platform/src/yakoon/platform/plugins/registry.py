@@ -1,4 +1,4 @@
-from yakoon.base.plugins.module import ModuleMeta
+from yakoon.base.plugins.models import ModuleMeta
 
 
 class ModuleRegistry:

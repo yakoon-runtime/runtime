@@ -9,6 +9,13 @@ A server-driven, event-sourced UI runtime with declarative projection
 „SAM verarbeitet Actions und erzeugt daraus strukturierte Projektionen eines Systemzustands.“
 ===
 
+## 2026-04-27
+**Design Principle - Default Ports:**
+Die Platform definiert keine Command-Default-Ports. Commands bleiben rein.
+Das ist Testbarkeit als Konstruktorvertrag. 
+Ein Command ist nur gültig, wenn seine benötigten Fähigkeiten im Konstruktor sichtbar sind.
+Kein stilles on_project, weil „braucht ja eh fast jeder“. 
+
 ## 2026-04-25
 **Design Principle:**
 Capabilities are passed to the point of use.

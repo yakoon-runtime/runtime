@@ -4,7 +4,7 @@ import uuid
 from dataclasses import dataclass, field, replace
 from typing import Literal
 
-from .block import Block
+from .block import Block, TextBlock
 from .header import ProjectionHeader
 
 
@@ -75,3 +75,16 @@ class Projection:
             header=None,
             blocks=list(blocks),
         )
+
+
+# ----------------------------------
+# HELPER
+# ----------------------------------
+
+
+def to_text(text: str) -> Projection:
+    return Projection.create(
+        blocks=[
+            TextBlock.create(text=text),
+        ]
+    )

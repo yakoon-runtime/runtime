@@ -136,16 +136,22 @@ class CommandEngine:
             #    controller=resolved_controller.id,
             # )
 
+            command = self.on_create_command(
+                session=session,
+                controller=controller_type,
+                command=command_type,
+            )
+
             flow = Flow(
                 id=uuid4().hex,
                 app_id=app_id,
-                command_type=command_type,
-                controller_type=controller_type,
+                command=command,
                 pipeline=pipeline_commands,
                 event=event,
                 cursor=FlowCursor(),
                 kind=self.DEFAULT_FLOW_KIND,
             )
+
             session.add_flow(flow)
             return flow
 
@@ -169,12 +175,7 @@ class CommandEngine:
     async def step_flow(self, flow: Flow, session: Session) -> Outcome | None:
 
         cursor = flow.cursor
-
-        command = self.on_create_command(
-            session=session,
-            controller=flow.controller_type,
-            command=flow.command_type,
-        )
+        command = flow.command
 
         try:
             session._runtime_flow_id = flow.id  # type: ignore

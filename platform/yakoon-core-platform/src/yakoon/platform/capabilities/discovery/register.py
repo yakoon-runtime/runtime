@@ -1,4 +1,4 @@
-from yakoon.base.plugins import ModuleExport, ModuleImport, ModuleMeta
+from yakoon.base.plugins import ModuleExport, ModuleMeta
 
 from .app import DiscoveryApplication
 
@@ -9,7 +9,7 @@ meta = ModuleMeta(
 )
 
 
-def register(ports: ModuleImport) -> ModuleExport:
+def register() -> ModuleExport:
 
     # provide(LookupCandidateStoreService, DefaultLookupCandidateStoreService())
     # provide(LookupParser, DefaultLookupParser())
@@ -19,5 +19,5 @@ def register(ports: ModuleImport) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        app=DiscoveryApplication(platform_ports=ports),
+        app=DiscoveryApplication,
     )

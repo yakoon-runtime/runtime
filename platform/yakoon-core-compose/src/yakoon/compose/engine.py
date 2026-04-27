@@ -7,7 +7,8 @@ from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.capabilities.interaction import FieldPolicy, FieldPolicyEngine
 from yakoon.base.dispatch import CommandQueue
 from yakoon.base.naming import Namespace, NamespaceResolver
-from yakoon.base.plugins import ModuleImport
+from yakoon.base.plugins.container import ModulePorts
+from yakoon.base.plugins.ports import OnGetShell, OnProject, OnSaveSession
 from yakoon.base.projection.model import FieldType
 from yakoon.base.projection.percept import ProjectionDispatcher
 from yakoon.base.projection.transfer import Output
@@ -27,7 +28,7 @@ from yakoon.platform.machine import (
 from yakoon.platform.machine.host import RuntimeHost
 from yakoon.platform.machine.wire import build_machine
 from yakoon.platform.naming import DomainNamespaceResolver
-from yakoon.platform.plugins.wire import load_modules
+from yakoon.platform.plugins import PluginLoader
 from yakoon.platform.projection import (
     EventProjectionDispatcher,
 )
@@ -53,18 +54,35 @@ def compose_engine(
     plugins = plugins or []
     capabilities = capabilities or {}
 
+    store = _compose_store()
+
     permission_service = DefaultPermissionService()
     audit_service = DefaultAuditLogService()
+    session_service = EntityStoreSessionService(store)
+
+    # ----------------------------------
+    # MODULES
+    # ----------------------------------
+
+    plug_loader = PluginLoader(
+        plugins=plugins,
+        capabilities=capabilities,
+    )
+
+    apps: list[Application] = []
+    for module in plug_loader.load():
+        if module.export.app:
+            apps.append(module.export.app())
+
+    # ----------------------------------
+    # PROJECTOR
+    # ----------------------------------
 
     projector = build_projector()
 
-    module_imports = ModuleImport(on_project=projector.project)
-    modules = load_modules(module_imports, plugins, capabilities)
-
-    apps: list[Application] = []
-    for module in modules:
-        if module.export.app:
-            apps.append(module.export.app)
+    # ----------------------------------
+    # QUERIES
+    # ----------------------------------
 
     apps_query = AppQueryBuilder(apps)
     command_query = CommandQueryBuilder(
@@ -72,13 +90,28 @@ def compose_engine(
         on_has_read_permission=permission_service.can_read,
     )
 
-    store = _compose_store()
-
     _compose_ports(
         bootstrap,
         store,
         apps_query,
     )
+
+    # ----------------------------------
+    # APPLICATIONS & PORTS
+    # ----------------------------------
+
+    def create_ports() -> ModulePorts:
+        ports = bootstrap.fork()
+        ports.register_static(OnProject, projector.project)
+        ports.register_static(OnGetShell, apps_query.shell)
+        ports.register_static(OnSaveSession, session_service.save)
+        return ModulePorts(
+            on_register=ports.register_static,
+            on_get_port=ports.get,
+        )
+
+    for app in apps_query.all():
+        app.apply_ports(create_ports())
 
     # _compose_permission_roles(bootstrap)
     # _compose_policies(bootstrap)

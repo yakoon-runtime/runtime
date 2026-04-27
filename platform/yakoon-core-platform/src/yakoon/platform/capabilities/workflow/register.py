@@ -1,4 +1,4 @@
-from yakoon.base.plugins import ModuleExport, ModuleImport, ModuleMeta
+from yakoon.base.plugins import ModuleExport, ModuleMeta
 
 meta = ModuleMeta(
     name="yakoon.workflow",
@@ -7,7 +7,7 @@ meta = ModuleMeta(
 )
 
 
-def register(ports: ModuleImport) -> ModuleExport:
+def register() -> ModuleExport:
 
     # provide(WorkflowCompiler, DefaultWorkflowCompileService())
     # publish(WorkflowService, DefaultWorkflowService(container))

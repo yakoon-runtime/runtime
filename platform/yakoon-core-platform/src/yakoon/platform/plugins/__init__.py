@@ -1,7 +1,5 @@
-from .manager import ModuleManager
-from .registry import ModuleRegistry
+from .wire import PluginLoader
 
 __all__ = [
-    "ModuleManager",
-    "ModuleRegistry",
+    "PluginLoader",
 ]

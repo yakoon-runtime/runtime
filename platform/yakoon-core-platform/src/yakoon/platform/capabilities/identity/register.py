@@ -1,4 +1,4 @@
-from yakoon.base.plugins import ModuleExport, ModuleImport, ModuleMeta
+from yakoon.base.plugins import ModuleExport, ModuleMeta
 
 from .app import AuthApplication
 
@@ -9,7 +9,7 @@ meta = ModuleMeta(
 )
 
 
-def register(ports: ModuleImport) -> ModuleExport:
+def register() -> ModuleExport:
 
     # provide(SecretVerifier, DefaultAllowAllSecretVerifier())
 
@@ -19,7 +19,5 @@ def register(ports: ModuleImport) -> ModuleExport:
 
     return ModuleExport(
         meta,
-        app=AuthApplication(
-            platform_ports=ports,
-        ),
+        app=AuthApplication,
     )

@@ -9,11 +9,3 @@ class ShellApplication(Application):
     is_shell: bool = True
 
     controllers = (ShellCoreController,)
-
-    def create_command(self, controller, command, lang):
-        command = super().create_command(controller, command, lang)
-
-        if controller is ShellCoreController:
-            pass
-
-        return command
