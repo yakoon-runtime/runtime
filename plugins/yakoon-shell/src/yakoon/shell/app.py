@@ -1,6 +1,6 @@
 from yakoon.base.application import Application
 
-from .controller import ShellCoreController
+from .controller import ShellSystemController
 
 
 class ShellApplication(Application):
@@ -8,4 +8,4 @@ class ShellApplication(Application):
     id: str = "shell-app"
     is_shell: bool = True
 
-    controllers = (ShellCoreController,)
+    controllers = (ShellSystemController,)

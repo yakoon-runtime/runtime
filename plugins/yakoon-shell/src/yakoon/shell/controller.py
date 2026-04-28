@@ -16,7 +16,7 @@ from yakoon.base.plugins.ports import (
     OnListListedApps,
     OnSaveSession,
 )
-from yakoon.shell.commands.core import (
+from yakoon.shell.commands.system import (
     CmdExit,
     CmdMan,
     CmdQuit,
@@ -25,12 +25,12 @@ from yakoon.shell.commands.core import (
     CmdWelcome,
 )
 
-from .commands.core.cmdset import ShellSystemCommands
+from .commands.system.cmdset import ShellSystemCommands
 
 
-class ShellCoreController(Controller):
+class ShellSystemController(Controller):
 
-    id: str = "shell-core-controller"
+    id: str = "shell-system-controller"
 
     commandsets = (ShellSystemCommands,)
 
