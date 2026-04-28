@@ -11,8 +11,6 @@ from yakoon.base.capabilities.workflow import (
     WorkflowRuntime,
     WorkflowStatus,
 )
-from yakoon.base.dispatch import CommandQueue
-from yakoon.base.runtime import Container
 
 from ..runtime.compiler import compile_run_command
 

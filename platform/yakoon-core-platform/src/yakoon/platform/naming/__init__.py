@@ -1,9 +1,9 @@
-from .counter_service import DefaultCounterService
-from .resolver import DomainNamespaceResolver
-from .shard_allocator import DefaultShardAllocator
+from .allocator import ShardAllocator
+from .counter import Counter
+from .namespace import NamespaceResolver
 
 __all__ = [
-    "DomainNamespaceResolver",
-    "DefaultShardAllocator",
-    "DefaultCounterService",
+    "NamespaceResolver",
+    "ShardAllocator",
+    "Counter",
 ]

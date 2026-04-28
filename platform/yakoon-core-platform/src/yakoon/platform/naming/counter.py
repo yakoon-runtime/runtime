@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .shard_allocator import DefaultShardAllocator
+    from .allocator import ShardAllocator
 
 
-class DefaultCounterService:
+class Counter:
 
-    def __init__(self, allocator: DefaultShardAllocator):
+    def __init__(self, allocator: ShardAllocator):
         self.allocator = allocator
 
     async def next(self, prefix: str) -> str:

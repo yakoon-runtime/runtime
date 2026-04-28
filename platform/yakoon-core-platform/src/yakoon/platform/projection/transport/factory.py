@@ -3,9 +3,9 @@ from yakoon.base.projection.transfer import Patch, PatchOp, PatchReset
 from yakoon.base.runtime import InputContext
 
 
-class ViewEmitter:
+class EventFactory:
 
-    def begin(
+    def begin_event(
         self,
         header: ProjectionHeader,
         *,
@@ -21,7 +21,7 @@ class ViewEmitter:
             job_id=job_id,
         )
 
-    def emit(
+    def patch_event(
         self,
         vid: str,
         ops: list[PatchOp],
@@ -36,7 +36,7 @@ class ViewEmitter:
             job_id=job_id,
         )
 
-    def finish(
+    def finish_event(
         self,
         vid: str,
         *,

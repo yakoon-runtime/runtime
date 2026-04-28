@@ -1,5 +1,5 @@
 from yakoon.base.runtime import Container
-from yakoon.compose.engine import compose_engine, initialize_storage
+from yakoon.compose.runtime import compose_runtime, initialize_storage
 from yakoon.platform.machine import RuntimeHost
 
 
@@ -7,7 +7,7 @@ async def create_runtime() -> RuntimeHost:
 
     container = Container()
 
-    runtime = compose_engine(
+    runtime = compose_runtime(
         container,
         plugins=[
             "yakoon.shell",

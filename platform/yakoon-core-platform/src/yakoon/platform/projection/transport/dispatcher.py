@@ -2,46 +2,43 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
+from typing import Protocol
 
-from yakoon.base.projection.model import Block, Projection
+from yakoon.base.projection.model import Block, Projection, ProjectionHeader
 from yakoon.base.projection.transfer import (
+    Node,
     PatchAppendStructure,
     PatchFinishNode,
+    PatchOp,
+    ProjectionEvent,
 )
 from yakoon.base.runtime import InputContext
-from yakoon.platform.projection import ViewEmitter, ViewTraversal
 from yakoon.platform.runtime import Session
 
 
-# ---------------------------------------------------------
-# INTERNAL STREAM STATE
-# ---------------------------------------------------------
-@dataclass
-class _ViewStream:
-    session: Session
-    projection_id: str
-    ctx: InputContext | None
-    job_id: str
+class EventDispatcher:
 
-    event_queue: list
-
-    node_depth: dict[str, int]
-    published_nodes: set[str]
-    last_flush: float
-
-
-# ---------------------------------------------------------
-# DISPATCHER
-# ---------------------------------------------------------
-class EventProjectionDispatcher:
-
-    BATCH_SIZE = 64
+    BATCH_SIZE = 128
     MAX_BUFFER_DELAY = 0.05  # technical flush
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        on_create_begin_event: OnCreateBeginEvent,
+        on_create_batch_event: OnCreateEmitEvent,
+        on_create_finish_event: OnCreateFinishEvent,
+        on_get_traversal_root: OnGetTraversalRoot,
+        on_get_traversal_parent: OnGetTraversalParent,
+        on_get_traversal_prepare: OnGetTraversalPrepareBlock,
+    ) -> None:
+        self.on_create_begin_event = on_create_begin_event
+        self.on_create_batch_event = on_create_batch_event
+        self.on_create_finish_event = on_create_finish_event
+
+        self.on_get_traversal_root = on_get_traversal_root
+        self.on_get_traversal_parent = on_get_traversal_parent
+        self.on_get_traversal_prepare = on_get_traversal_prepare
+
         self._streams: dict[str, _ViewStream] = {}
-        self._traversal = ViewTraversal()
-        self._emitter = ViewEmitter()
 
     # ---------------------------------------------------------
     # LIFECYCLE
@@ -75,12 +72,15 @@ class EventProjectionDispatcher:
 
         self._streams[vid] = stream
 
-        root = self._traversal.root_id(vid)
+        root = self.on_get_traversal_root(
+            projection_id=vid,
+        )
+
         stream.node_depth[root] = -1
         stream.published_nodes.add(root)
 
         await session.emit(
-            self._emitter.begin(
+            self.on_create_begin_event(
                 header=projection.header,
                 ctx=ctx,
                 vid=vid,
@@ -106,7 +106,7 @@ class EventProjectionDispatcher:
         await self._flush(stream)
 
         await session.emit(
-            self._emitter.finish(
+            self.on_create_finish_event(
                 vid=vid,
                 ctx=stream.ctx,
                 job_id=stream.job_id,
@@ -130,7 +130,7 @@ class EventProjectionDispatcher:
         stream.event_queue.clear()
 
         await session.emit(
-            self._emitter.finish(
+            self.on_create_finish_event(
                 vid=projection_id,
                 ctx=stream.ctx,
                 job_id=stream.job_id,
@@ -185,12 +185,12 @@ class EventProjectionDispatcher:
         if block.id is None:
             raise RuntimeError("Block without id passed to dispatcher")
 
-        parent = self._traversal.resolve_parent(vid, parent_id)
+        parent = self.on_get_traversal_parent(projection_id=vid, parent_id=parent_id)
         parent_depth = stream.node_depth.get(parent, -1)
         depth = parent_depth + 1
 
-        node, children = self._traversal.prepare_block(
-            block,
+        node, children = self.on_get_traversal_prepare(
+            block=block,
             parent=parent,
             depth=depth,
         )
@@ -200,7 +200,9 @@ class EventProjectionDispatcher:
         # -------------------------------------------------
         # STRUCTURE
         # -------------------------------------------------
-        stream.event_queue.append(PatchAppendStructure(nodes=[node]))
+        stream.event_queue.append(
+            PatchAppendStructure(nodes=[node]),
+        )
 
         # -------------------------------------------------
         # CHILDREN
@@ -278,7 +280,7 @@ class EventProjectionDispatcher:
         ops = ops[: self.BATCH_SIZE]
 
         await stream.session.emit(
-            self._emitter.emit(
+            self.on_create_batch_event(
                 vid=stream.projection_id,
                 ctx=stream.ctx,
                 ops=ops,
@@ -287,3 +289,73 @@ class EventProjectionDispatcher:
         )
 
         stream.last_flush = time.monotonic()
+
+
+# ---------------------------------------------------------
+# INTERNAL STREAM STATE
+# ---------------------------------------------------------
+
+
+@dataclass
+class _ViewStream:
+    session: Session
+    projection_id: str
+    ctx: InputContext | None
+    job_id: str
+
+    event_queue: list
+
+    node_depth: dict[str, int]
+    published_nodes: set[str]
+    last_flush: float
+
+
+# -------------
+# --- PORTS ---
+# -------------
+
+
+class OnCreateBeginEvent(Protocol):
+    def __call__(
+        self,
+        *,
+        header: ProjectionHeader,
+        vid: str,
+        ctx: InputContext | None,
+        job_id: str,
+    ) -> ProjectionEvent: ...
+
+
+class OnCreateEmitEvent(Protocol):
+    def __call__(
+        self,
+        *,
+        vid: str,
+        ops: list[PatchOp],
+        job_id: str,
+        ctx: InputContext | None,
+    ) -> ProjectionEvent: ...
+
+
+class OnCreateFinishEvent(Protocol):
+    def __call__(
+        self,
+        *,
+        vid: str,
+        job_id: str,
+        ctx: InputContext | None,
+    ) -> ProjectionEvent: ...
+
+
+class OnGetTraversalRoot(Protocol):
+    def __call__(self, *, projection_id: str) -> str: ...
+
+
+class OnGetTraversalParent(Protocol):
+    def __call__(self, *, projection_id: str, parent_id: str | None) -> str: ...
+
+
+class OnGetTraversalPrepareBlock(Protocol):
+    def __call__(
+        self, *, block: Block, parent: str, depth: int
+    ) -> tuple[Node, list[Block]]: ...

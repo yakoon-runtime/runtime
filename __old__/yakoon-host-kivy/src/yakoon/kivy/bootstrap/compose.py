@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from yakoon.compose.engine import compose_engine
+from yakoon.compose.runtime import compose_runtime
 from yakoon.kivy.bootstrap.dispatcher import ContextDispatcher
 from yakoon.kivy.controllers.app_controller import AppController
 from yakoon.kivy.pages.app_root_page import AppRootPage
@@ -20,7 +20,7 @@ class KivyComposition:
 
 def compose_kivy_app() -> KivyComposition:
 
-    engine = compose_engine(
+    engine = compose_runtime(
         plugins=[
             "yakoon.shell",
             "yakoon.crm",

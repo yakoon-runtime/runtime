@@ -5,8 +5,7 @@ from yakoon.base.application import Application
 from yakoon.base.capabilities.discovery import LookupResolver
 from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.capabilities.interaction import FieldPolicy, FieldPolicyEngine
-from yakoon.base.dispatch import CommandQueue
-from yakoon.base.naming import Namespace, NamespaceResolver
+from yakoon.base.naming import Namespace
 from yakoon.base.plugins.container import ModulePorts
 from yakoon.base.plugins.ports import (
     OnCheckAppListed,
@@ -20,10 +19,7 @@ from yakoon.base.plugins.ports import (
     OnSaveSession,
 )
 from yakoon.base.projection.model import FieldType
-from yakoon.base.projection.percept import ProjectionDispatcher
-from yakoon.base.projection.transfer import Output
 from yakoon.base.runtime import Container
-from yakoon.base.runtime.sessions import SessionStore
 from yakoon.platform.capabilities.audit.service import DefaultAuditLogService
 from yakoon.platform.capabilities.identity.services.permission_service import (
     DefaultPermissionService,
@@ -32,18 +28,13 @@ from yakoon.platform.catalogs import (
     AppQueryBuilder,
     CommandQueryBuilder,
 )
-from yakoon.platform.machine import (
-    InMemoryCommandQueue,
-)
 from yakoon.platform.machine.host import RuntimeHost
 from yakoon.platform.machine.wire import build_machine
-from yakoon.platform.naming import DomainNamespaceResolver
 from yakoon.platform.plugins import PluginLoader
 from yakoon.platform.projection import (
-    EventProjectionDispatcher,
+    build_projector,
+    build_stream,
 )
-from yakoon.platform.projection.transport import EventStreamOutput
-from yakoon.platform.projection.wire import build_projector
 from yakoon.platform.runtime import EntityStoreSessionService
 from yakoon.platform.services.lookup import NoLookupResolver
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
@@ -54,7 +45,7 @@ CapabilityMode: TypeAlias = Literal["default"]
 CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
 
 
-def compose_engine(
+def compose_runtime(
     bootstrap: Container,
     *,
     plugins: list[str] | None = None,
@@ -66,13 +57,13 @@ def compose_engine(
 
     store = _compose_store()
 
+    # --- SERVICES ---
+
+    session_service = EntityStoreSessionService(store)
     permission_service = DefaultPermissionService()
     audit_service = DefaultAuditLogService()
-    session_service = EntityStoreSessionService(store)
 
-    # ----------------------------------
-    # MODULES
-    # ----------------------------------
+    # --- PLUGINS ---
 
     plug_loader = PluginLoader(
         plugins=plugins,
@@ -84,15 +75,11 @@ def compose_engine(
         if module.export.app:
             apps.append(module.export.app())
 
-    # ----------------------------------
-    # PROJECTOR
-    # ----------------------------------
+    # --- PROJECTOR ---
 
     projector = build_projector()
 
-    # ----------------------------------
-    # QUERIES
-    # ----------------------------------
+    # --- QUERIES ---
 
     apps_query = AppQueryBuilder(apps)
     command_query = CommandQueryBuilder(
@@ -106,9 +93,7 @@ def compose_engine(
         apps_query,
     )
 
-    # ----------------------------------
-    # APPLICATIONS & PORTS
-    # ----------------------------------
+    # --- BINDINGS ---
 
     def bind_ports() -> ModulePorts:
         ports = bootstrap.fork()
@@ -136,9 +121,17 @@ def compose_engine(
     # _compose_permission_roles(bootstrap)
     # _compose_policies(bootstrap)
 
+    # --- STREAMING ---
+
+    output = build_stream()
+
+    # --- MACHINE HANDLING ---
+
     return build_machine(
         a_query=apps_query,
         c_query=command_query,
+        on_session=session_service.get_or_create,
+        on_projection=output.send_projection,
         on_has_exec_permission=permission_service.can_execute,
         on_bootstrap_permissions=permission_service.set_bootstrap_permissions,
         on_get_applications=apps_query.all,
@@ -146,7 +139,6 @@ def compose_engine(
         on_audit_error=audit_service.error,
         on_audit_security=audit_service.security,
         on_audit_warning=audit_service.warning,
-        container=bootstrap,
     )
 
 
@@ -199,14 +191,6 @@ def _compose_ports(
     store: DefaultEntityStore,
     directory: AppQueryBuilder,
 ) -> Container:
-
-    # core platform
-    container.bind(NamespaceResolver, DomainNamespaceResolver())
-    container.bind(SessionStore, EntityStoreSessionService(store))
-    container.bind(CommandQueue, InMemoryCommandQueue())
-
-    container.bind(ProjectionDispatcher, EventProjectionDispatcher())
-    container.bind(Output, EventStreamOutput())
 
     # register event store.
     container.bind(ports.EntityStore, store)

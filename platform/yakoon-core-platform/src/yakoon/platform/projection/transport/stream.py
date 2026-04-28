@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from yakoon.base.runtime.input.context import InputContext
+from typing_extensions import Protocol
+
+from yakoon.base.runtime import InputContext
 
 if TYPE_CHECKING:
-    from yakoon.base.projection.model import Projection
+    from yakoon.base.projection import Projection
     from yakoon.platform.runtime import Session
-
-from .dispatcher import EventProjectionDispatcher
 
 
 class EventStreamOutput:
@@ -21,8 +21,17 @@ class EventStreamOutput:
     - error safety
     """
 
-    def __init__(self):
-        self.dispatcher = EventProjectionDispatcher()
+    def __init__(
+        self,
+        on_begin: OnBeginProjection,
+        on_emit: OnEmitProjection,
+        on_abort: OnAbortProjection,
+        on_finish: OnFinishProjection,
+    ):
+        self.on_begin = on_begin
+        self.on_emit = on_emit
+        self.on_abort = on_abort
+        self.on_finish = on_finish
 
     async def send_projection(
         self,
@@ -35,7 +44,7 @@ class EventStreamOutput:
         if not projection.id:
             raise RuntimeError("Projection without id.")
 
-        await self.dispatcher.begin_projection(
+        await self.on_begin(
             session=session,
             projection=projection,
             ctx=ctx,
@@ -43,21 +52,65 @@ class EventStreamOutput:
         )
 
         try:
-            await self.dispatcher.emit_projection(
-                session,
-                projection,
+            await self.on_emit(
+                session=session,
+                projection=projection,
             )
 
         except Exception:
             # sauber abbrechen (keine halb-fertigen Streams)
-            await self.dispatcher.abort_projection(
-                session,
-                projection.id,
+            await self.on_abort(
+                session=session,
+                projection_id=projection.id,
             )
             raise
 
         else:
-            await self.dispatcher.finish_projection(
-                session,
-                projection,
+            await self.on_finish(
+                session=session,
+                projection=projection,
             )
+
+
+# -------------
+# --- PORTS ---
+# -------------
+
+
+class OnBeginProjection(Protocol):
+    async def __call__(
+        self,
+        *,
+        session: Session,
+        projection: Projection,
+        ctx: InputContext | None,
+        job_id: str,
+    ) -> None: ...
+
+
+class OnEmitProjection(Protocol):
+    async def __call__(
+        self,
+        *,
+        session: Session,
+        projection: Projection,
+    ) -> None: ...
+
+
+class OnAbortProjection(Protocol):
+    async def __call__(
+        self,
+        *,
+        session: Session,
+        projection_id: str,
+    ) -> None: ...
+
+
+class OnFinishProjection(Protocol):
+
+    async def __call__(
+        self,
+        *,
+        session: Session,
+        projection: Projection,
+    ) -> None: ...

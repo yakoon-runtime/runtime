@@ -3,7 +3,7 @@ import random
 from .shard import Shard
 
 
-class DefaultShardAllocator:
+class ShardAllocator:
 
     def __init__(self, shard_store, range_size: int = 1000):
         self.shard_store = shard_store

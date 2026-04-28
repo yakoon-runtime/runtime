@@ -1,9 +1,9 @@
 from .compiler import build_compiler
-from .projector import TemplateProjector
+from .projector import Projector
 from .rendering import build_renderer
 
 
-def build_projector() -> TemplateProjector:
+def build_projector() -> Projector:
 
     # --- RENDERING ---
 
@@ -15,7 +15,7 @@ def build_projector() -> TemplateProjector:
 
     # --- PROJECTING ---
 
-    projector = TemplateProjector(
+    projector = Projector(
         on_render=renderer.render,
         on_compile=compiler.compile,
     )

@@ -8,7 +8,7 @@ from yakoon.base.resources import ResourceRef
 from .compiler import ResolverContext
 
 
-class TemplateProjector:
+class Projector:
     """
     Unified projector.
 

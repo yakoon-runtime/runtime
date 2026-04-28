@@ -1,7 +1,5 @@
-from .dispatcher import EventProjectionDispatcher
-from .stream import EventStreamOutput
+from .wire import build_stream
 
 __all__ = [
-    "EventProjectionDispatcher",
-    "EventStreamOutput",
+    "build_stream",
 ]
