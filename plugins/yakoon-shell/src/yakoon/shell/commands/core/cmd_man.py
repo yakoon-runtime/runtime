@@ -1,22 +1,45 @@
-from typing import Protocol, cast
+from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Protocol
+
+from yakoon.base.application.application import Application
 from yakoon.base.commands import (
     Command,
     CommandScope,
     Request,
 )
-from yakoon.base.flow import present
-
-
-class _ApplicationAccess(Protocol):
-    def get_active_app(self) -> str: ...
-    def set_active_app(self, app_id: str) -> None: ...
+from yakoon.base.commands.ports import OnProjectCmd
+from yakoon.base.commands.types import CommandKind
+from yakoon.base.flow import out
 
 
 class CmdMan(Command):
 
     key = "man"
     scope = CommandScope.GLOBAL
+
+    def __init__(
+        self,
+        on_project: OnProjectCmd,
+        on_get_app: OnGetApp,
+        on_get_active_app: OnGetActiveApp,
+        on_list_apps: OnListApps,
+        on_get_shell: OnGetShell,
+        on_check_app_listed: OnCheckAppListed,
+        on_list_listed_apps: OnListListedApps,
+        on_list_commands_for_app: OnListCommandsForApp,
+        on_get_commands_for_manual: OnListCommandsForManual,
+    ):
+        self.on_project = on_project
+        self.on_get_app = on_get_app
+        self.on_get_active_app = on_get_active_app
+        self.on_list_apps = on_list_apps
+        self.on_get_shell = on_get_shell
+        self.on_check_app_listed = on_check_app_listed
+        self.on_list_listed_apps = on_list_listed_apps
+        self.on_list_commands_for_app = on_list_commands_for_app
+        self.on_get_commands_for_manual = on_get_commands_for_manual
 
     async def run(self, request: Request):
 
@@ -27,31 +50,26 @@ class CmdMan(Command):
             yield self.show_manual(request)
 
     async def show_manual(self, request: Request):
-        app_query = self.container.get(ApplicationQuery)
-        command_service = self.container.get(CommandQuery)
 
         command_key = request.arg(0)
         if not command_key:
-            projector = await self.create_projector()
-            projection = await projector.project(
-                "error",
+            projection = await self.on_project(
+                name="error.sam",
                 state={
                     "command_key": "",
                 },
             )
-            yield present(projection)
+            yield out(projection)
             return
 
         # privileged access: controller management
-        session = self.ctx.session
-        access = cast(_ApplicationAccess, session)
 
-        active_app_id = access.get_active_app()
+        active_app_id = self.on_get_active_app()
         if not active_app_id:
-            active_app_id = app_query.shell().id
+            active_app_id = self.on_get_shell().id
 
         # active controller must be listed to show man pages
-        if not app_query.is_listed(active_app_id):
+        if not self.on_check_app_listed(app_id=active_app_id):
             return
 
         # ----------------------------------------------------
@@ -60,7 +78,7 @@ class CmdMan(Command):
         command: type[Command] | None = None
         owner_app_id = active_app_id
 
-        for c in command_service.for_app(active_app_id):
+        for c in self.on_list_commands_for_app(app_id=active_app_id):
             if c.key == command_key:
                 command = c
                 break
@@ -71,10 +89,10 @@ class CmdMan(Command):
         if not command:
             global_hits: list[tuple[str, type[Command]]] = []
 
-            for ctrl in app_query.all():
-                if not app_query.is_listed(ctrl.id):
+            for ctrl in self.on_list_apps():
+                if not self.on_check_app_listed(app_id=ctrl.id):
                     continue
-                for c in command_service.for_app(ctrl.id):
+                for c in self.on_list_commands_for_app(app_id=ctrl.id):
                     if c.key == command_key and c.scope == CommandScope.GLOBAL:
                         global_hits.append((ctrl.id, c))
 
@@ -89,19 +107,17 @@ class CmdMan(Command):
         # 3) Render or show "no entry"
         # ----------------------------------------------------
         if not command:
-            projector = await self.create_projector()
-
-            projection = await projector.project(
-                "error",
+            projection = await self.on_project(
+                name="error.sam",
                 state={
                     "command_key": command_key,
                 },
             )
-            yield present(projection)
+            yield out(projection)
             return
 
         # controller has to exist - command was found before.
-        app = app_query.get(owner_app_id)
+        app = self.on_get_app(app_id=owner_app_id)
         if not app:
             raise RuntimeError("Controller not found")
 
@@ -123,29 +139,20 @@ class CmdMan(Command):
             )
             projector = await projector_service.create(ref, session)
             projection = await projector.project("details")
-            yield present(projection)
+            yield out(projection)
 
         except LookupError:
             # use the own projector.
-            projector = await self.create_projector()
-            projection = await projector.project(
-                "no_manual_entry",
+            projection = await self.on_project(
+                name="no_manual_entry.sam",
                 state={"command_key": command_key},
             )
-            yield present(projection)
+            yield out(projection)
 
     async def show_index(self, request: Request):
 
-        projector = await self.create_projector()
-        app_query = self.container.get(ApplicationQuery)
-        command_service = self.container.get(CommandQuery)
-
-        # privileged access: controller management
-        session = self.ctx.session
-        access = cast(_ApplicationAccess, session)
-
-        shell = app_query.shell()
-        active_app_id = access.get_active_app()
+        shell = self.on_get_shell()
+        active_app_id = self.on_get_active_app()
         mode = self.resolve_man_mode(request)
 
         globals_by_key: dict[str, type[Command]] = {}
@@ -156,14 +163,14 @@ class CmdMan(Command):
         if not active_app_id or active_app_id == shell.id:
             # 1) shell commands (defined in shell controller)
             shell_commands = list(
-                command_service.for_man_entries(shell.id, session, mode=mode)
+                self.on_get_commands_for_manual(app_id=shell.id, mode=mode)
             )
 
             # 2) global commands (defined anywhere)
-            for app in app_query.all():
-                if not app_query.is_listed(app.id):
+            for app in self.on_list_apps():
+                if not self.on_check_app_listed(app_id=app.id):
                     continue
-                for cmd in command_service.for_man_entries(app.id, session, mode=mode):
+                for cmd in self.on_get_commands_for_manual(app_id=app.id, mode=mode):
                     if cmd.scope == CommandScope.GLOBAL:
                         globals_by_key[cmd.key] = cmd
 
@@ -175,19 +182,19 @@ class CmdMan(Command):
             shell_commands = sorted(merged_by_key.values(), key=lambda c: c.key)
 
             apps = sorted(
-                [c for c in app_query.listed() if c != shell],
+                [c for c in self.on_list_listed_apps() if c != shell],
                 key=lambda c: c.id,
             )
 
-            projection = await projector.project(
-                "overview",
+            projection = await self.on_project(
+                name="overview.sam",
                 state={
                     "mode": "shell",
                     "shell_commands": shell_commands,
                     "apps": apps,
                 },
             )
-            yield present(projection)
+            yield out(projection)
             return
 
         # ----------------------------
@@ -195,14 +202,14 @@ class CmdMan(Command):
         # ----------------------------
 
         # 1) Collect GLOBAL commands from all app (system-wide available)
-        for app in app_query.all():
-            for cmd in command_service.for_man_entries(app.id, session, mode=mode):
+        for app in self.on_list_apps():
+            for cmd in self.on_get_commands_for_manual(app_id=app.id, mode=mode):
                 if cmd.scope == CommandScope.GLOBAL:
                     globals_by_key[cmd.key] = cmd
 
         # 2) Collect commands from active app that are executable in program mode
         program_by_key: dict[str, type[Command]] = {}
-        for cmd in command_service.for_man_entries(active_app_id, session, mode=mode):
+        for cmd in self.on_get_commands_for_manual(app_id=active_app_id, mode=mode):
             if cmd.scope in (CommandScope.APP, CommandScope.GLOBAL):
                 program_by_key[cmd.key] = cmd
 
@@ -212,14 +219,14 @@ class CmdMan(Command):
         merged.update(program_by_key)
 
         commands = sorted(merged.values(), key=lambda c: c.key)
-        projection = await projector.project(
-            "show_help",
+        projection = await self.on_project(
+            name="show_help.sam",
             state={
                 "mode": "program",
                 "commands": commands,
             },
         )
-        yield present(projection)
+        yield out(projection)
 
     def resolve_man_mode(self, request: Request) -> str:
         if request.has_option("internal"):
@@ -227,3 +234,46 @@ class CmdMan(Command):
         if request.has_option("all"):
             return "all"
         return "default"
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnGetActiveApp(Protocol):
+    def __call__(self) -> str: ...
+
+
+class OnGetApp(Protocol):
+    def __call__(self, *, app_id: str) -> Application | None: ...
+
+
+class OnListApps(Protocol):
+    def __call__(self) -> Sequence[Application]: ...
+
+
+class OnListListedApps(Protocol):
+    def __call__(self) -> Sequence[Application]: ...
+
+
+class OnGetShell(Protocol):
+    def __call__(self) -> Application: ...
+
+
+class OnCheckAppListed(Protocol):
+    def __call__(self, *, app_id: str) -> bool: ...
+
+
+class OnListCommandsForApp(Protocol):
+    def __call__(self, *, app_id: str) -> Sequence[type[Command]]: ...
+
+
+class OnListCommandsForManual(Protocol):
+    def __call__(
+        self,
+        *,
+        app_id: str,
+        mode: str,
+        kind_filter: CommandKind | None = None,
+    ) -> Sequence[type[Command]]: ...

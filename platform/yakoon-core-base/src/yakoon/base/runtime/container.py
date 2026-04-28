@@ -7,99 +7,99 @@ T = TypeVar("T")
 
 
 class Container:
-    """A container for registering and retrieving services, statically or lazily."""
+    """A container for registering and retrieving capability, statically or lazily."""
 
     def __init__(self, parent: Container | None = None, allow_override: bool = False):
         """Initializes the Container.
 
         Args:
-            parent: Optional parent directory for service lookup.
-            allow_override: If False, prevents overriding services from the parent.
+            parent: Optional parent directory for capability lookup.
+            allow_override: If False, prevents overriding capabilities from the parent.
         """
         self._parent = parent
         self._allow_override = allow_override
         self._container: dict[object, object] = {}
         self._factories: dict[object, Callable[[], Awaitable[object]]] = {}
 
-    def register_static(self, key: object, service: object) -> None:
-        """Registers a static service for a given key.
+    def bind(self, port: object, capability: object) -> None:
+        """Registers a static capability for a given port.
 
         Args:
-            key: The service key.
-            service: The ready-to-use service instance.
+            port: The port.
+            capability: The ready-to-use capability instance.
 
         Raises:
-            TypeError: If `service` is a class instead of an instance.
-            ValueError: If overriding is not allowed and the key exists in the parent.
+            TypeError: If `port` is a class instead of an instance.
+            ValueError: If overriding is not allowed and the port exists in the parent.
         """
-        if isinstance(service, type):
+        if isinstance(capability, type):
             raise TypeError("Expected instance, got class. Did you forget ()?")
 
-        if not self._allow_override and self._parent and self._parent.contains(key):
-            raise ValueError(f"Service override not allowed: {key}")
+        if not self._allow_override and self._parent and self._parent.contains(port):
+            raise ValueError(f"Port override not allowed: {port}")
 
-        self._container[key] = service
+        self._container[port] = capability
 
     def register_lazy(
-        self, key: object, factory: Callable[[], Awaitable[object]]
+        self, port: object, factory: Callable[[], Awaitable[object]]
     ) -> None:
-        """Registers a lazy factory for a given key.
+        """Registers a lazy factory for a given port.
 
         Args:
-            key: The service key.
-            factory: An async function returning a service instance.
+            port: The port.
+            factory: An async function returning a capability instance.
 
         Raises:
-            ValueError: If overriding is not allowed and the key exists in the parent.
+            ValueError: If overriding is not allowed and the port exists in the parent.
         """
-        if not self._allow_override and self._parent and self._parent.contains(key):
-            raise ValueError(f"Service override not allowed: {key}")
+        if not self._allow_override and self._parent and self._parent.contains(port):
+            raise ValueError(f"Port override not allowed: {port}")
 
-        self._factories[key] = factory
+        self._factories[port] = factory
 
-    def contains(self, key: object) -> bool:
-        """Returns True if the key is registered in this directory or its parent."""
-        return key in self._container or (
-            self._parent.contains(key) if self._parent else False
+    def contains(self, port: object) -> bool:
+        """Returns True if the port is registered in this directory or its parent."""
+        return port in self._container or (
+            self._parent.contains(port) if self._parent else False
         )
 
     def fork(self, allow_override: bool = False) -> Container:
         """Creates a new Container with this directory as parent."""
         return Container(parent=self, allow_override=allow_override)
 
-    def has(self, key: type[T]) -> bool:
-        if key in self._container:
+    def has(self, port: type[T]) -> bool:
+        if port in self._container:
             return True
-        if key in self._factories:
+        if port in self._factories:
             return True
         if self._parent:
-            return self._parent.has(key)
+            return self._parent.has(port)
         return False
 
-    def get(self, key: type[T]) -> T:
-        """Retrieves the service for a given key.
+    def get(self, port: type[T]) -> T:
+        """Retrieves the capability for a given port.
 
-        If a static service exists, it is returned. If a lazy factory is registered,
+        If a static capability exists, it is returned. If a lazy factory is registered,
         it is awaited and cached. Otherwise, a LookupError is raised.
 
         Args:
-            key: The service key.
+            port: The port.
 
         Returns:
-            The service instance for the given key.
+            The capability instance for the given port.
 
         Raises:
-            KeyError: If no service is registered for the key.
+            KeyError: If no capability is registered for the port.
         """
         try:
-            if key in self._container:
-                return cast(T, self._container[key])
-            if key in self._factories:
-                registry = self._factories[key]()
-                self._container[key] = registry
+            if port in self._container:
+                return cast(T, self._container[port])
+            if port in self._factories:
+                registry = self._factories[port]()
+                self._container[port] = registry
                 return cast(T, registry)
             if self._parent:
-                return self._parent.get(key)
-            raise KeyError(key)
+                return self._parent.get(port)
+            raise KeyError(port)
         except KeyError as e:
-            raise KeyError(f"Service not registered for key: {key!r}") from e
+            raise KeyError(f"Capability not registered for port: {port!r}") from e

@@ -39,13 +39,13 @@ def build_machine(
     output = container.get(Output)
     sessions = container.get(SessionStore)
 
-    # --- Command Resolver ---
+    # --- ROUTING ---
     resolver = CommandResolver(
         on_match_command=c_query.for_context,
         on_get_context=on_get_applications,
     )
 
-    # --- create command ---
+    # --- FACTORY ---
     def create_command(
         session: Session, controller: type[Controller], command: type[Command]
     ) -> Command:
@@ -56,10 +56,10 @@ def build_machine(
             session=session,
         )
 
-    # --- Input Parser ---
+    # --- PARSING ---
     parser = InputParser()
 
-    # --- Command Engine ---
+    # --- ORCHESTRATION ---
     engine = CommandEngine(
         on_match_command=resolver.resolve,
         on_parse_input=parser.parse,
@@ -71,7 +71,7 @@ def build_machine(
         on_get_shell_app=a_query.shell,
     )
 
-    # --- Scheduler ---
+    # --- EXECUTION ---
     scheduler = Scheduler(
         on_dispatch=engine.dispatch,
         on_step_flow=engine.step_flow,
@@ -80,7 +80,7 @@ def build_machine(
         on_audit_warning=on_audit_warning,
     )
 
-    # --- Session Bus & Session handling ---
+    # --- SESSION HANDLING ---
     bus = SessionBus()
 
     async def get_session(key: Key) -> Session:
@@ -94,7 +94,7 @@ def build_machine(
         on_apply_permissions=on_bootstrap_permissions,
     )
 
-    # --- Runner & Runner handling ---
+    # --- SESSION EXECUTION ---
     global_commands = {cmd.key for cmd in c_query.globals()}
 
     def create_runner(session: Session) -> Runner:
@@ -106,7 +106,7 @@ def build_machine(
         )
         return runner
 
-    # --- Host ---
+    # --- HOSTING ---
     return RuntimeHost(
         on_schedule=scheduler.run,
         on_join_bus=bus.join,

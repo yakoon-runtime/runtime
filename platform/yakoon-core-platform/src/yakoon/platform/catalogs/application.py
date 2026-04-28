@@ -42,11 +42,8 @@ class AppQueryBuilder:
     def all(self) -> Sequence[Application]:
         return tuple(self._by_id[cid] for cid in self.ids())
 
-    def get(self, app_id: str) -> Application:
-        app = self._by_id.get(app_id)
-        if not app:
-            raise ValueError(f"Appliation not found by id: {app_id}")
-        return app
+    def get(self, app_id: str) -> None | Application:
+        return self._by_id.get(app_id)
 
     def has(self, app_id: str) -> bool:
         return bool(self._by_id.get(app_id, {}))

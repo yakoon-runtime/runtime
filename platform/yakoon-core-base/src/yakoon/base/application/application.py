@@ -27,7 +27,7 @@ class Application(ABC):
     controllers: Sequence[type[Controller]]
     """Contains the controllers of this application."""
 
-    def apply_ports(self, ports):
+    def bind_ports(self, ports):
         for controller in self.controllers:
             controller.ports = ports
 

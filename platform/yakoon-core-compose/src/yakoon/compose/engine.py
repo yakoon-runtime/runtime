@@ -8,7 +8,17 @@ from yakoon.base.capabilities.interaction import FieldPolicy, FieldPolicyEngine
 from yakoon.base.dispatch import CommandQueue
 from yakoon.base.naming import Namespace, NamespaceResolver
 from yakoon.base.plugins.container import ModulePorts
-from yakoon.base.plugins.ports import OnGetShell, OnProject, OnSaveSession
+from yakoon.base.plugins.ports import (
+    OnCheckAppListed,
+    OnGetApp,
+    OnGetShell,
+    OnListApps,
+    OnListCommandsForApp,
+    OnListCommandsForManual,
+    OnListListedApps,
+    OnProject,
+    OnSaveSession,
+)
 from yakoon.base.projection.model import FieldType
 from yakoon.base.projection.percept import ProjectionDispatcher
 from yakoon.base.projection.transfer import Output
@@ -100,18 +110,28 @@ def compose_engine(
     # APPLICATIONS & PORTS
     # ----------------------------------
 
-    def create_ports() -> ModulePorts:
+    def bind_ports() -> ModulePorts:
         ports = bootstrap.fork()
-        ports.register_static(OnProject, projector.project)
-        ports.register_static(OnGetShell, apps_query.shell)
-        ports.register_static(OnSaveSession, session_service.save)
+
+        ports.bind(OnSaveSession, session_service.save)
+        ports.bind(OnProject, projector.project)
+
+        ports.bind(OnGetShell, apps_query.shell)
+        ports.bind(OnGetApp, apps_query.get)
+        ports.bind(OnCheckAppListed, apps_query.is_listed)
+        ports.bind(OnListApps, apps_query.all)
+        ports.bind(OnListListedApps, apps_query.listed)
+
+        ports.bind(OnListCommandsForApp, command_query.for_app)
+        ports.bind(OnListCommandsForManual, command_query.for_man_entries)
+
         return ModulePorts(
-            on_register=ports.register_static,
+            on_register=ports.bind,
             on_get_port=ports.get,
         )
 
     for app in apps_query.all():
-        app.apply_ports(create_ports())
+        app.bind_ports(bind_ports())
 
     # _compose_permission_roles(bootstrap)
     # _compose_policies(bootstrap)
@@ -181,20 +201,20 @@ def _compose_ports(
 ) -> Container:
 
     # core platform
-    container.register_static(NamespaceResolver, DomainNamespaceResolver())
-    container.register_static(SessionStore, EntityStoreSessionService(store))
-    container.register_static(CommandQueue, InMemoryCommandQueue())
+    container.bind(NamespaceResolver, DomainNamespaceResolver())
+    container.bind(SessionStore, EntityStoreSessionService(store))
+    container.bind(CommandQueue, InMemoryCommandQueue())
 
-    container.register_static(ProjectionDispatcher, EventProjectionDispatcher())
-    container.register_static(Output, EventStreamOutput())
+    container.bind(ProjectionDispatcher, EventProjectionDispatcher())
+    container.bind(Output, EventStreamOutput())
 
     # register event store.
-    container.register_static(ports.EntityStore, store)
-    container.register_static(ports.IndexRegistry, store)
+    container.bind(ports.EntityStore, store)
+    container.bind(ports.IndexRegistry, store)
 
     # optional lookup feature (can be overridden by plugin export.public_services)
     if not container.has(LookupResolver):
-        container.register_static(LookupResolver, NoLookupResolver())
+        container.bind(LookupResolver, NoLookupResolver())
 
     return container
 
