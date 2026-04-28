@@ -1,5 +1,4 @@
 from .builder import ViewEmitter, ViewTraversal
-from .compiler import TemplateProjectionCompiler
 from .transport import EventProjectionDispatcher
 
 __all__ = [
@@ -8,6 +7,4 @@ __all__ = [
     "ViewTraversal",
     # .transport
     "EventProjectionDispatcher",
-    # .compiler
-    "TemplateProjectionCompiler",
 ]

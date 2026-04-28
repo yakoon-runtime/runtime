@@ -7,7 +7,7 @@ from typing_extensions import Protocol
 from yakoon.base.resources import ResourceRef
 
 
-class TemplateProjectionRenderer:
+class Renderer:
 
     def __init__(
         self,

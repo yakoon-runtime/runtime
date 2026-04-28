@@ -1,19 +1,47 @@
+from __future__ import annotations
+
+from typing import Protocol
+
 from yakoon.base.projection import Projection
 
-from .ast import build_ast
+from .ast import ElementNode
 from .context import ResolverContext
-from .mapper import create_mapper
-from .tokens import tokenize_text
+from .tokens import Token
 
 
-class TemplateProjectionCompiler:
+class Compiler:
+
+    def __init__(
+        self,
+        on_tokenize: OnTokenize,
+        on_build_ast: OnBuildAst,
+        on_build_projection: OnBuildProjection,
+    ):
+
+        self.on_tokenize = on_tokenize
+        self.on_build_ast = on_build_ast
+        self.on_build_projection = on_build_projection
 
     def compile(self, text: str, ctx: ResolverContext) -> Projection:
 
-        tokens = tokenize_text(text)
-        ast = build_ast(tokens)
+        tokens = self.on_tokenize(text=text)
+        ast = self.on_build_ast(tokens=tokens)
 
-        mapper = create_mapper(ctx)
-        projection = mapper.map_projection(ast)
+        return self.on_build_projection(ctx=ctx, root=ast)
 
-        return projection
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnTokenize(Protocol):
+    def __call__(self, *, text: str) -> list[Token]: ...
+
+
+class OnBuildAst(Protocol):
+    def __call__(self, tokens: list[Token]) -> ElementNode: ...
+
+
+class OnBuildProjection(Protocol):
+    def __call__(self, ctx: ResolverContext, root: ElementNode) -> Projection: ...

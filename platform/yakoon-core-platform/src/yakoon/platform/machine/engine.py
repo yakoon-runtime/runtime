@@ -85,17 +85,6 @@ class CommandEngine:
             session.set_active_app(shell.id)
             app_id = shell.id
 
-        app = self.on_get_app(app_id=app_id)
-        if not app:
-            await self.on_projection(
-                session=session,
-                projection=system_error_projection(
-                    "dispatch() found no active application"
-                ),
-                ctx=event.context,
-            )
-            return None
-
         command_type: type[Command] | None = None
 
         try:
@@ -105,7 +94,7 @@ class CommandEngine:
 
             # Command finden
             result = self.on_match_command(
-                app_id=app.id,
+                app_id=app_id,
                 command_key=event.command,
             )
             if not result:
@@ -118,6 +107,17 @@ class CommandEngine:
             #        result = await self._find_matching_command(controller_id, event)
 
             app_id, controller_type, command_type = result
+
+            app = self.on_get_app(app_id=app_id)
+            if not app:
+                await self.on_projection(
+                    session=session,
+                    projection=system_error_projection(
+                        "dispatch() found no active application"
+                    ),
+                    ctx=event.context,
+                )
+                return None
 
             # session.execution.step(
             #    ExecStep.COMMAND_RESOLVED,
@@ -137,6 +137,7 @@ class CommandEngine:
             # )
 
             command = self.on_create_command(
+                app=app,
                 session=session,
                 controller=controller_type,
                 command=command_type,
@@ -339,7 +340,7 @@ class OnAuditSecurity(Protocol):
 
 
 class OnGetApp(Protocol):
-    def __call__(self, *, app_id: str) -> Application: ...
+    def __call__(self, *, app_id: str) -> Application | None: ...
 
 
 class OnGetShellApp(Protocol):
@@ -348,7 +349,11 @@ class OnGetShellApp(Protocol):
 
 class OnCreateCommand(Protocol):
     def __call__(
-        self, session: Session, controller: type[Controller], command: type[Command]
+        self,
+        app: Application,
+        session: Session,
+        controller: type[Controller],
+        command: type[Command],
     ) -> Command: ...
 
 

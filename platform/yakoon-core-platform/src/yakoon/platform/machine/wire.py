@@ -40,16 +40,21 @@ def build_machine(
     sessions = container.get(SessionStore)
 
     # --- ROUTING ---
+
     resolver = CommandResolver(
         on_match_command=c_query.for_context,
         on_get_context=on_get_applications,
     )
 
     # --- FACTORY ---
+
     def create_command(
-        session: Session, controller: type[Controller], command: type[Command]
+        app: Application,
+        session: Session,
+        controller: type[Controller],
+        command: type[Command],
     ) -> Command:
-        app = a_query.get(command.app_id)
+
         return app.create_command(
             controller=controller,
             command=command,
@@ -57,9 +62,11 @@ def build_machine(
         )
 
     # --- PARSING ---
+
     parser = InputParser()
 
     # --- ORCHESTRATION ---
+
     engine = CommandEngine(
         on_match_command=resolver.resolve,
         on_parse_input=parser.parse,
@@ -72,6 +79,7 @@ def build_machine(
     )
 
     # --- EXECUTION ---
+
     scheduler = Scheduler(
         on_dispatch=engine.dispatch,
         on_step_flow=engine.step_flow,
@@ -81,6 +89,7 @@ def build_machine(
     )
 
     # --- SESSION HANDLING ---
+
     bus = SessionBus()
 
     async def get_session(key: Key) -> Session:
@@ -95,6 +104,7 @@ def build_machine(
     )
 
     # --- SESSION EXECUTION ---
+
     global_commands = {cmd.key for cmd in c_query.globals()}
 
     def create_runner(session: Session) -> Runner:
@@ -107,6 +117,7 @@ def build_machine(
         return runner
 
     # --- HOSTING ---
+
     return RuntimeHost(
         on_schedule=scheduler.run,
         on_join_bus=bus.join,

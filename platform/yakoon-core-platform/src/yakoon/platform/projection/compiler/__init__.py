@@ -1,7 +1,7 @@
-from .compiler import TemplateProjectionCompiler
 from .context import ResolverContext
+from .wire import build_compiler
 
 __all__ = [
-    "TemplateProjectionCompiler",
+    "build_compiler",
     "ResolverContext",
 ]
