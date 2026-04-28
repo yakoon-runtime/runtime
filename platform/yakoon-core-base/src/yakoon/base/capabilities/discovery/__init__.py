@@ -1,13 +1,6 @@
 from .discovery import Candidates, Capability, DiscoveryResult, NoMatch, Resolved
 from .lookup import LookupCandidatesPayload
 from .parser import LookupEntry, LookupIndex
-from .port import (
-    DiscoveryService,
-    DiscoveryStrategy,
-    LookupCandidateStoreService,
-    LookupParser,
-    LookupResolver,
-)
 
 __all__ = [
     # .discovery
@@ -21,10 +14,4 @@ __all__ = [
     # .parser
     "LookupEntry",
     "LookupIndex",
-    # .port
-    "LookupParser",
-    "LookupCandidateStoreService",
-    "LookupResolver",
-    "DiscoveryStrategy",
-    "DiscoveryService",
 ]

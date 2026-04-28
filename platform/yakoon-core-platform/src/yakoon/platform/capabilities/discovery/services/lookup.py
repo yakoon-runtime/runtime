@@ -8,13 +8,12 @@ from yakoon.base.capabilities.discovery import (
     Resolved,
 )
 from yakoon.base.commands import Request
-from yakoon.base.runtime import Container
 from yakoon.platform.runtime.sessions import Session
 
 
 class DefaultLookupResolverService:
 
-    def __init__(self, container: Container):
+    def __init__(self, container):
         self._container = container
 
     async def resolve(self, session: Session, request: Request) -> str | None:

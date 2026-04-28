@@ -17,7 +17,7 @@ from ..runtime.compiler import compile_run_command
 
 class DefaultWorkflowService:
 
-    def __init__(self, container: Container):
+    def __init__(self):
         self.container = container
 
     # ---- runtime access ----

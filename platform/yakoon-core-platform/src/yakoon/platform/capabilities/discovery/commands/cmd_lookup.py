@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from yakoon.base.capabilities.discovery import LookupCandidateStoreService
 from yakoon.base.commands import (
     Command,
     CommandScope,

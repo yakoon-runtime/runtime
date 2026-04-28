@@ -10,9 +10,7 @@ from yakoon.base.capabilities.discovery import (
     NoMatch,
     Resolved,
 )
-from yakoon.base.catalogs import CommandQuery
 from yakoon.base.commands import Request
-from yakoon.base.runtime import Container
 from yakoon.platform.runtime.sessions import Session
 
 
@@ -29,7 +27,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
 
     def __init__(
         self,
-        container: Container,
+        container,
         lookup_filename: str = "lookup",
     ) -> None:
         self._services = container

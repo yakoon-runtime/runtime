@@ -2,7 +2,6 @@ from typing import Literal, TypeAlias
 
 from yakoon.base import ports
 from yakoon.base.application import Application
-from yakoon.base.capabilities.discovery import LookupResolver
 from yakoon.base.capabilities.identity import PermissionService
 from yakoon.base.capabilities.interaction import FieldPolicy, FieldPolicyEngine
 from yakoon.base.naming import Namespace
@@ -36,7 +35,6 @@ from yakoon.platform.projection import (
     build_stream,
 )
 from yakoon.platform.runtime import EntityStoreSessionService
-from yakoon.platform.services.lookup import NoLookupResolver
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
 from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
 from yakoon.platform.stores.event.store import DefaultEntityStore
@@ -195,10 +193,6 @@ def _compose_ports(
     # register event store.
     container.bind(ports.EntityStore, store)
     container.bind(ports.IndexRegistry, store)
-
-    # optional lookup feature (can be overridden by plugin export.public_services)
-    if not container.has(LookupResolver):
-        container.bind(LookupResolver, NoLookupResolver())
 
     return container
 
