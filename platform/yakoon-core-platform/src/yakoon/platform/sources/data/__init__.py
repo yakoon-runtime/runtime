@@ -1,7 +1,7 @@
-from .application import AppQueryBuilder
+from .apps import AppSource
 from .command import CommandQueryBuilder
 
 __all__ = [
     "CommandQueryBuilder",
-    "AppQueryBuilder",
+    "AppSource",
 ]

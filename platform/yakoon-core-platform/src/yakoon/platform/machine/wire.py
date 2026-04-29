@@ -9,9 +9,9 @@ from yakoon.base.controllers.controller import Controller
 from yakoon.base.naming import Key
 from yakoon.base.projection.model.model import Projection
 from yakoon.base.runtime.input.context import InputContext
-from yakoon.platform.catalogs import AppQueryBuilder, CommandQueryBuilder
 from yakoon.platform.runtime import Session
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
+from yakoon.platform.sources.data import CommandQueryBuilder
 
 from .engine import CommandEngine
 from .host import RuntimeHost
@@ -23,13 +23,12 @@ from .session import SessionBuilder
 
 
 def build_machine(
-    a_query: AppQueryBuilder,
+    applications: Sequence[Application],
     c_query: CommandQueryBuilder,
     on_projection: OnProjection,
     on_session: OnGetOrCreateSession,
     on_has_exec_permission: OnHasExecPermission,
     on_bootstrap_permissions: OnBootstrapPermissions,
-    on_get_applications: OnGetApplications,
     on_audit_log: OnAuditLog,
     on_audit_error: OnAuditError,
     on_audit_warning: OnAuditWarning,
@@ -39,8 +38,8 @@ def build_machine(
     # --- ROUTING ---
 
     resolver = CommandResolver(
+        applications=applications,
         on_match_command=c_query.for_context,
-        on_get_context=on_get_applications,
     )
 
     # --- FACTORY ---
@@ -65,14 +64,13 @@ def build_machine(
     # --- ORCHESTRATION ---
 
     engine = CommandEngine(
+        applications=applications,
         on_match_command=resolver.resolve,
         on_parse_input=parser.parse,
         on_authorize=on_has_exec_permission,
         on_projection=on_projection,
         on_create_command=create_command,
         on_audit_security=on_audit_security,
-        on_get_app=a_query.get,
-        on_get_shell_app=a_query.shell,
     )
 
     # --- EXECUTION ---
@@ -126,10 +124,6 @@ def build_machine(
 # ----------------------------------
 # PORTS
 # ----------------------------------
-
-
-class OnGetApplications(Protocol):
-    def __call__(self) -> Sequence[Application]: ...
 
 
 class OnHasExecPermission(Protocol):

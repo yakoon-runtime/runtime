@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Protocol
 
-from yakoon.base.application import Application
+from yakoon.base.application.application import Application
 from yakoon.base.commands import Command
 from yakoon.base.controllers import Controller
 
@@ -12,11 +12,11 @@ class CommandResolver:
 
     def __init__(
         self,
+        applications: Sequence[Application],
         on_match_command: OnMatchCommand,
-        on_get_context: OnGetContext,
     ):
+        self.applications = applications
         self.on_match_command = on_match_command
-        self.on_get_context = on_get_context
 
         self._controllers: dict[str, type[Controller]] = {}
         self._types: dict[str, dict[str, type[Command]]] = {}
@@ -24,7 +24,7 @@ class CommandResolver:
 
     def _build(self) -> None:
 
-        for app in self.on_get_context():
+        for app in self.applications:
             for controller in app.controllers:
 
                 if controller.id in self._controllers:
@@ -89,10 +89,6 @@ class CommandResolver:
 # ----------------------------------
 # PORTS
 # ----------------------------------
-
-
-class OnGetContext(Protocol):
-    def __call__(self) -> Sequence[Application]: ...
 
 
 class OnMatchCommand(Protocol):

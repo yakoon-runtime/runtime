@@ -4,6 +4,7 @@ from collections.abc import Sequence
 
 from typing_extensions import Protocol
 
+from yakoon.base.application.application import Application
 from yakoon.base.capabilities.identity import Permission
 from yakoon.base.commands import (
     Command,
@@ -11,19 +12,19 @@ from yakoon.base.commands import (
     CommandScope,
     CommandVisibility,
 )
+from yakoon.base.sources.request import DataRequest
+from yakoon.base.sources.source import DataResult, DataSource
 from yakoon.platform.runtime.sessions import Session
 
-from .application import AppQueryBuilder
 
-
-class CommandQueryBuilder:
+class CommandQueryBuilder(DataSource):
 
     def __init__(
         self,
-        app_query: AppQueryBuilder,
+        applications: Sequence[Application],
         on_has_read_permission: OnHasReadPermission,
     ):
-        self._app_query = app_query
+        self.applications = applications
         self.on_has_read_permission = on_has_read_permission
 
         self._by_controller: dict[str, list[type[Command]]] = {}
@@ -40,9 +41,8 @@ class CommandQueryBuilder:
         by_global: dict[str, type[Command]] = {}
         by_shell: dict[str, type[Command]] = {}
 
-        for app in self._app_query.all():
+        for app in self.applications:
             for controller in app.controllers:
-
                 commands = []
                 for commandset in controller.commandsets:
                     for command in commandset.commands:
@@ -79,6 +79,9 @@ class CommandQueryBuilder:
                 self._by_controller = by_controller
                 self._built = True
 
+    async def read(self, request: DataRequest) -> DataResult:
+        return DataResult(rows=[])
+
     def _ensure_built(self) -> None:
         if not self._built:
             raise RuntimeError("CommandIndexBuilder.build() was not called.")
@@ -108,7 +111,7 @@ class CommandQueryBuilder:
 
         out: list[type[Command]] = []
 
-        app = self._app_query.get(app_id)
+        app = next((a for a in self.applications if a.id == app_id), None)
         if not app:
             return tuple(out)
 
@@ -132,7 +135,7 @@ class CommandQueryBuilder:
 
         out: list[type[Command]] = []
 
-        app = self._app_query.get(app_id)
+        app = next((a for a in self.applications if a.id == app_id), None)
         if not app:
             return out
 

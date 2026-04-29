@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Protocol
 
-from yakoon.base.application.application import Application
 from yakoon.base.commands import (
     Command,
     CommandScope,
@@ -12,6 +11,7 @@ from yakoon.base.commands import (
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.commands.types import CommandKind
 from yakoon.base.flow import out
+from yakoon.base.sources import DataRequest, OnDataSource
 
 
 class CmdMan(Command):
@@ -21,23 +21,15 @@ class CmdMan(Command):
 
     def __init__(
         self,
+        on_source: OnDataSource,
         on_project: OnProjectCmd,
-        on_get_app: OnGetApp,
         on_get_active_app: OnGetActiveApp,
-        on_list_apps: OnListApps,
-        on_get_shell: OnGetShell,
-        on_check_app_listed: OnCheckAppListed,
-        on_list_listed_apps: OnListListedApps,
         on_list_commands_for_app: OnListCommandsForApp,
         on_get_commands_for_manual: OnListCommandsForManual,
     ):
+        self.on_source = on_source
         self.on_project = on_project
-        self.on_get_app = on_get_app
         self.on_get_active_app = on_get_active_app
-        self.on_list_apps = on_list_apps
-        self.on_get_shell = on_get_shell
-        self.on_check_app_listed = on_check_app_listed
-        self.on_list_listed_apps = on_list_listed_apps
         self.on_list_commands_for_app = on_list_commands_for_app
         self.on_get_commands_for_manual = on_get_commands_for_manual
 
@@ -66,10 +58,16 @@ class CmdMan(Command):
 
         active_app_id = self.on_get_active_app()
         if not active_app_id:
-            active_app_id = self.on_get_shell().id
+            data = await self.on_source(DataRequest("system:apps --shell"))
+
+            shell = data.one()
+            active_app_id = shell["id"]
 
         # active controller must be listed to show man pages
-        if not self.on_check_app_listed(app_id=active_app_id):
+        data = await self.on_source(
+            DataRequest(f"system:apps --by-id {active_app_id} --listed")
+        )
+        if not data.exists():
             return
 
         # ----------------------------------------------------
@@ -89,12 +87,13 @@ class CmdMan(Command):
         if not command:
             global_hits: list[tuple[str, type[Command]]] = []
 
-            for ctrl in self.on_list_apps():
-                if not self.on_check_app_listed(app_id=ctrl.id):
+            data = await self.on_source(DataRequest("system:apps --all"))
+            for app in data.rows:
+                if not app["is_listed"]:
                     continue
-                for c in self.on_list_commands_for_app(app_id=ctrl.id):
+                for c in self.on_list_commands_for_app(app_id=app["id"]):
                     if c.key == command_key and c.scope == CommandScope.GLOBAL:
-                        global_hits.append((ctrl.id, c))
+                        global_hits.append((app.id, c))
 
             if len(global_hits) == 1:
                 owner_app_id, command = global_hits[0]
@@ -117,7 +116,8 @@ class CmdMan(Command):
             return
 
         # controller has to exist - command was found before.
-        app = self.on_get_app(app_id=owner_app_id)
+        data = await self.on_source(DataRequest(f"system:apps --by-id {owner_app_id}"))
+        app = data.one()
         if not app:
             raise RuntimeError("Controller not found")
 
@@ -151,7 +151,9 @@ class CmdMan(Command):
 
     async def show_index(self, request: Request):
 
-        shell = self.on_get_shell()
+        data = await self.on_source(DataRequest("system:apps --shell"))
+
+        shell = data.one()
         active_app_id = self.on_get_active_app()
         mode = self.resolve_man_mode(request)
 
@@ -160,17 +162,18 @@ class CmdMan(Command):
         # ----------------------------
         # Shell mode (no active or shell)
         # ----------------------------
-        if not active_app_id or active_app_id == shell.id:
+        if not active_app_id or active_app_id == shell["id"]:
             # 1) shell commands (defined in shell controller)
             shell_commands = list(
-                self.on_get_commands_for_manual(app_id=shell.id, mode=mode)
+                self.on_get_commands_for_manual(app_id=shell["id"], mode=mode)
             )
 
             # 2) global commands (defined anywhere)
-            for app in self.on_list_apps():
-                if not self.on_check_app_listed(app_id=app.id):
+            data = await self.on_source(DataRequest("system:apps --all"))
+            for app in data.rows:
+                if not app["is_listed"]:
                     continue
-                for cmd in self.on_get_commands_for_manual(app_id=app.id, mode=mode):
+                for cmd in self.on_get_commands_for_manual(app_id=app["id"], mode=mode):
                     if cmd.scope == CommandScope.GLOBAL:
                         globals_by_key[cmd.key] = cmd
 
@@ -181,9 +184,10 @@ class CmdMan(Command):
 
             shell_commands = sorted(merged_by_key.values(), key=lambda c: c.key)
 
+            data = await self.on_source(DataRequest("system:apps --listed"))
             apps = sorted(
-                [c for c in self.on_list_listed_apps() if c != shell],
-                key=lambda c: c.id,
+                [c for c in data.rows if c["id"] != shell["id"]],
+                key=lambda c: c["id"],
             )
 
             projection = await self.on_project(
@@ -202,8 +206,9 @@ class CmdMan(Command):
         # ----------------------------
 
         # 1) Collect GLOBAL commands from all app (system-wide available)
-        for app in self.on_list_apps():
-            for cmd in self.on_get_commands_for_manual(app_id=app.id, mode=mode):
+        data = await self.on_source(DataRequest("system:apps --all"))
+        for app in data.rows:
+            for cmd in self.on_get_commands_for_manual(app_id=app["id"], mode=mode):
                 if cmd.scope == CommandScope.GLOBAL:
                     globals_by_key[cmd.key] = cmd
 
@@ -243,26 +248,6 @@ class CmdMan(Command):
 
 class OnGetActiveApp(Protocol):
     def __call__(self) -> str: ...
-
-
-class OnGetApp(Protocol):
-    def __call__(self, *, app_id: str) -> Application | None: ...
-
-
-class OnListApps(Protocol):
-    def __call__(self) -> Sequence[Application]: ...
-
-
-class OnListListedApps(Protocol):
-    def __call__(self) -> Sequence[Application]: ...
-
-
-class OnGetShell(Protocol):
-    def __call__(self) -> Application: ...
-
-
-class OnCheckAppListed(Protocol):
-    def __call__(self, *, app_id: str) -> bool: ...
 
 
 class OnListCommandsForApp(Protocol):

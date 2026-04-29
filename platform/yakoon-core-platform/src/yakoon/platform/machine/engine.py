@@ -21,9 +21,9 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.projection.model.model import Projection
+from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
-from yakoon.base.runtime.input.context import InputContext
+from yakoon.base.runtime.input import InputContext
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
     CommandNotFound,
@@ -41,23 +41,28 @@ class CommandEngine:
 
     def __init__(
         self,
+        applications: Sequence[Application],
         on_match_command: OnMatchCommand,
         on_parse_input: OnParseInput,
         on_authorize: OnAuthorize,
         on_projection: OnProjection,
         on_audit_security: OnAuditSecurity,
         on_create_command: OnCreateCommand,
-        on_get_app: OnGetApp,
-        on_get_shell_app: OnGetShellApp,
     ):
+        self.applications = applications
         self.on_match_command = on_match_command
         self.on_parse_input = on_parse_input
         self.on_authorize = on_authorize
         self.on_projection = on_projection
         self.on_audit_security = on_audit_security
-        self.on_get_app = on_get_app
-        self.on_get_shell_app = on_get_shell_app
         self.on_create_command = on_create_command
+
+        shell = next((a for a in self.applications if a.is_shell), None)
+        if not shell:
+            raise RuntimeError("dispatch() found no shell application")
+
+        self.shell_id = shell.id
+        self._apps_by_id = {app.id: app for app in self.applications}
 
     # ----------------------------------------------------
     # PUBLIC API
@@ -79,11 +84,8 @@ class CommandEngine:
         # Active app sicherstellen
         app_id = session.get_active_app()
         if not app_id:
-            shell = self.on_get_shell_app()
-            if not shell:
-                raise RuntimeError("dispatch() found no shell application")
-            session.set_active_app(shell.id)
-            app_id = shell.id
+            session.set_active_app(self.shell_id)
+            app_id = self.shell_id
 
         command_type: type[Command] | None = None
 
@@ -108,7 +110,7 @@ class CommandEngine:
 
             app_id, controller_type, command_type = result
 
-            app = self.on_get_app(app_id=app_id)
+            app = self._apps_by_id.get(app_id)
             if not app:
                 await self.on_projection(
                     session=session,
@@ -337,14 +339,6 @@ class OnProjection(Protocol):
 
 class OnAuditSecurity(Protocol):
     def __call__(self, *, session, obj, action) -> None: ...
-
-
-class OnGetApp(Protocol):
-    def __call__(self, *, app_id: str) -> Application | None: ...
-
-
-class OnGetShellApp(Protocol):
-    def __call__(self) -> Application: ...
 
 
 class OnCreateCommand(Protocol):

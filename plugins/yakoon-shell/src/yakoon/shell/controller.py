@@ -7,15 +7,11 @@ from yakoon.base.commands import Command
 from yakoon.base.commands.types import CommandKind
 from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.base.plugins.ports import (
-    OnCheckAppListed,
-    OnGetApp,
-    OnGetShell,
-    OnListApps,
     OnListCommandsForApp,
     OnListCommandsForManual,
-    OnListListedApps,
     OnSaveSession,
 )
+from yakoon.base.sources.source import OnDataSource
 from yakoon.shell.commands.system import (
     CmdExit,
     CmdMan,
@@ -84,9 +80,8 @@ class ShellSystemController(Controller):
             await on_save_session(session=self.session)
 
         return CmdUse(
+            on_source=self.ports.on_get_port(OnDataSource),
             on_project=self.project,
-            on_get_app=self.ports.on_get_port(OnGetApp),
-            on_list_apps=self.ports.on_get_port(OnListApps),
             on_get_active_app=access.get_active_app,
             on_set_active_app=access.set_active_app,
             on_save_session=save_session,
@@ -105,14 +100,10 @@ class ShellSystemController(Controller):
             )
 
         return CmdMan(
+            on_source=self.ports.on_get_port(OnDataSource),
             on_project=self.project,
-            on_get_app=self.ports.on_get_port(OnGetApp),
-            on_get_shell=self.ports.on_get_port(OnGetShell),
             on_get_active_app=access.get_active_app,
-            on_list_apps=self.ports.on_get_port(OnListApps),
-            on_list_listed_apps=self.ports.on_get_port(OnListListedApps),
             on_list_commands_for_app=self.ports.on_get_port(OnListCommandsForApp),
-            on_check_app_listed=self.ports.on_get_port(OnCheckAppListed),
             on_get_commands_for_manual=for_man,
         )
 
@@ -124,7 +115,7 @@ class ShellSystemController(Controller):
             await on_save_session(session=self.session)
 
         return CmdExit(
-            on_get_shell=self.ports.on_get_port(OnGetShell),
+            on_source=self.ports.on_get_port(OnDataSource),
             on_has_interaction=access.has_interaction,
             on_get_active_app=access.get_active_app,
             on_set_active_app=access.set_active_app,
