@@ -10,23 +10,23 @@ from yakoon.base.plugins.ports import OnAuthorize, OnProject, OnSaveSession
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.sources import OnDataSource
 
-from .commands.system import (
+from ..commands.system import (
     CmdExit,
     CmdMan,
     CmdQuit,
     CmdUse,
     CmdVersion,
     CmdWelcome,
-    ShellSystemCommands,
+    SystemCommands,
 )
-from .services import CommandManService
+from ..services import CommandManService
 
 
-class ShellSystemController(Controller):
+class SystemController(Controller):
 
     id: str = "shell-system-controller"
 
-    commandsets = (ShellSystemCommands,)
+    commandsets = (SystemCommands,)
 
     resources = ResourceReferences(
         package="yakoon.shell",

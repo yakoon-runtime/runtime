@@ -1,10 +1,14 @@
 from yakoon.base.commands import Command, Request
-from yakoon.base.flow import present
+from yakoon.base.commands.ports import OnProjectCmd
+from yakoon.base.flow import out
 
 
 class CmdTestCity(Command):
 
     key = "city.show.all"
+
+    def __init__(self, on_project: OnProjectCmd):
+        self.on_project = on_project
 
     async def run(self, request: Request):
 
@@ -28,10 +32,8 @@ class CmdTestCity(Command):
             "items": items,
         }
 
-        projector = await self.create_projector()
-
-        projection = await projector.project("list", state=state)
-        yield present(projection)
+        projection = await self.on_project(name="list.sam", state=state)
+        yield out(projection)
 
     def get_data(self, offset: int, limit: int) -> tuple[list[str], int]:
 
