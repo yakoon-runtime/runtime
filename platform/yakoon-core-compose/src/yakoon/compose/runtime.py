@@ -7,8 +7,7 @@ from yakoon.base.capabilities.interaction import FieldPolicy, FieldPolicyEngine
 from yakoon.base.naming import Namespace
 from yakoon.base.plugins.container import ModulePorts
 from yakoon.base.plugins.ports import (
-    OnListCommandsForApp,
-    OnListCommandsForManual,
+    OnAuthorize,
     OnProject,
     OnSaveSession,
 )
@@ -29,7 +28,7 @@ from yakoon.platform.projection import (
 from yakoon.platform.runtime import EntityStoreSessionService
 from yakoon.platform.sources.data import (
     AppSource,
-    CommandQueryBuilder,
+    CommandSource,
 )
 from yakoon.platform.sources.registry import DataSourceRegistry
 from yakoon.platform.stores.event.backends.memory import MemoryBackend
@@ -86,22 +85,7 @@ def compose_runtime(
 
     ds = DataSourceRegistry()
     ds.bind("system:apps", AppSource(applications))
-    ds.bind(
-        "system:commands",
-        CommandQueryBuilder(
-            applications=applications,
-            on_has_read_permission=permission_service.can_read,
-        ),
-    )
-
-    # ----------------
-    # --- QUERYING ---
-    # ----------------
-
-    command_query = CommandQueryBuilder(
-        applications=applications,
-        on_has_read_permission=permission_service.can_read,
-    )
+    ds.bind("system:commands", CommandSource(applications))
 
     # ----------------
     # --- BINDINGS ---
@@ -111,11 +95,9 @@ def compose_runtime(
         ports = bootstrap.fork()
 
         ports.bind(OnDataSource, ds.read)
-        ports.bind(OnSaveSession, session_service.save)
         ports.bind(OnProject, projector.project)
-
-        ports.bind(OnListCommandsForApp, command_query.for_app)
-        ports.bind(OnListCommandsForManual, command_query.for_man_entries)
+        ports.bind(OnSaveSession, session_service.save)
+        ports.bind(OnAuthorize, permission_service.can_read)
 
         return ModulePorts(
             on_register=ports.bind,
@@ -141,10 +123,9 @@ def compose_runtime(
 
     return build_machine(
         applications=applications,
-        c_query=command_query,
         on_session=session_service.get_or_create,
         on_projection=output.send_projection,
-        on_has_exec_permission=permission_service.can_execute,
+        on_authorize=permission_service.can_execute,
         on_bootstrap_permissions=permission_service.set_bootstrap_permissions,
         on_audit_log=audit_service.audit,
         on_audit_error=audit_service.error,

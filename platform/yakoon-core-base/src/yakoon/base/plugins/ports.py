@@ -1,8 +1,5 @@
-from collections.abc import Sequence
 from typing import Protocol
 
-from yakoon.base.commands import Command
-from yakoon.base.commands.types import CommandKind
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime.sessions import Session
@@ -22,15 +19,5 @@ class OnSaveSession(Protocol):
     async def __call__(self, *, session: Session): ...
 
 
-class OnListCommandsForApp(Protocol):
-    def __call__(self, app_id: str) -> Sequence[type[Command]]: ...
-
-
-class OnListCommandsForManual(Protocol):
-    def __call__(
-        self,
-        app_id: str,
-        session: Session,
-        mode: str,
-        kind_filter: CommandKind | None = None,
-    ) -> Sequence[type[Command]]: ...
+class OnAuthorize(Protocol):
+    def __call__(self, session: Session, perm_key: str) -> bool: ...

@@ -66,8 +66,8 @@ class Controller(ABC):
             self.resources.package,
             path,
         ).child(name)
-        on_project = self.ports.on_get_port(OnProject)
 
+        on_project = self.ports.on_get_port(OnProject)
         return await on_project(resource=resource, state=state)
 
     async def on_before_resolve(self, session: Session) -> None:

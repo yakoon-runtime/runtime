@@ -4,8 +4,10 @@ from .cmd_quit import CmdQuit
 from .cmd_use import CmdUse
 from .cmd_version import CmdVersion
 from .cmd_welcome import CmdWelcome
+from .cmdset import ShellSystemCommands
 
 __all__ = [
+    "ShellSystemCommands",
     "CmdExit",
     "CmdWelcome",
     "CmdVersion",

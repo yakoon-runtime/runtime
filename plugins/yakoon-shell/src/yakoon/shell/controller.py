@@ -1,27 +1,25 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Protocol, cast
+from typing import Any, Protocol, cast
 
 from yakoon.base.commands import Command
 from yakoon.base.commands.types import CommandKind
 from yakoon.base.controllers import Controller, ResourceReferences
-from yakoon.base.plugins.ports import (
-    OnListCommandsForApp,
-    OnListCommandsForManual,
-    OnSaveSession,
-)
-from yakoon.base.sources.source import OnDataSource
-from yakoon.shell.commands.system import (
+from yakoon.base.controllers.resolver import resolve_resource
+from yakoon.base.plugins.ports import OnAuthorize, OnProject, OnSaveSession
+from yakoon.base.resources.resource import ResourceRef
+from yakoon.base.sources import OnDataSource
+
+from .commands.system import (
     CmdExit,
     CmdMan,
     CmdQuit,
     CmdUse,
     CmdVersion,
     CmdWelcome,
+    ShellSystemCommands,
 )
-
-from .commands.system.cmdset import ShellSystemCommands
+from .services import CommandManService
 
 
 class ShellSystemController(Controller):
@@ -89,22 +87,37 @@ class ShellSystemController(Controller):
 
     def _create_man(self):
         access = cast(_SessionAccess, self.session)
+        manual_service = CommandManService(
+            on_source=self.ports.on_get_port(OnDataSource),
+            on_has_permission=self.ports.on_get_port(OnAuthorize),
+        )
 
-        def for_man(
-            app_id: str, mode: str, kind_filter: CommandKind | None = None
-        ) -> Sequence[type[Command]]:
-
-            for_man_pages = self.ports.on_get_port(OnListCommandsForManual)
-            return for_man_pages(
-                app_id=app_id, session=self.session, mode=mode, kind_filter=kind_filter
+        async def list_commands(
+            app_id: str, mode: str, kind: CommandKind | None = None
+        ) -> list[dict[str, Any]]:
+            return await manual_service.get_entries(
+                app_id=app_id, session=self.session, mode=mode, kind=kind
             )
 
+        def _resolve_manual_resource(resources, name):
+            path = resolve_resource(
+                i18n_root=resources["contracts"],
+                lang=self.session.lang,
+                cmd_key=self.command.key,
+            )
+            return ResourceRef(resources["package"], path).child(name)
+
+        async def project_manual(resources: dict, name: str, state: dict | None = None):
+            resource = _resolve_manual_resource(resources=resources, name=name)
+            on_project = self.ports.on_get_port(OnProject)
+            return await on_project(resource=resource, state=state)
+
         return CmdMan(
-            on_source=self.ports.on_get_port(OnDataSource),
             on_project=self.project,
+            on_project_manual=project_manual,
+            on_list_manual=list_commands,
+            on_source=self.ports.on_get_port(OnDataSource),
             on_get_active_app=access.get_active_app,
-            on_list_commands_for_app=self.ports.on_get_port(OnListCommandsForApp),
-            on_get_commands_for_manual=for_man,
         )
 
     def _create_exit(self):

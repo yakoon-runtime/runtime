@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Any, Protocol
 
 from yakoon.base.commands import (
     Command,
+    CommandKind,
     CommandScope,
     Request,
 )
 from yakoon.base.commands.ports import OnProjectCmd
-from yakoon.base.commands.types import CommandKind
 from yakoon.base.flow import out
+from yakoon.base.projection import Projection
 from yakoon.base.sources import DataRequest, OnDataSource
 
 
@@ -23,15 +24,19 @@ class CmdMan(Command):
         self,
         on_source: OnDataSource,
         on_project: OnProjectCmd,
+        on_list_manual: OnListManual,
+        on_project_manual: OnProjectManual,
         on_get_active_app: OnGetActiveApp,
-        on_list_commands_for_app: OnListCommandsForApp,
-        on_get_commands_for_manual: OnListCommandsForManual,
+        # on_list_commands_for_app: OnListCommandsForApp,
+        # on_get_commands_for_manual: OnListCommandsForManual,
     ):
         self.on_source = on_source
         self.on_project = on_project
+        self.on_list_manual = on_list_manual
+        self.on_project_manual = on_project_manual
         self.on_get_active_app = on_get_active_app
-        self.on_list_commands_for_app = on_list_commands_for_app
-        self.on_get_commands_for_manual = on_get_commands_for_manual
+        # self.on_list_commands_for_app = on_list_commands_for_app
+        # self.on_get_commands_for_manual = on_get_commands_for_manual
 
     async def run(self, request: Request):
 
@@ -64,36 +69,36 @@ class CmdMan(Command):
             active_app_id = shell["id"]
 
         # active controller must be listed to show man pages
-        data = await self.on_source(
-            DataRequest(f"system:apps --by-id {active_app_id} --listed")
-        )
-        if not data.exists():
+        data = await self.on_source(DataRequest(f"system:apps --by-id {active_app_id}"))
+        if not any(a["is_listed"] for a in data.rows):
             return
 
         # ----------------------------------------------------
         # 1) Try active app first
         # ----------------------------------------------------
-        command: type[Command] | None = None
         owner_app_id = active_app_id
-
-        for c in self.on_list_commands_for_app(app_id=active_app_id):
-            if c.key == command_key:
-                command = c
-                break
+        result = await self.on_source(
+            DataRequest(f"system:commands --by-app {owner_app_id}")
+        )
 
         # ----------------------------------------------------
         # 2) If not found: try GLOBAL commands from all apps
         # ----------------------------------------------------
+        command: dict | None = None
+        command = next((c for c in result.rows if c["key"] == command_key), None)
         if not command:
-            global_hits: list[tuple[str, type[Command]]] = []
+            global_hits: list[tuple[str, dict]] = []
 
             data = await self.on_source(DataRequest("system:apps --all"))
-            for app in data.rows:
-                if not app["is_listed"]:
-                    continue
-                for c in self.on_list_commands_for_app(app_id=app["id"]):
-                    if c.key == command_key and c.scope == CommandScope.GLOBAL:
-                        global_hits.append((app.id, c))
+
+            for app in [a for a in data.rows if a["is_listed"]]:
+                result = await self.on_source(
+                    DataRequest(f"system:commands --by-app {app['id']}")
+                )
+
+                for c in result.rows:
+                    if c["key"] == command_key and c["scope"] == "GLOBAL":
+                        global_hits.append((app["id"], c))
 
             if len(global_hits) == 1:
                 owner_app_id, command = global_hits[0]
@@ -121,30 +126,24 @@ class CmdMan(Command):
         if not app:
             raise RuntimeError("Controller not found")
 
-        # TODO
-        resources = app.resources
-        if not resources:
-            raise RuntimeError("Controller has no ResourceReferences")
-        if not resources.package:
-            raise RuntimeError("ResourceReferences has no package")
-
-        projector_service = self.container.get(ProjectorFactory)
+        controller_id = command["controller_id"]
 
         try:
-            ref = resolve_resource(
-                resources,
-                i18n_root=resources.man,
-                lang=session.lang,
-                cmd_key=command.key,
+
+            resources = app["resources"][controller_id]
+            projection = await self.on_project_manual(
+                resources=resources,
+                name="details.sam",
+                state={
+                    "command_key": command_key,
+                },
             )
-            projector = await projector_service.create(ref, session)
-            projection = await projector.project("details")
             yield out(projection)
 
         except LookupError:
             # use the own projector.
             projection = await self.on_project(
-                name="no_manual_entry.sam",
+                name="error.sam",
                 state={"command_key": command_key},
             )
             yield out(projection)
@@ -157,32 +156,28 @@ class CmdMan(Command):
         active_app_id = self.on_get_active_app()
         mode = self.resolve_man_mode(request)
 
-        globals_by_key: dict[str, type[Command]] = {}
+        globals_by_key: dict[str, dict] = {}
 
         # ----------------------------
         # Shell mode (no active or shell)
         # ----------------------------
         if not active_app_id or active_app_id == shell["id"]:
             # 1) shell commands (defined in shell controller)
-            shell_commands = list(
-                self.on_get_commands_for_manual(app_id=shell["id"], mode=mode)
-            )
+            shell_commands = await self.on_list_manual(app_id=shell["id"], mode=mode)
 
             # 2) global commands (defined anywhere)
             data = await self.on_source(DataRequest("system:apps --all"))
-            for app in data.rows:
-                if not app["is_listed"]:
-                    continue
-                for cmd in self.on_get_commands_for_manual(app_id=app["id"], mode=mode):
-                    if cmd.scope == CommandScope.GLOBAL:
-                        globals_by_key[cmd.key] = cmd
+            for app in [a for a in data.rows if bool(a["is_listed"])]:
+                for cmd in await self.on_list_manual(app_id=app["id"], mode=mode):
+                    if cmd["scope"] == "GLOBAL":
+                        globals_by_key[cmd["key"]] = cmd
 
             # merge, avoid duplicates
-            merged_by_key: dict[str, type[Command]] = {c.key: c for c in shell_commands}
+            merged_by_key: dict[str, dict] = {c["key"]: c for c in shell_commands}
             for k, v in globals_by_key.items():
                 merged_by_key.setdefault(k, v)
 
-            shell_commands = sorted(merged_by_key.values(), key=lambda c: c.key)
+            shell_commands = sorted(merged_by_key.values(), key=lambda c: c["key"])
 
             data = await self.on_source(DataRequest("system:apps --listed"))
             apps = sorted(
@@ -208,24 +203,24 @@ class CmdMan(Command):
         # 1) Collect GLOBAL commands from all app (system-wide available)
         data = await self.on_source(DataRequest("system:apps --all"))
         for app in data.rows:
-            for cmd in self.on_get_commands_for_manual(app_id=app["id"], mode=mode):
-                if cmd.scope == CommandScope.GLOBAL:
-                    globals_by_key[cmd.key] = cmd
+            for cmd in await self.on_list_manual(app_id=app["id"], mode=mode):
+                if cmd["scope"] == "GLOBAL":
+                    globals_by_key[cmd["key"]] = cmd
 
         # 2) Collect commands from active app that are executable in program mode
-        program_by_key: dict[str, type[Command]] = {}
-        for cmd in self.on_get_commands_for_manual(app_id=active_app_id, mode=mode):
-            if cmd.scope in (CommandScope.APP, CommandScope.GLOBAL):
-                program_by_key[cmd.key] = cmd
+        program_by_key: dict[str, dict] = {}
+        for cmd in await self.on_list_manual(app_id=active_app_id, mode=mode):
+            if cmd["scope"] in ("APP", "GLOBAL"):
+                program_by_key[cmd["key"]] = cmd
 
         # 3) Merge (active app wins on duplicates, but GLOBAL keys should be unique anyway)
-        merged: dict[str, type[Command]] = {}
+        merged: dict[str, dict] = {}
         merged.update(globals_by_key)
         merged.update(program_by_key)
 
-        commands = sorted(merged.values(), key=lambda c: c.key)
+        commands = sorted(merged.values(), key=lambda c: c["key"])
         projection = await self.on_project(
-            name="show_help.sam",
+            name="overview.sam",
             state={
                 "mode": "program",
                 "commands": commands,
@@ -244,6 +239,22 @@ class CmdMan(Command):
 # ----------------------------------
 # PORTS
 # ----------------------------------
+
+
+class OnListManual(Protocol):
+    async def __call__(
+        self,
+        *,
+        app_id: str,
+        mode: str,
+        kind: CommandKind | None = None,
+    ) -> list[dict[str, Any]]: ...
+
+
+class OnProjectManual(Protocol):
+    async def __call__(
+        self, resources: dict, name: str, state: dict | None = None
+    ) -> Projection: ...
 
 
 class OnGetActiveApp(Protocol):

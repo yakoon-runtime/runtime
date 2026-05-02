@@ -1,4 +1,5 @@
 from collections.abc import Iterable, Sequence
+from typing import Any
 
 from yakoon.base.application import Application
 from yakoon.base.sources import DataRequest, DataResult, DataSource
@@ -6,16 +7,103 @@ from yakoon.base.sources import DataRequest, DataResult, DataSource
 
 class AppSource(DataSource):
     """
-    Registry interface for routing commands to platform definitions.
-    Used by the Engine to remain agnostic of structure.
+    Registry interface for applications.
+
+    Query model:
+        Exactly one selector must be provided.
+
+    Supported selectors:
+        --by-id <id>
+        --all
+        --listed
+        --activatable
+        --shell
     """
 
     def __init__(self, applications: Iterable[Application]):
 
+        self._applications = applications
+        self._shell: Application
+        self._by_id: dict[str, Application] = {}
+
+        self._build()
+
+        self._resolvers = {
+            "by-id": self._resolve_by_id,
+            "all": self._resolve_all,
+            "listed": self._resolve_listed,
+            "activatable": self._resolve_activatable,
+            "shell": self._resolve_shell,
+        }
+
+    # ---------------------------------------------------------------------
+    # Public API
+    # ---------------------------------------------------------------------
+
+    async def read(self, request: DataRequest) -> DataResult:
+
+        if not request.args():
+            return DataResult.invalid(reason="empty query")
+
+        key = self._select(request)
+        if isinstance(key, DataResult):
+            return key
+
+        handler = self._resolvers[key]
+        return handler(request)
+
+    # -----------------------
+    # --- Selector Resolution
+    # -----------------------
+
+    def _select(self, request: DataRequest) -> str | DataResult:
+
+        matches = [k for k in self._resolvers if request.has_option(k)]
+        if not matches:
+            return DataResult.invalid(reason="no selector")
+
+        if len(matches) > 1:
+            return DataResult.invalid(reason="multiple selectors")
+
+        return matches[0]
+
+    # ------------------------
+    # Resolver Implementations
+    # ------------------------
+
+    def _resolve_by_id(self, request: DataRequest) -> DataResult:
+        app_id = request.option("by-id")
+        app = self._get(app_id)
+
+        if not app:
+            return DataResult.not_found(id=app_id)
+
+        return DataResult.ok(rows=[self._to_row(app)])
+
+    def _resolve_all(self, request: DataRequest) -> DataResult:
+        return DataResult.ok(rows=[self._to_row(a) for a in self._all()])
+
+    def _resolve_listed(self, request: DataRequest) -> DataResult:
+        return DataResult.ok(rows=[self._to_row(a) for a in self._all() if a.is_listed])
+
+    def _resolve_activatable(self, request: DataRequest) -> DataResult:
+        return DataResult.ok(
+            rows=[self._to_row(a) for a in self._all() if a.is_activatable]
+        )
+
+    def _resolve_shell(self, request: DataRequest) -> DataResult:
+        return DataResult.ok(rows=[self._to_row(self._shell)])
+
+    # ----------------
+    # Internal Helpers
+    # ----------------
+
+    def _build(self):
+
         by_id: dict[str, Application] = {}
         shell: Application | None = None
 
-        for app in applications:
+        for app in self._applications:
             if app.id in by_id:
                 raise ValueError(f"Duplicate application id: {app.id}")
 
@@ -34,54 +122,21 @@ class AppSource(DataSource):
         self._by_id = by_id
         self._shell = shell
 
-    async def read(self, request: DataRequest) -> DataResult:
-
-        if request.has_option("by-id"):
-            app = self._get(app_id=request.option("by-id"))
-            if not app:
-                return DataResult(rows=[])
-            if request.has_option("listed") and not app.is_listed:
-                return DataResult(rows=[])
-            if request.has_option("activatable") and not app.is_activatable:
-                return DataResult(rows=[])
-            return DataResult(rows=[self._to_row(app)])
-
-        if request.has_option("shell"):
-            return DataResult(rows=[self._to_row(self._shell)])
-
-        if request.has_option("all"):
-            _to_row = self._to_row
-            return DataResult(
-                rows=list(_to_row(self._by_id[cid]) for cid in self._ids())
-            )
-
-        if request.has_option("activatable"):
-            _to_row = self._to_row
-            return DataResult(
-                rows=list(_to_row(c) for c in self._all() if c.is_activatable)
-            )
-
-        if request.has_option("listed"):
-            _to_row = self._to_row
-            return DataResult(
-                rows=list(self._to_row(c) for c in self._all() if c.is_listed)
-            )
-
-        return DataResult(rows=[])
-
-    def _to_row(self, app) -> dict:
-        return {
-            "id": app.id,
-            "name": getattr(app, "name", app.id),
-            "is_listed": getattr(app, "is_listed", True),
-            "is_activatable": getattr(app, "is_activatable", True),
-        }
-
     def _ids(self) -> Sequence[str]:
         return tuple(sorted(self._by_id.keys()))
 
     def _all(self) -> Sequence[Application]:
         return tuple(self._by_id[cid] for cid in self._ids())
 
-    def _get(self, app_id: str) -> None | Application:
+    def _get(self, app_id: str) -> Application | None:
         return self._by_id.get(app_id)
+
+    def _to_row(self, app: Application) -> dict[str, Any]:
+        res = {c.id: c.resources.to_dict() for c in app.controllers}
+        return {
+            "id": app.id,
+            "name": getattr(app, "name", app.id),
+            "is_listed": getattr(app, "is_listed", True),
+            "is_activatable": getattr(app, "is_activatable", True),
+            "resources": res,
+        }

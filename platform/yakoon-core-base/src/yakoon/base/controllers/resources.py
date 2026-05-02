@@ -27,3 +27,11 @@ class ResourceReferences:
 
     # Lookup / discovery docs (yaml)
     lookup: str = "resources/{lang}/discovery/"
+
+    def to_dict(self) -> dict:
+        return {
+            "package": self.package,
+            "contracts": self.contracts,
+            "assets": self.assets,
+            "man": self.man,
+        }

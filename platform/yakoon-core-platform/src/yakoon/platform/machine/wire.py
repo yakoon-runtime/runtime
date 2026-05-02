@@ -11,7 +11,6 @@ from yakoon.base.projection.model.model import Projection
 from yakoon.base.runtime.input.context import InputContext
 from yakoon.platform.runtime import Session
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
-from yakoon.platform.sources.data import CommandQueryBuilder
 
 from .engine import CommandEngine
 from .host import RuntimeHost
@@ -24,10 +23,9 @@ from .session import SessionBuilder
 
 def build_machine(
     applications: Sequence[Application],
-    c_query: CommandQueryBuilder,
     on_projection: OnProjection,
     on_session: OnGetOrCreateSession,
-    on_has_exec_permission: OnHasExecPermission,
+    on_authorize: OnHasPermission,
     on_bootstrap_permissions: OnBootstrapPermissions,
     on_audit_log: OnAuditLog,
     on_audit_error: OnAuditError,
@@ -39,7 +37,6 @@ def build_machine(
 
     resolver = CommandResolver(
         applications=applications,
-        on_match_command=c_query.for_context,
     )
 
     # --- FACTORY ---
@@ -64,10 +61,9 @@ def build_machine(
     # --- ORCHESTRATION ---
 
     engine = CommandEngine(
-        applications=applications,
         on_match_command=resolver.resolve,
         on_parse_input=parser.parse,
-        on_authorize=on_has_exec_permission,
+        on_authorize=on_authorize,
         on_projection=on_projection,
         on_create_command=create_command,
         on_audit_security=on_audit_security,
@@ -100,12 +96,10 @@ def build_machine(
 
     # --- SESSION EXECUTION ---
 
-    global_commands = {cmd.key for cmd in c_query.globals()}
-
     def create_runner(session: Session) -> Runner:
         runner = Runner(
             session=session,
-            global_commands=global_commands,
+            global_commands=resolver.globals(),
             on_dispatch=scheduler.dispatch,
             on_schedule_flow=scheduler.schedule_flow,
         )
@@ -126,7 +120,7 @@ def build_machine(
 # ----------------------------------
 
 
-class OnHasExecPermission(Protocol):
+class OnHasPermission(Protocol):
     def __call__(self, *, session: Session, perm_key: str) -> bool: ...
 
 
