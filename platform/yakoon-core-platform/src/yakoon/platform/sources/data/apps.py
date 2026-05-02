@@ -25,11 +25,13 @@ class AppSource(DataSource):
         self._applications = applications
         self._shell: Application
         self._by_id: dict[str, Application] = {}
+        self._by_name: dict[str, Application] = {}
 
         self._build()
 
         self._resolvers = {
             "by-id": self._resolve_by_id,
+            "by-name": self._resolve_by_name,
             "all": self._resolve_all,
             "listed": self._resolve_listed,
             "activatable": self._resolve_activatable,
@@ -80,6 +82,14 @@ class AppSource(DataSource):
 
         return DataResult.ok(rows=[self._to_row(app)])
 
+    def _resolve_by_name(self, request: DataRequest) -> DataResult:
+        app_name = request.option("by-name")
+        app = self._get_by_name(app_name)
+        if not app:
+            return DataResult.not_found(name=app_name)
+
+        return DataResult.ok(rows=[self._to_row(app)])
+
     def _resolve_all(self, request: DataRequest) -> DataResult:
         return DataResult.ok(rows=[self._to_row(a) for a in self._all()])
 
@@ -101,6 +111,7 @@ class AppSource(DataSource):
     def _build(self):
 
         by_id: dict[str, Application] = {}
+        by_name: dict[str, Application] = {}
         shell: Application | None = None
 
         for app in self._applications:
@@ -115,10 +126,12 @@ class AppSource(DataSource):
                 shell = app
 
             by_id[app.id] = app
+            by_name[app.name] = app
 
         if shell is None:
             raise ValueError("No shell application found")
 
+        self._by_name = by_name
         self._by_id = by_id
         self._shell = shell
 
@@ -130,6 +143,9 @@ class AppSource(DataSource):
 
     def _get(self, app_id: str) -> Application | None:
         return self._by_id.get(app_id)
+
+    def _get_by_name(self, app_name: str) -> Application | None:
+        return self._by_name.get(app_name)
 
     def _to_row(self, app: Application) -> dict[str, Any]:
         res = {c.id: c.resources.to_dict() for c in app.controllers}

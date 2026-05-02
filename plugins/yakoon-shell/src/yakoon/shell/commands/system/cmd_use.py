@@ -31,16 +31,21 @@ class CmdUse(Command):
 
         applications = []
 
+        app_id = ""
         app_name = request.arg(0)
         if not app_name:
             data = await self.on_source(DataRequest("system:apps --all"))
             applications = data.rows
         else:
-            data = await self.on_source(DataRequest(f"system:apps --by-id {app_name}"))
-            if data.one_or_none():
-                applications.append(data.one())
+            data = await self.on_source(
+                DataRequest(f"system:apps --by-name {app_name}")
+            )
+            app = data.one_or_none()
+            if app:
+                app_id = app["id"]
+                applications.append(app)
 
-        if applications and not app_name:
+        if applications and not app_id:
             projection = await self.on_project(
                 name="active.sam",
                 state={
@@ -50,7 +55,7 @@ class CmdUse(Command):
             yield out(projection)
 
         elif applications:
-            if app_name == self.on_get_active_app():
+            if app_id == self.on_get_active_app():
                 projection = await self.on_project(
                     name="using.sam",
                     state={
@@ -59,7 +64,7 @@ class CmdUse(Command):
                 )
                 yield out(projection)
             else:
-                self.on_set_active_app(app_id=app_name)
+                self.on_set_active_app(app_id=app_id)
                 await self.on_save_session()
                 yield out(to_text(f"Aktiver Kontext: {app_name}"))
 

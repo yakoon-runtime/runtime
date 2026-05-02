@@ -55,7 +55,7 @@ class CmdExit(Command):
             await self.on_save_session()
             current = shell["id"]
 
-        yield out(to_text(f"Kontroller: {current}"))
+        yield out(to_text(f"Aktuell: {current}"))
 
 
 # ----------------------------------
