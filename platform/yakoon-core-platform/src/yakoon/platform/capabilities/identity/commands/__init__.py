@@ -1,3 +1,3 @@
-from .cmdset import AuthSystemCommands
+from .cmdset import BaseCommands
 
-__all__ = ["AuthSystemCommands"]
+__all__ = ["BaseCommands"]

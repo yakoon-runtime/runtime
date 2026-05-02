@@ -1,10 +1,11 @@
 from yakoon.base.application import Application
 
-from .controllers import AuthCoreController
+from .controllers import BaseController
 
 
-class AuthApplication(Application):
+class IdentityApp(Application):
 
-    id: str = "auth-app"
+    id: str = "identity-app"
+    name = "ident"
 
-    controllers = (AuthCoreController,)
+    controllers = (BaseController,)

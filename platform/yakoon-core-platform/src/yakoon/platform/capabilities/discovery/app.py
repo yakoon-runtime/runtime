@@ -5,6 +5,7 @@ from .controllers import DiscoveryController
 
 class DiscoveryApplication(Application):
 
-    id: str = "discovery"
+    id: str = "discovery-app"
+    name: str = "discover"
 
     controllers = (DiscoveryController,)

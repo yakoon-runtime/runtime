@@ -4,9 +4,9 @@ from .cmd_su import CmdSu
 from .cmd_whoami import CmdWhoAmI
 
 
-class AuthSystemCommands(CommandSet):
+class BaseCommands(CommandSet):
 
-    group = "system"
+    group = "base"
 
     commands = (
         CmdSu,

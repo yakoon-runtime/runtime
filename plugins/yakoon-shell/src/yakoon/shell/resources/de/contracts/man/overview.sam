@@ -10,7 +10,7 @@ Commands
 Available programs
 <list>
   {% for a in state.apps %}
-  <item><cmd command="use {{ a.id }}">{{ a.id }}</cmd></item>
+  <item><cmd command="use {{ a.id }}">{{ a.name }}</cmd></item>
   {% endfor %}
 </list>
 

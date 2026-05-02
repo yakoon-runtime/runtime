@@ -1,6 +1,6 @@
 from yakoon.base.plugins import ModuleExport, ModuleMeta
 
-from .app import AuthApplication
+from .app import IdentityApp
 
 meta = ModuleMeta(
     name="yakoon.identity",
@@ -19,5 +19,5 @@ def register() -> ModuleExport:
 
     return ModuleExport(
         meta,
-        app=AuthApplication,
+        app=IdentityApp,
     )

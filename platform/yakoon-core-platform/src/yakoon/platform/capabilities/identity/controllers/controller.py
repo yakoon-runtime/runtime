@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from yakoon.base.controllers import Controller, ResourceReferences
 
-from ..commands import AuthSystemCommands
+from ..commands import BaseCommands
 
 
-class AuthCoreController(Controller):
+class BaseController(Controller):
     """Authentication controller.
 
     Provides:
@@ -13,9 +13,9 @@ class AuthCoreController(Controller):
         - Templates under yakoon.auth:core
     """
 
-    id: str = "auth"
+    id: str = "id-base"
 
-    commandsets = (AuthSystemCommands,)
+    commandsets = (BaseCommands,)
 
     resources = ResourceReferences(
         package="yakoon.platform.capabilities.identity",

@@ -1,5 +1,5 @@
-from .controller import AuthCoreController
+from .controller import BaseController
 
 __all__ = [
-    "AuthCoreController",
+    "BaseController",
 ]

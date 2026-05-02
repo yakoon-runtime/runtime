@@ -15,6 +15,9 @@ class Application(ABC):
     id: str = "unnamed"
     """Unique controller identifier used for command prefix resolution."""
 
+    name: str = "unnamed"
+    """Display controller name used for displaying."""
+
     is_shell: bool = False
     """If True, the controller acts as a shell-like environment."""
 

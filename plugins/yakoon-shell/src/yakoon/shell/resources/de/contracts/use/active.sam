@@ -1,1 +1,3 @@
-{{ state.apps | map(attribute='id') | join('  ') }}
+
+Verfügare Programme:
+  {{ state.apps | map(attribute='name') | join('  ') }}

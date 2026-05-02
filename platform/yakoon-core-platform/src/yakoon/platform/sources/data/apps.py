@@ -135,7 +135,7 @@ class AppSource(DataSource):
         res = {c.id: c.resources.to_dict() for c in app.controllers}
         return {
             "id": app.id,
-            "name": getattr(app, "name", app.id),
+            "name": app.name,
             "is_listed": getattr(app, "is_listed", True),
             "is_activatable": getattr(app, "is_activatable", True),
             "resources": res,
