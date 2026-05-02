@@ -3,7 +3,7 @@ from __future__ import annotations
 from yakoon.base.capabilities.identity import Account, AccountData
 from yakoon.base.naming import Key, Namespace
 from yakoon.base.runtime.container import Container
-from yakoon.base.stores.event.entity import (
+from yakoon.storage.eventstore.models.entity import (
     IndexKey,
     IndexSpec,
     IndexTerm,
@@ -11,7 +11,6 @@ from yakoon.base.stores.event.entity import (
     SnapshotHint,
     ValueType,
 )
-from yakoon.platform.stores.event.store import EntityStore
 
 
 def expect_object(value: JsonValue) -> dict[str, JsonValue]:

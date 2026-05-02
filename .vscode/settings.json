@@ -7,6 +7,7 @@
     "platform/yakoon-core-base/src",
     "platform/yakoon-core-compose/src",
     "platform/yakoon-core-platform/src",
+    "platform/yakoon-core-storage/src",
     // plugins
     "plugins/yakoon-crm/src",
     "plugins/yakoon-office/src",

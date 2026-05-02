@@ -1,10 +1,10 @@
-from yakoon.base import ports
 from yakoon.base.commands import (
     Command,
     CommandKind,
     CommandVisibility,
     Request,
 )
+from yakoon.storage.eventstore.batches import strategie
 
 
 class CmdCustomerValidate(Command):
@@ -16,7 +16,7 @@ class CmdCustomerValidate(Command):
 
     async def run(self, request: Request) -> None:  # noqa: ARG002
 
-        wf = self.container.get(ports.WorkflowPublic)
+        wf = self.container.get(strategie.WorkflowPublic)
         batch_id = self.ctx.batch_id
         batch = wf.runtime(session).get(
             batch_id

@@ -1,17 +1,12 @@
 from typing import Literal, TypeAlias
 
-from yakoon.base import ports
 from yakoon.base.application import Application
-from yakoon.base.capabilities.identity import PermissionService
-from yakoon.base.capabilities.interaction import FieldPolicy, FieldPolicyEngine
-from yakoon.base.naming import Namespace
-from yakoon.base.plugins.container import ModulePorts
+from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import (
     OnAuthorize,
     OnProject,
     OnSaveSession,
 )
-from yakoon.base.projection.model import FieldType
 from yakoon.base.runtime import Container
 from yakoon.base.sources import OnDataSource
 from yakoon.platform.capabilities.audit.service import DefaultAuditLogService
@@ -25,37 +20,44 @@ from yakoon.platform.projection import (
     build_projector,
     build_stream,
 )
-from yakoon.platform.runtime import EntityStoreSessionService
+from yakoon.platform.runtime import SessionManager
 from yakoon.platform.sources.data import (
     AppSource,
     CommandSource,
 )
 from yakoon.platform.sources.registry import DataSourceRegistry
-from yakoon.platform.stores.event.backends.memory import MemoryBackend
-from yakoon.platform.stores.event.batches.json_patch import JsonPatchStrategy
-from yakoon.platform.stores.event.store import DefaultEntityStore
+from yakoon.storage.eventstore.wire import build_memory_store
 
 CapabilityMode: TypeAlias = Literal["default"]
 CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
 
 
 def compose_runtime(
-    bootstrap: Container,
     *,
     plugins: list[str] | None = None,
     capabilities: CapabilitySelection | None = None,
 ) -> RuntimeHost:
 
+    bootstrap = Container()
+
     plugins = plugins or []
     capabilities = capabilities or {}
 
-    store = _compose_store()
+    # ----------------------
+    # --- BUILDING STORE ---
+    # ----------------------
+
+    store = build_memory_store()
 
     # ----------------
     # --- SERVICES ---
     # ----------------
 
-    session_service = EntityStoreSessionService(store)
+    session_manager = SessionManager(
+        on_save=store.objects.replace,
+        on_load=store.objects.get_one,
+    )
+
     permission_service = DefaultPermissionService()
     audit_service = DefaultAuditLogService()
 
@@ -92,11 +94,12 @@ def compose_runtime(
     # ----------------
 
     def bind_ports() -> ModulePorts:
+
         ports = bootstrap.fork()
 
         ports.bind(OnDataSource, ds.read)
         ports.bind(OnProject, projector.project)
-        ports.bind(OnSaveSession, session_service.save)
+        ports.bind(OnSaveSession, session_manager.save)
         ports.bind(OnAuthorize, permission_service.can_read)
 
         return ModulePorts(
@@ -106,11 +109,6 @@ def compose_runtime(
 
     for app in applications:
         app.bind_ports(bind_ports())
-
-    _compose_ports(
-        bootstrap,
-        store,
-    )
 
     # _compose_permission_roles(bootstrap)
     # _compose_policies(bootstrap)
@@ -123,7 +121,7 @@ def compose_runtime(
 
     return build_machine(
         applications=applications,
-        on_session=session_service.get_or_create,
+        on_session=session_manager.get_or_create,
         on_projection=output.send_projection,
         on_authorize=permission_service.can_execute,
         on_bootstrap_permissions=permission_service.set_bootstrap_permissions,
@@ -134,89 +132,60 @@ def compose_runtime(
     )
 
 
-def _compose_permission_roles(container: Container):
-    permissions = container.get(PermissionService)
-    permissions.register_role(
-        "admin",
-        [
-            "app-app:su|rx",
-            "shell-app:use|rx",
-            "office.mailing:sendmail|rx",
-        ],
-    )
-    permissions.register_role(
-        "user",
-        [
-            "shell-app:use|rx",
-        ],
-    )
+# def _compose_permission_roles():
+#     permissions = "PermissionService"
+#     permissions.register_role(
+#         "admin",
+#         [
+#             "app-app:su|rx",
+#             "shell-app:use|rx",
+#             "office.mailing:sendmail|rx",
+#         ],
+#     )
+#     permissions.register_role(
+#         "user",
+#         [
+#             "shell-app:use|rx",
+#         ],
+#     )
 
 
-def _compose_policies(container: Container):
-    policy = container.get(FieldPolicyEngine)
-    policy.register_defaults()
-    policy.register_policies(
-        [
-            FieldPolicy(
-                key="customer.first_name",
-                type=FieldType.STRING,
-                required=False,
-            ),
-            FieldPolicy(
-                key="customer.age",
-                hint="mit hint",
-                type=FieldType.INT,
-                required=False,
-            ),
-            FieldPolicy(
-                key="auth.password",
-                hint="kein Echo",
-                type=FieldType.STRING,
-                secret=True,
-            ),
-        ]
-    )
+# def _compose_policies(c):
+#     policy = "get(FieldPolicyEngine)"
+#     policy.register_defaults()
+#     policy.register_policies(
+#         [
+#             FieldPolicy(
+#                 key="customer.first_name",
+#                 type=FieldType.STRING,
+#                 required=False,
+#             ),
+#             FieldPolicy(
+#                 key="customer.age",
+#                 hint="mit hint",
+#                 type=FieldType.INT,
+#                 required=False,
+#             ),
+#             FieldPolicy(
+#                 key="auth.password",
+#                 hint="kein Echo",
+#                 type=FieldType.STRING,
+#                 secret=True,
+#             ),
+#         ]
+#     )
 
 
-def _compose_ports(
-    container: Container,
-    store: DefaultEntityStore,
-) -> Container:
+# async def initialize_storage(container: Container) -> None:
+#     index = container.get(strategie.IndexRegistry)
 
-    # register event store.
-    container.bind(ports.EntityStore, store)
-    container.bind(ports.IndexRegistry, store)
+#     from yakoon.platform.capabilities.identity.services.account_service import (
+#         IDX_ACCOUNT_USERNAME_SPEC,
+#     )
 
-    return container
-
-
-def _compose_store() -> DefaultEntityStore:
-
-    backend = MemoryBackend()
-    patch = JsonPatchStrategy(max_ops=50)
-
-    store = DefaultEntityStore(
-        backend=backend,
-        writer=patch,
-        readers={
-            patch.format: patch,
-        },
-        # snapshot_policy=..., enable_revisions=True
-    )
-
-    return store
-
-
-async def initialize_storage(container: Container) -> None:
-    index = container.get(ports.IndexRegistry)
-
-    from yakoon.platform.capabilities.identity.services.account_service import (
-        IDX_ACCOUNT_USERNAME_SPEC,
-    )
-
-    await index.ensure(
-        namespace=Namespace("system", "account", "develop"),
-        specs=[
-            IDX_ACCOUNT_USERNAME_SPEC,
-        ],
-    )
+#     await index.ensure(
+#         namespace=Namespace("system", "account", "develop"),
+#         specs=[
+#             IDX_ACCOUNT_USERNAME_SPEC,
+#         ],
+#     )

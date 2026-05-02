@@ -4,9 +4,9 @@ import asyncio
 import bisect
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
-from yakoon.base.stores.event.entity import (
+from ..models.entity import (
     DomainId,
     EntityId,
     IndexKey,
@@ -20,17 +20,8 @@ from yakoon.base.stores.event.entity import (
     SpaceId,
     ValueType,
 )
-from yakoon.platform.stores.event.backend import (
-    CurrentRow,
-    EntityStoreBackend,
-    EntityStoreBackendTx,
-    RevisionRow,
-    SnapshotRow,
-)
-
-
-def _utc_now() -> datetime:
-    return datetime.now(UTC)
+from ..models.mode import ScanMode
+from ..models.rows import CurrentRow, RevisionRow, SnapshotRow
 
 
 @dataclass(slots=True)
@@ -41,17 +32,13 @@ class _IndexRecord:
     written_at: datetime
 
 
-def _ns_key(domain_id: DomainId, kind_id: KindId, space_id: SpaceId) -> str:
-    return f"{domain_id}::{kind_id}::{space_id}"
-
-
 def _ent_key(
     domain_id: DomainId, kind_id: KindId, space_id: SpaceId, entity_id: EntityId
 ) -> tuple[str, str, str, str]:
     return (str(domain_id), str(kind_id), str(space_id), str(entity_id))
 
 
-class MemoryBackend(EntityStoreBackend):
+class MemoryBackend:
     """
     Dev/test backend.
     - single-process only
@@ -86,21 +73,8 @@ class MemoryBackend(EntityStoreBackend):
             dict[str, list[_IndexRecord]],
         ] = {}
 
-    def transaction(self) -> EntityStoreBackendTx:
-        return _MemoryTx(self)
-
-
-class _MemoryTx(EntityStoreBackendTx):
-    def __init__(self, backend: MemoryBackend) -> None:
-        self._b = backend
-
-    async def __aenter__(self) -> EntityStoreBackendTx:
-        await self._b._lock.acquire()
-        return self
-
-    async def __aexit__(self, exc_type, exc, tb) -> bool | None:
-        self._b._lock.release()
-        return None
+    def transaction(self) -> MemoryTransactionScope:
+        return MemoryTransactionScope(self)
 
     # --- helpers ---
 
@@ -145,14 +119,13 @@ class _MemoryTx(EntityStoreBackendTx):
         space_id: SpaceId,
         entity_id: EntityId,
     ) -> CurrentRow | None:
-        return self._b._current.get(
-            self._k(
-                domain_id=domain_id,
-                kind_id=kind_id,
-                space_id=space_id,
-                entity_id=entity_id,
-            )
+        key = self._k(
+            domain_id=domain_id,
+            kind_id=kind_id,
+            space_id=space_id,
+            entity_id=entity_id,
         )
+        return self._current.get(key)
 
     async def load_current_many(
         self,
@@ -166,8 +139,14 @@ class _MemoryTx(EntityStoreBackendTx):
         result: dict[EntityId, CurrentRow] = {}
 
         for eid in entity_ids:
-            key = (domain_id, kind_id, space_id, eid)
-            row = self._b._current.get(key)
+            key = self._k(
+                domain_id=domain_id,
+                kind_id=kind_id,
+                space_id=space_id,
+                entity_id=eid,
+            )
+
+            row = self._current.get(key)
             if row is not None:
                 result[eid] = row
 
@@ -184,7 +163,7 @@ class _MemoryTx(EntityStoreBackendTx):
         data: JsonValue,
         updated_at: datetime,
     ) -> None:
-        self._b._current[
+        self._current[
             self._k(
                 domain_id=domain_id,
                 kind_id=kind_id,
@@ -213,7 +192,7 @@ class _MemoryTx(EntityStoreBackendTx):
         k = self._k(
             domain_id=domain_id, kind_id=kind_id, space_id=space_id, entity_id=entity_id
         )
-        rows = self._b._revisions.setdefault(k, [])
+        rows = self._revisions.setdefault(k, [])
         rows.append(
             RevisionRow(
                 entity_id=entity_id,
@@ -238,8 +217,12 @@ class _MemoryTx(EntityStoreBackendTx):
         k = self._k(
             domain_id=domain_id, kind_id=kind_id, space_id=space_id, entity_id=entity_id
         )
-        rows = self._b._revisions.get(k, [])
-        return [r for r in rows if r.rev > rev_gt and r.ts <= ts_lte]
+        rows = self._revisions.get(k, [])
+
+        return sorted(
+            (r for r in rows if r.rev > rev_gt and r.ts <= ts_lte),
+            key=lambda r: r.rev,
+        )
 
     async def load_snapshot_at_or_before(
         self,
@@ -253,7 +236,7 @@ class _MemoryTx(EntityStoreBackendTx):
         k = self._k(
             domain_id=domain_id, kind_id=kind_id, space_id=space_id, entity_id=entity_id
         )
-        snaps = self._b._snapshots.get(k, [])
+        snaps = self._snapshots.get(k, [])
         # snaps sorted by ts
         i = bisect.bisect_right([s.ts for s in snaps], ts_lte) - 1
         if i < 0:
@@ -274,7 +257,7 @@ class _MemoryTx(EntityStoreBackendTx):
         k = self._k(
             domain_id=domain_id, kind_id=kind_id, space_id=space_id, entity_id=entity_id
         )
-        snaps = self._b._snapshots.setdefault(k, [])
+        snaps = self._snapshots.setdefault(k, [])
         snaps.append(SnapshotRow(entity_id=entity_id, rev=rev, ts=ts, data=data))
         snaps.sort(key=lambda s: s.ts)
 
@@ -289,7 +272,7 @@ class _MemoryTx(EntityStoreBackendTx):
         specs: Sequence[IndexSpec],
     ) -> None:
         sp = self._sp(domain_id=domain_id, kind_id=kind_id, space_id=space_id)
-        table = self._b._index_specs.setdefault(sp, {})
+        table = self._index_specs.setdefault(sp, {})
         for spec in specs:
             key = str(spec.key)
             if key in table:
@@ -307,7 +290,7 @@ class _MemoryTx(EntityStoreBackendTx):
         space_id: SpaceId,
     ) -> Sequence[IndexSpec]:
         sp = self._sp(domain_id=domain_id, kind_id=kind_id, space_id=space_id)
-        return list(self._b._index_specs.get(sp, {}).values())
+        return list(self._index_specs.get(sp, {}).values())
 
     async def index_scan(
         self,
@@ -316,7 +299,7 @@ class _MemoryTx(EntityStoreBackendTx):
         kind_id: KindId,
         space_id: SpaceId,
         index_key: IndexKey,
-        mode: str,  # "eq" | "range"
+        mode: ScanMode,  # "eq" | "range"
         value: IndexValue | None = None,
         lo: IndexValue | None = None,
         hi: IndexValue | None = None,
@@ -328,17 +311,17 @@ class _MemoryTx(EntityStoreBackendTx):
 
         rows: list[tuple[IndexValue, EntityId]] = []
 
-        if mode not in ("eq", "range"):
+        if mode not in (ScanMode.EQ, ScanMode.RANGE):
             raise ValueError(f"unsupported scan mode: {mode}")
 
         gkey = (str(domain_id), str(kind_id), str(space_id), str(index_key))
         sp = self._sp(domain_id=domain_id, kind_id=kind_id, space_id=space_id)
-        specs = self._b._index_specs.get(sp, {})
+        specs = self._index_specs.get(sp, {})
         spec = specs.get(str(index_key))
         if spec is None:
             return []
 
-        bucket = self._b._index_inv2.get(gkey)
+        bucket = self._index_inv2.get(gkey)
         if not bucket:
             return []
 
@@ -351,7 +334,7 @@ class _MemoryTx(EntityStoreBackendTx):
         # ------------------------
         # EQ mode
         # ------------------------
-        if mode == "eq":
+        if mode == ScanMode.EQ:
             assert value is not None
 
             vq = self._norm_value(spec, value)
@@ -363,10 +346,18 @@ class _MemoryTx(EntityStoreBackendTx):
             records = bucket.get(vq, [])
 
             for rec in records:
+                if as_of is not None and rec.written_at > as_of:
+                    continue
+
                 eid = rec.entity_id
 
-                if after_entity_id_norm is not None and eid <= after_entity_id_norm:
-                    continue
+                if after_value_norm is not None:
+                    if (
+                        vq == after_value_norm
+                        and after_entity_id_norm is not None
+                        and eid <= after_entity_id_norm
+                    ):
+                        continue
 
                 rows.append((value, eid))
 
@@ -434,7 +425,7 @@ class _MemoryTx(EntityStoreBackendTx):
         written_at: datetime,
     ) -> None:
         sp = self._sp(domain_id=domain_id, kind_id=kind_id, space_id=space_id)
-        specs = self._b._index_specs.get(sp, {})
+        specs = self._index_specs.get(sp, {})
         if not specs:
             return
 
@@ -443,7 +434,7 @@ class _MemoryTx(EntityStoreBackendTx):
         )
 
         # remove old postings for keys we are about to set
-        existing = self._b._index_terms_by_entity.get(ent_k, {})
+        existing = self._index_terms_by_entity.get(ent_k, {})
         for t in terms:
             k = str(t.key)
             old = existing.get(k)
@@ -456,7 +447,7 @@ class _MemoryTx(EntityStoreBackendTx):
             old_norm = self._norm_value(spec, old)
 
             gkey = (str(domain_id), str(kind_id), str(space_id), k)
-            bucket = self._b._index_inv2.get(gkey)
+            bucket = self._index_inv2.get(gkey)
             if not bucket:
                 continue
 
@@ -468,7 +459,7 @@ class _MemoryTx(EntityStoreBackendTx):
                 bucket.pop(old_norm, None)
 
             if not bucket:
-                self._b._index_inv2.pop(gkey, None)
+                self._index_inv2.pop(gkey, None)
 
         # apply new
         newmap = dict(existing)
@@ -482,7 +473,7 @@ class _MemoryTx(EntityStoreBackendTx):
             newmap[k] = t.value
 
             gkey = (str(domain_id), str(kind_id), str(space_id), k)
-            bucket = self._b._index_inv2.setdefault(gkey, {})
+            bucket = self._index_inv2.setdefault(gkey, {})
             lst = bucket.setdefault(norm, [])
 
             # UNIQUE check (optional but strongly recommended)
@@ -497,7 +488,7 @@ class _MemoryTx(EntityStoreBackendTx):
             if i >= len(lst) or lst[i].entity_id != entity_id:
                 lst.insert(i, rec)
 
-        self._b._index_terms_by_entity[ent_k] = newmap
+        self._index_terms_by_entity[ent_k] = newmap
 
     # --- maintenance ---
 
@@ -513,24 +504,40 @@ class _MemoryTx(EntityStoreBackendTx):
         cutoff = now - timedelta(days=policy.keep_revisions_days)
 
         # prune revisions and snapshots
-        for k in list(self._b._revisions.keys()):
+        for k in list(self._revisions.keys()):
             d, kd, s, _ = k
             if d == str(domain_id) and kd == str(kind_id) and s == str(space_id):
-                self._b._revisions[k] = [
-                    r for r in self._b._revisions[k] if r.ts >= cutoff
-                ]
-                if not self._b._revisions[k]:
-                    self._b._revisions.pop(k, None)
+                self._revisions[k] = [r for r in self._revisions[k] if r.ts >= cutoff]
+                if not self._revisions[k]:
+                    self._revisions.pop(k, None)
 
         snap_cutoff = now - timedelta(days=policy.keep_snapshots_days or 0)
-        for k in list(self._b._snapshots.keys()):
+        for k in list(self._snapshots.keys()):
             d, kd, s, _ = k
             if d == str(domain_id) and kd == str(kind_id) and s == str(space_id):
-                self._b._snapshots[k] = [
-                    r for r in self._b._snapshots[k] if r.ts >= snap_cutoff
+                self._snapshots[k] = [
+                    r for r in self._snapshots[k] if r.ts >= snap_cutoff
                 ]
-                if not self._b._snapshots[k]:
-                    self._b._snapshots.pop(k, None)
+                if not self._snapshots[k]:
+                    self._snapshots.pop(k, None)
 
     async def gc_global(self, *, policy: RetentionPolicy) -> None:
         return None
+
+
+# ----------------------------------
+# TRANSACTION SCOPE
+# ----------------------------------
+
+
+class MemoryTransactionScope:
+
+    def __init__(self, backend):
+        self._b = backend
+
+    async def __aenter__(self):
+        await self._b._lock.acquire()
+        return self._b
+
+    async def __aexit__(self, *args):
+        self._b._lock.release()

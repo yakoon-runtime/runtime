@@ -1,18 +1,22 @@
 from __future__ import annotations
 
-from typing import cast
+from collections.abc import Mapping
+from datetime import datetime
+from typing import Protocol, cast
 
 from yakoon.base.naming import Key
-from yakoon.base.stores.event.entity import (
+from yakoon.storage.eventstore import (
+    GetResult,
+    JsonValue,
+    PutResult,
     SnapshotHint,
 )
-from yakoon.platform.stores.event.store import EntityStore
 
 from .identity import SessionIdentityMap
 from .session import Session, SessionState
 
 
-class EntityStoreSessionService:
+class SessionManager:
     """
     Session lifecycle service.
 
@@ -23,9 +27,13 @@ class EntityStoreSessionService:
     """
 
     def __init__(
-        self, store: EntityStore, identity_map: SessionIdentityMap | None = None
+        self,
+        on_save: OnStoreSession,
+        on_load: OnLoadSession,
+        identity_map: SessionIdentityMap | None = None,
     ) -> None:
-        self.store = store
+        self.on_save = on_save
+        self.on_load = on_load
         self._map = identity_map or SessionIdentityMap()
 
     async def get(self, key: Key) -> Session | None:
@@ -33,7 +41,7 @@ class EntityStoreSessionService:
         if live:
             return live
 
-        row = await self.store.get_one(key=key)
+        row = await self.on_load(key=key)
         if row.data is None:
             return None
 
@@ -57,7 +65,7 @@ class EntityStoreSessionService:
         state = SessionState(key=key, **kwargs)
         session = Session(state)
 
-        await self.store.put_doc(
+        await self.on_save(
             key=key,
             doc=state.to_dict(),
             snapshot_hint=SnapshotHint.COMMIT,
@@ -69,7 +77,7 @@ class EntityStoreSessionService:
     async def save(self, session: Session) -> None:
         key = session.key
         system_session = cast(Session, session)
-        await self.store.put_doc(
+        await self.on_save(
             key=key,
             doc=system_session.state.to_dict(),
             snapshot_hint=SnapshotHint.COMMIT,
@@ -80,3 +88,28 @@ class EntityStoreSessionService:
 
     def clear(self) -> None:
         self._map.clear()
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnStoreSession(Protocol):
+    async def __call__(
+        self,
+        *,
+        key: Key,
+        doc: Mapping[str, JsonValue],
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        expected_rev: int | None = None,
+    ) -> PutResult: ...
+
+
+class OnLoadSession(Protocol):
+    async def __call__(
+        self,
+        *,
+        key: Key,
+        at_time: datetime | None = None,
+    ) -> GetResult: ...

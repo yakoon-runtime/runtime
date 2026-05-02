@@ -1,9 +1,9 @@
+from .manager import SessionManager
 from .session import Session, SessionState
-from .store import EntityStoreSessionService
 
 __all__ = [
     # .session_service
-    "EntityStoreSessionService",
+    "SessionManager",
     # .session
     "Session",
     "SessionState",

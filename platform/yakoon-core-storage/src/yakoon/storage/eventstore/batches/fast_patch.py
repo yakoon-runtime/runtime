@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from yakoon.base.ports import PatchError
-from yakoon.base.stores.event.entity import JsonValue, PatchFormat
+from ..models import JsonValue, PatchFormat
+from .errors import PatchError
 
 # ----------------------------
 # Strategy 2: FastPatch (flat-entity friendly)

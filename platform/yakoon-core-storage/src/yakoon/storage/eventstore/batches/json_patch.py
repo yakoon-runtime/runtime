@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Any
+from typing import cast
 
-from yakoon.base.ports import PatchError
-from yakoon.base.stores.event.entity import JsonValue, PatchFormat
+from ..models import JsonValue, PatchFormat
+from .errors import PatchError
 
 # ----------------------------
 # Strategy 1: RFC 6902 JSON Patch
@@ -45,12 +45,18 @@ class JsonPatchStrategy:
         except Exception as e:  # pragma: no cover
             raise PatchError("jsonpatch library not installed.") from e
 
-        base = {} if current is None else current
+        base: JsonValue = {} if current is None else current
+
         try:
-            # in_place=False => returns a new object
-            return jsonpatch.apply_patch(base, patch, in_place=False)
+            result = jsonpatch.apply_patch(base, patch, in_place=False)
         except Exception as e:
             raise PatchError(f"Failed to apply RFC6902 patch: {e}") from e
+
+        # Boundary: externes System → wir übernehmen Kontrolle
+        if not _is_json_value(result):
+            raise PatchError("jsonpatch returned invalid JSON structure.")
+
+        return cast(JsonValue, result)
 
     def create_full_replace(
         self,
@@ -68,11 +74,16 @@ class JsonPatchStrategy:
         current: JsonValue | None,
         fields: Mapping[str, JsonValue],
     ) -> JsonValue:
-        ops: list[dict[str, Any]] = []
+        ops: list[dict[str, JsonValue]] = []
         for k, v in fields.items():
-            # RFC: "add" on existing member replaces it, too.
-            ops.append({"op": "add", "path": f"/{_escape_json_pointer(k)}", "value": v})
-        return ops
+            ops.append(
+                {
+                    "op": "add",
+                    "path": f"/{_escape_json_pointer(k)}",
+                    "value": v,
+                }
+            )
+        return cast(JsonValue, ops)
 
     def create_delete(
         self,
@@ -80,12 +91,29 @@ class JsonPatchStrategy:
         current: JsonValue | None,
         fields: Sequence[str],
     ) -> JsonValue:
-        ops: list[dict[str, Any]] = []
+        ops: list[dict[str, JsonValue]] = []
         for k in fields:
-            ops.append({"op": "remove", "path": f"/{_escape_json_pointer(k)}"})
-        return ops
+            ops.append(
+                {
+                    "op": "remove",
+                    "path": f"/{_escape_json_pointer(k)}",
+                }
+            )
+        return cast(JsonValue, ops)
 
 
 def _escape_json_pointer(token: str) -> str:
     # RFC 6901 escaping
     return token.replace("~", "~0").replace("/", "~1")
+
+
+def _is_json_value(value: object) -> bool:
+    if value is None:
+        return True
+    if isinstance(value, (str, int, float, bool)):
+        return True
+    if isinstance(value, list):
+        return all(_is_json_value(v) for v in value)
+    if isinstance(value, dict):
+        return all(isinstance(k, str) and _is_json_value(v) for k, v in value.items())
+    return False

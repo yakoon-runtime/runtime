@@ -1,14 +1,10 @@
-from yakoon.base.runtime import Container
-from yakoon.compose.runtime import compose_runtime, initialize_storage
+from yakoon.compose.runtime import compose_runtime
 from yakoon.platform.machine import RuntimeHost
 
 
 async def create_runtime() -> RuntimeHost:
 
-    container = Container()
-
     runtime = compose_runtime(
-        container,
         plugins=[
             "yakoon.shell",
             # "yakoon.crm",
@@ -25,7 +21,7 @@ async def create_runtime() -> RuntimeHost:
         },
     )
 
-    await initialize_storage(container)
+    # await initialize_storage(container)
     # await seed_demo_system_data(container)
 
     return runtime
