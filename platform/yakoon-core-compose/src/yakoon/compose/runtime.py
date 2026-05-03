@@ -173,18 +173,3 @@ def compose_runtime(
 #             ),
 #         ]
 #     )
-
-
-# async def initialize_storage(container: Container) -> None:
-#     index = container.get(strategie.IndexRegistry)
-
-#     from yakoon.platform.capabilities.identity.services.account_service import (
-#         IDX_ACCOUNT_USERNAME_SPEC,
-#     )
-
-#     await index.ensure(
-#         namespace=Namespace("system", "account", "develop"),
-#         specs=[
-#             IDX_ACCOUNT_USERNAME_SPEC,
-#         ],
-#     )

@@ -7,10 +7,6 @@ pip install \
   -e platform/yakoon-core-platform \
   -e platform/yakoon-core-storage \
 
-# hosts
-pip install \
-  -e hosts/yakoon-host-console \
-
 # transport
 pip install \
   -e transport/yakoon-transport-ws \

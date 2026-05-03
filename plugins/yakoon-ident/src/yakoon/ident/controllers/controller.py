@@ -5,7 +5,8 @@ from typing import Protocol, cast
 from yakoon.base.commands import Command
 from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.base.naming import Key, NamespaceResolver
-from yakoon.base.plugins.entities import AuthResult
+from yakoon.base.plugins.models import AuthResult
+from yakoon.base.plugins.ports import OnAuthenticate
 
 from ..commands import BaseCommands, CmdSu, CmdWhoAmI
 
@@ -45,21 +46,31 @@ class BaseController(Controller):
         raise RuntimeError("invalid command")
 
     # ----------------------------------
+    # AUTHENTICATE
+    # ----------------------------------
+
+    async def _authenticate(self, username: str, secret: str) -> AuthResult:
+        resolver = NamespaceResolver()
+        namespace = resolver.from_session(self.session, "account", "develop")
+
+        on_authenticate = self.ports.on_get_port(OnAuthenticate)
+        return await on_authenticate(
+            namespace=namespace,
+            username=username,
+            secret=secret,
+        )
+
+    # ----------------------------------
     # FACTORY
     # ----------------------------------
+
     def _create_su(self):
         access = cast(_SessionAccess, self.session)
-
-        async def authenticate(username: str, secret: str) -> AuthResult:
-            resolver = NamespaceResolver()
-            ns = resolver.from_session(self.session, "account", "develop")
-
-            return await auth.authenticate(ns, username, secret)
 
         return CmdSu(
             on_project=self.project,
             on_set_identity=access.set_identity,
-            on_authenticate=authenticate,
+            on_authenticate=self._authenticate,
         )
 
     def _create_whoami(self):

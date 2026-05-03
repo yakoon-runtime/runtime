@@ -18,17 +18,22 @@ class RuntimeHost:
         on_join_bus: OnJoinBus,
         on_get_session: OnGetSession,
         on_create_runner: OnCreateRunner,
+        on_initialize: OnInitialize,
     ):
         self.on_schedule = on_schedule
         self.on_join_bus = on_join_bus
         self.on_get_session = on_get_session
         self.on_create_runner = on_create_runner
+        self.on_initialize = on_initialize
 
         self._sessions: dict[Key, Runner] = {}
         self._connections: dict[ClientConnection, Runner] = {}
         self._session_counter = 0
 
         asyncio.create_task(self.on_schedule())
+
+    async def initialize(self):
+        await self.on_initialize()
 
     async def connect(
         self,
@@ -102,3 +107,7 @@ class OnGetSession(Protocol):
 
 class OnCreateRunner(Protocol):
     def __call__(self, *, session) -> Runner: ...
+
+
+class OnInitialize(Protocol):
+    async def __call__(self) -> None: ...

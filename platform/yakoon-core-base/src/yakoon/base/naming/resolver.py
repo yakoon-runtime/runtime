@@ -1,4 +1,4 @@
-from yakoon.base.naming import Namespace
+from .namespace import Namespace
 
 
 class NamespaceResolver:

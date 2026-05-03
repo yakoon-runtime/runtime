@@ -22,7 +22,4 @@ async def create_runtime() -> RuntimeHost:
         },
     )
 
-    # await initialize_storage(container)
-    # await seed_demo_system_data(container)
-
     return runtime

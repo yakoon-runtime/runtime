@@ -4,19 +4,22 @@ from typing import Protocol
 
 from yakoon.base.commands import Command, Request
 from yakoon.base.commands.ports import OnProjectCmd
+from yakoon.base.commands.types import CommandScope
+from yakoon.base.flow import out
 from yakoon.base.naming import Key
-from yakoon.base.plugins.entities import AuthResult
+from yakoon.base.plugins.models import AuthResult
 
 
 class CmdSu(Command):
 
     key = "su"
+    scope = CommandScope.SHELL
 
     def __init__(
         self,
         on_project: OnProjectCmd,
         on_set_identity: OnSetIdentity,
-        on_authenticate: OnAuthenticate,
+        on_authenticate: OnAuthenticateUser,
     ):
         self.on_project = on_project
         self.on_set_identity = on_set_identity
@@ -34,24 +37,26 @@ class CmdSu(Command):
         result = await self.on_authenticate(username, secret)
         if result.ok and result.account:
             account = result.account
-            self.on_set_identity(account.key, account.username)
+            self.on_set_identity(account["key"], account["username"])
             # permissions.apply_account_permissions(session, account)
-
             # await self.container.get(SessionStore).save(session)
-            await self.on_project(
-                name="success.sam",
-                state={
-                    "user": username,
-                },
+            yield out(
+                await self.on_project(
+                    name="success.sam",
+                    state={
+                        "user": username,
+                    },
+                )
             )
-
         else:
-            await self.on_project(
-                name="error.sam",
-                state={
-                    "user": username,
-                    "reason": result.reason,
-                },
+            yield out(
+                await self.on_project(
+                    name="error.sam",
+                    state={
+                        "user": username,
+                        "reason": result.reason,
+                    },
+                )
             )
 
 
@@ -64,5 +69,5 @@ class OnSetIdentity(Protocol):
     def __call__(self, key: Key, user_name: str): ...
 
 
-class OnAuthenticate(Protocol):
+class OnAuthenticateUser(Protocol):
     async def __call__(self, username: str, secret: str) -> AuthResult: ...

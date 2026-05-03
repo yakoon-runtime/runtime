@@ -91,6 +91,7 @@ class CommandResolver:
             cmd = self._shell.get(key)
             if cmd:
                 controller = self._controllers[cmd.controller_id]
+                app = self._applications[cmd.app_id]
                 return app, controller, cmd
 
         # 3. GLOBAL scope

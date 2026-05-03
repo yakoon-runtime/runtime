@@ -206,6 +206,7 @@ class EntityStore:
         *,
         key: Key,
         doc: Mapping[str, JsonValue],
+        indexes: Sequence[IndexTerm] = (),
         snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
         expected_rev: int | None = None,
     ) -> PutResult:
@@ -220,6 +221,7 @@ class EntityStore:
         return await self.put(
             key=key,
             patch=patch,
+            indexes=indexes,
             snapshot_hint=snapshot_hint,
             expected_rev=expected_rev,
         )

@@ -13,6 +13,7 @@
     "plugins/yakoon-office/src",
     "plugins/yakoon-playground/src",
     "plugins/yakoon-shell/src",
+    "plugins/yakoon-ident/src",
     // transport
     "transport/yakoon-transport-ws/src",
     // clients

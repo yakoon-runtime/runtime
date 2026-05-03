@@ -1,11 +1,10 @@
 from typing import Protocol
 
 from yakoon.base.naming import Namespace
+from yakoon.base.plugins.models import AuthResult
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime.sessions import Session
-
-from .entities import AuthResult
 
 # -------------------
 # -- PLUGIN PORTS ---
@@ -28,5 +27,5 @@ class OnAuthorize(Protocol):
 
 class OnAuthenticate(Protocol):
     async def __call__(
-        *, namespace: Namespace, username: str, secret: str
+        self, *, namespace: Namespace, username: str, secret: str
     ) -> AuthResult: ...

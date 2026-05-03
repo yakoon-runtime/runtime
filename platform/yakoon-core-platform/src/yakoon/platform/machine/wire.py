@@ -31,7 +31,7 @@ def build_machine(
     on_audit_error: OnAuditError,
     on_audit_warning: OnAuditWarning,
     on_audit_security: OnAuditSecurity,
-):
+) -> RuntimeHost:
 
     # --- ROUTING ---
 
@@ -105,6 +105,12 @@ def build_machine(
         )
         return runner
 
+    # --- LIFECYCLE ---
+
+    async def on_start():
+        for a in applications:
+            await a.start()
+
     # --- HOSTING ---
 
     return RuntimeHost(
@@ -112,6 +118,7 @@ def build_machine(
         on_join_bus=bus.join,
         on_create_runner=create_runner,
         on_get_session=session_builder.create,
+        on_initialize=on_start,
     )
 
 

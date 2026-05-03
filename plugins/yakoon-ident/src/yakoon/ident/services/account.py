@@ -1,12 +1,18 @@
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
+from datetime import datetime
+from typing import Protocol
+
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.runtime.container import Container
-from yakoon.storage.eventstore.models.entity import (
+from yakoon.storage.eventstore.models import (
+    GetResult,
     IndexKey,
     IndexSpec,
     IndexTerm,
+    IndexValue,
     JsonValue,
+    PutResult,
     SnapshotHint,
     ValueType,
 )
@@ -34,12 +40,20 @@ class AccountService:
     Keeps the public API stable.
     """
 
-    def __init__(self, container: Container) -> None:
-        self.container = container
-        self._store: EntityStore | None = None
+    def __init__(
+        self,
+        on_store: OnStore,
+        on_replace: OnReplace,
+        on_get_by_key: OnGetByKey,
+        on_find: OnFind,
+    ):
+        self.on_put = on_store
+        self.on_replace = on_replace
+        self.on_get_by_key = on_get_by_key
+        self.on_find = on_find
 
     async def get_by_key(self, key: Key) -> Account | None:
-        row = await self.store.get_one(key=key)
+        row = await self.on_get_by_key(key=key)
         if row.data is None:
             return None
 
@@ -50,7 +64,7 @@ class AccountService:
         self, namespace: Namespace, username: str
     ) -> Account | None:
 
-        keys, _ = await self.store.scan(
+        keys, _ = await self.on_find(
             namespace=namespace,
             index_key=IDX_ACCOUNT_USERNAME_KEY,
             value=username,
@@ -60,7 +74,7 @@ class AccountService:
         if not keys:
             return None
 
-        row = await self.store.get_one(key=keys[0])
+        row = await self.on_get_by_key(key=keys[0])
         if row.data is None:
             return None
 
@@ -77,7 +91,7 @@ class AccountService:
         if not isinstance(username, str):
             raise TypeError("Account.username must be a string")
 
-        await self.store.put_doc(
+        await self.on_replace(
             key=key,
             doc=doc,
             indexes=[IndexTerm(key=IDX_ACCOUNT_USERNAME_KEY, value=username)],
@@ -88,10 +102,73 @@ class AccountService:
         # ES-light delete semantics: either tombstone or hard-delete.
         # For now: write a tombstone field (recommended), or implement backend delete later.
 
-        patch: JsonValue = [{"op": "add", "path": "/_deleted", "value": True}]
+        patch: JsonValue = {"op": "add", "path": "/_deleted", "value": True}
 
-        await self.store.put(
+        await self.on_put(
             key=key,
-            patch=patch,
+            patch=[patch],
             snapshot_hint=SnapshotHint.COMMIT,
         )
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnStore(Protocol):
+    async def __call__(
+        self,
+        *,
+        key: Key,
+        patch: JsonValue,
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        meta: Mapping[str, object] | None = None,
+        expected_rev: int | None = None,
+    ) -> PutResult: ...
+
+
+class OnReplace(Protocol):
+    async def __call__(
+        self,
+        *,
+        key: Key,
+        doc: Mapping[str, JsonValue],
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        expected_rev: int | None = None,
+    ) -> PutResult: ...
+
+
+class OnGetByName(Protocol):
+    async def __call__(
+        self,
+        *,
+        key: Key,
+        at_time: datetime | None = None,
+    ) -> GetResult: ...
+
+
+class OnGetByKey(Protocol):
+    async def __call__(
+        self,
+        *,
+        key: Key,
+        at_time: datetime | None = None,
+    ) -> GetResult: ...
+
+
+class OnFind(Protocol):
+    async def __call__(
+        self,
+        *,
+        namespace: Namespace,
+        index_key: IndexKey,
+        value: IndexValue | None = None,
+        lo: IndexValue | None = None,
+        hi: IndexValue | None = None,
+        limit: int = 100,
+        prefix: str | None = None,
+        cursor: str | None = None,
+    ) -> tuple[list[Key], str | None]: ...

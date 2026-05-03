@@ -31,15 +31,25 @@ class Application(ABC):
     controllers: Sequence[type[Controller]]
     """Contains the controllers of this application."""
 
+    ports: ModulePorts
+
     def bind_ports(self, ports: ModulePorts):
+        self.ports = ports
         for controller in self.controllers:
             controller.ports = ports
 
-        self.on_initialize(ports)
+        self.on_build(ports)
 
-    def on_initialize(self, ports: ModulePorts) -> None:  # noqa: B027
+    def on_build(self, ports: ModulePorts) -> None:  # noqa: B027
         """Hook executed after bind ports"""
         pass
+
+    async def on_start(self, ports: ModulePorts) -> None:  # noqa: B027
+        """Hook executed after bind ports"""
+        pass
+
+    async def start(self) -> None:
+        await self.on_start(self.ports)
 
     def create_command(
         self,

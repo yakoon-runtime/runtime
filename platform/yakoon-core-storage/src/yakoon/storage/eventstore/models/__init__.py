@@ -14,6 +14,7 @@ from .entity import (
     RetentionPolicy,
     SnapshotHint,
     SpaceId,
+    ValueType,
 )
 from .mode import ScanMode
 from .policy import SnapshotPolicy
@@ -38,6 +39,7 @@ __all__ = [
     "RetentionPolicy",
     "SnapshotHint",
     "SpaceId",
+    "ValueType",
     # .mode
     "ScanMode",
     # .policy
