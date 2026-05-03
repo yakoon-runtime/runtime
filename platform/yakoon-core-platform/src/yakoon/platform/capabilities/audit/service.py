@@ -3,7 +3,7 @@ import logging
 from yakoon.platform.settings import settings
 
 
-class DefaultAuditLogService:
+class AuditLogService:
 
     def __init__(self):
         self._audit = logging.getLogger("yakoon.audit")

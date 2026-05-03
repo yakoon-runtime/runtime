@@ -5,13 +5,13 @@ from dataclasses import asdict, dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 
-from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.naming import Key
 from yakoon.base.projection import (
     ProjectionEvent,
     ProjectionState,
 )
 from yakoon.base.transport import IO
+from yakoon.platform.capabilities.permission import PermissionSet
 from yakoon.platform.flow import Flow
 from yakoon.platform.runtime.trace import ExecutionTrace
 

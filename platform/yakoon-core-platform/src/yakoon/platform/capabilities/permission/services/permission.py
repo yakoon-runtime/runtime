@@ -2,14 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 
-from yakoon.base.capabilities.identity import (
-    Account,
-    PermBit,
-    PermBits,
-    Permission,
-    PermissionSet,
-)
 from yakoon.platform.runtime.sessions import Session
+
+from ..models import PermBit, PermBits, Permission, PermissionSet
 
 
 class PermissionService:
@@ -62,11 +57,11 @@ class PermissionService:
     def set_bootstrap_permissions(self, session: Session):
         session.set_permissions(self.compile_permissions([], self._directs))
 
-    def apply_account_permissions(self, session: Session, account: Account):
-        bootstrap = self.compile_permissions([], self._directs)
-        account_ps = self.compile_permissions(account.roles, account.permissions)
-        bootstrap.merge(account_ps)
-        session.set_permissions(bootstrap)
+    # def apply_account_permissions(self, session: Session, account: Account):
+    #    bootstrap = self.compile_permissions([], self._directs)
+    #    account_ps = self.compile_permissions(account.roles, account.permissions)
+    #    bootstrap.merge(account_ps)
+    #    session.set_permissions(bootstrap)
 
     def can_execute(self, session: Session, perm_key: str) -> bool:
         return session.permissions.check(perm_key, PermBit.EXECUTE)

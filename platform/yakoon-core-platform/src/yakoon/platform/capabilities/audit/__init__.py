@@ -1,7 +1,7 @@
 from .logger import RotatingFileHandler
-from .service import DefaultAuditLogService
+from .service import AuditLogService
 
 __all__ = [
-    "DefaultAuditLogService",
+    "AuditLogService",
     "RotatingFileHandler",
 ]

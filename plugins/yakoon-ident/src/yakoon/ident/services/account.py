@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from yakoon.base.capabilities.identity import Account, AccountData
 from yakoon.base.naming import Key, Namespace
 from yakoon.base.runtime.container import Container
 from yakoon.storage.eventstore.models.entity import (
@@ -11,6 +10,8 @@ from yakoon.storage.eventstore.models.entity import (
     SnapshotHint,
     ValueType,
 )
+
+from ..models import Account, AccountData
 
 
 def expect_object(value: JsonValue) -> dict[str, JsonValue]:
@@ -36,12 +37,6 @@ class AccountService:
     def __init__(self, container: Container) -> None:
         self.container = container
         self._store: EntityStore | None = None
-
-    @property
-    def store(self) -> EntityStore:
-        if not self._store:
-            self._store = self.container.get(EntityStore)
-        return self._store
 
     async def get_by_key(self, key: Key) -> Account | None:
         row = await self.store.get_one(key=key)

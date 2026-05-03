@@ -9,10 +9,8 @@ from yakoon.base.plugins.ports import (
 )
 from yakoon.base.runtime import Container
 from yakoon.base.sources import OnDataSource
-from yakoon.platform.capabilities.audit.service import DefaultAuditLogService
-from yakoon.platform.capabilities.identity.services.permission import (
-    PermissionService,
-)
+from yakoon.platform.capabilities.audit import AuditLogService
+from yakoon.platform.capabilities.permission import PermissionService
 from yakoon.platform.machine.host import RuntimeHost
 from yakoon.platform.machine.wire import build_machine
 from yakoon.platform.plugins import PluginLoader
@@ -20,7 +18,7 @@ from yakoon.platform.projection import (
     build_projector,
     build_stream,
 )
-from yakoon.platform.runtime import SessionManager
+from yakoon.platform.runtime.sessions import SessionManager
 from yakoon.platform.sources.data import (
     AppSource,
     CommandSource,
@@ -58,8 +56,8 @@ def compose_runtime(
         on_load=store.objects.get_one,
     )
 
+    audit_service = AuditLogService()
     permission_service = PermissionService()
-    audit_service = DefaultAuditLogService()
 
     # ----------------
     # --- PLUGINS ---

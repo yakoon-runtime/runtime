@@ -1,4 +1,4 @@
-from yakoon.base.capabilities.identity import Account
+from ..models import Account
 
 
 class AllowAllSecretVerifier:

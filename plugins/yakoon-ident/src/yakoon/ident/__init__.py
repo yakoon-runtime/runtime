@@ -3,7 +3,7 @@ from yakoon.base.plugins import ModuleExport, ModuleMeta
 from .app import IdentityApp
 
 meta = ModuleMeta(
-    name="yakoon.identity",
+    name="yakoon.ident",
     version="0.1.0",
     description="Identity...",
 )

@@ -6,7 +6,6 @@ from typing import Protocol
 from uuid import uuid4
 
 from yakoon.base.application.application import Application
-from yakoon.base.capabilities.identity import Permission
 from yakoon.base.commands import Command, Request
 from yakoon.base.controllers.controller import Controller
 from yakoon.base.flow.primitives import (
@@ -24,6 +23,7 @@ from yakoon.base.flow.primitives import (
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext
+from yakoon.platform.capabilities.permission import Permission
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
     CommandNotFound,

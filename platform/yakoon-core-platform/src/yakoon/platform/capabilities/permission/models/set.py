@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .perm_types import PermBits
-from .permission import Permission
+from .bit import PermBits
+from .model import Permission
 
 
 class PermissionSet:

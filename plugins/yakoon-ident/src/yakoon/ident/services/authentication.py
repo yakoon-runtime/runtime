@@ -1,4 +1,3 @@
-from yakoon.base.capabilities.identity import AccountService, SecretVerifier
 from yakoon.base.naming import Namespace
 from yakoon.base.plugins.entities import AuthResult
 

@@ -1,7 +1,7 @@
 from typing import Protocol
 
-from yakoon.base.capabilities.identity import PermissionSet
 from yakoon.base.naming import Key
+from yakoon.platform.capabilities.permission import PermissionSet
 
 
 class Session(Protocol):

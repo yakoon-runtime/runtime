@@ -23,7 +23,7 @@ class BaseController(Controller):
     commandsets = (BaseCommands,)
 
     resources = ResourceReferences(
-        package="yakoon.platform.capabilities.identity",
+        package="yakoon.ident",
     )
 
     command_builders: dict[type[Command], str] = {

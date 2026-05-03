@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from .perm_types import PermBits
+from .bit import PermBits
 
 
 @dataclass(frozen=True)

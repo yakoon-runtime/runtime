@@ -21,6 +21,7 @@ pip install \
   -e plugins/yakoon-office \
   -e plugins/yakoon-playground \
   -e plugins/yakoon-shell \
+  -e plugins/yakoon-ident \
 
 # clients
 pip install \

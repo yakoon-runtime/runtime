@@ -1,6 +1,5 @@
 from uuid import uuid4
 
-from yakoon.base.capabilities.audit import AuditLogService
 from yakoon.base.commands import (
     Command,
     CommandKind,
@@ -17,8 +16,6 @@ class CmdCustomerStore(Command):
     visibility = CommandVisibility.INTERNAL
 
     async def run(self, request: Request) -> None:  # noqa: ARG002
-
-        audits = self.container.get(AuditLogService)
 
         first = request.option("first_name")
         last = request.option("last_name")

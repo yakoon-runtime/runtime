@@ -7,6 +7,7 @@ async def create_runtime() -> RuntimeHost:
     runtime = compose_runtime(
         plugins=[
             "yakoon.shell",
+            "yakoon.ident",
             # "yakoon.crm",
             # "yakoon.office",
             # "yakoon.playground",
@@ -14,7 +15,7 @@ async def create_runtime() -> RuntimeHost:
         capabilities={
             "audit": "default",
             "discovery": "default",
-            "identity": "default",
+            # "identity": "default",
             "interaction": "default",
             # "jobs": "default",
             "workflow": "default",
