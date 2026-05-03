@@ -109,7 +109,9 @@ def build_machine(
     # --- LIFECYCLE ---
 
     async def on_start():
+        # init runtime
         await on_initialize()
+        # init all apps
         for a in applications:
             await a.start()
 
