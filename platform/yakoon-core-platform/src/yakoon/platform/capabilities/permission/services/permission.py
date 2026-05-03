@@ -49,19 +49,31 @@ class PermissionService:
             "demo.patterns:demo.form.select|rx",
         ]
 
-    def register_role(self, name: str, specs: list[str]) -> None:
+    # ----------------------------------
+    # REGISTER
+    # ----------------------------------
+
+    async def register_role(self, name: str, specs: list[str]) -> None:
         if name in self._roles:
             raise ValueError(f"Role already registered: {name}")
         self._roles[name] = specs
 
-    def set_bootstrap_permissions(self, session: Session):
-        session.set_permissions(self.compile_permissions([], self._directs))
+    # ----------------------------------
+    # APPLY
+    # ----------------------------------
 
-    # def apply_account_permissions(self, session: Session, account: Account):
-    #    bootstrap = self.compile_permissions([], self._directs)
-    #    account_ps = self.compile_permissions(account.roles, account.permissions)
-    #    bootstrap.merge(account_ps)
-    #    session.set_permissions(bootstrap)
+    def apply_bootstrap(self, session: Session):
+        session.set_permissions(self._compile([], self._directs))
+
+    def apply_account(self, session: Session, roles: list[str], permissions: list[str]):
+        bootstrap = self._compile([], self._directs)
+        account_ps = self._compile(roles, permissions)
+        bootstrap.merge(account_ps)
+        session.set_permissions(bootstrap)
+
+    # ----------------------------------
+    # CHECK EXECUTE / READ
+    # ----------------------------------
 
     def can_execute(self, session: Session, perm_key: str) -> bool:
         return session.permissions.check(perm_key, PermBit.EXECUTE)
@@ -69,9 +81,11 @@ class PermissionService:
     def can_read(self, session: Session, perm_key: str) -> bool:
         return session.permissions.check(perm_key, PermBit.READ)
 
-    def compile_permissions(
-        self, roles: Iterable[str], direct: Iterable[str]
-    ) -> PermissionSet:
+    # ----------------------------------
+    # INTERNAL METHODS
+    # ----------------------------------
+
+    def _compile(self, roles: Iterable[str], direct: Iterable[str]) -> PermissionSet:
 
         ps = PermissionSet()
 
@@ -81,15 +95,15 @@ class PermissionService:
             if specs is None:
                 raise ValueError(f"Unknown role: {role}")
             for spec in specs:
-                ps.add(self.parse_permission(spec))
+                ps.add(self._parse_spec(spec))
 
         # 2) add direct specs
         for spec in direct:
-            ps.add(self.parse_permission(spec))
+            ps.add(self._parse_spec(spec))
 
         return ps
 
-    def parse_permission(self, spec: str) -> Permission:
+    def _parse_spec(self, spec: str) -> Permission:
         """
         Formats:
         "auth:su|rx"

@@ -6,7 +6,7 @@ from yakoon.base.commands import Command
 from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.base.naming import Key, NamespaceResolver
 from yakoon.base.plugins.models import AuthResult
-from yakoon.base.plugins.ports import OnAuthenticate
+from yakoon.base.plugins.ports import OnApplyPermissions, OnAuthenticate, OnSaveSession
 
 from ..commands import BaseCommands, CmdSu, CmdWhoAmI
 
@@ -61,6 +61,22 @@ class BaseController(Controller):
         )
 
     # ----------------------------------
+    # SESSION HANDLING
+    # ----------------------------------
+
+    async def _save_session(self):
+        on_save_session = self.ports.on_get_port(OnSaveSession)
+        await on_save_session(session=self.session)
+
+    # ----------------------------------
+    # APPLY PERMISSIONS
+    # ----------------------------------
+
+    def _apply_permissions(self, roles: list[str], permissions: list[str]):
+        on_apply_account = self.ports.on_get_port(OnApplyPermissions)
+        on_apply_account(session=self.session, roles=roles, permissions=permissions)
+
+    # ----------------------------------
     # FACTORY
     # ----------------------------------
 
@@ -70,7 +86,9 @@ class BaseController(Controller):
         return CmdSu(
             on_project=self.project,
             on_set_identity=access.set_identity,
+            on_store_session=self._save_session,
             on_authenticate=self._authenticate,
+            on_apply_perm=self._apply_permissions,
         )
 
     def _create_whoami(self):

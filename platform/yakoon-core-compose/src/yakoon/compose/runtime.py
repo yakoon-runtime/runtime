@@ -3,6 +3,7 @@ from typing import Literal, TypeAlias
 from yakoon.base.application import Application
 from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import (
+    OnApplyPermissions,
     OnAuthorize,
     OnProject,
     OnSaveSession,
@@ -10,7 +11,10 @@ from yakoon.base.plugins.ports import (
 from yakoon.base.runtime import Container
 from yakoon.base.sources import OnDataSource
 from yakoon.platform.capabilities.audit import AuditLogService
-from yakoon.platform.capabilities.permission import PermissionService
+from yakoon.platform.capabilities.permission import (
+    PermissionBootstrap,
+    PermissionService,
+)
 from yakoon.platform.machine.host import RuntimeHost
 from yakoon.platform.machine.wire import build_machine
 from yakoon.platform.plugins import PluginLoader
@@ -57,7 +61,15 @@ def compose_runtime(
     )
 
     audit_service = AuditLogService()
-    permission_service = PermissionService()
+
+    # -------------------
+    # --- PERMISSIONS ---
+    # -------------------
+
+    perm_service = PermissionService()
+    perm_boot = PermissionBootstrap(
+        on_register=perm_service.register_role,
+    )
 
     # ----------------
     # --- PLUGINS ---
@@ -98,7 +110,8 @@ def compose_runtime(
         fork.bind(OnDataSource, ds.read)
         fork.bind(OnProject, projector.project)
         fork.bind(OnSaveSession, session_manager.save)
-        fork.bind(OnAuthorize, permission_service.can_read)
+        fork.bind(OnAuthorize, perm_service.can_read)
+        fork.bind(OnApplyPermissions, perm_service.apply_account)
 
         return ModulePorts(
             on_publish=ports.bind,
@@ -108,9 +121,6 @@ def compose_runtime(
 
     for app in applications:
         app.bind_ports(bind_ports())
-
-    # _compose_permission_roles(bootstrap)
-    # _compose_policies(bootstrap)
 
     # --- STREAMING ---
 
@@ -122,31 +132,14 @@ def compose_runtime(
         applications=applications,
         on_session=session_manager.get_or_create,
         on_projection=output.send_projection,
-        on_authorize=permission_service.can_execute,
-        on_bootstrap_permissions=permission_service.set_bootstrap_permissions,
+        on_authorize=perm_service.can_execute,
         on_audit_log=audit_service.audit,
         on_audit_error=audit_service.error,
         on_audit_security=audit_service.security,
         on_audit_warning=audit_service.warning,
+        on_bootstrap_permissions=perm_service.apply_bootstrap,
+        on_initialize=perm_boot.apply,
     )
-
-
-# def _compose_permission_roles():
-#     permissions = "PermissionService"
-#     permissions.register_role(
-#         "admin",
-#         [
-#             "app-app:su|rx",
-#             "shell-app:use|rx",
-#             "office.mailing:sendmail|rx",
-#         ],
-#     )
-#     permissions.register_role(
-#         "user",
-#         [
-#             "shell-app:use|rx",
-#         ],
-#     )
 
 
 # def _compose_policies(c):

@@ -31,6 +31,7 @@ def build_machine(
     on_audit_error: OnAuditError,
     on_audit_warning: OnAuditWarning,
     on_audit_security: OnAuditSecurity,
+    on_initialize: Oninitialize,
 ) -> RuntimeHost:
 
     # --- ROUTING ---
@@ -108,6 +109,7 @@ def build_machine(
     # --- LIFECYCLE ---
 
     async def on_start():
+        await on_initialize()
         for a in applications:
             await a.start()
 
@@ -125,6 +127,10 @@ def build_machine(
 # ----------------------------------
 # PORTS
 # ----------------------------------
+
+
+class Oninitialize(Protocol):
+    async def __call__(self) -> None: ...
 
 
 class OnHasPermission(Protocol):

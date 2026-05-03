@@ -29,3 +29,13 @@ class OnAuthenticate(Protocol):
     async def __call__(
         self, *, namespace: Namespace, username: str, secret: str
     ) -> AuthResult: ...
+
+
+class OnApplyPermissions(Protocol):
+    def __call__(
+        self,
+        *,
+        session: Session,
+        roles: list[str],
+        permissions: list[str],
+    ): ...

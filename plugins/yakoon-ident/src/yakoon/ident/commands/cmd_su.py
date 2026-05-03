@@ -20,10 +20,14 @@ class CmdSu(Command):
         on_project: OnProjectCmd,
         on_set_identity: OnSetIdentity,
         on_authenticate: OnAuthenticateUser,
+        on_store_session: OnStoreSession,
+        on_apply_perm: OnApplyPermissions,
     ):
         self.on_project = on_project
         self.on_set_identity = on_set_identity
         self.on_authenticate = on_authenticate
+        self.on_store_session = on_store_session
+        self.on_apply_perm = on_apply_perm
 
     async def run(self, request: Request):
 
@@ -36,28 +40,33 @@ class CmdSu(Command):
 
         result = await self.on_authenticate(username, secret)
         if result.ok and result.account:
+
             account = result.account
             self.on_set_identity(account["key"], account["username"])
-            # permissions.apply_account_permissions(session, account)
-            # await self.container.get(SessionStore).save(session)
-            yield out(
-                await self.on_project(
-                    name="success.sam",
-                    state={
-                        "user": username,
-                    },
-                )
+
+            self.on_apply_perm(
+                roles=account["roles"],
+                permissions=account["permissions"],
+            )
+
+            await self.on_store_session()
+
+            projection = await self.on_project(
+                name="success.sam",
+                state={
+                    "user": username,
+                },
             )
         else:
-            yield out(
-                await self.on_project(
-                    name="error.sam",
-                    state={
-                        "user": username,
-                        "reason": result.reason,
-                    },
-                )
+            projection = await self.on_project(
+                name="error.sam",
+                state={
+                    "user": username,
+                    "reason": result.reason,
+                },
             )
+
+        yield out(projection)
 
 
 # ----------------------------------
@@ -71,3 +80,15 @@ class OnSetIdentity(Protocol):
 
 class OnAuthenticateUser(Protocol):
     async def __call__(self, username: str, secret: str) -> AuthResult: ...
+
+
+class OnStoreSession(Protocol):
+    async def __call__(self): ...
+
+
+class OnApplyPermissions(Protocol):
+    def __call__(
+        self,
+        roles: list[str],
+        permissions: list[str],
+    ): ...
