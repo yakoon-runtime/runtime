@@ -6,7 +6,7 @@ if TYPE_CHECKING:
     from yakoon.base.naming import Key, Namespace
     from yakoon.base.runtime.sessions import Session
 
-from . import Account, AuthResult
+from . import Account
 
 
 class SecretVerifier(Protocol):
@@ -14,9 +14,7 @@ class SecretVerifier(Protocol):
 
 
 class AuthenticationService(Protocol):
-    async def authenticate(
-        self, namespace: Namespace, username: str, secret: str
-    ) -> AuthResult: ...
+    async def authenticate(self, namespace: Namespace, username: str, secret: str): ...
 
 
 class PermissionService(Protocol):

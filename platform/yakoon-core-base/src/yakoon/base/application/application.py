@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from yakoon.base.commands import Command
     from yakoon.base.controllers import Controller
+    from yakoon.base.plugins import ModulePorts
     from yakoon.base.runtime.sessions import Session
 
 
@@ -30,9 +31,15 @@ class Application(ABC):
     controllers: Sequence[type[Controller]]
     """Contains the controllers of this application."""
 
-    def bind_ports(self, ports):
+    def bind_ports(self, ports: ModulePorts):
         for controller in self.controllers:
             controller.ports = ports
+
+        self.on_initialize(ports)
+
+    def on_initialize(self, ports: ModulePorts) -> None:  # noqa: B027
+        """Hook executed after bind ports"""
+        pass
 
     def create_command(
         self,

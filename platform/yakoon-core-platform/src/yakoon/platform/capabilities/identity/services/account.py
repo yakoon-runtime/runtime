@@ -27,7 +27,7 @@ IDX_ACCOUNT_USERNAME_SPEC = IndexSpec(
 )
 
 
-class DefaultAccountService:
+class AccountService:
     """
     Loads/saves accounts via ES-light EntityStore.
     Keeps the public API stable.

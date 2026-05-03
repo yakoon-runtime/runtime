@@ -12,7 +12,8 @@ T = TypeVar("T")
 
 @dataclass(frozen=True)
 class ModulePorts:
-    on_register: OnRegister
+    on_publish: OnRegister
+    on_provide: OnRegister
     on_get_port: OnGetPort
 
 

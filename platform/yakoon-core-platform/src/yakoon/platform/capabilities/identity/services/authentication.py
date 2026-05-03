@@ -1,12 +1,12 @@
-from yakoon.base.capabilities.identity import AccountService, AuthResult, SecretVerifier
+from yakoon.base.capabilities.identity import AccountService, SecretVerifier
 from yakoon.base.naming import Namespace
-from yakoon.base.runtime import Container
+from yakoon.base.plugins.entities import AuthResult
 
 
-class DefaultAuthenticationService:
+class AuthenticationService:
 
-    def __init__(self, container: Container):
-        self._container = container
+    def __init__(self):
+        pass
 
     async def authenticate(
         self, namespace: Namespace, username: str, secret: str

@@ -1,52 +1,68 @@
-from yakoon.base.capabilities.identity import AuthenticationService, PermissionService
+from __future__ import annotations
+
+from typing import Protocol
+
 from yakoon.base.commands import Command, Request
-from yakoon.base.runtime.sessions import SessionStore
+from yakoon.base.commands.ports import OnProjectCmd
+from yakoon.base.naming import Key
+from yakoon.base.plugins.entities import AuthResult
 
 
 class CmdSu(Command):
 
     key = "su"
 
-    async def run(self, request: Request) -> None:  # noqa: ARG002
+    def __init__(
+        self,
+        on_project: OnProjectCmd,
+        on_set_identity: OnSetIdentity,
+        on_authenticate: OnAuthenticate,
+    ):
+        self.on_project = on_project
+        self.on_set_identity = on_set_identity
+        self.on_authenticate = on_authenticate
 
-        projector = await self.create_projector(session)
-        auth = self.container.get(AuthenticationService)
-        namespaces = self.container.get(NamespaceResolver)
-        permissions = self.container.get(PermissionService)
+    async def run(self, request: Request):
 
-        # TODO: Woher bekommt ein Plugin einen stabilen Namespace?
-        ns = await namespaces.from_session(session, "account", "develop")
-
-        username = (
-            request.arg(0)
-            or request.option("user")
-            or (await projector.require_first("ask_user"))
-        )
+        username = request.arg(0) or request.option("user")
         secret = request.option("password")
         if not secret:
-            secret = await projector.require_first("ask_secret")
+            # secret = await projector.require_first("ask_secret")
             if secret:
                 secret = secret.reveal()
 
-        result = await auth.authenticate(ns, username, secret)
+        result = await self.on_authenticate(username, secret)
         if result.ok and result.account:
             account = result.account
-            session.set_identity(account.key, account.username)
-            permissions.apply_account_permissions(session, account)
+            self.on_set_identity(account.key, account.username)
+            # permissions.apply_account_permissions(session, account)
 
-            await self.container.get(SessionStore).save(session)
-            await projector.project(
-                "success",
+            # await self.container.get(SessionStore).save(session)
+            await self.on_project(
+                name="success.sam",
                 state={
                     "user": username,
                 },
             )
 
         else:
-            await projector.project(
-                "failed",
+            await self.on_project(
+                name="error.sam",
                 state={
                     "user": username,
                     "reason": result.reason,
                 },
             )
+
+
+# ----------------------------------
+# PORTS
+# ----------------------------------
+
+
+class OnSetIdentity(Protocol):
+    def __call__(self, key: Key, user_name: str): ...
+
+
+class OnAuthenticate(Protocol):
+    async def __call__(self, username: str, secret: str) -> AuthResult: ...

@@ -12,7 +12,7 @@ from yakoon.base.capabilities.identity import (
 from yakoon.platform.runtime.sessions import Session
 
 
-class DefaultPermissionService:
+class PermissionService:
 
     _roles: dict[str, list[str]]
     _directs: list[str]
@@ -21,8 +21,8 @@ class DefaultPermissionService:
 
         self._roles: dict[str, list[str]] = {}
         self._directs = [
-            "auth-app:su|rx",
-            "auth-app:whoami|rx",
+            "ident-app:su|rx",
+            "ident-app:whoami|rx",
             "jobs:jobs|rx",
             "shell-app:welcome|rx",
             "shell-app:version|rx",

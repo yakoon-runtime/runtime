@@ -35,6 +35,11 @@ class Container:
         if isinstance(capability, type):
             raise TypeError("Expected instance, got class. Did you forget ()?")
 
+        # Protect same container
+        if port in self._container or port in self._factories:
+            raise ValueError(f"Port already bound in this container: {port}")
+
+        # Protect container if overwrite not allowed.
         if not self._allow_override and self._parent and self._parent.contains(port):
             raise ValueError(f"Port override not allowed: {port}")
 
