@@ -1,9 +1,9 @@
-from .manager import SessionManager
+from .service import SessionService
 from .session import Session, SessionState
 
 __all__ = [
-    # .session_service
-    "SessionManager",
+    # .service
+    "SessionService",
     # .session
     "Session",
     "SessionState",

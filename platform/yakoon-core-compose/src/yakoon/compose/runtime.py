@@ -22,13 +22,13 @@ from yakoon.platform.projection import (
     build_projector,
     build_stream,
 )
-from yakoon.platform.runtime.sessions import SessionManager
+from yakoon.platform.runtime.sessions import SessionService
 from yakoon.platform.sources.data import (
     AppSource,
     CommandSource,
 )
 from yakoon.platform.sources.registry import DataSourceRegistry
-from yakoon.storage.eventstore.wire import build_memory_store
+from yakoon.storage.eventstore.wire import build_store
 
 CapabilityMode: TypeAlias = Literal["default"]
 CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
@@ -49,13 +49,14 @@ def compose_runtime(
     # --- BUILDING STORE ---
     # ----------------------
 
-    store = build_memory_store()
+    config = {"dns": "postgresql://postgres:secret@localhost:5432/yakoon_dev"}
+    store = build_store(config=config)
 
     # ----------------
     # --- SERVICES ---
     # ----------------
 
-    session_manager = SessionManager(
+    session_manager = SessionService(
         on_save=store.objects.replace,
         on_load=store.objects.get_one,
     )
@@ -126,6 +127,20 @@ def compose_runtime(
 
     output = build_stream()
 
+    # --- INITIALIZING ---
+
+    async def initialize():
+        await store.initialize()
+        await build_index()
+        await perm_boot.apply()
+
+    # -------------------
+    # --- BUILD INDEX ---
+    # -------------------
+
+    async def build_index():
+        pass
+
     # --- MACHINE HANDLING ---
 
     return build_machine(
@@ -138,7 +153,7 @@ def compose_runtime(
         on_audit_security=audit_service.security,
         on_audit_warning=audit_service.warning,
         on_bootstrap_permissions=perm_service.apply_bootstrap,
-        on_initialize=perm_boot.apply,
+        on_initialize=initialize,
     )
 
 

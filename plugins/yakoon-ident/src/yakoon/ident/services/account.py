@@ -26,6 +26,10 @@ def expect_object(value: JsonValue) -> dict[str, JsonValue]:
     return value
 
 
+# ----------------------------------
+# INDEX
+# ----------------------------------
+
 IDX_ACCOUNT_USERNAME_KEY = IndexKey("account.username")
 IDX_ACCOUNT_USERNAME_SPEC = IndexSpec(
     key=IDX_ACCOUNT_USERNAME_KEY,

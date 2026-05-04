@@ -1,0 +1,1 @@
+TRUNCATE TABLE current, revisions, index_entries, index_specs RESTART IDENTITY CASCADE;

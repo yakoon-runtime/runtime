@@ -16,7 +16,7 @@ from .identity import SessionIdentityMap
 from .session import Session, SessionState
 
 
-class SessionManager:
+class SessionService:
     """
     Session lifecycle service.
 

@@ -3,7 +3,8 @@ from yakoon.base.naming import Namespace
 from yakoon.base.naming.key import Key
 from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import OnAuthenticate
-from yakoon.storage.eventstore import StoreRuntime, build_memory_store
+from yakoon.storage.eventstore import StoreRuntime
+from yakoon.storage.eventstore.wire import build_store
 
 from .controllers import BaseController
 from .models import User, UserData
@@ -33,7 +34,7 @@ class IdentityApp(Application):
         # --- BUILDING STORE ---
         # ----------------------
 
-        self.store = build_memory_store()
+        self.store = build_store()
 
         # -------------------------------
         # --- CREATING USER ACCESS ---
