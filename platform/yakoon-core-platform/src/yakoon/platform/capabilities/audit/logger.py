@@ -2,7 +2,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from yakoon.platform.settings import settings
+from yakoon.platform.settings import Settings
 
 logdir = Path("logs")
 logdir.mkdir(exist_ok=True)
@@ -28,6 +28,7 @@ def file_logger(name, filename, level=logging.INFO):
     return logger
 
 
+settings = Settings()
 if settings.logging.log_audits:
     file_logger("yakoon.audit", "audit.log")
 if settings.logging.log_security:

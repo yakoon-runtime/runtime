@@ -14,6 +14,7 @@ from .services import (
     AuthenticationService,
     UserService,
 )
+from .settings import Settings
 
 
 class IdentityApp(Application):
@@ -30,11 +31,13 @@ class IdentityApp(Application):
 
     def on_build(self, ports: ModulePorts) -> None:
 
+        settings = Settings()
+
         # ----------------------
         # --- BUILDING STORE ---
         # ----------------------
 
-        self.store = build_store()
+        self.store = build_store(settings.storage)
 
         # -------------------------------
         # --- CREATING USER ACCESS ---
@@ -84,6 +87,8 @@ class IdentityApp(Application):
     # ----------------------------
 
     async def on_start(self, ports: ModulePorts) -> None:
+
+        await self.store.initialize()
 
         await self._build_index()
         await self._demo_data()

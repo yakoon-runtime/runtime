@@ -23,6 +23,7 @@ from yakoon.platform.projection import (
     build_stream,
 )
 from yakoon.platform.runtime.sessions import SessionService
+from yakoon.platform.settings import Settings
 from yakoon.platform.sources.data import (
     AppSource,
     CommandSource,
@@ -38,6 +39,7 @@ def compose_runtime(
     *,
     plugins: list[str] | None = None,
     capabilities: CapabilitySelection | None = None,
+    settings: Settings,
 ) -> RuntimeHost:
 
     ports = Container()
@@ -49,8 +51,7 @@ def compose_runtime(
     # --- BUILDING STORE ---
     # ----------------------
 
-    config = {"dns": "postgresql://postgres:secret@localhost:5432/yakoon_dev"}
-    store = build_store(config=config)
+    store = build_store(settings.storage)
 
     # ----------------
     # --- SERVICES ---
@@ -61,7 +62,7 @@ def compose_runtime(
         on_load=store.objects.get_one,
     )
 
-    audit_service = AuditLogService()
+    audit_service = AuditLogService(settings.logging)
 
     # -------------------
     # --- PERMISSIONS ---

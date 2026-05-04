@@ -1,19 +1,20 @@
 from contextlib import asynccontextmanager
 
 from yakoon.storage.eventstore.backends import PostgresBackend
+from yakoon.storage.settings import StorageSettings
 
 from ..batches.json_patch import JsonPatchStrategy
 from ..runtime import StoreRuntime
 from ..store import EntityStore
 
 
-def build_store(dsn: str):
+def build_store(settings: StorageSettings):
 
     # ------------------------
     # --- DEFINING BACKEND ---
     # ------------------------
 
-    backend = PostgresBackend(dsn)
+    backend = PostgresBackend(settings.dsn)
 
     def create_store(exec):
 

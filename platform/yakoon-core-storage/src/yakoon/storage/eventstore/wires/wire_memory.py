@@ -1,12 +1,14 @@
 from contextlib import asynccontextmanager
 
+from yakoon.storage.settings import StorageSettings
+
 from ..backends.memory import MemoryBackend
 from ..batches.json_patch import JsonPatchStrategy
 from ..runtime import StoreRuntime
 from ..store import EntityStore
 
 
-def build_store() -> StoreRuntime:
+def build_store(settings: StorageSettings) -> StoreRuntime:
 
     def create_store(exec: MemoryBackend) -> EntityStore:
 

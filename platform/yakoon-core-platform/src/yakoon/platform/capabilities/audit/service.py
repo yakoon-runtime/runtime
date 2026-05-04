@@ -1,26 +1,27 @@
 import logging
 
-from yakoon.platform.settings import settings
+from yakoon.platform.settings.logging import LoggingSettings
 
 
 class AuditLogService:
 
-    def __init__(self):
+    def __init__(self, settings: LoggingSettings):
+        self.settings = settings
         self._audit = logging.getLogger("yakoon.audit")
         self._error = logging.getLogger("yakoon.error")
         self._warning = logging.getLogger("yakoon.warning")
         self._security = logging.getLogger("yakoon.security")
 
     def audit(self, message: str):
-        if settings.logging.log_commands:
+        if self.settings.log_commands:
             self._audit.info(message)
 
     def warning(self, message: str, session):
-        if settings.logging.log_warnings:
+        if self.settings.log_warnings:
             self._warning.warning(message, extra={"session": session.key})
 
     def error(self, exc: Exception, session=None):
-        if settings.logging.log_errors:
+        if self.settings.log_errors:
             self._error.error(
                 "Unhandled exception",
                 exc_info=(type(exc), exc, exc.__traceback__),
@@ -28,7 +29,7 @@ class AuditLogService:
             )
 
     def security(self, session, obj, action):
-        if settings.logging.log_security:
+        if self.settings.log_security:
             self._security.warning(
                 "Permission denied",
                 extra={
