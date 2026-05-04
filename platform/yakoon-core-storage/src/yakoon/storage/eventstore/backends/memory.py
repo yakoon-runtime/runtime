@@ -346,6 +346,7 @@ class MemoryBackend:
             records = bucket.get(vq, [])
 
             for rec in records:
+                # Index ist zeitlich konsistent
                 if as_of is not None and rec.written_at > as_of:
                     continue
 
