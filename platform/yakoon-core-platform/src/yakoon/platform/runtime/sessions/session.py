@@ -20,8 +20,8 @@ from yakoon.platform.runtime.trace import ExecutionTrace
 class SessionState:
     key: Key
     active_app_id: str | None = None
+    user_key: str | None = None
     account_key: str | None = None
-    username: str | None = None
     last_active: datetime | None = None
     lang: str = "de"
     data: dict[str, Any] = field(default_factory=dict)
@@ -157,16 +157,6 @@ class Session:
         self._state.last_active = datetime.now(UTC)
 
     # ----------------------------
-    # Username
-    # ----------------------------
-
-    def set_username(self, username: str | None):
-        self._state.username = username
-
-    def get_username(self) -> str | None:
-        return self._state.username
-
-    # ----------------------------
     # Application
     # ----------------------------
 
@@ -180,15 +170,31 @@ class Session:
     # Identity
     # ----------------------------
 
-    def set_identity(self, account_key, username: str) -> None:
-        self._state.account_key = str(account_key)
-        self._state.username = username
+    def set_identity(self, user_key) -> None:
+        self._state.user_key = str(user_key)
+
+    def get_identity(self) -> Key | None:
+        if self._state.user_key:
+            return Key.from_str(self._state.user_key)
+        return None
 
     def clear_identity(self) -> None:
-        self._state.account_key = None
-        self._state.username = None
+        self._state.user_key = None
 
     def has_identity(self) -> bool:
+        return self._state.user_key is not None
+
+    # ----------------------------
+    # Account
+    # ----------------------------
+
+    def set_active_account(self, account_key) -> None:
+        self._state.account_key = str(account_key)
+
+    def clear_active_account(self) -> None:
+        self._state.account_key = None
+
+    def has_active_account(self) -> bool:
         return self._state.account_key is not None
 
     # ----------------------------
@@ -226,7 +232,8 @@ class Session:
         return replace(
             event,
             state=ProjectionState(
-                user=self.get_username(),
+                user="NO-USER!",
+                # user=self.get_username(),
                 controller=self.get_active_app(),
             ),
         )

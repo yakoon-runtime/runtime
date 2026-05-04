@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import Protocol, cast
-
 from yakoon.base.commands import Command
 from yakoon.base.controllers import Controller, ResourceReferences
-from yakoon.base.naming import Key, NamespaceResolver
+from yakoon.base.naming import NamespaceResolver
 from yakoon.base.plugins.models import AuthResult
 from yakoon.base.plugins.ports import OnApplyPermissions, OnAuthenticate, OnSaveSession
 
@@ -51,7 +49,7 @@ class BaseController(Controller):
 
     async def _authenticate(self, username: str, secret: str) -> AuthResult:
         resolver = NamespaceResolver()
-        namespace = resolver.from_session(self.session, "account", "develop")
+        namespace = resolver.from_session(self.session, "user", "global")
 
         on_authenticate = self.ports.on_get_port(OnAuthenticate)
         return await on_authenticate(
@@ -81,30 +79,21 @@ class BaseController(Controller):
     # ----------------------------------
 
     def _create_su(self):
-        access = cast(_SessionAccess, self.session)
 
         return CmdSu(
             on_project=self.project,
-            on_set_identity=access.set_identity,
+            on_set_identity=self.session.set_identity,
             on_store_session=self._save_session,
             on_authenticate=self._authenticate,
             on_apply_perm=self._apply_permissions,
         )
 
     def _create_whoami(self):
-        access = cast(_SessionAccess, self.session)
+
+        def get_user() -> str:
+            return str(self.session.get_identity() or "")
 
         return CmdWhoAmI(
             on_project=self.project,
-            on_get_user=access.get_username,
+            on_get_user=get_user,
         )
-
-
-# ----------------------------------
-# SESSION ACCESS
-# ----------------------------------
-
-
-class _SessionAccess(Protocol):
-    def get_username(self) -> str: ...
-    def set_identity(self, key: Key, user_name: str): ...

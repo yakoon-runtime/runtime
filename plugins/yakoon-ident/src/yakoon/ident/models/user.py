@@ -1,15 +1,19 @@
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from typing import Any
 
 from yakoon.base.naming import Key
 
 
 @dataclass
-class AccountData:
+class UserData:
     key: Key
 
-    name: str
+    username: str
+    password_hash: str | None = None
+
     is_disabled: bool = False
+    last_login: datetime | None = None
 
     data: dict[str, Any] = field(default_factory=dict)
 
@@ -19,25 +23,37 @@ class AccountData:
     def to_dict(self) -> dict:
         return {
             "key": str(self.key),
-            "name": self.name,
+            "username": self.username,
+            "password_hash": self.password_hash,
             "is_disabled": self.is_disabled,
+            "last_login": (
+                self.last_login.astimezone(UTC).isoformat() if self.last_login else None
+            ),
             "data": dict(self.data),
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> "AccountData":
+    def from_dict(cls, d: dict) -> "UserData":
         d = dict(d or {})
 
-        return cls(
+        raw_last_login = d.get("last_login")
+
+        obj = cls(
             key=Key.from_str(d["key"]),
-            name=d["name"],
+            username=d["username"],
+            password_hash=d["password_hash"],
             is_disabled=d.get("is_disabled", False),
             data=dict(d.get("data", {})),
         )
 
+        if raw_last_login:
+            obj.last_login = datetime.fromisoformat(raw_last_login)
 
-class Account:
-    def __init__(self, data: AccountData):
+        return obj
+
+
+class User:
+    def __init__(self, data: UserData):
         self.data = data
 
     @property
@@ -45,8 +61,8 @@ class Account:
         return self.data.key
 
     @property
-    def name(self) -> str:
-        return self.data.name
+    def username(self) -> str:
+        return self.data.username
 
     def is_active(self) -> bool:
         return self.data.is_active()

@@ -3,11 +3,16 @@ from yakoon.base.naming import Namespace
 from yakoon.base.naming.key import Key
 from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import OnAuthenticate
-from yakoon.ident.models.account import Account, AccountData
 from yakoon.storage.eventstore import StoreRuntime, build_memory_store
 
 from .controllers import BaseController
-from .services import AccountService, AllowAllSecretVerifier, AuthenticationService
+from .models import User, UserData
+from .services import (
+    AccountService,
+    AllowAllSecretVerifier,
+    AuthenticationService,
+    UserService,
+)
 
 
 class IdentityApp(Application):
@@ -20,6 +25,7 @@ class IdentityApp(Application):
     store: StoreRuntime
     auth: AuthenticationService
     accounts: AccountService
+    users: UserService
 
     def on_build(self, ports: ModulePorts) -> None:
 
@@ -28,6 +34,17 @@ class IdentityApp(Application):
         # ----------------------
 
         self.store = build_memory_store()
+
+        # -------------------------------
+        # --- CREATING USER ACCESS ---
+        # -------------------------------
+
+        self.users = UserService(
+            on_store=self.store.objects.put,
+            on_replace=self.store.objects.replace,
+            on_get_by_key=self.store.objects.get_one,
+            on_find=self.store.objects.scan,
+        )
 
         # -------------------------------
         # --- CREATING ACCOUNT ACCESS ---
@@ -46,13 +63,13 @@ class IdentityApp(Application):
 
         verifier = AllowAllSecretVerifier()
 
-        # ------------------------
-        # --- CREATING ACCOUNT ---
-        # ------------------------
+        # ----------------------
+        # --- AUTHENTICATING ---
+        # ----------------------
 
         self.auth = AuthenticationService(
-            on_get_account=self.accounts.get_by_username,
-            on_verify_account=verifier.verify,
+            on_get_user=self.users.get_by_username,
+            on_verify_user=verifier.verify,
         )
 
         # ------------------
@@ -75,39 +92,34 @@ class IdentityApp(Application):
     # -------------------
 
     async def _build_index(self):
-        from .services.account import IDX_ACCOUNT_USERNAME_SPEC
 
         await self.store.objects.ensure(
-            namespace=Namespace("system", "account", "develop"),
-            specs=[
-                IDX_ACCOUNT_USERNAME_SPEC,
-            ],
+            namespace=Namespace("system", "user", "global"),
+            specs=UserService.index_specs(),
         )
 
     # ----------------
     # --- DEMODATA ---
     # ----------------
 
-    async def _demo_data(self, space: str = "develop") -> None:
+    async def _demo_data(self) -> None:
 
-        ns = Namespace(domain="system", kind="account", space=space)
+        user_ns = Namespace(domain="system", kind="user", space="global")
 
-        a1 = Account(
-            AccountData(
-                Key(namespace=ns, id="1"),
+        u1 = User(
+            UserData(
+                key=Key(namespace=user_ns, id="stefan"),
                 username="stefan",
                 password_hash="123",
-                roles=["admin"],
             )
         )
-        await self.accounts.save(a1)
+        await self.users.save(u1)
 
-        a2 = Account(
-            AccountData(
-                Key(namespace=ns, id="2"),
+        u2 = User(
+            UserData(
+                key=Key(namespace=user_ns, id="lara"),
                 username="lara",
                 password_hash="456",
-                roles=["user"],
             )
         )
-        await self.accounts.save(a2)
+        await self.users.save(u2)

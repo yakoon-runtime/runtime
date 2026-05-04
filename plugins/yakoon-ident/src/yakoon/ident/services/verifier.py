@@ -1,7 +1,16 @@
-from ..models import Account
+import hashlib
+
+from ..models import User
 
 
 class AllowAllSecretVerifier:
 
-    def verify(self, account: Account, secret: str) -> bool:
-        return account.password_hash == secret
+    def verify(self, user: User, secret: str) -> bool:
+        return user.data.password_hash == secret
+
+
+class SimpleHashVerifier:
+
+    def verify(self, user: User, secret: str) -> bool:
+        hashed = hashlib.sha256(secret.encode()).hexdigest()
+        return user.data.password_hash == hashed

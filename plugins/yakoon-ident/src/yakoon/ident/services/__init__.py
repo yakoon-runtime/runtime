@@ -1,5 +1,6 @@
 from .account import AccountService
 from .authentication import AuthenticationService
+from .user import UserService
 from .verifier import AllowAllSecretVerifier
 
 __all__ = [
@@ -9,4 +10,6 @@ __all__ = [
     "AuthenticationService",
     # .verifier
     "AllowAllSecretVerifier",
+    # .user
+    "UserService",
 ]

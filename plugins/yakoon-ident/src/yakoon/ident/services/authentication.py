@@ -5,38 +5,36 @@ from typing import Protocol
 from yakoon.base.naming import Namespace
 from yakoon.base.plugins.models import AuthResult
 
-from ..models import Account
+from ..models import User
 
 
 class AuthenticationService:
 
     def __init__(
         self,
-        on_get_account: OnGetAccount,
-        on_verify_account: OnVerifyAccount,
+        on_get_user: OnGetUser,
+        on_verify_user: OnVerifyUser,
     ):
-        self.on_get_account = on_get_account
-        self.on_verify = on_verify_account
+        self.on_get_user = on_get_user
+        self.on_verify = on_verify_user
 
     async def authenticate(
         self, namespace: Namespace, username: str, secret: str
     ) -> AuthResult:
 
-        acc = await self.on_get_account(namespace=namespace, username=username)
-        if not acc:
+        user = await self.on_get_user(namespace=namespace, username=username)
+        if not user:
             return AuthResult(ok=False, reason="unknown-user")
 
-        if not self.on_verify(account=acc, secret=secret):
+        if not self.on_verify(user=user, secret=secret):
             return AuthResult(ok=False, reason="invalid-credentials")
 
-        return AuthResult(ok=True, account=self._to_dict(acc))
+        return AuthResult(ok=True, user=self._to_dict(user))
 
-    def _to_dict(self, account: Account) -> dict:
+    def _to_dict(self, user: User) -> dict:
         return {
-            "key": account.key,
-            "username": account.username,
-            "roles": list(account.roles),
-            "permissions": list(account.permissions),
+            "key": user.key,
+            "username": user.username,
         }
 
 
@@ -45,19 +43,19 @@ class AuthenticationService:
 # ----------------------------------
 
 
-class OnGetAccount(Protocol):
+class OnGetUser(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
         username: str,
-    ) -> Account | None: ...
+    ) -> User | None: ...
 
 
-class OnVerifyAccount(Protocol):
+class OnVerifyUser(Protocol):
     def __call__(
         self,
         *,
-        account: Account,
+        user: User,
         secret: str,
     ) -> bool: ...

@@ -17,7 +17,7 @@ from yakoon.storage.eventstore.models import (
     ValueType,
 )
 
-from ..models import Account, AccountData
+from ..models import User, UserData
 
 
 def expect_object(value: JsonValue) -> dict[str, JsonValue]:
@@ -26,19 +26,27 @@ def expect_object(value: JsonValue) -> dict[str, JsonValue]:
     return value
 
 
-IDX_ACCOUNT_USERNAME_KEY = IndexKey("account.username")
-IDX_ACCOUNT_USERNAME_SPEC = IndexSpec(
-    key=IDX_ACCOUNT_USERNAME_KEY,
+# ----------------------------------
+# INDEX
+# ----------------------------------
+
+IDX_USER_USERNAME_KEY = IndexKey("user.username")
+IDX_USER_USERNAME_SPEC = IndexSpec(
+    key=IDX_USER_USERNAME_KEY,
     value_type=ValueType.TEXT,
     unique=True,
 )
 
+# ----------------------------------
+# SERVICE
+# ----------------------------------
 
-class AccountService:
-    """
-    Loads/saves accounts via ES-light EntityStore.
-    Keeps the public API stable.
-    """
+
+class UserService:
+
+    @staticmethod
+    def index_specs():
+        return [IDX_USER_USERNAME_SPEC]
 
     def __init__(
         self,
@@ -52,40 +60,41 @@ class AccountService:
         self.on_get_by_key = on_get_by_key
         self.on_find = on_find
 
-    async def get_by_key(self, key: Key) -> Account | None:
+    async def get_by_key(self, key: Key) -> User | None:
         row = await self.on_get_by_key(key=key)
         if row.data is None:
             return None
+        return User(UserData.from_dict(expect_object(row.data)))
 
-        data = AccountData.from_dict(expect_object(row.data))
-        return Account(data)
+    async def get_by_username(self, namespace: Namespace, username: str) -> User | None:
 
-    async def save(self, account: Account) -> None:
-        key = account.data.key
-
-        doc: JsonValue = account.data.to_dict()
-
-        # index-on-write: username
-        username = doc.get("username")
-        if not isinstance(username, str):
-            raise TypeError("Account.username must be a string")
-
-        await self.on_replace(
-            key=key,
-            doc=doc,
-            indexes=[IndexTerm(key=IDX_ACCOUNT_USERNAME_KEY, value=username)],
-            snapshot_hint=SnapshotHint.COMMIT,
+        keys, _ = await self.on_find(
+            namespace=namespace,
+            index_key=IDX_USER_USERNAME_KEY,
+            value=username,
+            limit=1,
         )
 
-    async def delete_by_key(self, key: Key) -> None:
-        # ES-light delete semantics: either tombstone or hard-delete.
-        # For now: write a tombstone field (recommended), or implement backend delete later.
+        if not keys:
+            return None
 
-        patch: JsonValue = {"op": "add", "path": "/_deleted", "value": True}
+        row = await self.on_get_by_key(key=keys[0])
+        if row.data is None:
+            return None
 
-        await self.on_put(
-            key=key,
-            patch=[patch],
+        return User(UserData.from_dict(expect_object(row.data)))
+
+    async def save(self, user: User) -> None:
+        doc = user.data.to_dict()
+
+        username = doc.get("username")
+        if not isinstance(username, str):
+            raise TypeError("User.username must be a string")
+
+        await self.on_replace(
+            key=user.key,
+            doc=doc,
+            indexes=[IndexTerm(key=IDX_USER_USERNAME_KEY, value=username)],
             snapshot_hint=SnapshotHint.COMMIT,
         )
 

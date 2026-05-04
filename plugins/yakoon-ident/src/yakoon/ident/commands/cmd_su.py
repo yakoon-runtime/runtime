@@ -39,22 +39,22 @@ class CmdSu(Command):
                 secret = secret.reveal()
 
         result = await self.on_authenticate(username, secret)
-        if result.ok and result.account:
+        if result.ok and result.user:
 
-            account = result.account
-            self.on_set_identity(account["key"], account["username"])
+            user = result.user
+            self.on_set_identity(user["key"])
 
-            self.on_apply_perm(
-                roles=account["roles"],
-                permissions=account["permissions"],
-            )
+            # self.on_apply_perm(
+            #    roles=user["roles"],
+            #    permissions=user["permissions"],
+            # )
 
             await self.on_store_session()
 
             projection = await self.on_project(
                 name="success.sam",
                 state={
-                    "user": username,
+                    "user": user["username"],
                 },
             )
         else:
@@ -75,7 +75,7 @@ class CmdSu(Command):
 
 
 class OnSetIdentity(Protocol):
-    def __call__(self, key: Key, user_name: str): ...
+    def __call__(self, user_key: Key): ...
 
 
 class OnAuthenticateUser(Protocol):
