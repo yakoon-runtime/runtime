@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from typing import Any
 
 from yakoon.base.naming import Key
+from yakoon.storage.eventstore import GetResult
 
 
 @dataclass
@@ -25,7 +28,7 @@ class AccountData:
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> "AccountData":
+    def from_dict(cls, d: dict) -> AccountData:
         d = dict(d or {})
 
         return cls(
@@ -37,6 +40,7 @@ class AccountData:
 
 
 class Account:
+
     def __init__(self, data: AccountData):
         self.data = data
 
@@ -50,3 +54,8 @@ class Account:
 
     def is_active(self) -> bool:
         return self.data.is_active()
+
+    @classmethod
+    def from_row(cls, row: GetResult) -> Account:
+        data = row.require_object()
+        return cls(AccountData.from_dict(data))

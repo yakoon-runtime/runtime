@@ -1,8 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
 
 from yakoon.base.naming import Key
+from yakoon.storage.eventstore import GetResult
 
 
 @dataclass
@@ -33,7 +36,7 @@ class UserData:
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> "UserData":
+    def from_dict(cls, d: dict) -> UserData:
         d = dict(d or {})
 
         raw_last_login = d.get("last_login")
@@ -66,3 +69,8 @@ class User:
 
     def is_active(self) -> bool:
         return self.data.is_active()
+
+    @classmethod
+    def from_row(cls, row: GetResult) -> User:
+        data = row.require_object()
+        return cls(UserData.from_dict(data))

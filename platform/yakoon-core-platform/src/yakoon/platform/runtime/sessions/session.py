@@ -14,6 +14,7 @@ from yakoon.base.transport import IO
 from yakoon.platform.capabilities.permission import PermissionSet
 from yakoon.platform.flow import Flow
 from yakoon.platform.runtime.trace import ExecutionTrace
+from yakoon.storage.eventstore import GetResult
 
 
 @dataclass
@@ -103,6 +104,11 @@ class Session:
     @classmethod
     def from_state(cls, state: SessionState) -> Session:
         return cls(state)
+
+    @classmethod
+    def from_row(cls, row: GetResult) -> Session:
+        data = row.require_object()
+        return cls(SessionState.from_dict(data))
 
     # ========================================================
     # SYSTEM API

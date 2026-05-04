@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import datetime
-from typing import Protocol, cast
+from typing import Protocol
 
 from yakoon.base.naming import Key
 from yakoon.storage.eventstore import (
@@ -42,17 +42,10 @@ class SessionService:
             return live
 
         row = await self.on_load(key=key)
-        if row.data is None:
+        if not row.ok:
             return None
 
-        data = row.data
-        if not isinstance(data, dict):
-            raise TypeError(
-                f"Corrupted session state: expected object, got {type(data).__name__}"
-            )
-
-        state = SessionState.from_dict(data)  # data ist JsonValue (dict)
-        session = Session(state)
+        session = Session.from_row(row)
         self._map.put(session)
         return session
 
@@ -75,11 +68,9 @@ class SessionService:
         return session, True
 
     async def save(self, session: Session) -> None:
-        key = session.key
-        system_session = cast(Session, session)
         await self.on_save(
-            key=key,
-            doc=system_session.state.to_dict(),
+            key=session.key,
+            doc=session.state.to_dict(),
             snapshot_hint=SnapshotHint.COMMIT,
         )
 

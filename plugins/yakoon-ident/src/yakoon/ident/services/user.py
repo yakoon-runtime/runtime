@@ -17,14 +17,7 @@ from yakoon.storage.eventstore.models import (
     ValueType,
 )
 
-from ..models import User, UserData
-
-
-def expect_object(value: JsonValue) -> dict[str, JsonValue]:
-    if not isinstance(value, dict):
-        raise TypeError(f"Expected JSON object, got {type(value).__name__}")
-    return value
-
+from ..models import User
 
 # ----------------------------------
 # INDEX
@@ -62,9 +55,10 @@ class UserService:
 
     async def get_by_key(self, key: Key) -> User | None:
         row = await self.on_get_by_key(key=key)
-        if row.data is None:
+        if not row.ok:
             return None
-        return User(UserData.from_dict(expect_object(row.data)))
+
+        return User.from_row(row)
 
     async def get_by_username(self, namespace: Namespace, username: str) -> User | None:
 
@@ -79,10 +73,10 @@ class UserService:
             return None
 
         row = await self.on_get_by_key(key=keys[0])
-        if row.data is None:
+        if not row.ok:
             return None
 
-        return User(UserData.from_dict(expect_object(row.data)))
+        return User.from_row(row)
 
     async def save(self, user: User) -> None:
         doc = user.data.to_dict()

@@ -7,6 +7,7 @@ from typing import (
     Literal,
     NewType,
     TypeAlias,
+    cast,
 )
 
 
@@ -129,3 +130,34 @@ class GetResult:
     @property
     def is_historical(self) -> bool:
         return self.historical
+
+    @property
+    def ok(self) -> bool:
+        return self.data is not None
+
+    def require_object(self) -> dict[str, JsonValue]:
+        if self.data is None:
+            raise ValueError("Expected object, got None")
+
+        if not isinstance(self.data, dict):
+            raise TypeError(f"Expected JSON object, got {type(self.data).__name__}")
+
+        return cast(dict[str, JsonValue], self.data)
+
+    def require_list(self) -> list[JsonValue]:
+        if self.data is None:
+            raise ValueError("Expected list, got None")
+
+        if not isinstance(self.data, list):
+            raise TypeError(f"Expected JSON list, got {type(self.data).__name__}")
+
+        return self.data
+
+    def optional_object(self) -> dict[str, JsonValue] | None:
+        if self.data is None:
+            return None
+
+        if not isinstance(self.data, dict):
+            raise TypeError(f"Expected JSON object, got {type(self.data).__name__}")
+
+        return cast(dict[str, JsonValue], self.data)

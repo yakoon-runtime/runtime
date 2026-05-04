@@ -4,18 +4,10 @@ from yakoon.base.naming import Key
 from yakoon.storage.eventstore.models import (
     IndexKey,
     IndexTerm,
-    JsonValue,
     SnapshotHint,
 )
 
-from ..models import Membership, MembershipData
-
-
-def expect_object(value: JsonValue) -> dict[str, JsonValue]:
-    if not isinstance(value, dict):
-        raise TypeError(f"Expected JSON object, got {type(value).__name__}")
-    return value
-
+from ..models import Membership
 
 IDX_MEMBERSHIP_USER_ACCOUNT = IndexKey("membership.user_account")
 
@@ -27,21 +19,22 @@ class MembershipService:
         self.on_get_by_key = on_get_by_key
         self.on_find = on_find
 
-    async def get(self, user_id: Key, account_id: Key) -> Membership | None:
+    async def get(self, user_key: Key, account_key: Key) -> Membership | None:
+
         keys, _ = await self.on_find(
-            namespace=user_id.namespace,
+            namespace=user_key.namespace,
             index_key=IDX_MEMBERSHIP_USER_ACCOUNT,
-            value=f"{user_id}:{account_id}",
+            value=f"{user_key}::{account_key}",
             limit=1,
         )
         if not keys:
             return None
 
         row = await self.on_get_by_key(key=keys[0])
-        if row.data is None:
+        if not row.ok:
             return None
 
-        return Membership(MembershipData.from_dict(expect_object(row.data)))
+        return Membership.from_row(row)
 
     async def save(self, membership: Membership) -> None:
         doc = membership.data.to_dict()
