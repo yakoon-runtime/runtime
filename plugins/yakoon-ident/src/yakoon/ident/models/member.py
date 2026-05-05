@@ -9,15 +9,18 @@ from yakoon.storage.eventstore import GetResult
 
 @dataclass
 class MembershipData:
-    key: Key
 
+    CURRENT_VERSION = 1
+
+    key: Key
     user_id: Key
     account_id: Key
 
     roles: list[str] = field(default_factory=list)
-
     is_disabled: bool = False
     data: dict[str, Any] = field(default_factory=dict)
+
+    _v: int = field(default=CURRENT_VERSION)
 
     def has_role(self, role: str) -> bool:
         return role in self.roles
@@ -33,6 +36,7 @@ class MembershipData:
             "roles": list(self.roles),
             "is_disabled": self.is_disabled,
             "data": dict(self.data),
+            "_v": self._v,
         }
 
     @classmethod
@@ -46,6 +50,7 @@ class MembershipData:
             roles=list(d.get("roles", [])),
             is_disabled=d.get("is_disabled", False),
             data=dict(d.get("data", {})),
+            _v=d.get("_v", 0),
         )
 
 

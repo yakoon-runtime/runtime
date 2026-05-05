@@ -19,6 +19,9 @@ from yakoon.storage.eventstore import GetResult
 
 @dataclass
 class SessionState:
+
+    CURRENT_VERSION = 1
+
     key: Key
     active_app_id: str | None = None
     user_key: str | None = None
@@ -26,6 +29,7 @@ class SessionState:
     last_active: datetime | None = None
     lang: str = "de"
     data: dict[str, Any] = field(default_factory=dict)
+    _v: int = field(default=CURRENT_VERSION)
 
     def to_dict(self) -> dict:
         d = asdict(self)

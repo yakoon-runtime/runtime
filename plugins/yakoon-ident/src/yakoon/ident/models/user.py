@@ -10,15 +10,17 @@ from yakoon.storage.eventstore import GetResult
 
 @dataclass
 class UserData:
-    key: Key
 
+    CURRENT_VERSION = 1
+
+    key: Key
     username: str
     password_hash: str | None = None
-
     is_disabled: bool = False
     last_login: datetime | None = None
-
     data: dict[str, Any] = field(default_factory=dict)
+
+    _v: int = field(default=CURRENT_VERSION)
 
     def is_active(self) -> bool:
         return not self.is_disabled
@@ -33,6 +35,7 @@ class UserData:
                 self.last_login.astimezone(UTC).isoformat() if self.last_login else None
             ),
             "data": dict(self.data),
+            "_v": self._v,
         }
 
     @classmethod
@@ -47,6 +50,7 @@ class UserData:
             password_hash=d["password_hash"],
             is_disabled=d.get("is_disabled", False),
             data=dict(d.get("data", {})),
+            _v=d.get("_v", 0),
         )
 
         if raw_last_login:

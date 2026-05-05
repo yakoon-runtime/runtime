@@ -9,12 +9,15 @@ from yakoon.storage.eventstore import GetResult
 
 @dataclass
 class AccountData:
-    key: Key
 
+    CURRENT_VERSION = 1
+
+    key: Key
     name: str
     is_disabled: bool = False
-
     data: dict[str, Any] = field(default_factory=dict)
+
+    _v: int = field(default=CURRENT_VERSION)
 
     def is_active(self) -> bool:
         return not self.is_disabled
@@ -24,6 +27,7 @@ class AccountData:
             "key": str(self.key),
             "name": self.name,
             "is_disabled": self.is_disabled,
+            "_v": self._v,
             "data": dict(self.data),
         }
 
@@ -36,6 +40,7 @@ class AccountData:
             name=d["name"],
             is_disabled=d.get("is_disabled", False),
             data=dict(d.get("data", {})),
+            _v=d.get("_v", 0),
         )
 
 
