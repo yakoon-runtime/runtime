@@ -18,6 +18,7 @@ class JinjaRenderEngine:
             lstrip_blocks=True,
             enable_async=False,
             undefined=StrictUndefined,  # !!
+            finalize=finalize_template_value,
         )
         register_filters(self.env)
 
@@ -37,9 +38,31 @@ class JinjaRenderEngine:
         return obj
 
 
+# ----------------------------------
+# HELPER
+# ----------------------------------
+
+
 def ljust(value: str, width: int) -> str:
     return value.ljust(width)
 
 
 def register_filters(environment):
     environment.filters["ljust"] = ljust
+
+
+# ----------------------------------
+# TEMPLATE PROTECTION
+# ----------------------------------
+
+
+def finalize_template_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, (str, int, float, bool)):
+        return value
+
+    raise TypeError(
+        f"Cannot render object of type {type(value).__name__} directly. "
+        "Render a field instead, e.g. user.name."
+    )
