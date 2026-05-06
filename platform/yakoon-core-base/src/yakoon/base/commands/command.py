@@ -26,6 +26,7 @@ class Command(ABC):
     kind: CommandKind = CommandKind.USER
     scope: CommandScope = CommandScope.APP
     visibility: CommandVisibility = CommandVisibility.NORMAL
+    use_subcommands: bool = False
 
     @abstractmethod
     def run(self, request: Request):

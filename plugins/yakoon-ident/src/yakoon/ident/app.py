@@ -6,7 +6,7 @@ from yakoon.base.plugins.ports import OnAuthenticate
 from yakoon.storage.eventstore import StoreRuntime
 from yakoon.storage.eventstore.wire import build_store
 
-from .controllers import BaseController
+from .controllers import AuthController, UserAdminController
 from .models import User, UserData
 from .services import (
     AccountService,
@@ -22,7 +22,10 @@ class IdentityApp(Application):
     id: str = "ident-app"
     name = "ident"
 
-    controllers = (BaseController,)
+    controllers = (
+        AuthController,
+        UserAdminController,
+    )
 
     store: StoreRuntime
     auth: AuthenticationService

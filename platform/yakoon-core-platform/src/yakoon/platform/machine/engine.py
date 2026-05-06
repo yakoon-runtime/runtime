@@ -89,7 +89,10 @@ class CommandEngine:
             # )
 
             # Permission check
-            fq = Permission.fq_key(app.id, command_type.key)
+            action = None
+            if command_type.use_subcommands:
+                action = event.tokens[0] if event.tokens else None
+            fq = Permission.fq_key(app.id, command_type.key, action)
             if not self.on_authorize(session=session, perm_key=fq):
                 raise PermissionDenied()
 

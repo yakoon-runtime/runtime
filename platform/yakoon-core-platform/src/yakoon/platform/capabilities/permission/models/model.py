@@ -26,8 +26,10 @@ class Permission:
         return self.scope2 is not None
 
     @staticmethod
-    def fq_key(controller_id, command_key) -> str:
+    def fq_key(app_id: str, command_key: str, action: str | None) -> str:
         """
         Returns fq_key (fully qualified key)
         """
-        return f"{controller_id}:{command_key}"
+        if action and action != "*":
+            return f"{app_id}:{command_key}.{action}"
+        return f"{app_id}:{command_key}"

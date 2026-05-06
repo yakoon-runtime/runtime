@@ -16,9 +16,14 @@ class PermissionService:
 
         self._roles: dict[str, list[str]] = {}
         self._directs = [
+            # ident
             "ident-app:su|rx",
             "ident-app:whoami|rx",
+            "ident-app:user|rx",
+            "ident-app:user.list|rx",
+            # jobs
             "jobs:jobs|rx",
+            # shell
             "shell-app:welcome|rx",
             "shell-app:version|rx",
             "shell-app:man|rx",
@@ -31,10 +36,6 @@ class PermissionService:
             "crm-customer:customer-create|rx",
             "crm-customer:wf:crm.customer.store|rx",
             "crm-customer:wf:crm.customer.validate|rx",
-            "workflow:wf.run|rx",
-            "workflow:wf.input|rx",
-            "workflow:wf.next|rx",
-            "workflow:wf.cancel|rx",
             "discovery:lookup|rx",
             # demo DSL
             "demo.dsl:demo.focus.simple|rx",

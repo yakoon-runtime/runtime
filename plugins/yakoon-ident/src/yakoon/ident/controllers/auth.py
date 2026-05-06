@@ -6,20 +6,14 @@ from yakoon.base.naming import NamespaceResolver
 from yakoon.base.plugins.models import AuthResult
 from yakoon.base.plugins.ports import OnApplyPermissions, OnAuthenticate, OnSaveSession
 
-from ..commands import BaseCommands, CmdSu, CmdWhoAmI
+from ..commands import AuthCommands, CmdSu, CmdWhoAmI
 
 
-class BaseController(Controller):
-    """Authentication controller.
+class AuthController(Controller):
 
-    Provides:
-        - System-level authentication commands
-        - Templates under yakoon.auth:core
-    """
+    id: str = "id-auth"
 
-    id: str = "id-base"
-
-    commandsets = (BaseCommands,)
+    commandsets = (AuthCommands,)
 
     resources = ResourceReferences(
         package="yakoon.ident",
