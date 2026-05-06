@@ -48,7 +48,7 @@ class MembershipService:
         if not row.ok:
             return None
 
-        return Membership.from_row(key=row.key, row=row)
+        return Membership.from_row(row=row)
 
     async def save(self, membership: Membership) -> None:
         key = membership.key

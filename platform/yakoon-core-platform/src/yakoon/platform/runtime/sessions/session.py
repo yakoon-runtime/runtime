@@ -92,10 +92,10 @@ class Session:
         self._runtime.permissions = permset
 
     @classmethod
-    def from_row(cls, key: Key, row: GetResult) -> Session:
+    def from_row(cls, row: GetResult) -> Session:
         data = row.require_object()
         return cls(
-            key=key,
+            key=row.key,
             data=SessionData.from_dict(data),
         )
 

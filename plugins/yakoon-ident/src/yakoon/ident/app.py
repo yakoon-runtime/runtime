@@ -47,9 +47,10 @@ class IdentityApp(Application):
         # -------------------------------
 
         self.users = UserService(
+            on_get=self.store.objects.get,
             on_append=self.store.objects.append,
             on_replace=self.store.objects.replace,
-            on_get_by_key=self.store.objects.get,
+            on_get_many=self.store.objects.get_many,
             on_scan=self.store.objects.scan,
         )
 
@@ -84,6 +85,12 @@ class IdentityApp(Application):
         # ------------------
 
         ports.on_publish(OnAuthenticate, self.auth.authenticate)
+
+        # -----------------------
+        # --- PROVIDE INTENAL ---
+        # -----------------------
+
+        ports.on_provide(UserService, self.users)
 
     # ----------------------------
     # --- LIFECYCLE - ON_START ---

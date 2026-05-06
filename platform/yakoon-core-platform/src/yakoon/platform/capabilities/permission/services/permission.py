@@ -21,6 +21,9 @@ class PermissionService:
             "ident-app:whoami|rx",
             "ident-app:user|rx",
             "ident-app:user.list|rx",
+            "ident-app:user.add|rx",
+            "ident-app:user.edit|rx",
+            "ident-app:user.delete|rx",
             # jobs
             "jobs:jobs|rx",
             # shell

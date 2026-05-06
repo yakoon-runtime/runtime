@@ -1,0 +1,10 @@
+{% if not state.users %}
+No users found
+{% else %}
+
+Users: <list>
+  {% for u in state.users %}
+  <item>{{ u.username }}</item>
+  {% endfor %}
+</list>
+{% endif %}

@@ -54,7 +54,7 @@ class AccountService:
         if not row.ok:
             return None
 
-        return Account.from_row(key, row=row)
+        return Account.from_row(row=row)
 
     async def save(self, account: Account) -> None:
         key = account.key

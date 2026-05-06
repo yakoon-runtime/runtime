@@ -16,7 +16,7 @@ class MembershipData:
     account_id: Key
 
     roles: list[str] = field(default_factory=list)
-    is_disabled: bool = False
+    enabled: bool = False
     data: dict[str, Any] = field(default_factory=dict)
 
     _v: int = field(default=CURRENT_VERSION)
@@ -25,14 +25,14 @@ class MembershipData:
         return role in self.roles
 
     def is_active(self) -> bool:
-        return not self.is_disabled
+        return self.enabled
 
     def to_dict(self) -> dict:
         return {
             "user_id": str(self.user_id),
             "account_id": str(self.account_id),
             "roles": list(self.roles),
-            "is_disabled": self.is_disabled,
+            "enabled": self.enabled,
             "data": dict(self.data),
             "_v": self._v,
         }
@@ -45,7 +45,7 @@ class MembershipData:
             user_id=Key.from_str(d["user_id"]),
             account_id=Key.from_str(d["account_id"]),
             roles=list(d.get("roles", [])),
-            is_disabled=d.get("is_disabled", False),
+            enabled=d.get("enabled", True),
             data=dict(d.get("data", {})),
             _v=d.get("_v", 0),
         )
@@ -75,9 +75,9 @@ class Membership:
         return self.data.is_active()
 
     @classmethod
-    def from_row(cls, key: Key, row: GetResult) -> Membership:
+    def from_row(cls, row: GetResult) -> Membership:
         data = row.require_object()
         return cls(
-            key=key,
+            key=row.key,
             data=MembershipData.from_dict(data),
         )

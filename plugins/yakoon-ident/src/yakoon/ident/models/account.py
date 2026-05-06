@@ -13,18 +13,18 @@ class AccountData:
     CURRENT_VERSION = 1
 
     name: str
-    is_disabled: bool = False
+    enabled: bool = False
     data: dict[str, Any] = field(default_factory=dict)
 
     _v: int = field(default=CURRENT_VERSION)
 
     def is_active(self) -> bool:
-        return not self.is_disabled
+        return self.enabled
 
     def to_dict(self) -> dict:
         return {
             "name": self.name,
-            "is_disabled": self.is_disabled,
+            "enabled": self.enabled,
             "_v": self._v,
             "data": dict(self.data),
         }
@@ -35,7 +35,7 @@ class AccountData:
 
         return cls(
             name=d["name"],
-            is_disabled=d.get("is_disabled", False),
+            enabled=d.get("enabled", True),
             data=dict(d.get("data", {})),
             _v=d.get("_v", 0),
         )
@@ -55,9 +55,9 @@ class Account:
         return self.data.is_active()
 
     @classmethod
-    def from_row(cls, key: Key, row: GetResult) -> Account:
+    def from_row(cls, row: GetResult) -> Account:
         data = row.require_object()
         return cls(
-            key=key,
+            key=row.key,
             data=AccountData.from_dict(data),
         )

@@ -17,7 +17,7 @@ from yakoon.storage.eventstore.models import (
     ValueType,
 )
 
-from ..models import User
+from ..models import User, UserData
 
 # ----------------------------------
 # INDEX
@@ -43,22 +43,24 @@ class UserService:
 
     def __init__(
         self,
+        on_get: OnGet,
         on_append: OnAppend,
         on_replace: OnReplace,
-        on_get_by_key: OnGetByKey,
+        on_get_many: OnGetMany,
         on_scan: OnScan,
     ):
+        self.on_get = on_get
         self.on_append = on_append
         self.on_replace = on_replace
-        self.on_get_by_key = on_get_by_key
+        self.on_get_many = on_get_many
         self.on_scan = on_scan
 
     async def get_by_key(self, key: Key) -> User | None:
-        row = await self.on_get_by_key(key=key)
+        row = await self.on_get(key=key)
         if not row.ok:
             return None
 
-        return User.from_row(key=key, row=row)
+        return User.from_row(row=row)
 
     async def get_by_username(self, namespace: Namespace, username: str) -> User | None:
 
@@ -72,11 +74,11 @@ class UserService:
         if not keys:
             return None
 
-        row = await self.on_get_by_key(key=keys[0])
+        row = await self.on_get(key=keys[0])
         if not row.ok:
             return None
 
-        return User.from_row(key=row.key, row=row)
+        return User.from_row(row=row)
 
     async def save(self, user: User) -> None:
         doc = user.data.to_dict()
@@ -91,6 +93,76 @@ class UserService:
             indexes=[IndexTerm(key=IDX_USER_USERNAME_KEY, value=username)],
             snapshot_hint=SnapshotHint.COMMIT,
         )
+
+    async def list_users(self, namespace: Namespace) -> list[User]:
+        keys, _ = await self.on_scan(
+            namespace=namespace,
+            index_key=IDX_USER_USERNAME_KEY,
+        )
+
+        rows = await self.on_get_many(keys=keys)
+        users = [User.from_row(row) for row in rows if row.ok]
+
+        return [u for u in users if u.data.enabled]
+
+    async def add_user(
+        self,
+        *,
+        namespace: Namespace,
+        username: str,
+        password: str | None = None,
+    ) -> User:
+        key = Key(namespace=namespace, id=username)
+
+        existing = await self.get_by_key(key)
+        if existing:
+            raise ValueError(f"User already exists: {username}")
+
+        user = User(
+            key=key,
+            data=UserData(
+                username=username,
+                password_hash=password,
+            ),
+        )
+
+        await self.save(user)
+        return user
+
+    async def edit_user(
+        self,
+        *,
+        namespace: Namespace,
+        username: str,
+        changes: dict,
+    ) -> User:
+        user = await self.get_by_username(namespace, username)
+        if not user:
+            raise ValueError(f"User not found: {username}")
+
+        password = changes.get("password")
+        if password is not None:
+            user.data.password_hash = password
+
+        enabled = changes.get("enabled")
+        if enabled is not None:
+            user.data.enabled = enabled
+
+        await self.save(user)
+        return user
+
+    async def delete_user(
+        self,
+        *,
+        namespace: Namespace,
+        username: str,
+    ) -> None:
+        user = await self.get_by_username(namespace, username)
+        if not user:
+            raise ValueError(f"User not found: {username}")
+
+        user.data.enabled = False
+        await self.save(user)
 
 
 # ----------------------------------
@@ -132,13 +204,21 @@ class OnGetByName(Protocol):
     ) -> GetResult: ...
 
 
-class OnGetByKey(Protocol):
+class OnGet(Protocol):
     async def __call__(
         self,
         *,
         key: Key,
         at_time: datetime | None = None,
     ) -> GetResult: ...
+
+
+class OnGetMany(Protocol):
+    async def __call__(
+        self,
+        *,
+        keys: Sequence[Key],
+    ) -> list[GetResult]: ...
 
 
 class OnScan(Protocol):

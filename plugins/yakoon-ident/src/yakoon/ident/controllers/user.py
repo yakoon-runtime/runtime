@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from yakoon.base.commands import Command
 from yakoon.base.controllers import Controller, ResourceReferences
+from yakoon.base.naming import Namespace, NamespaceResolver
 from yakoon.base.plugins.ports import OnSaveSession
 
-from ..commands import CmdUsers, UserCommands
+from ..commands import CmdUser, UserCommands
+from ..services import UserService
 
 
 class UserAdminController(Controller):
@@ -18,7 +20,7 @@ class UserAdminController(Controller):
     )
 
     command_builders: dict[type[Command], str] = {
-        CmdUsers: "_create_user",
+        CmdUser: "_create_user",
     }
 
     # ----------------------------------
@@ -48,6 +50,17 @@ class UserAdminController(Controller):
 
     def _create_user(self):
 
-        return CmdUsers(
+        user_service = self.ports.on_get_port(UserService)
+
+        def get_user_namespace() -> Namespace:
+            resolver = NamespaceResolver()
+            return resolver.from_session(self.session, "user", "global")
+
+        return CmdUser(
             on_project=self.project,
+            on_list_users=user_service.list_users,
+            on_add_user=user_service.add_user,
+            on_edit_user=user_service.edit_user,
+            on_delete_user=user_service.delete_user,
+            on_get_namspace=get_user_namespace,
         )

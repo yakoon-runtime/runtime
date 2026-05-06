@@ -45,7 +45,7 @@ class SessionService:
         if not row.ok:
             return None
 
-        session = Session.from_row(key, row)
+        session = Session.from_row(row)
         self._map.put(session)
         return session
 
