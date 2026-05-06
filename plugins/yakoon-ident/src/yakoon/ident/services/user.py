@@ -43,26 +43,26 @@ class UserService:
 
     def __init__(
         self,
-        on_store: OnStore,
+        on_append: OnAppend,
         on_replace: OnReplace,
         on_get_by_key: OnGetByKey,
-        on_find: OnFind,
+        on_scan: OnScan,
     ):
-        self.on_put = on_store
+        self.on_append = on_append
         self.on_replace = on_replace
         self.on_get_by_key = on_get_by_key
-        self.on_find = on_find
+        self.on_scan = on_scan
 
     async def get_by_key(self, key: Key) -> User | None:
         row = await self.on_get_by_key(key=key)
         if not row.ok:
             return None
 
-        return User.from_row(row)
+        return User.from_row(key=key, row=row)
 
     async def get_by_username(self, namespace: Namespace, username: str) -> User | None:
 
-        keys, _ = await self.on_find(
+        keys, _ = await self.on_scan(
             namespace=namespace,
             index_key=IDX_USER_USERNAME_KEY,
             value=username,
@@ -76,7 +76,7 @@ class UserService:
         if not row.ok:
             return None
 
-        return User.from_row(row)
+        return User.from_row(key=row.key, row=row)
 
     async def save(self, user: User) -> None:
         doc = user.data.to_dict()
@@ -98,7 +98,7 @@ class UserService:
 # ----------------------------------
 
 
-class OnStore(Protocol):
+class OnAppend(Protocol):
     async def __call__(
         self,
         *,
@@ -141,7 +141,7 @@ class OnGetByKey(Protocol):
     ) -> GetResult: ...
 
 
-class OnFind(Protocol):
+class OnScan(Protocol):
     async def __call__(
         self,
         *,

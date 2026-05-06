@@ -18,11 +18,10 @@ from yakoon.storage.eventstore import GetResult
 
 
 @dataclass
-class SessionState:
+class SessionData:
 
     CURRENT_VERSION = 1
 
-    key: Key
     active_app_id: str | None = None
     user_key: str | None = None
     account_key: str | None = None
@@ -35,21 +34,14 @@ class SessionState:
         d = asdict(self)
         if self.last_active:
             d["last_active"] = self.last_active.astimezone(UTC).isoformat()
-        else:
-            d["last_active"] = None
-        if self.key:
-            d["key"] = str(self.key)
         return d
 
     @classmethod
-    def from_dict(cls, d: dict) -> SessionState:
-        if not d or "key" not in d:
-            raise ValueError("SessionState requires a 'key'")
+    def from_dict(cls, d: dict) -> SessionData:
 
         d = dict(d)
-        raw_key = d.pop("key")
         raw_last_active = d.pop("last_active", None)
-        state = cls(key=Key.from_str(raw_key), **d)
+        state = cls(**d)
         if raw_last_active:
             state.last_active = datetime.fromisoformat(raw_last_active)
         return state
@@ -71,8 +63,10 @@ class Session:
       - mime is always application/yakoon.view+json
     """
 
-    def __init__(self, state: SessionState):
-        self._state = state
+    def __init__(self, key: Key, data: SessionData):
+        self.key = key
+        self.data = data
+
         self._runtime = SessionRuntime()
         self._flows: dict[str, Flow] = {}
         self._focus_flow_id: str | None = None
@@ -84,19 +78,11 @@ class Session:
 
     @property
     def lang(self) -> str:
-        return self._state.lang
-
-    @property
-    def key(self) -> Key:
-        return self._state.key
+        return self.data.lang
 
     @property
     def execution(self) -> ExecutionTrace:
         return self._runtime.execution
-
-    @property
-    def state(self) -> SessionState:
-        return self._state
 
     @property
     def permissions(self) -> PermissionSet:
@@ -106,13 +92,12 @@ class Session:
         self._runtime.permissions = permset
 
     @classmethod
-    def from_state(cls, state: SessionState) -> Session:
-        return cls(state)
-
-    @classmethod
-    def from_row(cls, row: GetResult) -> Session:
+    def from_row(cls, key: Key, row: GetResult) -> Session:
         data = row.require_object()
-        return cls(SessionState.from_dict(data))
+        return cls(
+            key=key,
+            data=SessionData.from_dict(data),
+        )
 
     # ========================================================
     # SYSTEM API
@@ -164,48 +149,48 @@ class Session:
     # ----------------------------
 
     def touch(self) -> None:
-        self._state.last_active = datetime.now(UTC)
+        self.data.last_active = datetime.now(UTC)
 
     # ----------------------------
     # Application
     # ----------------------------
 
     def set_active_app(self, app_id: str) -> None:
-        self._state.active_app_id = app_id
+        self.data.active_app_id = app_id
 
     def get_active_app(self, default=None) -> str | None:
-        return self._state.active_app_id or default
+        return self.data.active_app_id or default
 
     # ----------------------------
     # Identity
     # ----------------------------
 
     def set_identity(self, user_key) -> None:
-        self._state.user_key = str(user_key)
+        self.data.user_key = str(user_key)
 
     def get_identity(self) -> Key | None:
-        if self._state.user_key:
-            return Key.from_str(self._state.user_key)
+        if self.data.user_key:
+            return Key.from_str(self.data.user_key)
         return None
 
     def clear_identity(self) -> None:
-        self._state.user_key = None
+        self.data.user_key = None
 
     def has_identity(self) -> bool:
-        return self._state.user_key is not None
+        return self.data.user_key is not None
 
     # ----------------------------
     # Account
     # ----------------------------
 
     def set_active_account(self, account_key) -> None:
-        self._state.account_key = str(account_key)
+        self.data.account_key = str(account_key)
 
     def clear_active_account(self) -> None:
-        self._state.account_key = None
+        self.data.account_key = None
 
     def has_active_account(self) -> bool:
-        return self._state.account_key is not None
+        return self.data.account_key is not None
 
     # ----------------------------
     # Mark

@@ -39,26 +39,25 @@ class AccountService:
 
     def __init__(
         self,
-        on_store: OnStore,
+        on_append: OnAppend,
         on_replace: OnReplace,
         on_get_by_key: OnGetByKey,
-        on_find: OnFind,
+        on_scan: OnScan,
     ):
-        self.on_put = on_store
+        self.on_append = on_append
         self.on_replace = on_replace
         self.on_get_by_key = on_get_by_key
-        self.on_find = on_find
+        self.on_scan = on_scan
 
     async def get_by_key(self, key: Key) -> Account | None:
         row = await self.on_get_by_key(key=key)
         if not row.ok:
             return None
 
-        return Account.from_row(row)
+        return Account.from_row(key, row=row)
 
     async def save(self, account: Account) -> None:
-        key = account.data.key
-
+        key = account.key
         doc: JsonValue = account.data.to_dict()
 
         # index-on-write: username
@@ -79,7 +78,7 @@ class AccountService:
 
         patch: JsonValue = {"op": "add", "path": "/_deleted", "value": True}
 
-        await self.on_put(
+        await self.on_append(
             key=key,
             patch=[patch],
             snapshot_hint=SnapshotHint.COMMIT,
@@ -91,7 +90,7 @@ class AccountService:
 # ----------------------------------
 
 
-class OnStore(Protocol):
+class OnAppend(Protocol):
     async def __call__(
         self,
         *,
@@ -134,7 +133,7 @@ class OnGetByKey(Protocol):
     ) -> GetResult: ...
 
 
-class OnFind(Protocol):
+class OnScan(Protocol):
     async def __call__(
         self,
         *,

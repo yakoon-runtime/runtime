@@ -83,19 +83,19 @@ class EntityStore:
     # Index
     # ----------------------------
 
-    async def ensure(self, *, namespace: Namespace, specs: Sequence[IndexSpec]):
+    async def ensure_indexes(self, *, namespace: Namespace, specs: Sequence[IndexSpec]):
         d, k, s = _dims_from_namespace(namespace)
         await self.on_index_ensure(domain_id=d, kind_id=k, space_id=s, specs=specs)
 
-    async def list(self, *, namespace: Namespace):
+    async def list_indexes(self, *, namespace: Namespace):
         d, k, s = _dims_from_namespace(namespace)
         return await self.on_index_list(domain_id=d, kind_id=k, space_id=s)
 
     # ----------------------------
-    # PUT
+    # APPEND
     # ----------------------------
 
-    async def put(
+    async def append(
         self,
         *,
         key: Key,
@@ -211,14 +211,14 @@ class EntityStore:
         expected_rev: int | None = None,
     ) -> PutResult:
 
-        row = await self.get_one(key=key)
+        row = await self.get(key=key)
 
         patch = self._writer.create_full_replace(
             current=row.data if row else None,
             new_doc=doc,
         )
 
-        return await self.put(
+        return await self.append(
             key=key,
             patch=patch,
             indexes=indexes,
@@ -230,7 +230,7 @@ class EntityStore:
     # GET (inkl. Historie)
     # ----------------------------
 
-    async def get_one(
+    async def get(
         self,
         *,
         key: Key,
@@ -252,6 +252,7 @@ class EntityStore:
 
             if cur is None:
                 return GetResult(
+                    key=key,
                     entity_id=eid,
                     data=None,
                     rev=None,
@@ -260,6 +261,7 @@ class EntityStore:
                 )
 
             return GetResult(
+                key=key,
                 entity_id=eid,
                 data=cur.data,
                 rev=cur.rev,
@@ -311,6 +313,7 @@ class EntityStore:
             last_rev = r.rev
 
         return GetResult(
+            key=key,
             entity_id=eid,
             data=state,
             rev=last_rev,
@@ -330,14 +333,14 @@ class EntityStore:
         groups = defaultdict(list)
         for idx, key in enumerate(keys):
             d, k, s, eid = _dims_from_key(key)
-            groups[(d, k, s)].append((idx, eid))
+            groups[(d, k, s)].append((idx, key, eid))
 
         results: list[GetResult | None] = [None] * len(keys)
         now = _utc_now()
 
         for (d, k, s), items in groups.items():
 
-            eids = [eid for _, eid in items]
+            eids = [eid for _, _, eid in items]
             unique_eids = list(dict.fromkeys(eids))
 
             rows = await self.on_load_current_many(
@@ -347,22 +350,19 @@ class EntityStore:
                 entity_ids=unique_eids,
             )
 
-            for idx, eid in items:
+            for idx, key, eid in items:
                 row = rows.get(eid)
-                if row is None:
-                    results[idx] = GetResult(
-                        entity_id=eid, data=None, rev=None, as_of=now, historical=False
-                    )
-                else:
-                    results[idx] = GetResult(
-                        entity_id=eid,
-                        data=row.data,
-                        rev=row.rev,
-                        as_of=row.updated_at,
-                        historical=False,
-                    )
 
-        return [r for r in results if r is not None]  # guaranteed
+                results[idx] = GetResult(
+                    key=key,
+                    entity_id=eid,
+                    data=None if row is None else row.data,
+                    rev=None if row is None else row.rev,
+                    as_of=now if row is None else row.updated_at,
+                    historical=False,
+                )
+
+        return [r for r in results if r is not None]
 
     # ----------------------------
     # SCAN (final)

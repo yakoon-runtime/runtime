@@ -13,7 +13,7 @@ from yakoon.storage.eventstore import (
 )
 
 from .identity import SessionIdentityMap
-from .session import Session, SessionState
+from .session import Session, SessionData
 
 
 class SessionService:
@@ -28,12 +28,12 @@ class SessionService:
 
     def __init__(
         self,
-        on_save: OnStoreSession,
-        on_load: OnLoadSession,
+        on_replace: OnReplace,
+        on_get: OnGet,
         identity_map: SessionIdentityMap | None = None,
     ) -> None:
-        self.on_save = on_save
-        self.on_load = on_load
+        self.on_replace = on_replace
+        self.on_get = on_get
         self._map = identity_map or SessionIdentityMap()
 
     async def get(self, key: Key) -> Session | None:
@@ -41,11 +41,11 @@ class SessionService:
         if live:
             return live
 
-        row = await self.on_load(key=key)
+        row = await self.on_get(key=key)
         if not row.ok:
             return None
 
-        session = Session.from_row(row)
+        session = Session.from_row(key, row)
         self._map.put(session)
         return session
 
@@ -55,12 +55,12 @@ class SessionService:
             return existing, False
 
         # Create new state (key is required)
-        state = SessionState(key=key, **kwargs)
-        session = Session(state)
+        data = SessionData(**kwargs)
+        session = Session(key=key, data=data)
 
-        await self.on_save(
+        await self.on_replace(
             key=key,
-            doc=state.to_dict(),
+            doc=data.to_dict(),
             snapshot_hint=SnapshotHint.COMMIT,
         )
 
@@ -68,9 +68,9 @@ class SessionService:
         return session, True
 
     async def save(self, session: Session) -> None:
-        await self.on_save(
+        await self.on_replace(
             key=session.key,
-            doc=session.state.to_dict(),
+            doc=session.data.to_dict(),
             snapshot_hint=SnapshotHint.COMMIT,
         )
 
@@ -86,7 +86,7 @@ class SessionService:
 # ----------------------------------
 
 
-class OnStoreSession(Protocol):
+class OnReplace(Protocol):
     async def __call__(
         self,
         *,
@@ -97,7 +97,7 @@ class OnStoreSession(Protocol):
     ) -> PutResult: ...
 
 
-class OnLoadSession(Protocol):
+class OnGet(Protocol):
     async def __call__(
         self,
         *,

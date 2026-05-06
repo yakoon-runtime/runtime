@@ -44,10 +44,10 @@ class IdentityApp(Application):
         # -------------------------------
 
         self.users = UserService(
-            on_store=self.store.objects.put,
+            on_append=self.store.objects.append,
             on_replace=self.store.objects.replace,
-            on_get_by_key=self.store.objects.get_one,
-            on_find=self.store.objects.scan,
+            on_get_by_key=self.store.objects.get,
+            on_scan=self.store.objects.scan,
         )
 
         # -------------------------------
@@ -55,10 +55,10 @@ class IdentityApp(Application):
         # -------------------------------
 
         self.accounts = AccountService(
-            on_store=self.store.objects.put,
+            on_append=self.store.objects.append,
             on_replace=self.store.objects.replace,
-            on_get_by_key=self.store.objects.get_one,
-            on_find=self.store.objects.scan,
+            on_get_by_key=self.store.objects.get,
+            on_scan=self.store.objects.scan,
         )
 
         # ---------------------------
@@ -99,7 +99,7 @@ class IdentityApp(Application):
 
     async def _build_index(self):
 
-        await self.store.objects.ensure(
+        await self.store.objects.ensure_indexes(
             namespace=Namespace("system", "user", "global"),
             specs=UserService.index_specs(),
         )
@@ -113,19 +113,19 @@ class IdentityApp(Application):
         user_ns = Namespace(domain="system", kind="user", space="global")
 
         u1 = User(
-            UserData(
-                key=Key(namespace=user_ns, id="stefan"),
+            key=Key(namespace=user_ns, id="stefan"),
+            data=UserData(
                 username="stefan",
                 password_hash="123",
-            )
+            ),
         )
         await self.users.save(u1)
 
         u2 = User(
-            UserData(
-                key=Key(namespace=user_ns, id="lara"),
+            key=Key(namespace=user_ns, id="lara"),
+            data=UserData(
                 username="lara",
                 password_hash="456",
-            )
+            ),
         )
         await self.users.save(u2)

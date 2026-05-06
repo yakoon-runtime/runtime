@@ -58,8 +58,8 @@ def compose_runtime(
     # ----------------
 
     session_manager = SessionService(
-        on_save=store.objects.replace,
-        on_load=store.objects.get_one,
+        on_replace=store.objects.replace,
+        on_get=store.objects.get,
     )
 
     audit_service = AuditLogService(settings.logging)

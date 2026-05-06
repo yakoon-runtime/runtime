@@ -12,7 +12,6 @@ class AccountData:
 
     CURRENT_VERSION = 1
 
-    key: Key
     name: str
     is_disabled: bool = False
     data: dict[str, Any] = field(default_factory=dict)
@@ -24,7 +23,6 @@ class AccountData:
 
     def to_dict(self) -> dict:
         return {
-            "key": str(self.key),
             "name": self.name,
             "is_disabled": self.is_disabled,
             "_v": self._v,
@@ -36,7 +34,6 @@ class AccountData:
         d = dict(d or {})
 
         return cls(
-            key=Key.from_str(d["key"]),
             name=d["name"],
             is_disabled=d.get("is_disabled", False),
             data=dict(d.get("data", {})),
@@ -46,12 +43,9 @@ class AccountData:
 
 class Account:
 
-    def __init__(self, data: AccountData):
+    def __init__(self, key: Key, data: AccountData):
+        self.key = key
         self.data = data
-
-    @property
-    def key(self) -> Key:
-        return self.data.key
 
     @property
     def name(self) -> str:
@@ -61,6 +55,9 @@ class Account:
         return self.data.is_active()
 
     @classmethod
-    def from_row(cls, row: GetResult) -> Account:
+    def from_row(cls, key: Key, row: GetResult) -> Account:
         data = row.require_object()
-        return cls(AccountData.from_dict(data))
+        return cls(
+            key=key,
+            data=AccountData.from_dict(data),
+        )

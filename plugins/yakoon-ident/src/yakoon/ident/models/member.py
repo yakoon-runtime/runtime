@@ -12,7 +12,6 @@ class MembershipData:
 
     CURRENT_VERSION = 1
 
-    key: Key
     user_id: Key
     account_id: Key
 
@@ -30,7 +29,6 @@ class MembershipData:
 
     def to_dict(self) -> dict:
         return {
-            "key": str(self.key),
             "user_id": str(self.user_id),
             "account_id": str(self.account_id),
             "roles": list(self.roles),
@@ -44,7 +42,6 @@ class MembershipData:
         d = dict(d or {})
 
         return cls(
-            key=Key.from_str(d["key"]),
             user_id=Key.from_str(d["user_id"]),
             account_id=Key.from_str(d["account_id"]),
             roles=list(d.get("roles", [])),
@@ -55,7 +52,8 @@ class MembershipData:
 
 
 class Membership:
-    def __init__(self, data: MembershipData):
+    def __init__(self, key: Key, data: MembershipData):
+        self.key = key
         self.data = data
 
     @property
@@ -77,6 +75,9 @@ class Membership:
         return self.data.is_active()
 
     @classmethod
-    def from_row(cls, row: GetResult) -> Membership:
+    def from_row(cls, key: Key, row: GetResult) -> Membership:
         data = row.require_object()
-        return cls(MembershipData.from_dict(data))
+        return cls(
+            key=key,
+            data=MembershipData.from_dict(data),
+        )

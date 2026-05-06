@@ -10,6 +10,8 @@ from typing import (
     cast,
 )
 
+from yakoon.base.naming import Key
+
 
 class PatchFormat(StrEnum):
     JSONPATCH = "jsonpatch"
@@ -118,6 +120,7 @@ class PutResult:
 
 @dataclass(frozen=True, slots=True)
 class GetResult:
+    key: Key
     entity_id: EntityId
     data: (
         JsonValue | None

@@ -13,7 +13,6 @@ class UserData:
 
     CURRENT_VERSION = 1
 
-    key: Key
     username: str
     password_hash: str | None = None
     is_disabled: bool = False
@@ -27,7 +26,6 @@ class UserData:
 
     def to_dict(self) -> dict:
         return {
-            "key": str(self.key),
             "username": self.username,
             "password_hash": self.password_hash,
             "is_disabled": self.is_disabled,
@@ -45,7 +43,6 @@ class UserData:
         raw_last_login = d.get("last_login")
 
         obj = cls(
-            key=Key.from_str(d["key"]),
             username=d["username"],
             password_hash=d["password_hash"],
             is_disabled=d.get("is_disabled", False),
@@ -60,12 +57,9 @@ class UserData:
 
 
 class User:
-    def __init__(self, data: UserData):
+    def __init__(self, key: Key, data: UserData):
+        self.key = key
         self.data = data
-
-    @property
-    def key(self) -> Key:
-        return self.data.key
 
     @property
     def username(self) -> str:
@@ -75,6 +69,9 @@ class User:
         return self.data.is_active()
 
     @classmethod
-    def from_row(cls, row: GetResult) -> User:
+    def from_row(cls, key: Key, row: GetResult) -> User:
         data = row.require_object()
-        return cls(UserData.from_dict(data))
+        return cls(
+            key=key,
+            data=UserData.from_dict(data),
+        )

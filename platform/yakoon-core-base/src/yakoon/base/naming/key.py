@@ -10,6 +10,10 @@ class Key:
         self.id = id
 
     @classmethod
+    def from_parts(cls, domain: str, kind: str, space: str, id: str) -> Key:
+        return cls(namespace=Namespace(domain, kind, space), id=id)
+
+    @classmethod
     def from_str(cls, raw: str) -> Key:
         try:
             ns_part, id = raw.rsplit("#", 1)
@@ -17,10 +21,6 @@ class Key:
         except ValueError as exc:
             raise ValueError(f"Invalid key format: {raw}") from exc
         return Key(Namespace(domain, bucket, scope), id)
-
-    @classmethod
-    def from_parts(cls, domain: str, kind: str, space: str, id: str) -> Key:
-        return cls(namespace=Namespace(domain, kind, space), id=id)
 
     @staticmethod
     def is_key(s: str) -> bool:
