@@ -26,6 +26,8 @@ class Command(ABC):
     kind: CommandKind = CommandKind.USER
     scope: CommandScope = CommandScope.APP
     visibility: CommandVisibility = CommandVisibility.NORMAL
+
+    # for permission check and manual pages.
     use_subcommands: bool = False
 
     @abstractmethod
