@@ -13,6 +13,7 @@ from .services import (
     AllowAllSecretVerifier,
     AuthenticationService,
     GroupService,
+    IdentityNamespaces,
     MembershipService,
     UserService,
 )
@@ -138,16 +139,18 @@ class IdentityApp(Application):
 
     async def _build_index(self):
 
+        namespaces = IdentityNamespaces()
+
         await self.store.objects.ensure_indexes(
-            namespace=Namespace("system", "user", "global"),
+            namespace=namespaces.user_namespace(),
             specs=UserService.index_specs(),
         )
         await self.store.objects.ensure_indexes(
-            namespace=Namespace("system", "group", "global"),
+            namespace=namespaces.group_namespace(),
             specs=GroupService.index_specs(),
         )
         await self.store.objects.ensure_indexes(
-            namespace=Namespace("system", "membership", "global"),
+            namespace=namespaces.membership_namespace(),
             specs=MembershipService.index_specs(),
         )
 

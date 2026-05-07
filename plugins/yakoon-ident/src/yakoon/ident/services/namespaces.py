@@ -1,0 +1,20 @@
+from yakoon.base.naming import Namespace
+
+
+class IdentityNamespaces:
+
+    domain = "system"
+    space = "global"
+
+    # ----------------------------------
+    # NAMESPACES
+    # ----------------------------------
+
+    def user_namespace(self) -> Namespace:
+        return Namespace(self.domain, "user", self.space)
+
+    def group_namespace(self) -> Namespace:
+        return Namespace(self.domain, "group", self.space)
+
+    def membership_namespace(self) -> Namespace:
+        return Namespace(self.domain, "membership", self.space)

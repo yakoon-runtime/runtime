@@ -10,7 +10,7 @@ class NamespaceResolver:
 
     def from_session(self, session, kind: str, space: str | None) -> Namespace:
         return Namespace(
-            domain=session.key.namespace.domain,
             kind=kind,
+            domain=session.key.namespace.domain,
             space=space or session.key.namespace.space,
         )

@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from yakoon.base.commands import Command
 from yakoon.base.controllers import Controller, ResourceReferences
-from yakoon.base.naming import Namespace, NamespaceResolver
 from yakoon.base.plugins.ports import OnSaveSession
 from yakoon.ident.models import Group, User
 
 from ..commands import AdminCommands, CmdGroup, CmdMembership, CmdUser
-from ..services import GroupService, MembershipService, UserService
+from ..services import GroupService, IdentityNamespaces, MembershipService, UserService
 
 
 class AdminController(Controller):
@@ -26,7 +25,7 @@ class AdminController(Controller):
         CmdMembership: "_create_membership",
     }
 
-    resolver = NamespaceResolver()
+    namespaces = IdentityNamespaces()
 
     # ----------------------------------
     # CREATE COMMAND
@@ -50,19 +49,6 @@ class AdminController(Controller):
         await on_save_session(session=self.session)
 
     # ----------------------------------
-    # NAMESPACES
-    # ----------------------------------
-
-    def get_user_namespace(self) -> Namespace:
-        return self.resolver.from_session(self.session, "user", "global")
-
-    def get_group_namespace(self) -> Namespace:
-        return self.resolver.from_session(self.session, "group", "global")
-
-    def get_membership_namespace(self) -> Namespace:
-        return self.resolver.from_session(self.session, "membership", "global")
-
-    # ----------------------------------
     # FACTORY
     # ----------------------------------
 
@@ -76,7 +62,7 @@ class AdminController(Controller):
             on_add_user=user_service.add_user,
             on_edit_user=user_service.edit_user,
             on_delete_user=user_service.delete_user,
-            on_get_namspace=self.get_user_namespace,
+            on_get_namspace=self.namespaces.user_namespace,
         )
 
     def _create_group(self):
@@ -89,7 +75,7 @@ class AdminController(Controller):
             on_add_group=group_service.add_group,
             on_edit_group=group_service.edit_group,
             on_delete_group=group_service.delete_group,
-            on_get_namspace=self.get_group_namespace,
+            on_get_namspace=self.namespaces.group_namespace,
         )
 
     def _create_membership(self):
@@ -100,13 +86,13 @@ class AdminController(Controller):
 
         async def get_user_by_name(name: str) -> User | None:
             return await user_service.get_by_username(
-                namespace=self.get_user_namespace(),
+                namespace=self.namespaces.user_namespace(),
                 username=name,
             )
 
         async def get_group_by_name(name: str) -> Group | None:
             return await group_service.get_by_name(
-                namespace=self.get_group_namespace(),
+                namespace=self.namespaces.group_namespace(),
                 name=name,
             )
 
@@ -119,5 +105,5 @@ class AdminController(Controller):
             on_remove_membership=membership_service.remove_membership,
             on_get_user_by_name=get_user_by_name,
             on_get_group_by_name=get_group_by_name,
-            on_get_namespace=self.get_membership_namespace,
+            on_get_namespace=self.namespaces.membership_namespace,
         )
