@@ -1,6 +1,6 @@
 from .account import Account, AccountData
 from .group import Group, GroupData
-from .member import Membership, MembershipData
+from .membership import Membership, MembershipData
 from .user import User, UserData
 
 __all__ = [
@@ -16,4 +16,7 @@ __all__ = [
     # .group
     "Group",
     "GroupData",
+    # .membership
+    "Membership",
+    "MembershipData",
 ]

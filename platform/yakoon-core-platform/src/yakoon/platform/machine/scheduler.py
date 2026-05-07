@@ -9,9 +9,10 @@ from typing import Protocol
 from yakoon.base.flow.primitives import Control
 from yakoon.base.flow.primitives.outcome import Outcome
 from yakoon.base.projection import Projection
+from yakoon.base.runtime.errors import DomainError
 from yakoon.base.runtime.input import InputContext, InputEvent
 from yakoon.platform.flow import Flow, FlowKind
-from yakoon.platform.runtime import DomainError, PlatformError, Session
+from yakoon.platform.runtime import PlatformError, Session
 
 from .errors import (
     domain_error_projection,

@@ -7,7 +7,7 @@ Backend = Literal["memory", "postgres"]
 
 @dataclass
 class StorageSettings:
-    backend: Backend = "memory"
+    # backend: Backend = "memory"
     backend: Backend = "postgres"
 
     dsn: str = os.getenv(

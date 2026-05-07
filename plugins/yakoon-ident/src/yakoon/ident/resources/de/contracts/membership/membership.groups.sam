@@ -1,0 +1,12 @@
+{% if not state.memberships %}
+No groups found
+{% else %}
+
+Groups for '{{ state.user }}':
+<list>
+{% for m in state.memberships %}
+  <item>{{ m.group_key.id }}</item>
+{% endfor %}
+</list>
+
+{% endif %}

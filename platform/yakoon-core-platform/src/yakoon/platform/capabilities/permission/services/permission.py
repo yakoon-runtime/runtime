@@ -31,6 +31,12 @@ class PermissionService:
             "ident-app:group.add|rx",
             "ident-app:group.edit|rx",
             "ident-app:group.delete|rx",
+            # ident - member
+            "ident-app:membership|rx",
+            "ident-app:membership.add|rx",
+            "ident-app:membership.remove|rx",
+            "ident-app:membership.groups|rx",
+            "ident-app:membership.users|rx",
             # jobs
             "jobs:jobs|rx",
             # shell

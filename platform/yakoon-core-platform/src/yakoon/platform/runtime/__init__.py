@@ -1,7 +1,6 @@
 from .error import (
     CommandNotFound,
     CriticalError,
-    DomainError,
     PermissionDenied,
     PlatformError,
 )
@@ -13,6 +12,5 @@ __all__ = [
     "PlatformError",
     "CommandNotFound",
     "PermissionDenied",
-    "DomainError",
     "CriticalError",
 ]

@@ -13,6 +13,7 @@ from .services import (
     AllowAllSecretVerifier,
     AuthenticationService,
     GroupService,
+    MembershipService,
     UserService,
 )
 from .settings import Settings
@@ -33,6 +34,7 @@ class IdentityApp(Application):
     accounts: AccountService
     users: UserService
     groups: GroupService
+    membership: MembershipService
 
     def on_build(self, ports: ModulePorts) -> None:
 
@@ -60,6 +62,18 @@ class IdentityApp(Application):
         # -------------------------------
 
         self.groups = GroupService(
+            on_get=self.store.objects.get,
+            on_append=self.store.objects.append,
+            on_replace=self.store.objects.replace,
+            on_get_many=self.store.objects.get_many,
+            on_scan=self.store.objects.scan,
+        )
+
+        # --------------------------
+        # --- CREATING MS ACCESS ---
+        # --------------------------
+
+        self.membership = MembershipService(
             on_get=self.store.objects.get,
             on_append=self.store.objects.append,
             on_replace=self.store.objects.replace,
@@ -105,6 +119,7 @@ class IdentityApp(Application):
 
         ports.on_provide(UserService, self.users)
         ports.on_provide(GroupService, self.groups)
+        ports.on_provide(MembershipService, self.membership)
 
     # ----------------------------
     # --- LIFECYCLE - ON_START ---
@@ -130,6 +145,10 @@ class IdentityApp(Application):
         await self.store.objects.ensure_indexes(
             namespace=Namespace("system", "group", "global"),
             specs=GroupService.index_specs(),
+        )
+        await self.store.objects.ensure_indexes(
+            namespace=Namespace("system", "membership", "global"),
+            specs=MembershipService.index_specs(),
         )
 
     # ----------------
