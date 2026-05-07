@@ -1,1 +1,1 @@
-{{ state.user }} was deleted.
+User '{{ state.user.username }}' was deleted.

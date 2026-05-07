@@ -5,15 +5,15 @@ from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.base.naming import Namespace, NamespaceResolver
 from yakoon.base.plugins.ports import OnSaveSession
 
-from ..commands import CmdUser, UserCommands
-from ..services import UserService
+from ..commands import AdminCommands, CmdGroup, CmdUser
+from ..services import GroupService, UserService
 
 
-class UserAdminController(Controller):
+class AdminController(Controller):
 
-    id: str = "id-user"
+    id: str = "id-ident-admin"
 
-    commandsets = (UserCommands,)
+    commandsets = (AdminCommands,)
 
     resources = ResourceReferences(
         package="yakoon.ident",
@@ -21,6 +21,7 @@ class UserAdminController(Controller):
 
     command_builders: dict[type[Command], str] = {
         CmdUser: "_create_user",
+        CmdGroup: "_create_group",
     }
 
     # ----------------------------------
@@ -63,4 +64,21 @@ class UserAdminController(Controller):
             on_edit_user=user_service.edit_user,
             on_delete_user=user_service.delete_user,
             on_get_namspace=get_user_namespace,
+        )
+
+    def _create_group(self):
+
+        group_service = self.ports.on_get_port(GroupService)
+
+        def get_group_namespace() -> Namespace:
+            resolver = NamespaceResolver()
+            return resolver.from_session(self.session, "group", "global")
+
+        return CmdGroup(
+            on_project=self.project,
+            on_list_groups=group_service.list_groups,
+            on_add_group=group_service.add_group,
+            on_edit_group=group_service.edit_group,
+            on_delete_group=group_service.delete_group,
+            on_get_namspace=get_group_namespace,
         )

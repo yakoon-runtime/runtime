@@ -1,0 +1,10 @@
+{% if not state.groups %}
+No groups found
+{% else %}
+
+Groups: <list>
+  {% for g in state.groups %}
+  <item>{{ g.name }}</item>
+  {% endfor %}
+</list>
+{% endif %}

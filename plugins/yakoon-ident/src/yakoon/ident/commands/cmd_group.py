@@ -6,28 +6,28 @@ from yakoon.base.commands import Command, Request
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
 from yakoon.base.naming import Namespace
-from yakoon.ident.models import User
+from yakoon.ident.models import Group
 
 
-class CmdUser(Command):
+class CmdGroup(Command):
 
-    key = "user"
+    key = "group"
     use_subcommands = True
 
     def __init__(
         self,
         on_project: OnProjectCmd,
-        on_list_users: OnListUsers,
-        on_add_user: OnAddUser,
-        on_edit_user: OnEditUser,
-        on_delete_user: OnDeleteUser,
+        on_list_groups: OnListGroups,
+        on_add_group: OnAddGroup,
+        on_edit_group: OnEditGroup,
+        on_delete_group: OnDeleteGroup,
         on_get_namspace: OnGetNamespace,
     ):
         self.on_project = on_project
-        self.on_list_users = on_list_users
-        self.on_add_user = on_add_user
-        self.on_edit_user = on_edit_user
-        self.on_delete_user = on_delete_user
+        self.on_list_groups = on_list_groups
+        self.on_add_group = on_add_group
+        self.on_edit_group = on_edit_group
+        self.on_delete_group = on_delete_group
         self.on_get_namspace = on_get_namspace
 
     async def run(self, request: Request):
@@ -50,81 +50,78 @@ class CmdUser(Command):
             return
 
         projection = await self.on_project(
-            name="user.error.sam",
+            name="group.error.sam",
             state={
-                "reason": f"Unknown user action: {action}",
+                "reason": f"Unknown group action: {action}",
             },
         )
         yield out(projection)
 
     async def _list(self, request: Request):
         namespace = self.on_get_namspace()
-        users = await self.on_list_users(namespace=namespace)
+        groups = await self.on_list_groups(namespace=namespace)
 
         projection = await self.on_project(
-            name="user.list.sam",
+            name="group.list.sam",
             state={
-                "users": users,
+                "groups": groups,
             },
         )
         return out(projection)
 
     async def _add(self, request: Request):
-        username = request.arg(1)
-        password = request.option("password")
+        groupname = request.arg(1)
 
         namespace = self.on_get_namspace()
-        user = await self.on_add_user(
+        group = await self.on_add_group(
             namespace=namespace,
-            username=username,
-            password=password,
+            name=groupname,
         )
 
         projection = await self.on_project(
-            name="user.add.sam",
+            name="group.add.sam",
             state={
-                "user": user,
+                "group": group,
             },
         )
         return out(projection)
 
     async def _edit(self, request: Request):
 
-        username = request.arg(1)
+        groupname = request.arg(1)
 
         changes = {
-            "password": request.option("password"),
             "enabled": request.option("enabled"),
         }
 
         namespace = self.on_get_namspace()
-        user = await self.on_edit_user(
+        group = await self.on_edit_group(
             namespace=namespace,
-            username=username,
+            name=groupname,
             changes=changes,
         )
 
         projection = await self.on_project(
-            name="user.edit.sam",
+            name="group.edit.sam",
             state={
-                "user": user,
+                "group": group,
             },
         )
         return out(projection)
 
     async def _delete(self, request: Request):
-        username = request.arg(1)
+        groupname = request.arg(1)
 
         namespace = self.on_get_namspace()
-        await self.on_delete_user(
+        await self.on_delete_group(
             namespace=namespace,
-            username=username,
+            name=groupname,
         )
 
         projection = await self.on_project(
-            name="user.delete.sam",
+            name="group.delete.sam",
             state={
-                "user": username,
+                "group": groupname,
             },
         )
         return out(projection)
@@ -139,34 +136,33 @@ class OnGetNamespace(Protocol):
     def __call__(self) -> Namespace: ...
 
 
-class OnListUsers(Protocol):
-    async def __call__(self, namespace: Namespace) -> list[User]: ...
+class OnListGroups(Protocol):
+    async def __call__(self, namespace: Namespace) -> list[Group]: ...
 
 
-class OnAddUser(Protocol):
+class OnAddGroup(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
-        username: str,
-        password: str | None,
-    ) -> User: ...
+        name: str,
+    ) -> Group: ...
 
 
-class OnEditUser(Protocol):
+class OnEditGroup(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
-        username: str,
+        name: str,
         changes: dict,
-    ) -> User: ...
+    ) -> Group: ...
 
 
-class OnDeleteUser(Protocol):
+class OnDeleteGroup(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
-        username: str,
+        name: str,
     ) -> None: ...

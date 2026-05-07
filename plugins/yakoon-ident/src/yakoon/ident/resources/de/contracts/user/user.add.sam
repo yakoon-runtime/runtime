@@ -1,1 +1,1 @@
-{{ state.user.username }} was added.
+User '{{ state.user.username }}' was added.

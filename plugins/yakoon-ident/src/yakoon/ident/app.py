@@ -6,12 +6,13 @@ from yakoon.base.plugins.ports import OnAuthenticate
 from yakoon.storage.eventstore import StoreRuntime
 from yakoon.storage.eventstore.wire import build_store
 
-from .controllers import AuthController, UserAdminController
+from .controllers import AdminController, AuthController
 from .models import User, UserData
 from .services import (
     AccountService,
     AllowAllSecretVerifier,
     AuthenticationService,
+    GroupService,
     UserService,
 )
 from .settings import Settings
@@ -24,13 +25,14 @@ class IdentityApp(Application):
 
     controllers = (
         AuthController,
-        UserAdminController,
+        AdminController,
     )
 
     store: StoreRuntime
     auth: AuthenticationService
     accounts: AccountService
     users: UserService
+    groups: GroupService
 
     def on_build(self, ports: ModulePorts) -> None:
 
@@ -47,6 +49,17 @@ class IdentityApp(Application):
         # -------------------------------
 
         self.users = UserService(
+            on_get=self.store.objects.get,
+            on_append=self.store.objects.append,
+            on_replace=self.store.objects.replace,
+            on_get_many=self.store.objects.get_many,
+            on_scan=self.store.objects.scan,
+        )
+        # -------------------------------
+        # --- CREATING GROUP ACCESS ---
+        # -------------------------------
+
+        self.groups = GroupService(
             on_get=self.store.objects.get,
             on_append=self.store.objects.append,
             on_replace=self.store.objects.replace,
@@ -91,6 +104,7 @@ class IdentityApp(Application):
         # -----------------------
 
         ports.on_provide(UserService, self.users)
+        ports.on_provide(GroupService, self.groups)
 
     # ----------------------------
     # --- LIFECYCLE - ON_START ---
@@ -112,6 +126,10 @@ class IdentityApp(Application):
         await self.store.objects.ensure_indexes(
             namespace=Namespace("system", "user", "global"),
             specs=UserService.index_specs(),
+        )
+        await self.store.objects.ensure_indexes(
+            namespace=Namespace("system", "group", "global"),
+            specs=GroupService.index_specs(),
         )
 
     # ----------------

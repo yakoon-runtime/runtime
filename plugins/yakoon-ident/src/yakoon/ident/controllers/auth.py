@@ -11,7 +11,7 @@ from ..commands import AuthCommands, CmdSu, CmdWhoAmI
 
 class AuthController(Controller):
 
-    id: str = "id-auth"
+    id: str = "id-ident-auth"
 
     commandsets = (AuthCommands,)
 

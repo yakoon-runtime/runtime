@@ -16,14 +16,21 @@ class PermissionService:
 
         self._roles: dict[str, list[str]] = {}
         self._directs = [
-            # ident
+            # ident - global
             "ident-app:su|rx",
             "ident-app:whoami|rx",
+            # ident - user
             "ident-app:user|rx",
             "ident-app:user.list|rx",
             "ident-app:user.add|rx",
             "ident-app:user.edit|rx",
             "ident-app:user.delete|rx",
+            # ident - user
+            "ident-app:group|rx",
+            "ident-app:group.list|rx",
+            "ident-app:group.add|rx",
+            "ident-app:group.edit|rx",
+            "ident-app:group.delete|rx",
             # jobs
             "jobs:jobs|rx",
             # shell

@@ -1,4 +1,5 @@
 from .account import Account, AccountData
+from .group import Group, GroupData
 from .member import Membership, MembershipData
 from .user import User, UserData
 
@@ -12,4 +13,7 @@ __all__ = [
     # .member
     "Membership",
     "MembershipData",
+    # .group
+    "Group",
+    "GroupData",
 ]
