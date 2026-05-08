@@ -2,6 +2,7 @@ from yakoon.base.application import Application
 from yakoon.base.naming.key import Key
 from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import OnAuthenticate
+from yakoon.platform.capabilities.permission import PermissionParser
 from yakoon.storage.eventstore import StoreRuntime
 from yakoon.storage.eventstore.wire import build_store
 
@@ -15,6 +16,7 @@ from .services import (
     IdentityNamespaces,
     MembershipService,
     PermissionGrantService,
+    PermissionResolver,
     UserService,
 )
 from .settings import Settings
@@ -37,6 +39,7 @@ class IdentityApp(Application):
     groups: GroupService
     membership: MembershipService
     permgrant: PermissionGrantService
+    perm_resolver: PermissionResolver
 
     def on_build(self, ports: ModulePorts) -> None:
 
@@ -94,12 +97,27 @@ class IdentityApp(Application):
             on_scan=self.store.objects.scan,
         )
 
+        # -----------------------------
+        # --- CREATING GRANT ACCESS ---
+        # -----------------------------
+
         self.permgrant = PermissionGrantService(
             on_get=self.store.objects.get,
             on_append=self.store.objects.append,
             on_replace=self.store.objects.replace,
             on_get_many=self.store.objects.get_many,
             on_scan=self.store.objects.scan,
+        )
+
+        # -------------------------------
+        # --- CREATING PERM RESOLVER ---
+        # -------------------------------
+
+        perm_parser = PermissionParser()
+        self.perm_resolver = PermissionResolver(
+            on_list_subject_grants=self.permgrant.list_subject_grants,
+            on_list_user_memberships=self.membership.list_user_memberships,
+            on_parse_spec=perm_parser.parse,
         )
 
         # ---------------------------
@@ -131,6 +149,7 @@ class IdentityApp(Application):
         ports.on_provide(GroupService, self.groups)
         ports.on_provide(MembershipService, self.membership)
         ports.on_provide(PermissionGrantService, self.permgrant)
+        ports.on_provide(PermissionResolver, self.perm_resolver)
 
     # ----------------------------
     # --- LIFECYCLE - ON_START ---

@@ -21,13 +21,13 @@ class CmdSu(Command):
         on_set_identity: OnSetIdentity,
         on_authenticate: OnAuthenticateUser,
         on_store_session: OnStoreSession,
-        on_apply_perm: OnApplyPermissions,
+        on_apply_permissions: OnResolvePermissions,
     ):
         self.on_project = on_project
         self.on_set_identity = on_set_identity
         self.on_authenticate = on_authenticate
         self.on_store_session = on_store_session
-        self.on_apply_perm = on_apply_perm
+        self.on_apply_permissions = on_apply_permissions
 
     async def run(self, request: Request):
 
@@ -42,12 +42,11 @@ class CmdSu(Command):
         if result.ok and result.user:
 
             user = result.user
-            self.on_set_identity(user["key"])
+            user_key: Key = user["key"]
 
-            # self.on_apply_perm(
-            #    roles=user["roles"],
-            #    permissions=user["permissions"],
-            # )
+            self.on_set_identity(user_key)
+
+            await self.on_apply_permissions(user_key=user_key)
 
             await self.on_store_session()
 
@@ -86,9 +85,9 @@ class OnStoreSession(Protocol):
     async def __call__(self): ...
 
 
-class OnApplyPermissions(Protocol):
-    def __call__(
+class OnResolvePermissions(Protocol):
+    async def __call__(
         self,
-        roles: list[str],
-        permissions: list[str],
+        *,
+        user_key: Key,
     ): ...

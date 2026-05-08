@@ -1,5 +1,5 @@
 from .models import PermBit, PermBits, Permission, PermissionSet
-from .services import PermissionBootstrap, PermissionService
+from .services import PermissionChecker, PermissionCompiler, PermissionParser
 
 __all__ = [
     # .models
@@ -8,6 +8,7 @@ __all__ = [
     "Permission",
     "PermissionSet",
     # .services
-    "PermissionService",
-    "PermissionBootstrap",
+    "PermissionCompiler",
+    "PermissionParser",
+    "PermissionChecker",
 ]

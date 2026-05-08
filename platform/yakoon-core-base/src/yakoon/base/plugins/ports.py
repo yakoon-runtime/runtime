@@ -5,6 +5,7 @@ from yakoon.base.plugins.models import AuthResult
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime.sessions import Session
+from yakoon.platform.capabilities.permission.models.set import PermissionSet
 
 # -------------------
 # -- PLUGIN PORTS ---
@@ -21,7 +22,11 @@ class OnSaveSession(Protocol):
     async def __call__(self, *, session: Session): ...
 
 
-class OnAuthorize(Protocol):
+class OnAuthorizeRead(Protocol):
+    def __call__(self, session: Session, perm_key: str) -> bool: ...
+
+
+class OnAuthorizeWrite(Protocol):
     def __call__(self, session: Session, perm_key: str) -> bool: ...
 
 
@@ -31,11 +36,10 @@ class OnAuthenticate(Protocol):
     ) -> AuthResult: ...
 
 
-class OnApplyPermissions(Protocol):
+class OnBootstrapPermissions(Protocol):
     def __call__(
         self,
         *,
         session: Session,
-        roles: list[str],
-        permissions: list[str],
+        permissions: PermissionSet,
     ): ...

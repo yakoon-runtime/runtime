@@ -40,6 +40,10 @@ class Application(ABC):
 
         self.on_build(ports)
 
+    def collect_bootstrap_permissions(self, permissions: list[str]):
+        for controller in self.controllers:
+            controller.collect_bootstrap_permissions(permissions)
+
     def on_build(self, ports: ModulePorts) -> None:  # noqa: B027
         """Hook executed after bind ports"""
         pass

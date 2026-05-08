@@ -93,6 +93,15 @@ class PermissionSet:
 
         return True
 
+    def clone(self) -> PermissionSet:
+
+        out = PermissionSet()
+
+        out._allow = self._allow.copy()
+        out._deny = self._deny.copy()
+
+        return out
+
     def to_debug_dict(self) -> dict[str, dict[str, str]]:
 
         def bits_to_str(b: PermBits | None) -> str:

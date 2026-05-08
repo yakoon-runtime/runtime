@@ -25,7 +25,7 @@ def build_machine(
     applications: Sequence[Application],
     on_projection: OnProjection,
     on_session: OnGetOrCreateSession,
-    on_authorize: OnHasPermission,
+    on_has_permission: OnHasPermission,
     on_bootstrap_permissions: OnBootstrapPermissions,
     on_audit_log: OnAuditLog,
     on_audit_error: OnAuditError,
@@ -64,7 +64,7 @@ def build_machine(
     engine = CommandEngine(
         on_match_command=resolver.resolve,
         on_parse_input=parser.parse,
-        on_authorize=on_authorize,
+        on_authorize=on_has_permission,
         on_projection=on_projection,
         on_create_command=create_command,
         on_audit_security=on_audit_security,

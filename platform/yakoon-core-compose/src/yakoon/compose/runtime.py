@@ -3,8 +3,8 @@ from typing import Literal, TypeAlias
 from yakoon.base.application import Application
 from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import (
-    OnApplyPermissions,
-    OnAuthorize,
+    OnAuthorizeRead,
+    OnAuthorizeWrite,
     OnProject,
     OnSaveSession,
 )
@@ -12,9 +12,11 @@ from yakoon.base.runtime import Container
 from yakoon.base.sources import OnDataSource
 from yakoon.platform.capabilities.audit import AuditLogService
 from yakoon.platform.capabilities.permission import (
-    PermissionBootstrap,
-    PermissionService,
+    PermissionChecker,
+    PermissionCompiler,
+    PermissionParser,
 )
+from yakoon.platform.capabilities.permission.services import PermissionBootstrapper
 from yakoon.platform.machine.host import RuntimeHost
 from yakoon.platform.machine.wire import build_machine
 from yakoon.platform.plugins import PluginLoader
@@ -68,10 +70,7 @@ def compose_runtime(
     # --- PERMISSIONS ---
     # -------------------
 
-    perm_service = PermissionService()
-    perm_boot = PermissionBootstrap(
-        on_register=perm_service.register_role,
-    )
+    perm_checker = PermissionChecker()
 
     # ----------------
     # --- PLUGINS ---
@@ -112,8 +111,8 @@ def compose_runtime(
         fork.bind(OnDataSource, ds.read)
         fork.bind(OnProject, projector.project)
         fork.bind(OnSaveSession, session_manager.save)
-        fork.bind(OnAuthorize, perm_service.can_read)
-        fork.bind(OnApplyPermissions, perm_service.apply_account)
+        fork.bind(OnAuthorizeRead, perm_checker.can_read)
+        fork.bind(OnAuthorizeWrite, perm_checker.can_write)
 
         return ModulePorts(
             on_publish=ports.bind,
@@ -121,8 +120,23 @@ def compose_runtime(
             on_get_port=fork.get,
         )
 
+    # --- PLUGINS ---
+
+    permission_specs = []
     for app in applications:
         app.bind_ports(bind_ports())
+        app.collect_bootstrap_permissions(permission_specs)
+
+    # --- BOOT PERMISSIONS ---
+
+    perm_parser = PermissionParser()
+    compiler = PermissionCompiler(
+        permission_specs,
+        on_parse=perm_parser.parse,
+    )
+    perm_bootstrapper = PermissionBootstrapper(
+        permissions=compiler.compile(),
+    )
 
     # --- STREAMING ---
 
@@ -133,7 +147,6 @@ def compose_runtime(
     async def initialize():
         await store.initialize()
         await build_index()
-        await perm_boot.apply()
 
     # -------------------
     # --- BUILD INDEX ---
@@ -148,12 +161,12 @@ def compose_runtime(
         applications=applications,
         on_session=session_manager.get_or_create,
         on_projection=output.send_projection,
-        on_authorize=perm_service.can_execute,
+        on_has_permission=perm_checker.can_execute,
         on_audit_log=audit_service.audit,
         on_audit_error=audit_service.error,
         on_audit_security=audit_service.security,
         on_audit_warning=audit_service.warning,
-        on_bootstrap_permissions=perm_service.apply_bootstrap,
+        on_bootstrap_permissions=perm_bootstrapper.apply,
         on_initialize=initialize,
     )
 

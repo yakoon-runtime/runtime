@@ -4,6 +4,7 @@ from .group import GroupService
 from .membership import MembershipService
 from .namespaces import IdentityNamespaces
 from .permgrant import PermissionGrantService
+from .resolver import PermissionResolver
 from .user import UserService
 from .verifier import AllowAllSecretVerifier
 
@@ -24,4 +25,6 @@ __all__ = [
     "IdentityNamespaces",
     # .permgrant
     "PermissionGrantService",
+    # .resolver
+    "PermissionResolver",
 ]

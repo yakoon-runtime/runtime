@@ -30,6 +30,8 @@ class Command(ABC):
     # for permission check and manual pages.
     use_subcommands: bool = False
 
+    bootstrap_permissions: list[str] = []
+
     @abstractmethod
     def run(self, request: Request):
         raise NotImplementedError

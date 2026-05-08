@@ -6,7 +6,7 @@ from yakoon.base.commands import Command
 from yakoon.base.commands.types import CommandKind
 from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.base.controllers.resolver import resolve_resource
-from yakoon.base.plugins.ports import OnAuthorize, OnProject, OnSaveSession
+from yakoon.base.plugins.ports import OnAuthorizeRead, OnProject, OnSaveSession
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.sources import OnDataSource
 
@@ -89,7 +89,7 @@ class SystemController(Controller):
         access = cast(_SessionAccess, self.session)
         manual_service = CommandManService(
             on_source=self.ports.on_get_port(OnDataSource),
-            on_has_permission=self.ports.on_get_port(OnAuthorize),
+            on_has_permission=self.ports.on_get_port(OnAuthorizeRead),
         )
 
         async def list_commands(
