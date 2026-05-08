@@ -3,6 +3,7 @@ from .authentication import AuthenticationService
 from .group import GroupService
 from .membership import MembershipService
 from .namespaces import IdentityNamespaces
+from .permgrant import PermissionGrantService
 from .user import UserService
 from .verifier import AllowAllSecretVerifier
 
@@ -19,6 +20,8 @@ __all__ = [
     "GroupService",
     # .membership
     "MembershipService",
-    # namespaces
+    # .namespaces
     "IdentityNamespaces",
+    # .permgrant
+    "PermissionGrantService",
 ]

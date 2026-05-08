@@ -37,6 +37,13 @@ class PermissionService:
             "ident-app:membership.remove|rx",
             "ident-app:membership.groups|rx",
             "ident-app:membership.users|rx",
+            # ident - grant
+            "ident-app:grant|rx",
+            "ident-app:grant.add|rx",
+            "ident-app:grant.remove|rx",
+            "ident-app:grant.user|rx",
+            "ident-app:grant.group|rx",
+            "ident-app:grant.permission|rx",
             # jobs
             "jobs:jobs|rx",
             # shell

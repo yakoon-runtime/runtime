@@ -1,5 +1,4 @@
 from yakoon.base.application import Application
-from yakoon.base.naming import Namespace
 from yakoon.base.naming.key import Key
 from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import OnAuthenticate
@@ -15,6 +14,7 @@ from .services import (
     GroupService,
     IdentityNamespaces,
     MembershipService,
+    PermissionGrantService,
     UserService,
 )
 from .settings import Settings
@@ -36,6 +36,7 @@ class IdentityApp(Application):
     users: UserService
     groups: GroupService
     membership: MembershipService
+    permgrant: PermissionGrantService
 
     def on_build(self, ports: ModulePorts) -> None:
 
@@ -93,6 +94,14 @@ class IdentityApp(Application):
             on_scan=self.store.objects.scan,
         )
 
+        self.permgrant = PermissionGrantService(
+            on_get=self.store.objects.get,
+            on_append=self.store.objects.append,
+            on_replace=self.store.objects.replace,
+            on_get_many=self.store.objects.get_many,
+            on_scan=self.store.objects.scan,
+        )
+
         # ---------------------------
         # --- ALLOW ALL PASSWORDS ---
         # ---------------------------
@@ -121,6 +130,7 @@ class IdentityApp(Application):
         ports.on_provide(UserService, self.users)
         ports.on_provide(GroupService, self.groups)
         ports.on_provide(MembershipService, self.membership)
+        ports.on_provide(PermissionGrantService, self.permgrant)
 
     # ----------------------------
     # --- LIFECYCLE - ON_START ---
@@ -153,6 +163,10 @@ class IdentityApp(Application):
             namespace=namespaces.membership_namespace(),
             specs=MembershipService.index_specs(),
         )
+        await self.store.objects.ensure_indexes(
+            namespace=namespaces.permgrant_namespace(),
+            specs=PermissionGrantService.index_specs(),
+        )
 
     # ----------------
     # --- DEMODATA ---
@@ -160,7 +174,8 @@ class IdentityApp(Application):
 
     async def _demo_data(self) -> None:
 
-        user_ns = Namespace(domain="system", kind="user", space="global")
+        namespaces = IdentityNamespaces()
+        user_ns = namespaces.user_namespace()
 
         u1 = User(
             key=Key(namespace=user_ns, id="stefan"),

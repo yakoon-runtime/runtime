@@ -2,6 +2,7 @@ from yakoon.base.commands import CommandSet
 
 from .cmd_group import CmdGroup
 from .cmd_member import CmdMembership
+from .cmd_permgrant import CmdPermissionGrant
 from .cmd_su import CmdSu
 from .cmd_user import CmdUser
 from .cmd_whoami import CmdWhoAmI
@@ -25,4 +26,5 @@ class AdminCommands(CommandSet):
         CmdUser,
         CmdGroup,
         CmdMembership,
+        CmdPermissionGrant,
     )

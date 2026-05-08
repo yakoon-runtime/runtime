@@ -5,8 +5,20 @@ from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.base.plugins.ports import OnSaveSession
 from yakoon.ident.models import Group, User
 
-from ..commands import AdminCommands, CmdGroup, CmdMembership, CmdUser
-from ..services import GroupService, IdentityNamespaces, MembershipService, UserService
+from ..commands import (
+    AdminCommands,
+    CmdGroup,
+    CmdMembership,
+    CmdPermissionGrant,
+    CmdUser,
+)
+from ..services import (
+    GroupService,
+    IdentityNamespaces,
+    MembershipService,
+    PermissionGrantService,
+    UserService,
+)
 
 
 class AdminController(Controller):
@@ -23,6 +35,7 @@ class AdminController(Controller):
         CmdUser: "_create_user",
         CmdGroup: "_create_group",
         CmdMembership: "_create_membership",
+        CmdPermissionGrant: "create_permgrant",
     }
 
     namespaces = IdentityNamespaces()
@@ -106,4 +119,34 @@ class AdminController(Controller):
             on_get_user_by_name=get_user_by_name,
             on_get_group_by_name=get_group_by_name,
             on_get_namespace=self.namespaces.membership_namespace,
+        )
+
+    def create_permgrant(self):
+
+        user_service = self.ports.on_get_port(UserService)
+        group_service = self.ports.on_get_port(GroupService)
+        permgrant_service = self.ports.on_get_port(PermissionGrantService)
+
+        async def get_user_by_name(name: str) -> User | None:
+            return await user_service.get_by_username(
+                namespace=(self.namespaces.user_namespace()),
+                username=name,
+            )
+
+        async def get_group_by_name(name: str) -> Group | None:
+            return await group_service.get_by_name(
+                namespace=(self.namespaces.group_namespace()),
+                name=name,
+            )
+
+        return CmdPermissionGrant(
+            on_project=self.project,
+            on_list_grants=permgrant_service.list_grants,
+            on_list_subject_grants=permgrant_service.list_subject_grants,
+            on_list_permission_grants=permgrant_service.list_permission_grants,
+            on_add_grant=permgrant_service.add_grant,
+            on_remove_grant=permgrant_service.remove_grant,
+            on_get_user_by_name=get_user_by_name,
+            on_get_group_by_name=get_group_by_name,
+            on_get_namespace=self.namespaces.permgrant_namespace,
         )

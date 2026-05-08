@@ -1,5 +1,6 @@
 from .cmd_group import CmdGroup
 from .cmd_member import CmdMembership
+from .cmd_permgrant import CmdPermissionGrant
 from .cmd_su import CmdSu
 from .cmd_user import CmdUser
 from .cmd_whoami import CmdWhoAmI
@@ -13,4 +14,5 @@ __all__ = [
     "CmdUser",
     "CmdGroup",
     "CmdMembership",
+    "CmdPermissionGrant",
 ]

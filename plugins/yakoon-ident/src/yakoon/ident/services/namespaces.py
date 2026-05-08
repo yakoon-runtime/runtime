@@ -3,7 +3,7 @@ from yakoon.base.naming import Namespace
 
 class IdentityNamespaces:
 
-    domain = "system"
+    domain = "ident"
     space = "global"
 
     # ----------------------------------
@@ -18,3 +18,6 @@ class IdentityNamespaces:
 
     def membership_namespace(self) -> Namespace:
         return Namespace(self.domain, "membership", self.space)
+
+    def permgrant_namespace(self) -> Namespace:
+        return Namespace(self.domain, "permgrant", self.space)
