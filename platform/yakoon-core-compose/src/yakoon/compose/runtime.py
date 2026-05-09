@@ -118,6 +118,7 @@ def compose_runtime(
         )
 
     for app in applications:
+        app.initialize()
         app.bind_ports(bind_ports())
 
     # -----------------

@@ -14,8 +14,7 @@ class CmdGroup(Command):
     key = "group"
 
     invocations = [
-        # Invocation(),
-        Invocation(action="list"),
+        Invocation(action="list", default=True),
         Invocation(action="add", args=["groupname"]),
         Invocation(action="delete", args=["groupname"]),
         Invocation(action="edit", args=["groupname"], options=["enabled"]),
@@ -55,14 +54,6 @@ class CmdGroup(Command):
         if action == "delete":
             yield await self._delete(request)
             return
-
-        projection = await self.on_project(
-            name="group.error.sam",
-            state={
-                "reason": f"Unknown group action: {action}",
-            },
-        )
-        yield out(projection)
 
     async def _list(self, request: Request):
         namespace = self.on_get_namspace()

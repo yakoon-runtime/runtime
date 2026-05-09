@@ -58,14 +58,6 @@ class CmdUser(Command):
             yield await self._delete(request)
             return
 
-        projection = await self.on_project(
-            name="user.error.sam",
-            state={
-                "reason": f"Unknown user action: {action}",
-            },
-        )
-        yield out(projection)
-
     async def _list(self, request: Request):
         namespace = self.on_get_namspace()
         users = await self.on_list_users(namespace=namespace)

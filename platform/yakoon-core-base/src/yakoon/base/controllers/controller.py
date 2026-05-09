@@ -55,6 +55,16 @@ class Controller(ABC):
         self,
     ) -> Command: ...
 
+    @classmethod
+    def validate(cls):
+        for cs in cls.commandsets:
+            for cmd in cs.commands:
+                defaults = [x for x in cmd.invocations if x.default]
+                if len(defaults) > 1:
+                    raise RuntimeError(
+                        f"Command '{cmd.key}' defines multiple default invocations."
+                    )
+
     async def project(self, name: str, state: dict | None = None):
 
         path = resolve_resource(

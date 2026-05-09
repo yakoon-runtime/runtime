@@ -33,6 +33,10 @@ class Application(ABC):
 
     ports: ModulePorts
 
+    def initialize(self):
+        for controller in self.controllers:
+            controller.validate()
+
     def bind_ports(self, ports: ModulePorts):
         self.ports = ports
         for controller in self.controllers:

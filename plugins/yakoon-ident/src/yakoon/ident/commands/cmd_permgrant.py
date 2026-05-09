@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands import Command, Request
+from yakoon.base.commands import Command, Invocation, Request
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
@@ -17,7 +17,20 @@ from yakoon.ident.models import (
 class CmdPermissionGrant(Command):
 
     key = "grant"
-    actions = ["add", "remove", "user", "group", "permission"]
+
+    invocations = [
+        Invocation(
+            action="add",
+            args=["subject_type", "subject_name", "permission"],
+            options=["bits", "deny"],
+        ),
+        Invocation(
+            action="remove", args=["subject_type", "subject_name", "permission"]
+        ),
+        Invocation(action="user", args=["username"]),
+        Invocation(action="group", args=["groupname"]),
+        Invocation(action="permission", args=["permission"]),
+    ]
 
     def __init__(
         self,
@@ -66,15 +79,6 @@ class CmdPermissionGrant(Command):
         if action == "permission":
             yield await self._permission(request)
             return
-
-        projection = await self.on_project(
-            name="grant.error.sam",
-            state={
-                "reason": (f"Unknown permission action: " f"{action}"),
-            },
-        )
-
-        yield out(projection)
 
     async def _add(
         self,

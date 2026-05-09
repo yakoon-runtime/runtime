@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands import Command, Request
+from yakoon.base.commands import Command, Invocation, Request
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
@@ -13,7 +13,13 @@ from yakoon.ident.models import Group, Membership, User
 class CmdMembership(Command):
 
     key = "membership"
-    actions = ["add", "remove", "groups", "users"]
+
+    invocations = [
+        Invocation(action="add", args=["username", "groupname"]),
+        Invocation(action="remove", args=["username", "groupname"]),
+        Invocation(action="groups", args=["username"]),
+        Invocation(action="users", args=["groupname"]),
+    ]
 
     def __init__(
         self,
@@ -59,15 +65,6 @@ class CmdMembership(Command):
         if action == "users":
             yield await self._users(request)
             return
-
-        projection = await self.on_project(
-            name="membership.error.sam",
-            state={
-                "reason": (f"Unknown membership action: {action}"),
-            },
-        )
-
-        yield out(projection)
 
     async def _add(self, request: Request):
 

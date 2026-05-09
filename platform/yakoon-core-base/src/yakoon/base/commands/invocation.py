@@ -9,6 +9,7 @@ class Invocation:
     action: str | None = None
     args: list[str] = field(default_factory=list)
     options: list[str] = field(default_factory=list)
+    default: bool | None = None
 
     def usage(
         self,
