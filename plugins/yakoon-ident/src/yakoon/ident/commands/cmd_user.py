@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands import Command, Request
+from yakoon.base.commands import Command, Invocation, Request
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
 from yakoon.base.naming import Namespace
@@ -12,7 +12,16 @@ from yakoon.ident.models import User
 class CmdUser(Command):
 
     key = "user"
-    subcommands = ["add", "edit", "delete"]
+
+    invocations = [
+        Invocation(action="add", args=["username"], options=["password"]),
+        Invocation(action="delete", args=["username"]),
+        Invocation(
+            action="edit",
+            args=["username"],
+            options=["password", "enabled"],
+        ),
+    ]
 
     def __init__(
         self,

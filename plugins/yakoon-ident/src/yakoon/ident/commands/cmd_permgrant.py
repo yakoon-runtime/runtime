@@ -17,7 +17,7 @@ from yakoon.ident.models import (
 class CmdPermissionGrant(Command):
 
     key = "grant"
-    subcommands = ["add", "remove", "user", "group", "permission"]
+    actions = ["add", "remove", "user", "group", "permission"]
 
     def __init__(
         self,

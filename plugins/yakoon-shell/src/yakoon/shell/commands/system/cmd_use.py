@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands import Command, Request
+from yakoon.base.commands import Command, Invocation, Request
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
 from yakoon.base.projection import to_text
@@ -13,6 +13,10 @@ class CmdUse(Command):
 
     key = "use"
     anonymous = True
+
+    invocations = [
+        Invocation(),
+    ]
 
     def __init__(
         self,

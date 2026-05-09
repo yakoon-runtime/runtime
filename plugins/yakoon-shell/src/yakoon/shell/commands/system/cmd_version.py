@@ -3,7 +3,7 @@ import subprocess
 import time
 from datetime import UTC, datetime
 
-from yakoon.base.commands import Command, Request
+from yakoon.base.commands import Command, Invocation, Request
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
 
@@ -12,6 +12,10 @@ class CmdVersion(Command):
 
     key = "version"
     anonymous = True
+
+    invocations = [
+        Invocation(),
+    ]
 
     def __init__(self, on_project: OnProjectCmd):
         self.on_project = on_project

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands import Command, Request
+from yakoon.base.commands import Command, Invocation, Request
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
 from yakoon.base.naming import Namespace
@@ -12,7 +12,14 @@ from yakoon.ident.models import Group
 class CmdGroup(Command):
 
     key = "group"
-    subcommands = ["add", "edit", "delete"]
+
+    invocations = [
+        # Invocation(),
+        Invocation(action="list"),
+        Invocation(action="add", args=["groupname"]),
+        Invocation(action="delete", args=["groupname"]),
+        Invocation(action="edit", args=["groupname"], options=["enabled"]),
+    ]
 
     def __init__(
         self,

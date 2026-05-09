@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands import Command, Request
+from yakoon.base.commands import Command, Invocation, Request
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.commands.types import CommandScope
 from yakoon.base.flow import out
@@ -15,6 +15,10 @@ class CmdSu(Command):
     key = "su"
     scope = CommandScope.SHELL
     anonymous = True
+
+    invocations = [
+        Invocation(args=["username"], options=["password"]),
+    ]
 
     def __init__(
         self,

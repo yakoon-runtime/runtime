@@ -1,5 +1,9 @@
 from yakoon.base.runtime.errors import DomainError
 
+# ----------------------------------------
+# INVALID INVOCATION ERROR
+# ----------------------------------------
+
 
 class InvalidInvocation(DomainError):
 
@@ -12,6 +16,11 @@ class InvalidInvocation(DomainError):
 
         self.message = message
         self.code = code
+
+
+# ----------------------------------------
+# MISSING ACTION ERROR
+# ----------------------------------------
 
 
 class MissingAction(InvalidInvocation):
@@ -34,6 +43,11 @@ class MissingAction(InvalidInvocation):
         )
 
 
+# ----------------------------------------
+# UNSUPPORTED ACTION ERROR
+# ----------------------------------------
+
+
 class UnsupportedAction(InvalidInvocation):
 
     def __init__(
@@ -52,4 +66,22 @@ class UnsupportedAction(InvalidInvocation):
         super().__init__(
             msg,
             code="unsupported_action",
+        )
+
+
+# ----------------------------------------
+# USAGE ERROR
+# ----------------------------------------
+
+
+class UsageError(InvalidInvocation):
+
+    def __init__(
+        self,
+        usage: str,
+        code: str = "invalid_usage",
+    ):
+        super().__init__(
+            usage.strip(),
+            code,
         )

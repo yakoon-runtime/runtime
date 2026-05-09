@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands import Command, Request
+from yakoon.base.commands import Command, Invocation, Request
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import receive
 from yakoon.base.flow.patterns import form
@@ -12,6 +12,10 @@ class CmdQuit(Command):
 
     key = "quit"
     anonymous = True
+
+    invocations = [
+        Invocation(),
+    ]
 
     def __init__(
         self,

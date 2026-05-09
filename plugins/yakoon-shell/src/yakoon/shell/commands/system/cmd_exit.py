@@ -5,6 +5,7 @@ from typing import Protocol
 from yakoon.base.commands import (
     Command,
     CommandScope,
+    Invocation,
     Request,
 )
 from yakoon.base.flow import out
@@ -17,6 +18,10 @@ class CmdExit(Command):
     key = "exit"
     scope = CommandScope.GLOBAL
     anonymous = True
+
+    invocations = [
+        Invocation(),
+    ]
 
     def __init__(
         self,
