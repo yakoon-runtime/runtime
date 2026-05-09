@@ -14,7 +14,12 @@ from yakoon.base.projection.model import (
 # ---------------------------------------------------------
 
 
-def domain_error_projection(text: str, *, title=None, error_code=None) -> Projection:
+def domain_error_projection(
+    text: str,
+    *,
+    title=None,
+    error_code=None,
+) -> Projection:
     return _p_text(
         text,
         role="error",

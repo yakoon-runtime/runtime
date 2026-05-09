@@ -12,7 +12,7 @@ from yakoon.ident.models import User
 class CmdUser(Command):
 
     key = "user"
-    use_subcommands = True
+    subcommands = ["add", "edit", "delete"]
 
     def __init__(
         self,

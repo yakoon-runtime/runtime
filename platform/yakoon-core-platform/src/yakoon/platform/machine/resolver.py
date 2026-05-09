@@ -4,15 +4,21 @@ from collections.abc import Sequence
 from typing import Protocol
 
 from yakoon.base.application.application import Application
-from yakoon.base.commands import Command
-from yakoon.base.commands.types import CommandScope
+from yakoon.base.commands import Command, CommandScope
 from yakoon.base.controllers import Controller
-from yakoon.platform.runtime import CommandNotFound
+from yakoon.platform.capabilities.permission import Permission
+from yakoon.platform.runtime import CommandNotFound, PermissionDenied
+from yakoon.platform.runtime.sessions import Session
 
 
-class CommandResolver:
+class InvocationResolver:
 
-    def __init__(self, applications: Sequence[Application]):
+    def __init__(
+        self,
+        on_authorize: OnAuthorize,
+        applications: Sequence[Application],
+    ):
+        self.on_authorize = on_authorize
         self._applications = {a.id: a for a in applications}
         self._shell_app = next(a for a in applications if a.is_shell)
 
@@ -65,6 +71,8 @@ class CommandResolver:
         self,
         app_id: str | None,
         command_key: str,
+        tokens: list[str] | None,
+        session: Session,
     ) -> tuple[Application, type[Controller], type[Command]]:
 
         key = command_key.strip()
@@ -84,6 +92,7 @@ class CommandResolver:
             cmds = self._commands_by_controller.get(controller.id, {})
             cmd = cmds.get(key)
             if cmd and cmd.scope == CommandScope.APP:
+                self._ensure_invocation(session, cmd, tokens)
                 return app, controller, cmd
 
         # 2. SHELL scope
@@ -92,6 +101,7 @@ class CommandResolver:
             if cmd:
                 controller = self._controllers[cmd.controller_id]
                 app = self._applications[cmd.app_id]
+                self._ensure_invocation(session, cmd, tokens)
                 return app, controller, cmd
 
         # 3. GLOBAL scope
@@ -99,6 +109,7 @@ class CommandResolver:
         if cmd:
             controller = self._controllers[cmd.controller_id]
             target_app = self._applications[cmd.app_id]
+            self._ensure_invocation(session, cmd, tokens)
             return target_app, controller, cmd
 
         raise CommandNotFound(key)
@@ -106,11 +117,27 @@ class CommandResolver:
     def globals(self) -> set[str]:
         return set(self._global.keys())
 
+    # ----------------------------------
+    # INTERNALS
+    # ----------------------------------
+
+    def _ensure_invocation(
+        self, session: Session, command_type: type[Command], tokens: list[str] | None
+    ):
+        command_type.ensure_invocation(tokens=tokens)
+        if command_type.anonymous:
+            return
+
+        action = tokens[0] if tokens else None
+        fq = Permission.fq_key(command_type.app_id, command_type.key, action)
+        if not self.on_authorize(session=session, perm_key=fq):
+            raise PermissionDenied()
+
 
 # ----------------------------------
 # PORTS
 # ----------------------------------
 
 
-class OnMatchCommand(Protocol):
-    def __call__(self, *, app_id: str, command_key: str) -> type[Command] | None: ...
+class OnAuthorize(Protocol):
+    def __call__(self, *, session, perm_key: str) -> bool: ...

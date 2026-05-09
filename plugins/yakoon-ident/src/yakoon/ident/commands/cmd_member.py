@@ -13,7 +13,7 @@ from yakoon.ident.models import Group, Membership, User
 class CmdMembership(Command):
 
     key = "membership"
-    use_subcommands = True
+    subcommands = ["add", "remove", "groups", "users"]
 
     def __init__(
         self,

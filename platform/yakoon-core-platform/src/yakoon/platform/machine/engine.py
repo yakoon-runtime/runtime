@@ -6,7 +6,7 @@ from typing import Protocol
 from uuid import uuid4
 
 from yakoon.base.application.application import Application
-from yakoon.base.commands import Command, Request
+from yakoon.base.commands import Command, InvalidInvocation, Request
 from yakoon.base.controllers.controller import Controller
 from yakoon.base.flow.primitives import (
     AutoFocus,
@@ -23,7 +23,6 @@ from yakoon.base.flow.primitives import (
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext
-from yakoon.platform.capabilities.permission import Permission
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
     CommandNotFound,
@@ -39,16 +38,14 @@ class CommandEngine:
 
     def __init__(
         self,
-        on_match_command: OnMatchCommand,
+        on_resolve_command: OnResolveCommand,
         on_parse_input: OnParseInput,
-        on_authorize: OnAuthorize,
         on_projection: OnProjection,
         on_audit_security: OnAuditSecurity,
         on_create_command: OnCreateCommand,
     ):
-        self.on_match_command = on_match_command
+        self.on_resolve_command = on_resolve_command
         self.on_parse_input = on_parse_input
-        self.on_authorize = on_authorize
         self.on_projection = on_projection
         self.on_audit_security = on_audit_security
         self.on_create_command = on_create_command
@@ -77,9 +74,11 @@ class CommandEngine:
             # await application.on_before_resolve(session)
 
             # Command finden
-            app, controller_type, command_type = self.on_match_command(
+            app, controller_type, command_type = self.on_resolve_command(
                 app_id=session.get_active_app(),
                 command_key=event.command,
+                tokens=event.tokens,
+                session=session,
             )
 
             # session.execution.step(
@@ -87,15 +86,6 @@ class CommandEngine:
             #    command=command_type.key,
             #    controller=resolved_controller.id,
             # )
-
-            # Permission check
-            action = None
-            if not command_type.anonymous:
-                if command_type.use_subcommands:
-                    action = event.tokens[0] if event.tokens else None
-                fq = Permission.fq_key(app.id, command_type.key, action)
-                if not self.on_authorize(session=session, perm_key=fq):
-                    raise PermissionDenied()
 
             # session.execution.step(
             #    ExecStep.COMMAND_PREPARED,
@@ -123,7 +113,7 @@ class CommandEngine:
             session.add_flow(flow)
             return flow
 
-        except CommandNotFound:
+        except (CommandNotFound, InvalidInvocation):
             raise
 
         except PermissionDenied:
@@ -277,18 +267,19 @@ class CommandEngine:
 # ----------------------------------
 
 
-class OnMatchCommand(Protocol):
+class OnResolveCommand(Protocol):
     def __call__(
-        self, *, app_id: str | None, command_key: str
+        self,
+        *,
+        app_id: str | None,
+        command_key: str,
+        tokens: list[str] | None,
+        session: Session,
     ) -> tuple[Application, type[Controller], type[Command]]: ...
 
 
 class OnParseInput(Protocol):
     def __call__(self, *, event: InputEvent) -> tuple[InputEvent, list[str]]: ...
-
-
-class OnAuthorize(Protocol):
-    def __call__(self, *, session, perm_key: str) -> bool: ...
 
 
 class OnProjection(Protocol):

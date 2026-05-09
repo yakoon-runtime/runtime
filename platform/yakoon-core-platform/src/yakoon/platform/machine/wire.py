@@ -15,7 +15,7 @@ from yakoon.platform.runtime.bus import BusOutput, SessionBus
 from .engine import CommandEngine
 from .host import RuntimeHost
 from .parser import InputParser
-from .resolver import CommandResolver
+from .resolver import InvocationResolver
 from .runner import Runner
 from .scheduler import Scheduler
 from .session import SessionBuilder
@@ -35,8 +35,9 @@ def build_machine(
 
     # --- ROUTING ---
 
-    resolver = CommandResolver(
+    resolver = InvocationResolver(
         applications=applications,
+        on_authorize=on_has_permission,
     )
 
     # --- FACTORY ---
@@ -61,9 +62,8 @@ def build_machine(
     # --- ORCHESTRATION ---
 
     engine = CommandEngine(
-        on_match_command=resolver.resolve,
+        on_resolve_command=resolver.resolve,
         on_parse_input=parser.parse,
-        on_authorize=on_has_permission,
         on_projection=on_projection,
         on_create_command=create_command,
         on_audit_security=on_audit_security,

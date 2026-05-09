@@ -12,7 +12,7 @@ from yakoon.ident.models import Group
 class CmdGroup(Command):
 
     key = "group"
-    use_subcommands = True
+    subcommands = ["add", "edit", "delete"]
 
     def __init__(
         self,

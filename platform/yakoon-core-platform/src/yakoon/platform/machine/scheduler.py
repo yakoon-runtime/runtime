@@ -68,10 +68,23 @@ class Scheduler:
             for flow in session.flows():
                 self.schedule_flow(flow, session)
 
+        except DomainError as e:
+            await self.on_projection(
+                session=session,
+                projection=domain_error_projection(
+                    e.message,
+                    error_code=e.code,
+                ),
+                ctx=event.context,
+            )
+
         except PlatformError as e:
             await self.on_projection(
                 session=session,
-                projection=system_error_projection(e.message, error_code=e.code),
+                projection=system_error_projection(
+                    e.message,
+                    error_code=e.code,
+                ),
                 ctx=event.context,
             )
 
@@ -79,7 +92,10 @@ class Scheduler:
             self.on_audit_error(exc=e, session=session)
             await self.on_projection(
                 session=session,
-                projection=fatal_error_projection("Fatal error", error_code="fatal"),
+                projection=fatal_error_projection(
+                    "Fatal error",
+                    error_code="fatal",
+                ),
                 ctx=event.context,
             )
 
