@@ -12,6 +12,7 @@ from yakoon.base.sources import DataRequest, OnDataSource
 class CmdUse(Command):
 
     key = "use"
+    anonymous = True
 
     def __init__(
         self,

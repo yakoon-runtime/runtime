@@ -26,7 +26,6 @@ def build_machine(
     on_projection: OnProjection,
     on_session: OnGetOrCreateSession,
     on_has_permission: OnHasPermission,
-    on_bootstrap_permissions: OnBootstrapPermissions,
     on_audit_log: OnAuditLog,
     on_audit_error: OnAuditError,
     on_audit_warning: OnAuditWarning,
@@ -92,7 +91,6 @@ def build_machine(
 
     session_builder = SessionBuilder(
         on_get_session=get_session,
-        on_apply_permissions=on_bootstrap_permissions,
     )
 
     # --- SESSION EXECUTION ---

@@ -14,14 +14,6 @@ class CmdUser(Command):
     key = "user"
     use_subcommands = True
 
-    bootstrap_permissions = [
-        "user|rx",
-        "user.list|rx",
-        "user.add|rx",
-        "user.edit|rx",
-        "user.delete|rx",
-    ]
-
     def __init__(
         self,
         on_project: OnProjectCmd,

@@ -16,6 +16,7 @@ class CmdExit(Command):
 
     key = "exit"
     scope = CommandScope.GLOBAL
+    anonymous = True
 
     def __init__(
         self,

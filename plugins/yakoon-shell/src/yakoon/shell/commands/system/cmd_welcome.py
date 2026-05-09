@@ -6,6 +6,7 @@ from yakoon.base.flow import out
 class CmdWelcome(Command):
 
     key = "welcome"
+    anonymous = True
 
     def __init__(self, on_project: OnProjectCmd):
         self.on_project = on_project

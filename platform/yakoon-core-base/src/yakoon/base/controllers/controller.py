@@ -50,13 +50,6 @@ class Controller(ABC):
         self.session = session
         self.command = command
 
-    @classmethod
-    def collect_bootstrap_permissions(cls, permissions: list[str]):
-        for cs in cls.commandsets:
-            for command in cs.commands:
-                if command.bootstrap_permissions:
-                    permissions.extend(command.bootstrap_permissions)
-
     @abstractmethod
     def create_command(
         self,

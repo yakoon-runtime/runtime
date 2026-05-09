@@ -87,6 +87,7 @@ class CommandSource(DataSource):
             "scope": cmd.scope.name,
             "kind": cmd.kind.name,
             "visibility": cmd.visibility.name,
+            "anonymous": cmd.anonymous,
         }
 
     def _build(self, applications: Sequence[Application]):

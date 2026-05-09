@@ -67,14 +67,6 @@ class MembershipService:
         self.on_scan = on_scan
 
     # ----------------------------------
-    # KEY
-    # ----------------------------------
-
-    @staticmethod
-    def build_key(*, namespace: Namespace, user_key: Key, group_key: Key) -> Key:
-        return Key(namespace=namespace, id=f"{group_key}:{user_key}")
-
-    # ----------------------------------
     # API
     # ----------------------------------
 
@@ -98,7 +90,7 @@ class MembershipService:
         group_key: Key,
     ) -> Membership | None:
 
-        key = self.build_key(
+        key = Membership.build_key(
             namespace=namespace,
             user_key=user_key,
             group_key=group_key,
@@ -202,7 +194,7 @@ class MembershipService:
         group_key: Key,
     ) -> Membership:
 
-        key = self.build_key(
+        key = Membership.build_key(
             namespace=namespace,
             user_key=user_key,
             group_key=group_key,

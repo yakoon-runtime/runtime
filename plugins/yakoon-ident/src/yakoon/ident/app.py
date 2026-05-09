@@ -1,11 +1,12 @@
 from yakoon.base.application import Application
-from yakoon.base.naming.key import Key
+from yakoon.base.naming import Key
 from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import OnAuthenticate
 from yakoon.platform.capabilities.permission import PermissionParser
 from yakoon.storage.eventstore import StoreRuntime
 from yakoon.storage.eventstore.wire import build_store
 
+from .boot import IdentityBootstrapper
 from .controllers import AdminController, AuthController
 from .models import User, UserData
 from .services import (
@@ -158,8 +159,15 @@ class IdentityApp(Application):
     async def on_start(self, ports: ModulePorts) -> None:
 
         await self.store.initialize()
-
         await self._build_index()
+
+        await IdentityBootstrapper(
+            users=self.users,
+            groups=self.groups,
+            membership=self.membership,
+            permgrant=self.permgrant,
+        ).bootstrap()
+
         await self._demo_data()
 
     # -------------------

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from yakoon.base.naming import Key
+from yakoon.base.naming import Key, Namespace
 from yakoon.storage.eventstore import GetResult
 
 
@@ -60,6 +60,19 @@ class PermissionGrant:
     ):
         self.key = key
         self.data = data
+
+    @staticmethod
+    def build_key(
+        *,
+        namespace: Namespace,
+        subject_key: Key,
+        permission_key: str,
+    ) -> Key:
+
+        return Key(
+            namespace=namespace,
+            id=f"{subject_key}:{permission_key}",
+        )
 
     @property
     def subject_key(self) -> Key:

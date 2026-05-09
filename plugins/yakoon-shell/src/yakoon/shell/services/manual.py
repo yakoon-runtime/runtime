@@ -40,7 +40,8 @@ class CommandManService:
         rows = [
             r
             for r in rows
-            if on_has_permission(
+            if r["anonymous"]
+            or on_has_permission(
                 session=session,
                 perm_key=f"{r['app_id']}:{r['key']}",
             )

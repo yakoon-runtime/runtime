@@ -11,17 +11,14 @@ class SessionBuilder:
     def __init__(
         self,
         on_get_session: OnGetSession,
-        on_apply_permissions: OnApplyPermissions,
     ):
         self.on_get_session = on_get_session
-        self.on_apply_permissions = on_apply_permissions
         self._counter = 0
 
     async def create(self) -> Session:
         key = self._next_key()
 
         session = await self.on_get_session(key=key)
-        self.on_apply_permissions(session=session)
 
         return session
 

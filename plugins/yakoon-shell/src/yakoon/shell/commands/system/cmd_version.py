@@ -11,6 +11,7 @@ from yakoon.base.flow import out
 class CmdVersion(Command):
 
     key = "version"
+    anonymous = True
 
     def __init__(self, on_project: OnProjectCmd):
         self.on_project = on_project

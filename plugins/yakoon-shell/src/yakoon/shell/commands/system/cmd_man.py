@@ -19,6 +19,7 @@ class CmdMan(Command):
 
     key = "man"
     scope = CommandScope.GLOBAL
+    anonymous = True
 
     def __init__(
         self,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from yakoon.base.naming import Key
+from yakoon.base.naming import Key, Namespace
 from yakoon.storage.eventstore import GetResult
 
 
@@ -45,6 +45,10 @@ class Membership:
     def __init__(self, key: Key, data: MembershipData):
         self.key = key
         self.data = data
+
+    @staticmethod
+    def build_key(*, namespace: Namespace, user_key: Key, group_key: Key) -> Key:
+        return Key(namespace=namespace, id=f"{group_key}:{user_key}")
 
     @property
     def user_key(self) -> Key:

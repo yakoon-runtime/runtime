@@ -11,6 +11,7 @@ from yakoon.base.flow.patterns import form
 class CmdQuit(Command):
 
     key = "quit"
+    anonymous = True
 
     def __init__(
         self,

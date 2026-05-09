@@ -13,10 +13,7 @@ from yakoon.base.sources import OnDataSource
 from yakoon.platform.capabilities.audit import AuditLogService
 from yakoon.platform.capabilities.permission import (
     PermissionChecker,
-    PermissionCompiler,
-    PermissionParser,
 )
-from yakoon.platform.capabilities.permission.services import PermissionBootstrapper
 from yakoon.platform.machine.host import RuntimeHost
 from yakoon.platform.machine.wire import build_machine
 from yakoon.platform.plugins import PluginLoader
@@ -120,29 +117,18 @@ def compose_runtime(
             on_get_port=fork.get,
         )
 
-    # --- PLUGINS ---
-
-    permission_specs = []
     for app in applications:
         app.bind_ports(bind_ports())
-        app.collect_bootstrap_permissions(permission_specs)
 
-    # --- BOOT PERMISSIONS ---
-
-    perm_parser = PermissionParser()
-    compiler = PermissionCompiler(
-        permission_specs,
-        on_parse=perm_parser.parse,
-    )
-    perm_bootstrapper = PermissionBootstrapper(
-        permissions=compiler.compile(),
-    )
-
+    # -----------------
     # --- STREAMING ---
+    # -----------------
 
     output = build_stream()
 
+    # --------------------
     # --- INITIALIZING ---
+    # --------------------
 
     async def initialize():
         await store.initialize()
@@ -155,7 +141,9 @@ def compose_runtime(
     async def build_index():
         pass
 
+    # ------------------------
     # --- MACHINE HANDLING ---
+    # ------------------------
 
     return build_machine(
         applications=applications,
@@ -166,7 +154,6 @@ def compose_runtime(
         on_audit_error=audit_service.error,
         on_audit_security=audit_service.security,
         on_audit_warning=audit_service.warning,
-        on_bootstrap_permissions=perm_bootstrapper.apply,
         on_initialize=initialize,
     )
 

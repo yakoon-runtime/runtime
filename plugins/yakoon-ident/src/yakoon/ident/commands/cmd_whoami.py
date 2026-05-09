@@ -10,6 +10,7 @@ from yakoon.base.flow import out
 class CmdWhoAmI(Command):
 
     key = "whoami"
+    anonymous = True
 
     def __init__(
         self,

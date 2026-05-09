@@ -14,6 +14,7 @@ class CmdSu(Command):
 
     key = "su"
     scope = CommandScope.SHELL
+    anonymous = True
 
     def __init__(
         self,

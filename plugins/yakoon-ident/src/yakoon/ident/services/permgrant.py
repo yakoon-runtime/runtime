@@ -71,23 +71,6 @@ class PermissionGrantService:
         self.on_scan = on_scan
 
     # ----------------------------------
-    # KEY
-    # ----------------------------------
-
-    @staticmethod
-    def build_key(
-        *,
-        namespace: Namespace,
-        subject_key: Key,
-        permission_key: str,
-    ) -> Key:
-
-        return Key(
-            namespace=namespace,
-            id=f"{subject_key}:{permission_key}",
-        )
-
-    # ----------------------------------
     # API
     # ----------------------------------
 
@@ -111,7 +94,7 @@ class PermissionGrantService:
         permission_key: str,
     ) -> PermissionGrant | None:
 
-        key = self.build_key(
+        key = PermissionGrant.build_key(
             namespace=namespace,
             subject_key=subject_key,
             permission_key=permission_key,
@@ -224,7 +207,7 @@ class PermissionGrantService:
         deny: bool = False,
     ) -> PermissionGrant:
 
-        key = self.build_key(
+        key = PermissionGrant.build_key(
             namespace=namespace,
             subject_key=subject_key,
             permission_key=permission_key,

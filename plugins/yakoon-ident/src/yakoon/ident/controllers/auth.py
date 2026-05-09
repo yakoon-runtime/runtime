@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from yakoon.base.commands import Command
 from yakoon.base.controllers import Controller, ResourceReferences
-from yakoon.base.naming import Key, NamespaceResolver
+from yakoon.base.naming import Key
 from yakoon.base.plugins.models import AuthResult
 from yakoon.base.plugins.ports import OnAuthenticate, OnSaveSession
 from yakoon.ident.services import IdentityNamespaces
@@ -47,9 +47,7 @@ class AuthController(Controller):
     # ----------------------------------
 
     async def _authenticate(self, username: str, secret: str) -> AuthResult:
-        resolver = NamespaceResolver()
-        namespace = resolver.from_session(self.session, "user", "global")
-
+        namespace = self.namespaces.user_namespace()
         on_authenticate = self.ports.on_get_port(OnAuthenticate)
         return await on_authenticate(
             namespace=namespace,
