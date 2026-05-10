@@ -9,7 +9,7 @@ from typing import Protocol
 from yakoon.base.flow.primitives import Control
 from yakoon.base.flow.primitives.outcome import Outcome
 from yakoon.base.projection import Projection
-from yakoon.base.runtime.errors import DomainError
+from yakoon.base.runtime.errors import BaseError, DomainError, format_error
 from yakoon.base.runtime.input import InputContext, InputEvent
 from yakoon.platform.flow import Flow, FlowKind
 from yakoon.platform.runtime import PlatformError, Session
@@ -40,6 +40,7 @@ class Scheduler:
         on_projection: OnProjection,
         on_audit_error: OnAuditError,
         on_audit_warning: OnAuditWarning,
+        on_i18n: Oni18n,
     ):
         # Hooks
         self.on_dispatch = on_dispatch
@@ -47,6 +48,7 @@ class Scheduler:
         self.on_projection = on_projection
         self.on_audit_error = on_audit_error
         self.on_audit_warning = on_audit_warning
+        self.on_i18n = on_i18n
 
         # Flow-basierte Queue: (session, flow)
         self._ready_user = deque()
@@ -69,20 +71,22 @@ class Scheduler:
                 self.schedule_flow(flow, session)
 
         except DomainError as e:
+
             await self.on_projection(
                 session=session,
                 projection=domain_error_projection(
-                    e.message,
+                    text=self._translate(session, e),
                     error_code=e.code,
                 ),
                 ctx=event.context,
             )
 
         except PlatformError as e:
+
             await self.on_projection(
                 session=session,
                 projection=system_error_projection(
-                    e.message,
+                    text=self._translate(session, e),
                     error_code=e.code,
                 ),
                 ctx=event.context,
@@ -222,23 +226,28 @@ class Scheduler:
                             break
 
                 except DomainError as e:
+
                     event = flow.event
                     if session.interaction_flow:
                         session.del_flow(session.interaction_flow)
+
                     await self.on_projection(
                         session=session,
                         projection=domain_error_projection(
-                            e.message, error_code=e.code
+                            text=self._translate(session, e),
+                            error_code=e.code,
                         ),
                         ctx=event.context,
                     )
 
                 except PlatformError as e:
+
                     event = flow.event
                     await self.on_projection(
                         session=session,
                         projection=system_error_projection(
-                            e.message, error_code=e.code
+                            text=self._translate(session, e),
+                            error_code=e.code,
                         ),
                         ctx=event.context,
                     )
@@ -280,6 +289,10 @@ class Scheduler:
     # --------------------------------------------------------
     # INTERNAL
     # --------------------------------------------------------
+
+    def _translate(self, session: Session, e: BaseError):
+        message = self.on_i18n(lang=session.lang, code=e.code, data=e.data)
+        return format_error(e, message=message, debug=session.debug)
 
     def _wake_sleeping(self):
         now = time.time()
@@ -344,3 +357,13 @@ class OnProjection(Protocol):
         projection: Projection,
         ctx: InputContext | None,
     ) -> None: ...
+
+
+class Oni18n(Protocol):
+    def __call__(
+        self,
+        *,
+        lang: str,
+        code: str,
+        data: dict,
+    ) -> str: ...

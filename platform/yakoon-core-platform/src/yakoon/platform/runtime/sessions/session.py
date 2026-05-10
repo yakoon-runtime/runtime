@@ -27,6 +27,7 @@ class SessionData:
     account_key: str | None = None
     last_active: datetime | None = None
     lang: str = "de"
+    debug: bool = False
     data: dict[str, Any] = field(default_factory=dict)
     _v: int = field(default=CURRENT_VERSION)
 
@@ -79,6 +80,10 @@ class Session:
     @property
     def lang(self) -> str:
         return self.data.lang
+
+    @property
+    def debug(self) -> bool:
+        return self.data.debug
 
     @property
     def execution(self) -> ExecutionTrace:

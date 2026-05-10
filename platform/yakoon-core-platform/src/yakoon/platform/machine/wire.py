@@ -32,6 +32,7 @@ def build_machine(
     on_audit_warning: OnAuditWarning,
     on_audit_security: OnAuditSecurity,
     on_initialize: Oninitialize,
+    on_i18n: Oni18n,
 ) -> RuntimeHost:
 
     # --- ROUTING ---
@@ -79,6 +80,7 @@ def build_machine(
         on_projection=on_projection,
         on_audit_error=on_audit_error,
         on_audit_warning=on_audit_warning,
+        on_i18n=on_i18n,
     )
 
     # --- SESSION HANDLING ---
@@ -183,3 +185,13 @@ class OnSuggest(Protocol):
         limit: int = 3,
         cutoff: float = 0.5,
     ) -> list[str]: ...
+
+
+class Oni18n(Protocol):
+    def __call__(
+        self,
+        *,
+        lang: str,
+        code: str,
+        data: dict,
+    ) -> str: ...

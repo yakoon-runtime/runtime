@@ -1,14 +1,11 @@
 from dataclasses import dataclass
 
-from yakoon.base.runtime.errors import BaseError
 
-# ----------------------------------------
-# PLATFORM ERRORS
-# ----------------------------------------
+@dataclass
+class PlatformError(Exception):
 
-
-class PlatformError(BaseError):
-    pass
+    message: str
+    code: str | None = None
 
 
 # ----------------------------------------
@@ -20,19 +17,26 @@ class CommandNotFound(PlatformError):
 
     def __init__(
         self,
-        app_id: str,
         command: str,
         suggestions: list[str] | None = None,
     ):
+
+        self.command = command
+        self.suggestions = suggestions or []
+
+        msg = f"Command '{command}' not found"
+        if self.suggestions:
+
+            if len(self.suggestions) == 1:
+                msg += f"\n\nDid you mean " f"'{self.suggestions[0]}'?"
+
+            else:
+                joined = "\n".join(f"  {x}" for x in self.suggestions)
+                msg += "\n\nDid you mean:\n\n" f"{joined}"
+
         super().__init__(
-            app_id=app_id,
-            number=10,
+            message=msg,
             code="command_not_found",
-            data={
-                "command": command,
-                "suggestions": suggestions or [],
-            },
-            dev_hint=("Command resolution failed after lookup."),
         )
 
 
@@ -40,17 +44,11 @@ class PermissionDenied(PlatformError):
 
     def __init__(
         self,
-        app_id: str,
-        permission: str | None = None,
     ):
+
         super().__init__(
-            app_id=app_id,
+            message="Permission denied",
             code="permission_denied",
-            number=15,
-            data={
-                "permission": permission,
-            },
-            dev_hint=("Permission check failed " "during command invocation."),
         )
 
 
