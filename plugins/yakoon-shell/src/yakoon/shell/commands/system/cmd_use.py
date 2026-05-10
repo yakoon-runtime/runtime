@@ -2,16 +2,24 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands import Command, Invocation, Request
+from yakoon.base.commands import (
+    Command,
+    Invocation,
+    Request,
+)
 from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
 from yakoon.base.projection import to_text
-from yakoon.base.sources import DataRequest, OnDataSource
+from yakoon.base.sources import (
+    DataRequest,
+    OnDataSource,
+)
 
 
 class CmdUse(Command):
 
     key = "use"
+
     anonymous = True
 
     invocations = [
@@ -32,55 +40,85 @@ class CmdUse(Command):
         self.on_set_active_app = on_set_active_app
         self.on_save_session = on_save_session
 
-    async def run(self, request: Request):
+    async def run(
+        self,
+        request: Request,
+    ):
 
-        applications = []
-
-        app_id = ""
         app_name = request.arg(0)
+
+        # --------------------------------------------------
+        # use
+        # --------------------------------------------------
+
         if not app_name:
             data = await self.on_source(DataRequest("system:apps --all"))
-            applications = data.rows
-        else:
-            data = await self.on_source(
-                DataRequest(f"system:apps --by-name {app_name}")
-            )
-            app = data.one_or_none()
-            if app:
-                app_id = app["id"]
-                applications.append(app)
-
-        if applications and not app_id:
             projection = await self.on_project(
                 name="active.sam",
                 state={
-                    "apps": applications,
+                    "apps": data.rows,
                 },
             )
             yield out(projection)
+            return
 
-        elif applications:
-            if app_id == self.on_get_active_app():
-                projection = await self.on_project(
-                    name="using.sam",
-                    state={
-                        "app": applications[0],
-                    },
-                )
-                yield out(projection)
-            else:
-                self.on_set_active_app(app_id=app_id)
-                await self.on_save_session()
-                yield out(to_text(f"Aktiver Kontext: {app_name}"))
+        # --------------------------------------------------
+        # use ..
+        # --------------------------------------------------
+        if app_name == "..":
+            result = await self.on_source(DataRequest("system:apps --shell"))
+            if result.status != "ok":
+                return
 
-        else:
-            projector = await self.on_project(
+            shell = result.one()
+            current = self.on_get_active_app()
+
+            # already shell
+            if current == shell["id"]:
+                yield out(to_text(f"Aktiver Kontext: {shell['id']}"))
+                return
+
+            self.on_set_active_app(app_id=shell["id"])
+            await self.on_save_session()
+
+            yield out(to_text(f"Aktiver Kontext: {shell['id']}"))
+            return
+
+        # --------------------------------------------------
+        # use <app>
+        # --------------------------------------------------
+
+        data = await self.on_source(DataRequest(f"system:apps --by-name {app_name}"))
+        app = data.one_or_none()
+        if not app:
+            projection = await self.on_project(
                 name="error.sam",
                 state={
                     "app": app_name,
                 },
             )
-            yield out(projector)
+
+            yield out(projection)
+            return
+
+        app_id = app["id"]
+
+        # already active
+        if app_id == self.on_get_active_app():
+            projection = await self.on_project(
+                name="using.sam",
+                state={
+                    "app": app,
+                },
+            )
+
+            yield out(projection)
+            return
+
+        # activate
+        self.on_set_active_app(app_id=app_id)
+        await self.on_save_session()
+        yield out(to_text(f"Aktiver Kontext: {app_name}"))
 
 
 # ----------------------------------
@@ -89,12 +127,23 @@ class CmdUse(Command):
 
 
 class OnSaveSession(Protocol):
-    async def __call__(self) -> None: ...
+
+    async def __call__(
+        self,
+    ) -> None: ...
 
 
 class OnGetActiveApp(Protocol):
-    def __call__(self) -> str | None: ...
+
+    def __call__(
+        self,
+    ) -> str | None: ...
 
 
 class OnSetActiveApp(Protocol):
-    def __call__(self, *, app_id: str) -> None: ...
+
+    def __call__(
+        self,
+        *,
+        app_id: str,
+    ) -> None: ...
