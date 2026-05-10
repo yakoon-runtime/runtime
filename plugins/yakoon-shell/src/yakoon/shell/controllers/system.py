@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Protocol, cast
+from typing import Protocol, cast
 
 from yakoon.base.commands import Command
-from yakoon.base.commands.types import CommandKind
 from yakoon.base.controllers import Controller, ResourceReferences
 from yakoon.base.controllers.resolver import resolve_resource
-from yakoon.base.plugins.ports import OnAuthorizeRead, OnProject, OnSaveSession
+from yakoon.base.plugins.ports import OnProject, OnSaveSession
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.base.sources import OnDataSource
 
@@ -19,9 +18,6 @@ from ..commands.system import (
     CmdVersion,
     CmdWelcome,
     SystemCommands,
-)
-from ..services import (
-    CommandManService,
 )
 
 
@@ -91,37 +87,29 @@ class SystemController(Controller):
 
     def _create_man(self):
         access = cast(_SessionAccess, self.session)
-        manual_service = CommandManService(
-            on_source=self.ports.on_get_port(OnDataSource),
-            on_has_permission=self.ports.on_get_port(OnAuthorizeRead),
-        )
 
-        async def list_commands(
-            app_id: str, mode: str, kind: CommandKind | None = None
-        ) -> list[dict[str, Any]]:
-            return await manual_service.get_entries(
-                app_id=app_id, session=self.session, mode=mode, kind=kind
-            )
-
-        def _resolve_manual_resource(resources, name):
+        def _resolve_manual_resource(resources, name, command):
             path = resolve_resource(
-                i18n_root=resources["contracts"],
+                i18n_root=resources["man"],
                 lang=self.session.lang,
-                cmd_key=self.command.key,
+                cmd_key=command,
             )
             return ResourceRef(resources["package"], path).child(name)
 
-        async def project_manual(resources: dict, name: str, state: dict | None = None):
-            resource = _resolve_manual_resource(resources=resources, name=name)
+        async def project_manual(resources: dict, name: str, state: dict):
+            cmd_key = state.get("command_key", None)
+            resource = _resolve_manual_resource(
+                resources=resources, name=name, command=cmd_key
+            )
             on_project = self.ports.on_get_port(OnProject)
             return await on_project(resource=resource, state=state)
 
         return CmdMan(
             on_project=self.project,
             on_project_manual=project_manual,
-            on_list_manual=list_commands,
             on_source=self.ports.on_get_port(OnDataSource),
             on_get_active_app=access.get_active_app,
+            on_get_session=lambda: self.session,
         )
 
     def _create_exit(self):

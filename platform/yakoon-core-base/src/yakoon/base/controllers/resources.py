@@ -19,11 +19,11 @@ class ResourceReferences:
     # Contracts / Projections (formerly templates)
     contracts: str = "resources/{lang}/contracts/{cmd_key}"
 
+    # Man pages (can be inside contracts or separate; controller decides)
+    man: str = "resources/{lang}/manuals/{cmd_key}"
+
     # Resources like files or images
     assets: str = "resources/{lang}/assets/"
-
-    # Man pages (can be inside contracts or separate; controller decides)
-    man: str = "resources/{lang}/manuals/"
 
     # Lookup / discovery docs (yaml)
     lookup: str = "resources/{lang}/discovery/"
