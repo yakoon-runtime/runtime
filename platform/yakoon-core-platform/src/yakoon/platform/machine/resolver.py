@@ -16,9 +16,11 @@ class InvocationResolver:
     def __init__(
         self,
         on_authorize: OnAuthorize,
+        on_suggest: OnSuggest,
         applications: Sequence[Application],
     ):
         self.on_authorize = on_authorize
+        self.on_suggest = on_suggest
         self._applications = {a.id: a for a in applications}
         self._shell_app = next(a for a in applications if a.is_shell)
 
@@ -75,6 +77,7 @@ class InvocationResolver:
         session: Session,
     ) -> tuple[Application, type[Controller], type[Command]]:
 
+        choices = []
         key = command_key.strip()
         if not key:
             raise CommandNotFound(key)
@@ -87,33 +90,56 @@ class InvocationResolver:
         if not app:
             raise CommandNotFound(key)
 
-        # 1. APP scope
+        # ----------------
+        # 1. APP scope ---
+        # ----------------
+
         for controller in app.controllers:
             cmds = self._commands_by_controller.get(controller.id, {})
+            choices.extend(
+                [
+                    c.key
+                    for c in cmds.values()
+                    if c.scope in (CommandScope.APP, CommandScope.SHELL)
+                ]
+            )
             cmd = cmds.get(key)
             #!Command in own app & all own commands with SHELL Scope.
             if cmd and cmd.scope in (CommandScope.APP, CommandScope.SHELL):
                 self._ensure_invocation(session, cmd, tokens)
                 return app, controller, cmd
 
-        # 2. SHELL scope (in case of shell)
+        # -------------------------------------
+        # 2. SHELL scope (in case of shell) ---
+        # -------------------------------------
+
         if app.is_shell:
             cmd = self._shell.get(key)
+            choices.extend([c for c in self._shell.keys()])
             if cmd:
                 controller = self._controllers[cmd.controller_id]
                 app = self._applications[cmd.app_id]
                 self._ensure_invocation(session, cmd, tokens)
                 return app, controller, cmd
 
-        # 3. GLOBAL scope
+        # -------------------
+        # 3. GLOBAL scope ---
+        # -------------------
+
         cmd = self._global.get(key)
+        choices.extend([c for c in self._global.keys()])
         if cmd:
             controller = self._controllers[cmd.controller_id]
             target_app = self._applications[cmd.app_id]
             self._ensure_invocation(session, cmd, tokens)
             return target_app, controller, cmd
 
-        raise CommandNotFound(key)
+        # -----------------
+        # 4. SUGGESTION ---
+        # -----------------
+
+        suggestions = self.on_suggest(value=key, choices=choices, limit=2)
+        raise CommandNotFound(command=key, suggestions=suggestions)
 
     def globals(self) -> set[str]:
         return set(self._global.keys())
@@ -142,3 +168,14 @@ class InvocationResolver:
 
 class OnAuthorize(Protocol):
     def __call__(self, *, session, perm_key: str) -> bool: ...
+
+
+class OnSuggest(Protocol):
+    def __call__(
+        self,
+        *,
+        value: str,
+        choices: list[str],
+        limit: int = 3,
+        cutoff: float = 0.5,
+    ) -> list[str]: ...

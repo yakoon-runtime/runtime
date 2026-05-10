@@ -23,6 +23,7 @@ from .session import SessionBuilder
 
 def build_machine(
     applications: Sequence[Application],
+    on_suggest: OnSuggest,
     on_projection: OnProjection,
     on_session: OnGetOrCreateSession,
     on_has_permission: OnHasPermission,
@@ -38,6 +39,7 @@ def build_machine(
     resolver = InvocationResolver(
         applications=applications,
         on_authorize=on_has_permission,
+        on_suggest=on_suggest,
     )
 
     # --- FACTORY ---
@@ -170,3 +172,14 @@ class OnProjection(Protocol):
         ctx: InputContext | None,
         job_id: str = "system",
     ) -> None: ...
+
+
+class OnSuggest(Protocol):
+    def __call__(
+        self,
+        *,
+        value: str,
+        choices: list[str],
+        limit: int = 3,
+        cutoff: float = 0.5,
+    ) -> list[str]: ...

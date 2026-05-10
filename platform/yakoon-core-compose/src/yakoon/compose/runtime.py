@@ -22,6 +22,7 @@ from yakoon.platform.projection import (
     build_stream,
 )
 from yakoon.platform.runtime.sessions import SessionService
+from yakoon.platform.services import GuidanceService
 from yakoon.platform.settings import Settings
 from yakoon.platform.sources.data import (
     AppSource,
@@ -56,6 +57,8 @@ def compose_runtime(
     # ----------------
     # --- SERVICES ---
     # ----------------
+
+    guidance_service = GuidanceService()
 
     session_manager = SessionService(
         on_replace=store.objects.replace,
@@ -150,6 +153,7 @@ def compose_runtime(
 
     return build_machine(
         applications=applications,
+        on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
         on_projection=output.send_projection,
         on_has_permission=perm_checker.can_execute,
