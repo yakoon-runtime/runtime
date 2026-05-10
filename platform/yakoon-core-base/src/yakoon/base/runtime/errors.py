@@ -4,13 +4,13 @@ from typing import Any
 class BaseError(Exception):
 
     # stable semantic key
-    code: str
+    CODE: str
+
+    # support-visible id
+    NUMBER: int | None = None
 
     # app/runtime namespace
     app_id: str = "system"
-
-    # support-visible id
-    number: int | None = None
 
     # structured runtime data
     data: dict[str, Any]
@@ -22,8 +22,6 @@ class BaseError(Exception):
         self,
         *,
         app_id: str,
-        number: int,
-        code: str,
         data: dict[str, Any] | None,
         dev_hint: str | None,
     ):
@@ -31,11 +29,11 @@ class BaseError(Exception):
         if not self.app_id:
             raise ValueError("Parameter app_id must not be None")
 
-        self.number = number
+        self.number = self.NUMBER
         if self.number is None:
             raise ValueError("Parameter number must not be None")
 
-        self.code = code
+        self.code = self.CODE
         if not self.code:
             raise ValueError("Parameter code must not be None")
 
@@ -54,7 +52,7 @@ class BaseError(Exception):
     def message(self) -> dict[str, Any]:
 
         return {
-            "code": self.code,
+            "code": self.CODE,
             "data": self.data,
         }
 

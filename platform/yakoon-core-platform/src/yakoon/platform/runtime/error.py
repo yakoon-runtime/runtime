@@ -18,6 +18,9 @@ class PlatformError(BaseError):
 
 class CommandNotFound(PlatformError):
 
+    NUMBER = 10
+    CODE = "command_not_found"
+
     def __init__(
         self,
         app_id: str,
@@ -26,8 +29,6 @@ class CommandNotFound(PlatformError):
     ):
         super().__init__(
             app_id=app_id,
-            number=10,
-            code="command_not_found",
             data={
                 "command": command,
                 "suggestions": suggestions or [],
@@ -38,6 +39,9 @@ class CommandNotFound(PlatformError):
 
 class PermissionDenied(PlatformError):
 
+    NUMBER = 15
+    CODE = "permission_denied"
+
     def __init__(
         self,
         app_id: str,
@@ -45,8 +49,6 @@ class PermissionDenied(PlatformError):
     ):
         super().__init__(
             app_id=app_id,
-            code="permission_denied",
-            number=15,
             data={
                 "permission": permission,
             },
