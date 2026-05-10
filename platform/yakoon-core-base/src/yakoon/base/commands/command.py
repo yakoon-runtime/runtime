@@ -22,6 +22,7 @@ class Command(ABC):
 
     # Public identity
     key: str
+    usage_key: str = "--h"
 
     app_id: str
     controller_id: str
@@ -45,6 +46,16 @@ class Command(ABC):
             return
 
         tokens = tokens or []
+
+        # ----------------------------------
+        # SHOW USAGE BY KEY
+        # ----------------------------------
+
+        if cls.usage_key and cls.usage_key in tokens:
+            usages = "\n".join(
+                invocation.usage(cls.key) for invocation in cls.invocations
+            )
+            raise UsageError(dedent(f"{usages}").strip())
 
         # ----------------------------------
         # INVOCATION MODES
@@ -136,15 +147,11 @@ class Command(ABC):
 
                 unknown = "\n".join(f"  {x}" for x in unknown_options)
 
-                raise UsageError(dedent(f"""
-                        Unknown option(s):
-                        {unknown}
-
-                        Supported options:
-                        {opts}
-
-                        {invocation.usage(cls.key)}
-                        """).strip())
+                raise UsageError(
+                    dedent(
+                        f"Unknown option(s):\n{unknown}\nSupported options:\n{opts}\n{invocation.usage(cls.key)}"
+                    ).strip()
+                )
 
             # ----------------------------------
             # MATCH

@@ -22,7 +22,12 @@ class CmdLs(Command):
 
     anonymous = True
     scope = CommandScope.GLOBAL
-    invocations = [Invocation(default=True)]
+    invocations = [
+        Invocation(
+            default=True,
+            options=["all", "internal", "app"],
+        )
+    ]
 
     def __init__(
         self,
@@ -40,13 +45,14 @@ class CmdLs(Command):
         self,
         request: Request,
     ):
+        app_id = request.option("app") or self.on_get_active_app()
         result = await self.on_source(
             DataRequest(
                 "system:discovery --runtime",
                 context={
                     "session": self.on_get_session(),
                     "mode": self.resolve_mode(request),
-                    "app_id": self.on_get_active_app(),
+                    "app_id": app_id,
                 },
             )
         )
