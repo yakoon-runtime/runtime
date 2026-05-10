@@ -26,6 +26,7 @@ from yakoon.platform.settings import Settings
 from yakoon.platform.sources.data import (
     AppSource,
     CommandSource,
+    DiscoverySource,
 )
 from yakoon.platform.sources.registry import DataSourceRegistry
 from yakoon.storage.eventstore.wire import build_store
@@ -96,6 +97,7 @@ def compose_runtime(
     ds = DataSourceRegistry()
     ds.bind("system:apps", AppSource(applications))
     ds.bind("system:commands", CommandSource(applications))
+    ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
 
     # ----------------
     # --- BINDINGS ---

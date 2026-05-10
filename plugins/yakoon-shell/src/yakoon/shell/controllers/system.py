@@ -12,6 +12,7 @@ from yakoon.base.sources import OnDataSource
 
 from ..commands.system import (
     CmdExit,
+    CmdLs,
     CmdMan,
     CmdQuit,
     CmdUse,
@@ -19,7 +20,9 @@ from ..commands.system import (
     CmdWelcome,
     SystemCommands,
 )
-from ..services import CommandManService
+from ..services import (
+    CommandManService,
+)
 
 
 class SystemController(Controller):
@@ -39,6 +42,7 @@ class SystemController(Controller):
         CmdUse: "_create_use",
         CmdQuit: "_create_quit",
         CmdMan: "_create_man",
+        CmdLs: "_create_ls",
     }
 
     # ----------------------------------
@@ -134,6 +138,16 @@ class SystemController(Controller):
             on_set_active_app=access.set_active_app,
             on_set_interaction=access.set_interaction,
             on_save_session=save_session,
+        )
+
+    def _create_ls(self):
+        access = cast(_SessionAccess, self.session)
+
+        return CmdLs(
+            on_project=self.project,
+            on_source=self.ports.on_get_port(OnDataSource),
+            on_get_session=lambda: self.session,
+            on_get_active_app=access.get_active_app,
         )
 
 

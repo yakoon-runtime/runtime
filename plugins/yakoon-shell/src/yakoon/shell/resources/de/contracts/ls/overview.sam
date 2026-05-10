@@ -1,0 +1,23 @@
+{%- if state.mode == "shell" -%}
+Commands
+<list>
+  {% for c in state.commands %}
+  <item><cmd command="{{ c.key }}">{{ c.key }}</cmd></item>
+  {% endfor %}
+</list>
+
+Available programs
+<list>
+  {% for a in state.apps %}
+  <item><cmd command="use {{ a.id }}">{{ a.name }}</cmd></item>
+  {% endfor %}
+</list>
+
+{% elif state.mode == "program" %}
+Commands
+<list>
+  {% for c in state.commands %}
+  <item><cmd command="{{ c.key }}">{{ c.key }}</cmd></item>
+  {% endfor %}
+</list>
+{% endif %}

@@ -1,6 +1,7 @@
 from yakoon.base.commands import CommandSet
 
 from .cmd_exit import CmdExit
+from .cmd_ls import CmdLs
 from .cmd_man import CmdMan
 from .cmd_quit import CmdQuit
 from .cmd_use import CmdUse
@@ -19,4 +20,5 @@ class SystemCommands(CommandSet):
         CmdUse,
         CmdExit,
         CmdMan,
+        CmdLs,
     )

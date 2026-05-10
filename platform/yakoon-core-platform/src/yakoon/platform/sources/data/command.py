@@ -3,8 +3,6 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any
 
-from typing_extensions import Protocol
-
 from yakoon.base.application.application import Application
 from yakoon.base.commands import (
     Command,
@@ -12,12 +10,14 @@ from yakoon.base.commands import (
 )
 from yakoon.base.sources.request import DataRequest
 from yakoon.base.sources.source import DataResult, DataSource
-from yakoon.platform.runtime.sessions import Session
 
 
 class CommandSource(DataSource):
 
-    def __init__(self, applications: Sequence[Application]):
+    def __init__(
+        self,
+        applications: Sequence[Application],
+    ):
         self._commands: list[type[Command]] = []
         self._by_app: dict[str, list[type[Command]]] = {}
         self._by_scope: dict[CommandScope, list[type[Command]]] = {}
@@ -35,7 +35,10 @@ class CommandSource(DataSource):
     # Public API
     # ---------------------------------------------------------------------
 
-    async def read(self, request: DataRequest) -> DataResult:
+    async def read(
+        self,
+        request: DataRequest,
+    ) -> DataResult:
 
         if not request.args():
             return DataResult.invalid(reason="empty query")
@@ -49,37 +52,77 @@ class CommandSource(DataSource):
             return DataResult.invalid(reason="multiple selectors")
 
         handler = self._selectors[matches[0]]
+
         return handler(request)
 
-    # ------------------------
-    # Resolver Implementations
-    # ------------------------
+    # ---------------------------------------------------------------------
+    # Structural Resolvers
+    # ---------------------------------------------------------------------
 
-    def _all(self, request: DataRequest) -> DataResult:
+    def _all(
+        self,
+        request: DataRequest,
+    ) -> DataResult:
+
         return DataResult.ok(rows=[self._to_row(cmd) for cmd in self._commands])
 
-    def _by_app_selector(self, request: DataRequest) -> DataResult:
+    def _by_app_selector(
+        self,
+        request: DataRequest,
+    ) -> DataResult:
+
         app_id = request.option("by-app")
 
         cmds = self._by_app.get(app_id)
+
         if cmds is None:
             return DataResult.not_found(app_id=app_id)
 
         return DataResult.ok(rows=[self._to_row(cmd) for cmd in cmds])
 
-    def _global(self, request: DataRequest) -> DataResult:
+    def _global(
+        self,
+        request: DataRequest,
+    ) -> DataResult:
+
         cmds = self._by_scope.get(CommandScope.GLOBAL, [])
+
         return DataResult.ok(rows=[self._to_row(cmd) for cmd in cmds])
 
-    def _shell(self, request: DataRequest) -> DataResult:
+    def _shell(
+        self,
+        request: DataRequest,
+    ) -> DataResult:
+
         cmds = self._by_scope.get(CommandScope.SHELL, [])
+
         return DataResult.ok(rows=[self._to_row(cmd) for cmd in cmds])
 
-    # ----------------
+    # ---------------------------------------------------------------------
     # Internal Helpers
-    # ----------------
+    # ---------------------------------------------------------------------
 
-    def _to_row(self, cmd: type[Command]) -> dict[str, Any]:
+    def _allowed_visibilities(
+        self,
+        mode: str,
+    ) -> set[str]:
+
+        if mode == "default":
+            return {"NORMAL"}
+
+        if mode == "all":
+            return {"NORMAL", "DEVELOPER"}
+
+        if mode == "internal":
+            return {"NORMAL", "DEVELOPER", "INTERNAL"}
+
+        raise ValueError(f"invalid mode: {mode}")
+
+    def _to_row(
+        self,
+        cmd: type[Command],
+    ) -> dict[str, Any]:
+
         return {
             "key": cmd.key,
             "app_id": cmd.app_id,
@@ -90,25 +133,16 @@ class CommandSource(DataSource):
             "anonymous": cmd.anonymous,
         }
 
-    def _build(self, applications: Sequence[Application]):
+    def _build(
+        self,
+        applications: Sequence[Application],
+    ):
         for app in applications:
             for controller in app.controllers:
                 for cs in controller.commandsets:
                     for cmd in cs.commands:
-
                         cmd.app_id = app.id
                         cmd.controller_id = controller.id
-
                         self._commands.append(cmd)
-
                         self._by_app.setdefault(app.id, []).append(cmd)
                         self._by_scope.setdefault(cmd.scope, []).append(cmd)
-
-
-# ----------------------------------
-# PORTS
-# ----------------------------------
-
-
-class OnHasReadPermission(Protocol):
-    def __call__(self, *, session: Session, perm_key: str) -> bool: ...

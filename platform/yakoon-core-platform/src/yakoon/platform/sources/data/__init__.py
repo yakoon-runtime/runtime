@@ -1,7 +1,9 @@
 from .apps import AppSource
 from .command import CommandSource
+from .discovery import DiscoverySource
 
 __all__ = [
-    "CommandSource",
     "AppSource",
+    "CommandSource",
+    "DiscoverySource",
 ]

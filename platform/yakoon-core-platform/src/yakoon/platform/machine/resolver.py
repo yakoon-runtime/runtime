@@ -91,11 +91,12 @@ class InvocationResolver:
         for controller in app.controllers:
             cmds = self._commands_by_controller.get(controller.id, {})
             cmd = cmds.get(key)
-            if cmd and cmd.scope == CommandScope.APP:
+            #!Command in own app & all own commands with SHELL Scope.
+            if cmd and cmd.scope in (CommandScope.APP, CommandScope.SHELL):
                 self._ensure_invocation(session, cmd, tokens)
                 return app, controller, cmd
 
-        # 2. SHELL scope
+        # 2. SHELL scope (in case of shell)
         if app.is_shell:
             cmd = self._shell.get(key)
             if cmd:

@@ -9,8 +9,7 @@ from typing import Any
 class DataRequest:
 
     query: str
-    session: Any = None
-    caller_app_id: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
 
     _source: str = field(init=False, repr=False)
     _tokens: list[str] = field(init=False, repr=False)

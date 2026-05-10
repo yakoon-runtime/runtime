@@ -15,5 +15,5 @@ class CommandVisibility(StrEnum):
 
 class CommandScope(StrEnum):
     APP = "app"  # Only in active application
-    SHELL = "shell"  # Only in shell application
+    SHELL = "shell"  # In owner applcication and in shell application
     GLOBAL = "global"  # global usage
