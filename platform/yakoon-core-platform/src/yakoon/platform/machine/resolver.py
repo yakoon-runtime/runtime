@@ -138,7 +138,7 @@ class InvocationResolver:
         # 4. SUGGESTION ---
         # -----------------
 
-        suggestions = self.on_suggest(value=key, choices=choices, limit=2)
+        suggestions = self.on_suggest(value=key, choices=choices, limit=1)
         raise CommandNotFound(command=key, suggestions=suggestions)
 
     def globals(self) -> set[str]:
