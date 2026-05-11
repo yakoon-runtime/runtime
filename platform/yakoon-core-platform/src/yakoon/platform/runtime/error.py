@@ -19,16 +19,23 @@ class PlatformError(BaseError):
 class CommandNotFound(PlatformError):
 
     NUMBER = 10
-    CODE = "command_not_found"
+    APP_ID = "System"
+    CODE = "command_not_found"  # ==> Code sollte IMMER DEFINIERT werden müssen.
+    # -> Dazu gibt es eine Datei error_codes.py
+
+    # error_codes.py
+    # GROUP_NOT_FOUND = "group_not_found"
+    # INVALID_TYPE = "invalid_type"
+    # PERMISSION_DENIED = "permission_denied"
 
     def __init__(
         self,
-        app_id: str,
         command: str,
         suggestions: list[str] | None = None,
+        code: str | None = None,
     ):
         super().__init__(
-            app_id=app_id,
+            code=code,
             data={
                 "command": command,
                 "suggestions": suggestions or [],
@@ -40,15 +47,14 @@ class CommandNotFound(PlatformError):
 class PermissionDenied(PlatformError):
 
     NUMBER = 15
+    APP_ID = "System"
     CODE = "permission_denied"
 
     def __init__(
         self,
-        app_id: str,
         permission: str | None = None,
     ):
         super().__init__(
-            app_id=app_id,
             data={
                 "permission": permission,
             },

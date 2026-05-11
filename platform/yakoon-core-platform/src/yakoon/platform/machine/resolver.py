@@ -84,7 +84,7 @@ class InvocationResolver:
 
         key = command_key.strip()
         if not key:
-            raise CommandNotFound(app_id, key)
+            raise CommandNotFound(key)
 
         if app_id is self._shell_app.id:
             app = self._shell_app
@@ -92,7 +92,7 @@ class InvocationResolver:
             app = self._applications.get(app_id)
 
         if not app:
-            raise CommandNotFound(app_id, key)
+            raise CommandNotFound(key)
 
         # ----------------
         # 1. APP scope ---
@@ -143,7 +143,7 @@ class InvocationResolver:
         # -----------------
 
         suggestions = self.on_suggest(value=key, choices=choices, limit=1)
-        raise CommandNotFound(app_id, command=key, suggestions=suggestions)
+        raise CommandNotFound(command=key, suggestions=suggestions)
 
     def globals(self) -> set[str]:
         return set(self._global.keys())
@@ -162,7 +162,7 @@ class InvocationResolver:
         action = tokens[0] if tokens else None
         fq = Permission.fq_key(command_type.app_id, command_type.key, action)
         if not self.on_authorize(session=session, perm_key=fq):
-            raise PermissionDenied(app_id=command_type.app_id)
+            raise PermissionDenied()
 
 
 # ----------------------------------

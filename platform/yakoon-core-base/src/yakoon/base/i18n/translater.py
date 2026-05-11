@@ -17,7 +17,10 @@ class Translator:
         table = self.messages.get(lang, {})
         template = table.get(code)
 
-        if not template:
-            template = code
+        if template is None:
+            return code
+
+        if callable(template):
+            return template(data)
 
         return template.format(**data)

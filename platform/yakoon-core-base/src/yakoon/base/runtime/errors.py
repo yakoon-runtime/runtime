@@ -3,14 +3,14 @@ from typing import Any
 
 class BaseError(Exception):
 
+    APP_ID: str
+    # app/runtime namespace
+
     # stable semantic key
     CODE: str
 
     # support-visible id
     NUMBER: int | None = None
-
-    # app/runtime namespace
-    app_id: str = "system"
 
     # structured runtime data
     data: dict[str, Any]
@@ -20,12 +20,12 @@ class BaseError(Exception):
 
     def __init__(
         self,
+        code: str | None = None,
         *,
-        app_id: str,
         data: dict[str, Any] | None,
         dev_hint: str | None,
     ):
-        self.app_id = app_id
+        self.app_id = self.APP_ID
         if not self.app_id:
             raise ValueError("Parameter app_id must not be None")
 
@@ -33,7 +33,7 @@ class BaseError(Exception):
         if self.number is None:
             raise ValueError("Parameter number must not be None")
 
-        self.code = self.CODE
+        self.code = code or self.CODE
         if not self.code:
             raise ValueError("Parameter code must not be None")
 
