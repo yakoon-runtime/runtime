@@ -1,0 +1,45 @@
+<text>Unbekannte Optionen:</text>
+
+<list>
+{% for item in state.unknown_options %}
+  <item>
+    <code>{{ item }}</code>
+  </item>
+{% endfor %}
+</list>
+
+<spacer/>
+
+<text>Unterstützte Optionen:</text>
+
+<list>
+{% for item in state.valid_options %}
+  <item>
+    <code>{{ item }}</code>
+  </item>
+{% endfor %}
+</list>
+
+<spacer/>
+
+<text>Verwendung:</text>
+
+<list>
+{% for usage in state.usages %}
+
+  <item>
+    <cmd command="
+      {{ usage.command }}
+      {% if usage.action %} {{ usage.action }}{% endif %}
+      {% for arg in usage.args %} &lt;{{ arg }}&gt;{% endfor %}
+      {% for opt in usage.options %} --{{ opt }} &lt;{{ opt }}&gt;{% endfor %}
+    ">
+      {{ usage.command }}
+      {% if usage.action %} {{ usage.action }}{% endif %}
+      {% for arg in usage.args %} &lt;{{ arg }}&gt;{% endfor %}
+      {% for opt in usage.options %} --{{ opt }} &lt;{{ opt }}&gt;{% endfor %}
+    </cmd>
+  </item>
+
+{% endfor %}
+</list>

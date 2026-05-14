@@ -1,0 +1,9 @@
+<text>Befehl "<strong>{{ state.command }}</strong>" wurde nicht gefunden.</text>
+{% if state.suggestions %}
+  <text>Meintest du:</text>
+  <list>
+    {% for item in state.suggestions %}
+      <item>{{ item }}</item>
+    {% endfor %}
+  </list>
+{% endif %}

@@ -3,12 +3,12 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Protocol, cast
 
-from yakoon.base.application.application import Application
-from yakoon.base.commands.command import Command
-from yakoon.base.controllers.controller import Controller
+from yakoon.base.application import Application
+from yakoon.base.commands import Command
+from yakoon.base.controllers import Controller
 from yakoon.base.naming import Key
-from yakoon.base.projection.model.model import Projection
-from yakoon.base.runtime.input.context import InputContext
+from yakoon.base.projection import Projection
+from yakoon.base.runtime import InputContext
 from yakoon.platform.runtime import Session
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
 
@@ -31,8 +31,8 @@ def build_machine(
     on_audit_error: OnAuditError,
     on_audit_warning: OnAuditWarning,
     on_audit_security: OnAuditSecurity,
+    on_project_error: OnProjectError,
     on_initialize: Oninitialize,
-    on_i18n: Oni18n,
 ) -> RuntimeHost:
 
     # --- ROUTING ---
@@ -80,7 +80,7 @@ def build_machine(
         on_projection=on_projection,
         on_audit_error=on_audit_error,
         on_audit_warning=on_audit_warning,
-        on_i18n=on_i18n,
+        on_project_error=on_project_error,
     )
 
     # --- SESSION HANDLING ---
@@ -187,11 +187,9 @@ class OnSuggest(Protocol):
     ) -> list[str]: ...
 
 
-class Oni18n(Protocol):
-    def __call__(
+class OnProjectError(Protocol):
+    async def __call__(
         self,
-        *,
-        lang: str,
-        code: str,
-        data: dict,
-    ) -> str: ...
+        exc: Exception,
+        session: Session,
+    ) -> Projection: ...

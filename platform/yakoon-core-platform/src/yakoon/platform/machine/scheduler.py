@@ -9,16 +9,10 @@ from typing import Protocol
 from yakoon.base.flow.primitives import Control
 from yakoon.base.flow.primitives.outcome import Outcome
 from yakoon.base.projection import Projection
-from yakoon.base.runtime.errors import BaseError, DomainError, format_error
+from yakoon.base.runtime.errors import DomainError
 from yakoon.base.runtime.input import InputContext, InputEvent
 from yakoon.platform.flow import Flow, FlowKind
 from yakoon.platform.runtime import PlatformError, Session
-
-from .errors import (
-    domain_error_projection,
-    fatal_error_projection,
-    system_error_projection,
-)
 
 
 class Scheduler:
@@ -40,7 +34,7 @@ class Scheduler:
         on_projection: OnProjection,
         on_audit_error: OnAuditError,
         on_audit_warning: OnAuditWarning,
-        on_i18n: Oni18n,
+        on_project_error: OnProjectError,
     ):
         # Hooks
         self.on_dispatch = on_dispatch
@@ -48,7 +42,7 @@ class Scheduler:
         self.on_projection = on_projection
         self.on_audit_error = on_audit_error
         self.on_audit_warning = on_audit_warning
-        self.on_i18n = on_i18n
+        self.on_project_error = on_project_error
 
         # Flow-basierte Queue: (session, flow)
         self._ready_user = deque()
@@ -71,35 +65,30 @@ class Scheduler:
                 self.schedule_flow(flow, session)
 
         except DomainError as e:
+            error = await self.on_project_error(e, session)
 
             await self.on_projection(
                 session=session,
-                projection=domain_error_projection(
-                    text=self._translate(session, e),
-                    error_code=e.code,
-                ),
+                projection=error,
                 ctx=event.context,
             )
 
         except PlatformError as e:
+            error = await self.on_project_error(e, session)
 
             await self.on_projection(
                 session=session,
-                projection=system_error_projection(
-                    text=self._translate(session, e),
-                    error_code=e.code,
-                ),
+                projection=error,
                 ctx=event.context,
             )
 
         except Exception as e:
+            error = await self.on_project_error(e, session)
+
             self.on_audit_error(exc=e, session=session)
             await self.on_projection(
                 session=session,
-                projection=fatal_error_projection(
-                    "Fatal error",
-                    error_code="fatal",
-                ),
+                projection=error,
                 ctx=event.context,
             )
 
@@ -226,6 +215,7 @@ class Scheduler:
                             break
 
                 except DomainError as e:
+                    error = await self.on_project_error(e, session)
 
                     event = flow.event
                     if session.interaction_flow:
@@ -233,33 +223,28 @@ class Scheduler:
 
                     await self.on_projection(
                         session=session,
-                        projection=domain_error_projection(
-                            text=self._translate(session, e),
-                            error_code=e.code,
-                        ),
+                        projection=error,
                         ctx=event.context,
                     )
 
                 except PlatformError as e:
+                    error = await self.on_project_error(e, session)
 
                     event = flow.event
                     await self.on_projection(
                         session=session,
-                        projection=system_error_projection(
-                            text=self._translate(session, e),
-                            error_code=e.code,
-                        ),
+                        projection=error,
                         ctx=event.context,
                     )
 
                 except Exception as e:
+                    error = await self.on_project_error(e, session)
+
                     event = flow.event
                     self.on_audit_error(exc=e, session=session)
                     await self.on_projection(
                         session=session,
-                        projection=fatal_error_projection(
-                            "Fatal error", error_code="fatal"
-                        ),
+                        projection=error,
                         ctx=event.context,
                     )
 
@@ -289,10 +274,6 @@ class Scheduler:
     # --------------------------------------------------------
     # INTERNAL
     # --------------------------------------------------------
-
-    def _translate(self, session: Session, e: BaseError):
-        message = self.on_i18n(lang=session.lang, code=e.code, data=e.data)
-        return format_error(e, message=message, debug=session.debug)
 
     def _wake_sleeping(self):
         now = time.time()
@@ -359,11 +340,9 @@ class OnProjection(Protocol):
     ) -> None: ...
 
 
-class Oni18n(Protocol):
-    def __call__(
+class OnProjectError(Protocol):
+    async def __call__(
         self,
-        *,
-        lang: str,
-        code: str,
-        data: dict,
-    ) -> str: ...
+        exc: Exception,
+        session: Session,
+    ) -> Projection: ...

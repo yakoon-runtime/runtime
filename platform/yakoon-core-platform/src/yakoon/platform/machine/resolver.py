@@ -6,7 +6,9 @@ from typing import Protocol
 from yakoon.base.application.application import Application
 from yakoon.base.commands import Command, CommandScope
 from yakoon.base.controllers import Controller
+from yakoon.base.errors import ErrorState
 from yakoon.platform.capabilities.permission import Permission
+from yakoon.platform.errors import codes
 from yakoon.platform.runtime import CommandNotFound, PermissionDenied
 from yakoon.platform.runtime.sessions import Session
 
@@ -84,7 +86,12 @@ class InvocationResolver:
 
         key = command_key.strip()
         if not key:
-            raise CommandNotFound(key)
+            raise CommandNotFound(
+                ErrorState.with_data(
+                    code=codes.COMMAND_NOT_FOUND,
+                    command=key,
+                )
+            )
 
         if app_id is self._shell_app.id:
             app = self._shell_app
@@ -92,7 +99,12 @@ class InvocationResolver:
             app = self._applications.get(app_id)
 
         if not app:
-            raise CommandNotFound(key)
+            raise CommandNotFound(
+                ErrorState.with_data(
+                    code=codes.COMMAND_NOT_FOUND,
+                    command=key,
+                )
+            )
 
         # ----------------
         # 1. APP scope ---
@@ -143,7 +155,13 @@ class InvocationResolver:
         # -----------------
 
         suggestions = self.on_suggest(value=key, choices=choices, limit=1)
-        raise CommandNotFound(command=key, suggestions=suggestions)
+        raise CommandNotFound(
+            ErrorState.with_data(
+                code=codes.COMMAND_NOT_FOUND,
+                command=key,
+                suggestions=suggestions,
+            )
+        )
 
     def globals(self) -> set[str]:
         return set(self._global.keys())
@@ -162,7 +180,11 @@ class InvocationResolver:
         action = tokens[0] if tokens else None
         fq = Permission.fq_key(command_type.app_id, command_type.key, action)
         if not self.on_authorize(session=session, perm_key=fq):
-            raise PermissionDenied()
+            raise PermissionDenied(
+                ErrorState.with_data(
+                    code=codes.PERMISSION_DENIED,
+                )
+            )
 
 
 # ----------------------------------

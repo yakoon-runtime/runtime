@@ -8,6 +8,7 @@ from uuid import uuid4
 from yakoon.base.application.application import Application
 from yakoon.base.commands import Command, InvalidInvocation, Request
 from yakoon.base.controllers.controller import Controller
+from yakoon.base.errors import ErrorState
 from yakoon.base.flow.primitives import (
     AutoFocus,
     AwaitEvent,
@@ -23,6 +24,7 @@ from yakoon.base.flow.primitives import (
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext
+from yakoon.platform.errors import codes
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
     CommandNotFound,
@@ -126,8 +128,10 @@ class CommandEngine:
 
         except Exception as exc:
             raise CriticalError(
-                "Ein interner Fehler ist aufgetreten.",
-                "internal_error",
+                ErrorState.with_data(
+                    code=codes.FATAL_ERROR,
+                    args=exc.args,
+                )
             ) from exc
 
     async def step_flow(self, flow: Flow, session: Session) -> Outcome | None:

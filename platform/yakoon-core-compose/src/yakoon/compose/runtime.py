@@ -1,7 +1,6 @@
 from typing import Literal, TypeAlias
 
 from yakoon.base.application import Application
-from yakoon.base.i18n import Translator
 from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import (
     OnAuthorizeRead,
@@ -15,7 +14,7 @@ from yakoon.platform.capabilities.audit import AuditLogService
 from yakoon.platform.capabilities.permission import (
     PermissionChecker,
 )
-from yakoon.platform.i18n import MESSAGES
+from yakoon.platform.errors.wire import build_error_projector
 from yakoon.platform.machine.host import RuntimeHost
 from yakoon.platform.machine.wire import build_machine
 from yakoon.platform.plugins import PluginLoader
@@ -56,12 +55,6 @@ def compose_runtime(
 
     store = build_store(settings.storage)
 
-    # ------------
-    # --- I18n ---
-    # ------------
-
-    translater = Translator(MESSAGES)
-
     # ----------------
     # --- SERVICES ---
     # ----------------
@@ -100,6 +93,9 @@ def compose_runtime(
     # -----------------
 
     projector = build_projector()
+    error_projector = build_error_projector(
+        on_project=projector.project,
+    )
 
     # --------------------
     # --- DATASOURCING ---
@@ -169,8 +165,8 @@ def compose_runtime(
         on_audit_error=audit_service.error,
         on_audit_security=audit_service.security,
         on_audit_warning=audit_service.warning,
+        on_project_error=error_projector.project,
         on_initialize=initialize,
-        on_i18n=translater.translate,
     )
 
 

@@ -27,7 +27,7 @@ class SessionData:
     account_key: str | None = None
     last_active: datetime | None = None
     lang: str = "de"
-    debug: bool = False
+    debug: bool = True
     data: dict[str, Any] = field(default_factory=dict)
     _v: int = field(default=CURRENT_VERSION)
 

@@ -33,14 +33,18 @@ class PackageResourceLoader:
         encoding: str,
     ) -> str | None:
         base = ir.files(package)
-        full_name = clean_rel(name)
 
-        candidate = base.joinpath(full_name)
-        try:
-            if candidate.is_file():
-                return candidate.read_text(encoding=encoding)
-        except FileNotFoundError:
-            # importlib.resources can throw for missing paths depending on backend
-            pass
+        for ext in [".sam"]:
+            if not name.endswith(ext):
+                name += ext
+
+            full_name = clean_rel(name)
+            candidate = base.joinpath(full_name)
+            try:
+                if candidate.is_file():
+                    return candidate.read_text(encoding=encoding)
+            except FileNotFoundError:
+                # importlib.resources can throw for missing paths depending on backend
+                pass
 
         return None

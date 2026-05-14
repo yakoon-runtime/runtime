@@ -11,18 +11,14 @@ class Invocation:
     options: list[str] = field(default_factory=list)
     default: bool | None = None
 
-    def usage(
+    def usage_data(
         self,
         command: str,
-    ) -> str:
-        parts = [command]
-        if self.action:
-            parts.append(self.action)
+    ) -> dict:
 
-        for arg in self.args:
-            parts.append(f"<{arg}>")
-
-        for opt in self.options:
-            parts.append(f"--{opt} <{opt}>")
-
-        return "usage: " + " ".join(parts)
+        return {
+            "command": command,
+            "action": self.action,
+            "args": self.args,
+            "options": self.options,
+        }

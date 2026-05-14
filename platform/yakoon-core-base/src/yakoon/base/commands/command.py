@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from textwrap import dedent
 from typing import TYPE_CHECKING
 
+from yakoon.base.errors import ErrorState, codes
+
+from .errors import UsageError
 from .invocation import Invocation
 from .types import (
     CommandKind,
@@ -14,13 +16,14 @@ from .types import (
 if TYPE_CHECKING:
     from .request import Request
 
-from .errors import UsageError
-
 
 class Command(ABC):
     """Base class for all executable commands."""
 
-    # Public identity
+    # ----------------------------------
+    # PUBLIC IDENTITY
+    # ----------------------------------
+
     key: str
     usage_key: str = "--h"
 
@@ -29,12 +32,31 @@ class Command(ABC):
 
     anonymous = False
 
-    # Execution metadata
+    # ----------------------------------
+    # EXECUTION METADATA
+    # ----------------------------------
+
     kind: CommandKind = CommandKind.USER
     scope: CommandScope = CommandScope.APP
     visibility: CommandVisibility = CommandVisibility.NORMAL
 
     invocations: list[Invocation] = []
+
+    # ----------------------------------
+    # INTERNAL
+    # ----------------------------------
+
+    @classmethod
+    def _usage_data(
+        cls,
+        invocations: list[Invocation],
+    ) -> list[dict]:
+
+        return [invocation.usage_data(cls.key) for invocation in invocations]
+
+    # ----------------------------------
+    # VALIDATION
+    # ----------------------------------
 
     @classmethod
     def ensure_invocation(
@@ -48,30 +70,36 @@ class Command(ABC):
         tokens = tokens or []
 
         # ----------------------------------
-        # SHOW USAGE BY KEY
+        # SHOW USAGE
         # ----------------------------------
 
         if cls.usage_key and cls.usage_key in tokens:
-            usages = "\n".join(
-                invocation.usage(cls.key) for invocation in cls.invocations
+
+            raise UsageError(
+                ErrorState.with_data(
+                    code=codes.USAGE,
+                    usages=cls._usage_data(cls.invocations),
+                )
             )
-            raise UsageError(dedent(f"{usages}").strip())
 
         # ----------------------------------
         # INVOCATION MODES
         # ----------------------------------
 
         action_invocations = [x for x in cls.invocations if x.action]
+
         positional_invocations = [x for x in cls.invocations if not x.action]
+
         matching: list[Invocation] = []
 
         # ----------------------------------
-        # ACTION-BASED COMMANDS
+        # ACTION COMMANDS
         # ----------------------------------
 
         if action_invocations:
 
             action = tokens[0] if tokens else None
+
             matching = [x for x in action_invocations if x.action == action]
 
             # ----------------------------------
@@ -79,10 +107,12 @@ class Command(ABC):
             # ----------------------------------
 
             if not matching and not tokens:
+
                 default = next(
                     (x for x in action_invocations if x.default),
                     None,
                 )
+
                 if default:
                     matching = [default]
 
@@ -100,11 +130,12 @@ class Command(ABC):
 
         if not matching:
 
-            usages = "\n".join(
-                invocation.usage(cls.key) for invocation in cls.invocations
+            raise UsageError(
+                ErrorState.with_data(
+                    code=codes.USAGE,
+                    usages=cls._usage_data(cls.invocations),
+                )
             )
-
-            raise UsageError(dedent(f"{usages}").strip())
 
         # ----------------------------------
         # VALIDATE MATCHES
@@ -129,7 +160,7 @@ class Command(ABC):
 
             valid_options = {f"--{x}" for x in invocation.options}
 
-            unknown_options = []
+            unknown_options: list[str] = []
 
             for token in tokens[offset:]:
 
@@ -141,16 +172,19 @@ class Command(ABC):
                 if key not in valid_options:
                     unknown_options.append(key)
 
+            # ----------------------------------
+            # UNKNOWN OPTIONS
+            # ----------------------------------
+
             if unknown_options:
 
-                opts = "\n".join(f"  {x}" for x in sorted(valid_options))
-
-                unknown = "\n".join(f"  {x}" for x in unknown_options)
-
                 raise UsageError(
-                    dedent(
-                        f"Unknown option(s):\n{unknown}\nSupported options:\n{opts}\n{invocation.usage(cls.key)}"
-                    ).strip()
+                    ErrorState.with_data(
+                        code=codes.UNKNOWN_OPTIONS,
+                        unknown_options=sorted(unknown_options),
+                        valid_options=sorted(valid_options),
+                        usages=cls._usage_data([invocation]),
+                    )
                 )
 
             # ----------------------------------
@@ -163,9 +197,20 @@ class Command(ABC):
         # INVALID INVOCATION
         # ----------------------------------
 
-        usages = "\n".join(invocation.usage(cls.key) for invocation in matching)
-        raise UsageError(dedent(f"{usages}").strip())
+        raise UsageError(
+            ErrorState.with_data(
+                code=codes.USAGE,
+                usages=cls._usage_data(matching),
+            )
+        )
+
+    # ----------------------------------
+    # EXECUTION
+    # ----------------------------------
 
     @abstractmethod
-    def run(self, request: Request):
+    def run(
+        self,
+        request: Request,
+    ):
         raise NotImplementedError

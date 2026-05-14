@@ -57,6 +57,7 @@ def create_mapper(ctx: ResolverContext) -> Mapper:
     mapper.register_block("actions", map_actions)
     mapper.register_block("fields", map_fields)
     mapper.register_block("p", map_paragraph)
+    mapper.register_block("text", map_paragraph)
     mapper.register_block("h1", map_heading(1))
     mapper.register_block("h2", map_heading(2))
     mapper.register_block("h3", map_heading(3))
