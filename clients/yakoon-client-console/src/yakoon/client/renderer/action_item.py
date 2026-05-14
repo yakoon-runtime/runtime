@@ -13,4 +13,4 @@ class ActionItemRenderer(BaseRenderer):
             return "[action]"
 
         label = action.label or "action"
-        return f"[{label}]\n"
+        return f"{label}\n"

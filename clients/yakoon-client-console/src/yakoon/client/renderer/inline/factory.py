@@ -1,3 +1,4 @@
+from .arg import ArgInlineRenderer
 from .base import BaseInlineRenderer, _get
 from .break_ import BreakInlineRenderer
 from .cmd import CmdInlineRenderer
@@ -6,6 +7,7 @@ from .em import EmInlineRenderer
 from .link import LinkInlineRenderer
 from .mark import MarkInlineRenderer
 from .select import SelectInlineRenderer
+from .space import SpaceInlineRenderer
 from .strong import StrongInlineRenderer
 from .text import TextInlineRenderer
 from .underline import UnderlineInlineRenderer
@@ -20,12 +22,14 @@ class InlineRendererFactory:
             "code": CodeInlineRenderer,
             "link": LinkInlineRenderer,
             "cmd": CmdInlineRenderer,
-            "strong": StrongInlineRenderer,
             "em": EmInlineRenderer,
-            "underline": UnderlineInlineRenderer,
+            "arg": ArgInlineRenderer,
             "mark": MarkInlineRenderer,
             "select": SelectInlineRenderer,
             "break": BreakInlineRenderer,
+            "space": SpaceInlineRenderer,
+            "strong": StrongInlineRenderer,
+            "underline": UnderlineInlineRenderer,
         }
 
     def create(self, node) -> BaseInlineRenderer:

@@ -30,12 +30,14 @@ from .header import (
 )
 from .inline import (
     Inline,
+    InlineArg,
     InlineCmd,
     InlineCode,
     InlineEm,
     InlineLink,
     InlineMark,
     InlineSelect,
+    InlineSpace,
     InlineStrong,
     InlineText,
     InlineUnderline,
@@ -63,6 +65,8 @@ __all__ = [
     "Inline",
     "InlineText",
     "InlineCode",
+    "InlineArg",
+    "InlineSpace",
     "InlineLink",
     "InlineCmd",
     "InlineSelect",

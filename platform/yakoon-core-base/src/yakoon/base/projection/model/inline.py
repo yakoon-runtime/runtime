@@ -15,6 +15,12 @@ class InlineCode:
 
 
 @dataclass(frozen=True, slots=True)
+class InlineArg:
+    type: Literal["arg"] = "arg"
+    children: list["Inline"] | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class InlineLink:
     type: Literal["link"] = "link"
     href: str = ""
@@ -61,17 +67,26 @@ class InlineMark:
 
 
 @dataclass(frozen=True, slots=True)
+class InlineSpace:
+    type: Literal["space"] = "space"
+    count: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class InlineBreak:
     type: Literal["break"] = "break"
+    count: int | None = None
 
 
 Inline = (
     InlineText
     | InlineCode
+    | InlineArg
     | InlineLink
     | InlineSelect
     | InlineCmd
     | InlineStrong
+    | InlineSpace
     | InlineEm
     | InlineUnderline
     | InlineMark

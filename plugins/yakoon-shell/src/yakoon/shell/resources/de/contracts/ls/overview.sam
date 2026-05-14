@@ -1,23 +1,23 @@
 {%- if state.mode == "shell" -%}
-Commands
-<list>
-  {% for c in state.commands %}
-  <item><cmd command="{{ c.key }}">{{ c.key }}</cmd></item>
-  {% endfor %}
-</list>
 
-Available programs
-<list>
-  {% for a in state.apps %}
-  <item><cmd command="use {{ a.id }}">{{ a.name }}</cmd></item>
-  {% endfor %}
-</list>
+<br/>
+Commands: <br/>
+
+{% for c in state.commands %}
+<space count="2"/> <cmd command="{{ c.key }}">{{ c.key }}</cmd>
+{% endfor %}
+
+<br/><br/>
+Applications: <br/>
+
+{% for a in state.apps %}
+  <space count="2"/> <cmd command="use {{ a.id }}">{{ a.name }}</cmd>
+{% endfor %}
 
 {% elif state.mode == "program" %}
-Commands
-<list>
+<br/>
+Commands: <br/>
   {% for c in state.commands %}
-  <item><cmd command="{{ c.key }}">{{ c.key }}</cmd></item>
+  <space count="2"/> <cmd command="{{ c.key }}">{{ c.key }}</cmd>
   {% endfor %}
-</list>
 {% endif %}

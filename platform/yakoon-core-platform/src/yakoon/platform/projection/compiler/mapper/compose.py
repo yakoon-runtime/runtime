@@ -17,6 +17,7 @@ from .block import (
 )
 from .core import Mapper
 from .inline import (
+    map_arg,
     map_br,
     map_cmd,
     map_code,
@@ -24,6 +25,7 @@ from .inline import (
     map_link,
     map_mark,
     map_select,
+    map_space,
     map_strong,
     map_underline,
 )
@@ -43,7 +45,9 @@ def create_mapper(ctx: ResolverContext) -> Mapper:
     mapper.register_inline("code", map_code)
     mapper.register_inline("link", map_link)
     mapper.register_inline("select", map_select)
+    mapper.register_inline("arg", map_arg)
     mapper.register_inline("em", map_em)
+    mapper.register_inline("space", map_space)
     mapper.register_inline("strong", map_strong)
     mapper.register_inline("u", map_underline)
     mapper.register_inline("mark", map_mark)

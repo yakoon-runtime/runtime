@@ -9,4 +9,4 @@ class CmdInlineRenderer(BaseInlineRenderer):
         label = render_inline(children)
 
         # leichte visuelle Markierung
-        return f"[{label}]"
+        return f"{label}"

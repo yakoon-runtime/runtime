@@ -15,6 +15,8 @@ from yakoon.platform.runtime.sessions import Session
 
 class InvocationResolver:
 
+    SUGGESTION_LIMIT = 1
+
     def __init__(
         self,
         on_authorize: OnAuthorize,
@@ -154,7 +156,11 @@ class InvocationResolver:
         # 4. SUGGESTION ---
         # -----------------
 
-        suggestions = self.on_suggest(value=key, choices=choices, limit=1)
+        suggestions = self.on_suggest(
+            value=key,
+            choices=choices,
+            limit=self.SUGGESTION_LIMIT,
+        )
         raise CommandNotFound(
             ErrorState.with_data(
                 code=codes.COMMAND_NOT_FOUND,
