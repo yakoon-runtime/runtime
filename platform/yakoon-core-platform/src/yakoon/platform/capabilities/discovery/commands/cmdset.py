@@ -1,9 +1,9 @@
-from yakoon.base.commands import CommandSet
+from yakoon.base.commands import CommandGroup
 
 from .cmd_lookup import CmdLookup
 
 
-class DiscoveryLookupCommands(CommandSet):
+class DiscoveryLookupCommands(CommandGroup):
 
     group = "lookup"
 

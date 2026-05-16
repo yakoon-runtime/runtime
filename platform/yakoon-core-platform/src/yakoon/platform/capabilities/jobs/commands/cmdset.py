@@ -1,9 +1,9 @@
-from yakoon.base.commands import CommandSet
+from yakoon.base.commands import CommandGroup
 
 from .cmd_jobs import CmdJobs
 
 
-class JobsCommands(CommandSet):
+class JobsCommands(CommandGroup):
 
     group = "jobs"
 

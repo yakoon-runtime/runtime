@@ -1,7 +1,7 @@
-from .system import SystemController
-from .test import TestController
+from .system import SystemComposer
+from .test import TestComposer
 
 __all__ = [
-    "SystemController",
-    "TestController",
+    "SystemComposer",
+    "TestComposer",
 ]

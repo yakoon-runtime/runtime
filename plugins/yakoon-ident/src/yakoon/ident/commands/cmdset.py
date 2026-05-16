@@ -1,4 +1,4 @@
-from yakoon.base.commands import CommandSet
+from yakoon.base.commands import CommandGroup
 
 from .cmd_group import CmdGroup
 from .cmd_member import CmdMembership
@@ -8,7 +8,7 @@ from .cmd_user import CmdUser
 from .cmd_whoami import CmdWhoAmI
 
 
-class AuthCommands(CommandSet):
+class AuthCommands(CommandGroup):
 
     group = "auth"
 
@@ -18,7 +18,7 @@ class AuthCommands(CommandSet):
     )
 
 
-class AdminCommands(CommandSet):
+class AdminCommands(CommandGroup):
 
     group = "users"
 

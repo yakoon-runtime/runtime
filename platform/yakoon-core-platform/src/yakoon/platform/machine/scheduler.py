@@ -4,8 +4,9 @@ import asyncio
 import heapq
 import time
 from collections import deque
-from typing import Protocol
+from typing import Any, Protocol
 
+from yakoon.base.errors.state import ErrorState
 from yakoon.base.flow.primitives import Control
 from yakoon.base.flow.primitives.outcome import Outcome
 from yakoon.base.projection import Projection
@@ -31,18 +32,18 @@ class Scheduler:
         self,
         on_dispatch: OnDispatch,
         on_step_flow: OnStepFlow,
-        on_projection: OnProjection,
+        on_get_projection: OnGetProjection,
+        on_show_projection: OnShowProjection,
         on_audit_error: OnAuditError,
         on_audit_warning: OnAuditWarning,
-        on_project_error: OnProjectError,
     ):
         # Hooks
         self.on_dispatch = on_dispatch
         self.on_step_flow = on_step_flow
-        self.on_projection = on_projection
+        self.on_get_projection = on_get_projection
+        self.on_show_projection = on_show_projection
         self.on_audit_error = on_audit_error
         self.on_audit_warning = on_audit_warning
-        self.on_project_error = on_project_error
 
         # Flow-basierte Queue: (session, flow)
         self._ready_user = deque()
@@ -65,28 +66,28 @@ class Scheduler:
                 self.schedule_flow(flow, session)
 
         except DomainError as e:
-            error = await self.on_project_error(e, session)
+            error = await self._get_error(e, session)
 
-            await self.on_projection(
+            await self.on_show_projection(
                 session=session,
                 projection=error,
                 ctx=event.context,
             )
 
         except PlatformError as e:
-            error = await self.on_project_error(e, session)
+            error = await self._get_error(e, session)
 
-            await self.on_projection(
+            await self.on_show_projection(
                 session=session,
                 projection=error,
                 ctx=event.context,
             )
 
         except Exception as e:
-            error = await self.on_project_error(e, session)
+            error = await self._get_error(e, session)
 
             self.on_audit_error(exc=e, session=session)
-            await self.on_projection(
+            await self.on_show_projection(
                 session=session,
                 projection=error,
                 ctx=event.context,
@@ -215,34 +216,34 @@ class Scheduler:
                             break
 
                 except DomainError as e:
-                    error = await self.on_project_error(e, session)
+                    error = await self._get_error(e, session)
 
                     event = flow.event
                     if session.interaction_flow:
                         session.del_flow(session.interaction_flow)
 
-                    await self.on_projection(
+                    await self.on_show_projection(
                         session=session,
                         projection=error,
                         ctx=event.context,
                     )
 
                 except PlatformError as e:
-                    error = await self.on_project_error(e, session)
+                    error = await self._get_error(e, session)
 
                     event = flow.event
-                    await self.on_projection(
+                    await self.on_show_projection(
                         session=session,
                         projection=error,
                         ctx=event.context,
                     )
 
                 except Exception as e:
-                    error = await self.on_project_error(e, session)
+                    error = await self._get_error(e, session)
 
                     event = flow.event
                     self.on_audit_error(exc=e, session=session)
-                    await self.on_projection(
+                    await self.on_show_projection(
                         session=session,
                         projection=error,
                         ctx=event.context,
@@ -274,6 +275,15 @@ class Scheduler:
     # --------------------------------------------------------
     # INTERNAL
     # --------------------------------------------------------
+
+    async def _get_error(self, exc: Exception, session: Session) -> Projection:
+        state = ErrorState.extract_state(exc)
+        return await self.on_get_projection(
+            key=state.key,
+            scope="system",
+            lang=session.lang,
+            state=state.data,
+        )
 
     def _wake_sleeping(self):
         now = time.time()
@@ -330,7 +340,7 @@ class OnAuditWarning(Protocol):
     def __call__(self, *, message: str, session: Session) -> None: ...
 
 
-class OnProjection(Protocol):
+class OnShowProjection(Protocol):
     async def __call__(
         self,
         *,
@@ -340,9 +350,12 @@ class OnProjection(Protocol):
     ) -> None: ...
 
 
-class OnProjectError(Protocol):
+class OnGetProjection(Protocol):
     async def __call__(
         self,
-        exc: Exception,
-        session: Session,
+        *,
+        scope: str,
+        key: str,
+        lang: str,
+        state: dict[str, Any] | None = None,
     ) -> Projection: ...

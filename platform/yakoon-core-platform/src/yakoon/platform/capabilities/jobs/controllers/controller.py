@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from yakoon.base.controllers.controller import Controller
+from yakoon.base.controllers import Composer
 
 from ..commands.cmdset import JobsCommands
 
 
-class JobsController(Controller):
+class JobsComposer(Composer):
 
-    id: str = "jobs"
-
-    commandsets = (JobsCommands,)
+    command_groups = (JobsCommands,)

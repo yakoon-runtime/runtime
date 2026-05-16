@@ -148,12 +148,12 @@ class AppSource(DataSource):
         return self._by_name.get(app_name)
 
     def _to_row(self, app: Application) -> dict[str, Any]:
-        res = {c.id: c.resources.to_dict() for c in app.controllers}
+        # res = {c.id: c.resources.to_dict() for c in app.controllers}
         return {
             "id": app.id,
             "name": app.name,
             "is_shell": app.is_shell,
             "is_listed": getattr(app, "is_listed", True),
             "is_activatable": getattr(app, "is_activatable", True),
-            "resources": res,
+            # "resources": res,
         }

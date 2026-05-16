@@ -4,8 +4,8 @@ import time
 from datetime import UTC, datetime
 
 from yakoon.base.commands import Command, Invocation, Request
-from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
+from yakoon.base.plugins.ports import OnProject
 
 
 class CmdVersion(Command):
@@ -17,13 +17,15 @@ class CmdVersion(Command):
         Invocation(),
     ]
 
-    def __init__(self, on_project: OnProjectCmd):
+    def __init__(self, on_project: OnProject):
         self.on_project = on_project
 
     async def run(self, request: Request):
 
         projection = await self.on_project(
-            name="list.sam",
+            key="version:list",
+            scope="shell",
+            lang=request.lang,
             state={
                 "version": get_platform_version(),
                 "python": platform.python_version(),

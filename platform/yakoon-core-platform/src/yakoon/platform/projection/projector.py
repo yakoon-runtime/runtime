@@ -20,19 +20,27 @@ class Projector:
         self,
         on_render: OnRender,
         on_compile: OnCompile,
+        on_resource: OnGetResourceRef,
     ) -> None:
         self.on_render = on_render
         self.on_compile = on_compile
+        self.on_resource = on_resource
 
     async def project(
         self,
-        resource: ResourceRef,
-        # assets: ResourceRef,
+        *,
+        scope: str,
+        key: str,
+        lang: str,
         state: dict[str, Any] | None = None,
     ) -> Projection:
 
         if state is None:
             state = {}
+
+        resource = self.on_resource(scope=scope, key=key, lang=lang)
+        if resource is None:
+            raise RuntimeError(f"Resource for projection not found: {key, lang}")
 
         text = self.on_render(resource=resource, context=state)
         context = ResolverContext(assets=resource)  # TODO:
@@ -57,3 +65,7 @@ class OnRender(Protocol):
 
 class OnCompile(Protocol):
     def __call__(self, *, text: str, ctx: ResolverContext) -> Projection: ...
+
+
+class OnGetResourceRef(Protocol):
+    def __call__(self, *, scope: str, key: str, lang: str) -> ResourceRef | None: ...

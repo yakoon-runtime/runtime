@@ -17,7 +17,6 @@ DEFAULT = "default"
 class Flow:
     id: str
 
-    app_id: str
     command: Command
     event: InputEvent
 

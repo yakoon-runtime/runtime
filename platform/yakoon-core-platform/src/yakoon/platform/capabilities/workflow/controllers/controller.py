@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-from yakoon.base.controllers.controller import Controller
+from yakoon.base.controllers import Composer
 
 from ..commands.cmdset import WorkflowCommands
 
 
-class WorkflowController(Controller):
+class WorkflowComposer(Composer):
 
-    id: str = "workflow"
-
-    commandsets = (WorkflowCommands,)
+    command_groups = (WorkflowCommands,)

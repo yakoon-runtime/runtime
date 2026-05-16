@@ -8,8 +8,8 @@ from yakoon.base.commands import (
     Invocation,
     Request,
 )
-from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
+from yakoon.base.plugins.ports import OnManualGet, OnProject
 from yakoon.base.projection import Projection
 from yakoon.base.sources import (
     DataRequest,
@@ -28,14 +28,16 @@ class CmdMan(Command):
     def __init__(
         self,
         on_source: OnDataSource,
-        on_project: OnProjectCmd,
-        on_project_manual: OnProjectManual,
+        on_project: OnProject,
+        # on_project_manual: OnProjectManual,
+        on_get_manual: OnManualGet,
         on_get_active_app: OnGetActiveApp,
         on_get_session: OnGetSession,
     ):
         self.on_source = on_source
         self.on_project = on_project
-        self.on_project_manual = on_project_manual
+        self.on_get_manual = on_get_manual
+        # self.on_project_manual = on_project_manual
         self.on_get_active_app = on_get_active_app
         self.on_get_session = on_get_session
 
@@ -63,7 +65,9 @@ class CmdMan(Command):
 
         if result.status != "ok":
             projection = await self.on_project(
-                name="error.sam",
+                key="man:error",
+                scope="shell",
+                lang=request.lang,
                 state={
                     "command_key": command_key,
                 },
@@ -85,7 +89,9 @@ class CmdMan(Command):
 
         if not command:
             projection = await self.on_project(
-                name="error.sam",
+                key="man:error",
+                scope="shell",
+                lang=request.lang,
                 state={
                     "command_key": command_key,
                 },
@@ -104,7 +110,9 @@ class CmdMan(Command):
 
         if result.status != "ok":
             projection = await self.on_project(
-                name="error.sam",
+                key="man:error",
+                scope="shell",
+                lang=request.lang,
                 state={
                     "command_key": command_key,
                 },
@@ -119,26 +127,41 @@ class CmdMan(Command):
         # Render manual
         # --------------------------------------------------
 
-        controller_id = command["controller_id"]
+        # controller_id = command["controller_id"]
 
         try:
 
-            resources = app["resources"][controller_id]
+            # resources = app["resources"][controller_id]
 
-            projection = await self.on_project_manual(
-                resources=resources,
-                name="manual.sam",
+            data = self.on_get_manual(scope=app["id"], command=command_key)
+            if not data:
+                raise LookupError()
+
+            projection = await self.on_project(
+                key=data["projection"],
+                scope=data["scope"],
+                lang=request.lang,
                 state={
                     "command_key": command_key,
                 },
             )
+
+            # projection = await self.on_project_manual(
+            #    resources=resources,
+            #    name="man:manual",
+            #    state={
+            #        "command_key": command_key,
+            #    },
+            # )
 
             yield out(projection)
 
         except LookupError:
 
             projection = await self.on_project(
-                name="error.sam",
+                key="man:error",
+                scope="shell",
+                lang=request.lang,
                 state={
                     "command_key": command_key,
                 },

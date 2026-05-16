@@ -1,7 +1,7 @@
-from .admin import AdminController
-from .auth import AuthController
+from .admin import AdminComposer
+from .auth import AuthComposer
 
 __all__ = [
-    "AuthController",
-    "AdminController",
+    "AuthComposer",
+    "AdminComposer",
 ]

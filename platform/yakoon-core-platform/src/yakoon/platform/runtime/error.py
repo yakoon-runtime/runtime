@@ -1,9 +1,9 @@
 # ----------------------------------------
-# CRITICAL ERRORS
+# INTERNAL ERROR
 # ----------------------------------------
 
 
-class CriticalError(Exception):
+class UnhandledError(Exception):
     pass
 
 

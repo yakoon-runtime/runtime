@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from yakoon.base.errors import ErrorState, codes
+from yakoon.base.errors import ErrorState
 
-from .errors import UsageError
+from .errors import UnknowOptionsError, UsageError
 from .invocation import Invocation
 from .types import (
     CommandKind,
@@ -27,8 +27,9 @@ class Command(ABC):
     key: str
     usage_key: str = "--h"
 
-    app_id: str
-    controller_id: str
+    app: Any = None
+    composer: Any = None
+    group: Any = None
 
     anonymous = False
 
@@ -76,8 +77,8 @@ class Command(ABC):
         if cls.usage_key and cls.usage_key in tokens:
 
             raise UsageError(
-                ErrorState.with_data(
-                    code=codes.USAGE,
+                ErrorState.by_type(
+                    type_key=UsageError,
                     usages=cls._usage_data(cls.invocations),
                 )
             )
@@ -131,8 +132,8 @@ class Command(ABC):
         if not matching:
 
             raise UsageError(
-                ErrorState.with_data(
-                    code=codes.USAGE,
+                ErrorState.by_type(
+                    type_key=UsageError,
                     usages=cls._usage_data(cls.invocations),
                 )
             )
@@ -178,9 +179,9 @@ class Command(ABC):
 
             if unknown_options:
 
-                raise UsageError(
-                    ErrorState.with_data(
-                        code=codes.UNKNOWN_OPTIONS,
+                raise UnknowOptionsError(
+                    ErrorState.by_type(
+                        type_key=UnknowOptionsError,
                         unknown_options=sorted(unknown_options),
                         valid_options=sorted(valid_options),
                         usages=cls._usage_data([invocation]),
@@ -198,8 +199,8 @@ class Command(ABC):
         # ----------------------------------
 
         raise UsageError(
-            ErrorState.with_data(
-                code=codes.USAGE,
+            ErrorState.by_type(
+                type_key=UsageError,
                 usages=cls._usage_data(matching),
             )
         )

@@ -1,5 +1,5 @@
-from .controller import JobsController
+from .controller import JobsComposer
 
 __all__ = [
-    "JobsController",
+    "JobsComposer",
 ]

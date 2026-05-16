@@ -34,3 +34,7 @@ class UnsupportedAction(InvalidInvocation):
 
 class UsageError(InvalidInvocation):
     pass
+
+
+class UnknowOptionsError(InvalidInvocation):
+    pass

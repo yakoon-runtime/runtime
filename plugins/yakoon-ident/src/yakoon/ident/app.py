@@ -7,7 +7,7 @@ from yakoon.storage.eventstore import StoreRuntime
 from yakoon.storage.eventstore.wire import build_store
 
 from .boot import IdentityBootstrapper
-from .controllers import AdminController, AuthController
+from .controllers import AdminComposer, AuthComposer
 from .models import User, UserData
 from .services import (
     AccountService,
@@ -28,9 +28,9 @@ class IdentityApp(Application):
     id: str = "ident-app"
     name = "ident"
 
-    controllers = (
-        AuthController,
-        AdminController,
+    composers = (
+        AuthComposer,
+        AdminComposer,
     )
 
     store: StoreRuntime

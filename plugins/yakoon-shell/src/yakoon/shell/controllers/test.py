@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from yakoon.base.commands import Command
-from yakoon.base.controllers import Controller, ResourceReferences
+from yakoon.base.controllers import Composer, ResourceReferences
 
 from ..commands.test import (
     CmdTest,
@@ -10,11 +10,9 @@ from ..commands.test import (
 )
 
 
-class TestController(Controller):
+class TestComposer(Composer):
 
-    id: str = "shell-test-controller"
-
-    commandsets = (TestCommands,)
+    command_groups = (TestCommands,)
 
     resources = ResourceReferences(
         package="yakoon.shell",

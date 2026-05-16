@@ -1,5 +1,0 @@
-<text>Interner Fehler</text>
-
-{% if state.debug %}
-<text>DEBUG:</text> >> {{state.args[0]}}
-{% endif %}

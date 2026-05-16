@@ -1,5 +1,5 @@
-from .controller import DiscoveryController
+from .controller import DiscoveryComposer
 
 __all__ = [
-    "DiscoveryController",
+    "DiscoveryComposer",
 ]

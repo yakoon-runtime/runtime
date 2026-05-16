@@ -1,8 +1,8 @@
 from .error import (
     CommandNotFound,
-    CriticalError,
     PermissionDenied,
     PlatformError,
+    UnhandledError,
 )
 from .sessions import Session, SessionService
 
@@ -12,5 +12,5 @@ __all__ = [
     "PlatformError",
     "CommandNotFound",
     "PermissionDenied",
-    "CriticalError",
+    "UnhandledError",
 ]

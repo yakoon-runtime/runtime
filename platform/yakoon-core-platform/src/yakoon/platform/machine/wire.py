@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Protocol, cast
+from typing import Any, Protocol, cast
 
 from yakoon.base.application import Application
 from yakoon.base.commands import Command
-from yakoon.base.controllers import Controller
 from yakoon.base.naming import Key
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputContext
@@ -31,7 +30,7 @@ def build_machine(
     on_audit_error: OnAuditError,
     on_audit_warning: OnAuditWarning,
     on_audit_security: OnAuditSecurity,
-    on_project_error: OnProjectError,
+    on_load_projection: OnLoadProjection,
     on_initialize: Oninitialize,
 ) -> RuntimeHost:
 
@@ -46,14 +45,11 @@ def build_machine(
     # --- FACTORY ---
 
     def create_command(
-        app: Application,
         session: Session,
-        controller: type[Controller],
         command: type[Command],
     ) -> Command:
 
-        return app.create_command(
-            controller=controller,
+        return command.app.create_command(
             command=command,
             session=session,
         )
@@ -77,10 +73,10 @@ def build_machine(
     scheduler = Scheduler(
         on_dispatch=engine.dispatch,
         on_step_flow=engine.step_flow,
-        on_projection=on_projection,
+        on_show_projection=on_projection,
         on_audit_error=on_audit_error,
         on_audit_warning=on_audit_warning,
-        on_project_error=on_project_error,
+        on_get_projection=on_load_projection,
     )
 
     # --- SESSION HANDLING ---
@@ -187,9 +183,12 @@ class OnSuggest(Protocol):
     ) -> list[str]: ...
 
 
-class OnProjectError(Protocol):
+class OnLoadProjection(Protocol):
     async def __call__(
         self,
-        exc: Exception,
-        session: Session,
+        *,
+        scope: str,
+        key: str,
+        lang: str,
+        state: dict[str, Any] | None = None,
     ) -> Projection: ...

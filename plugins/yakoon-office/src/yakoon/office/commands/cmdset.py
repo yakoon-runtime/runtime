@@ -1,8 +1,8 @@
-from yakoon.base.commands import CommandSet
+from yakoon.base.commands import CommandGroup
 from yakoon.office.commands.cmd_sendmail import CmdSendMail
 
 
-class MailingCommands(CommandSet):
+class MailingCommands(CommandGroup):
 
     group = "system"
 

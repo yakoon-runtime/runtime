@@ -5,9 +5,7 @@ from collections.abc import Sequence
 from typing import Protocol
 from uuid import uuid4
 
-from yakoon.base.application.application import Application
 from yakoon.base.commands import Command, InvalidInvocation, Request
-from yakoon.base.controllers.controller import Controller
 from yakoon.base.errors import ErrorState
 from yakoon.base.flow.primitives import (
     AutoFocus,
@@ -24,13 +22,12 @@ from yakoon.base.flow.primitives import (
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext
-from yakoon.platform.errors import codes
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
     CommandNotFound,
-    CriticalError,
     PermissionDenied,
     Session,
+    UnhandledError,
 )
 
 
@@ -72,11 +69,8 @@ class CommandEngine:
 
         try:
 
-            # Hook vor resolve
-            # await application.on_before_resolve(session)
-
             # Command finden
-            app, controller_type, command_type = self.on_resolve_command(
+            command_type = self.on_resolve_command(
                 app_id=session.get_active_app(),
                 command_key=event.command,
                 tokens=event.tokens,
@@ -96,15 +90,12 @@ class CommandEngine:
             # )
 
             command = self.on_create_command(
-                app=app,
                 session=session,
-                controller=controller_type,
                 command=command_type,
             )
 
             flow = Flow(
                 id=uuid4().hex,
-                app_id=app.id,
                 command=command,
                 pipeline=pipeline_commands,
                 event=event,
@@ -127,10 +118,11 @@ class CommandEngine:
             raise
 
         except Exception as exc:
-            raise CriticalError(
-                ErrorState.with_data(
-                    code=codes.FATAL_ERROR,
+            raise UnhandledError(
+                ErrorState.by_type(
+                    type_key=UnhandledError,
                     args=exc.args,
+                    debug=session.debug,
                 )
             ) from exc
 
@@ -145,7 +137,7 @@ class CommandEngine:
             # ----------------------------------
             # 21. NORMAL STEP
             # ----------------------------------
-            item = await self._next_step(flow, command, flow.event)
+            item = await self._next_step(flow, command, flow.event, session)
             if item is None:
                 return None
 
@@ -243,7 +235,13 @@ class CommandEngine:
             elif isinstance(effect, ClearFocus):
                 session.set_interaction(None)
 
-    async def _next_step(self, flow: Flow, command, event: InputEvent):
+    async def _next_step(
+        self,
+        flow: Flow,
+        command,
+        event: InputEvent,
+        session: Session,
+    ):
 
         # ----------------------------------
         # Resume: Input / Event
@@ -262,7 +260,7 @@ class CommandEngine:
         # ----------------------------------
         # NEXT
         # ----------------------------------
-        request = Request(event.command, event.tokens, event.payload)
+        request = Request(event.command, event.tokens, event.payload, session.lang)
         return await flow.cursor.next(command, request)
 
 
@@ -279,7 +277,7 @@ class OnResolveCommand(Protocol):
         command_key: str,
         tokens: list[str] | None,
         session: Session,
-    ) -> tuple[Application, type[Controller], type[Command]]: ...
+    ) -> type[Command]: ...
 
 
 class OnParseInput(Protocol):
@@ -304,9 +302,7 @@ class OnAuditSecurity(Protocol):
 class OnCreateCommand(Protocol):
     def __call__(
         self,
-        app: Application,
         session: Session,
-        controller: type[Controller],
         command: type[Command],
     ) -> Command: ...
 

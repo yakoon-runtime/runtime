@@ -5,10 +5,8 @@ from typing import Protocol
 
 from yakoon.base.application.application import Application
 from yakoon.base.commands import Command, CommandScope
-from yakoon.base.controllers import Controller
 from yakoon.base.errors import ErrorState
 from yakoon.platform.capabilities.permission import Permission
-from yakoon.platform.errors import codes
 from yakoon.platform.runtime import CommandNotFound, PermissionDenied
 from yakoon.platform.runtime.sessions import Session
 
@@ -28,9 +26,6 @@ class InvocationResolver:
         self._applications = {a.id: a for a in applications}
         self._shell_app = next(a for a in applications if a.is_shell)
 
-        self._controllers: dict[str, type[Controller]] = {}
-        self._commands_by_controller: dict[str, dict[str, type[Command]]] = {}
-
         self._global: dict[str, type[Command]] = {}
         self._shell: dict[str, type[Command]] = {}
 
@@ -39,27 +34,10 @@ class InvocationResolver:
     def _build(self):
 
         for app in self._applications.values():
-            for controller in app.controllers:
+            for controller in app.composers:
 
-                if controller.id in self._controllers:
-                    raise ValueError(f"Duplicate controller.id: {controller.id}")
-
-                self._controllers[controller.id] = controller
-
-                by_key = self._commands_by_controller.setdefault(controller.id, {})
-
-                for cs in controller.commandsets:
+                for cs in controller.command_groups:
                     for cmd in cs.commands:
-
-                        cmd.app_id = app.id
-                        cmd.controller_id = controller.id
-
-                        if cmd.key in by_key:
-                            raise ValueError(
-                                f"Duplicate command key '{cmd.key}' in {controller.id}"
-                            )
-
-                        by_key[cmd.key] = cmd
 
                         # GLOBAL
                         if cmd.scope == CommandScope.GLOBAL:
@@ -79,7 +57,7 @@ class InvocationResolver:
         command_key: str,
         tokens: list[str] | None,
         session: Session,
-    ) -> tuple[Application, type[Controller], type[Command]]:
+    ) -> type[Command]:
 
         choices = []
 
@@ -89,8 +67,8 @@ class InvocationResolver:
         key = command_key.strip()
         if not key:
             raise CommandNotFound(
-                ErrorState.with_data(
-                    code=codes.COMMAND_NOT_FOUND,
+                ErrorState.by_type(
+                    type_key=CommandNotFound,
                     command=key,
                 )
             )
@@ -102,8 +80,8 @@ class InvocationResolver:
 
         if not app:
             raise CommandNotFound(
-                ErrorState.with_data(
-                    code=codes.COMMAND_NOT_FOUND,
+                ErrorState.by_type(
+                    type_key=CommandNotFound,
                     command=key,
                 )
             )
@@ -112,20 +90,21 @@ class InvocationResolver:
         # 1. APP scope ---
         # ----------------
 
-        for controller in app.controllers:
-            cmds = self._commands_by_controller.get(controller.id, {})
-            choices.extend(
-                [
-                    c.key
-                    for c in cmds.values()
-                    if c.scope in (CommandScope.APP, CommandScope.SHELL)
-                ]
-            )
-            cmd = cmds.get(key)
-            #!Command in own app & all own commands with SHELL Scope.
-            if cmd and cmd.scope in (CommandScope.APP, CommandScope.SHELL):
-                self._ensure_invocation(session, cmd, tokens)
-                return app, controller, cmd
+        for composer in app.composers:
+
+            for group in composer.command_groups:
+                for cmd in group.commands:
+
+                    if cmd.scope in (CommandScope.APP, CommandScope.SHELL):
+                        choices.append(cmd.key)
+
+                    #!Command in own app & all own commands with SHELL Scope.
+                    if cmd.key == key and cmd.scope in (
+                        CommandScope.APP,
+                        CommandScope.SHELL,
+                    ):
+                        self._ensure_invocation(session, cmd, tokens)
+                        return cmd
 
         # -------------------------------------
         # 2. SHELL scope (in case of shell) ---
@@ -135,10 +114,9 @@ class InvocationResolver:
             cmd = self._shell.get(key)
             choices.extend([c for c in self._shell.keys()])
             if cmd:
-                controller = self._controllers[cmd.controller_id]
-                app = self._applications[cmd.app_id]
+                app = cmd.app
                 self._ensure_invocation(session, cmd, tokens)
-                return app, controller, cmd
+                return cmd
 
         # -------------------
         # 3. GLOBAL scope ---
@@ -147,10 +125,9 @@ class InvocationResolver:
         cmd = self._global.get(key)
         choices.extend([c for c in self._global.keys()])
         if cmd:
-            controller = self._controllers[cmd.controller_id]
-            target_app = self._applications[cmd.app_id]
+            composer = cmd.composer
             self._ensure_invocation(session, cmd, tokens)
-            return target_app, controller, cmd
+            return cmd
 
         # -----------------
         # 4. SUGGESTION ---
@@ -162,8 +139,8 @@ class InvocationResolver:
             limit=self.SUGGESTION_LIMIT,
         )
         raise CommandNotFound(
-            ErrorState.with_data(
-                code=codes.COMMAND_NOT_FOUND,
+            ErrorState.by_type(
+                type_key=CommandNotFound,
                 command=key,
                 suggestions=suggestions,
             )
@@ -184,13 +161,9 @@ class InvocationResolver:
             return
 
         action = tokens[0] if tokens else None
-        fq = Permission.fq_key(command_type.app_id, command_type.key, action)
+        fq = Permission.fq_key(command_type.app.id, command_type.key, action)
         if not self.on_authorize(session=session, perm_key=fq):
-            raise PermissionDenied(
-                ErrorState.with_data(
-                    code=codes.PERMISSION_DENIED,
-                )
-            )
+            raise PermissionDenied(ErrorState.by_type(type_key=PermissionDenied))
 
 
 # ----------------------------------

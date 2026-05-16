@@ -1,4 +1,4 @@
-from yakoon.base.commands import CommandSet
+from yakoon.base.commands import CommandGroup
 
 from .cmd_exit import CmdExit
 from .cmd_ls import CmdLs
@@ -9,7 +9,7 @@ from .cmd_version import CmdVersion
 from .cmd_welcome import CmdWelcome
 
 
-class SystemCommands(CommandSet):
+class SystemCommands(CommandGroup):
 
     group = "system"
 

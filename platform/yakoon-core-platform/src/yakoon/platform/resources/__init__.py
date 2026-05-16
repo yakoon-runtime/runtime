@@ -1,5 +1,7 @@
-from .loader import PackageResourceLoader
+from .reader import PackageReader
+from .registry import ProjectionRegistry
 
 __all__ = [
-    "PackageResourceLoader",
+    "PackageReader",
+    "ProjectionRegistry",
 ]

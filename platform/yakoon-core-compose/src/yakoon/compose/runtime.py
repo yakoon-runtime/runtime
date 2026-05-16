@@ -5,7 +5,10 @@ from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import (
     OnAuthorizeRead,
     OnAuthorizeWrite,
+    OnManualGet,
+    OnManualRegister,
     OnProject,
+    OnProjectionRegister,
     OnSaveSession,
 )
 from yakoon.base.runtime import Container
@@ -14,14 +17,15 @@ from yakoon.platform.capabilities.audit import AuditLogService
 from yakoon.platform.capabilities.permission import (
     PermissionChecker,
 )
-from yakoon.platform.errors.wire import build_error_projector
 from yakoon.platform.machine.host import RuntimeHost
 from yakoon.platform.machine.wire import build_machine
+from yakoon.platform.manual import ManualService
 from yakoon.platform.plugins import PluginLoader
 from yakoon.platform.projection import (
     build_projector,
     build_stream,
 )
+from yakoon.platform.resources import ProjectionRegistry
 from yakoon.platform.runtime.sessions import SessionService
 from yakoon.platform.services import GuidanceService
 from yakoon.platform.settings import Settings
@@ -31,6 +35,7 @@ from yakoon.platform.sources.data import (
     DiscoverySource,
 )
 from yakoon.platform.sources.registry import DataSourceRegistry
+from yakoon.platform.templates.wire import register_templates
 from yakoon.storage.eventstore.wire import build_store
 
 CapabilityMode: TypeAlias = Literal["default"]
@@ -49,11 +54,24 @@ def compose_runtime(
     plugins = plugins or []
     capabilities = capabilities or {}
 
+    # -------------------
+    # --- PROJECTIONS ---
+    # -------------------
+
+    projections = ProjectionRegistry()
+    register_templates(projections.register)
+
     # ----------------------
     # --- BUILDING STORE ---
     # ----------------------
 
     store = build_store(settings.storage)
+
+    # ---------------
+    # --- MANUALS ---
+    # ---------------
+
+    manuals = ManualService()
 
     # ----------------
     # --- SERVICES ---
@@ -92,9 +110,8 @@ def compose_runtime(
     # --- PROJECTOR ---
     # -----------------
 
-    projector = build_projector()
-    error_projector = build_error_projector(
-        on_project=projector.project,
+    projector = build_projector(
+        on_resource=projections.resolve,
     )
 
     # --------------------
@@ -119,6 +136,9 @@ def compose_runtime(
         fork.bind(OnSaveSession, session_manager.save)
         fork.bind(OnAuthorizeRead, perm_checker.can_read)
         fork.bind(OnAuthorizeWrite, perm_checker.can_write)
+        fork.bind(OnProjectionRegister, projections.register)
+        fork.bind(OnManualRegister, manuals.register)
+        fork.bind(OnManualGet, manuals.get)
 
         return ModulePorts(
             on_publish=ports.bind,
@@ -165,7 +185,7 @@ def compose_runtime(
         on_audit_error=audit_service.error,
         on_audit_security=audit_service.security,
         on_audit_warning=audit_service.warning,
-        on_project_error=error_projector.project,
+        on_load_projection=projector.project,
         on_initialize=initialize,
     )
 

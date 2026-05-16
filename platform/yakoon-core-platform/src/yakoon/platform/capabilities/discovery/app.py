@@ -1,6 +1,6 @@
 from yakoon.base.application import Application
 
-from .controllers import DiscoveryController
+from .controllers import DiscoveryComposer
 
 
 class DiscoveryApplication(Application):
@@ -8,4 +8,4 @@ class DiscoveryApplication(Application):
     id: str = "discovery-app"
     name: str = "discover"
 
-    controllers = (DiscoveryController,)
+    composers = (DiscoveryComposer,)

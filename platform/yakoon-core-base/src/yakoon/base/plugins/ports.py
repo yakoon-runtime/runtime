@@ -14,8 +14,21 @@ from yakoon.platform.capabilities.permission.models.set import PermissionSet
 
 class OnProject(Protocol):
     async def __call__(
-        self, *, resource: ResourceRef, state: dict | None = None
+        self, *, scope: str, key: str, lang: str, state: dict | None = None
     ) -> Projection: ...
+
+
+class OnProjectionRegister(Protocol):
+    def __call__(
+        self,
+        scope: str,
+        key: str,
+        resource: ResourceRef,
+        lang: str,
+        renderer: str | None = None,
+        theme: str | None = None,
+        priority: int = 0,
+    ) -> None: ...
 
 
 class OnSaveSession(Protocol):
@@ -43,3 +56,21 @@ class OnBootstrapPermissions(Protocol):
         session: Session,
         permissions: PermissionSet,
     ): ...
+
+
+class OnManualRegister(Protocol):
+
+    def __call__(
+        self,
+        scope: str,
+        command: str,
+        projection: str,
+    ) -> None: ...
+
+
+class OnManualGet(Protocol):
+    def __call__(
+        self,
+        scope: str,
+        command: str,
+    ) -> dict | None: ...

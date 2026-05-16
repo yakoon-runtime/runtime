@@ -125,8 +125,7 @@ class CommandSource(DataSource):
 
         return {
             "key": cmd.key,
-            "app_id": cmd.app_id,
-            "controller_id": cmd.controller_id,
+            "app_id": cmd.app.id,
             "scope": cmd.scope.name,
             "kind": cmd.kind.name,
             "visibility": cmd.visibility.name,
@@ -138,11 +137,9 @@ class CommandSource(DataSource):
         applications: Sequence[Application],
     ):
         for app in applications:
-            for controller in app.controllers:
-                for cs in controller.commandsets:
-                    for cmd in cs.commands:
-                        cmd.app_id = app.id
-                        cmd.controller_id = controller.id
+            for composer in app.composers:
+                for group in composer.command_groups:
+                    for cmd in group.commands:
                         self._commands.append(cmd)
                         self._by_app.setdefault(app.id, []).append(cmd)
                         self._by_scope.setdefault(cmd.scope, []).append(cmd)

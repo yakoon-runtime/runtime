@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Protocol
 
 from yakoon.base.commands import Command, Invocation, Request
-from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import receive
 from yakoon.base.flow.patterns import form
+from yakoon.base.plugins.ports import OnProject
 
 
 class CmdQuit(Command):
@@ -19,7 +19,7 @@ class CmdQuit(Command):
 
     def __init__(
         self,
-        on_project: OnProjectCmd,
+        on_project: OnProject,
         on_set_mark: OnSetMark,
     ):
         self.on_project = on_project
@@ -27,7 +27,11 @@ class CmdQuit(Command):
 
     async def run(self, request: Request):
 
-        projection = await self.on_project(name="confirm.sam")
+        projection = await self.on_project(
+            key="quit:confirm",
+            scope="shell",
+            lang=request.lang,
+        )
 
         yield form(self, projection, "form")
 

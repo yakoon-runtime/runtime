@@ -1,5 +1,5 @@
-from .controller import WorkflowController
+from .controller import WorkflowComposer
 
 __all__ = [
-    "WorkflowController",
+    "WorkflowComposer",
 ]

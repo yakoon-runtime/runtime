@@ -1,4 +1,4 @@
-from yakoon.base.commands import CommandSet
+from yakoon.base.commands import CommandGroup
 
 from .cmd_demo_delay import CmdDemoDelaySimple
 from .cmd_demo_focus import CmdDemoFocusSimple
@@ -7,7 +7,7 @@ from .cmd_demo_receive import CmdDemoReceiveSimple
 from .cmd_demo_send import CmdDemSendSimple
 
 
-class DemoCommandsDsl(CommandSet):
+class DemoCommandsDsl(CommandGroup):
 
     group = "dsl"
 

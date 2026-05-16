@@ -1,19 +1,13 @@
 from __future__ import annotations
 
-from yakoon.base.controllers import Controller, ResourceReferences
+from yakoon.base.controllers import Composer, ResourceReferences
 
 from .commands.dsl.cmdset import DemoCommandsDsl
 
 
-class DemoControllerDsl(Controller):
-    """Playground controller.
+class DemoDslComposer(Composer):
 
-    This controller provides the default interactive environment.
-    """
-
-    id: str = "demo.dsl"
-
-    commandsets = (DemoCommandsDsl,)
+    command_groups = (DemoCommandsDsl,)
 
     resources = ResourceReferences(
         package="yakoon.playground",

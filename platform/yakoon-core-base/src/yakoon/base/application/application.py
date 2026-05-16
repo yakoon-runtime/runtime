@@ -4,9 +4,11 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
+from yakoon.base.plugins.ports import OnManualRegister, OnProjectionRegister
+
 if TYPE_CHECKING:
     from yakoon.base.commands import Command
-    from yakoon.base.controllers import Controller
+    from yakoon.base.controllers import Composer
     from yakoon.base.plugins import ModulePorts
     from yakoon.base.runtime.sessions import Session
 
@@ -28,44 +30,64 @@ class Application(ABC):
     is_activatable: bool = True
     """If False, the controller cannot be activated as an interactive context."""
 
-    controllers: Sequence[type[Controller]]
+    composers: Sequence[type[Composer]]
     """Contains the controllers of this application."""
 
     ports: ModulePorts
 
+    def __init__(self):
+        for composer in self.composers:
+            composer.attach_runtime(self)
+
     def initialize(self):
-        for controller in self.controllers:
-            controller.validate()
+        for composer in self.composers:
+            composer.validate()
 
     def bind_ports(self, ports: ModulePorts):
         self.ports = ports
-        for controller in self.controllers:
-            controller.ports = ports
+        for composer in self.composers:
+            composer.ports = ports
 
         self.on_build(ports)
+
+    async def start(self) -> None:
+        self.on_projection_register(
+            on_register=self.ports.on_get_port(OnProjectionRegister),
+        )
+        self.on_manual_register(
+            on_register=self.ports.on_get_port(OnManualRegister),
+        )
+        await self.on_start(self.ports)
+
+    def create_command(
+        self,
+        command: type[Command],
+        session: Session,
+    ) -> Command:
+
+        composer = command.composer(session, command)
+        return composer.create_command()
+
+    # ----------------------------------
+    # HOOKS
+    # ----------------------------------
 
     def on_build(self, ports: ModulePorts) -> None:  # noqa: B027
         """Hook executed after bind ports"""
         pass
 
+    # @abstractmethod
+    def on_projection_register(  # noqa: B027
+        self, on_register: OnProjectionRegister
+    ) -> None:
+        pass
+
+    def on_manual_register(  # noqa: B027
+        self,
+        on_register: OnManualRegister,
+    ) -> None:
+        pass
+
     async def on_start(self, ports: ModulePorts) -> None:  # noqa: B027
         """Hook executed after bind ports"""
         pass
-
-    async def start(self) -> None:
-        await self.on_start(self.ports)
-
-    def create_command(
-        self,
-        controller: type[Controller],
-        command: type[Command],
-        session: Session,
-    ) -> Command:
-
-        if controller not in self.controllers:
-            raise RuntimeError(
-                f"create_command: Invalid controller in {self.__class__}"
-            )
-
-        ctrl = controller(session, command)
-        return ctrl.create_command()

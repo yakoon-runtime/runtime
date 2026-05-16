@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from yakoon.base.commands import Command
-from yakoon.base.controllers import Controller, ResourceReferences
+from yakoon.base.controllers import Composer, ResourceReferences
 from yakoon.base.naming import Key
 from yakoon.base.plugins.models import AuthResult
 from yakoon.base.plugins.ports import OnAuthenticate, OnSaveSession
@@ -12,11 +12,9 @@ from ..commands import AuthCommands, CmdSu, CmdWhoAmI
 from ..services import PermissionResolver
 
 
-class AuthController(Controller):
+class AuthComposer(Composer):
 
-    id: str = "id-ident-auth"
-
-    commandsets = (AuthCommands,)
+    command_groups = (AuthCommands,)
 
     resources = ResourceReferences(
         package="yakoon.ident",

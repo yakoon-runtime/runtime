@@ -7,8 +7,8 @@ from yakoon.base.commands import (
     Invocation,
     Request,
 )
-from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
+from yakoon.base.plugins.ports import OnProject
 from yakoon.base.projection import to_text
 from yakoon.base.sources import (
     DataRequest,
@@ -29,7 +29,7 @@ class CmdUse(Command):
     def __init__(
         self,
         on_source: OnDataSource,
-        on_project: OnProjectCmd,
+        on_project: OnProject,
         on_get_active_app: OnGetActiveApp,
         on_set_active_app: OnSetActiveApp,
         on_save_session: OnSaveSession,
@@ -54,7 +54,9 @@ class CmdUse(Command):
         if not app_name:
             data = await self.on_source(DataRequest("system:apps --all"))
             projection = await self.on_project(
-                name="active.sam",
+                key="use:active",
+                scope="shell",
+                lang=request.lang,
                 state={
                     "apps": data.rows,
                 },
@@ -92,7 +94,9 @@ class CmdUse(Command):
         app = data.one_or_none()
         if not app:
             projection = await self.on_project(
-                name="error.sam",
+                key="use:error",
+                scope="shell",
+                lang=request.lang,
                 state={
                     "app": app_name,
                 },
@@ -106,7 +110,9 @@ class CmdUse(Command):
         # already active
         if app_id == self.on_get_active_app():
             projection = await self.on_project(
-                name="using.sam",
+                key="use:using",
+                scope="shell",
+                lang=request.lang,
                 state={
                     "app": app,
                 },

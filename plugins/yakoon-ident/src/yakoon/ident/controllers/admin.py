@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from yakoon.base.commands import Command
-from yakoon.base.controllers import Controller, ResourceReferences
+from yakoon.base.controllers import Composer, ResourceReferences
 from yakoon.base.plugins.ports import OnSaveSession
 from yakoon.ident.models import Group, User
 
@@ -21,11 +21,9 @@ from ..services import (
 )
 
 
-class AdminController(Controller):
+class AdminComposer(Composer):
 
-    id: str = "id-ident-admin"
-
-    commandsets = (AdminCommands,)
+    command_groups = (AdminCommands,)
 
     resources = ResourceReferences(
         package="yakoon.ident",

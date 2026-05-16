@@ -8,8 +8,8 @@ from yakoon.base.commands import (
     Invocation,
     Request,
 )
-from yakoon.base.commands.ports import OnProjectCmd
 from yakoon.base.flow import out
+from yakoon.base.plugins.ports import OnProject
 from yakoon.base.sources import (
     DataRequest,
     OnDataSource,
@@ -31,7 +31,7 @@ class CmdLs(Command):
 
     def __init__(
         self,
-        on_project: OnProjectCmd,
+        on_project: OnProject,
         on_source: OnDataSource,
         on_get_active_app: OnGetActiveApp,
         on_get_session: OnGetSession,
@@ -63,7 +63,9 @@ class CmdLs(Command):
         discovery = result.one()
 
         projection = await self.on_project(
-            name="overview.sam",
+            key="ls:overview",
+            scope="shell",
+            lang=request.lang,
             state={
                 "mode": discovery["mode"],
                 "commands": discovery["commands"],

@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from yakoon.base.controllers import Controller, ResourceReferences
+from yakoon.base.controllers import Composer, ResourceReferences
 
 from ..commands import DiscoveryLookupCommands
 
 
-class DiscoveryController(Controller):
-    """DiscoveryController controller."""
+class DiscoveryComposer(Composer):
 
-    id: str = "discovery"
-
-    commandsets = (DiscoveryLookupCommands,)
+    command_groups = (DiscoveryLookupCommands,)
 
     resources = ResourceReferences(
         package="yakoon.platform.capabilities.discovery",

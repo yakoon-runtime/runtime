@@ -6,7 +6,7 @@ from yakoon.base.resources import ResourceRef
 
 
 @dataclass(slots=True)
-class PackageResourceLoader:
+class PackageReader:
 
     def get_text(
         self,
