@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from typing import Protocol
 from uuid import uuid4
 
-from yakoon.base.commands import Command, InvalidInvocation, Request
+from yakoon.base.commands import InvalidInvocation, Request
 from yakoon.base.errors import ErrorState
 from yakoon.base.flow.primitives import (
     AutoFocus,
@@ -19,12 +19,13 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
+from yakoon.base.nodes.node import Node
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
-    CommandNotFound,
+    NodeNotFound,
     PermissionDenied,
     Session,
     UnhandledError,
@@ -37,27 +38,38 @@ class CommandEngine:
 
     def __init__(
         self,
-        on_resolve_command: OnResolveCommand,
+        on_resolve_node: OnResolveNode,
         on_parse_input: OnParseInput,
         on_projection: OnProjection,
         on_audit_security: OnAuditSecurity,
-        on_create_command: OnCreateCommand,
     ):
-        self.on_resolve_command = on_resolve_command
+        self.on_resolve_command = on_resolve_node
         self.on_parse_input = on_parse_input
         self.on_projection = on_projection
         self.on_audit_security = on_audit_security
-        self.on_create_command = on_create_command
 
     # ----------------------------------------------------
     # PUBLIC API
     # ----------------------------------------------------
 
+    async def setup(self, session: Session, node: Node) -> Flow | None:
+
+        flow = Flow(
+            id=uuid4().hex,
+            node=node,
+            event=InputEvent(node.key, tokens=[]),
+            cursor=FlowCursor("setup"),
+            kind=self.DEFAULT_FLOW_KIND,
+        )
+
+        session.add_flow(flow)
+        return flow
+
     async def dispatch(self, session: Session, event: InputEvent) -> Flow | None:
 
         # session.execution.reset()
         # session.execution.step(ExecStep.EXECUTION_START)
-        command_type: type[Command] | None = None
+        node: Node | None = None
         event, pipeline_commands = self.on_parse_input(event=event)
         if not event or not event.command:
             return None
@@ -69,10 +81,10 @@ class CommandEngine:
 
         try:
 
-            # Command finden
-            command_type = self.on_resolve_command(
-                app_id=session.get_active_app(),
-                command_key=event.command,
+            # find node
+            node = self.on_resolve_command(
+                parent_key=session.get_active_app(),
+                node_key=event.command,
                 tokens=event.tokens,
                 session=session,
             )
@@ -89,31 +101,26 @@ class CommandEngine:
             #    controller=resolved_controller.id,
             # )
 
-            command = self.on_create_command(
-                session=session,
-                command=command_type,
-            )
-
             flow = Flow(
                 id=uuid4().hex,
-                command=command,
+                node=node,
                 pipeline=pipeline_commands,
                 event=event,
-                cursor=FlowCursor(),
+                cursor=FlowCursor("run"),
                 kind=self.DEFAULT_FLOW_KIND,
             )
 
             session.add_flow(flow)
             return flow
 
-        except (CommandNotFound, InvalidInvocation):
+        except (NodeNotFound, InvalidInvocation):
             raise
 
         except PermissionDenied:
             self.on_audit_security(
                 session=session,
                 obj="command",
-                action=command_type.key if command_type else event.command,
+                action=node.key if node else event.command,
             )
             raise
 
@@ -128,8 +135,8 @@ class CommandEngine:
 
     async def step_flow(self, flow: Flow, session: Session) -> Outcome | None:
 
+        node = flow.node
         cursor = flow.cursor
-        command = flow.command
 
         try:
             session._runtime_flow_id = flow.id  # type: ignore
@@ -137,7 +144,7 @@ class CommandEngine:
             # ----------------------------------
             # 21. NORMAL STEP
             # ----------------------------------
-            item = await self._next_step(flow, command, flow.event, session)
+            item = await self._next_step(flow, node, flow.event, session)
             if item is None:
                 return None
 
@@ -238,7 +245,7 @@ class CommandEngine:
     async def _next_step(
         self,
         flow: Flow,
-        command,
+        node,
         event: InputEvent,
         session: Session,
     ):
@@ -261,7 +268,7 @@ class CommandEngine:
         # NEXT
         # ----------------------------------
         request = Request(event.command, event.tokens, event.payload, session.lang)
-        return await flow.cursor.next(command, request)
+        return await flow.cursor.next(node, request)
 
 
 # ----------------------------------
@@ -269,15 +276,15 @@ class CommandEngine:
 # ----------------------------------
 
 
-class OnResolveCommand(Protocol):
+class OnResolveNode(Protocol):
     def __call__(
         self,
         *,
-        app_id: str | None,
-        command_key: str,
+        parent_key: str | None,
+        node_key: str,
         tokens: list[str] | None,
         session: Session,
-    ) -> type[Command]: ...
+    ) -> Node: ...
 
 
 class OnParseInput(Protocol):
@@ -297,14 +304,6 @@ class OnProjection(Protocol):
 
 class OnAuditSecurity(Protocol):
     def __call__(self, *, session, obj, action) -> None: ...
-
-
-class OnCreateCommand(Protocol):
-    def __call__(
-        self,
-        session: Session,
-        command: type[Command],
-    ) -> Command: ...
 
 
 class OnContinuePipeline(Protocol):

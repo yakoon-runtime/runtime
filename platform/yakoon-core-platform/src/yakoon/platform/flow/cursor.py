@@ -1,23 +1,36 @@
 from __future__ import annotations
 
 import inspect
+from typing import Literal
 
 from yakoon.base.flow.primitives import Outcome
+from yakoon.base.nodes import RuntimeContext
+from yakoon.base.nodes.node import Node
+
+HandlerName = Literal[
+    "run",
+    "setup",
+]
 
 
 class FlowCursor:
 
-    def __init__(self):
+    def __init__(self, handler_name: HandlerName):
+        self.handler_name = handler_name
         self._stack = []
 
-    async def next(self, command, request):
-
-        # initialisieren
+    async def next(
+        self,
+        node: Node,
+        ctx: RuntimeContext,
+    ):
         if not self._stack:
-            gen = _ensure_step(command.run)(command, request)
+            handler = getattr(node, self.handler_name)
+            gen = _ensure_step(handler)(ctx)
             self._stack.append(gen)
 
         gen = self._stack[-1]
+
         return await anext(gen)
 
     def has_stack(self) -> bool:
@@ -42,9 +55,9 @@ class FlowCursor:
 
 def _ensure_step(run_fn):
 
-    def factory(command, request):
+    def factory(ctx):
 
-        result = run_fn(request)
+        result = run_fn(ctx)
 
         # --- async generator ---
         if inspect.isasyncgen(result):

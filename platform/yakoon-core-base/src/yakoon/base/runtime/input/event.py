@@ -8,7 +8,7 @@ from .context import InputContext
 @dataclass(frozen=True, slots=True)
 class InputEvent:
     command: str
-    tokens: list[str]
+    tokens: list[str] | None = None
     context: InputContext | None = None
     batch_id: str | None = None
 

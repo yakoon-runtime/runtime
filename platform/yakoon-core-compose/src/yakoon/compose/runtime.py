@@ -1,6 +1,7 @@
 from typing import Literal, TypeAlias
 
 from yakoon.base.application import Application
+from yakoon.base.nodes import Node as AppContainer
 from yakoon.base.plugins import ModulePorts
 from yakoon.base.plugins.ports import (
     OnAuthorizeRead,
@@ -53,6 +54,7 @@ def compose_runtime(
 
     plugins = plugins or []
     capabilities = capabilities or {}
+    nodes: list[AppContainer] = []
 
     # -------------------
     # --- PROJECTIONS ---
@@ -105,6 +107,8 @@ def compose_runtime(
     for module in plug_loader.load():
         if module.export.app:
             applications.append(module.export.app())
+            if module.export.node:
+                nodes.append(module.export.node)
 
     # -----------------
     # --- PROJECTOR ---
@@ -176,7 +180,7 @@ def compose_runtime(
     # ------------------------
 
     return build_machine(
-        applications=applications,
+        nodes=nodes,
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
         on_projection=output.send_projection,

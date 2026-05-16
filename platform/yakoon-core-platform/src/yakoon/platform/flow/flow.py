@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 
-from yakoon.base.commands import Command
 from yakoon.base.flow.primitives import Control
+from yakoon.base.nodes import Node
 from yakoon.base.runtime import InputEvent
 
 from .cursor import FlowCursor
@@ -17,7 +17,7 @@ DEFAULT = "default"
 class Flow:
     id: str
 
-    command: Command
+    node: Node
     event: InputEvent
 
     cursor: FlowCursor

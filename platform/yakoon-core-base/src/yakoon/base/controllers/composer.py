@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from yakoon.base.runtime.sessions import Session
 
 TComposer = TypeVar("TComposer", bound="Composer")
-CommandFactory = Callable[[TComposer], "Command"]
+CommandFactory = Callable[[TComposer], "Node"]
 
 
 class Composer(ABC):

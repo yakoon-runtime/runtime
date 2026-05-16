@@ -3,9 +3,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Any, Protocol, cast
 
-from yakoon.base.application import Application
-from yakoon.base.commands import Command
 from yakoon.base.naming import Key
+from yakoon.base.nodes import Node
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputContext
 from yakoon.platform.runtime import Session
@@ -21,7 +20,7 @@ from .session import SessionBuilder
 
 
 def build_machine(
-    applications: Sequence[Application],
+    nodes: Sequence[Node],
     on_suggest: OnSuggest,
     on_projection: OnProjection,
     on_session: OnGetOrCreateSession,
@@ -37,22 +36,10 @@ def build_machine(
     # --- ROUTING ---
 
     resolver = InvocationResolver(
-        applications=applications,
+        nodes=nodes,
         on_authorize=on_has_permission,
         on_suggest=on_suggest,
     )
-
-    # --- FACTORY ---
-
-    def create_command(
-        session: Session,
-        command: type[Command],
-    ) -> Command:
-
-        return command.app.create_command(
-            command=command,
-            session=session,
-        )
 
     # --- PARSING ---
 
@@ -61,16 +48,16 @@ def build_machine(
     # --- ORCHESTRATION ---
 
     engine = CommandEngine(
-        on_resolve_command=resolver.resolve,
+        on_resolve_node=resolver.resolve,
         on_parse_input=parser.parse,
         on_projection=on_projection,
-        on_create_command=create_command,
         on_audit_security=on_audit_security,
     )
 
     # --- EXECUTION ---
 
     scheduler = Scheduler(
+        on_setup=engine.setup,
         on_dispatch=engine.dispatch,
         on_step_flow=engine.step_flow,
         on_show_projection=on_projection,
@@ -104,14 +91,22 @@ def build_machine(
         )
         return runner
 
-    # --- LIFECYCLE ---
+    # --- SETUP NODES ---
 
-    async def on_start():
-        # init runtime
+    async def setup_nodes(session):
+
         await on_initialize()
-        # init all apps
-        for a in applications:
-            await a.start()
+
+        nodes_to_setup: list[Node] = []
+
+        def collect_nodes(node: Node):
+            if node.has_setup():
+                nodes_to_setup.append(node)
+
+        for node in nodes:
+            node.walk(collect_nodes)
+        for node in nodes_to_setup:
+            await scheduler.setup(session, node)
 
     # --- HOSTING ---
 
@@ -120,7 +115,7 @@ def build_machine(
         on_join_bus=bus.join,
         on_create_runner=create_runner,
         on_get_session=session_builder.create,
-        on_initialize=on_start,
+        on_setup=setup_nodes,
     )
 
 

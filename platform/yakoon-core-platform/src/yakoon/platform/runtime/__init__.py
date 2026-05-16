@@ -1,5 +1,5 @@
 from .error import (
-    CommandNotFound,
+    NodeNotFound,
     PermissionDenied,
     PlatformError,
     UnhandledError,
@@ -10,7 +10,7 @@ __all__ = [
     "SessionService",
     "Session",
     "PlatformError",
-    "CommandNotFound",
+    "NodeNotFound",
     "PermissionDenied",
     "UnhandledError",
 ]

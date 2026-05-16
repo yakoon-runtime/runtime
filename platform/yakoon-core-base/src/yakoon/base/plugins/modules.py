@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from yakoon.base.application import Application
+    from yakoon.base.nodes import Node
 
 
 @dataclass(frozen=True)
@@ -18,6 +19,7 @@ class ModuleMeta:
 class ModuleExport:
     meta: ModuleMeta
     app: type[Application]
+    node: Node | None = None
 
 
 @dataclass(frozen=True, slots=True)

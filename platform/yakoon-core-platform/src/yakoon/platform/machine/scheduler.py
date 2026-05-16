@@ -9,6 +9,7 @@ from typing import Any, Protocol
 from yakoon.base.errors.state import ErrorState
 from yakoon.base.flow.primitives import Control
 from yakoon.base.flow.primitives.outcome import Outcome
+from yakoon.base.nodes import Node
 from yakoon.base.projection import Projection
 from yakoon.base.runtime.errors import DomainError
 from yakoon.base.runtime.input import InputContext, InputEvent
@@ -30,6 +31,7 @@ class Scheduler:
 
     def __init__(
         self,
+        on_setup: OnSetup,
         on_dispatch: OnDispatch,
         on_step_flow: OnStepFlow,
         on_get_projection: OnGetProjection,
@@ -38,6 +40,7 @@ class Scheduler:
         on_audit_warning: OnAuditWarning,
     ):
         # Hooks
+        self.on_setup = on_setup
         self.on_dispatch = on_dispatch
         self.on_step_flow = on_step_flow
         self.on_get_projection = on_get_projection
@@ -57,41 +60,11 @@ class Scheduler:
     # Public API
     # --------------------------------------------------------
 
+    async def setup(self, session: Session, node: Node):
+        await self._call_runtime(session, None, self.on_setup, node=node)
+
     async def dispatch(self, session: Session, event: InputEvent):
-        try:
-            await self.on_dispatch(session=session, event=event)
-
-            # alle Flows der Session schedulen
-            for flow in session.flows():
-                self.schedule_flow(flow, session)
-
-        except DomainError as e:
-            error = await self._get_error(e, session)
-
-            await self.on_show_projection(
-                session=session,
-                projection=error,
-                ctx=event.context,
-            )
-
-        except PlatformError as e:
-            error = await self._get_error(e, session)
-
-            await self.on_show_projection(
-                session=session,
-                projection=error,
-                ctx=event.context,
-            )
-
-        except Exception as e:
-            error = await self._get_error(e, session)
-
-            self.on_audit_error(exc=e, session=session)
-            await self.on_show_projection(
-                session=session,
-                projection=error,
-                ctx=event.context,
-            )
+        await self._call_runtime(session, event.context, self.on_dispatch, event=event)
 
     async def continue_flow(self, session, old_flow, event, pipeline):
 
@@ -276,6 +249,44 @@ class Scheduler:
     # INTERNAL
     # --------------------------------------------------------
 
+    async def _call_runtime(
+        self, session: Session, ctx: InputContext | None, callback, **kwargs
+    ):
+        try:
+            await callback(session=session, **kwargs)
+
+            # alle Flows der Session schedulen
+            for flow in session.flows():
+                self.schedule_flow(flow, session)
+
+        except DomainError as e:
+            error = await self._get_error(e, session)
+
+            await self.on_show_projection(
+                session=session,
+                projection=error,
+                ctx=ctx,
+            )
+
+        except PlatformError as e:
+            error = await self._get_error(e, session)
+
+            await self.on_show_projection(
+                session=session,
+                projection=error,
+                ctx=ctx,
+            )
+
+        except Exception as e:
+            error = await self._get_error(e, session)
+
+            self.on_audit_error(exc=e, session=session)
+            await self.on_show_projection(
+                session=session,
+                projection=error,
+                ctx=ctx,
+            )
+
     async def _get_error(self, exc: Exception, session: Session) -> Projection:
         state = ErrorState.extract_state(exc)
         return await self.on_get_projection(
@@ -326,6 +337,10 @@ class Scheduler:
 
 class OnDispatch(Protocol):
     async def __call__(self, *, session: Session, event: InputEvent) -> Flow | None: ...
+
+
+class OnSetup(Protocol):
+    async def __call__(self, *, session: Session, node: Node) -> Flow | None: ...
 
 
 class OnStepFlow(Protocol):

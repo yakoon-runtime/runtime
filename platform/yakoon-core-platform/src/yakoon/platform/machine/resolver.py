@@ -3,12 +3,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Protocol
 
-from yakoon.base.application.application import Application
-from yakoon.base.commands import Command, CommandScope
 from yakoon.base.errors import ErrorState
+from yakoon.base.nodes import Node, NodeScope
 from yakoon.platform.capabilities.permission import Permission
-from yakoon.platform.runtime import CommandNotFound, PermissionDenied
-from yakoon.platform.runtime.sessions import Session
+from yakoon.platform.runtime import NodeNotFound, PermissionDenied, Session
 
 
 class InvocationResolver:
@@ -19,149 +17,153 @@ class InvocationResolver:
         self,
         on_authorize: OnAuthorize,
         on_suggest: OnSuggest,
-        applications: Sequence[Application],
+        nodes: Sequence[Node],
     ):
+        self.nodes = nodes
         self.on_authorize = on_authorize
         self.on_suggest = on_suggest
-        self._applications = {a.id: a for a in applications}
-        self._shell_app = next(a for a in applications if a.is_shell)
 
-        self._global: dict[str, type[Command]] = {}
-        self._shell: dict[str, type[Command]] = {}
+        self._root_nodes = {n.key: n for n in nodes}
+        self._global_nodes: dict[str, Node] = {}
+        self._shell_nodes: dict[str, Node] = {}
+        self._shell_root = next(n for n in nodes if n.is_shell)
 
         self._build()
 
     def _build(self):
 
-        for app in self._applications.values():
-            for controller in app.composers:
+        for root in self.nodes:
+            self._index_node(root)
 
-                for cs in controller.command_groups:
-                    for cmd in cs.commands:
+    def _index_node(self, node: Node):
 
-                        # GLOBAL
-                        if cmd.scope == CommandScope.GLOBAL:
-                            if cmd.key in self._global:
-                                raise ValueError(f"GLOBAL conflict: {cmd.key}")
-                            self._global[cmd.key] = cmd
+        # GLOBAL
+        if node.scope == NodeScope.GLOBAL:
+            if node.key in self._global_nodes:
+                raise ValueError(f"GLOBAL conflict: {node.key}")
 
-                        # SHELL
-                        if cmd.scope == CommandScope.SHELL:
-                            if cmd.key in self._shell:
-                                raise ValueError(f"SHELL conflict: {cmd.key}")
-                            self._shell[cmd.key] = cmd
+            self._global_nodes[node.key] = node
+
+        # ROOT
+        if node.scope == NodeScope.ROOT:
+            if node.key in self._shell_nodes:
+                raise ValueError(f"ROOT conflict: {node.key}")
+
+            self._shell_nodes[node.key] = node
+
+        # RECURSIVE
+        for child in node.children.values():
+            self._index_node(child)
 
     def resolve(
         self,
-        app_id: str | None,
-        command_key: str,
+        parent_key: str | None,
+        node_key: str,
         tokens: list[str] | None,
         session: Session,
-    ) -> type[Command]:
+    ) -> Node:
 
         choices = []
 
-        if app_id is None:
-            app_id = self._shell_app.id
-
-        key = command_key.strip()
-        if not key:
-            raise CommandNotFound(
+        node_key = node_key.strip()
+        if not node_key:
+            raise NodeNotFound(
                 ErrorState.by_type(
-                    type_key=CommandNotFound,
-                    command=key,
+                    type_key=NodeNotFound,
+                    command=node_key,
                 )
             )
 
-        if app_id is self._shell_app.id:
-            app = self._shell_app
+        parent: Node | None = None
+        if parent_key is None:
+            parent = self._shell_root
         else:
-            app = self._applications.get(app_id)
+            parent = self._root_nodes.get(parent_key)
 
-        if not app:
-            raise CommandNotFound(
+        if not parent:
+            raise NodeNotFound(
                 ErrorState.by_type(
-                    type_key=CommandNotFound,
-                    command=key,
+                    type_key=NodeNotFound,
+                    command=node_key,
                 )
             )
 
-        # ----------------
-        # 1. APP scope ---
-        # ----------------
-
-        for composer in app.composers:
-
-            for group in composer.command_groups:
-                for cmd in group.commands:
-
-                    if cmd.scope in (CommandScope.APP, CommandScope.SHELL):
-                        choices.append(cmd.key)
-
-                    #!Command in own app & all own commands with SHELL Scope.
-                    if cmd.key == key and cmd.scope in (
-                        CommandScope.APP,
-                        CommandScope.SHELL,
-                    ):
-                        self._ensure_invocation(session, cmd, tokens)
-                        return cmd
-
-        # -------------------------------------
-        # 2. SHELL scope (in case of shell) ---
-        # -------------------------------------
-
-        if app.is_shell:
-            cmd = self._shell.get(key)
-            choices.extend([c for c in self._shell.keys()])
-            if cmd:
-                app = cmd.app
-                self._ensure_invocation(session, cmd, tokens)
-                return cmd
+        if parent.key == node_key:
+            self._ensure_invocation(session, parent, tokens)
+            return parent
 
         # -------------------
-        # 3. GLOBAL scope ---
+        # 2. PARENT SCOPE ---
         # -------------------
 
-        cmd = self._global.get(key)
-        choices.extend([c for c in self._global.keys()])
-        if cmd:
-            composer = cmd.composer
-            self._ensure_invocation(session, cmd, tokens)
-            return cmd
+        for node in parent.children.values():
+            if node.scope in (NodeScope.NODE, NodeScope.ROOT):
+                choices.append(node.key)
+
+            #!Command in own app & all own commands with SHELL Scope.
+            if node.key == node_key and node.scope in (
+                NodeScope.NODE,
+                NodeScope.ROOT,
+            ):
+                self._ensure_invocation(session, node, tokens)
+                return node
+
+        # -------------------------------------
+        # 3. SHELL scope (in case of shell) ---
+        # -------------------------------------
+
+        if parent.is_shell:
+            choices.extend([n for n in self._shell_nodes.keys()])
+            node = self._shell_nodes.get(node_key)
+            if node:
+                self._ensure_invocation(session, node, tokens)
+                return node
+
+        # -------------------
+        # 4. GLOBAL scope ---
+        # -------------------
+
+        node = self._global_nodes.get(node_key)
+        choices.extend([n for n in self._global_nodes.keys()])
+        if node:
+            self._ensure_invocation(session, node, tokens)
+            return node
 
         # -----------------
-        # 4. SUGGESTION ---
+        # 5. SUGGESTION ---
         # -----------------
 
         suggestions = self.on_suggest(
-            value=key,
+            value=node_key,
             choices=choices,
             limit=self.SUGGESTION_LIMIT,
         )
-        raise CommandNotFound(
+        raise NodeNotFound(
             ErrorState.by_type(
-                type_key=CommandNotFound,
-                command=key,
+                type_key=NodeNotFound,
+                command=node_key,
                 suggestions=suggestions,
             )
         )
 
     def globals(self) -> set[str]:
-        return set(self._global.keys())
+        return set(self._global_nodes.keys())
 
     # ----------------------------------
     # INTERNALS
     # ----------------------------------
 
     def _ensure_invocation(
-        self, session: Session, command_type: type[Command], tokens: list[str] | None
+        self, session: Session, node: Node, tokens: list[str] | None
     ):
-        command_type.ensure_invocation(tokens=tokens)
-        if command_type.anonymous:
+        # node.ensure_invocation(tokens=tokens)
+
+        if node.anonymous:
             return
 
         action = tokens[0] if tokens else None
-        fq = Permission.fq_key(command_type.app.id, command_type.key, action)
+        parent_key = node.parent.key if node.parent else ""
+        fq = Permission.fq_key(parent_key, node.key, action)  # type: ignore
         if not self.on_authorize(session=session, perm_key=fq):
             raise PermissionDenied(ErrorState.by_type(type_key=PermissionDenied))
 

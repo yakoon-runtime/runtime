@@ -5,7 +5,7 @@ from typing import Protocol
 from yakoon.base.commands.errors import UnknowOptionsError, UsageError
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.platform.runtime.error import (
-    CommandNotFound,
+    NodeNotFound,
     PermissionDenied,
     UnhandledError,
 )
@@ -45,7 +45,7 @@ def _register_for(on_register: OnRegister, lang="de"):
     # ----------------------------------
 
     on_register(
-        key=str(type(CommandNotFound())),
+        key=str(type(NodeNotFound())),
         scope="system",
         resource=ResourceRef(
             package=PACKAGE,

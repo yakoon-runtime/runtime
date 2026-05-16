@@ -17,11 +17,11 @@ class PlatformError(Exception):
 
 
 # ----------------------------------------
-# COMMAND ERRORS
+# NODE ERRORS
 # ----------------------------------------
 
 
-class CommandNotFound(PlatformError):
+class NodeNotFound(PlatformError):
     pass
 
 
