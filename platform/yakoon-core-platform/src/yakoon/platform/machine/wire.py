@@ -61,7 +61,7 @@ def build_machine(
         on_audit_security=on_audit_security,
     )
 
-    def get_resource(key: str, lang: str, state: dict[str, Any] | None) -> ResourceRef:
+    def get_resource(key: Any, lang: str) -> ResourceRef:
         root = nodes[0].root
         return root.get_resource(key, lang=lang)
 

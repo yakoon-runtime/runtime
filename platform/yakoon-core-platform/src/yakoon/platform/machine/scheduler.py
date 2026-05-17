@@ -6,7 +6,7 @@ import time
 from collections import deque
 from typing import Any, Protocol
 
-from yakoon.base.errors.state import ErrorState
+from yakoon.base.errors.state import ErrorKey, ErrorState
 from yakoon.base.flow.primitives import Control
 from yakoon.base.flow.primitives.outcome import Outcome
 from yakoon.base.nodes import Node
@@ -294,7 +294,11 @@ class Scheduler:
     async def _get_error(self, exc: Exception, session: Session) -> Projection:
 
         state = ErrorState.extract_state(exc)
-        resource = self.on_get_resource(state.key, lang=session.lang)
+        resource = self.on_get_resource(
+            state.key,
+            lang=session.lang,
+        )
+
         return await self.on_get_projection(
             resource=resource,
             state=state.data,
@@ -379,4 +383,4 @@ class OnGetProjection(Protocol):
 
 
 class OnGetResourceRef(Protocol):
-    def __call__(self, key: str, lang: str) -> ResourceRef: ...
+    def __call__(self, key: ErrorKey, lang: str) -> ResourceRef: ...

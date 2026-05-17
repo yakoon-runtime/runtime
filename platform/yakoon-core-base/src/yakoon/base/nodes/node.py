@@ -180,7 +180,7 @@ class Node:
 
         return self.children.get(key)
 
-    def get_resource(self, key: str, **kwargs: Any) -> Any:
+    def get_resource(self, key: Any, **kwargs: Any) -> Any:
         """Resolves a semantic runtime resource."""
 
         if self.resource:

@@ -1,5 +1,6 @@
-from .state import ErrorState
+from .state import ErrorKey, ErrorState
 
 __all__ = [
+    "ErrorKey",
     "ErrorState",
 ]

@@ -135,7 +135,7 @@ class CommandEngine:
         except Exception as exc:
             raise UnhandledError(
                 ErrorState.by_type(
-                    type_key=UnhandledError,
+                    key=UnhandledError,
                     args=exc.args,
                     debug=session.debug,
                 )

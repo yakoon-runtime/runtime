@@ -78,7 +78,7 @@ class Command(ABC):
 
             raise UsageError(
                 ErrorState.by_type(
-                    type_key=UsageError,
+                    key=UsageError,
                     usages=cls._usage_data(cls.invocations),
                 )
             )
@@ -133,7 +133,7 @@ class Command(ABC):
 
             raise UsageError(
                 ErrorState.by_type(
-                    type_key=UsageError,
+                    key=UsageError,
                     usages=cls._usage_data(cls.invocations),
                 )
             )
@@ -181,7 +181,7 @@ class Command(ABC):
 
                 raise UnknowOptionsError(
                     ErrorState.by_type(
-                        type_key=UnknowOptionsError,
+                        key=UnknowOptionsError,
                         unknown_options=sorted(unknown_options),
                         valid_options=sorted(valid_options),
                         usages=cls._usage_data([invocation]),
@@ -200,7 +200,7 @@ class Command(ABC):
 
         raise UsageError(
             ErrorState.by_type(
-                type_key=UsageError,
+                key=UsageError,
                 usages=cls._usage_data(matching),
             )
         )

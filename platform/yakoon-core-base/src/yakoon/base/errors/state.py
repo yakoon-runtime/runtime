@@ -23,10 +23,10 @@ class ErrorState:
         )
 
     @classmethod
-    def by_type(cls, *, type_key: type[Exception], **data) -> ErrorState:
+    def by_type(cls, *, key: type[Exception], **data) -> ErrorState:
 
         return ErrorState(
-            key=type_key,
+            key=key,
             data=data,
         )
 
@@ -37,4 +37,4 @@ class ErrorState:
             if isinstance(first, ErrorState):
                 return first
 
-        return ErrorState.by_type(type_key=UnhandledError)
+        return ErrorState.by_type(key=UnhandledError)

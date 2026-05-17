@@ -69,7 +69,7 @@ class InvocationResolver:
         if not node_key:
             raise NodeNotFound(
                 ErrorState.by_type(
-                    type_key=NodeNotFound,
+                    key=NodeNotFound,
                     command=node_key,
                 )
             )
@@ -83,7 +83,7 @@ class InvocationResolver:
         if not parent:
             raise NodeNotFound(
                 ErrorState.by_type(
-                    type_key=NodeNotFound,
+                    key=NodeNotFound,
                     command=node_key,
                 )
             )
@@ -140,7 +140,7 @@ class InvocationResolver:
         )
         raise NodeNotFound(
             ErrorState.by_type(
-                type_key=NodeNotFound,
+                key=NodeNotFound,
                 command=node_key,
                 suggestions=suggestions,
             )
@@ -165,7 +165,7 @@ class InvocationResolver:
         parent_key = node.parent.key if node.parent else ""
         fq = Permission.fq_key(parent_key, node.key, action)  # type: ignore
         if not self.on_authorize(session=session, perm_key=fq):
-            raise PermissionDenied(ErrorState.by_type(type_key=PermissionDenied))
+            raise PermissionDenied(ErrorState.by_type(key=PermissionDenied))
 
 
 # ----------------------------------
