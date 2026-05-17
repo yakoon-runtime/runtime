@@ -19,7 +19,7 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.nodes.node import Node
+from yakoon.base.nodes import Node, RuntimeContext
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext
@@ -53,6 +53,10 @@ class CommandEngine:
     # ----------------------------------------------------
 
     async def setup(self, session: Session, node: Node) -> Flow | None:
+
+        # TODO: Wie wollen wir darauf später reagieren?
+        if not node.has_setup():
+            return
 
         flow = Flow(
             id=uuid4().hex,
@@ -88,6 +92,10 @@ class CommandEngine:
                 tokens=event.tokens,
                 session=session,
             )
+
+            # TODO: Wie wollen wir darauf später reagieren?
+            if not node.has_run():
+                return None
 
             # session.execution.step(
             #    ExecStep.COMMAND_RESOLVED,
@@ -245,7 +253,7 @@ class CommandEngine:
     async def _next_step(
         self,
         flow: Flow,
-        node,
+        node: Node,
         event: InputEvent,
         session: Session,
     ):
@@ -267,8 +275,24 @@ class CommandEngine:
         # ----------------------------------
         # NEXT
         # ----------------------------------
-        request = Request(event.command, event.tokens, event.payload, session.lang)
-        return await flow.cursor.next(node, request)
+
+        request = Request(
+            event.command,
+            event.tokens,
+            event.payload,
+            session.lang,
+        )
+
+        return await flow.cursor.next(
+            node,
+            RuntimeContext(
+                ports=node.ports,
+                request=request,
+                session=session,
+                resource=node.get_resource,
+                metadata=dict(node.metadata),
+            ),
+        )
 
 
 # ----------------------------------

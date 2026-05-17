@@ -11,6 +11,7 @@ from yakoon.base.flow.primitives import Control
 from yakoon.base.flow.primitives.outcome import Outcome
 from yakoon.base.nodes import Node
 from yakoon.base.projection import Projection
+from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime.errors import DomainError
 from yakoon.base.runtime.input import InputContext, InputEvent
 from yakoon.platform.flow import Flow, FlowKind
@@ -35,6 +36,7 @@ class Scheduler:
         on_dispatch: OnDispatch,
         on_step_flow: OnStepFlow,
         on_get_projection: OnGetProjection,
+        on_get_resource: OnGetResourceRef,
         on_show_projection: OnShowProjection,
         on_audit_error: OnAuditError,
         on_audit_warning: OnAuditWarning,
@@ -44,6 +46,7 @@ class Scheduler:
         self.on_dispatch = on_dispatch
         self.on_step_flow = on_step_flow
         self.on_get_projection = on_get_projection
+        self.on_get_resource = on_get_resource
         self.on_show_projection = on_show_projection
         self.on_audit_error = on_audit_error
         self.on_audit_warning = on_audit_warning
@@ -276,6 +279,7 @@ class Scheduler:
                 projection=error,
                 ctx=ctx,
             )
+            pass
 
         except Exception as e:
             error = await self._get_error(e, session)
@@ -288,11 +292,11 @@ class Scheduler:
             )
 
     async def _get_error(self, exc: Exception, session: Session) -> Projection:
+
         state = ErrorState.extract_state(exc)
+        resource = self.on_get_resource(state.key, lang=session.lang)
         return await self.on_get_projection(
-            key=state.key,
-            scope="system",
-            lang=session.lang,
+            resource=resource,
             state=state.data,
         )
 
@@ -369,8 +373,10 @@ class OnGetProjection(Protocol):
     async def __call__(
         self,
         *,
-        scope: str,
-        key: str,
-        lang: str,
+        resource: ResourceRef,
         state: dict[str, Any] | None = None,
     ) -> Projection: ...
+
+
+class OnGetResourceRef(Protocol):
+    def __call__(self, key: str, lang: str) -> ResourceRef: ...

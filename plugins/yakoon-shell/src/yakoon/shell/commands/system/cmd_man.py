@@ -105,7 +105,7 @@ class CmdMan(Command):
         # --------------------------------------------------
 
         result = await self.on_source(
-            DataRequest(f"system:apps --by-id {command['app_id']}")
+            DataRequest(f"system:apps --by-key {command['app_id']}")
         )
 
         if result.status != "ok":

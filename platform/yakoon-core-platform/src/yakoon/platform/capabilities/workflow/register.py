@@ -14,6 +14,5 @@ def register() -> ModuleExport:
 
     return ModuleExport(
         meta,
-        app=None,
         # controllers=[WorkflowController],
     )

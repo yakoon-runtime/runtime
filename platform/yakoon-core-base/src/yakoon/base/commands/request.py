@@ -16,7 +16,9 @@ class Request:
     This class intentionally represents exactly one command.
     """
 
-    def __init__(self, command: str, tokens: list[str], payload, lang: str) -> None:
+    def __init__(
+        self, command: str, tokens: list[str] | None, payload, lang: str
+    ) -> None:
         """Create a Request from normalized input.
 
         Args:

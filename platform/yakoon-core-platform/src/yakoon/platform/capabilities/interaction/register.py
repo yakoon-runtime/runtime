@@ -11,4 +11,4 @@ def register() -> ModuleExport:
 
     # publish(FieldPolicyEngine, DefaultFieldPolicyEngine())
 
-    return ModuleExport(meta, app=None)
+    return ModuleExport(meta)

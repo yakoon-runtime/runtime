@@ -4,8 +4,6 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from yakoon.base.plugins.ports import OnManualRegister, OnProjectionRegister
-
 if TYPE_CHECKING:
     from yakoon.base.commands import Command
     from yakoon.base.controllers import Composer
@@ -51,13 +49,14 @@ class Application(ABC):
         self.on_build(ports)
 
     async def start(self) -> None:
-        self.on_projection_register(
+        """self.on_projection_register(
             on_register=self.ports.on_get_port(OnProjectionRegister),
         )
         self.on_manual_register(
             on_register=self.ports.on_get_port(OnManualRegister),
         )
-        await self.on_start(self.ports)
+        await self.on_start(self.ports)"""
+        pass
 
     def create_command(
         self,

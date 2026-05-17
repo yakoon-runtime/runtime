@@ -1,5 +1,5 @@
-from .node_welcome import run_welcome
+from ..system.on_welcome import on_welcome
 
 __all__ = [
-    "run_welcome",
+    "on_welcome",
 ]

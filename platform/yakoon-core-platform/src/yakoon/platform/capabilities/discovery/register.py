@@ -1,7 +1,5 @@
 from yakoon.base.plugins import ModuleExport, ModuleMeta
 
-from .app import DiscoveryApplication
-
 meta = ModuleMeta(
     name="yakoon.discovery",
     version="0.1.0",
@@ -19,5 +17,4 @@ def register() -> ModuleExport:
 
     return ModuleExport(
         meta,
-        app=DiscoveryApplication,
     )

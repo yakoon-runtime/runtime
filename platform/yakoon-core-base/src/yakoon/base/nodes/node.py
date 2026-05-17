@@ -1,17 +1,41 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from yakoon.base.runtime.container import Container
+
 from .context import RuntimeContext
+from .ports import NodePorts
+from .resource import ResourceHandler
 from .types import NodeKind, NodeScope, NodeVisibility
 
-RunHandler = Callable[[RuntimeContext], Any]  #  Awaitable[None]]
+RunHandler = Callable[[RuntimeContext], Any]
+
+# ----------------------------------
+# NODE
+# ----------------------------------
 
 
 @dataclass(slots=True)
 class Node:
+    """Semantic runtime node.
+
+    A node represents an executable runtime space inside the
+    hierarchical platform runtime.
+
+    Nodes may:
+
+    - execute runtime capabilities
+    - expose semantic structure
+    - define local capability scopes
+    - provide child runtime spaces
+    - participate in hierarchical resolution
+
+    Each node owns a local capability scope through NodePorts.
+    Child nodes automatically inherit a forked capability scope.
+    """
 
     key: str
     name: str | None = None
@@ -23,7 +47,13 @@ class Node:
     kind: NodeKind = NodeKind.USER
     scope: NodeScope = NodeScope.NODE
     visibility: NodeVisibility = NodeVisibility.NORMAL
-    is_shell: bool = False
+
+    ports: NodePorts = field(
+        default_factory=lambda: NodePorts(
+            Container(),
+            Container(),
+        )
+    )
 
     # ----------------------------------
     # PERMISSIONS
@@ -32,11 +62,17 @@ class Node:
     anonymous: bool = False
 
     # ----------------------------------
-    # HANDLER
+    # RUN HANDLER
     # ----------------------------------
 
     run: RunHandler | None = None
     setup: RunHandler | None = None
+
+    # ----------------------------------
+    # RUN HANDLER
+    # ----------------------------------
+
+    resource: ResourceHandler | None = None
 
     # ----------------------------------
     # FIELDS
@@ -47,27 +83,173 @@ class Node:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     # ----------------------------------
+    # PROPERTIES
+    # ----------------------------------
+
+    is_shell: bool = False
+    listed: bool = True
+    navigable: bool = True
+
+    # ----------------------------------
+    # ATTACH TO RUNTIME
+    # ----------------------------------
+
+    def mount(self, node: Node) -> None:
+        """Mountes an existing runtime subtree.
+
+        Unlike add(), attach() preserves the existing capability
+        hierarchy of the attached subtree.
+
+        The attached subtree keeps its internal local scopes while
+        extending hierarchical lookup into the current runtime node.
+
+        Published capabilities remain directed only to the direct
+        parent runtime space.
+
+        Args:
+            node:
+                Existing runtime subtree root.
+        """
+
+        node.parent = self
+
+        # Mount existing runtime scope into current hierarchy.
+        node.ports.mount(self.ports)
+
+        self.children[node.key] = node
+
+    # ----------------------------------
+    # ROOT
+    # ----------------------------------
+
+    @property
+    def root(self) -> Node:
+        """Returns the top-most runtime node.
+
+        The root node represents the sovereign runtime space of the
+        current hierarchy.
+
+        Mounted runtime subtrees inherit hierarchical access into this
+        root space while preserving their own local runtime semantics.
+
+        The root node is typically used for:
+
+        - platform-level resource resolution
+        - sovereign runtime capabilities
+        - global fallback resources
+        - platform-owned error projections
+        - runtime-wide infrastructure access
+
+        Returns:
+            The top-most runtime node in the hierarchy.
+        """
+
+        node = self
+
+        while node.parent is not None:
+            node = node.parent
+
+        return node
+
+    # ----------------------------------
     # CHILDREN
     # ----------------------------------
 
-    def add(self, container: Node) -> None:
-        container.parent = self
-        self.children[container.key] = container
+    def add(self, child: Node) -> None:
+        """Adds a child runtime node.
+
+        Child nodes inherit a forked capability scope from the
+        current node, creating a hierarchical runtime visibility
+        chain.
+
+        Args:
+            child:
+                The child runtime node.
+        """
+
+        child.parent = self
+
+        # Inherit hierarchical capability scope.
+        if self.ports:
+            child.ports = self.ports.fork()
+
+        self.children[child.key] = child
 
     def get(self, key: str) -> Node | None:
+        """Returns a direct child node by key."""
+
         return self.children.get(key)
 
+    def get_resource(self, key: str, **kwargs: Any) -> Any:
+        """Resolves a semantic runtime resource."""
+
+        if self.resource:
+            resource = self.resource(key, **kwargs)
+            if resource is not None:
+                return resource
+
+        if self.parent:
+            return self.parent.get_resource(key, **kwargs)
+
+        return None
+
     # ----------------------------------
-    # EXECUTION
+    # HAS
     # ----------------------------------
 
     def has_run(self) -> bool:
+        """Returns True if the node provides a run capability."""
+
         return self.run is not None
 
     def has_setup(self) -> bool:
+        """Returns True if the node provides a setup capability."""
+
         return self.setup is not None
 
+    def has_resource(self) -> bool:
+        """Returns True if the node provides a resource capability."""
+
+        return self.resource is not None
+
+    # ----------------------------------
+    # HIERARCHY
+    # ----------------------------------
+
     def walk(self, on_walk: Callable[[Node], None]):
+        """Traverses the runtime hierarchy recursively."""
+
         on_walk(self)
+
         for child in self.children.values():
             child.walk(on_walk)
+
+    def find_navigable(self) -> Sequence[Node]:
+        """Returns navigable runtime spaces visible from this node.
+
+        Visibility follows semantic runtime traversal rules:
+
+        - direct navigable child nodes are visible
+        - non-navigable child spaces are traversed transparently
+        - navigable child spaces stop recursive traversal
+
+        Returns:
+            Visible navigable runtime spaces.
+        """
+
+        result: list[Node] = []
+
+        def collect(node: Node):
+
+            for child in node.children.values():
+
+                # Navigable spaces become visible and stop traversal.
+                if child.navigable:
+                    result.append(child)
+                    continue
+
+                # Transparent structure spaces are traversed recursively.
+                collect(child)
+
+        collect(self)
+        return tuple(result)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yakoon.platform.runtime.sessions import Session
+from yakoon.platform.runtime import Session
 
 from ..models import PermBit
 

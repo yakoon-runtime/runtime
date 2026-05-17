@@ -1,8 +1,8 @@
-from .data import AppSource, CommandSource
+from .data import CommandSource, NodeSource
 from .registry import DataSourceRegistry
 
 __all__ = [
     "DataSourceRegistry",
-    "AppSource",
+    "NodeSource",
     "CommandSource",
 ]

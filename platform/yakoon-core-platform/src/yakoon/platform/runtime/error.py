@@ -25,6 +25,10 @@ class NodeNotFound(PlatformError):
     pass
 
 
+class NodeNotRunnable(PlatformError):
+    pass
+
+
 # ----------------------------------------
 # PERMISSION ERRORS
 # ----------------------------------------

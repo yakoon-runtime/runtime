@@ -21,6 +21,10 @@ class Container:
         self._container: dict[object, object] = {}
         self._factories: dict[object, Callable[[], Awaitable[object]]] = {}
 
+    # ----------------------------------
+    # BINDING
+    # ----------------------------------
+
     def bind(self, port: object, capability: object) -> None:
         """Registers a static capability for a given port.
 
@@ -45,9 +49,7 @@ class Container:
 
         self._container[port] = capability
 
-    def register_lazy(
-        self, port: object, factory: Callable[[], Awaitable[object]]
-    ) -> None:
+    def bind_lazy(self, port: object, factory: Callable[[], Awaitable[object]]) -> None:
         """Registers a lazy factory for a given port.
 
         Args:
@@ -62,15 +64,46 @@ class Container:
 
         self._factories[port] = factory
 
+    # ----------------------------------
+    # EXTENSIONS
+    # ----------------------------------
+
+    def fork(self, allow_override: bool = False) -> Container:
+        """Creates a new Container with this directory as parent."""
+        return Container(parent=self, allow_override=allow_override)
+
+    def mount(self, root: Container) -> None:
+        """Mountes the current container chain to a new root scope.
+
+        This operation preserves the existing hierarchical scope chain
+        while extending lookup into the attached root hierarchy.
+
+        Intended for mounting already composed runtime spaces into
+        larger runtime environments.
+
+        Args:
+            root:
+                The root capability scope to attach.
+
+        Raises:
+            RuntimeError:
+                If the container already has a parent scope.
+        """
+
+        if self._parent is not None:
+            raise RuntimeError("Cannot attach root to container with existing parent.")
+
+        self._parent = root
+
+    # ----------------------------------
+    # RESOLUTIONS
+    # ----------------------------------
+
     def contains(self, port: object) -> bool:
         """Returns True if the port is registered in this directory or its parent."""
         return port in self._container or (
             self._parent.contains(port) if self._parent else False
         )
-
-    def fork(self, allow_override: bool = False) -> Container:
-        """Creates a new Container with this directory as parent."""
-        return Container(parent=self, allow_override=allow_override)
 
     def has(self, port: type[T]) -> bool:
         if port in self._container:

@@ -5,11 +5,13 @@ from typing import Any
 
 from yakoon.platform.runtime import UnhandledError
 
+ErrorKey = str | type[Exception]
+
 
 @dataclass
 class ErrorState:
 
-    key: str
+    key: ErrorKey
     data: dict[str, Any] | None = None
 
     @classmethod
@@ -24,7 +26,7 @@ class ErrorState:
     def by_type(cls, *, type_key: type[Exception], **data) -> ErrorState:
 
         return ErrorState(
-            key=str(type(type_key())),
+            key=type_key,
             data=data,
         )
 

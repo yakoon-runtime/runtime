@@ -19,5 +19,4 @@ def register() -> ModuleExport:
 
     return ModuleExport(
         meta,
-        app=IdentityApp,
     )

@@ -1,6 +1,5 @@
 from yakoon.base.plugins import ModuleExport, ModuleMeta
 
-from .app import ShellApp
 from .root import shell
 
 meta = ModuleMeta(
@@ -14,6 +13,5 @@ def register() -> ModuleExport:
 
     return ModuleExport(
         meta,
-        app=ShellApp,
         node=shell,
     )

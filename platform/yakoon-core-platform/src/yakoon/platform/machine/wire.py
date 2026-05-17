@@ -6,6 +6,7 @@ from typing import Any, Protocol, cast
 from yakoon.base.naming import Key
 from yakoon.base.nodes import Node
 from yakoon.base.projection import Projection
+from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime import InputContext
 from yakoon.platform.runtime import Session
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
@@ -33,7 +34,9 @@ def build_machine(
     on_initialize: Oninitialize,
 ) -> RuntimeHost:
 
+    # ---------------
     # --- ROUTING ---
+    # ---------------
 
     resolver = InvocationResolver(
         nodes=nodes,
@@ -41,11 +44,15 @@ def build_machine(
         on_suggest=on_suggest,
     )
 
+    # ---------------
     # --- PARSING ---
+    # ---------------
 
     parser = InputParser()
 
+    # ---------------------
     # --- ORCHESTRATION ---
+    # ----------------------
 
     engine = CommandEngine(
         on_resolve_node=resolver.resolve,
@@ -54,7 +61,13 @@ def build_machine(
         on_audit_security=on_audit_security,
     )
 
+    def get_resource(key: str, lang: str, state: dict[str, Any] | None) -> ResourceRef:
+        root = nodes[0].root
+        return root.get_resource(key, lang=lang)
+
+    # -----------------
     # --- EXECUTION ---
+    # -----------------
 
     scheduler = Scheduler(
         on_setup=engine.setup,
@@ -64,9 +77,12 @@ def build_machine(
         on_audit_error=on_audit_error,
         on_audit_warning=on_audit_warning,
         on_get_projection=on_load_projection,
+        on_get_resource=get_resource,
     )
 
+    # ------------------------
     # --- SESSION HANDLING ---
+    # ------------------------
 
     bus = SessionBus()
 
@@ -80,7 +96,9 @@ def build_machine(
         on_get_session=get_session,
     )
 
+    # -------------------------
     # --- SESSION EXECUTION ---
+    # -------------------------
 
     def create_runner(session: Session) -> Runner:
         runner = Runner(
@@ -91,7 +109,9 @@ def build_machine(
         )
         return runner
 
+    # -------------------
     # --- SETUP NODES ---
+    # -------------------
 
     async def setup_nodes(session):
 
@@ -108,7 +128,9 @@ def build_machine(
         for node in nodes_to_setup:
             await scheduler.setup(session, node)
 
+    # ---------------
     # --- HOSTING ---
+    # ---------------
 
     return RuntimeHost(
         on_schedule=scheduler.run,
@@ -182,8 +204,6 @@ class OnLoadProjection(Protocol):
     async def __call__(
         self,
         *,
-        scope: str,
-        key: str,
-        lang: str,
+        resource: ResourceRef,
         state: dict[str, Any] | None = None,
     ) -> Projection: ...

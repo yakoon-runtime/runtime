@@ -1,42 +1,60 @@
 from collections.abc import Iterable, Sequence
 from typing import Any
 
-from yakoon.base.application import Application
+from yakoon.base.nodes.node import Node
 from yakoon.base.sources import DataRequest, DataResult, DataSource
 
 
-class AppSource(DataSource):
-    """
-    Registry interface for applications.
+class NodeSource(DataSource):
+    """Query interface for the runtime node graph.
+
+    NodeSource provides structured runtime introspection over
+    the composed semantic runtime world.
+
+    The source exposes filtered views onto the internal node
+    graph without leaking actual runtime objects. Results are
+    always returned as serializable data rows.
 
     Query model:
         Exactly one selector must be provided.
 
     Supported selectors:
-        --by-id <id>
         --all
+            Returns all known runtime nodes.
+
         --listed
+            Returns nodes visible in runtime discovery.
+
         --activatable
+            Returns nodes that may become active runtime spaces.
+
         --shell
+            Returns the shell runtime node.
+
+        --by-key <key>
+            Resolves a node by its unique runtime key.
+
+        --by-name <name>
+            Resolves a node by its semantic display name.
     """
 
-    def __init__(self, applications: Iterable[Application]):
+    def __init__(self, nodes: Iterable[Node]):
 
-        self._applications = applications
-        self._shell: Application
-        self._by_id: dict[str, Application] = {}
-        self._by_name: dict[str, Application] = {}
+        self._shell = None
+        self._by_key: dict[str, Node] = {}
+        self._by_name: dict[str, Node] = {}
 
-        self._build()
-
+        self._nodes = nodes
         self._resolvers = {
-            "by-id": self._resolve_by_id,
-            "by-name": self._resolve_by_name,
             "all": self._resolve_all,
             "listed": self._resolve_listed,
             "activatable": self._resolve_activatable,
             "shell": self._resolve_shell,
+            "by-key": self._resolve_by_key,
+            "by-name": self._resolve_by_name,
         }
+
+        self._build()
 
     # ---------------------------------------------------------------------
     # Public API
@@ -73,33 +91,32 @@ class AppSource(DataSource):
     # Resolver Implementations
     # ------------------------
 
-    def _resolve_by_id(self, request: DataRequest) -> DataResult:
-        app_id = request.option("by-id")
-        app = self._get(app_id)
+    def _resolve_by_key(self, request: DataRequest) -> DataResult:
+        node_key = request.option("by-key")
 
-        if not app:
-            return DataResult.not_found(id=app_id)
+        node = self._get(node_key)
+        if not node:
+            return DataResult.not_found(id=node_key)
 
-        return DataResult.ok(rows=[self._to_row(app)])
+        return DataResult.ok(rows=[self._to_row(node)])
 
     def _resolve_by_name(self, request: DataRequest) -> DataResult:
-        app_name = request.option("by-name")
-        app = self._get_by_name(app_name)
-        if not app:
-            return DataResult.not_found(name=app_name)
+        node_name = request.option("by-name")
 
-        return DataResult.ok(rows=[self._to_row(app)])
+        node = self._get_by_name(node_name)
+        if not node:
+            return DataResult.not_found(name=node_name)
+
+        return DataResult.ok(rows=[self._to_row(node)])
 
     def _resolve_all(self, request: DataRequest) -> DataResult:
-        return DataResult.ok(rows=[self._to_row(a) for a in self._all()])
+        return DataResult.ok(rows=[self._to_row(n) for n in self._all()])
 
     def _resolve_listed(self, request: DataRequest) -> DataResult:
-        return DataResult.ok(rows=[self._to_row(a) for a in self._all() if a.is_listed])
+        return DataResult.ok(rows=[self._to_row(n) for n in self._all() if n.listed])
 
     def _resolve_activatable(self, request: DataRequest) -> DataResult:
-        return DataResult.ok(
-            rows=[self._to_row(a) for a in self._all() if a.is_activatable]
-        )
+        return DataResult.ok(rows=[self._to_row(n) for n in self._all() if n.navigable])
 
     def _resolve_shell(self, request: DataRequest) -> DataResult:
         return DataResult.ok(rows=[self._to_row(self._shell)])
@@ -110,50 +127,48 @@ class AppSource(DataSource):
 
     def _build(self):
 
-        by_id: dict[str, Application] = {}
-        by_name: dict[str, Application] = {}
-        shell: Application | None = None
+        by_key: dict[str, Node] = {}
+        by_name: dict[str, Node] = {}
 
-        for app in self._applications:
-            if app.id in by_id:
-                raise ValueError(f"Duplicate application id: {app.id}")
+        def collect(node: Node):
 
-            if app.is_shell:
-                if shell is not None:
+            if node.key in by_key:
+                raise ValueError(f"Duplicate node key: {node.key}")
+
+            if node.is_shell:
+                if self._shell is not None:
                     raise ValueError(
-                        f"Duplicate shell application: {shell.id} / {app.id}"
+                        f"Duplicate shell node: " f"{self._shell.key} / {node.key}"
                     )
-                shell = app
+                self._shell = node
 
-            by_id[app.id] = app
-            by_name[app.name] = app
+            by_key[node.key] = node
+            if node.name:
+                by_name[node.name] = node
 
-        if shell is None:
-            raise ValueError("No shell application found")
+        for root in self._nodes:
+            root.walk(collect)
 
+        self._by_key = by_key
         self._by_name = by_name
-        self._by_id = by_id
-        self._shell = shell
 
     def _ids(self) -> Sequence[str]:
-        return tuple(sorted(self._by_id.keys()))
+        return tuple(sorted(self._by_key.keys()))
 
-    def _all(self) -> Sequence[Application]:
-        return tuple(self._by_id[cid] for cid in self._ids())
+    def _all(self) -> Sequence[Node]:
+        return tuple(self._by_key[cid] for cid in self._ids())
 
-    def _get(self, app_id: str) -> Application | None:
-        return self._by_id.get(app_id)
+    def _get(self, node_key: str) -> Node | None:
+        return self._by_key.get(node_key)
 
-    def _get_by_name(self, app_name: str) -> Application | None:
-        return self._by_name.get(app_name)
+    def _get_by_name(self, node_name: str) -> Node | None:
+        return self._by_name.get(node_name)
 
-    def _to_row(self, app: Application) -> dict[str, Any]:
-        # res = {c.id: c.resources.to_dict() for c in app.controllers}
+    def _to_row(self, node: Node) -> dict[str, Any]:
         return {
-            "id": app.id,
-            "name": app.name,
-            "is_shell": app.is_shell,
-            "is_listed": getattr(app, "is_listed", True),
-            "is_activatable": getattr(app, "is_activatable", True),
-            # "resources": res,
+            "key": node.key,
+            "name": node.name,
+            "listed": node.listed,
+            "activatable": node.navigable,
+            "is_shell": node.is_shell,
         }

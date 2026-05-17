@@ -1,18 +1,14 @@
 from typing import Literal, TypeAlias
 
-from yakoon.base.application import Application
-from yakoon.base.nodes import Node as AppContainer
-from yakoon.base.plugins import ModulePorts
+from yakoon.base.nodes import Node, NodeScope
 from yakoon.base.plugins.ports import (
     OnAuthorizeRead,
     OnAuthorizeWrite,
     OnManualGet,
     OnManualRegister,
     OnProject,
-    OnProjectionRegister,
     OnSaveSession,
 )
-from yakoon.base.runtime import Container
 from yakoon.base.sources import OnDataSource
 from yakoon.platform.capabilities.audit import AuditLogService
 from yakoon.platform.capabilities.permission import (
@@ -31,13 +27,14 @@ from yakoon.platform.runtime.sessions import SessionService
 from yakoon.platform.services import GuidanceService
 from yakoon.platform.settings import Settings
 from yakoon.platform.sources.data import (
-    AppSource,
-    CommandSource,
     DiscoverySource,
+    NodeSource,
 )
 from yakoon.platform.sources.registry import DataSourceRegistry
 from yakoon.platform.templates.wire import register_templates
 from yakoon.storage.eventstore.wire import build_store
+
+from .resource import get_resource
 
 CapabilityMode: TypeAlias = Literal["default"]
 CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
@@ -50,43 +47,23 @@ def compose_runtime(
     settings: Settings,
 ) -> RuntimeHost:
 
-    ports = Container()
-
-    plugins = plugins or []
-    capabilities = capabilities or {}
-    nodes: list[AppContainer] = []
-
-    # -------------------
-    # --- PROJECTIONS ---
-    # -------------------
-
-    projections = ProjectionRegistry()
-    register_templates(projections.register)
-
-    # ----------------------
-    # --- BUILDING STORE ---
-    # ----------------------
+    # -----------------
+    # --- STORAGING ---
+    # -----------------
 
     store = build_store(settings.storage)
-
-    # ---------------
-    # --- MANUALS ---
-    # ---------------
-
-    manuals = ManualService()
 
     # ----------------
     # --- SERVICES ---
     # ----------------
 
+    manuals = ManualService()
     guidance_service = GuidanceService()
-
+    audit_service = AuditLogService(settings.logging)
     session_manager = SessionService(
         on_replace=store.objects.replace,
         on_get=store.objects.get,
     )
-
-    audit_service = AuditLogService(settings.logging)
 
     # -------------------
     # --- PERMISSIONS ---
@@ -94,65 +71,56 @@ def compose_runtime(
 
     perm_checker = PermissionChecker()
 
-    # ----------------
-    # --- PLUGINS ---
-    # ----------------
-
-    plug_loader = PluginLoader(
-        plugins=plugins,
-        capabilities=capabilities,
-    )
-
-    applications: list[Application] = []
-    for module in plug_loader.load():
-        if module.export.app:
-            applications.append(module.export.app())
-            if module.export.node:
-                nodes.append(module.export.node)
-
     # -----------------
     # --- PROJECTOR ---
     # -----------------
 
-    projector = build_projector(
-        on_resource=projections.resolve,
-    )
+    projections = ProjectionRegistry()
+    register_templates(projections.register)
+
+    projector = build_projector()
+
+    # ----------------
+    # --- PLUGINS ---
+    # ----------------
+
+    nodes: list[Node] = []
+    for module in PluginLoader(plugins or [], capabilities or {}).load():
+        if module.export.node:
+            nodes.append(module.export.node)
 
     # --------------------
     # --- DATASOURCING ---
     # --------------------
 
     ds = DataSourceRegistry()
-    ds.bind("system:apps", AppSource(applications))
-    ds.bind("system:commands", CommandSource(applications))
+    ds.bind("system:nodes", NodeSource(nodes))
     ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
 
     # ----------------
     # --- BINDINGS ---
     # ----------------
 
-    def bind_ports() -> ModulePorts:
+    platform = Node(
+        key="platform",
+        scope=NodeScope.NODE,
+        resource=get_resource,
+    )
 
-        fork = ports.fork()
+    platform.ports.provide(OnDataSource, ds.read)
+    platform.ports.provide(OnProject, projector.project)
+    platform.ports.provide(OnSaveSession, session_manager.save)
+    platform.ports.provide(OnAuthorizeRead, perm_checker.can_read)
+    platform.ports.provide(OnAuthorizeWrite, perm_checker.can_write)
+    platform.ports.provide(OnManualRegister, manuals.register)
+    platform.ports.provide(OnManualGet, manuals.get)
 
-        fork.bind(OnDataSource, ds.read)
-        fork.bind(OnProject, projector.project)
-        fork.bind(OnSaveSession, session_manager.save)
-        fork.bind(OnAuthorizeRead, perm_checker.can_read)
-        fork.bind(OnAuthorizeWrite, perm_checker.can_write)
-        fork.bind(OnProjectionRegister, projections.register)
-        fork.bind(OnManualRegister, manuals.register)
-        fork.bind(OnManualGet, manuals.get)
+    # -----------------
+    # --- ATTACHING ---
+    # -----------------
 
-        return ModulePorts(
-            on_publish=ports.bind,
-            on_provide=fork.bind,
-            on_get_port=fork.get,
-        )
-
-    for app in applications:
-        app.initialize()
-        app.bind_ports(bind_ports())
+    for node in nodes:
+        platform.mount(node)
 
     # -----------------
     # --- STREAMING ---

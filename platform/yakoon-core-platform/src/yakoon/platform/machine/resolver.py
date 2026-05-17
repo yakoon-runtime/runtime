@@ -96,7 +96,7 @@ class InvocationResolver:
         # 2. PARENT SCOPE ---
         # -------------------
 
-        for node in parent.children.values():
+        for node in parent.find_navigable():
             if node.scope in (NodeScope.NODE, NodeScope.ROOT):
                 choices.append(node.key)
 
