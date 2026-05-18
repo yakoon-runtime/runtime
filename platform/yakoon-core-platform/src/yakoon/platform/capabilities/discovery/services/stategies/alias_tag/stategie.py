@@ -78,7 +78,7 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         return head, tail
 
     def _resolve_owner_ids(self, session: Session) -> list[str]:
-        active_id = session.get_active_app()
+        active_id = session.get_current_node()
         if not active_id:
             return []
 

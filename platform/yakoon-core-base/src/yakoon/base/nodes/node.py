@@ -7,6 +7,7 @@ from typing import Any
 from yakoon.base.runtime.container import Container
 
 from .context import RuntimeContext
+from .path import NodePath
 from .ports import NodePorts
 from .resource import ResourceHandler
 from .types import NodeKind, NodeScope, NodeVisibility
@@ -65,14 +66,14 @@ class Node:
     # RUN HANDLER
     # ----------------------------------
 
-    run: RunHandler | None = None
-    setup: RunHandler | None = None
+    on_run: RunHandler | None = None
+    on_setup: RunHandler | None = None
 
     # ----------------------------------
-    # RUN HANDLER
+    # CONTEXT HANDLER
     # ----------------------------------
 
-    resource: ResourceHandler | None = None
+    on_resource: ResourceHandler | None = None
 
     # ----------------------------------
     # FIELDS
@@ -89,6 +90,7 @@ class Node:
     is_shell: bool = False
     listed: bool = True
     navigable: bool = True
+    resolvable: bool = True
 
     # ----------------------------------
     # ATTACH TO RUNTIME
@@ -183,8 +185,8 @@ class Node:
     def get_resource(self, key: Any, **kwargs: Any) -> Any:
         """Resolves a semantic runtime resource."""
 
-        if self.resource:
-            resource = self.resource(key, **kwargs)
+        if self.on_resource:
+            resource = self.on_resource(key, **kwargs)
             if resource is not None:
                 return resource
 
@@ -200,17 +202,17 @@ class Node:
     def has_run(self) -> bool:
         """Returns True if the node provides a run capability."""
 
-        return self.run is not None
+        return self.on_run is not None
 
     def has_setup(self) -> bool:
         """Returns True if the node provides a setup capability."""
 
-        return self.setup is not None
+        return self.on_setup is not None
 
     def has_resource(self) -> bool:
         """Returns True if the node provides a resource capability."""
 
-        return self.resource is not None
+        return self.on_resource is not None
 
     # ----------------------------------
     # HIERARCHY
@@ -223,6 +225,45 @@ class Node:
 
         for child in self.children.values():
             child.walk(on_walk)
+
+    def find(
+        self,
+        path: NodePath,
+        *,
+        absolute: bool = False,
+    ) -> Node | None:
+        """Resolves a runtime node by path.
+
+        Path resolution traverses the runtime hierarchy using
+        local child namespaces.
+
+        Relative resolution starts from the current node.
+
+        Absolute resolution starts from the runtime root.
+
+        Args:
+            path:
+                Runtime path to resolve.
+
+            absolute:
+                If True, resolution starts from the runtime root.
+
+        Returns:
+            Resolved runtime node or None if the path
+            cannot be resolved.
+        """
+
+        current = self.root if absolute else self
+
+        for part in path.parts:
+
+            child = current.children.get(part)
+            if child is None:
+                return None
+
+            current = child
+
+        return current
 
     def find_navigable(self) -> Sequence[Node]:
         """Returns navigable runtime spaces visible from this node.
@@ -252,4 +293,42 @@ class Node:
                 collect(child)
 
         collect(self)
+        return tuple(result)
+
+    def find_resolvable(self) -> Sequence[Node]:
+        """Returns runtime nodes addressable from this runtime space.
+
+        Resolver visibility follows semantic runtime traversal rules:
+
+        - resolvable child nodes become directly addressable
+        - non-navigable child spaces are traversed transparently
+        - navigable child spaces stop recursive traversal
+        - non-resolvable nodes may still contribute structure
+
+        This method describes runtime command visibility, not
+        navigational visibility.
+
+        Returns:
+            Addressable runtime nodes visible from this runtime space.
+        """
+
+        result: list[Node] = []
+
+        def collect(node: Node):
+
+            for child in node.children.values():
+
+                # Addressable runtime endpoint.
+                if child.resolvable:
+                    result.append(child)
+
+                # Navigable spaces stop recursive traversal.
+                if child.navigable:
+                    continue
+
+                # Transparent structure spaces are traversed recursively.
+                collect(child)
+
+        collect(self)
+
         return tuple(result)

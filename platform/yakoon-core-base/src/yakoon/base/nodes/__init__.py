@@ -1,5 +1,6 @@
 from .context import RuntimeContext
 from .node import Node
+from .path import NodePath
 from .types import NodeKind, NodeScope, NodeVisibility
 
 __all__ = [
@@ -11,4 +12,6 @@ __all__ = [
     "NodeVisibility",
     "NodeScope",
     "NodeKind",
+    # .path
+    "NodePath",
 ]

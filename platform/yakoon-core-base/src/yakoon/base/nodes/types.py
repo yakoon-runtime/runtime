@@ -15,5 +15,5 @@ class NodeVisibility(StrEnum):
 
 class NodeScope(StrEnum):
     NODE = "node"  # Only in active node
-    ROOT = "shell"  # In owner applcication and in shell application
+    ROOT = "root"  # In owner applcication and in root node
     GLOBAL = "global"  # global usage

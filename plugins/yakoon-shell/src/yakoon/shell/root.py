@@ -20,8 +20,8 @@ shell = Node(
     name="Shell",
     is_shell=True,
     anonymous=True,
-    setup=boot_shell,
-    resource=get_resource,
+    on_setup=boot_shell,
+    on_resource=get_resource,
 )
 
 shell.mount(system)

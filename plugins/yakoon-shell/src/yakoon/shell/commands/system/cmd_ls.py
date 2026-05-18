@@ -48,7 +48,7 @@ class CmdLs(Command):
         app_id = request.option("app") or self.on_get_active_app()
         result = await self.on_source(
             DataRequest(
-                "system:discovery --runtime",
+                "nodes:discovery --runtime",
                 context={
                     "session": self.on_get_session(),
                     "mode": self.resolve_mode(request),

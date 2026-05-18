@@ -8,8 +8,8 @@ from yakoon.base.nodes import RuntimeContext
 from yakoon.base.nodes.node import Node
 
 HandlerName = Literal[
-    "run",
-    "setup",
+    "on_run",
+    "on_setup",
 ]
 
 

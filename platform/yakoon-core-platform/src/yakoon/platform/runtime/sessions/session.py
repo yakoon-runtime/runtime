@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from yakoon.base.naming import Key
+from yakoon.base.nodes.path import NodePath
 from yakoon.base.projection import (
     ProjectionEvent,
     ProjectionState,
@@ -22,7 +23,7 @@ class SessionData:
 
     CURRENT_VERSION = 1
 
-    active_app_id: str | None = None
+    node_path: str | None = None
     user_key: str | None = None
     account_key: str | None = None
     last_active: datetime | None = None
@@ -157,14 +158,14 @@ class Session:
         self.data.last_active = datetime.now(UTC)
 
     # ----------------------------
-    # Application
+    # NODE
     # ----------------------------
 
-    def set_active_app(self, app_id: str) -> None:
-        self.data.active_app_id = app_id
+    def set_current_node(self, path: NodePath) -> None:
+        self.data.node_path = str(path)
 
-    def get_active_app(self, default=None) -> str | None:
-        return self.data.active_app_id or default
+    def get_current_node(self, default=None) -> NodePath:
+        return NodePath.from_string(self.data.node_path or default)
 
     # ----------------------------
     # Identity
@@ -234,6 +235,6 @@ class Session:
             state=ProjectionState(
                 user="NO-USER!",
                 # user=self.get_username(),
-                controller=self.get_active_app(),
+                # controller=self.get_current_node(),
             ),
         )

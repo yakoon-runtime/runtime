@@ -2,7 +2,7 @@
   Befehl "<strong>{{ state.command }}</strong>" wurde nicht gefunden.
 </text>
 
-{% if state.suggestions %}
+{% if state.suggestions is defined and state.suggestions %}
 
   {% if state.suggestions|length == 1 %}
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import Any, Protocol, cast
 
 from yakoon.base.naming import Key
@@ -21,7 +20,7 @@ from .session import SessionBuilder
 
 
 def build_machine(
-    nodes: Sequence[Node],
+    root: Node,
     on_suggest: OnSuggest,
     on_projection: OnProjection,
     on_session: OnGetOrCreateSession,
@@ -39,7 +38,7 @@ def build_machine(
     # ---------------
 
     resolver = InvocationResolver(
-        nodes=nodes,
+        root=root,
         on_authorize=on_has_permission,
         on_suggest=on_suggest,
     )
@@ -62,7 +61,6 @@ def build_machine(
     )
 
     def get_resource(key: Any, lang: str) -> ResourceRef:
-        root = nodes[0].root
         return root.get_resource(key, lang=lang)
 
     # -----------------
@@ -123,8 +121,7 @@ def build_machine(
             if node.has_setup():
                 nodes_to_setup.append(node)
 
-        for node in nodes:
-            node.walk(collect_nodes)
+        root.walk(collect_nodes)
         for node in nodes_to_setup:
             await scheduler.setup(session, node)
 

@@ -19,7 +19,7 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.nodes import Node, RuntimeContext
+from yakoon.base.nodes import Node, NodePath, RuntimeContext
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext
@@ -62,7 +62,7 @@ class CommandEngine:
             id=uuid4().hex,
             node=node,
             event=InputEvent(node.key, tokens=[]),
-            cursor=FlowCursor("setup"),
+            cursor=FlowCursor("on_setup"),
             kind=self.DEFAULT_FLOW_KIND,
         )
 
@@ -87,8 +87,8 @@ class CommandEngine:
 
             # find node
             node = self.on_resolve_command(
-                parent_key=session.get_active_app(),
-                node_key=event.command,
+                parent=session.get_current_node(),
+                key=event.command,
                 tokens=event.tokens,
                 session=session,
             )
@@ -114,7 +114,7 @@ class CommandEngine:
                 node=node,
                 pipeline=pipeline_commands,
                 event=event,
-                cursor=FlowCursor("run"),
+                cursor=FlowCursor("on_run"),
                 kind=self.DEFAULT_FLOW_KIND,
             )
 
@@ -304,8 +304,8 @@ class OnResolveNode(Protocol):
     def __call__(
         self,
         *,
-        parent_key: str | None,
-        node_key: str,
+        parent: NodePath,
+        key: str,
         tokens: list[str] | None,
         session: Session,
     ) -> Node: ...

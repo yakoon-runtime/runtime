@@ -6,6 +6,7 @@ from yakoon.base.resources import ResourceRef
 
 
 def get_resource(key: str, **kwargs):
+
     scope = kwargs.get("scope")
     lang = kwargs.get("lang")
 

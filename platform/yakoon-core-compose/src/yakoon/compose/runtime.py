@@ -27,7 +27,6 @@ from yakoon.platform.runtime.sessions import SessionService
 from yakoon.platform.services import GuidanceService
 from yakoon.platform.settings import Settings
 from yakoon.platform.sources.data import (
-    DiscoverySource,
     NodeSource,
 )
 from yakoon.platform.sources.registry import DataSourceRegistry
@@ -94,8 +93,6 @@ def compose_runtime(
     # --------------------
 
     ds = DataSourceRegistry()
-    ds.bind("system:nodes", NodeSource(nodes))
-    ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
 
     # ----------------
     # --- BINDINGS ---
@@ -104,7 +101,7 @@ def compose_runtime(
     platform = Node(
         key="platform",
         scope=NodeScope.NODE,
-        resource=get_resource,
+        on_resource=get_resource,
     )
 
     platform.ports.provide(OnDataSource, ds.read)
@@ -121,6 +118,13 @@ def compose_runtime(
 
     for node in nodes:
         platform.mount(node)
+
+    # --------------------
+    # --- DATASOURCING ---
+    # --------------------
+
+    ds.bind("system:nodes", NodeSource(platform))
+    # ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
 
     # -----------------
     # --- STREAMING ---
@@ -148,7 +152,7 @@ def compose_runtime(
     # ------------------------
 
     return build_machine(
-        nodes=nodes,
+        root=platform,
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
         on_projection=output.send_projection,
