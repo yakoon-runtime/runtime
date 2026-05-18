@@ -3,6 +3,7 @@ from yakoon.base.nodes.types import NodeScope
 
 from .on_cd import on_cd
 from .on_list import on_list
+from .on_pwd import on_pwd
 from .on_version import on_version
 from .on_welcome import on_welcome
 
@@ -51,6 +52,17 @@ system.add(
     Node(
         key="cd",
         on_run=on_cd,
+        anonymous=True,
+        scope=NodeScope.GLOBAL,
+        resolvable=True,
+        navigable=False,
+    )
+)
+
+system.add(
+    Node(
+        key="pwd",
+        on_run=on_pwd,
         anonymous=True,
         scope=NodeScope.GLOBAL,
         resolvable=True,
