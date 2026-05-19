@@ -9,6 +9,8 @@ from yakoon.base.sources import DataRequest, OnDataSource
 async def on_cd(ctx: RuntimeContext):
 
     target = ctx.request.arg(0)
+    if not target:
+        return
 
     on_source = ctx.ports.get(OnDataSource)
 

@@ -22,9 +22,14 @@ async def on_list(ctx: RuntimeContext):
         lang=ctx.session.lang,
     )
 
+    navigables = [x for x in result.rows if x["navigable"]]
+
     projection = await ctx.ports.get(OnProject)(
         resource=resource,
-        state={"nodes": result.rows},
+        state={
+            "nodes": result.rows,
+            "navigables": navigables,
+        },
     )
 
     yield out(projection)

@@ -8,11 +8,14 @@ Commands: <br/>
     {% endif %}
 {% endfor %}
 
-<br/><br/>
-Apps: <br/>
+{% if state.navigables %}
+  <br/><br/>
+  Apps: <br/>
 
-{% for c in state.nodes %}
-    {% if c.navigable %}
-      <space count="2"/> <cmd command="{{ c.key }}">{{ c.key }}</cmd>
-    {% endif %}
-{% endfor %}
+  {% for c in state.navigables %}
+      {% if c.navigable %}
+        <space count="2"/> <cmd command="{{ c.key }}">{{ c.key }}</cmd>
+      {% endif %}
+  {% endfor %}
+
+{% endif %}

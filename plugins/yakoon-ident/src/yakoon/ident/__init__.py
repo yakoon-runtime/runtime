@@ -1,18 +1,12 @@
 from yakoon.base.plugins import ModuleExport, ModuleMeta
 
-from .app import IdentityApp
+from .root import ident
 
 
 def register() -> ModuleExport:
 
-    # provide(SecretVerifier, DefaultAllowAllSecretVerifier())
-
-    # publish(AccountService, DefaultAccountService(container))
-    # publish(AuthenticationService, DefaultAuthenticationService(container))
-    # publish(PermissionService, DefaultPermissionService())
-
     return ModuleExport(
-        node=None,
+        node=ident,
         meta=ModuleMeta(
             name="yakoon.ident",
             version="0.1.0",
