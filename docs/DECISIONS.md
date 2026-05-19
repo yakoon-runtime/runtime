@@ -9,6 +9,25 @@ A server-driven, event-sourced UI runtime with declarative projection
 „SAM verarbeitet Actions und erzeugt daraus strukturierte Projektionen eines Systemzustands.“
 ===
 
+## 2026-05-19
+**Runtime**
+Wir haben einen sehr großen Architekturshift abgeschlossen. 
+Yakoon entwickelt sich inzwischen klar weg von einem klassischen 
+Command-/Controller-Framework hin zu einer operativen Runtime mit 
+navigierbaren semantischen Räumen.
+
+Der wichtigste Punkt:
+Die gesamte Architektur dreht sich inzwischen fast vollständig um genau eine Primitive:
+- Node
+Dazu kommt inzwischen als zweite fundamentale Primitive:
+- NodePath
+
+Die Runtime ist inzwischen:
+topologisch.
+
+Das bedeutet:
+Die Struktur selbst IST die Wahrheit.
+
 ## 2026-04-27
 **Design Principle - Default Ports:**
 Die Platform definiert keine Command-Default-Ports. Commands bleiben rein.
