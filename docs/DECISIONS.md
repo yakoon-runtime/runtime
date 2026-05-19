@@ -16,17 +16,30 @@ Yakoon entwickelt sich inzwischen klar weg von einem klassischen
 Command-/Controller-Framework hin zu einer operativen Runtime mit 
 navigierbaren semantischen Räumen.
 
-Der wichtigste Punkt:
-Die gesamte Architektur dreht sich inzwischen fast vollständig um genau eine Primitive:
-- Node
-Dazu kommt inzwischen als zweite fundamentale Primitive:
-- NodePath
+## 2026-04-27
+**Spätere Jobs-Zustände**
 
-Die Runtime ist inzwischen:
-topologisch.
+| Zustand             | Braucht Command? |
+| ------------------- | ---------------- |
+| laufender Task      | jobs             |
+| pausierter Task     | resume           |
+| interaktive Session | focus            |
+| Hintergrundprozess  | bg               |
+| Vordergrundprozess  | fg               |
+| Modal-Flow          | exit             |
+| gestoppter Prozess  | stop             |
 
-Das bedeutet:
-Die Struktur selbst IST die Wahrheit.
+
+## 2026-04-27
+**Architekturprinzipien:**
+„Kernel remains domain-neutral“
+„Domains emerge through composition“
+„Platform defines topology, not semantics“
+„Plugins own language“
+
+Node als Begriff soll daher bleiben, weil Domains dann einfach Domänensprache nutzen können:
+- system = root.mount(System())
+- kitchen = world.add(Room("kitchen"))
 
 ## 2026-04-27
 **Design Principle - Default Ports:**

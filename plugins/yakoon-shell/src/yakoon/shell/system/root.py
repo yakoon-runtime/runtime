@@ -1,11 +1,17 @@
 from yakoon.base.nodes import Node
+from yakoon.base.nodes.invocation import Invocation
 from yakoon.base.nodes.types import NodeScope
 
 from .on_cd import on_cd
 from .on_list import on_list
+from .on_man import on_man
 from .on_pwd import on_pwd
 from .on_version import on_version
 from .on_welcome import on_welcome
+
+# ----------------------------------
+# SYSTEM
+# ----------------------------------
 
 system = Node(
     key="system",
@@ -14,6 +20,10 @@ system = Node(
     navigable=True,
     resolvable=False,
 )
+
+# ----------------------------------
+# WELCOME
+# ----------------------------------
 
 system.add(
     Node(
@@ -26,6 +36,10 @@ system.add(
     )
 )
 
+# ----------------------------------
+# VERSION
+# ----------------------------------
+
 system.add(
     Node(
         key="version",
@@ -34,8 +48,36 @@ system.add(
         scope=NodeScope.NODE,
         resolvable=True,
         navigable=False,
+        invocations=[
+            Invocation(action="list"),
+            Invocation(action="add", args=["groupname"]),
+            Invocation(action="delete", args=["groupname"]),
+            Invocation(action="edit", args=["groupname"], options=["enabled"]),
+        ],
     )
 )
+
+# ----------------------------------
+# MAN
+# ----------------------------------
+
+system.add(
+    Node(
+        key="man",
+        on_run=on_man,
+        anonymous=True,
+        scope=NodeScope.GLOBAL,
+        resolvable=True,
+        navigable=False,
+        invocations=[
+            Invocation(args=["command"], default=True),
+        ],
+    )
+)
+
+# ----------------------------------
+# LS - LIST
+# ----------------------------------
 
 system.add(
     Node(
@@ -48,6 +90,10 @@ system.add(
     )
 )
 
+# ----------------------------------
+# CD - CHANGE DIR
+# ----------------------------------
+
 system.add(
     Node(
         key="cd",
@@ -58,6 +104,10 @@ system.add(
         navigable=False,
     )
 )
+
+# ----------------------------------
+# PWD - PRINT WORKING DIRECORY
+# ----------------------------------
 
 system.add(
     Node(

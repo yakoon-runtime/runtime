@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import inspect
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from yakoon.base.flow.primitives import Outcome
-from yakoon.base.nodes import RuntimeContext
-from yakoon.base.nodes.node import Node
+
+if TYPE_CHECKING:
+    from yakoon.base.nodes import Node, RuntimeContext
 
 HandlerName = Literal[
     "on_run",

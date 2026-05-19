@@ -60,8 +60,8 @@ def build_machine(
         on_audit_security=on_audit_security,
     )
 
-    def get_resource(key: Any, lang: str) -> ResourceRef:
-        return root.get_resource(key, lang=lang)
+    async def get_resource(key: Any, lang: str) -> ResourceRef:
+        return await root.get_resource(domain=key, lang=lang)
 
     # -----------------
     # --- EXECUTION ---

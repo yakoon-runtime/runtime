@@ -122,12 +122,7 @@ class InvocationResolver:
                 NodeScope.NODE,
                 NodeScope.ROOT,
             ):
-                self._ensure_invocation(
-                    session,
-                    node,
-                    tokens,
-                )
-
+                self._ensure_invocation(session, node, tokens)
                 return node
 
         # ---------------------------------
@@ -196,6 +191,7 @@ class InvocationResolver:
         node: Node,
         tokens: list[str] | None,
     ):
+        node.validate(tokens)
 
         if node.anonymous:
             return
@@ -203,17 +199,8 @@ class InvocationResolver:
         action = tokens[0] if tokens else None
 
         parent_key = node.parent.key if node.parent else ""
-
-        fq = Permission.fq_key(
-            parent_key,
-            node.key,
-            action,
-        )  # type: ignore
-
-        if not self.on_authorize(
-            session=session,
-            perm_key=fq,
-        ):
+        fq = Permission.fq_key(parent_key, node.key, action)
+        if not self.on_authorize(session=session, perm_key=fq):
             raise PermissionDenied(ErrorState.by_type(key=PermissionDenied))
 
 

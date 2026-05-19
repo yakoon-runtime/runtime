@@ -29,12 +29,12 @@
 
   <item>
     <cmd command="
-      {{ usage.command }}
+      {{ usage.key }}
       {% if usage.action %} {{ usage.action }}{% endif %}
       {% for arg in usage.args %} &lt;{{ arg }}&gt;{% endfor %}
       {% for opt in usage.options %} --{{ opt }} &lt;{{ opt }}&gt;{% endfor %}
     ">
-      {{ usage.command }}
+      {{ usage.key }}
       {% if usage.action %} {{ usage.action }}{% endif %}
       {% for arg in usage.args %} &lt;{{ arg }}&gt;{% endfor %}
       {% for opt in usage.options %} --{{ opt }} &lt;{{ opt }}&gt;{% endfor %}

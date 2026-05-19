@@ -294,7 +294,7 @@ class Scheduler:
     async def _get_error(self, exc: Exception, session: Session) -> Projection:
 
         state = ErrorState.extract_state(exc)
-        resource = self.on_get_resource(
+        resource = await self.on_get_resource(
             state.key,
             lang=session.lang,
         )
@@ -383,4 +383,4 @@ class OnGetProjection(Protocol):
 
 
 class OnGetResourceRef(Protocol):
-    def __call__(self, key: ErrorKey, lang: str) -> ResourceRef: ...
+    async def __call__(self, key: ErrorKey, lang: str) -> ResourceRef: ...

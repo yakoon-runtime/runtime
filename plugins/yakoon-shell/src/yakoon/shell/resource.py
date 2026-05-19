@@ -5,10 +5,17 @@ from yakoon.base.resources import ResourceRef
 # ----------------------------------
 
 
-def get_resource(key: str, **kwargs):
+async def get_resource(domain: str, **kwargs):
 
-    scope = kwargs.get("scope")
     lang = kwargs.get("lang")
+    scope = kwargs.get("scope")
+    key = kwargs.get("key")
+
+    if domain == "manual":
+        return ResourceRef(
+            package="yakoon.shell",
+            path=f"resources/{lang}/manuals/{scope}/man",
+        )
 
     return ResourceRef(
         package="yakoon.shell",

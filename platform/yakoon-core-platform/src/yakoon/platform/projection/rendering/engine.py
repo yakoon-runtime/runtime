@@ -63,6 +63,6 @@ def finalize_template_value(value):
         return value
 
     raise TypeError(
-        f"Cannot render object of type {type(value).__name__} directly. "
+        f"Cannot render object of type {str(value)} directly. "
         "Render a field instead, e.g. user.name."
     )

@@ -6,7 +6,7 @@
   <item>
     
     <cmd command="...">
-        {{ usage.command }}
+        {{ usage.key }}
 
         {% if usage.action %}
            <space/> {{ usage.action }}

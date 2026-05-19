@@ -2,21 +2,22 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TypeVar
 
-from yakoon.base.runtime.container import Container
+from yakoon.base.runtime import Container
 
-from .context import RuntimeContext
+from .describe import NodeDescription
+from .handler import ResourceHandler, RunHandler
+from .invocation import Invocation, InvocationValidator
 from .path import NodePath
 from .ports import NodePorts
-from .resource import ResourceHandler
 from .types import NodeKind, NodeScope, NodeVisibility
-
-RunHandler = Callable[[RuntimeContext], Any]
 
 # ----------------------------------
 # NODE
 # ----------------------------------
+
+T = TypeVar("T", bound="Node")
 
 
 @dataclass(slots=True)
@@ -41,6 +42,8 @@ class Node:
     key: str
     name: str | None = None
 
+    help_domain: str = "manual"
+
     # ----------------------------------
     # EXECUTION METADATA
     # ----------------------------------
@@ -55,6 +58,16 @@ class Node:
             Container(),
         )
     )
+
+    # ----------------------------------
+    # INVOCATIONS
+    # ----------------------------------
+
+    invocations: list[Invocation] = field(default_factory=list)
+    validator: InvocationValidator = field(default_factory=InvocationValidator)
+
+    def validate(self, tokens: list[str] | None) -> Invocation | None:
+        return self.validator.validate(node=self, tokens=tokens)
 
     # ----------------------------------
     # PERMISSIONS
@@ -93,10 +106,31 @@ class Node:
     resolvable: bool = True
 
     # ----------------------------------
+    # REFLECTION
+    # ----------------------------------
+
+    def describe(self) -> NodeDescription:
+        parent = self.parent.key if self.parent else None
+        return NodeDescription(
+            key=self.key,
+            name=self.name,
+            help_domain=self.help_domain,
+            root=self.root.key,
+            parent=parent,
+            kind=self.kind.value,
+            scope=self.scope.value,
+            visibility=self.visibility.value,
+            navigable=self.navigable,
+            resolvable=self.resolvable,
+            listed=self.listed,
+            anonymous=self.anonymous,
+        )
+
+    # ----------------------------------
     # ATTACH TO RUNTIME
     # ----------------------------------
 
-    def mount(self, node: Node) -> None:
+    def mount(self, node: T) -> T:
         """Mountes an existing runtime subtree.
 
         Unlike add(), attach() preserves the existing capability
@@ -119,6 +153,25 @@ class Node:
         node.ports.mount(self.ports)
 
         self.children[node.key] = node
+        return node
+
+    # ----------------------------------
+    # ROOT
+    # ----------------------------------
+
+    @property
+    def path(self) -> NodePath:
+        """Returns the node path inside the runtime hierarchy."""
+
+        parts: list[str] = []
+
+        node: Node | None = self
+        while node is not None:
+            parts.append(node.key)
+            node = node.parent
+
+        parts.reverse()
+        return NodePath(tuple(parts))
 
     # ----------------------------------
     # ROOT
@@ -157,7 +210,7 @@ class Node:
     # CHILDREN
     # ----------------------------------
 
-    def add(self, child: Node) -> None:
+    def add(self, child: T) -> T:
         """Adds a child runtime node.
 
         Child nodes inherit a forked capability scope from the
@@ -176,22 +229,75 @@ class Node:
             child.ports = self.ports.fork()
 
         self.children[child.key] = child
+        return child
 
     def get(self, key: str) -> Node | None:
         """Returns a direct child node by key."""
 
         return self.children.get(key)
 
-    def get_resource(self, key: Any, **kwargs: Any) -> Any:
-        """Resolves a semantic runtime resource."""
+    async def get_resource_from(
+        self, path: NodePath, absolute: bool, domain: Any, **kwargs: Any
+    ) -> Any:
+        """Resolves a semantic resource from another runtime space.
+
+        This method delegates resource resolution into another
+        runtime space while preserving the normal hierarchical
+        resource resolution semantics of the target node.
+
+        Unlike direct node access, this method exposes only
+        semantic resource capabilities and does not leak mutable
+        runtime topology.
+
+        Internally this method forwards resolution to the target
+        node's get_resource() implementation.
+        """
+
+        node = self.find(path, absolute=absolute)
+        if node:
+            return await node.get_resource(domain=domain, **kwargs)
+
+    async def get_resource(self, domain: Any, **kwargs: Any) -> Any:
+        """Resolves a semantic runtime resource.
+
+        Resources represent semantic runtime projections owned by
+        the current runtime space.
+
+        Resolution follows hierarchical delegation rules:
+
+        - local runtime space
+        - parent runtime spaces
+        - root runtime space
+        - platform-owned fallback spaces
+
+        Resolvers may internally use:
+
+        - filesystem resources
+        - databases
+        - remote services
+        - generated runtime content
+        - AI-backed projections
+
+        Args:
+            domain:
+                Semantic resource domain or resolution target.
+
+            **kwargs:
+                Resolver-specific metadata forwarded unchanged
+                through the runtime hierarchy.
+
+        Returns:
+            Resolved semantic runtime resource or None if
+            no resolver can satisfy the request.
+        """
 
         if self.on_resource:
-            resource = self.on_resource(key, **kwargs)
+            resource = await self.on_resource(domain=domain, **kwargs)
             if resource is not None:
                 return resource
 
         if self.parent:
-            return self.parent.get_resource(key, **kwargs)
+            return await self.parent.get_resource(domain, **kwargs)
 
         return None
 
@@ -256,6 +362,14 @@ class Node:
         current = self.root if absolute else self
 
         for part in path.parts:
+
+            if part == ".":
+                continue
+
+            if part == "..":
+                if current.parent:
+                    current = current.parent
+                continue
 
             child = current.children.get(part)
             if child is None:

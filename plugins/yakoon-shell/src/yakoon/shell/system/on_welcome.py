@@ -9,9 +9,10 @@ from yakoon.base.plugins.ports import OnProject
 
 async def on_welcome(ctx: RuntimeContext):
 
-    resource = ctx.resource(
-        "result",
+    resource = await ctx.resource(
+        domain="resource",
         scope="welcome",
+        key="result",
         lang=ctx.session.lang,
     )
 

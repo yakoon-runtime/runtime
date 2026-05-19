@@ -14,9 +14,10 @@ from yakoon.base.plugins.ports import OnProject
 
 async def on_version(ctx: RuntimeContext):
 
-    resource = ctx.resource(
-        "list",
+    resource = await ctx.resource(
+        domain="resource",
         scope="version",
+        key="list",
         lang=ctx.session.lang,
     )
 

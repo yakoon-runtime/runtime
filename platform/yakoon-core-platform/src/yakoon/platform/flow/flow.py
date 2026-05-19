@@ -2,10 +2,13 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from yakoon.base.flow.primitives import Control
-from yakoon.base.nodes import Node
 from yakoon.base.runtime import InputEvent
+
+if TYPE_CHECKING:
+    from yakoon.base.nodes import Node
 
 from .cursor import FlowCursor
 from .types import FlowKind

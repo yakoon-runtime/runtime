@@ -289,7 +289,9 @@ class CommandEngine:
                 ports=node.ports,
                 request=request,
                 session=session,
+                resource_from=node.get_resource_from,
                 resource=node.get_resource,
+                node=node.describe(),
                 metadata=dict(node.metadata),
             ),
         )

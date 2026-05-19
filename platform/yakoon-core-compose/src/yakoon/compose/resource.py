@@ -25,9 +25,9 @@ errors = {
 # ----------------------------------
 
 
-def get_resource(key: type, **kwargs):
+async def get_resource(domain: type, **kwargs):
 
-    part = errors.get(key)
+    part = errors.get(domain)
     lang = kwargs.get("lang")
 
     return ResourceRef(

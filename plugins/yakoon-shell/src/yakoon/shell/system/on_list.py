@@ -15,9 +15,10 @@ async def on_list(ctx: RuntimeContext):
     on_source = ctx.ports.get(OnDataSource)
     result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))
 
-    resource = ctx.resource(
-        "overview",
+    resource = await ctx.resource(
+        domain="resource",
         scope="list",
+        key="overview",
         lang=ctx.session.lang,
     )
 
