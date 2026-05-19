@@ -4,8 +4,6 @@ from yakoon.base.nodes import Node, NodeScope
 from yakoon.base.plugins.ports import (
     OnAuthorizeRead,
     OnAuthorizeWrite,
-    OnManualGet,
-    OnManualRegister,
     OnProject,
     OnSaveSession,
 )
@@ -16,7 +14,6 @@ from yakoon.platform.capabilities.permission import (
 )
 from yakoon.platform.machine.host import RuntimeHost
 from yakoon.platform.machine.wire import build_machine
-from yakoon.platform.manual import ManualService
 from yakoon.platform.plugins import PluginLoader
 from yakoon.platform.projection import (
     build_projector,
@@ -56,7 +53,6 @@ def compose_runtime(
     # --- SERVICES ---
     # ----------------
 
-    manuals = ManualService()
     guidance_service = GuidanceService()
     audit_service = AuditLogService(settings.logging)
     session_manager = SessionService(
@@ -109,8 +105,6 @@ def compose_runtime(
     platform.ports.provide(OnSaveSession, session_manager.save)
     platform.ports.provide(OnAuthorizeRead, perm_checker.can_read)
     platform.ports.provide(OnAuthorizeWrite, perm_checker.can_write)
-    platform.ports.provide(OnManualRegister, manuals.register)
-    platform.ports.provide(OnManualGet, manuals.get)
 
     # -----------------
     # --- ATTACHING ---

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands.errors import UnknowOptionsError, UsageError
+from yakoon.base.nodes.errors import UnknowOptionsError, UsageError
 from yakoon.base.resources.resource import ResourceRef
 from yakoon.platform.runtime.error import (
     NodeNotFound,

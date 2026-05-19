@@ -16,14 +16,7 @@ async def create_runtime() -> RuntimeHost:
             # "yakoon.office",
             # "yakoon.playground",
         ],
-        capabilities={
-            "audit": "default",
-            "discovery": "default",
-            # "identity": "default",
-            "interaction": "default",
-            # "jobs": "default",
-            "workflow": "default",
-        },
+        capabilities={},
     )
 
     return runtime

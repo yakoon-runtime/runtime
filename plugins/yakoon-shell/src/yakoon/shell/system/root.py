@@ -48,12 +48,6 @@ system.add(
         scope=NodeScope.NODE,
         resolvable=True,
         navigable=False,
-        invocations=[
-            Invocation(action="list"),
-            Invocation(action="add", args=["groupname"]),
-            Invocation(action="delete", args=["groupname"]),
-            Invocation(action="edit", args=["groupname"], options=["enabled"]),
-        ],
     )
 )
 

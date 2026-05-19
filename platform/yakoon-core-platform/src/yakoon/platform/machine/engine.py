@@ -5,7 +5,6 @@ from collections.abc import Sequence
 from typing import Protocol
 from uuid import uuid4
 
-from yakoon.base.commands import InvalidInvocation, Request
 from yakoon.base.errors import ErrorState
 from yakoon.base.flow.primitives import (
     AutoFocus,
@@ -19,7 +18,8 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.nodes import Node, NodePath, RuntimeContext
+from yakoon.base.nodes import Node, NodePath, Request, RuntimeContext
+from yakoon.base.nodes.errors import InvalidInvocation
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext

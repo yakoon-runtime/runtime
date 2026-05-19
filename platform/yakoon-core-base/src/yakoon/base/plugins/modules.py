@@ -44,8 +44,8 @@ class ModuleExport:
     scope for the module and returns the composed runtime node.
     """
 
+    node: Node
     meta: ModuleMeta
-    node: Node | None = None
 
 
 # ----------------------------------

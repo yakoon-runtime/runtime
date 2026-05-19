@@ -43,21 +43,3 @@ class OnBootstrapPermissions(Protocol):
         session: Session,
         permissions: PermissionSet,
     ): ...
-
-
-class OnManualRegister(Protocol):
-
-    def __call__(
-        self,
-        scope: str,
-        command: str,
-        projection: str,
-    ) -> None: ...
-
-
-class OnManualGet(Protocol):
-    def __call__(
-        self,
-        scope: str,
-        command: str,
-    ) -> dict | None: ...

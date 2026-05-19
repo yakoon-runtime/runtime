@@ -2,12 +2,6 @@ from yakoon.base.plugins import ModuleExport, ModuleMeta
 
 from .app import IdentityApp
 
-meta = ModuleMeta(
-    name="yakoon.ident",
-    version="0.1.0",
-    description="Identity...",
-)
-
 
 def register() -> ModuleExport:
 
@@ -18,5 +12,10 @@ def register() -> ModuleExport:
     # publish(PermissionService, DefaultPermissionService())
 
     return ModuleExport(
-        meta,
+        node=None,
+        meta=ModuleMeta(
+            name="yakoon.ident",
+            version="0.1.0",
+            description="Identity...",
+        ),
     )

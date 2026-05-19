@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from yakoon.base.errors import ErrorState
 
-from .errors import UnknowOptionsError, UsageError
+from ..nodes.errors import UnknowOptionsError, UsageError
 from .invocation import Invocation
 from .types import (
     CommandKind,
@@ -14,7 +14,7 @@ from .types import (
 )
 
 if TYPE_CHECKING:
-    from .request import Request
+    from ..nodes.request import Request
 
 
 class Command(ABC):

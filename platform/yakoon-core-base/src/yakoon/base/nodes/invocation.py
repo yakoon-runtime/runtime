@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from yakoon.base.commands.errors import UnknowOptionsError, UsageError
 from yakoon.base.errors import ErrorState
+
+from .errors import UnknowOptionsError, UsageError
 
 
 @dataclass(slots=True)

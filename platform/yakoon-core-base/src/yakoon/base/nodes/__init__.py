@@ -1,6 +1,7 @@
 from .context import RuntimeContext
 from .node import Node
 from .path import NodePath
+from .request import Request
 from .types import NodeKind, NodeScope, NodeVisibility
 
 __all__ = [
@@ -14,4 +15,6 @@ __all__ = [
     "NodeKind",
     # .path
     "NodePath",
+    # .request
+    "Request",
 ]

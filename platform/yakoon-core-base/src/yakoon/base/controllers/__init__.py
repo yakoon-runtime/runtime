@@ -1,5 +1,4 @@
 from .composer import CommandFactory, Composer
-from .resolver import resolve_resource
 from .resources import ResourceReferences
 
 __all__ = [
@@ -8,6 +7,4 @@ __all__ = [
     "CommandFactory",
     # .ressources
     "ResourceReferences",
-    # .resolver
-    "resolve_resource",
 ]

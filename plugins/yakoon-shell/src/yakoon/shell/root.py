@@ -1,15 +1,7 @@
-from yakoon.base.nodes import (
-    Node,
-    RuntimeContext,
-)
+from yakoon.base.nodes import Node
 
-from .resource import get_resource
+from .resources import get_resource
 from .system import system
-
-
-async def boot_shell(ctx: RuntimeContext):
-    pass
-
 
 # ----------------------------------
 # SHELL NODE
@@ -20,7 +12,6 @@ shell = Node(
     name="Shell",
     is_shell=True,
     anonymous=True,
-    on_setup=boot_shell,
     on_resource=get_resource,
 )
 

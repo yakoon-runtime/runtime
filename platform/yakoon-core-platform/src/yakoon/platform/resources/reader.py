@@ -1,7 +1,7 @@
 import importlib.resources as ir
 from dataclasses import dataclass
+from pathlib import PurePosixPath
 
-from yakoon.base.controllers.resolver import clean_rel
 from yakoon.base.resources import ResourceRef
 
 
@@ -48,3 +48,10 @@ class PackageReader:
                 pass
 
         return None
+
+
+def clean_rel(p: str) -> str:
+    pp = PurePosixPath(p)
+    if pp.is_absolute():
+        pp = PurePosixPath(*pp.parts[1:])
+    return str(pp)
