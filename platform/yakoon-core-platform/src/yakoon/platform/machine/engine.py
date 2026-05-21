@@ -86,7 +86,7 @@ class CommandEngine:
         try:
 
             # find node
-            node = self.on_resolve_command(
+            node, tokens = self.on_resolve_command(
                 parent=session.get_current_node(),
                 key=event.command,
                 tokens=event.tokens,
@@ -113,7 +113,7 @@ class CommandEngine:
                 id=uuid4().hex,
                 node=node,
                 pipeline=pipeline_commands,
-                event=event,
+                event=event.with_tokens(tokens),
                 cursor=FlowCursor("on_run"),
                 kind=self.DEFAULT_FLOW_KIND,
             )
@@ -310,7 +310,7 @@ class OnResolveNode(Protocol):
         key: str,
         tokens: list[str] | None,
         session: Session,
-    ) -> Node: ...
+    ) -> tuple[Node, list[str]]: ...
 
 
 class OnParseInput(Protocol):

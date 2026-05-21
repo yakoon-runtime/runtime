@@ -102,8 +102,10 @@ class Node:
 
     is_shell: bool = False
     listed: bool = True
+
     navigable: bool = True
     resolvable: bool = True
+    contextual: bool = False
 
     # ----------------------------------
     # REFLECTION
@@ -361,7 +363,11 @@ class Node:
 
         current = self.root if absolute else self
 
-        for part in path.parts:
+        parts = path.parts
+        if absolute and path.start == current.key:
+            parts = parts[1:]
+
+        for part in parts:
 
             if part == ".":
                 continue

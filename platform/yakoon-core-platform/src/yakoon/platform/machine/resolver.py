@@ -72,9 +72,9 @@ class InvocationResolver:
         key: str,
         tokens: list[str] | None,
         session: Session,
-    ) -> Node:
+    ) -> tuple[Node, list[str]]:
 
-        choices: list[str] = []
+        tokens = tokens or []
 
         key = key.strip()
 
@@ -90,11 +90,11 @@ class InvocationResolver:
         # Resolve parent runtime space
         # ---------------------------------
 
-        _parent = self._root
+        current = self._root
 
         if parent:
 
-            resolved = self._root.find(parent)
+            resolved = self._root.find(parent, absolute=True)
 
             if not resolved:
                 raise NodeNotFound(
@@ -104,13 +104,106 @@ class InvocationResolver:
                     )
                 )
 
-            _parent = resolved
+            current = resolved
+
+        # ---------------------------------
+        # Resolve current node
+        # ---------------------------------
+
+        node = self._resolve_node(
+            parent=current,
+            key=key,
+        )
+
+        if not node:
+            self._raise_not_found(
+                parent=current,
+                key=key,
+            )
+
+        assert node
+        # ---------------------------------
+        # Continue contextual traversal
+        # ---------------------------------
+
+        if node.contextual and tokens:
+
+            return self.resolve(
+                parent=node.path,
+                key=tokens[0],
+                tokens=tokens[1:],
+                session=session,
+            )
+
+        # ---------------------------------
+        # Validate invocation
+        # ---------------------------------
+
+        self._ensure_invocation(
+            session,
+            node,
+            tokens,
+        )
+
+        return node, tokens
+
+    # ---------------------------------------------------------------------
+    # Internals
+    # ---------------------------------------------------------------------
+
+    def _resolve_node(
+        self,
+        *,
+        parent: Node,
+        key: str,
+    ) -> Node | None:
 
         # ---------------------------------
         # Local runtime scope
         # ---------------------------------
 
-        for node in _parent.find_resolvable():
+        for node in parent.find_resolvable():
+
+            if node.scope not in (
+                NodeScope.NODE,
+                NodeScope.ROOT,
+            ):
+                continue
+
+            if node.key == key:
+                return node
+
+        # ---------------------------------
+        # ROOT scope
+        # ---------------------------------
+
+        if parent == self._root:
+
+            node = self._root_nodes.get(key)
+
+            if node:
+                return node
+
+        # ---------------------------------
+        # GLOBAL scope
+        # ---------------------------------
+
+        return self._global_nodes.get(key)
+
+    def _raise_not_found(
+        self,
+        *,
+        parent: Node,
+        key: str,
+    ) -> None:
+
+        choices: list[str] = []
+
+        # ---------------------------------
+        # Local runtime scope
+        # ---------------------------------
+
+        for node in parent.find_resolvable():
 
             if node.scope in (
                 NodeScope.NODE,
@@ -118,54 +211,18 @@ class InvocationResolver:
             ):
                 choices.append(node.key)
 
-            if node.key == key and node.scope in (
-                NodeScope.NODE,
-                NodeScope.ROOT,
-            ):
-                self._ensure_invocation(session, node, tokens)
-                return node
-
         # ---------------------------------
         # ROOT scope
         # ---------------------------------
 
-        if _parent == self._root:
-
-            choices.extend([n for n in self._root_nodes.keys()])
-
-            node = self._root_nodes.get(key)
-
-            if node:
-
-                self._ensure_invocation(
-                    session,
-                    node,
-                    tokens,
-                )
-
-                return node
+        if parent == self._root:
+            choices.extend(self._root_nodes.keys())
 
         # ---------------------------------
         # GLOBAL scope
         # ---------------------------------
 
-        choices.extend([n for n in self._global_nodes.keys()])
-
-        node = self._global_nodes.get(key)
-
-        if node:
-
-            self._ensure_invocation(
-                session,
-                node,
-                tokens,
-            )
-
-            return node
-
-        # ---------------------------------
-        # Suggestions
-        # ---------------------------------
+        choices.extend(self._global_nodes.keys())
 
         suggestions = self.on_suggest(
             value=key,
@@ -181,10 +238,6 @@ class InvocationResolver:
             )
         )
 
-    # ---------------------------------------------------------------------
-    # Internals
-    # ---------------------------------------------------------------------
-
     def _ensure_invocation(
         self,
         session: Session,
@@ -199,9 +252,22 @@ class InvocationResolver:
         action = tokens[0] if tokens else None
 
         parent_key = node.parent.key if node.parent else ""
-        fq = Permission.fq_key(parent_key, node.key, action)
-        if not self.on_authorize(session=session, perm_key=fq):
-            raise PermissionDenied(ErrorState.by_type(key=PermissionDenied))
+
+        fq = Permission.fq_key(
+            parent_key,
+            node.key,
+            action,
+        )
+
+        if not self.on_authorize(
+            session=session,
+            perm_key=fq,
+        ):
+            raise PermissionDenied(
+                ErrorState.by_type(
+                    key=PermissionDenied,
+                )
+            )
 
 
 # -------------------------------------------------------------------------
