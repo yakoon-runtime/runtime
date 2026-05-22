@@ -18,12 +18,15 @@ class InputEvent:
     def from_raw(cls, raw: str, context=None, batch_id=None):
         return cls(raw.strip(), [], context, batch_id)
 
-    def with_tokens(
+    def update(
         self,
-        tokens: list[str],
+        *,
+        command: str | None = None,
+        tokens: list[str] | None = None,
     ) -> InputEvent:
 
         return replace(
             self,
-            tokens=tokens,
+            command=command if command is not None else self.command,
+            tokens=tokens if tokens is not None else self.tokens,
         )

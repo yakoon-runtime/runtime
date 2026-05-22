@@ -113,7 +113,7 @@ class CommandEngine:
                 id=uuid4().hex,
                 node=node,
                 pipeline=pipeline_commands,
-                event=event.with_tokens(tokens),
+                event=event.update(command=node.key, tokens=tokens),
                 cursor=FlowCursor("on_run"),
                 kind=self.DEFAULT_FLOW_KIND,
             )

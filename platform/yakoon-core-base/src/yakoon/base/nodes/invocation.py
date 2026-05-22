@@ -39,17 +39,21 @@ class InvocationValidator:
         invocations = node.invocations
 
         if not invocations:
-            return
+            return None
 
         tokens = tokens or []
 
         # ----------------------------------
-        # ACTION INVOCATIONS
+        # GROUPS
         # ----------------------------------
 
-        action_invocations = [x for x in invocations if x.action]
+        default_invocations = [x for x in invocations if x.default]
 
-        positional_invocations = [x for x in invocations if not x.action]
+        action_invocations = [x for x in invocations if x.action is not None]
+
+        positional_invocations = [
+            x for x in invocations if not x.default and x.action is None
+        ]
 
         matching: list[Invocation] = []
 
@@ -57,31 +61,25 @@ class InvocationValidator:
         # ACTION MATCHING
         # ----------------------------------
 
-        if action_invocations:
+        if tokens:
 
-            action = tokens[0] if tokens else None
+            action = tokens[0]
 
             matching = [x for x in action_invocations if x.action == action]
 
-            # ----------------------------------
-            # DEFAULT INVOCATION
-            # ----------------------------------
-
-            if not matching and not tokens:
-
-                default = next(
-                    (x for x in action_invocations if x.default),
-                    None,
-                )
-
-                if default:
-                    matching = [default]
-
         # ----------------------------------
-        # POSITIONAL INVOCATIONS
+        # DEFAULT MATCHING
         # ----------------------------------
 
-        else:
+        if not matching:
+
+            matching = default_invocations
+
+        # ----------------------------------
+        # POSITIONAL MATCHING
+        # ----------------------------------
+
+        if not matching:
 
             matching = positional_invocations
 

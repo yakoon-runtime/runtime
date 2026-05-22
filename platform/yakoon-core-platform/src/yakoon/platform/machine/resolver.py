@@ -128,12 +128,14 @@ class InvocationResolver:
 
         if node.contextual and tokens:
 
-            return self.resolve(
-                parent=node.path,
-                key=tokens[0],
-                tokens=tokens[1:],
-                session=session,
-            )
+            if not node.consumes(tokens):
+
+                return self.resolve(
+                    parent=node.path,
+                    key=tokens[0],
+                    tokens=tokens[1:],
+                    session=session,
+                )
 
         # ---------------------------------
         # Validate invocation

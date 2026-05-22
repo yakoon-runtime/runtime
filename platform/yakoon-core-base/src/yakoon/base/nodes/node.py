@@ -69,6 +69,22 @@ class Node:
     def validate(self, tokens: list[str] | None) -> Invocation | None:
         return self.validator.validate(node=self, tokens=tokens)
 
+    def consumes(self, tokens: list[str] | None) -> bool:
+        if not self.invocations:
+            return False
+
+        tokens = tokens or []
+        if not tokens:
+            return False
+
+        action = tokens[0]
+
+        for invocation in self.invocations:
+            if invocation.action == action:
+                return True
+
+        return False
+
     # ----------------------------------
     # PERMISSIONS
     # ----------------------------------
@@ -364,7 +380,7 @@ class Node:
         current = self.root if absolute else self
 
         parts = path.parts
-        if absolute and path.start == current.key:
+        if absolute and path.first == current.key:
             parts = parts[1:]
 
         for part in parts:
