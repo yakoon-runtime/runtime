@@ -12,8 +12,6 @@ async def create_runtime() -> RuntimeHost:
         plugins=[
             "yakoon.shell",
             "yakoon.ident",
-            # "yakoon.crm",
-            # "yakoon.office",
             # "yakoon.playground",
         ],
         capabilities={},

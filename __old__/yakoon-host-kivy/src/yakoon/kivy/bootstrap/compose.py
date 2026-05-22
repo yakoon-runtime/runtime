@@ -23,8 +23,6 @@ def compose_kivy_app() -> KivyComposition:
     engine = compose_runtime(
         plugins=[
             "yakoon.shell",
-            "yakoon.crm",
-            "yakoon.office",
         ],
         capabilities={
             "audit": "default",

@@ -9,8 +9,6 @@
     "platform/yakoon-core-platform/src",
     "platform/yakoon-core-storage/src",
     // plugins
-    "plugins/yakoon-crm/src",
-    "plugins/yakoon-office/src",
     "plugins/yakoon-playground/src",
     "plugins/yakoon-shell/src",
     "plugins/yakoon-ident/src",

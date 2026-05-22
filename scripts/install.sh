@@ -13,8 +13,6 @@ pip install \
 
 # plugins
 pip install \
-  -e plugins/yakoon-crm \
-  -e plugins/yakoon-office \
   -e plugins/yakoon-playground \
   -e plugins/yakoon-shell \
   -e plugins/yakoon-ident \
