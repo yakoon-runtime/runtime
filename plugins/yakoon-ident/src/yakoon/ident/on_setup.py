@@ -2,13 +2,22 @@ from __future__ import annotations
 
 from yakoon.base.naming.key import Key
 from yakoon.base.nodes import RuntimeContext
+from yakoon.base.plugins.ports import OnAuthenticate
 from yakoon.ident.models.user import User, UserData
+from yakoon.ident.services.authentication import AuthenticationService
+from yakoon.ident.services.verifier import AllowAllSecretVerifier
+from yakoon.platform.capabilities.permission import PermissionParser
 from yakoon.storage.eventstore.wire import build_store
 
-from .services import Namespaces, UserService
-from .services.group import GroupService
-from .services.membership import MembershipService
-from .services.permgrant import PermissionGrantService
+from .services import (
+    AccountService,
+    GroupService,
+    MembershipService,
+    Namespaces,
+    PermissionGrantService,
+    PermissionResolver,
+    UserService,
+)
 from .settings import Settings
 
 # ----------------------------------
@@ -69,6 +78,65 @@ async def on_setup(ctx: RuntimeContext):
         on_scan=store.objects.scan,
     )
 
+    # -------------------------------
+    # --- CREATING ACCOUNT ACCESS ---
+    # -------------------------------
+
+    accounts = AccountService(
+        on_append=store.objects.append,
+        on_replace=store.objects.replace,
+        on_get_by_key=store.objects.get,
+        on_scan=store.objects.scan,
+    )
+
+    # -----------------------------
+    # --- CREATING GRANT ACCESS ---
+    # -----------------------------
+
+    permgrant = PermissionGrantService(
+        on_get=store.objects.get,
+        on_append=store.objects.append,
+        on_replace=store.objects.replace,
+        on_get_many=store.objects.get_many,
+        on_scan=store.objects.scan,
+    )
+
+    # -------------------------------
+    # --- CREATING PERM RESOLVER ---
+    # -------------------------------
+
+    perm_parser = PermissionParser()
+    perm_resolver = PermissionResolver(
+        on_list_subject_grants=permgrant.list_subject_grants,
+        on_list_user_memberships=membership.list_user_memberships,
+        on_parse_spec=perm_parser.parse,
+    )
+
+    # ---------------------------
+    # --- ALLOW ALL PASSWORDS ---
+    # ---------------------------
+
+    verifier = AllowAllSecretVerifier()
+
+    # ----------------------
+    # --- AUTHENTICATING ---
+    # ----------------------
+
+    auth = AuthenticationService(
+        on_get_user=users.get_by_username,
+        on_verify_user=verifier.verify,
+    )
+
+    # ------------------
+    # --- PUBLISHING ---
+    # ------------------
+
+    ctx.ports.publish(OnAuthenticate, auth.authenticate)
+
+    # -----------------------
+    # --- PROVIDE INTENAL ---
+    # -----------------------
+
     # await IdentityBootstrapper(
     #    users=users,
     #    groups=groups,
@@ -86,6 +154,8 @@ async def on_setup(ctx: RuntimeContext):
     ctx.ports.provide(UserService, users)
     ctx.ports.provide(GroupService, groups)
     ctx.ports.provide(MembershipService, membership)
+    ctx.ports.provide(PermissionGrantService, permgrant)
+    ctx.ports.provide(PermissionResolver, perm_resolver)
 
 
 # ----------------------------------

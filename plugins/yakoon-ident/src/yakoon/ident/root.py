@@ -1,8 +1,10 @@
-from yakoon.base.nodes import Node
+from __future__ import annotations
 
-from .actors import group, membership, user
-from .resources import get_resource
-from .setup import on_setup
+from yakoon.base.nodes import Invocation, Node, NodeScope
+
+from .actors import grant, group, membership, on_su, on_whoami, user
+from .on_setup import on_setup
+from .resources import on_resource
 
 # ----------------------------------
 # IDENT NODE
@@ -13,15 +15,16 @@ ident = Node(
     name="Ident",
     anonymous=True,
     on_setup=on_setup,
-    on_resource=get_resource,
+    on_resource=on_resource,
 )
 
 # ----------------------------------
-# ADD MODELS
+# MOUNT TREES
 # ----------------------------------
 
 ident.mount(user)
 ident.mount(group)
+ident.mount(grant)
 ident.mount(membership)
 
 # ----------------------------------
@@ -34,6 +37,8 @@ ident.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
+        on_run=on_whoami,
+        scope=NodeScope.GLOBAL,
     )
 )
 
@@ -47,18 +52,10 @@ ident.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-    )
-)
-
-# ----------------------------------
-# GRANT - DEFINE ACCESS PRIVILEGES
-# ----------------------------------
-
-ident.add(
-    Node(
-        key="grant",
-        anonymous=True,
-        resolvable=True,
-        navigable=False,
+        on_run=on_su,
+        scope=NodeScope.GLOBAL,
+        invocations=[
+            Invocation(args=["user"], options=["password"]),
+        ],
     )
 )
