@@ -12,8 +12,7 @@ from yakoon.platform.capabilities.audit import AuditLogService
 from yakoon.platform.capabilities.permission import (
     PermissionChecker,
 )
-from yakoon.platform.machine.host import RuntimeHost
-from yakoon.platform.machine.wire import build_machine
+from yakoon.platform.machine import RuntimeHost, build_machine
 from yakoon.platform.plugins import PluginLoader
 from yakoon.platform.projection import (
     build_projector,
@@ -23,10 +22,10 @@ from yakoon.platform.resources import ProjectionRegistry
 from yakoon.platform.runtime.sessions import SessionService
 from yakoon.platform.services import GuidanceService
 from yakoon.platform.settings import Settings
+from yakoon.platform.sources import DataSourceRegistry
 from yakoon.platform.sources.data import (
     NodeSource,
 )
-from yakoon.platform.sources.registry import DataSourceRegistry
 from yakoon.platform.templates.wire import register_templates
 from yakoon.storage.eventstore.wire import build_store
 

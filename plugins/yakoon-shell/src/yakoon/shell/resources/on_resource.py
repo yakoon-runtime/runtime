@@ -5,7 +5,7 @@ from yakoon.base.resources import ResourceRef
 # ----------------------------------
 
 
-async def get_resource(domain: str, **kwargs):
+async def on_resource(domain: str, **kwargs):
 
     lang = kwargs.get("lang")
     scope = kwargs.get("scope")

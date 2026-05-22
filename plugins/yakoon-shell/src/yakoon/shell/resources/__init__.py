@@ -1,5 +1,5 @@
-from .resource import get_resource
+from .on_resource import on_resource
 
 __all__ = [
-    "get_resource",
+    "on_resource",
 ]
