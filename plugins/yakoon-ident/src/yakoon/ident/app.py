@@ -14,8 +14,8 @@ from .services import (
     AllowAllSecretVerifier,
     AuthenticationService,
     GroupService,
-    IdentityNamespaces,
     MembershipService,
+    Namespaces,
     PermissionGrantService,
     PermissionResolver,
     UserService,
@@ -176,7 +176,7 @@ class IdentityApp(Application):
 
     async def _build_index(self):
 
-        namespaces = IdentityNamespaces()
+        namespaces = Namespaces()
 
         await self.store.objects.ensure_indexes(
             namespace=namespaces.user_namespace(),
@@ -201,7 +201,7 @@ class IdentityApp(Application):
 
     async def _demo_data(self) -> None:
 
-        namespaces = IdentityNamespaces()
+        namespaces = Namespaces()
         user_ns = namespaces.user_namespace()
 
         u1 = User(

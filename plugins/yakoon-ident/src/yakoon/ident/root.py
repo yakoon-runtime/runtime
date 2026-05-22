@@ -1,6 +1,8 @@
 from yakoon.base.nodes import Node
 
+from .actors import user
 from .resources import get_resource
+from .setup import on_setup
 
 # ----------------------------------
 # IDENT NODE
@@ -10,25 +12,19 @@ ident = Node(
     key="ident",
     name="Ident",
     anonymous=True,
+    on_setup=on_setup,
     on_resource=get_resource,
 )
 
 # ----------------------------------
-# USER
+# USERS
 # ----------------------------------
 
-ident.add(
-    Node(
-        key="user",
-        anonymous=True,
-        resolvable=True,
-        navigable=False,
-    )
-)
+ident.mount(user)
 
 
 # ----------------------------------
-# GROUPls
+# GROUPS
 # ----------------------------------
 
 ident.add(

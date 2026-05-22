@@ -5,7 +5,7 @@ from yakoon.base.controllers import Composer, ResourceReferences
 from yakoon.base.naming import Key
 from yakoon.base.plugins.models import AuthResult
 from yakoon.base.plugins.ports import OnAuthenticate, OnSaveSession
-from yakoon.ident.services import IdentityNamespaces
+from yakoon.ident.services import Namespaces
 from yakoon.platform.capabilities.permission import PermissionSet
 
 from ..commands import AuthCommands, CmdSu, CmdWhoAmI
@@ -25,7 +25,7 @@ class AuthComposer(Composer):
         CmdSu: "_create_su",
     }
 
-    namespaces = IdentityNamespaces()
+    namespaces = Namespaces()
 
     # ----------------------------------
     # CREATE COMMAND

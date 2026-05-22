@@ -2,7 +2,7 @@ from .account import AccountService
 from .authentication import AuthenticationService
 from .group import GroupService
 from .membership import MembershipService
-from .namespaces import IdentityNamespaces
+from .namespaces import Namespaces
 from .permgrant import PermissionGrantService
 from .resolver import PermissionResolver
 from .user import UserService
@@ -22,7 +22,7 @@ __all__ = [
     # .membership
     "MembershipService",
     # .namespaces
-    "IdentityNamespaces",
+    "Namespaces",
     # .permgrant
     "PermissionGrantService",
     # .resolver

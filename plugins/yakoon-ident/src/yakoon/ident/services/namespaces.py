@@ -1,7 +1,7 @@
 from yakoon.base.naming import Namespace
 
 
-class IdentityNamespaces:
+class Namespaces:
 
     domain = "ident"
     space = "global"

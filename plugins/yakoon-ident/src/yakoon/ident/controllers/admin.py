@@ -14,8 +14,8 @@ from ..commands import (
 )
 from ..services import (
     GroupService,
-    IdentityNamespaces,
     MembershipService,
+    Namespaces,
     PermissionGrantService,
     UserService,
 )
@@ -36,7 +36,7 @@ class AdminComposer(Composer):
         CmdPermissionGrant: "create_permgrant",
     }
 
-    namespaces = IdentityNamespaces()
+    namespaces = Namespaces()
 
     # ----------------------------------
     # CREATE COMMAND

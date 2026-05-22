@@ -12,8 +12,8 @@ from yakoon.ident.models import (
 
 from .services import (
     GroupService,
-    IdentityNamespaces,
     MembershipService,
+    Namespaces,
     PermissionGrantService,
     UserService,
 )
@@ -68,7 +68,7 @@ class IdentityBootstrapper:
 
     async def bootstrap(self) -> None:
 
-        namespaces = IdentityNamespaces()
+        namespaces = Namespaces()
 
         user_ns = namespaces.user_namespace()
         group_ns = namespaces.group_namespace()
