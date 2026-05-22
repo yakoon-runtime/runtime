@@ -63,32 +63,6 @@ class AdminComposer(Composer):
     # FACTORY
     # ----------------------------------
 
-    def _create_user(self):
-
-        user_service = self.ports.on_get_port(UserService)
-
-        return CmdUser(
-            on_project=self.project,
-            on_list_users=user_service.list_users,
-            on_add_user=user_service.add_user,
-            on_edit_user=user_service.edit_user,
-            on_delete_user=user_service.delete_user,
-            on_get_namspace=self.namespaces.user_namespace,
-        )
-
-    def _create_group(self):
-
-        group_service = self.ports.on_get_port(GroupService)
-
-        return CmdGroup(
-            on_project=self.project,
-            on_list_groups=group_service.list_groups,
-            on_add_group=group_service.add_group,
-            on_edit_group=group_service.edit_group,
-            on_delete_group=group_service.delete_group,
-            on_get_namspace=self.namespaces.group_namespace,
-        )
-
     def _create_membership(self):
 
         user_service = self.ports.on_get_port(UserService)

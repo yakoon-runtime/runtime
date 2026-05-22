@@ -45,6 +45,30 @@ async def on_setup(ctx: RuntimeContext):
         on_scan=store.objects.scan,
     )
 
+    # -------------------------------
+    # --- CREATING GROUP ACCESS ---
+    # -------------------------------
+
+    groups = GroupService(
+        on_get=store.objects.get,
+        on_append=store.objects.append,
+        on_replace=store.objects.replace,
+        on_get_many=store.objects.get_many,
+        on_scan=store.objects.scan,
+    )
+
+    # --------------------------
+    # --- CREATING MS ACCESS ---
+    # --------------------------
+
+    membership = MembershipService(
+        on_get=store.objects.get,
+        on_append=store.objects.append,
+        on_replace=store.objects.replace,
+        on_get_many=store.objects.get_many,
+        on_scan=store.objects.scan,
+    )
+
     # await IdentityBootstrapper(
     #    users=users,
     #    groups=groups,
@@ -60,6 +84,8 @@ async def on_setup(ctx: RuntimeContext):
 
     ctx.ports.provide(Namespaces, namespaces)
     ctx.ports.provide(UserService, users)
+    ctx.ports.provide(GroupService, groups)
+    ctx.ports.provide(MembershipService, membership)
 
 
 # ----------------------------------

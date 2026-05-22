@@ -1,6 +1,6 @@
 from yakoon.base.nodes import Node
 
-from .actors import user
+from .actors import group, membership, user
 from .resources import get_resource
 from .setup import on_setup
 
@@ -17,37 +17,12 @@ ident = Node(
 )
 
 # ----------------------------------
-# USERS
+# ADD MODELS
 # ----------------------------------
 
 ident.mount(user)
-
-
-# ----------------------------------
-# GROUPS
-# ----------------------------------
-
-ident.add(
-    Node(
-        key="group",
-        anonymous=True,
-        resolvable=True,
-        navigable=False,
-    )
-)
-
-# ----------------------------------
-# MEMBERSHIP
-# ----------------------------------
-
-ident.add(
-    Node(
-        key="membership",
-        anonymous=True,
-        resolvable=True,
-        navigable=False,
-    )
-)
+ident.mount(group)
+ident.mount(membership)
 
 # ----------------------------------
 # WHOAMI
