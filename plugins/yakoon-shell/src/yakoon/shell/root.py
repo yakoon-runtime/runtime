@@ -4,7 +4,7 @@ from .resources import get_resource
 from .system import system
 
 # ----------------------------------
-# SHELL NODE
+# SHELL
 # ----------------------------------
 
 shell = Node(

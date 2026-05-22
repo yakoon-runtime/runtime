@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from yakoon.base.nodes import Invocation, Node, NodeScope
 
-from .actors import grant, group, membership, on_su, on_whoami, user
-from .on_setup import on_setup
+from .actors import grant, group, membership, on_setup, on_su, on_whoami, user
 from .resources import on_resource
 
 # ----------------------------------

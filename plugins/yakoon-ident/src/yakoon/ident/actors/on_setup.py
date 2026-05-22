@@ -3,14 +3,14 @@ from __future__ import annotations
 from yakoon.base.naming.key import Key
 from yakoon.base.nodes import RuntimeContext
 from yakoon.base.plugins.ports import OnAuthenticate
-from yakoon.ident.models.user import User, UserData
-from yakoon.ident.services.authentication import AuthenticationService
-from yakoon.ident.services.verifier import AllowAllSecretVerifier
 from yakoon.platform.capabilities.permission import PermissionParser
 from yakoon.storage.eventstore.wire import build_store
 
-from .services import (
+from ..models import User, UserData
+from ..services import (
     AccountService,
+    AllowAllSecretVerifier,
+    AuthenticationService,
     GroupService,
     MembershipService,
     Namespaces,
@@ -18,7 +18,8 @@ from .services import (
     PermissionResolver,
     UserService,
 )
-from .settings import Settings
+from ..settings import Settings
+from .bootstrap import bootstrap
 
 # ----------------------------------
 # COMMAND
@@ -133,18 +134,22 @@ async def on_setup(ctx: RuntimeContext):
 
     ctx.ports.publish(OnAuthenticate, auth.authenticate)
 
-    # -----------------------
-    # --- PROVIDE INTENAL ---
-    # -----------------------
+    # -------------------------
+    # --- BOOTSTRAP ACCOUNT ---
+    # -------------------------
 
-    # await IdentityBootstrapper(
-    #    users=users,
-    #    groups=groups,
-    #    membership=membership,
-    #    permgrant=permgrant,
-    # ).bootstrap()
+    await bootstrap(
+        users=users,
+        groups=groups,
+        membership=membership,
+        permgrant=permgrant,
+    )
 
-    # await _demo_data()
+    # ----------------
+    # --- DEMODATA ---
+    # ----------------
+
+    await _demo_data(users=users)
 
     # ------------------------
     # --- PROVIDE INTERNAL ---
@@ -190,7 +195,7 @@ async def _build_index(store):
 # ----------------
 
 
-async def _demo_data(self) -> None:
+async def _demo_data(users) -> None:
 
     namespaces = Namespaces()
     user_ns = namespaces.user_namespace()
@@ -202,7 +207,7 @@ async def _demo_data(self) -> None:
             password_hash="123",
         ),
     )
-    await self.users.save(u1)
+    await users.save(u1)
 
     u2 = User(
         key=Key(namespace=user_ns, id="lara"),
@@ -211,4 +216,4 @@ async def _demo_data(self) -> None:
             password_hash="456",
         ),
     )
-    await self.users.save(u2)
+    await users.save(u2)
