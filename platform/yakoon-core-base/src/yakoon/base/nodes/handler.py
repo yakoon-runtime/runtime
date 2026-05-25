@@ -29,7 +29,7 @@ class RunHandler(Protocol):
 
     def __call__(
         self,
-        ctx: NodeSpace,
+        space: NodeSpace,
     ) -> RunResult: ...
 
 

@@ -8,6 +8,7 @@ from yakoon.base.projection import Projection
 
 
 class OnProject(Protocol):
+
     async def __call__(
         self,
         *,

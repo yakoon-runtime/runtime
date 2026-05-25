@@ -8,6 +8,7 @@ from yakoon.base.plugins.ports import (
 )
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
+from yakoon.base.runtime.sessions.session import Session
 
 from .ports import OnProject
 
@@ -62,22 +63,21 @@ async def on_setup(space: NodeSpace):
 
     async def on_error(
         *,
-        exc: Exception,
-        lang: str,
+        key: NodePath,
+        session: Session,
+        error: Exception,
     ) -> Projection:
 
         resource = ResourceRef(
             package="yakoon.shell",
-            path=f"resources/{lang}/errors/exc",
+            path=f"resources/{session.lang}/errors/exc",
         )
 
         on_project = space.ports.get(OnProjectionResolve)
 
         return await on_project(
             resource=resource,
-            state={
-                "key": exc.args[0].key,
-            },
+            state={"message": error.args[0]},
         )
 
     # ------------------------

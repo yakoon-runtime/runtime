@@ -2,4 +2,4 @@ Fehler <br/>
 ------<br/>
 ...
 
-Message: {{ state.key }}
+Message: {{ state.message }}
