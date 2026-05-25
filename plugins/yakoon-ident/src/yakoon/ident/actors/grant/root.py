@@ -17,8 +17,8 @@ grant = Node(
     resolvable=True,
     navigable=True,
     contextual=True,
-    on_setup=on_setup,
-    on_run=on_grant_user,
+    setup=on_setup,
+    run=on_grant_user,
     invocations=[
         Invocation(action="user", args=["username"]),
     ],
@@ -35,7 +35,7 @@ grant.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_grant_add,
+        run=on_grant_add,
         invocations=[
             Invocation(args=["type", "name", "permission"], options=["bits", "deny"]),
         ],
@@ -52,7 +52,7 @@ grant.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_grant_remove,
+        run=on_grant_remove,
         invocations=[Invocation(args=["type", "name", "permission"])],
     ),
 )
@@ -68,7 +68,7 @@ grant.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_grant_user,
+        run=on_grant_user,
         invocations=[
             Invocation(action="user", args=["username"]),
         ],
@@ -85,7 +85,7 @@ grant.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_grant_group,
+        run=on_grant_group,
         invocations=[Invocation(args=["groupname"])],
     ),
 )
@@ -100,7 +100,7 @@ grant.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_grant_perm,
+        run=on_grant_perm,
         invocations=[Invocation(args=["permission"])],
     ),
 )

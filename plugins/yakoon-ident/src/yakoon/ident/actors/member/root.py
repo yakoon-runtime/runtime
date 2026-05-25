@@ -15,7 +15,7 @@ membership = Node(
     resolvable=True,
     navigable=True,
     contextual=True,
-    on_run=on_membership_users,
+    run=on_membership_users,
     invocations=[
         Invocation(action=None, default=True),
     ],
@@ -31,7 +31,7 @@ membership.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_membership_add,
+        run=on_membership_add,
         invocations=[Invocation(args=["username", "groupname"])],
     ),
 )
@@ -46,7 +46,7 @@ membership.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_membership_users,
+        run=on_membership_users,
         invocations=[Invocation(args=["groupname"])],
     ),
 )
@@ -61,7 +61,7 @@ membership.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_membership_groups,
+        run=on_membership_groups,
         invocations=[Invocation(args=["username"])],
     ),
 )
@@ -76,7 +76,7 @@ membership.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_membership_remove,
+        run=on_membership_remove,
         invocations=[Invocation(args=["username", "groupname"])],
     ),
 )

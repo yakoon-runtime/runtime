@@ -12,7 +12,7 @@ shell = Node(
     name="Shell",
     is_shell=True,
     anonymous=True,
-    on_setup=on_setup,
+    setup=on_setup,
 )
 
 shell.mount(system)

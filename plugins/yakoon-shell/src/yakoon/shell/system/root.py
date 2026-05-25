@@ -27,7 +27,7 @@ system = Node(
 system.add(
     Node(
         key="welcome",
-        on_run=on_welcome,
+        run=on_welcome,
         anonymous=True,
         scope=NodeScope.NODE,
         resolvable=True,
@@ -42,7 +42,7 @@ system.add(
 system.add(
     Node(
         key="version",
-        on_run=on_version,
+        run=on_version,
         anonymous=True,
         scope=NodeScope.NODE,
         resolvable=True,
@@ -57,7 +57,7 @@ system.add(
 system.add(
     Node(
         key="man",
-        on_run=on_man,
+        run=on_man,
         anonymous=True,
         scope=NodeScope.GLOBAL,
         resolvable=True,
@@ -75,7 +75,7 @@ system.add(
 system.add(
     Node(
         key="ls",
-        on_run=on_list,
+        run=on_list,
         anonymous=True,
         scope=NodeScope.GLOBAL,
         resolvable=True,
@@ -90,7 +90,7 @@ system.add(
 system.add(
     Node(
         key="cd",
-        on_run=on_cd,
+        run=on_cd,
         anonymous=True,
         scope=NodeScope.GLOBAL,
         resolvable=True,
@@ -105,7 +105,7 @@ system.add(
 system.add(
     Node(
         key="pwd",
-        on_run=on_pwd,
+        run=on_pwd,
         anonymous=True,
         scope=NodeScope.GLOBAL,
         resolvable=True,

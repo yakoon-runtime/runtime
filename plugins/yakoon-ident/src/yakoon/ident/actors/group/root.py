@@ -15,7 +15,7 @@ group = Node(
     resolvable=True,
     navigable=True,
     contextual=True,
-    on_run=on_group_list,
+    run=on_group_list,
     invocations=[
         Invocation(action=None, default=True),
     ],
@@ -31,7 +31,7 @@ group.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_group_list,
+        run=on_group_list,
     ),
 )
 
@@ -45,7 +45,7 @@ group.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_group_add,
+        run=on_group_add,
         invocations=[
             Invocation(args=["groupname"]),
         ],
@@ -62,7 +62,7 @@ group.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_group_edit,
+        run=on_group_edit,
         invocations=[
             Invocation(args=["groupname"], options=["enabled"]),
         ],
@@ -79,7 +79,7 @@ group.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_group_delete,
+        run=on_group_delete,
         invocations=[Invocation(args=["groupname"])],
     ),
 )

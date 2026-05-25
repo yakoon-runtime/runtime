@@ -12,7 +12,7 @@ ident = Node(
     key="ident",
     name="Ident",
     anonymous=True,
-    on_setup=on_setup,
+    setup=on_setup,
 )
 
 # ----------------------------------
@@ -34,7 +34,7 @@ ident.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_whoami,
+        run=on_whoami,
         scope=NodeScope.GLOBAL,
     )
 )
@@ -49,7 +49,7 @@ ident.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_su,
+        run=on_su,
         scope=NodeScope.GLOBAL,
         invocations=[
             Invocation(args=["user"], options=["password"]),

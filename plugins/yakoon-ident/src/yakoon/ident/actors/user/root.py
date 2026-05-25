@@ -15,7 +15,7 @@ user = Node(
     resolvable=True,
     navigable=True,
     contextual=True,
-    on_run=on_user_list,
+    run=on_user_list,
     invocations=[
         Invocation(action=None, default=True),
     ],
@@ -31,7 +31,7 @@ user.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_user_list,
+        run=on_user_list,
     ),
 )
 
@@ -45,7 +45,7 @@ user.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_user_add,
+        run=on_user_add,
         invocations=[
             Invocation(args=["username"], options=["password"]),
         ],
@@ -62,7 +62,7 @@ user.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_user_edit,
+        run=on_user_edit,
         invocations=[
             Invocation(args=["username"], options=["password", "enabled"]),
         ],
@@ -79,7 +79,7 @@ user.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        on_run=on_user_delete,
+        run=on_user_delete,
         invocations=[Invocation(args=["username"])],
     ),
 )

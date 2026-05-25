@@ -92,8 +92,8 @@ class Node:
     # RUN HANDLER
     # ----------------------------------
 
-    on_run: RunHandler | None = None
-    on_setup: RunHandler | None = None
+    run: RunHandler | None = None
+    setup: RunHandler | None = None
 
     # ----------------------------------
     # FIELDS
@@ -271,12 +271,12 @@ class Node:
     def has_run(self) -> bool:
         """Returns True if the node provides a run capability."""
 
-        return self.on_run is not None
+        return self.run is not None
 
     def has_setup(self) -> bool:
         """Returns True if the node provides a setup capability."""
 
-        return self.on_setup is not None
+        return self.setup is not None
 
     # ----------------------------------
     # HIERARCHY

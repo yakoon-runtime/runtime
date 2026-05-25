@@ -55,7 +55,7 @@ class CommandEngine:
             id=uuid4().hex,
             node=node,
             event=InputEvent(node.key, tokens=[]),
-            cursor=FlowCursor("on_setup"),
+            cursor=FlowCursor("setup"),
             kind=self.DEFAULT_FLOW_KIND,
         )
 
@@ -105,7 +105,7 @@ class CommandEngine:
             node=node,
             pipeline=pipeline_commands,
             event=event.update(command=node.key, tokens=tokens),
-            cursor=FlowCursor("on_run"),
+            cursor=FlowCursor("run"),
             kind=self.DEFAULT_FLOW_KIND,
         )
 

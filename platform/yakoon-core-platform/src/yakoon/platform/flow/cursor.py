@@ -9,8 +9,8 @@ if TYPE_CHECKING:
     from yakoon.base.nodes import Node, NodeSpace
 
 HandlerName = Literal[
-    "on_run",
-    "on_setup",
+    "run",
+    "setup",
 ]
 
 
