@@ -1,6 +1,7 @@
 from yakoon.base.flow import out
 from yakoon.base.nodes import RuntimeContext
-from yakoon.base.nodes.path import NodePath
+from yakoon.base.plugins.ports import OnManualResolve
+from yakoon.base.projection import Projection
 from yakoon.base.sources import (
     DataRequest,
     OnSourceRead,
@@ -29,40 +30,6 @@ async def on_man(ctx: RuntimeContext):
     # ----------------------------------
 
     if not found:
-
-        projection = await ctx.ports.get(OnProject)(
-            name="man/error",
-            lang=ctx.session.lang,
-            state={
-                "key": key,
-            },
-        )
-
-        yield out(projection)
-        return
-
-    # ----------------------------------
-    # Resolve manual
-    # ----------------------------------
-    ports = ctx.ports_from(
-        path=NodePath.from_string("."),
-        absolute=False,
-    )
-
-    resource = await ctx.resource_from(
-        path=NodePath.from_string("."),
-        absolute=False,
-        scope=key,
-        domain=found["help_domain"],
-        lang=ctx.session.lang,
-    )
-
-    # ----------------------------------
-    # Manual missing
-    # ----------------------------------
-
-    if not resource:
-
         projection = await ctx.ports.get(OnProject)(
             name="man/missing",
             lang=ctx.session.lang,
@@ -75,14 +42,35 @@ async def on_man(ctx: RuntimeContext):
         return
 
     # ----------------------------------
-    # Render manual
+    # Resolve manual
     # ----------------------------------
 
-    projection = await ctx.ports.get(OnProject)(
-        resource=resource,
-        state={
-            "node": found,
-        },
-    )
+    projection: Projection | None = None
+    ports = ctx.ports_from(path=found["path"], absolute=True)
+    if ports and ports.has(OnManualResolve):
+        on_manual_resolve = ports.get(OnManualResolve)
+        try:
+            projection = await on_manual_resolve(
+                key=found["path"],
+                lang=ctx.request.lang,
+            )
+        except Exception:
+            pass
+
+    # ----------------------------------
+    # Manual missing
+    # ----------------------------------
+
+    if not projection:
+        projection = await ctx.ports.get(OnProject)(
+            name="man/missing",
+            lang=ctx.session.lang,
+            state={
+                "key": key,
+            },
+        )
+
+        yield out(projection)
+        return
 
     yield out(projection)

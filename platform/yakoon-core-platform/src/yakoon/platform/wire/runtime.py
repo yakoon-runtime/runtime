@@ -6,7 +6,7 @@ from yakoon.base.plugins.ports import (
     OnAuthorizeWrite,
     OnCompile,
     OnJinjaRender,
-    OnProject,
+    OnProjectionResolve,
     OnResourceLoad,
     OnSessionSave,
 )
@@ -103,10 +103,10 @@ def build_runtime(
     platform.ports.provide(OnSessionSave, session_manager.save)
     platform.ports.provide(OnAuthorizeRead, perm_checker.can_read)
     platform.ports.provide(OnAuthorizeWrite, perm_checker.can_write)
+    platform.ports.provide(OnProjectionResolve, projector.project)
     platform.ports.provide(OnResourceLoad, package_reader.get_text)
     platform.ports.provide(OnJinjaRender, jinja_engine.render_str)
     platform.ports.provide(OnCompile, compiler.compile)
-    platform.ports.provide(OnProject, projector.project)
 
     # -----------------
     # --- ATTACHING ---

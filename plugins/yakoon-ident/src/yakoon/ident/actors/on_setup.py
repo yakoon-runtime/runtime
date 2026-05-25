@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from yakoon.base.naming.key import Key
 from yakoon.base.nodes import RuntimeContext
-from yakoon.base.plugins.ports import OnAuthenticate
-from yakoon.base.plugins.ports import OnProject as OnPlatformProject
+from yakoon.base.plugins.ports import OnAuthenticate, OnProjectionResolve
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
 from yakoon.platform.capabilities.permission import PermissionParser
@@ -165,7 +164,7 @@ async def on_setup(ctx: RuntimeContext):
             path=f"resources/{lang}/templates/{name}",
         )
 
-        on_project = ctx.ports.get(OnPlatformProject)
+        on_project = ctx.ports.get(OnProjectionResolve)
         return await on_project(resource=resource, state=state)
 
     # ----------------

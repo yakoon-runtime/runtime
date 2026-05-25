@@ -255,5 +255,5 @@ class NodeSource(DataSource):
             "scope": str(node.scope),
             "visibility": str(node.visibility),
             "parent": node.parent.key if node.parent else None,
-            "help_domain": node.help_domain,
+            "path": node.path,
         }

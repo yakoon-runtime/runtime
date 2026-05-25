@@ -5,7 +5,7 @@ from typing import Protocol, cast
 from yakoon.base.controllers import Composer
 from yakoon.base.plugins.ports import (
     OnManualGet,
-    OnProject,
+    OnProjectionResolve,
     OnSessionSave,
 )
 from yakoon.base.sources import OnSourceRead
@@ -32,24 +32,24 @@ class SystemComposer(Composer):
 
     command_factories = {
         CmdVersion: lambda self: CmdVersion(
-            on_project=self.port(OnProject),
+            on_project=self.port(OnProjectionResolve),
         ),
         CmdWelcome: lambda self: CmdWelcome(
-            on_project=self.port(OnProject),
+            on_project=self.port(OnProjectionResolve),
         ),
         CmdQuit: lambda self: CmdQuit(
-            on_project=self.port(OnProject),
+            on_project=self.port(OnProjectionResolve),
             on_set_mark=self.access.mark,
         ),
         CmdUse: lambda self: CmdUse(
             on_source=self.port(OnSourceRead),
-            on_project=self.port(OnProject),
+            on_project=self.port(OnProjectionResolve),
             on_get_active_app=self.access.get_active_app,
             on_set_active_app=self.access.set_active_app,
             on_save_session=self.save_session,
         ),
         CmdMan: lambda self: CmdMan(
-            on_project=self.port(OnProject),
+            on_project=self.port(OnProjectionResolve),
             on_get_manual=self.port(OnManualGet),
             on_source=self.port(OnSourceRead),
             on_get_active_app=self.access.get_active_app,
@@ -64,7 +64,7 @@ class SystemComposer(Composer):
             on_save_session=self.save_session,
         ),
         CmdLs: lambda self: CmdLs(
-            on_project=self.port(OnProject),
+            on_project=self.port(OnProjectionResolve),
             on_source=self.port(OnSourceRead),
             on_get_session=lambda: self.session,
             on_get_active_app=self.access.get_active_app,

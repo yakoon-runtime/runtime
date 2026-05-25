@@ -1,6 +1,7 @@
 from typing import Protocol
 
 from yakoon.base.naming import Namespace
+from yakoon.base.nodes import NodePath
 from yakoon.base.plugins.models import AuthResult
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
@@ -11,14 +12,14 @@ from yakoon.base.runtime.sessions import Session
 # -------------------
 
 
-class OnProject(Protocol):
+class OnProjectionResolve(Protocol):
     async def __call__(
         self, *, resource: ResourceRef, state: dict | None = None
     ) -> Projection: ...
 
 
-class OnManual(Protocol):
-    async def __call__(self, *, name: str) -> ResourceRef: ...
+class OnManualResolve(Protocol):
+    async def __call__(self, *, key: NodePath, lang: str) -> Projection | None: ...
 
 
 class OnSessionSave(Protocol):

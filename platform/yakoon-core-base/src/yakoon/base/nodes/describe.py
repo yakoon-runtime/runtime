@@ -7,8 +7,6 @@ class NodeDescription:
     key: str
     name: str | None
 
-    help_domain: str
-
     root: str
     parent: str | None
 

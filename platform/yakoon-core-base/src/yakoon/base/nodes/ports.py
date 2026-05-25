@@ -96,6 +96,9 @@ class NodePorts:
         """
         return self._local.get(port)
 
+    def has(self, port):
+        return self._local.has(port=port)
+
     # ----------------------------------
     # FORK
     # ----------------------------------

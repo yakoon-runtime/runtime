@@ -42,8 +42,6 @@ class Node:
     key: str
     name: str | None = None
 
-    help_domain: str = "manual"
-
     # ----------------------------------
     # EXECUTION METADATA
     # ----------------------------------
@@ -126,7 +124,6 @@ class Node:
         return NodeDescription(
             key=self.key,
             name=self.name,
-            help_domain=self.help_domain,
             root=self.root.key,
             parent=parent,
             kind=self.kind.value,
