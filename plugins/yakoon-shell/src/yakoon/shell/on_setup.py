@@ -3,7 +3,7 @@ from __future__ import annotations
 from yakoon.base.nodes import RuntimeContext
 from yakoon.base.plugins.ports import OnCompile, OnJinjaRender, OnResourceLoad
 from yakoon.base.projection import Projection
-from yakoon.base.resources.resource import ResourceRef
+from yakoon.base.resources import ResourceRef
 
 from .ports import OnProject
 
