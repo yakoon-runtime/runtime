@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Protocol, cast
+from typing import Protocol, cast
 
-from yakoon.base.errors import ErrorKey, UnhandledError
 from yakoon.base.naming import Key
 from yakoon.base.nodes import Node
-from yakoon.base.nodes.errors import UnknowOptionsError, UsageError
+from yakoon.base.plugins.ports import OnErrorResolve
 from yakoon.base.projection import Projection
-from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime import InputContext
 from yakoon.platform.machine import (
     CommandEngine,
@@ -18,33 +16,21 @@ from yakoon.platform.machine import (
     Scheduler,
     SessionBuilder,
 )
-from yakoon.platform.runtime import NodeNotFound, PermissionDenied, Session
+from yakoon.platform.runtime import Session
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
 
 # ----------------------------------
 # ERRORS
 # ----------------------------------
 
-errors = {
-    UnhandledError: "error.sam",
-    NodeNotFound: "command/not_found.sam",
-    UsageError: "command/usage.sam",
-    UnknowOptionsError: "command/unknown_options.sam",
-    PermissionDenied: "permissions/denied.sam",
-}
-
 
 def build_machine(
-    root: Node,
+    platform: Node,
     on_suggest: OnSuggest,
     on_projection_send: OnProjectionSend,
-    on_projection_create: OnProjectionCreate,
     on_session: OnGetOrCreateSession,
     on_has_permission: OnHasPermission,
-    on_audit_log: OnAuditLog,
-    on_audit_error: OnAuditError,
     on_audit_warning: OnAuditWarning,
-    on_audit_security: OnAuditSecurity,
     on_initialize: Oninitialize,
 ) -> RuntimeHost:
 
@@ -53,7 +39,7 @@ def build_machine(
     # ---------------
 
     resolver = InvocationResolver(
-        root=root,
+        root=platform,
         on_authorize=on_has_permission,
         on_suggest=on_suggest,
     )
@@ -72,36 +58,37 @@ def build_machine(
         on_resolve_node=resolver.resolve,
         on_parse_input=parser.parse,
         on_projection=on_projection_send,
-        on_audit_security=on_audit_security,
     )
 
-    # ------------------------
-    # --- PROJECTION ---
-    # ------------------------
+    # --------------
+    # --- ERRORS ---
+    # --------------
 
-    async def load_projection(
-        *, key: ErrorKey, lang: str, state: dict | None = None
-    ) -> Projection:
-
-        parts = errors.get(key)
-        resource = ResourceRef(
-            package="yakoon.platform",
-            path=f"templates/{lang}/{parts}",
-        )
-        return await on_projection_create(resource=resource, state=state)
+    async def on_error_resolve(
+        *,
+        node: Node,
+        session,
+        error: Exception,
+    ) -> Projection | None:
+        try:
+            on_error = node.ports.get(OnErrorResolve)
+            return await on_error(node=node, session=session, error=error)
+        except Exception:
+            on_error = node.root.ports.get(OnErrorResolve)
+            return await on_error(node=node, session=session, error=error)
 
     # -----------------
     # --- EXECUTION ---
     # -----------------
 
     scheduler = Scheduler(
+        platform=platform,
         on_setup=engine.setup,
         on_dispatch=engine.dispatch,
         on_step_flow=engine.step_flow,
         on_show_projection=on_projection_send,
-        on_audit_error=on_audit_error,
         on_audit_warning=on_audit_warning,
-        on_load_projection=load_projection,
+        on_error_resolve=on_error_resolve,
     )
 
     # ------------------------
@@ -147,7 +134,7 @@ def build_machine(
             if node.has_setup():
                 nodes_to_setup.append(node)
 
-        root.walk(collect_nodes)
+        platform.walk(collect_nodes)
         for node in nodes_to_setup:
             await scheduler.setup(session, node)
 
@@ -181,18 +168,6 @@ class OnBootstrapPermissions(Protocol):
     def __call__(self, *, session: Session): ...
 
 
-class OnAuditError(Protocol):
-    def __call__(self, *, exc: Exception, session: Session) -> None: ...
-
-
-class OnAuditLog(Protocol):
-    def __call__(self, *, message: str) -> None: ...
-
-
-class OnAuditSecurity(Protocol):
-    def __call__(self, *, session, obj, action) -> None: ...
-
-
 class OnAuditWarning(Protocol):
     def __call__(self, *, message: str, session: Session) -> None: ...
 
@@ -210,15 +185,6 @@ class OnProjectionSend(Protocol):
         ctx: InputContext | None,
         job_id: str = "system",
     ) -> None: ...
-
-
-class OnProjectionCreate(Protocol):
-    async def __call__(
-        self,
-        *,
-        resource: ResourceRef,
-        state: dict[str, Any] | None = None,
-    ) -> Projection: ...
 
 
 class OnSuggest(Protocol):

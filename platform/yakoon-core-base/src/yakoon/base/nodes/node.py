@@ -52,8 +52,8 @@ class Node:
 
     ports: NodePorts = field(
         default_factory=lambda: NodePorts(
-            Container(),
-            Container(),
+            Container(allow_override=False),
+            Container(allow_override=True),
         )
     )
 

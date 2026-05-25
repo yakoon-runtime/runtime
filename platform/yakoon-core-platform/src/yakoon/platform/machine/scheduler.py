@@ -6,15 +6,13 @@ import time
 from collections import deque
 from typing import Protocol
 
-from yakoon.base.errors.state import ErrorKey, ErrorState
-from yakoon.base.flow.primitives import Control
-from yakoon.base.flow.primitives.outcome import Outcome
+from yakoon.base.flow.primitives import Control, Outcome
 from yakoon.base.nodes import Node
+from yakoon.base.plugins.ports import OnErrorResolve
 from yakoon.base.projection import Projection
-from yakoon.base.runtime.errors import DomainError
-from yakoon.base.runtime.input import InputContext, InputEvent
+from yakoon.base.runtime import InputContext, InputEvent
 from yakoon.platform.flow import Flow, FlowKind
-from yakoon.platform.runtime import PlatformError, Session
+from yakoon.platform.runtime import Session
 
 
 class Scheduler:
@@ -31,22 +29,23 @@ class Scheduler:
 
     def __init__(
         self,
+        platform: Node,
         on_setup: OnSetup,
         on_dispatch: OnDispatch,
         on_step_flow: OnStepFlow,
-        on_load_projection: OnLoadProjection,
         on_show_projection: OnShowProjection,
-        on_audit_error: OnAuditError,
         on_audit_warning: OnAuditWarning,
+        on_error_resolve: OnErrorResolve,
     ):
+        self.platform = platform
+
         # Hooks
         self.on_setup = on_setup
         self.on_dispatch = on_dispatch
         self.on_step_flow = on_step_flow
-        self.on_load_projection = on_load_projection
         self.on_show_projection = on_show_projection
-        self.on_audit_error = on_audit_error
         self.on_audit_warning = on_audit_warning
+        self.on_error_resolve = on_error_resolve
 
         # Flow-basierte Queue: (session, flow)
         self._ready_user = deque()
@@ -188,39 +187,10 @@ class Scheduler:
                             self.schedule_flow(flow, session)
                             break
 
-                except DomainError as e:
-                    error = await self._get_error(e, session)
-
-                    event = flow.event
+                except Exception as error:
                     if session.interaction_flow:
                         session.del_flow(session.interaction_flow)
-
-                    await self.on_show_projection(
-                        session=session,
-                        projection=error,
-                        ctx=event.context,
-                    )
-
-                except PlatformError as e:
-                    error = await self._get_error(e, session)
-
-                    event = flow.event
-                    await self.on_show_projection(
-                        session=session,
-                        projection=error,
-                        ctx=event.context,
-                    )
-
-                except Exception as e:
-                    error = await self._get_error(e, session)
-
-                    event = flow.event
-                    self.on_audit_error(exc=e, session=session)
-                    await self.on_show_projection(
-                        session=session,
-                        projection=error,
-                        ctx=event.context,
-                    )
+                    await self._show_error(session, None, flow.node, error)
 
             # --------------------------------------------------
             # Yield zurück an Event Loop
@@ -252,50 +222,18 @@ class Scheduler:
     async def _call_runtime(
         self, session: Session, ctx: InputContext | None, callback, **kwargs
     ):
+        node: Node | None = None
         try:
-            await callback(session=session, **kwargs)
+            flow = await callback(session=session, **kwargs)
+            if flow:
+                node = flow.node
 
             # alle Flows der Session schedulen
             for flow in session.flows():
                 self.schedule_flow(flow, session)
 
-        except DomainError as e:
-            error = await self._get_error(e, session)
-
-            await self.on_show_projection(
-                session=session,
-                projection=error,
-                ctx=ctx,
-            )
-
-        except PlatformError as e:
-            error = await self._get_error(e, session)
-
-            await self.on_show_projection(
-                session=session,
-                projection=error,
-                ctx=ctx,
-            )
-            pass
-
-        except Exception as e:
-            error = await self._get_error(e, session)
-
-            self.on_audit_error(exc=e, session=session)
-            await self.on_show_projection(
-                session=session,
-                projection=error,
-                ctx=ctx,
-            )
-
-    async def _get_error(self, exc: Exception, session: Session) -> Projection:
-
-        state = ErrorState.extract_state(exc)
-        return await self.on_load_projection(
-            key=state.key,
-            lang=session.lang,
-            state=state.data,
-        )
+        except Exception as error:
+            await self._show_error(session, ctx, node, error)
 
     def _wake_sleeping(self):
         now = time.time()
@@ -330,6 +268,21 @@ class Scheduler:
 
         raise RuntimeError(f"Unhandled control: {type(control)}")
 
+    async def _show_error(self, session, ctx, node, error):
+
+        projection = await self.on_error_resolve(
+            node=node or self.platform,
+            session=session,
+            error=error,
+        )
+
+        if projection:
+            await self.on_show_projection(
+                session=session,
+                projection=projection,
+                ctx=ctx,
+            )
+
 
 # ----------------------------------
 # PORTS
@@ -348,10 +301,6 @@ class OnStepFlow(Protocol):
     async def __call__(self, *, flow: Flow, session: Session) -> Outcome | None: ...
 
 
-class OnAuditError(Protocol):
-    def __call__(self, *, exc: Exception, session: Session) -> None: ...
-
-
 class OnAuditWarning(Protocol):
     def __call__(self, *, message: str, session: Session) -> None: ...
 
@@ -364,13 +313,3 @@ class OnShowProjection(Protocol):
         projection: Projection,
         ctx: InputContext | None,
     ) -> None: ...
-
-
-class OnLoadProjection(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: ErrorKey,
-        lang: str,
-        state: dict | None = None,
-    ) -> Projection: ...

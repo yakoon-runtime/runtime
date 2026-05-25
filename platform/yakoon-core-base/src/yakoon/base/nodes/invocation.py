@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from yakoon.base.errors import ErrorState
-
 from .errors import UnknowOptionsError, UsageError
 
 
@@ -90,13 +88,10 @@ class InvocationValidator:
         if not matching:
 
             raise UsageError(
-                ErrorState.by_type(
-                    key=UsageError,
-                    usages=self._usage_data(
-                        node,
-                        invocations,
-                    ),
-                )
+                usages=self._usage_data(
+                    node,
+                    invocations,
+                ),
             )
 
         # ----------------------------------
@@ -141,15 +136,12 @@ class InvocationValidator:
             if unknown_options:
 
                 raise UnknowOptionsError(
-                    ErrorState.by_type(
-                        key=UnknowOptionsError,
-                        unknown_options=sorted(unknown_options),
-                        valid_options=sorted(valid_options),
-                        usages=self._usage_data(
-                            node,
-                            [invocation],
-                        ),
-                    )
+                    unknown_options=sorted(unknown_options),
+                    valid_options=sorted(valid_options),
+                    usages=self._usage_data(
+                        node,
+                        [invocation],
+                    ),
                 )
 
             # ----------------------------------
@@ -163,13 +155,10 @@ class InvocationValidator:
         # ----------------------------------
 
         raise UsageError(
-            ErrorState.by_type(
-                key=UsageError,
-                usages=self._usage_data(
-                    node,
-                    matching,
-                ),
-            )
+            usages=self._usage_data(
+                node,
+                matching,
+            ),
         )
 
     # ----------------------------------

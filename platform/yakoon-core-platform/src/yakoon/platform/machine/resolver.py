@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.errors import ErrorState
 from yakoon.base.nodes import Node, NodePath, NodeScope
 from yakoon.platform.capabilities.permission import Permission
 from yakoon.platform.runtime import (
@@ -79,12 +78,7 @@ class InvocationResolver:
         key = key.strip()
 
         if not key:
-            raise NodeNotFound(
-                ErrorState.by_type(
-                    key=NodeNotFound,
-                    command=key,
-                )
-            )
+            raise NodeNotFound(command=key)
 
         # ---------------------------------
         # Resolve parent runtime space
@@ -97,12 +91,7 @@ class InvocationResolver:
             resolved = self._root.find(parent, absolute=True)
 
             if not resolved:
-                raise NodeNotFound(
-                    ErrorState.by_type(
-                        key=NodeNotFound,
-                        command=str(parent),
-                    )
-                )
+                raise NodeNotFound(command=str(parent))
 
             current = resolved
 
@@ -233,11 +222,8 @@ class InvocationResolver:
         )
 
         raise NodeNotFound(
-            ErrorState.by_type(
-                key=NodeNotFound,
-                command=key,
-                suggestions=suggestions,
-            )
+            command=key,
+            suggestions=suggestions,
         )
 
     def _ensure_invocation(
@@ -265,11 +251,7 @@ class InvocationResolver:
             session=session,
             perm_key=fq,
         ):
-            raise PermissionDenied(
-                ErrorState.by_type(
-                    key=PermissionDenied,
-                )
-            )
+            raise PermissionDenied()
 
 
 # -------------------------------------------------------------------------

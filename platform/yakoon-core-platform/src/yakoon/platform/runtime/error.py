@@ -1,22 +1,20 @@
 # ----------------------------------------
-# PLATFORM ERRORS
-# ----------------------------------------
-
-
-class PlatformError(Exception):
-    pass
-
-
-# ----------------------------------------
 # NODE ERRORS
 # ----------------------------------------
 
 
-class NodeNotFound(PlatformError):
-    pass
+class NodeNotFound(Exception):
+
+    def __init__(
+        self,
+        command: str,
+        suggestions: list[str] | None = None,
+    ):
+        self.command = command
+        self.suggestions = suggestions or []
 
 
-class NodeNotRunnable(PlatformError):
+class NodeNotRunnable(Exception):
     pass
 
 
@@ -25,5 +23,5 @@ class NodeNotRunnable(PlatformError):
 # ----------------------------------------
 
 
-class PermissionDenied(PlatformError):
+class PermissionDenied(Exception):
     pass

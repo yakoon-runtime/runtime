@@ -5,7 +5,6 @@ from collections.abc import Sequence
 from typing import Protocol
 from uuid import uuid4
 
-from yakoon.base.errors import ErrorState, UnhandledError
 from yakoon.base.flow.primitives import (
     AutoFocus,
     AwaitEvent,
@@ -19,14 +18,11 @@ from yakoon.base.flow.primitives import (
     Stop,
 )
 from yakoon.base.nodes import Node, NodePath, Request, RuntimeContext
-from yakoon.base.nodes.errors import InvalidInvocation
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext
 from yakoon.platform.flow import Flow, FlowCursor, FlowKind
 from yakoon.platform.runtime import (
-    NodeNotFound,
-    PermissionDenied,
     Session,
 )
 
@@ -40,12 +36,10 @@ class CommandEngine:
         on_resolve_node: OnResolveNode,
         on_parse_input: OnParseInput,
         on_projection: OnProjection,
-        on_audit_security: OnAuditSecurity,
     ):
         self.on_resolve_command = on_resolve_node
         self.on_parse_input = on_parse_input
         self.on_projection = on_projection
-        self.on_audit_security = on_audit_security
 
     # ----------------------------------------------------
     # PUBLIC API
@@ -82,63 +76,41 @@ class CommandEngine:
         #    command=request.raw,
         # )
 
-        try:
+        # find node
+        node, tokens = self.on_resolve_command(
+            parent=session.get_current_node(),
+            key=event.command,
+            tokens=event.tokens,
+            session=session,
+        )
 
-            # find node
-            node, tokens = self.on_resolve_command(
-                parent=session.get_current_node(),
-                key=event.command,
-                tokens=event.tokens,
-                session=session,
-            )
+        # TODO: Wie wollen wir darauf später reagieren?
+        if not node.has_run():
+            return None
 
-            # TODO: Wie wollen wir darauf später reagieren?
-            if not node.has_run():
-                return None
+        # session.execution.step(
+        #    ExecStep.COMMAND_RESOLVED,
+        #    command=command_type.key,
+        #    controller=resolved_controller.id,
+        # )
 
-            # session.execution.step(
-            #    ExecStep.COMMAND_RESOLVED,
-            #    command=command_type.key,
-            #    controller=resolved_controller.id,
-            # )
+        # session.execution.step(
+        #    ExecStep.COMMAND_PREPARED,
+        #    command=command_type.key,
+        #    controller=resolved_controller.id,
+        # )
 
-            # session.execution.step(
-            #    ExecStep.COMMAND_PREPARED,
-            #    command=command_type.key,
-            #    controller=resolved_controller.id,
-            # )
+        flow = Flow(
+            id=uuid4().hex,
+            node=node,
+            pipeline=pipeline_commands,
+            event=event.update(command=node.key, tokens=tokens),
+            cursor=FlowCursor("on_run"),
+            kind=self.DEFAULT_FLOW_KIND,
+        )
 
-            flow = Flow(
-                id=uuid4().hex,
-                node=node,
-                pipeline=pipeline_commands,
-                event=event.update(command=node.key, tokens=tokens),
-                cursor=FlowCursor("on_run"),
-                kind=self.DEFAULT_FLOW_KIND,
-            )
-
-            session.add_flow(flow)
-            return flow
-
-        except (NodeNotFound, InvalidInvocation):
-            raise
-
-        except PermissionDenied:
-            self.on_audit_security(
-                session=session,
-                obj="command",
-                action=node.key if node else event.command,
-            )
-            raise
-
-        except Exception as exc:
-            raise UnhandledError(
-                ErrorState.by_type(
-                    key=UnhandledError,
-                    args=exc.args,
-                    debug=session.debug,
-                )
-            ) from exc
+        session.add_flow(flow)
+        return flow
 
     async def step_flow(self, flow: Flow, session: Session) -> Outcome | None:
 
@@ -324,10 +296,6 @@ class OnProjection(Protocol):
         ctx: InputContext | None,
         job_id: str = "system",
     ) -> None: ...
-
-
-class OnAuditSecurity(Protocol):
-    def __call__(self, *, session, obj, action) -> None: ...
 
 
 class OnContinuePipeline(Protocol):
