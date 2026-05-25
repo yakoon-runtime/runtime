@@ -5,7 +5,6 @@ from yakoon.base.plugins.models import AuthResult
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime.sessions import Session
-from yakoon.platform.capabilities.permission.models.set import PermissionSet
 
 # -------------------
 # -- PLUGIN PORTS ---
@@ -18,7 +17,11 @@ class OnProject(Protocol):
     ) -> Projection: ...
 
 
-class OnSaveSession(Protocol):
+class OnManual(Protocol):
+    async def __call__(self, *, name: str) -> ResourceRef: ...
+
+
+class OnSessionSave(Protocol):
     async def __call__(self, *, session: Session): ...
 
 
@@ -41,5 +44,26 @@ class OnBootstrapPermissions(Protocol):
         self,
         *,
         session: Session,
-        permissions: PermissionSet,
+        permissions,
     ): ...
+
+
+# ------------------
+# -- PROJECTIONS ---
+# ------------------
+
+
+class OnResourceLoad(Protocol):
+    def __call__(
+        self,
+        *,
+        resource: ResourceRef,
+    ) -> str: ...
+
+
+class OnJinjaRender(Protocol):
+    def __call__(self, content: str, *, context: dict) -> str: ...
+
+
+class OnCompile(Protocol):
+    def __call__(self, *, text: str, context: dict) -> Projection: ...

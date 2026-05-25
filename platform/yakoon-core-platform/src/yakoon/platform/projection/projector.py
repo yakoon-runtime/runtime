@@ -5,8 +5,6 @@ from typing import Any, Protocol
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
 
-from .compiler import ResolverContext
-
 
 class Projector:
     """
@@ -35,9 +33,8 @@ class Projector:
             state = {}
 
         text = self.on_render(resource=resource, context=state)
-        context = ResolverContext(assets=resource)  # TODO:
 
-        projection = self.on_compile(text=text, ctx=context)
+        projection = self.on_compile(text=text, context={})
         if projection.id is None:
             raise RuntimeError(
                 "Renderer returned a Projection without id (parser invariant violated)"
@@ -56,4 +53,4 @@ class OnRender(Protocol):
 
 
 class OnCompile(Protocol):
-    def __call__(self, *, text: str, ctx: ResolverContext) -> Projection: ...
+    def __call__(self, *, text: str, context: dict) -> Projection: ...

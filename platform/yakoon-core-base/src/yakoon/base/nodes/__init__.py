@@ -1,5 +1,4 @@
 from .context import RuntimeContext
-from .handler import ResourceHandler
 from .invocation import Invocation
 from .node import Node
 from .path import NodePath
@@ -19,8 +18,6 @@ __all__ = [
     "NodePath",
     # .request
     "Request",
-    # .handler
-    "ResourceHandler",
     # .invocation
     "Invocation",
 ]

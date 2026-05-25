@@ -7,7 +7,7 @@ from typing import Any, TypeVar
 from yakoon.base.runtime import Container
 
 from .describe import NodeDescription
-from .handler import ResourceHandler, RunHandler
+from .handler import RunHandler
 from .invocation import Invocation, InvocationValidator
 from .path import NodePath
 from .ports import NodePorts
@@ -97,12 +97,6 @@ class Node:
 
     on_run: RunHandler | None = None
     on_setup: RunHandler | None = None
-
-    # ----------------------------------
-    # CONTEXT HANDLER
-    # ----------------------------------
-
-    on_resource: ResourceHandler | None = None
 
     # ----------------------------------
     # FIELDS
@@ -254,70 +248,45 @@ class Node:
 
         return self.children.get(key)
 
-    async def get_resource_from(
-        self, path: NodePath, absolute: bool, domain: Any, **kwargs: Any
-    ) -> Any:
-        """Resolves a semantic resource from another runtime space.
+    def ports_from(
+        self,
+        path: NodePath,
+        *,
+        absolute: bool = False,
+    ) -> NodePorts | None:
+        """Resolves the capability scope of another runtime space.
 
-        This method delegates resource resolution into another
-        runtime space while preserving the normal hierarchical
-        resource resolution semantics of the target node.
+        This method traverses the runtime hierarchy and returns the
+        published capability scope of the target runtime node.
 
-        Unlike direct node access, this method exposes only
-        semantic resource capabilities and does not leak mutable
-        runtime topology.
+        Unlike direct node access, this method exposes only semantic
+        runtime capabilities and does not leak mutable runtime topology.
 
-        Internally this method forwards resolution to the target
-        node's get_resource() implementation.
+        The returned NodePorts object may provide:
+
+        - projection capabilities
+        - runtime services
+        - infrastructure adapters
+        - plugin-local semantic capabilities
+        - platform-provided services
+
+        Args:
+            path:
+                Runtime path to resolve.
+
+            absolute:
+                If True, resolution starts from the runtime root.
+
+        Returns:
+            The target runtime capability scope or None if the
+            runtime space cannot be resolved.
         """
 
         node = self.find(path, absolute=absolute)
-        if node:
-            return await node.get_resource(domain=domain, **kwargs)
+        if node is None:
+            return None
 
-    async def get_resource(self, domain: Any, **kwargs: Any) -> Any:
-        """Resolves a semantic runtime resource.
-
-        Resources represent semantic runtime projections owned by
-        the current runtime space.
-
-        Resolution follows hierarchical delegation rules:
-
-        - local runtime space
-        - parent runtime spaces
-        - root runtime space
-        - platform-owned fallback spaces
-
-        Resolvers may internally use:
-
-        - filesystem resources
-        - databases
-        - remote services
-        - generated runtime content
-        - AI-backed projections
-
-        Args:
-            domain:
-                Semantic resource domain or resolution target.
-
-            **kwargs:
-                Resolver-specific metadata forwarded unchanged
-                through the runtime hierarchy.
-
-        Returns:
-            Resolved semantic runtime resource or None if
-            no resolver can satisfy the request.
-        """
-
-        if self.on_resource:
-            resource = await self.on_resource(domain=domain, **kwargs)
-            if resource is not None:
-                return resource
-
-        if self.parent:
-            return await self.parent.get_resource(domain, **kwargs)
-
-        return None
+        return node.ports
 
     # ----------------------------------
     # HAS
@@ -332,11 +301,6 @@ class Node:
         """Returns True if the node provides a setup capability."""
 
         return self.on_setup is not None
-
-    def has_resource(self) -> bool:
-        """Returns True if the node provides a resource capability."""
-
-        return self.on_resource is not None
 
     # ----------------------------------
     # HIERARCHY

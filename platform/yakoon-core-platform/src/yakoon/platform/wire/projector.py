@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+from yakoon.platform.projection import Projector
+
 from .compiler import build_compiler
-from .projector import Projector
-from .rendering import build_renderer
+from .renderer import build_renderer
 
 
 def build_projector() -> Projector:

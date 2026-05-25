@@ -1,4 +1,5 @@
 import importlib.resources as ir
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
@@ -12,14 +13,19 @@ class PackageReader:
         self,
         *,
         resource: ResourceRef,
-        encoding: str = "utf-8",
     ) -> str:
         if not resource.package:
             raise LookupError("Parameter resource.package cannot be None or Empty")
         if not resource.path:
             raise LookupError("Parameter resource.path cannot be None or Empty")
 
-        text = self._try_package(resource.package, resource.path, encoding=encoding)
+        text = self._try_package(
+            resource.package,
+            resource.path,
+            encoding=resource.encoding,
+            exts=resource.exts,
+        )
+
         if text is not None:
             return text
 
@@ -31,10 +37,11 @@ class PackageReader:
         name: str,
         *,
         encoding: str,
+        exts: Sequence[str],
     ) -> str | None:
         base = ir.files(package)
 
-        for ext in [".sam"]:
+        for ext in exts:
             if not name.endswith(ext):
                 name += ext
 

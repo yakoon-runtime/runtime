@@ -4,12 +4,12 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.nodes import Request, ResourceHandler, RuntimeContext
-from yakoon.base.plugins.ports import OnProject
+from yakoon.base.nodes import Request, RuntimeContext
 from yakoon.base.runtime.errors import DomainError
 from yakoon.ident.models.permgrant import PermissionGrant
 
 from ...models.group import Group
+from ...ports import OnProject
 from ...services import GroupService, Namespaces, PermissionGrantService
 
 # ----------------------------------
@@ -32,7 +32,6 @@ async def on_grant_group(ctx: RuntimeContext):
     yield await _handler(
         request=ctx.request,
         on_project=ctx.ports.get(OnProject),
-        resource=ctx.resource,
         on_get_namespace=namespaces.membership_namespace,
         on_get_group_by_name=get_group_by_name,
         on_list_subject_grants=permgrant_service.list_subject_grants,
@@ -48,7 +47,6 @@ async def _handler(
     *,
     request: Request,
     on_project: OnProject,
-    resource: ResourceHandler,
     on_get_namespace: OnGetNamespace,
     on_get_group_by_name: OnGetGroupByName,
     on_list_subject_grants: OnListSubjectGrants,
@@ -66,15 +64,9 @@ async def _handler(
         subject_key=group.key,
     )
 
-    reference = await resource(
-        domain="resource",
-        scope="grant",
-        key="group",
-        lang=request.lang,
-    )
-
     projection = await on_project(
-        resource=reference,
+        name="grant/group",
+        lang=request.lang,
         state={
             "group": groupname,
             "grants": grants,

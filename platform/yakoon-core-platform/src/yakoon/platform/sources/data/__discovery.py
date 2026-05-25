@@ -8,7 +8,7 @@ from yakoon.base.sources import (
     DataRequest,
     DataResult,
     DataSource,
-    OnDataSource,
+    OnSourceRead,
 )
 from yakoon.platform.runtime.sessions import Session
 
@@ -17,7 +17,7 @@ class DiscoverySource(DataSource):
 
     def __init__(
         self,
-        on_source: OnDataSource,
+        on_source: OnSourceRead,
         on_has_read_permission: OnHasReadPermission,
     ):
         self.on_source = on_source

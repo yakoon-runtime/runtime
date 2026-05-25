@@ -4,14 +4,13 @@ import asyncio
 import heapq
 import time
 from collections import deque
-from typing import Any, Protocol
+from typing import Protocol
 
 from yakoon.base.errors.state import ErrorKey, ErrorState
 from yakoon.base.flow.primitives import Control
 from yakoon.base.flow.primitives.outcome import Outcome
 from yakoon.base.nodes import Node
 from yakoon.base.projection import Projection
-from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime.errors import DomainError
 from yakoon.base.runtime.input import InputContext, InputEvent
 from yakoon.platform.flow import Flow, FlowKind
@@ -35,8 +34,7 @@ class Scheduler:
         on_setup: OnSetup,
         on_dispatch: OnDispatch,
         on_step_flow: OnStepFlow,
-        on_get_projection: OnGetProjection,
-        on_get_resource: OnGetResourceRef,
+        on_load_projection: OnLoadProjection,
         on_show_projection: OnShowProjection,
         on_audit_error: OnAuditError,
         on_audit_warning: OnAuditWarning,
@@ -45,8 +43,7 @@ class Scheduler:
         self.on_setup = on_setup
         self.on_dispatch = on_dispatch
         self.on_step_flow = on_step_flow
-        self.on_get_projection = on_get_projection
-        self.on_get_resource = on_get_resource
+        self.on_load_projection = on_load_projection
         self.on_show_projection = on_show_projection
         self.on_audit_error = on_audit_error
         self.on_audit_warning = on_audit_warning
@@ -294,13 +291,9 @@ class Scheduler:
     async def _get_error(self, exc: Exception, session: Session) -> Projection:
 
         state = ErrorState.extract_state(exc)
-        resource = await self.on_get_resource(
-            state.key,
+        return await self.on_load_projection(
+            key=state.key,
             lang=session.lang,
-        )
-
-        return await self.on_get_projection(
-            resource=resource,
             state=state.data,
         )
 
@@ -373,14 +366,11 @@ class OnShowProjection(Protocol):
     ) -> None: ...
 
 
-class OnGetProjection(Protocol):
+class OnLoadProjection(Protocol):
     async def __call__(
         self,
         *,
-        resource: ResourceRef,
-        state: dict[str, Any] | None = None,
+        key: ErrorKey,
+        lang: str,
+        state: dict | None = None,
     ) -> Projection: ...
-
-
-class OnGetResourceRef(Protocol):
-    async def __call__(self, key: ErrorKey, lang: str) -> ResourceRef: ...

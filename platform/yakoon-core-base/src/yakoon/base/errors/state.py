@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from yakoon.platform.runtime import UnhandledError
+from .types import UnhandledError
 
 ErrorKey = str | type[Exception]
 

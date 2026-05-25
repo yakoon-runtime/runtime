@@ -1,6 +1,5 @@
 from yakoon.base.projection.model import ImageBlock
 
-from ..compiler import ResolverContext
 from .block import (
     map_actions,
     map_fields,
@@ -32,10 +31,10 @@ from .inline import (
 from .resolver import ImageResolver
 
 
-def create_mapper(ctx: ResolverContext) -> Mapper:
+def create_mapper(context: dict) -> Mapper:
 
     resolvers = {
-        ImageBlock: ImageResolver(ctx.assets),
+        ImageBlock: ImageResolver(context.get("assets", "")),
     }
 
     mapper = Mapper(resolvers)

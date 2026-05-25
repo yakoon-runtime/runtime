@@ -4,11 +4,8 @@ from collections.abc import Sequence
 
 from typing_extensions import Protocol
 
-from yakoon.base.plugins import CapabilitySelection, LoadedModule
-from yakoon.base.plugins.container import ModulePorts
-
-from .manager import ModuleManager
-from .registry import ModuleRegistry
+from yakoon.base.plugins import CapabilitySelection, LoadedModule, ModulePorts
+from yakoon.platform.plugins import ModuleManager, ModuleRegistry
 
 
 class PluginLoader:

@@ -1,11 +1,12 @@
 from yakoon.base.flow import out
 from yakoon.base.nodes import RuntimeContext
 from yakoon.base.nodes.path import NodePath
-from yakoon.base.plugins.ports import OnProject
 from yakoon.base.sources import (
     DataRequest,
-    OnDataSource,
+    OnSourceRead,
 )
+
+from ..ports import OnProject
 
 
 async def on_man(ctx: RuntimeContext):
@@ -18,7 +19,7 @@ async def on_man(ctx: RuntimeContext):
     # Resolve visible nodes
     # ----------------------------------
 
-    on_source = ctx.ports.get(OnDataSource)
+    on_source = ctx.ports.get(OnSourceRead)
 
     result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))
     found = next((x for x in result.rows if x["key"] == key), None)
@@ -29,15 +30,9 @@ async def on_man(ctx: RuntimeContext):
 
     if not found:
 
-        resource = await ctx.resource(
-            domain="resource",
-            scope="man",
-            key="error",
-            lang=ctx.session.lang,
-        )
-
         projection = await ctx.ports.get(OnProject)(
-            resource=resource,
+            name="man/error",
+            lang=ctx.session.lang,
             state={
                 "key": key,
             },
@@ -49,6 +44,10 @@ async def on_man(ctx: RuntimeContext):
     # ----------------------------------
     # Resolve manual
     # ----------------------------------
+    ports = ctx.ports_from(
+        path=NodePath.from_string("."),
+        absolute=False,
+    )
 
     resource = await ctx.resource_from(
         path=NodePath.from_string("."),
@@ -64,15 +63,9 @@ async def on_man(ctx: RuntimeContext):
 
     if not resource:
 
-        resource = await ctx.resource(
-            domain="resource",
-            scope="man",
-            key="missing",
-            lang=ctx.session.lang,
-        )
-
         projection = await ctx.ports.get(OnProject)(
-            resource=resource,
+            name="man/missing",
+            lang=ctx.session.lang,
             state={
                 "key": key,
             },

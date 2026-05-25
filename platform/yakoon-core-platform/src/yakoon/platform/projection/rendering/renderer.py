@@ -19,7 +19,7 @@ class Renderer:
 
     def render(self, resource: ResourceRef, context: dict[str, Any]) -> str:
 
-        template_str = self.on_load_resouce(resource=resource)
+        content = self.on_load_resouce(resource=resource)
 
         # reserved namespaces owned by the platform
         meta = {"resource": resource}
@@ -38,7 +38,7 @@ class Renderer:
         }
 
         template_string = self.on_engine_render(
-            template_str=template_str,
+            content=content,
             context=data,
         )
         return template_string
@@ -54,4 +54,4 @@ class OnLoadResource(Protocol):
 
 
 class OnEngineRender(Protocol):
-    def __call__(self, *, template_str: str, context: dict) -> str: ...
+    def __call__(self, *, content: str, context: dict) -> str: ...

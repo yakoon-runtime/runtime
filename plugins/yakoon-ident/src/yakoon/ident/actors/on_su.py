@@ -4,10 +4,11 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.nodes import Request, ResourceHandler, RuntimeContext
+from yakoon.base.nodes import Request, RuntimeContext
 from yakoon.base.plugins.models import AuthResult
-from yakoon.base.plugins.ports import OnAuthenticate, OnProject, OnSaveSession
+from yakoon.base.plugins.ports import OnAuthenticate, OnSessionSave
 
+from ..ports import OnProject
 from ..services import Namespaces, PermissionResolver
 
 # ----------------------------------
@@ -50,7 +51,7 @@ async def on_su(ctx: RuntimeContext):
     # ----------------------------------
 
     async def _save_session():
-        on_save_session = ctx.ports.get(OnSaveSession)
+        on_save_session = ctx.ports.get(OnSessionSave)
         await on_save_session(session=ctx.session)
 
     # ----------------------------------
@@ -60,7 +61,6 @@ async def on_su(ctx: RuntimeContext):
     yield await _handler(
         request=ctx.request,
         on_project=ctx.ports.get(OnProject),
-        resource=ctx.resource,
         on_set_identity=ctx.session.set_identity,
         on_authenticate=_authenticate,
         on_store_session=_save_session,
@@ -77,7 +77,6 @@ async def _handler(
     *,
     request: Request,
     on_project: OnProject,
-    resource: ResourceHandler,
     on_set_identity: OnSetIdentity,
     on_authenticate: OnAuthenticateUser,
     on_store_session: OnStoreSession,
@@ -103,29 +102,17 @@ async def _handler(
 
         await on_store_session()
 
-        reference = await resource(
-            domain="resource",
-            scope="su",
-            key="success",
-            lang=request.lang,
-        )
-
         projection = await on_project(
-            resource=reference,
+            name="su/success",
+            lang=request.lang,
             state={
                 "user": user["username"],
             },
         )
     else:
-        reference = await resource(
-            domain="resource",
-            scope="su",
-            key="error",
-            lang=request.lang,
-        )
-
         projection = await on_project(
-            resource=reference,
+            name="su/error",
+            lang=request.lang,
             state={
                 "user": username,
                 "reason": result.reason,

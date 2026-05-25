@@ -1,5 +1,7 @@
-from .wire import build_renderer
+from .engine import JinjaRenderEngine
+from .renderer import Renderer
 
 __all__ = [
-    "build_renderer",
+    "JinjaRenderEngine",
+    "Renderer",
 ]

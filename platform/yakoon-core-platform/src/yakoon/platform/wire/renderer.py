@@ -1,7 +1,5 @@
+from yakoon.platform.projection.rendering import JinjaRenderEngine, Renderer
 from yakoon.platform.resources import PackageReader
-
-from .engine import JinjaRenderEngine
-from .renderer import Renderer
 
 
 def build_renderer() -> Renderer:

@@ -2,7 +2,6 @@ from .error import (
     NodeNotFound,
     PermissionDenied,
     PlatformError,
-    UnhandledError,
 )
 from .sessions import Session, SessionService
 
@@ -12,5 +11,4 @@ __all__ = [
     "PlatformError",
     "NodeNotFound",
     "PermissionDenied",
-    "UnhandledError",
 ]

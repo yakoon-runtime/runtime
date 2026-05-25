@@ -1,5 +1,5 @@
 from yakoon.base.nodes import NodePath, RuntimeContext
-from yakoon.base.sources import DataRequest, OnDataSource
+from yakoon.base.sources import DataRequest, OnSourceRead
 
 # ----------------------------------
 # COMMAND
@@ -12,7 +12,7 @@ async def on_cd(ctx: RuntimeContext):
     if not target:
         return
 
-    on_source = ctx.ports.get(OnDataSource)
+    on_source = ctx.ports.get(OnSourceRead)
 
     # ----------------------------------
     # CURRENT RUNTIME SPACE

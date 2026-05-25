@@ -1,7 +1,9 @@
-from .dispatcher import EventDispatcher
-from .factory import EventFactory
-from .stream import EventStreamOutput
-from .traversal import EventTraversal
+from yakoon.platform.projection.transport import (
+    EventDispatcher,
+    EventFactory,
+    EventStreamOutput,
+    EventTraversal,
+)
 
 
 def build_stream() -> EventStreamOutput:

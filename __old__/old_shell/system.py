@@ -6,9 +6,9 @@ from yakoon.base.controllers import Composer
 from yakoon.base.plugins.ports import (
     OnManualGet,
     OnProject,
-    OnSaveSession,
+    OnSessionSave,
 )
-from yakoon.base.sources import OnDataSource
+from yakoon.base.sources import OnSourceRead
 
 from ..commands.system import (
     CmdExit,
@@ -42,7 +42,7 @@ class SystemComposer(Composer):
             on_set_mark=self.access.mark,
         ),
         CmdUse: lambda self: CmdUse(
-            on_source=self.port(OnDataSource),
+            on_source=self.port(OnSourceRead),
             on_project=self.port(OnProject),
             on_get_active_app=self.access.get_active_app,
             on_set_active_app=self.access.set_active_app,
@@ -51,12 +51,12 @@ class SystemComposer(Composer):
         CmdMan: lambda self: CmdMan(
             on_project=self.port(OnProject),
             on_get_manual=self.port(OnManualGet),
-            on_source=self.port(OnDataSource),
+            on_source=self.port(OnSourceRead),
             on_get_active_app=self.access.get_active_app,
             on_get_session=lambda: self.session,
         ),
         CmdExit: lambda self: CmdExit(
-            on_source=self.port(OnDataSource),
+            on_source=self.port(OnSourceRead),
             on_has_interaction=self.access.has_interaction,
             on_get_active_app=self.access.get_active_app,
             on_set_active_app=self.access.set_active_app,
@@ -65,7 +65,7 @@ class SystemComposer(Composer):
         ),
         CmdLs: lambda self: CmdLs(
             on_project=self.port(OnProject),
-            on_source=self.port(OnDataSource),
+            on_source=self.port(OnSourceRead),
             on_get_session=lambda: self.session,
             on_get_active_app=self.access.get_active_app,
         ),
@@ -80,7 +80,7 @@ class SystemComposer(Composer):
         return cast(_SessionAccess, self.session)
 
     async def save_session(self):
-        on_save_session = self.port(OnSaveSession)
+        on_save_session = self.port(OnSessionSave)
         await on_save_session(session=self.session)
 
 

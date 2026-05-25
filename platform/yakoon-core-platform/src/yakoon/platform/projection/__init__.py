@@ -1,9 +1,8 @@
-from .transport import build_stream
-from .wire import build_projector
+from __future__ import annotations
+
+from .projector import Projector
 
 __all__ = [
-    # .transport
-    "build_stream",
-    # .wire
-    "build_projector",
+    # .projector
+    "Projector",
 ]

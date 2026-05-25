@@ -22,8 +22,8 @@ class JinjaRenderEngine:
         )
         register_filters(self.env)
 
-    def render_str(self, template_str: str, *, context: dict) -> str:
-        return self.env.from_string(template_str).render(**context)
+    def render_str(self, content: str, *, context: dict) -> str:
+        return self.env.from_string(content).render(**context)
 
     def render_any(self, obj: Any, *, context: dict) -> Any:
         if obj is None:

@@ -3,10 +3,14 @@ from __future__ import annotations
 from yakoon.base.naming.key import Key
 from yakoon.base.nodes import RuntimeContext
 from yakoon.base.plugins.ports import OnAuthenticate
+from yakoon.base.plugins.ports import OnProject as OnPlatformProject
+from yakoon.base.projection import Projection
+from yakoon.base.resources import ResourceRef
 from yakoon.platform.capabilities.permission import PermissionParser
 from yakoon.storage.eventstore.wire import build_store
 
 from ..models import User, UserData
+from ..ports import OnProject
 from ..services import (
     AccountService,
     AllowAllSecretVerifier,
@@ -145,6 +149,25 @@ async def on_setup(ctx: RuntimeContext):
         permgrant=permgrant,
     )
 
+    # ------------------
+    # --- PROJECTION ---
+    # ------------------
+
+    async def on_project(
+        *,
+        name: str,
+        lang: str,
+        state: dict | None = None,
+    ) -> Projection:
+
+        resource = ResourceRef(
+            package="yakoon.ident",
+            path=f"resources/{lang}/templates/{name}",
+        )
+
+        on_project = ctx.ports.get(OnPlatformProject)
+        return await on_project(resource=resource, state=state)
+
     # ----------------
     # --- DEMODATA ---
     # ----------------
@@ -161,6 +184,7 @@ async def on_setup(ctx: RuntimeContext):
     ctx.ports.provide(MembershipService, membership)
     ctx.ports.provide(PermissionGrantService, permgrant)
     ctx.ports.provide(PermissionResolver, perm_resolver)
+    ctx.ports.provide(OnProject, on_project)
 
 
 # ----------------------------------

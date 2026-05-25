@@ -3,7 +3,6 @@ cd ..
 # platform
 pip install \
   -e platform/yakoon-core-base \
-  -e platform/yakoon-core-compose \
   -e platform/yakoon-core-platform \
   -e platform/yakoon-core-storage \
 

@@ -1,6 +1,7 @@
 from yakoon.base.flow import out
 from yakoon.base.nodes import RuntimeContext
-from yakoon.base.plugins.ports import OnProject
+
+from ..ports import OnProject
 
 # ----------------------------------
 # COMMAND
@@ -9,15 +10,9 @@ from yakoon.base.plugins.ports import OnProject
 
 async def on_welcome(ctx: RuntimeContext):
 
-    resource = await ctx.resource(
-        domain="resource",
-        scope="welcome",
-        key="result",
-        lang=ctx.session.lang,
-    )
-
     projection = await ctx.ports.get(OnProject)(
-        resource=resource,
+        name="welcome/result",
+        lang=ctx.session.lang,
         state={"name": ctx.request.payload},
     )
 

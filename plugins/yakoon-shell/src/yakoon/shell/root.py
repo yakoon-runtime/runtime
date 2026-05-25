@@ -1,6 +1,6 @@
 from yakoon.base.nodes import Node
 
-from .resources import on_resource
+from .on_setup import on_setup
 from .system import system
 
 # ----------------------------------
@@ -12,7 +12,7 @@ shell = Node(
     name="Shell",
     is_shell=True,
     anonymous=True,
-    on_resource=on_resource,
+    on_setup=on_setup,
 )
 
 shell.mount(system)

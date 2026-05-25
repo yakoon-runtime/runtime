@@ -4,11 +4,11 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.nodes import Request, ResourceHandler, RuntimeContext
-from yakoon.base.plugins.ports import OnProject
+from yakoon.base.nodes import Request, RuntimeContext
 from yakoon.base.runtime.errors import DomainError
 from yakoon.ident.models import Membership, User
 
+from ...ports import OnProject
 from ...services import MembershipService, Namespaces, UserService
 
 # ----------------------------------
@@ -31,7 +31,6 @@ async def on_membership_groups(ctx: RuntimeContext):
     yield await _handler(
         request=ctx.request,
         on_project=ctx.ports.get(OnProject),
-        resource=ctx.resource,
         on_get_namespace=namespaces.membership_namespace,
         on_list_user_memberships=members.list_user_memberships,
         on_get_user_by_name=get_user_by_name,
@@ -47,7 +46,6 @@ async def _handler(
     *,
     request: Request,
     on_project: OnProject,
-    resource: ResourceHandler,
     on_get_namespace: OnGetNamespace,
     on_get_user_by_name: OnGetUserByName,
     on_list_user_memberships: OnListUserMemberships,
@@ -64,15 +62,9 @@ async def _handler(
         user_key=user.key,
     )
 
-    reference = await resource(
-        domain="resource",
-        scope="membership",
-        key="groups",
-        lang=request.lang,
-    )
-
     projection = await on_project(
-        resource=reference,
+        name="membership/groups",
+        lang=request.lang,
         state={
             "memberships": memberships,
             "user": username,

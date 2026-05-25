@@ -10,7 +10,7 @@ from yakoon.base.commands import (
 )
 from yakoon.base.flow import out
 from yakoon.base.projection import to_text
-from yakoon.base.sources import DataRequest, OnDataSource
+from yakoon.base.sources import DataRequest, OnSourceRead
 
 
 class CmdExit(Command):
@@ -25,7 +25,7 @@ class CmdExit(Command):
 
     def __init__(
         self,
-        on_source: OnDataSource,
+        on_source: OnSourceRead,
         on_has_interaction: OnHasInteraction,
         on_set_interaction: OnSetInteraction,
         on_get_active_app: OnGetActiveApp,

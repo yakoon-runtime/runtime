@@ -5,7 +5,7 @@ from collections.abc import Sequence
 from typing import Protocol
 from uuid import uuid4
 
-from yakoon.base.errors import ErrorState
+from yakoon.base.errors import ErrorState, UnhandledError
 from yakoon.base.flow.primitives import (
     AutoFocus,
     AwaitEvent,
@@ -28,7 +28,6 @@ from yakoon.platform.runtime import (
     NodeNotFound,
     PermissionDenied,
     Session,
-    UnhandledError,
 )
 
 
@@ -286,12 +285,11 @@ class CommandEngine:
         return await flow.cursor.next(
             node,
             RuntimeContext(
-                ports=node.ports,
                 request=request,
                 session=session,
-                resource_from=node.get_resource_from,
-                resource=node.get_resource,
-                node=node.describe(),
+                ports=node.ports,
+                ports_from=node.ports_from,
+                node=node.describe,
                 metadata=dict(node.metadata),
             ),
         )

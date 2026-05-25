@@ -2,34 +2,49 @@ from __future__ import annotations
 
 from typing import Any, Protocol, cast
 
+from yakoon.base.errors import ErrorKey, UnhandledError
 from yakoon.base.naming import Key
 from yakoon.base.nodes import Node
+from yakoon.base.nodes.errors import UnknowOptionsError, UsageError
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
 from yakoon.base.runtime import InputContext
-from yakoon.platform.runtime import Session
+from yakoon.platform.machine import (
+    CommandEngine,
+    InputParser,
+    InvocationResolver,
+    Runner,
+    RuntimeHost,
+    Scheduler,
+    SessionBuilder,
+)
+from yakoon.platform.runtime import NodeNotFound, PermissionDenied, Session
 from yakoon.platform.runtime.bus import BusOutput, SessionBus
 
-from .engine import CommandEngine
-from .host import RuntimeHost
-from .parser import InputParser
-from .resolver import InvocationResolver
-from .runner import Runner
-from .scheduler import Scheduler
-from .session import SessionBuilder
+# ----------------------------------
+# ERRORS
+# ----------------------------------
+
+errors = {
+    UnhandledError: "error.sam",
+    NodeNotFound: "command/not_found.sam",
+    UsageError: "command/usage.sam",
+    UnknowOptionsError: "command/unknown_options.sam",
+    PermissionDenied: "permissions/denied.sam",
+}
 
 
 def build_machine(
     root: Node,
     on_suggest: OnSuggest,
-    on_projection: OnProjection,
+    on_projection_send: OnProjectionSend,
+    on_projection_create: OnProjectionCreate,
     on_session: OnGetOrCreateSession,
     on_has_permission: OnHasPermission,
     on_audit_log: OnAuditLog,
     on_audit_error: OnAuditError,
     on_audit_warning: OnAuditWarning,
     on_audit_security: OnAuditSecurity,
-    on_load_projection: OnLoadProjection,
     on_initialize: Oninitialize,
 ) -> RuntimeHost:
 
@@ -56,12 +71,24 @@ def build_machine(
     engine = CommandEngine(
         on_resolve_node=resolver.resolve,
         on_parse_input=parser.parse,
-        on_projection=on_projection,
+        on_projection=on_projection_send,
         on_audit_security=on_audit_security,
     )
 
-    async def get_resource(key: Any, lang: str) -> ResourceRef:
-        return await root.get_resource(domain=key, lang=lang)
+    # ------------------------
+    # --- PROJECTION ---
+    # ------------------------
+
+    async def load_projection(
+        *, key: ErrorKey, lang: str, state: dict | None = None
+    ) -> Projection:
+
+        parts = errors.get(key)
+        resource = ResourceRef(
+            package="yakoon.platform",
+            path=f"templates/{lang}/{parts}",
+        )
+        return await on_projection_create(resource=resource, state=state)
 
     # -----------------
     # --- EXECUTION ---
@@ -71,11 +98,10 @@ def build_machine(
         on_setup=engine.setup,
         on_dispatch=engine.dispatch,
         on_step_flow=engine.step_flow,
-        on_show_projection=on_projection,
+        on_show_projection=on_projection_send,
         on_audit_error=on_audit_error,
         on_audit_warning=on_audit_warning,
-        on_get_projection=on_load_projection,
-        on_get_resource=get_resource,
+        on_load_projection=load_projection,
     )
 
     # ------------------------
@@ -175,7 +201,7 @@ class OnGetOrCreateSession(Protocol):
     async def __call__(self, key: Key, **kwargs) -> tuple[Session, bool]: ...
 
 
-class OnProjection(Protocol):
+class OnProjectionSend(Protocol):
     async def __call__(
         self,
         *,
@@ -184,6 +210,15 @@ class OnProjection(Protocol):
         ctx: InputContext | None,
         job_id: str = "system",
     ) -> None: ...
+
+
+class OnProjectionCreate(Protocol):
+    async def __call__(
+        self,
+        *,
+        resource: ResourceRef,
+        state: dict[str, Any] | None = None,
+    ) -> Projection: ...
 
 
 class OnSuggest(Protocol):
@@ -195,12 +230,3 @@ class OnSuggest(Protocol):
         limit: int = 3,
         cutoff: float = 0.5,
     ) -> list[str]: ...
-
-
-class OnLoadProjection(Protocol):
-    async def __call__(
-        self,
-        *,
-        resource: ResourceRef,
-        state: dict[str, Any] | None = None,
-    ) -> Projection: ...

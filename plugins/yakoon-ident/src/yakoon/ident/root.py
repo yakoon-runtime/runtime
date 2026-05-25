@@ -3,7 +3,6 @@ from __future__ import annotations
 from yakoon.base.nodes import Invocation, Node, NodeScope
 
 from .actors import grant, group, membership, on_setup, on_su, on_whoami, user
-from .resources import on_resource
 
 # ----------------------------------
 # IDENT NODE
@@ -14,7 +13,6 @@ ident = Node(
     name="Ident",
     anonymous=True,
     on_setup=on_setup,
-    on_resource=on_resource,
 )
 
 # ----------------------------------

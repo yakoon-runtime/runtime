@@ -10,8 +10,9 @@ from yakoon.base.flow.dsl import Outcome
 
 if TYPE_CHECKING:
     from .context import RuntimeContext
+    from .describe import NodeDescription
     from .path import NodePath
-
+    from .ports import NodePorts
 
 # ----------------------------------
 # RESULT
@@ -33,23 +34,16 @@ class RunHandler(Protocol):
     ) -> RunResult: ...
 
 
-class ResourceHandler(Protocol):
+class PortsFromHandler(Protocol):
 
-    async def __call__(
+    def __call__(
         self,
-        *,
-        domain: Any,
-        **kwargs: Any,
-    ) -> Any: ...
-
-
-class ResourceFromHandler(Protocol):
-
-    async def __call__(
-        self,
-        *,
         path: NodePath,
-        absolute: bool,
-        domain: Any,
-        **kwargs: Any,
-    ) -> Any: ...
+        *,
+        absolute: bool = False,
+    ) -> NodePorts | None: ...
+
+
+class DescriptionHandler(Protocol):
+
+    def __call__(self) -> NodeDescription: ...

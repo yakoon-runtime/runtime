@@ -5,7 +5,6 @@ from typing import Protocol
 from yakoon.base.projection import Projection
 
 from .ast import ElementNode
-from .context import ResolverContext
 from .tokens import Token
 
 
@@ -24,13 +23,13 @@ class Compiler:
         self.on_normalize_ast = on_normalize_ast
         self.on_build_projection = on_build_projection
 
-    def compile(self, text: str, ctx: ResolverContext) -> Projection:
+    def compile(self, text: str, context: dict) -> Projection:
 
         tokens = self.on_tokenize(text=text)
         ast = self.on_build_ast(tokens=tokens)
 
         self.on_normalize_ast(ast)
-        return self.on_build_projection(ctx=ctx, root=ast)
+        return self.on_build_projection(context=context, root=ast)
 
 
 # ----------------------------------
@@ -51,4 +50,4 @@ class OnNormalizeAst(Protocol):
 
 
 class OnBuildProjection(Protocol):
-    def __call__(self, ctx: ResolverContext, root: ElementNode) -> Projection: ...
+    def __call__(self, context: dict, root: ElementNode) -> Projection: ...

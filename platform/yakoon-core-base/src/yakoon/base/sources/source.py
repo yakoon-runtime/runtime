@@ -75,7 +75,7 @@ class DataSource(Protocol[T]):
 # ----------------------------------
 
 
-class OnDataSource(Protocol):
+class OnSourceRead(Protocol):
     async def __call__(
         self,
         request: DataRequest,

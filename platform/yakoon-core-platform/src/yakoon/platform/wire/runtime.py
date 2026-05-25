@@ -4,21 +4,19 @@ from yakoon.base.nodes import Node, NodeScope
 from yakoon.base.plugins.ports import (
     OnAuthorizeRead,
     OnAuthorizeWrite,
+    OnCompile,
+    OnJinjaRender,
     OnProject,
-    OnSaveSession,
+    OnResourceLoad,
+    OnSessionSave,
 )
-from yakoon.base.sources import OnDataSource
+from yakoon.base.sources import OnSourceRead
 from yakoon.platform.capabilities.audit import AuditLogService
 from yakoon.platform.capabilities.permission import (
     PermissionChecker,
 )
-from yakoon.platform.machine import RuntimeHost, build_machine
-from yakoon.platform.plugins import PluginLoader
-from yakoon.platform.projection import (
-    build_projector,
-    build_stream,
-)
-from yakoon.platform.resources import ProjectionRegistry
+from yakoon.platform.projection.rendering.engine import JinjaRenderEngine
+from yakoon.platform.resources import PackageReader
 from yakoon.platform.runtime.sessions import SessionService
 from yakoon.platform.services import GuidanceService
 from yakoon.platform.settings import Settings
@@ -26,16 +24,18 @@ from yakoon.platform.sources import DataSourceRegistry
 from yakoon.platform.sources.data import (
     NodeSource,
 )
-from yakoon.platform.templates.wire import register_templates
+from yakoon.platform.wire.compiler import build_compiler
+from yakoon.platform.wire.machine import RuntimeHost, build_machine
+from yakoon.platform.wire.plugins import PluginLoader
+from yakoon.platform.wire.projector import build_projector
+from yakoon.platform.wire.stream import build_stream
 from yakoon.storage.eventstore.wire import build_store
-
-from .resource import get_resource
 
 CapabilityMode: TypeAlias = Literal["default"]
 CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
 
 
-def compose_runtime(
+def build_runtime(
     *,
     plugins: list[str] | None = None,
     capabilities: CapabilitySelection | None = None,
@@ -52,8 +52,14 @@ def compose_runtime(
     # --- SERVICES ---
     # ----------------
 
+    package_reader = PackageReader()
+    jinja_engine = JinjaRenderEngine()
+    projector = build_projector()
+    compiler = build_compiler()
+
     guidance_service = GuidanceService()
     audit_service = AuditLogService(settings.logging)
+
     session_manager = SessionService(
         on_replace=store.objects.replace,
         on_get=store.objects.get,
@@ -64,15 +70,6 @@ def compose_runtime(
     # -------------------
 
     perm_checker = PermissionChecker()
-
-    # -----------------
-    # --- PROJECTOR ---
-    # -----------------
-
-    projections = ProjectionRegistry()
-    register_templates(projections.register)
-
-    projector = build_projector()
 
     # ----------------
     # --- PLUGINS ---
@@ -89,21 +86,27 @@ def compose_runtime(
 
     ds = DataSourceRegistry()
 
-    # ----------------
-    # --- BINDINGS ---
-    # ----------------
+    # -----------------
+    # --- ROOT NODE ---
+    # -----------------
 
     platform = Node(
         key="platform",
         scope=NodeScope.NODE,
-        on_resource=get_resource,
     )
 
-    platform.ports.provide(OnDataSource, ds.read)
-    platform.ports.provide(OnProject, projector.project)
-    platform.ports.provide(OnSaveSession, session_manager.save)
+    # ----------------
+    # --- BINDINGS ---
+    # ----------------
+
+    platform.ports.provide(OnSourceRead, ds.read)
+    platform.ports.provide(OnSessionSave, session_manager.save)
     platform.ports.provide(OnAuthorizeRead, perm_checker.can_read)
     platform.ports.provide(OnAuthorizeWrite, perm_checker.can_write)
+    platform.ports.provide(OnResourceLoad, package_reader.get_text)
+    platform.ports.provide(OnJinjaRender, jinja_engine.render_str)
+    platform.ports.provide(OnCompile, compiler.compile)
+    platform.ports.provide(OnProject, projector.project)
 
     # -----------------
     # --- ATTACHING ---
@@ -148,13 +151,13 @@ def compose_runtime(
         root=platform,
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
-        on_projection=output.send_projection,
+        on_projection_send=output.send_projection,
+        on_projection_create=projector.project,
         on_has_permission=perm_checker.can_execute,
         on_audit_log=audit_service.audit,
         on_audit_error=audit_service.error,
         on_audit_security=audit_service.security,
         on_audit_warning=audit_service.warning,
-        on_load_projection=projector.project,
         on_initialize=initialize,
     )
 

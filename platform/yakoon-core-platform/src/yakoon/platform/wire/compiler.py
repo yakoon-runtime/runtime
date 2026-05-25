@@ -1,20 +1,20 @@
 from yakoon.base.projection import Projection
-
-from .ast import build_ast
-from .compiler import Compiler
-from .context import ResolverContext
-from .mapper import create_mapper
-from .nodes import ElementNode
-from .normalize import normalize_ast
-from .tokens import tokenize_text
+from yakoon.platform.projection.compiler import (
+    Compiler,
+    ElementNode,
+    build_ast,
+    create_mapper,
+    normalize_ast,
+    tokenize_text,
+)
 
 
 def build_compiler() -> Compiler:
 
     # --- MAPPING ---
 
-    def mapper(ctx: ResolverContext, root: ElementNode) -> Projection:
-        mapper = create_mapper(ctx)
+    def mapper(context: dict, root: ElementNode) -> Projection:
+        mapper = create_mapper(context)
         projection = mapper.map_projection(root)
         return projection
 
