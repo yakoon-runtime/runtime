@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from yakoon.base.nodes import NodePath, NodeSpace
-from yakoon.base.plugins.ports import (
+from yakoon.api.nodes import NodePath, NodeSpace
+from yakoon.api.ports import (
     OnErrorResolve,
     OnManualResolve,
     OnProjectionResolve,
 )
-from yakoon.base.projection import Projection
-from yakoon.base.resources import ResourceRef
-from yakoon.base.runtime.sessions.session import Session
+from yakoon.api.projections import Projection
+from yakoon.api.resources import ResourceRef
+from yakoon.api.sessions import Session
 
 from .ports import OnProject
 

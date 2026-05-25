@@ -1,6 +1,6 @@
-from yakoon.base.flow import out
-from yakoon.base.nodes import NodeSpace
-from yakoon.base.projection import to_text
+from yakoon.api.flows import out
+from yakoon.api.nodes import NodeSpace
+from yakoon.api.projections import to_text
 from yakoon.base.runtime.errors import DomainError
 
 # ----------------------------------

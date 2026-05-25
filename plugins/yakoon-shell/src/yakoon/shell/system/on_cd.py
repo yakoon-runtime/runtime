@@ -1,5 +1,6 @@
-from yakoon.base.nodes import NodePath, NodeSpace
-from yakoon.base.sources import DataRequest, OnSourceRead
+from yakoon.api.data import DataRequest
+from yakoon.api.nodes import NodePath, NodeSpace
+from yakoon.api.ports import OnSourceRead
 
 # ----------------------------------
 # COMMAND

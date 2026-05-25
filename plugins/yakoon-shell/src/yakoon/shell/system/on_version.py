@@ -3,8 +3,8 @@ import subprocess
 import time
 from datetime import UTC, datetime
 
-from yakoon.base.flow import out
-from yakoon.base.nodes import NodeSpace
+from yakoon.api.flows import out
+from yakoon.api.nodes import NodeSpace
 
 from ..ports import OnProject
 

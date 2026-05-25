@@ -1,4 +1,4 @@
-from yakoon.base.plugins import ModuleExport, ModuleMeta
+from yakoon.api.modules import ModuleExport, ModuleMeta
 
 from .root import shell
 

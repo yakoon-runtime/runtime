@@ -1,6 +1,7 @@
-from yakoon.base.flow import out
-from yakoon.base.nodes import NodeSpace
-from yakoon.base.sources import DataRequest, OnSourceRead
+from yakoon.api.data import DataRequest
+from yakoon.api.flows import out
+from yakoon.api.nodes import NodeSpace
+from yakoon.api.ports import OnSourceRead
 
 from ..ports import OnProject
 

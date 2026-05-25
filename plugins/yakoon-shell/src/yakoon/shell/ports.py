@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from yakoon.base.projection import Projection
+from yakoon.api.projections import Projection
 
 # -------------
 # --- PORTS ---

@@ -1,4 +1,4 @@
-from yakoon.base.nodes import Node
+from yakoon.api.nodes import Node
 
 from .on_setup import on_setup
 from .system import system

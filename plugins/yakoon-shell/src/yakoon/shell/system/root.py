@@ -1,6 +1,5 @@
-from yakoon.base.nodes import Node
-from yakoon.base.nodes.invocation import Invocation
-from yakoon.base.nodes.types import NodeScope
+from yakoon.api.invocations import Invocation
+from yakoon.api.nodes import Node, NodeScope
 
 from .on_cd import on_cd
 from .on_list import on_list
