@@ -10,8 +10,8 @@ async def create_runtime() -> RuntimeHost:
     runtime = build_runtime(
         settings=settings,
         plugins=[
-            "yakoon.shell",
-            "yakoon.ident",
+            "yakoon_spaces.shell",
+            "yakoon_spaces.ident",
             # "yakoon.playground",
         ],
         capabilities={},

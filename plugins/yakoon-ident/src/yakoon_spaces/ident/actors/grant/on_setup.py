@@ -4,9 +4,8 @@ from typing import Protocol
 
 from yakoon.base.nodes import NodeSpace
 from yakoon.base.runtime.errors import DomainError
-from yakoon.ident.models.group import Group
-from yakoon.ident.models.user import User
 
+from ...models import Group, User
 from ...services import GroupService, Namespaces, UserService
 from .ports import OnResolveSubject
 

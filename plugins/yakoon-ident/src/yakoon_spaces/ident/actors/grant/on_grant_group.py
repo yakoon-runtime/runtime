@@ -6,9 +6,8 @@ from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
 from yakoon.base.nodes import NodeSpace, Request
 from yakoon.base.runtime.errors import DomainError
-from yakoon.ident.models.permgrant import PermissionGrant
 
-from ...models.group import Group
+from ...models import Group, PermissionGrant
 from ...ports import OnProject
 from ...services import GroupService, Namespaces, PermissionGrantService
 

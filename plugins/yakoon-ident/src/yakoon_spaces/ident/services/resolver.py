@@ -5,8 +5,9 @@ from __future__ import annotations
 from typing import Protocol
 
 from yakoon.base.naming import Key, Namespace
-from yakoon.ident.models import Membership, PermissionGrant
 from yakoon.platform.capabilities.permission import Permission, PermissionSet
+
+from ..models import Membership, PermissionGrant
 
 
 class PermissionResolver:

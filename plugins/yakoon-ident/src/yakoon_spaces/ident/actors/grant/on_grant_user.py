@@ -6,29 +6,35 @@ from yakoon.base.flow import out
 from yakoon.base.naming import Namespace
 from yakoon.base.naming.key import Key
 from yakoon.base.nodes import NodeSpace, Request
-from yakoon.ident.models.permgrant import PermissionGrant
+from yakoon.base.runtime.errors import DomainError
 
+from ...models import PermissionGrant, User
 from ...ports import OnProject
-from ...services import Namespaces, PermissionGrantService
-from .ports import OnResolveSubject
+from ...services import Namespaces, PermissionGrantService, UserService
 
 # ----------------------------------
 # ENTRY
 # ----------------------------------
 
 
-async def on_grant_add(space: NodeSpace):
+async def on_grant_user(space: NodeSpace):
 
     namespaces = space.ports.get(Namespaces)
+    user_service = space.ports.get(UserService)
     permgrant_service = space.ports.get(PermissionGrantService)
-    resolve_subject = space.ports.get(OnResolveSubject)
+
+    async def get_user_by_name(name: str) -> User | None:
+        return await user_service.get_by_username(
+            namespace=namespaces.user_namespace(),
+            username=name,
+        )
 
     yield await _handler(
         request=space.request,
         on_project=space.ports.get(OnProject),
         on_get_namespace=namespaces.permgrant_namespace,
-        on_add_grant=permgrant_service.add_grant,
-        on_resolve_subject=resolve_subject,
+        on_get_user_by_name=get_user_by_name,
+        on_list_subject_grants=permgrant_service.list_subject_grants,
     )
 
 
@@ -42,37 +48,27 @@ async def _handler(
     request: Request,
     on_project: OnProject,
     on_get_namespace: OnGetNamespace,
-    on_add_grant: OnAddGrant,
-    on_resolve_subject: OnResolveSubject,
+    on_get_user_by_name: OnGetUserByName,
+    on_list_subject_grants: OnListSubjectGrants,
 ):
-    subject_type = request.arg(0)
-    subject_name = request.arg(1)
-
-    permission_key = request.arg(2)
-
-    bits = request.option("bits") or "x"
-    deny = bool(request.option("deny"))
-
+    username = request.arg(0)
     namespace = on_get_namespace()
 
-    subject = await on_resolve_subject(
-        subject_type=subject_type,
-        subject_name=subject_name,
-    )
+    user = await on_get_user_by_name(name=username)
+    if not user:
+        raise DomainError(f"User '{username}' " f"does not exist.")
 
-    grant = await on_add_grant(
+    grants = await on_list_subject_grants(
         namespace=namespace,
-        subject_key=subject.key,
-        permission_key=permission_key,
-        bits=bits,
-        deny=deny,
+        subject_key=user.key,
     )
 
     projection = await on_project(
-        name="grant/add",
+        name="grant/user",
         lang=request.lang,
         state={
-            "grant": grant,
+            "user": username,
+            "grants": grants,
         },
     )
     return out(projection)
@@ -87,13 +83,18 @@ class OnGetNamespace(Protocol):
     def __call__(self) -> Namespace: ...
 
 
-class OnAddGrant(Protocol):
+class OnGetUserByName(Protocol):
+    async def __call__(
+        self,
+        *,
+        name: str,
+    ) -> User | None: ...
+
+
+class OnListSubjectGrants(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
         subject_key: Key,
-        permission_key: str,
-        bits: str = "x",
-        deny: bool = False,
-    ) -> PermissionGrant: ...
+    ) -> list[PermissionGrant]: ...

@@ -6,8 +6,8 @@ from yakoon.base.flow import out
 from yakoon.base.naming import Namespace
 from yakoon.base.naming.key import Key
 from yakoon.base.nodes import NodeSpace, Request
-from yakoon.ident.models.permgrant import PermissionGrant
 
+from ...models import PermissionGrant
 from ...ports import OnProject
 from ...services import Namespaces, PermissionGrantService
 from .ports import OnResolveSubject

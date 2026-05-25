@@ -1,5 +1,6 @@
 from yakoon.base.naming import Key
-from yakoon.ident.models import (
+
+from ..models import (
     Group,
     GroupData,
     Membership,
@@ -9,7 +10,6 @@ from yakoon.ident.models import (
     User,
     UserData,
 )
-
 from ..services import (
     GroupService,
     MembershipService,

@@ -160,7 +160,7 @@ async def on_setup(space: NodeSpace):
     ) -> Projection:
 
         resource = ResourceRef(
-            package="yakoon.ident",
+            package="yakoon_spaces.ident",
             path=f"resources/{lang}/templates/{name}",
         )
 

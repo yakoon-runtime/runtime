@@ -31,7 +31,7 @@ async def on_setup(space: NodeSpace):
     ) -> Projection:
 
         resource = ResourceRef(
-            package="yakoon.shell",
+            package="yakoon_spaces.shell",
             path=f"resources/{lang}/templates/{name}",
         )
 
@@ -50,7 +50,7 @@ async def on_setup(space: NodeSpace):
     ) -> Projection:
 
         resource = ResourceRef(
-            package="yakoon.shell",
+            package="yakoon_spaces.shell",
             path=f"resources/{lang}/manuals/{key.parent.last}/{key.last}",
         )
 
@@ -69,7 +69,7 @@ async def on_setup(space: NodeSpace):
     ) -> Projection:
 
         resource = ResourceRef(
-            package="yakoon.shell",
+            package="yakoon_spaces.shell",
             path=f"resources/{session.lang}/errors/exc",
         )
 
