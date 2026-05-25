@@ -4,7 +4,7 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Namespace
-from yakoon.base.nodes import Request, RuntimeContext
+from yakoon.base.nodes import NodeSpace, Request
 from yakoon.ident.models.permgrant import PermissionGrant
 
 from ...ports import OnProject
@@ -15,14 +15,14 @@ from ...services import Namespaces, PermissionGrantService
 # ----------------------------------
 
 
-async def on_grant_perm(ctx: RuntimeContext):
+async def on_grant_perm(space: NodeSpace):
 
-    namespaces = ctx.ports.get(Namespaces)
-    permgrant_service = ctx.ports.get(PermissionGrantService)
+    namespaces = space.ports.get(Namespaces)
+    permgrant_service = space.ports.get(PermissionGrantService)
 
     yield await _handler(
-        request=ctx.request,
-        on_project=ctx.ports.get(OnProject),
+        request=space.request,
+        on_project=space.ports.get(OnProject),
         on_get_namespace=namespaces.permgrant_namespace,
         on_list_permission_grants=permgrant_service.list_permission_grants,
     )

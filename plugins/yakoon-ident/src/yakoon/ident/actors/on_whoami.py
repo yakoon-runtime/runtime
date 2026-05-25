@@ -1,6 +1,6 @@
 from yakoon.base.flow import out
 from yakoon.base.naming import Key
-from yakoon.base.nodes import Request, RuntimeContext
+from yakoon.base.nodes import NodeSpace, Request
 
 from ..ports import OnProject
 
@@ -9,12 +9,12 @@ from ..ports import OnProject
 # ----------------------------------
 
 
-async def on_whoami(ctx: RuntimeContext):
+async def on_whoami(space: NodeSpace):
 
     yield await _handler(
-        identity=ctx.session.get_identity(),
-        request=ctx.request,
-        on_project=ctx.ports.get(OnProject),
+        identity=space.session.get_identity(),
+        request=space.request,
+        on_project=space.ports.get(OnProject),
     )
 
 

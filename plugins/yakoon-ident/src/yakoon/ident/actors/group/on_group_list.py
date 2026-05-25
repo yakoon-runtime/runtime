@@ -4,7 +4,7 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Namespace
-from yakoon.base.nodes import Request, RuntimeContext
+from yakoon.base.nodes import NodeSpace, Request
 
 from ...models import Group
 from ...ports import OnProject
@@ -15,13 +15,13 @@ from ...services import GroupService, Namespaces
 # ----------------------------------
 
 
-async def on_group_list(ctx: RuntimeContext):
+async def on_group_list(space: NodeSpace):
 
     yield await _handler(
-        request=ctx.request,
-        on_project=ctx.ports.get(OnProject),
-        on_get_namespace=ctx.ports.get(Namespaces).group_namespace,
-        on_list_groups=ctx.ports.get(GroupService).list_groups,
+        request=space.request,
+        on_project=space.ports.get(OnProject),
+        on_get_namespace=space.ports.get(Namespaces).group_namespace,
+        on_list_groups=space.ports.get(GroupService).list_groups,
     )
 
 

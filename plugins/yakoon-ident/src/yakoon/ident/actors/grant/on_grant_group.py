@@ -4,7 +4,7 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.nodes import Request, RuntimeContext
+from yakoon.base.nodes import NodeSpace, Request
 from yakoon.base.runtime.errors import DomainError
 from yakoon.ident.models.permgrant import PermissionGrant
 
@@ -17,11 +17,11 @@ from ...services import GroupService, Namespaces, PermissionGrantService
 # ----------------------------------
 
 
-async def on_grant_group(ctx: RuntimeContext):
+async def on_grant_group(space: NodeSpace):
 
-    namespaces = ctx.ports.get(Namespaces)
-    groups = ctx.ports.get(GroupService)
-    permgrant_service = ctx.ports.get(PermissionGrantService)
+    namespaces = space.ports.get(Namespaces)
+    groups = space.ports.get(GroupService)
+    permgrant_service = space.ports.get(PermissionGrantService)
 
     async def get_group_by_name(name: str) -> Group | None:
         return await groups.get_by_name(
@@ -30,8 +30,8 @@ async def on_grant_group(ctx: RuntimeContext):
         )
 
     yield await _handler(
-        request=ctx.request,
-        on_project=ctx.ports.get(OnProject),
+        request=space.request,
+        on_project=space.ports.get(OnProject),
         on_get_namespace=namespaces.membership_namespace,
         on_get_group_by_name=get_group_by_name,
         on_list_subject_grants=permgrant_service.list_subject_grants,

@@ -9,10 +9,9 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 from yakoon.base.flow.dsl import Outcome
 
 if TYPE_CHECKING:
-    from .context import RuntimeContext
-    from .describe import NodeDescription
     from .path import NodePath
     from .ports import NodePorts
+    from .space import NodeSpace
 
 # ----------------------------------
 # RESULT
@@ -30,7 +29,7 @@ class RunHandler(Protocol):
 
     def __call__(
         self,
-        ctx: RuntimeContext,
+        ctx: NodeSpace,
     ) -> RunResult: ...
 
 
@@ -42,8 +41,3 @@ class PortsFromHandler(Protocol):
         *,
         absolute: bool = False,
     ) -> NodePorts | None: ...
-
-
-class DescriptionHandler(Protocol):
-
-    def __call__(self) -> NodeDescription: ...

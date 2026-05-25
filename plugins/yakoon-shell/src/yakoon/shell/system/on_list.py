@@ -1,5 +1,5 @@
 from yakoon.base.flow import out
-from yakoon.base.nodes import RuntimeContext
+from yakoon.base.nodes import NodeSpace
 from yakoon.base.sources import DataRequest, OnSourceRead
 
 from ..ports import OnProject
@@ -9,18 +9,18 @@ from ..ports import OnProject
 # ----------------------------------
 
 
-async def on_list(ctx: RuntimeContext):
+async def on_list(space: NodeSpace):
 
-    current_node = ctx.session.get_current_node()
+    current_node = space.session.get_current_node()
 
-    on_source = ctx.ports.get(OnSourceRead)
+    on_source = space.ports.get(OnSourceRead)
     result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))
 
     navigables = [x for x in result.rows if x["navigable"]]
 
-    projection = await ctx.ports.get(OnProject)(
+    projection = await space.ports.get(OnProject)(
         name="list/overview",
-        lang=ctx.session.lang,
+        lang=space.session.lang,
         state={
             "nodes": result.rows,
             "navigables": navigables,

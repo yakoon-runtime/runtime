@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from yakoon.base.naming.key import Key
-from yakoon.base.nodes import RuntimeContext
+from yakoon.base.nodes import NodeSpace
 from yakoon.base.plugins.ports import OnAuthenticate, OnProjectionResolve
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
@@ -29,7 +29,7 @@ from .bootstrap import bootstrap
 # ----------------------------------
 
 
-async def on_setup(ctx: RuntimeContext):
+async def on_setup(space: NodeSpace):
 
     settings = Settings()
 
@@ -135,7 +135,7 @@ async def on_setup(ctx: RuntimeContext):
     # --- PUBLISHING ---
     # ------------------
 
-    ctx.ports.publish(OnAuthenticate, auth.authenticate)
+    space.ports.publish(OnAuthenticate, auth.authenticate)
 
     # -------------------------
     # --- BOOTSTRAP ACCOUNT ---
@@ -164,7 +164,7 @@ async def on_setup(ctx: RuntimeContext):
             path=f"resources/{lang}/templates/{name}",
         )
 
-        on_project = ctx.ports.get(OnProjectionResolve)
+        on_project = space.ports.get(OnProjectionResolve)
         return await on_project(resource=resource, state=state)
 
     # ----------------
@@ -177,13 +177,13 @@ async def on_setup(ctx: RuntimeContext):
     # --- PROVIDE INTERNAL ---
     # ------------------------
 
-    ctx.ports.provide(Namespaces, namespaces)
-    ctx.ports.provide(UserService, users)
-    ctx.ports.provide(GroupService, groups)
-    ctx.ports.provide(MembershipService, membership)
-    ctx.ports.provide(PermissionGrantService, permgrant)
-    ctx.ports.provide(PermissionResolver, perm_resolver)
-    ctx.ports.provide(OnProject, on_project)
+    space.ports.provide(Namespaces, namespaces)
+    space.ports.provide(UserService, users)
+    space.ports.provide(GroupService, groups)
+    space.ports.provide(MembershipService, membership)
+    space.ports.provide(PermissionGrantService, permgrant)
+    space.ports.provide(PermissionResolver, perm_resolver)
+    space.ports.provide(OnProject, on_project)
 
 
 # ----------------------------------

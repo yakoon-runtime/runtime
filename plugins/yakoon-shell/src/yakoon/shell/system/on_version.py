@@ -4,7 +4,7 @@ import time
 from datetime import UTC, datetime
 
 from yakoon.base.flow import out
-from yakoon.base.nodes import RuntimeContext
+from yakoon.base.nodes import NodeSpace
 
 from ..ports import OnProject
 
@@ -13,11 +13,11 @@ from ..ports import OnProject
 # ----------------------------------
 
 
-async def on_version(ctx: RuntimeContext):
+async def on_version(space: NodeSpace):
 
-    projection = await ctx.ports.get(OnProject)(
+    projection = await space.ports.get(OnProject)(
         name="version/list",
-        lang=ctx.session.lang,
+        lang=space.session.lang,
         state={
             "time": datetime.now(UTC).isoformat(),
             "uptime": _get_uptime(),

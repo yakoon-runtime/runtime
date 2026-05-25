@@ -5,7 +5,7 @@ from typing import Protocol
 from yakoon.base.flow import out
 from yakoon.base.naming import Namespace
 from yakoon.base.naming.key import Key
-from yakoon.base.nodes import Request, RuntimeContext
+from yakoon.base.nodes import NodeSpace, Request
 from yakoon.base.runtime.errors import DomainError
 from yakoon.ident.models.permgrant import PermissionGrant
 
@@ -18,11 +18,11 @@ from ...services import Namespaces, PermissionGrantService, UserService
 # ----------------------------------
 
 
-async def on_grant_user(ctx: RuntimeContext):
+async def on_grant_user(space: NodeSpace):
 
-    namespaces = ctx.ports.get(Namespaces)
-    user_service = ctx.ports.get(UserService)
-    permgrant_service = ctx.ports.get(PermissionGrantService)
+    namespaces = space.ports.get(Namespaces)
+    user_service = space.ports.get(UserService)
+    permgrant_service = space.ports.get(PermissionGrantService)
 
     async def get_user_by_name(name: str) -> User | None:
         return await user_service.get_by_username(
@@ -31,8 +31,8 @@ async def on_grant_user(ctx: RuntimeContext):
         )
 
     yield await _handler(
-        request=ctx.request,
-        on_project=ctx.ports.get(OnProject),
+        request=space.request,
+        on_project=space.ports.get(OnProject),
         on_get_namespace=namespaces.permgrant_namespace,
         on_get_user_by_name=get_user_by_name,
         on_list_subject_grants=permgrant_service.list_subject_grants,

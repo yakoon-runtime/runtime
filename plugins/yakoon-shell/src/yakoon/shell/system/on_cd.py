@@ -1,4 +1,4 @@
-from yakoon.base.nodes import NodePath, RuntimeContext
+from yakoon.base.nodes import NodePath, NodeSpace
 from yakoon.base.sources import DataRequest, OnSourceRead
 
 # ----------------------------------
@@ -6,26 +6,26 @@ from yakoon.base.sources import DataRequest, OnSourceRead
 # ----------------------------------
 
 
-async def on_cd(ctx: RuntimeContext):
+async def on_cd(space: NodeSpace):
 
-    target = ctx.request.arg(0)
+    target = space.request.arg(0)
     if not target:
         return
 
-    on_source = ctx.ports.get(OnSourceRead)
+    on_source = space.ports.get(OnSourceRead)
 
     # ----------------------------------
     # CURRENT RUNTIME SPACE
     # ----------------------------------
 
-    current_path = ctx.session.get_current_node()
+    current_path = space.session.get_current_node()
 
     # ----------------------------------
     # ROOT
     # ----------------------------------
 
     if target == "/":
-        ctx.session.set_current_node(NodePath.root())
+        space.session.set_current_node(NodePath.root())
         return
 
     # ----------------------------------
@@ -35,7 +35,7 @@ async def on_cd(ctx: RuntimeContext):
     if target == "..":
         parent = current_path.parent
         if parent:
-            ctx.session.set_current_node(parent)
+            space.session.set_current_node(parent)
 
         return
 
@@ -77,4 +77,4 @@ async def on_cd(ctx: RuntimeContext):
     # ACTIVATE RUNTIME SPACE
     # ----------------------------------
 
-    ctx.session.set_current_node(resolved_path)
+    space.session.set_current_node(resolved_path)

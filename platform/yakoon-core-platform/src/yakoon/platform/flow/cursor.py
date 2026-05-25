@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Literal
 from yakoon.base.flow.primitives import Outcome
 
 if TYPE_CHECKING:
-    from yakoon.base.nodes import Node, RuntimeContext
+    from yakoon.base.nodes import Node, NodeSpace
 
 HandlerName = Literal[
     "on_run",
@@ -23,7 +23,7 @@ class FlowCursor:
     async def next(
         self,
         node: Node,
-        ctx: RuntimeContext,
+        ctx: NodeSpace,
     ):
         if not self._stack:
             handler = getattr(node, self.handler_name)

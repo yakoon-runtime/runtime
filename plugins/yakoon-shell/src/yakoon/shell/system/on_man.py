@@ -1,5 +1,5 @@
 from yakoon.base.flow import out
-from yakoon.base.nodes import RuntimeContext
+from yakoon.base.nodes import NodeSpace
 from yakoon.base.plugins.ports import OnManualResolve
 from yakoon.base.projection import Projection
 from yakoon.base.sources import (
@@ -10,17 +10,17 @@ from yakoon.base.sources import (
 from ..ports import OnProject
 
 
-async def on_man(ctx: RuntimeContext):
+async def on_man(space: NodeSpace):
 
-    key = ctx.request.arg(0)
+    key = space.request.arg(0)
 
-    current_node = ctx.session.get_current_node()
+    current_node = space.session.get_current_node()
 
     # ----------------------------------
     # Resolve visible nodes
     # ----------------------------------
 
-    on_source = ctx.ports.get(OnSourceRead)
+    on_source = space.ports.get(OnSourceRead)
 
     result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))
     found = next((x for x in result.rows if x["key"] == key), None)
@@ -30,9 +30,9 @@ async def on_man(ctx: RuntimeContext):
     # ----------------------------------
 
     if not found:
-        projection = await ctx.ports.get(OnProject)(
+        projection = await space.ports.get(OnProject)(
             name="man/missing",
-            lang=ctx.session.lang,
+            lang=space.session.lang,
             state={
                 "key": key,
             },
@@ -46,13 +46,13 @@ async def on_man(ctx: RuntimeContext):
     # ----------------------------------
 
     projection: Projection | None = None
-    ports = ctx.ports_from(path=found["path"], absolute=True)
+    ports = space.ports_from(path=found["path"], absolute=True)
     if ports and ports.has(OnManualResolve):
         on_manual_resolve = ports.get(OnManualResolve)
         try:
             projection = await on_manual_resolve(
                 key=found["path"],
-                lang=ctx.request.lang,
+                lang=space.request.lang,
             )
         except Exception:
             pass
@@ -62,9 +62,9 @@ async def on_man(ctx: RuntimeContext):
     # ----------------------------------
 
     if not projection:
-        projection = await ctx.ports.get(OnProject)(
+        projection = await space.ports.get(OnProject)(
             name="man/missing",
-            lang=ctx.session.lang,
+            lang=space.session.lang,
             state={
                 "key": key,
             },

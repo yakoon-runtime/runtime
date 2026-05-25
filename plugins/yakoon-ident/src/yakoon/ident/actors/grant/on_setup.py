@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.nodes import RuntimeContext
+from yakoon.base.nodes import NodeSpace
 from yakoon.base.runtime.errors import DomainError
 from yakoon.ident.models.group import Group
 from yakoon.ident.models.user import User
@@ -11,11 +11,11 @@ from ...services import GroupService, Namespaces, UserService
 from .ports import OnResolveSubject
 
 
-async def on_setup(ctx: RuntimeContext):
+async def on_setup(space: NodeSpace):
 
-    namespaces = ctx.ports.get(Namespaces)
-    user_service = ctx.ports.get(UserService)
-    group_service = ctx.ports.get(GroupService)
+    namespaces = space.ports.get(Namespaces)
+    user_service = space.ports.get(UserService)
+    group_service = space.ports.get(GroupService)
 
     async def get_user_by_name(name: str) -> User | None:
         return await user_service.get_by_username(
@@ -42,7 +42,7 @@ async def on_setup(ctx: RuntimeContext):
     # PROVIDE
     # ----------------------------------
 
-    ctx.ports.provide(OnResolveSubject, resolve_subject)
+    space.ports.provide(OnResolveSubject, resolve_subject)
 
 
 # ----------------------------------

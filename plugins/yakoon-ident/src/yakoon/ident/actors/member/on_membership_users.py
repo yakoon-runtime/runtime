@@ -4,7 +4,7 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.nodes import Request, RuntimeContext
+from yakoon.base.nodes import NodeSpace, Request
 from yakoon.base.runtime.errors import DomainError
 
 from ...models import Group, Membership
@@ -16,11 +16,11 @@ from ...services import GroupService, MembershipService, Namespaces
 # ----------------------------------
 
 
-async def on_membership_users(ctx: RuntimeContext):
+async def on_membership_users(space: NodeSpace):
 
-    namespaces = ctx.ports.get(Namespaces)
-    groups = ctx.ports.get(GroupService)
-    members = ctx.ports.get(MembershipService)
+    namespaces = space.ports.get(Namespaces)
+    groups = space.ports.get(GroupService)
+    members = space.ports.get(MembershipService)
 
     async def get_group_by_name(name: str) -> Group | None:
         return await groups.get_by_name(
@@ -29,8 +29,8 @@ async def on_membership_users(ctx: RuntimeContext):
         )
 
     yield await _handler(
-        request=ctx.request,
-        on_project=ctx.ports.get(OnProject),
+        request=space.request,
+        on_project=space.ports.get(OnProject),
         on_get_namespace=namespaces.membership_namespace,
         on_list_group_memberships=members.list_group_memberships,
         on_get_group_by_name=get_group_by_name,

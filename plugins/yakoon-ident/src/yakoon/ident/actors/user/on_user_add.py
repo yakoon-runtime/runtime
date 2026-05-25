@@ -4,7 +4,7 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Namespace
-from yakoon.base.nodes import Request, RuntimeContext
+from yakoon.base.nodes import NodeSpace, Request
 
 from ...models import User
 from ...ports import OnProject
@@ -15,13 +15,13 @@ from ...services import Namespaces, UserService
 # ----------------------------------
 
 
-async def on_user_add(ctx: RuntimeContext):
+async def on_user_add(space: NodeSpace):
 
     yield await _handler(
-        request=ctx.request,
-        on_project=ctx.ports.get(OnProject),
-        on_get_namespace=ctx.ports.get(Namespaces).user_namespace,
-        on_add_user=ctx.ports.get(UserService).add_user,
+        request=space.request,
+        on_project=space.ports.get(OnProject),
+        on_get_namespace=space.ports.get(Namespaces).user_namespace,
+        on_add_user=space.ports.get(UserService).add_user,
     )
 
 

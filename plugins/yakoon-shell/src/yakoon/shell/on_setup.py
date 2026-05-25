@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from yakoon.base.nodes import RuntimeContext
-from yakoon.base.nodes.path import NodePath
+from yakoon.base.nodes import NodePath, NodeSpace
 from yakoon.base.plugins.ports import (
     OnErrorResolve,
     OnManualResolve,
@@ -17,7 +16,7 @@ from .ports import OnProject
 # ----------------------------------
 
 
-async def on_setup(ctx: RuntimeContext):
+async def on_setup(space: NodeSpace):
 
     # ------------------
     # --- ON PROJECT ---
@@ -35,7 +34,7 @@ async def on_setup(ctx: RuntimeContext):
             path=f"resources/{lang}/templates/{name}",
         )
 
-        on_project = ctx.ports.get(OnProjectionResolve)
+        on_project = space.ports.get(OnProjectionResolve)
         return await on_project(resource=resource, state=state)
 
     # ------------------
@@ -54,7 +53,7 @@ async def on_setup(ctx: RuntimeContext):
             path=f"resources/{lang}/manuals/{key.parent.last}/{key.last}",
         )
 
-        on_project = ctx.ports.get(OnProjectionResolve)
+        on_project = space.ports.get(OnProjectionResolve)
         return await on_project(resource=resource, state=state)
 
     # ------------------
@@ -72,7 +71,7 @@ async def on_setup(ctx: RuntimeContext):
             path=f"resources/{lang}/errors/exc",
         )
 
-        on_project = ctx.ports.get(OnProjectionResolve)
+        on_project = space.ports.get(OnProjectionResolve)
 
         return await on_project(
             resource=resource,
@@ -85,6 +84,6 @@ async def on_setup(ctx: RuntimeContext):
     # --- PROVIDE INTERNAL ---
     # ------------------------
 
-    ctx.ports.provide(OnProject, on_project)
-    ctx.ports.provide(OnManualResolve, on_manual)
-    ctx.ports.provide(OnErrorResolve, on_error)
+    space.ports.provide(OnProject, on_project)
+    space.ports.provide(OnManualResolve, on_manual)
+    space.ports.provide(OnErrorResolve, on_error)

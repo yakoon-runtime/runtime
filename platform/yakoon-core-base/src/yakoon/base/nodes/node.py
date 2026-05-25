@@ -6,7 +6,6 @@ from typing import Any, TypeVar
 
 from yakoon.base.runtime import Container
 
-from .describe import NodeDescription
 from .handler import RunHandler
 from .invocation import Invocation, InvocationValidator
 from .path import NodePath
@@ -114,26 +113,6 @@ class Node:
     navigable: bool = True
     resolvable: bool = True
     contextual: bool = False
-
-    # ----------------------------------
-    # REFLECTION
-    # ----------------------------------
-
-    def describe(self) -> NodeDescription:
-        parent = self.parent.key if self.parent else None
-        return NodeDescription(
-            key=self.key,
-            name=self.name,
-            root=self.root.key,
-            parent=parent,
-            kind=self.kind.value,
-            scope=self.scope.value,
-            visibility=self.visibility.value,
-            navigable=self.navigable,
-            resolvable=self.resolvable,
-            listed=self.listed,
-            anonymous=self.anonymous,
-        )
 
     # ----------------------------------
     # ATTACH TO RUNTIME

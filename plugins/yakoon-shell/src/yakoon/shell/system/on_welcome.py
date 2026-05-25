@@ -1,5 +1,5 @@
 from yakoon.base.flow import out
-from yakoon.base.nodes import RuntimeContext
+from yakoon.base.nodes import NodeSpace
 
 from ..ports import OnProject
 
@@ -8,12 +8,12 @@ from ..ports import OnProject
 # ----------------------------------
 
 
-async def on_welcome(ctx: RuntimeContext):
+async def on_welcome(space: NodeSpace):
 
-    projection = await ctx.ports.get(OnProject)(
+    projection = await space.ports.get(OnProject)(
         name="welcome/result",
-        lang=ctx.session.lang,
-        state={"name": ctx.request.payload},
+        lang=space.session.lang,
+        state={"name": space.request.payload},
     )
 
     yield out(projection)

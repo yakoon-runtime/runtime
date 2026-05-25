@@ -4,7 +4,7 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.nodes import Request, RuntimeContext
+from yakoon.base.nodes import NodeSpace, Request
 from yakoon.base.plugins.models import AuthResult
 from yakoon.base.plugins.ports import OnAuthenticate, OnSessionSave
 
@@ -16,22 +16,22 @@ from ..services import Namespaces, PermissionResolver
 # ----------------------------------
 
 
-async def on_su(ctx: RuntimeContext):
+async def on_su(space: NodeSpace):
 
-    namespaces = ctx.ports.get(Namespaces)
+    namespaces = space.ports.get(Namespaces)
 
     # ----------------------------------
     # PERMISSIONS
     # ----------------------------------
 
     async def resolve_permission(user_key: Key):
-        resolver = ctx.ports.get(PermissionResolver)
+        resolver = space.ports.get(PermissionResolver)
         permissions = await resolver.resolve_user_permissions(
             grant_namespace=namespaces.permgrant_namespace(),
             membership_namespace=namespaces.membership_namespace(),
             user_key=user_key,
         )
-        ctx.session.set_permissions(permissions)
+        space.session.set_permissions(permissions)
 
     # ----------------------------------
     # AUTHENTICATE
@@ -39,7 +39,7 @@ async def on_su(ctx: RuntimeContext):
 
     async def _authenticate(username: str, secret: str) -> AuthResult:
         namespace = namespaces.user_namespace()
-        on_authenticate = ctx.ports.get(OnAuthenticate)
+        on_authenticate = space.ports.get(OnAuthenticate)
         return await on_authenticate(
             namespace=namespace,
             username=username,
@@ -51,17 +51,17 @@ async def on_su(ctx: RuntimeContext):
     # ----------------------------------
 
     async def _save_session():
-        on_save_session = ctx.ports.get(OnSessionSave)
-        await on_save_session(session=ctx.session)
+        on_save_session = space.ports.get(OnSessionSave)
+        await on_save_session(session=space.session)
 
     # ----------------------------------
     # HANDLER
     # ----------------------------------
 
     yield await _handler(
-        request=ctx.request,
-        on_project=ctx.ports.get(OnProject),
-        on_set_identity=ctx.session.set_identity,
+        request=space.request,
+        on_project=space.ports.get(OnProject),
+        on_set_identity=space.session.set_identity,
         on_authenticate=_authenticate,
         on_store_session=_save_session,
         on_apply_permissions=resolve_permission,

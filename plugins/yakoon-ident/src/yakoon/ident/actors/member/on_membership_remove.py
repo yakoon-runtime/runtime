@@ -4,7 +4,7 @@ from typing import Protocol
 
 from yakoon.base.flow import out
 from yakoon.base.naming import Key, Namespace
-from yakoon.base.nodes import Request, RuntimeContext
+from yakoon.base.nodes import NodeSpace, Request
 from yakoon.base.runtime.errors import DomainError
 
 from ...models import Group, Membership, User
@@ -16,12 +16,12 @@ from ...services import GroupService, MembershipService, Namespaces, UserService
 # ----------------------------------
 
 
-async def on_membership_remove(ctx: RuntimeContext):
+async def on_membership_remove(space: NodeSpace):
 
-    namespaces = ctx.ports.get(Namespaces)
-    user_service = ctx.ports.get(UserService)
-    group_service = ctx.ports.get(GroupService)
-    membership_service = ctx.ports.get(MembershipService)
+    namespaces = space.ports.get(Namespaces)
+    user_service = space.ports.get(UserService)
+    group_service = space.ports.get(GroupService)
+    membership_service = space.ports.get(MembershipService)
 
     async def get_user_by_name(name: str) -> User | None:
         return await user_service.get_by_username(
@@ -36,8 +36,8 @@ async def on_membership_remove(ctx: RuntimeContext):
         )
 
     yield await _handler(
-        request=ctx.request,
-        on_project=ctx.ports.get(OnProject),
+        request=space.request,
+        on_project=space.ports.get(OnProject),
         on_get_namespace=namespaces.membership_namespace,
         on_get_user_by_name=get_user_by_name,
         on_get_group_by_name=get_group_by_name,

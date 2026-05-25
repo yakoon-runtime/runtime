@@ -17,7 +17,7 @@ from yakoon.base.flow.primitives import (
     SetFocus,
     Stop,
 )
-from yakoon.base.nodes import Node, NodePath, Request, RuntimeContext
+from yakoon.base.nodes import Node, NodePath, NodeSpace, Request
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputEvent
 from yakoon.base.runtime.input import InputContext
@@ -256,13 +256,11 @@ class CommandEngine:
 
         return await flow.cursor.next(
             node,
-            RuntimeContext(
+            NodeSpace(
                 request=request,
                 session=session,
                 ports=node.ports,
                 ports_from=node.ports_from,
-                node=node.describe,
-                metadata=dict(node.metadata),
             ),
         )
 
