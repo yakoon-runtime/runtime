@@ -72,10 +72,10 @@ def build_machine(
     ) -> Projection | None:
         try:
             on_error = node.ports.get(OnErrorResolve)
-            return await on_error(node=node, session=session, error=error)
+            return await on_error(key=node.path, session=session, error=error)
         except Exception:
             on_error = node.root.ports.get(OnErrorResolve)
-            return await on_error(node=node, session=session, error=error)
+            return await on_error(key=node.path, session=session, error=error)
 
     # -----------------
     # --- EXECUTION ---

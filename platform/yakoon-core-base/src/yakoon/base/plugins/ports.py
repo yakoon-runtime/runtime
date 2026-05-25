@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from yakoon.base.naming import Namespace
-from yakoon.base.nodes import Node, NodePath
+from yakoon.base.nodes import NodePath
 from yakoon.base.plugins.models import AuthResult
 from yakoon.base.projection import Projection
 from yakoon.base.resources import ResourceRef
@@ -19,14 +19,19 @@ class OnProjectionResolve(Protocol):
 
 
 class OnManualResolve(Protocol):
-    async def __call__(self, *, key: NodePath, lang: str) -> Projection | None: ...
+    async def __call__(
+        self,
+        *,
+        key: NodePath,
+        lang: str,
+    ) -> Projection | None: ...
 
 
 class OnErrorResolve(Protocol):
     async def __call__(
         self,
         *,
-        node: Node,
+        key: NodePath,
         session: Session,
         error: Exception,
     ) -> Projection | None: ...

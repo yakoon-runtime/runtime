@@ -1,7 +1,6 @@
 from typing import Literal, TypeAlias
 
-from yakoon.base.nodes import Node, NodeScope
-from yakoon.base.nodes.errors import UnknowOptionsError, UsageError
+from yakoon.base.nodes import Node, NodePath, NodeScope, UnknowOptionsError, UsageError
 from yakoon.base.plugins.ports import (
     OnAuthorizeRead,
     OnAuthorizeWrite,
@@ -19,11 +18,14 @@ from yakoon.platform.capabilities.audit import AuditLogService
 from yakoon.platform.capabilities.permission import (
     PermissionChecker,
 )
-from yakoon.platform.projection.rendering.engine import JinjaRenderEngine
+from yakoon.platform.projection.rendering import JinjaRenderEngine
 from yakoon.platform.resources import PackageReader
-from yakoon.platform.runtime.error import NodeNotFound, PermissionDenied
-from yakoon.platform.runtime.sessions import SessionService
-from yakoon.platform.runtime.sessions.session import Session
+from yakoon.platform.runtime import (
+    NodeNotFound,
+    PermissionDenied,
+    Session,
+    SessionService,
+)
 from yakoon.platform.services import GuidanceService
 from yakoon.platform.settings import Settings
 from yakoon.platform.sources import DataSourceRegistry
@@ -116,7 +118,7 @@ def build_runtime(
 
     async def error_resolve(
         *,
-        node: Node,
+        key: NodePath,
         session: Session,
         error: Exception,
     ) -> Projection:

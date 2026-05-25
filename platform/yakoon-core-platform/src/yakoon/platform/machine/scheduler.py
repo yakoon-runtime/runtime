@@ -8,7 +8,6 @@ from typing import Protocol
 
 from yakoon.base.flow.primitives import Control, Outcome
 from yakoon.base.nodes import Node
-from yakoon.base.plugins.ports import OnErrorResolve
 from yakoon.base.projection import Projection
 from yakoon.base.runtime import InputContext, InputEvent
 from yakoon.platform.flow import Flow, FlowKind
@@ -313,3 +312,13 @@ class OnShowProjection(Protocol):
         projection: Projection,
         ctx: InputContext | None,
     ) -> None: ...
+
+
+class OnErrorResolve(Protocol):
+    async def __call__(
+        self,
+        *,
+        node: Node,
+        session: Session,
+        error: Exception,
+    ) -> Projection | None: ...
