@@ -59,7 +59,7 @@ async def run(space: NodeSpace):
     # ----------------------------------
 
     target_result = await on_source(
-        DataRequest(f"system:nodes --by-key {resolved_path}")
+        DataRequest(f"system:nodes --by-key {resolved_path} --from {current_path}")
     )
 
     if target_result.status != "ok":
@@ -77,5 +77,5 @@ async def run(space: NodeSpace):
     # ----------------------------------
     # ACTIVATE RUNTIME SPACE
     # ----------------------------------
-
-    space.session.set_current_node(resolved_path)  # type: ignore
+    new_path = target_node["path"]
+    space.session.set_current_node(new_path)  # type: ignore

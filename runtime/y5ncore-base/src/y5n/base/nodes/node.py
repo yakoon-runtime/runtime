@@ -320,7 +320,7 @@ class Node:
         current = self.root if absolute else self
 
         parts = path.parts
-        if absolute and path.first == current.key:
+        if path.first == current.key:
             parts = parts[1:]
 
         for part in parts:
