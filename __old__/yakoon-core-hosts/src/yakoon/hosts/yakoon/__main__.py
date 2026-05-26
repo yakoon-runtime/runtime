@@ -1,4 +1,4 @@
-from yakoon.apps.yakoon.cli import cli
+from y5n.apps.y5n.cli import cli
 
 if __name__ == "__main__":
     cli()

@@ -1,7 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-
-from yakoon.apps.webapi.sessions.handler import handle_input
+from y5n.apps.webapi.sessions.handler import handle_input
 
 router = APIRouter()
 

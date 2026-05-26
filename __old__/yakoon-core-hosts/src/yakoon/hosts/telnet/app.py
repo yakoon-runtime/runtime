@@ -1,6 +1,6 @@
 import asyncio
 
-from yakoon.apps.telnet.utils.bridge import handle_client
+from y5n.apps.telnet.utils.bridge import handle_client
 
 
 async def run_telnet():

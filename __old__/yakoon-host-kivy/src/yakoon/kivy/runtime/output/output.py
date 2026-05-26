@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from yakoon.base.projection import Projection
-from yakoon.kivy.runtime.context.view_context import ViewContext
-from yakoon.kivy.runtime.output.output_adapter import OutputAdapter
+from y5n.base.projection import Projection
+from y5n.kivy.runtime.context.view_context import ViewContext
+from y5n.kivy.runtime.output.output_adapter import OutputAdapter
 
 
 class KivyOutput:

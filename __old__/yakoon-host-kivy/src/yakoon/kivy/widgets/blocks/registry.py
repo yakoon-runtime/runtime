@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from yakoon.kivy.widgets.blocks.block import BlockRenderer
-from yakoon.kivy.widgets.blocks.block_header import HeaderBlockRenderer
-from yakoon.kivy.widgets.blocks.block_kv import KvBlockRenderer, KvItemBlockRenderer
-from yakoon.kivy.widgets.blocks.block_list import (
+from y5n.kivy.widgets.blocks.block import BlockRenderer
+from y5n.kivy.widgets.blocks.block_header import HeaderBlockRenderer
+from y5n.kivy.widgets.blocks.block_kv import KvBlockRenderer, KvItemBlockRenderer
+from y5n.kivy.widgets.blocks.block_list import (
     ListBlockRenderer,
     ListItemBlockRenderer,
 )
-from yakoon.kivy.widgets.blocks.block_ruler import RulerBlockRenderer
-from yakoon.kivy.widgets.blocks.block_spacer import SpacerBlockRenderer
-from yakoon.kivy.widgets.blocks.block_text import TextBlockRenderer
+from y5n.kivy.widgets.blocks.block_ruler import RulerBlockRenderer
+from y5n.kivy.widgets.blocks.block_spacer import SpacerBlockRenderer
+from y5n.kivy.widgets.blocks.block_text import TextBlockRenderer
 
 
 class BlockRendererRegistry:

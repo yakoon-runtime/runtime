@@ -2,8 +2,7 @@ import asyncio
 import uuid
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-
-from yakoon.platform.machine.directories import Engine, Output
+from y5n.runtime.machine.directories import Engine, Output
 
 engine = Engine(None)
 

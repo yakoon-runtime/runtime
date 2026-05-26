@@ -2,9 +2,8 @@ import asyncio
 from pathlib import Path
 
 import typer
-
-from yakoon.apps.yakoon.jobs.migrate import migrate_from_config
-from yakoon.apps.yakoon.jobs.scaffold import scaffold_mesh_template
+from y5n.apps.y5n.jobs.migrate import migrate_from_config
+from y5n.apps.y5n.jobs.scaffold import scaffold_mesh_template
 
 cli = typer.Typer()
 

@@ -4,9 +4,9 @@ import asyncio
 import threading
 from typing import Any
 
-from yakoon.base.host.ports import InputEvent
-from yakoon.kivy.host import KivyHost
-from yakoon.platform.machine.runner import Runner
+from y5n.base.host.ports import InputEvent
+from y5n.kivy.host import KivyHost
+from y5n.runtime.machine.runner import Runner
 
 
 class TabRunnerThread:

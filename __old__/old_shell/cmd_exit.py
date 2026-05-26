@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from yakoon.base.commands import (
+from y5n.base.commands import (
     Command,
     CommandScope,
     Invocation,
     Request,
 )
-from yakoon.base.flow import out
-from yakoon.base.projection import to_text
-from yakoon.base.sources import DataRequest, OnSourceRead
+from y5n.base.flow import out
+from y5n.base.projection import to_text
+from y5n.base.sources import DataRequest, OnSourceRead
 
 
 class CmdExit(Command):

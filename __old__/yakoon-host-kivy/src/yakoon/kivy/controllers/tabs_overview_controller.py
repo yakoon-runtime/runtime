@@ -1,4 +1,4 @@
-from yakoon.kivy.states.tab_state import TabState
+from y5n.kivy.states.tab_state import TabState
 
 
 class OverviewController:

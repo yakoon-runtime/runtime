@@ -1,14 +1,15 @@
+from y5n.base.capabilities.identity import PermissionService
+from y5n.base.naming import Key
+from y5n.base.runtime.sessions import SessionStore
+from y5n.kivy.host import KivyHost
+from y5n.kivy.runner import SessionRunner
+from y5n.kivy.runtime.output.output import KivyOutput
+from y5n.kivy.states.state_provider import UIStateProvider
+from y5n.kivy.states.tab_state import TabRuntime, TabState
+from y5n.kivy.thread import TabRunnerThread
+from y5n.kivy.widgets.commands.surface import CommandSurface
+
 from kivy.clock import Clock
-from yakoon.base.capabilities.identity import PermissionService
-from yakoon.base.naming import Key
-from yakoon.base.runtime.sessions import SessionStore
-from yakoon.kivy.host import KivyHost
-from yakoon.kivy.runner import SessionRunner
-from yakoon.kivy.runtime.output.output import KivyOutput
-from yakoon.kivy.states.state_provider import UIStateProvider
-from yakoon.kivy.states.tab_state import TabRuntime, TabState
-from yakoon.kivy.thread import TabRunnerThread
-from yakoon.kivy.widgets.commands.surface import CommandSurface
 
 
 class TabsController:

@@ -4,9 +4,9 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Protocol
 
-from yakoon.base.host import InputEvent, Interaction
-from yakoon.base.projection import FieldsBlock
-from yakoon.base.projection.model import Projection
+from y5n.base.host import InputEvent, Interaction
+from y5n.base.projection import FieldsBlock
+from y5n.base.projection.model import Projection
 
 
 class HostUI(Protocol):

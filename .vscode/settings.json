@@ -3,22 +3,23 @@
   "python.analysis.autoSearchPaths": true,
   "python.analysis.useLibraryCodeForTypes": true,
   "python.analysis.extraPaths": [
-    // platform
-    "platform/yakoon-core-base/src",
-    "platform/yakoon-core-platform/src",
-    "platform/yakoon-core-storage/src",
-    // plugins
-    "plugins/yakoon-playground/src",
-    "plugins/yakoon-shell/src",
-    "plugins/yakoon-ident/src",
-    // transport
-    "transport/yakoon-transport-ws/src",
+    // runtime
+    "runtime/y5ncore-base/src",
+    "runtime/y5ncore-runtime/src",
+    // stores (event)
+    "stores/y5nstore-event/src",
+    // spaces
+    "spaces/y5nspace-runtime/src",
+    "spaces/y5nspace-shell/src",
+    "spaces/y5nspace-ident/src",
+    // transports
+    "transports/y5ntrans-ws/src",
     // clients
-    "apps/yakoon-client-console/src",
+    "clients/y5ncli-console/src",
     // apps
-    "apps/yakoon-app-web/src",
-    "apps/yakoon-app-ssh/src",
-    "apps/yakoon-app-console/src",
+    "apps/y5napp-web/src",
+    "apps/y5napp-ssh/src",
+    "apps/y5napp-console/src",
   ],
   "editor.formatOnSave": true,
   "[python]": {

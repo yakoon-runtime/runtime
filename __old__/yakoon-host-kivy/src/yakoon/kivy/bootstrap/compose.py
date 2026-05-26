@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from yakoon.kivy.bootstrap.dispatcher import ContextDispatcher
-from yakoon.kivy.controllers.app_controller import AppController
-from yakoon.kivy.pages.app_root_page import AppRootPage
-from yakoon.kivy.runner import SessionRunner
-from yakoon.platform.wire.runtime import build_runtime
+from y5n.kivy.bootstrap.dispatcher import ContextDispatcher
+from y5n.kivy.controllers.app_controller import AppController
+from y5n.kivy.pages.app_root_page import AppRootPage
+from y5n.kivy.runner import SessionRunner
+from y5n.runtime.wire.runtime import build_runtime
 
 
 @dataclass
@@ -22,7 +22,7 @@ def compose_kivy_app() -> KivyComposition:
 
     engine = build_runtime(
         plugins=[
-            "yakoon.shell",
+            "y5n.shell",
         ],
         capabilities={
             "audit": "default",

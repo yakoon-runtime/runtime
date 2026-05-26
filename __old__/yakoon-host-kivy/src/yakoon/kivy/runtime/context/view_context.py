@@ -1,7 +1,7 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from yakoon.kivy.models.envelope import Envelope
+from y5n.kivy.models.envelope import Envelope
 
 
 @dataclass

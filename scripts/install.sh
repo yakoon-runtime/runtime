@@ -1,27 +1,33 @@
 cd ..
 
-# platform
+# runtime (base)
 pip install \
-  -e platform/yakoon-core-base \
-  -e platform/yakoon-core-platform \
-  -e platform/yakoon-core-storage \
+  -e runtime/y5ncore-base \
+
+# storage
+pip install \
+  -e stores/y5nstore-event \
+
+# runtime (runtime)
+pip install \
+  -e runtime/y5ncore-runtime \
 
 # transport
 pip install \
-  -e transport/yakoon-transport-ws \
+  -e transports/y5ntrans-ws \
 
-# plugins
+# spaces
 pip install \
-  -e plugins/yakoon-playground \
-  -e plugins/yakoon-shell \
-  -e plugins/yakoon-ident \
+  -e spaces/y5nspace-runtime \
+  -e spaces/y5nspace-shell \
+  -e spaces/y5nspace-ident \
 
 # clients
 pip install \
-  -e clients/yakoon-client-console \
+  -e clients/y5ncli-console \
 
 # apps
 pip install \
-  -e apps/yakoon-app-console \
-  -e apps/yakoon-app-ssh \
-  -e apps/yakoon-app-web \
+  -e apps/y5napp-console \
+  -e apps/y5napp-ssh \
+  -e apps/y5napp-web \

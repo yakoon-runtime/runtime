@@ -9,8 +9,8 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Stefan Bergmann" }]
 dependencies = [
-    "yakoon-core-base", 
-    "yakoon-core-platform", 
+    "y5ncore-base", 
+    "y5ncore-runtime", 
     "yakoon-core-compose",
     ]
 

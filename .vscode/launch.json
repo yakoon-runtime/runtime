@@ -5,7 +5,7 @@
             "name": "Yakoon: App Console",
             "type": "debugpy",
             "request": "launch",
-            "module": "yakoon.console.main",
+            "module": "y5napp.console.main",
             "console": "integratedTerminal",
             "env": {
                 "DEV_MODE": "true"
@@ -15,7 +15,7 @@
             "name": "Yakoon: App SSH",
             "type": "debugpy",
             "request": "launch",
-            "module": "yakoon.ssh.main",
+            "module": "y5napp.ssh.main",
             "console": "integratedTerminal",
             "env": {
                 "DEV_MODE": "true"
@@ -25,7 +25,7 @@
             "name": "Yakoon: App Web",
             "type": "debugpy",
             "request": "launch",
-            "module": "yakoon.web.main",
+            "module": "y5napp.web.main",
             "console": "integratedTerminal",
             "env": {
                 "DEV_MODE": "true"

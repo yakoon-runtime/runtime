@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
-from yakoon.base.controllers import Composer
-from yakoon.base.plugins.ports import (
+from y5n.base.controllers import Composer
+from y5n.base.plugins.ports import (
     OnManualGet,
     OnProjectionResolve,
     OnSessionSave,
 )
-from yakoon.base.sources import OnSourceRead
+from y5n.base.sources import OnSourceRead
 
 from ..commands.system import (
     CmdExit,

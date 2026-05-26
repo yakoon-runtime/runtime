@@ -9,14 +9,15 @@ Config.set("graphics", "height", "700")
 Config.set("graphics", "resizable", "1")
 
 
-from kivy.app import App  # noqa: E402
-from kivy.core.text import LabelBase  # noqa: E402
-from kivy.lang import Builder  # noqa: E402
-from yakoon.kivy import (  # noqa: E402
+from y5n.kivy import (  # noqa: E402
     pages,  # noqa: F401
     widgets,  # noqa: F401
 )
-from yakoon.kivy.bootstrap.compose import compose_kivy_app  # noqa: E402
+from y5n.kivy.bootstrap.compose import compose_kivy_app  # noqa: E402
+
+from kivy.app import App  # noqa: E402
+from kivy.core.text import LabelBase  # noqa: E402
+from kivy.lang import Builder  # noqa: E402
 
 
 class YakoonKivyApp(App):

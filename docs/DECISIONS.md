@@ -80,9 +80,9 @@ clients/
   tauri/
   ssh/
 apps/
-  yakoon-app-web
-  yakoon-app-console
-  yakoon-app-ssh
+  y5napp-web
+  y5napp-console
+  y5napp-ssh
 platform/
   runtime
   transport

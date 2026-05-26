@@ -1,9 +1,9 @@
-from yakoon.base.commands import Command, Request
-from yakoon.base.flow import out
-from yakoon.base.projection.model.block import TextBlock
-from yakoon.base.projection.model.model import Projection
+from y5n.base.commands import Command, Request
+from y5n.base.flow import out
+from y5n.base.projection.model.block import TextBlock
+from y5n.base.projection.model.model import Projection
 
-# from yakoon.base.flow import present
+# from y5n.base.flow import present
 
 
 class CmdTest(Command):

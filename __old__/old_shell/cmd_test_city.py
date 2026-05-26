@@ -1,6 +1,6 @@
-from yakoon.base.commands import Command, Request
-from yakoon.base.commands.ports import OnProjectCmd
-from yakoon.base.flow import out
+from y5n.base.commands import Command, Request
+from y5n.base.commands.ports import OnProjectCmd
+from y5n.base.flow import out
 
 
 class CmdTestCity(Command):

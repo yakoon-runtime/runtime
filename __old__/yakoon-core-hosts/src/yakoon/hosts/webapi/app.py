@@ -1,7 +1,6 @@
 from fastapi import FastAPI
-
-from yakoon.apps.webapi.tools.middleware import setup_CORS
-from yakoon.apps.webapi.tools.routes import init_routes
+from y5n.apps.webapi.tools.middleware import setup_CORS
+from y5n.apps.webapi.tools.routes import init_routes
 
 app = FastAPI()
 
@@ -15,7 +14,7 @@ def run_web_api(host: str = "127.0.0.1", port: int = 8000, reload=False):
 
     import uvicorn
 
-    uvicorn.run("yakoon.apps.webapi.app:app", host=host, port=port, reload=reload)
+    uvicorn.run("y5n.apps.webapi.app:app", host=host, port=port, reload=reload)
 
 
 if __name__ == "__main__":

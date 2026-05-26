@@ -1,0 +1,39 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, replace
+from typing import Any, TypeAlias
+
+from y5n.base.projection.model import FieldType
+
+
+@dataclass(frozen=True, slots=True)
+class FieldPolicy:
+    key: str
+    type: FieldType
+    required: bool = False
+    secret: bool = False
+    hint: str = ""
+    pattern: str = ""
+    default: Any = None
+    options: list[dict] | None = None
+    validators: tuple[str, ...] = ()
+
+    def fork(self, **changes) -> FieldPolicy:
+        return replace(self, **changes)
+
+
+RawValue: TypeAlias = object
+CoercedValue: TypeAlias = object
+
+
+@dataclass(frozen=True, slots=True)
+class FieldPolicyValidationError:
+    field_key: str
+    message: str
+
+
+@dataclass(frozen=True, slots=True)
+class FieldPolicyValidationResult:
+    ok: bool
+    value: object | None = None
+    errors: tuple[FieldPolicyValidationError, ...] = ()

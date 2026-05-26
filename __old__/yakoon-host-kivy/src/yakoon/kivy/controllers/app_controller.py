@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from yakoon.kivy.controllers.tabs_controller import TabsController
-from yakoon.kivy.controllers.tabs_overview_controller import OverviewController
-from yakoon.kivy.runtime.context import ViewContext
-from yakoon.kivy.states.tab_state import TabState
+from y5n.kivy.controllers.tabs_controller import TabsController
+from y5n.kivy.controllers.tabs_overview_controller import OverviewController
+from y5n.kivy.runtime.context import ViewContext
+from y5n.kivy.states.tab_state import TabState
 
 
 class Navigator:

@@ -1,4 +1,4 @@
-from yakoon.platform.machine.directories import Engine, Output
+from y5n.runtime.machine.directories import Engine, Output
 
 # Set the global rendering mode to ansi text (no Markdown formatting)
 _engine = Engine(None)

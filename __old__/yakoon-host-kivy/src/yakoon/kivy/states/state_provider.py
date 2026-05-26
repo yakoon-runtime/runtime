@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from yakoon.platform.runtime.sessions.session import Session
+from y5n.runtime.runtime.sessions.session import Session
 
 
 @dataclass(frozen=True)

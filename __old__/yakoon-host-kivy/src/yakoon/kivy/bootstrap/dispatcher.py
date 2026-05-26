@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from y5n.kivy.runtime.context.view_context import ViewContext
+
 from kivy.clock import Clock
-from yakoon.kivy.runtime.context.view_context import ViewContext
 
 
 class ContextDispatcher:

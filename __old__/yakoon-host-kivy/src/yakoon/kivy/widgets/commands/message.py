@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from typing import Any
 
+from y5n.kivy.widgets.blocks.registry import BlockRendererRegistry
+
 from kivy.clock import Clock
 from kivy.factory import Factory
 
 # from kivy.uix.stacklayout import StackLayout
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
-from yakoon.kivy.widgets.blocks.registry import BlockRendererRegistry
 
 
 class CommandMessage(RecycleDataViewBehavior, BoxLayout):

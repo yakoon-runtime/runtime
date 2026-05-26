@@ -1,4 +1,4 @@
-from yakoon.platform.scaffold.workspace import scaffold_workspace
+from y5n.runtime.scaffold.workspace import scaffold_workspace
 
 
 def scaffold_mesh_template(name: str, target):
