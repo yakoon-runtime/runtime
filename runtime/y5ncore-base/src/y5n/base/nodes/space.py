@@ -4,8 +4,9 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from y5n.base.nodes import Request
-    from y5n.runtime.runtime import Session
+    from y5n.base.nodes import NodePath, Request
+    from y5n.base.runtime.sessions import Session
+
 
 from .handler import PortsFromHandler
 from .ports import NodePorts
@@ -14,6 +15,7 @@ from .ports import NodePorts
 @dataclass(slots=True)
 class NodeSpace:
 
+    path: NodePath
     request: Request
     session: Session
     ports: NodePorts

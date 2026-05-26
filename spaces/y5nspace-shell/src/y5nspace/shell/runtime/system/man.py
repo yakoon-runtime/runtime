@@ -11,7 +11,7 @@ async def run(space: NodeSpace):
 
     key = space.request.arg(0)
 
-    current_node = space.session.get_current_node()
+    current_node = space.session.get_current_node()  # type: ignore
 
     # ----------------------------------
     # Resolve visible nodes

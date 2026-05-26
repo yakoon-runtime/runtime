@@ -12,7 +12,7 @@ from ...ports import OnProject
 
 async def run(space: NodeSpace):
 
-    current_node = space.session.get_current_node()
+    current_node = space.session.get_current_node()  # type: ignore
 
     on_source = space.ports.get(OnSourceRead)
     result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))

@@ -1,5 +1,6 @@
 from y5n.api.nodes import Node, NodeScope
 
+from .runtime.jobs.space import jobs
 from .runtime.labs.space import labs
 from .runtime.setup import setup
 from .runtime.version import run as version
@@ -48,3 +49,4 @@ runtime.add(
 )
 
 runtime.mount(labs)
+runtime.mount(jobs)

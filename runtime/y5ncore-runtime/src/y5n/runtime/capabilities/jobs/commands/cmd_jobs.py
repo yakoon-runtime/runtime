@@ -83,6 +83,7 @@ class CmdJobs(Command):
 
         if not flow:
             yield write_text(f"Job {index} nicht gefunden")
+            yield write_text(f"Job {index} nicht gefunden")
 
         self.ctx.session.del_flow(flow)
         yield write_text(f"Job {index} gestoppt")

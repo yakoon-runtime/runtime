@@ -257,6 +257,7 @@ class CommandEngine:
         return await flow.cursor.next(
             node,
             NodeSpace(
+                path=node.path,
                 request=request,
                 session=session,
                 ports=node.ports,

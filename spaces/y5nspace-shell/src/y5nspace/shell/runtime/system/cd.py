@@ -19,14 +19,14 @@ async def run(space: NodeSpace):
     # CURRENT RUNTIME SPACE
     # ----------------------------------
 
-    current_path = space.session.get_current_node()
+    current_path = space.session.get_current_node()  # type: ignore
 
     # ----------------------------------
     # ROOT
     # ----------------------------------
 
     if target == "/":
-        space.session.set_current_node(NodePath.root())
+        space.session.set_current_node(NodePath.root())  # type: ignore
         return
 
     # ----------------------------------
@@ -36,7 +36,7 @@ async def run(space: NodeSpace):
     if target == "..":
         parent = current_path.parent
         if parent:
-            space.session.set_current_node(parent)
+            space.session.set_current_node(parent)  # type: ignore
 
         return
 
@@ -78,4 +78,4 @@ async def run(space: NodeSpace):
     # ACTIVATE RUNTIME SPACE
     # ----------------------------------
 
-    space.session.set_current_node(resolved_path)
+    space.session.set_current_node(resolved_path)  # type: ignore
