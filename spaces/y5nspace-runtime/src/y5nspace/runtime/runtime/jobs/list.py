@@ -9,7 +9,7 @@ async def run(space: NodeSpace):
 
     on_list = space.ports.get(OnJobsList)
 
-    indexed = on_list()
+    indexed = on_list(space.session)
     if not indexed:
         yield out(to_text("No jobs active."))
         return

@@ -10,14 +10,14 @@ from y5n.runtime.flow.flow import Flow
 
 class OnJobsList(Protocol):
 
-    def __call__(
-        self,
-    ) -> list[tuple[int, Flow]]: ...
+    def __call__(self, session) -> list[tuple[int, Flow]]: ...
 
 
 class OnFlowGetByIndex(Protocol):
 
     def __call__(
         self,
+        *,
+        session,
         request: Request,
     ) -> tuple[Flow | None, int | None]: ...

@@ -17,5 +17,5 @@ async def run(space: NodeSpace):
         yield out(to_text(f"Job {index} not found."))
         return
 
-    space.session.del_flow(flow)  # type: ignore
-    yield out(to_text(f"Job {index} was stopped."))
+    space.session.set_interaction(flow.id)  # type: ignore
+    yield out(to_text(f"Job {index} moved to foreground."))

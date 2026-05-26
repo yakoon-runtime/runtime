@@ -2,6 +2,7 @@ from y5n.api.nodes import Node
 
 from .delay import run as delay
 from .out import run as out
+from .receive import run as receive
 from .send import run as send
 
 # ----------------------------------
@@ -51,6 +52,21 @@ dsl.add(
     Node(
         key="send",
         run=send,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+    )
+)
+
+
+# ----------------------------------
+# RECEIVE
+# ----------------------------------
+
+dsl.add(
+    Node(
+        key="receive",
+        run=receive,
         anonymous=True,
         resolvable=True,
         navigable=False,

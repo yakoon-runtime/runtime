@@ -9,18 +9,21 @@ from .ports import OnFlowGetByIndex, OnJobsList
 
 async def setup(space: NodeSpace):
 
-    def _enumerate_flows() -> list[tuple[int, Flow]]:
-        session = space.session
-        flows = [f for f in session.flows() if f.node.key != space.path.last]  # type: ignore
+    def _enumerate_flows(session) -> list[tuple[int, Flow]]:
+        flows = list(session.flows())
+
+        # Exclude current jobs flow
+        flows = flows[:-1]
+
         return list(enumerate(flows, start=1))
 
-    def _get_flow_by_index(request: Request) -> tuple[Flow | None, int | None]:
+    def _get_flow_by_index(session, request: Request) -> tuple[Flow | None, int | None]:
         try:
             index = int(request.arg(0))
         except (TypeError, ValueError):
             return None, None
 
-        indexed = _enumerate_flows()
+        indexed = _enumerate_flows(session)
 
         for i, flow in indexed:
             if i == index:
