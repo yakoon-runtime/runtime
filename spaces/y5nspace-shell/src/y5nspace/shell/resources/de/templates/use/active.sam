@@ -1,3 +1,0 @@
-
-Verfügare Programme:<br/>
-<space count="3"/>{{ state.apps | map(attribute='name') | join('  ') }}

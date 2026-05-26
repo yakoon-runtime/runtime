@@ -5,8 +5,6 @@ from .on_cd import on_cd
 from .on_list import on_list
 from .on_man import on_man
 from .on_pwd import on_pwd
-from .on_version import on_version
-from .on_welcome import on_welcome
 
 # ----------------------------------
 # SYSTEM
@@ -20,35 +18,6 @@ system = Node(
     resolvable=False,
 )
 
-# ----------------------------------
-# WELCOME
-# ----------------------------------
-
-system.add(
-    Node(
-        key="welcome",
-        run=on_welcome,
-        anonymous=True,
-        scope=NodeScope.NODE,
-        resolvable=True,
-        navigable=True,
-    )
-)
-
-# ----------------------------------
-# VERSION
-# ----------------------------------
-
-system.add(
-    Node(
-        key="version",
-        run=on_version,
-        anonymous=True,
-        scope=NodeScope.NODE,
-        resolvable=True,
-        navigable=False,
-    )
-)
 
 # ----------------------------------
 # MAN
