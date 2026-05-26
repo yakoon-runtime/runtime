@@ -30,6 +30,7 @@ class RunHandler(Protocol):
     def __call__(
         self,
         space: NodeSpace,
+        /,
     ) -> RunResult: ...
 
 
