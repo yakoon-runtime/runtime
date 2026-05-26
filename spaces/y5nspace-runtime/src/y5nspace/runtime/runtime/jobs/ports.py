@@ -1,7 +1,6 @@
 from typing import Protocol
 
-from y5n.base.nodes.request import Request
-from y5n.runtime.flow.flow import Flow
+from y5n.runtime.flow import Flow
 
 # -------------
 # --- PORTS ---
@@ -19,5 +18,5 @@ class OnFlowGetByIndex(Protocol):
         self,
         *,
         session,
-        request: Request,
+        request,
     ) -> tuple[Flow | None, int | None]: ...
