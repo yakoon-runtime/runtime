@@ -3,7 +3,7 @@ from y5n.api.nodes import NodePath, NodeSpace
 from y5n.api.ports import OnSourceRead
 
 # ----------------------------------
-# COMMAND
+# RUN
 # ----------------------------------
 
 

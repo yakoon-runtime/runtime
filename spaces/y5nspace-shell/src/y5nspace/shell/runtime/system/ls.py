@@ -6,7 +6,7 @@ from y5n.api.ports import OnSourceRead
 from ...ports import OnProject
 
 # ----------------------------------
-# COMMAND
+# RUN
 # ----------------------------------
 
 

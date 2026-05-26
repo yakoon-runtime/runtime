@@ -13,7 +13,7 @@ from y5n.api.sessions import Session
 from ..ports import OnProject
 
 # ----------------------------------
-# COMMAND
+# RUN
 # ----------------------------------
 
 

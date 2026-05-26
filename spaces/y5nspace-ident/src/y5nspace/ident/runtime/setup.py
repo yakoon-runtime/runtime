@@ -25,7 +25,7 @@ from ..settings import Settings
 from .bootstrap import bootstrap
 
 # ----------------------------------
-# COMMAND
+# RUN
 # ----------------------------------
 
 

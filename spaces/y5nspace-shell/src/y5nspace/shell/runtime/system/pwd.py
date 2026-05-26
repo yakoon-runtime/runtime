@@ -4,7 +4,7 @@ from y5n.api.projections import to_text
 from y5n.base.runtime.errors import DomainError
 
 # ----------------------------------
-# COMMAND
+# RUN
 # ----------------------------------
 
 

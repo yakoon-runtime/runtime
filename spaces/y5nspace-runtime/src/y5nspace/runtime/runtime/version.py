@@ -9,7 +9,7 @@ from y5n.api.nodes import NodeSpace
 from ..ports import OnProject
 
 # ----------------------------------
-# COMMAND
+# RUN
 # ----------------------------------
 
 
