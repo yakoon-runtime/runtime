@@ -56,7 +56,7 @@ class Continue(Control):
 
         # 2. Event für nächsten Command vorbereiten
         event = InputEvent(
-            command=next_cmd, tokens=[], payload=self.data  # später sauber lösen
+            data=next_cmd, tokens=[], payload=self.data  # später sauber lösen
         )
 
         # 3. Flow weiter schedulen

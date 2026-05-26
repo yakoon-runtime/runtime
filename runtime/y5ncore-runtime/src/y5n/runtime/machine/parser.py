@@ -7,7 +7,7 @@ class InputParser:
 
     def parse(self, event: InputEvent) -> tuple[InputEvent, list[str]]:
 
-        parts = self.split_pipes(event.command)
+        parts = self.split_pipes(event.data)
 
         if not parts:
             return event, []
@@ -17,7 +17,7 @@ class InputParser:
         tokens = shlex.split(head)
 
         event = InputEvent(
-            command=tokens[0],
+            data=tokens[0],
             tokens=tokens[1:],
             payload=event.payload,
             context=event.context,

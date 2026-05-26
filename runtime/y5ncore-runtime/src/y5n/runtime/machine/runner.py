@@ -22,7 +22,7 @@ class Runner:
 
     async def on_input(self, event: InputEvent):
 
-        if event.command in self._global_commands:
+        if event.data in self._global_commands:
             await self.on_dispatch(session=self._session, event=event)
             return
 

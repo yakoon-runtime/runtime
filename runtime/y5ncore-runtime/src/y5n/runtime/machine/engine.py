@@ -68,7 +68,7 @@ class CommandEngine:
         # session.execution.step(ExecStep.EXECUTION_START)
         node: Node | None = None
         event, pipeline_commands = self.on_parse_input(event=event)
-        if not event or not event.command:
+        if not event or not event.data:
             return None
 
         # session.execution.step(
@@ -79,7 +79,7 @@ class CommandEngine:
         # find node
         node, tokens = self.on_resolve_command(
             parent=session.get_current_node(),
-            key=event.command,
+            key=event.data,
             tokens=event.tokens,
             session=session,
         )
@@ -104,7 +104,7 @@ class CommandEngine:
             id=uuid4().hex,
             node=node,
             pipeline=pipeline_commands,
-            event=event.update(command=node.key, tokens=tokens),
+            event=event.update(data=node.key, tokens=tokens),
             cursor=FlowCursor("run"),
             kind=self.DEFAULT_FLOW_KIND,
         )
@@ -248,7 +248,7 @@ class CommandEngine:
         # ----------------------------------
 
         request = Request(
-            event.command,
+            event.data,
             event.tokens,
             event.payload,
             session.lang,

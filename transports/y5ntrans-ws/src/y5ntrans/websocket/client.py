@@ -34,7 +34,7 @@ class WebSocketClientTransport:
             payload = {
                 "type": "input",
                 "payload": {
-                    "raw": event.command,
+                    "raw": event.data,
                     "context": {
                         "origin": getattr(event.context, "origin", None),
                     },
