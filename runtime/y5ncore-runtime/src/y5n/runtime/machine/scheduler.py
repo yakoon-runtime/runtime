@@ -94,7 +94,7 @@ class Scheduler:
             steps = 0
             iterations = 0
 
-            self._wake_sleeping()
+            await self._wake_sleeping()
 
             # --------------------------------------------------
             # Nichts zu tun → warten
@@ -234,7 +234,7 @@ class Scheduler:
         except Exception as error:
             await self._show_error(session, ctx, node, error)
 
-    def _wake_sleeping(self):
+    async def _wake_sleeping(self):
         now = time.time()
 
         while self._sleeping and self._sleeping[0][0] <= now:
@@ -244,7 +244,7 @@ class Scheduler:
             if not control:
                 continue
 
-            control.on_wake(flow, self, session)
+            await control.on_wake(flow, self, session)
 
     async def _handle_outcome(self, session: Session, flow: Flow, outcome):
 
