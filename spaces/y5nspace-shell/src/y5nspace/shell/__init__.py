@@ -1,6 +1,6 @@
 from y5n.api.modules import ModuleExport, ModuleMeta
 
-from .root import shell
+from .space import shell
 
 
 def register() -> ModuleExport:

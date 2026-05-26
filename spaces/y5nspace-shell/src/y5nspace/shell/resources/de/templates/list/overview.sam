@@ -10,7 +10,7 @@ Commands: <br/>
 
 {% if state.navigables %}
   <br/><br/>
-  Apps: <br/>
+  Spaces: <br/>
 
   {% for c in state.navigables %}
       {% if c.navigable %}

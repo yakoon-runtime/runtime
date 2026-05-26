@@ -1,7 +1,9 @@
 from y5n.api.nodes import Node, NodeScope
 
-from .actors import on_version, on_welcome
-from .on_setup import on_setup
+from .runtime.labs.space import labs
+from .runtime.setup import setup
+from .runtime.version import run as version
+from .runtime.welcome import run as welcome
 
 # ----------------------------------
 # RUNTIME
@@ -10,7 +12,7 @@ from .on_setup import on_setup
 runtime = Node(
     key="runtime",
     name="Runtime",
-    setup=on_setup,
+    setup=setup,
     anonymous=True,
 )
 
@@ -22,7 +24,7 @@ runtime = Node(
 runtime.add(
     Node(
         key="welcome",
-        run=on_welcome,
+        run=welcome,
         anonymous=True,
         scope=NodeScope.NODE,
         resolvable=True,
@@ -37,11 +39,12 @@ runtime.add(
 runtime.add(
     Node(
         key="version",
-        run=on_version,
+        run=version,
         anonymous=True,
         scope=NodeScope.NODE,
         resolvable=True,
         navigable=False,
     )
 )
-# runtime.mount(system)
+
+runtime.mount(labs)

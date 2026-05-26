@@ -1,6 +1,6 @@
 from y5n.base.plugins import ModuleExport, ModuleMeta
 
-from .root import ident
+from .space import ident
 
 
 def register() -> ModuleExport:
