@@ -3,7 +3,7 @@ import subprocess
 import time
 from datetime import UTC, datetime
 
-from y5n.api.flows import out
+from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
 
 from ..ports import OnProject

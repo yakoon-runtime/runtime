@@ -1,4 +1,4 @@
-from y5n.api.flows import foreground, out, receive, suspend
+from y5n.api.dsl import foreground, out, receive, suspend
 from y5n.api.projections import to_text
 
 

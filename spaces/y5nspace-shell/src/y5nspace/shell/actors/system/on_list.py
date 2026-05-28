@@ -6,13 +6,13 @@ from y5n.api.ports import OnSourceRead
 from ...ports import OnProject
 
 # ----------------------------------
-# RUN
+# COMMAND
 # ----------------------------------
 
 
-async def run(space: NodeSpace):
+async def on_list(space: NodeSpace):
 
-    current_node = space.session.get_current_node()  # type: ignore
+    current_node = space.session.get_current_node()
 
     on_source = space.ports.get(OnSourceRead)
     result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))

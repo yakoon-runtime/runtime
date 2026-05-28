@@ -3,12 +3,10 @@ from .dsl import (
     delay,
     foreground,
     out,
-    present,
     prompt,
     receive,
     send,
     suspend,
-    write,
 )
 
 __all__ = [
@@ -18,8 +16,6 @@ __all__ = [
     "send",
     "delay",
     "receive",
-    "present",
-    "write",
     "suspend",
     "foreground",
     "background",

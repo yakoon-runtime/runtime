@@ -1,4 +1,4 @@
-from y5n.api.flows import delay, out
+from y5n.api.dsl import delay, out
 from y5n.api.projections import to_text
 
 

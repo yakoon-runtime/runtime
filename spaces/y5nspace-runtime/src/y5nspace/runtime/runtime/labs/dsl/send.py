@@ -1,4 +1,4 @@
-from y5n.api.flows import out, receive, send
+from y5n.api.dsl import out, receive, send
 from y5n.api.projections import to_text
 
 
