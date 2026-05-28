@@ -36,10 +36,7 @@ Patterns = Behavior
 Commands = Orchestration
 """
 
-from warnings import deprecated
-
-from y5n.base.flow.primitives.builder import create_projection
-from y5n.base.projection.model import Block, Projection
+from y5n.base.projection.model import Projection
 from y5n.base.runtime import InputEvent
 
 from .primitives import (
@@ -56,37 +53,22 @@ from .primitives import (
 
 
 def out(value: Projection):
+    """
+    Emit a transient projection to the active client.
+
+    The projection is rendered immediately but is not
+    persisted as part of the flow interaction state.
+    """
     return Outcome(value=value)
 
 
-@deprecated("Use 'yield out(projection)' instead.")
-def present(projection: Projection) -> Outcome:
-    """
-    Emit a projection to the UI.
-
-    This represents a pure state update. It does not affect
-    input routing or flow control.
-    """
-
-    return Outcome(effects=[EmitView(projection)])
-
-
-@deprecated("Use 'yield out(Projection(blocks=[...]))' instead.")
-def write(block: Block) -> Outcome:
-    """
-    Emit a single block as a projection.
-
-    Convenience wrapper around present(), creating a minimal
-    projection containing only the given block.
-    """
-
-    if not isinstance(block, Block):
-        raise TypeError("write() expects a Block instance")
-    projection = create_projection(blocks=[block])
-    return present(projection)
-
-
 def suspend() -> Outcome:
+    """
+    Suspend the current flow until it is explicitly resumed.
+
+    The flow releases foreground interaction and remains
+    paused at the current execution position.
+    """
     return Outcome(
         control=Suspend(),
         effects=[Background()],
@@ -94,18 +76,36 @@ def suspend() -> Outcome:
 
 
 def foreground() -> Outcome:
+    """
+    Move the current flow into foreground interaction.
+
+    The flow becomes the active user interaction context.
+    """
     return Outcome(
         effects=[Foreground()],
     )
 
 
 def background() -> Outcome:
+    """
+    Remove the current flow from foreground interaction.
+
+    The flow continues running unless blocked by a control
+    such as receive(), sleep(), or suspend().
+    """
     return Outcome(
         effects=[Background()],
     )
 
 
 def prompt(projection: Projection) -> Outcome:
+    """
+    Persist and emit an interactive flow projection.
+
+    The projection becomes the current resumable interaction
+    state of the flow and is automatically restored when the
+    flow returns to foreground.
+    """
 
     return Outcome(
         effects=[
