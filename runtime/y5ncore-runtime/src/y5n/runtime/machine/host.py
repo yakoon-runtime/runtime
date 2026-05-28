@@ -69,7 +69,7 @@ class RuntimeHost:
         if self._has_connections(runner):
             return
 
-        # real session ist deth
+        # real session is death
         session = runner._session
 
         # self.engine.cleanup_session(session)

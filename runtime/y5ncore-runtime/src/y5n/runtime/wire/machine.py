@@ -73,7 +73,7 @@ def build_machine(
         try:
             on_error = node.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
-        except Exception:
+        except Exception:  # fallback
             on_error = node.root.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
 
@@ -114,7 +114,9 @@ def build_machine(
     def create_runner(session: Session) -> Runner:
         runner = Runner(
             session=session,
-            global_commands=resolver.globals(),
+            runtime_commands={
+                ":bg",
+            },
             on_dispatch=scheduler.dispatch,
             on_schedule_flow=scheduler.schedule_flow,
         )
