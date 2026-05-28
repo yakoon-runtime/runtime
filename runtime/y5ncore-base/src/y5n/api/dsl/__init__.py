@@ -3,6 +3,7 @@ from y5n.base.flow import (
     delay,
     foreground,
     out,
+    out_text,
     prompt,
     receive,
     send,
@@ -11,6 +12,7 @@ from y5n.base.flow import (
 
 __all__ = [
     "out",
+    "out_text",
     "delay",
     "receive",
     "send",

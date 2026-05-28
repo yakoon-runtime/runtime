@@ -1,7 +1,6 @@
-from .public import form, write_text
+from .public import Form
 
 __all__ = [
     # .public
-    "form",
-    "write_text",
+    "Form",
 ]

@@ -1,6 +1,6 @@
 from y5n.base.commands import Command, Request
 from y5n.base.flow.dsl import prompt, receive
-from y5n.base.flow.patterns import write_text
+from y5n.base.flow.patterns import out_text
 
 
 class CmdDemoSubflow(Command):
@@ -9,25 +9,25 @@ class CmdDemoSubflow(Command):
 
     async def run(self, request: Request):
 
-        yield write_text("\nA start")
+        yield out_text("\nA start")
         yield self.sub()
 
-        yield write_text("\nA end")
-        yield write_text("\nA start again")
+        yield out_text("\nA end")
+        yield out_text("\nA start again")
 
         yield self.sub()
-        yield write_text("\nA end again")
+        yield out_text("\nA end again")
 
     async def sub(self):
 
         projector = await self.create_projector()
         projection = await projector.project("view_1")
 
-        yield write_text("\nB start")
+        yield out_text("\nB start")
         yield prompt(projection)
 
         value = yield receive()
-        yield write_text("\n" + f"B got {value}")
+        yield out_text("\n" + f"B got {value}")
 
 
 # name = (yield ask(view1)).require("name")

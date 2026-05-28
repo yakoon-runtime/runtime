@@ -1,6 +1,6 @@
 from y5n.base.commands import Command, Request
 from y5n.base.flow import prompt, receive
-from y5n.base.flow.patterns import write_text
+from y5n.base.flow.patterns import out_text
 from y5n.base.flow.patterns.internal.validate import apply_errors, validate
 
 
@@ -24,5 +24,5 @@ class CmdDemoValidateSimple(Command):
                 continue
 
             values = result.values
-            yield write_text(f"Ihre Eingabe: {values}")
+            yield out_text(f"Ihre Eingabe: {values}")
             break

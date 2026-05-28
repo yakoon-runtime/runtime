@@ -1,16 +1,19 @@
-from y5n.api.dsl import foreground, out, prompt, receive
-from y5n.api.projections import to_text
+from y5n.api.dsl import out_text
+from y5n.api.dsl.patterns import Form
 
 
 async def run(_):
 
-    yield foreground()
+    form = Form()
 
-    yield prompt(to_text("Vorname:"))
-    first_Name = yield receive()
+    yield form.ask(
+        key="first_name",
+        title="Vorname:",
+    )
 
-    yield prompt(to_text("Nachname:"))
-    last_Name = yield receive()
+    yield form.ask(
+        key="last_name",
+        title="Nachname:",
+    )
 
-    yield out(to_text("\nEingabe:"))
-    yield out(to_text(f"{first_Name.data}, {last_Name.data}"))
+    yield out_text(str(form.data))

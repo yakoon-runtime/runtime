@@ -1,44 +1,14 @@
-from __future__ import annotations
-
-from y5n.base.projection import Projection
-
-from ...dsl import prompt, receive, send
-from ...port import DslContext
-from ..internal.validate import apply_errors, validate
-
-# --------------------------------------------------------
-# PUBLIC API
-# --------------------------------------------------------
+from y5n.base.flow.dsl import prompt, receive, to_text
 
 
-async def form(
-    context: DslContext,
-    projection: Projection,
-    channel_id: str,
-):
-    """
-    Generic form interaction pattern.
+class Form:
 
-    Flow:
-    - ask(view)
-    - receive input
-    - validate via PolicyService
-    - apply errors to view (if any)
-    - repeat until valid
-    - return validated values
+    def __init__(self):
+        self.data = {}
 
-    Returns:
-        dict[str, Any]
-    """
+    async def ask(self, key: str, title: str):
 
-    while True:
-        yield prompt(projection)
-
+        yield prompt(to_text(title))
         event = yield receive()
 
-        result = validate(context, projection, event)
-        if result.ok:
-            yield send(channel_id, result.values)
-            return
-        else:
-            projection = apply_errors(projection, result.errors)
+        self.data[key] = event.data

@@ -36,7 +36,7 @@ Patterns = Behavior
 Commands = Orchestration
 """
 
-from y5n.base.projection.model import Projection
+from y5n.base.projection import Projection, to_text
 from y5n.base.runtime import InputEvent
 
 from .primitives import (
@@ -60,6 +60,19 @@ def out(value: Projection):
     persisted as part of the flow interaction state.
     """
     return Outcome(value=value)
+
+
+def out_text(text: str) -> Outcome:
+    """
+    Emit a transient text projection to the active client.
+
+    Convenience shortcut for:
+        out(to_text(...))
+
+    The emitted text is rendered immediately but is not
+    persisted as part of the flow interaction state.
+    """
+    return out(to_text(text))
 
 
 def suspend() -> Outcome:

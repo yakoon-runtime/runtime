@@ -1,7 +1,5 @@
-from .form import form
-from .write import write_text
+from .form import Form
 
 __all__ = [
-    "form",
-    "write_text",
+    "Form",
 ]

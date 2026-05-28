@@ -3,6 +3,7 @@ from .dsl import (
     delay,
     foreground,
     out,
+    out_text,
     prompt,
     receive,
     send,
@@ -13,6 +14,7 @@ __all__ = [
     # .dsl
     "prompt",
     "out",
+    "out_text",
     "send",
     "delay",
     "receive",
