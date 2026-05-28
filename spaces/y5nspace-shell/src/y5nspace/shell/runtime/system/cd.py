@@ -59,7 +59,7 @@ async def run(space: NodeSpace):
     # ----------------------------------
 
     target_result = await on_source(
-        DataRequest(f"system:nodes --by-key {resolved_path} --from {current_path}")
+        DataRequest(f"system:nodes --by-key {resolved_path}")
     )
 
     if target_result.status != "ok":

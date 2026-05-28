@@ -30,7 +30,7 @@ class NodeSource(DataSource):
         --roots
             Returns visible runtime nodes with root scope.
 
-        --by-key <key-path> --from <current-key-path>
+        --by-key <key-path>
             Resolves a runtime node by canonical runtime path.
 
         --children [<key-path>]
@@ -118,23 +118,7 @@ class NodeSource(DataSource):
     def _resolve_by_key(self, request: DataRequest) -> DataResult:
 
         raw = request.option("by-key")
-        scope_raw = request.option("from")
-
         path = NodePath.from_string(raw)
-
-        # ---------------------------------
-        # Scope resolution
-        # ---------------------------------
-
-        scope_node = self._root
-
-        if scope_raw:
-            scope_path = NodePath.from_string(scope_raw)
-            resolved_scope = self._root.find(scope_path)
-            if not resolved_scope:
-                return DataResult.not_found(id=str(scope_path))
-
-            scope_node = resolved_scope
 
         # ---------------------------------
         # Direct tree resolution
@@ -153,7 +137,7 @@ class NodeSource(DataSource):
         # Root-visible nodes
         # ---------------------------------
 
-        if not node and scope_node == self._root:
+        if not node and path.parent == NodePath.root():
             node = self._roots.get(path.last or "")
 
         # ---------------------------------

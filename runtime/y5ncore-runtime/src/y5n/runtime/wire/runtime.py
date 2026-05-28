@@ -108,7 +108,7 @@ def build_runtime(
     # -----------------
 
     platform = Node(
-        key="platform",
+        key="/",
         scope=NodeScope.NODE,
     )
 
