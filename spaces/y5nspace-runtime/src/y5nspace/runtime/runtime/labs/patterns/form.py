@@ -1,5 +1,6 @@
 from y5n.api.dsl import out_text
 from y5n.api.dsl.patterns import Form
+from y5n.api.dsl.policies import IntPolicy
 
 
 async def run(_):
@@ -23,7 +24,9 @@ async def run(_):
 
 
 async def ask_age(form):
+
     yield form.ask(
         key="age",
         title="Alter:",
+        policy=IntPolicy(min=1, max=99),
     )

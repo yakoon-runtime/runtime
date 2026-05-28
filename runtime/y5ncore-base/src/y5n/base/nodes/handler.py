@@ -18,7 +18,8 @@ if TYPE_CHECKING:
 # ----------------------------------
 
 
-RunResult: TypeAlias = AsyncGenerator[Outcome | None, Any] | Awaitable[None]
+FlowYield: TypeAlias = Outcome | AsyncGenerator | None
+RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]
 
 # ----------------------------------
 # HANDLER

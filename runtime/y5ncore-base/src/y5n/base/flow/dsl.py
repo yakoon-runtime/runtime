@@ -52,7 +52,7 @@ from .primitives import (
 )
 
 
-def out(value: Projection):
+def out(value: Projection) -> Outcome:
     """
     Emit a transient projection to the active client.
 
