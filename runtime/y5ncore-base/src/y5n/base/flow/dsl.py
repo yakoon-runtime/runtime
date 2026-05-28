@@ -43,13 +43,15 @@ from y5n.base.projection.model import Block, Projection
 from y5n.base.runtime import InputEvent
 
 from .primitives import (
-    AutoFocus,
     AwaitEvent,
+    Background,
     EmitEvent,
     EmitView,
+    Foreground,
     Outcome,
     Sleep,
     SleepUntil,
+    Suspend,
 )
 
 
@@ -84,6 +86,26 @@ def write(block: Block) -> Outcome:
     return present(projection)
 
 
+def suspend() -> Outcome:
+    return Outcome(
+        control=Suspend(),
+        effects=[Background()],
+    )
+
+
+def foreground() -> Outcome:
+    return Outcome(
+        effects=[Foreground()],
+    )
+
+
+def background() -> Outcome:
+    return Outcome(
+        effects=[Background()],
+    )
+
+
+@deprecated("Don't use it. -> TODO: Remove")
 def focus(projection: Projection) -> Outcome:
     """
     Emit a projection and give this flow focus.
@@ -94,7 +116,7 @@ def focus(projection: Projection) -> Outcome:
     """
 
     return Outcome(
-        effects=[AutoFocus(), EmitView(projection)],
+        effects=[Foreground(), EmitView(projection)],
     )
 
 

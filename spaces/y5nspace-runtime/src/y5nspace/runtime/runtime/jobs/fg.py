@@ -17,5 +17,8 @@ async def run(space: NodeSpace):
         yield out(to_text(f"Job {index} not found."))
         return
 
+    assert flow.control
+
     space.session.set_foreground_flow(flow.id)  # type: ignore
+    await flow.control.resume(flow, space.session)
     yield out(to_text(f"Job {index} moved to foreground."))

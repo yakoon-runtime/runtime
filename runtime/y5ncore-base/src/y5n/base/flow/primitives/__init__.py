@@ -6,9 +6,16 @@ from .control import (
     Sleep,
     SleepUntil,
     Stop,
+    Suspend,
     YieldToScheduler,
 )
-from .effect import AutoFocus, Effect, EmitEvent, EmitView, SetBackground, SetForeground
+from .effect import (
+    Background,
+    Effect,
+    EmitEvent,
+    EmitView,
+    Foreground,
+)
 from .outcome import Outcome
 from .view import compile_view
 
@@ -18,18 +25,19 @@ __all__ = [
     # .controls
     "AwaitEvent",
     "Control",
+    "Suspend",
     "Sleep",
     "SleepUntil",
     "Stop",
     "Continue",
     "YieldToScheduler",
     # .effects
-    "AutoFocus",
-    "SetBackground",
+    "Foreground",
+    "Background",
     "Effect",
     "EmitEvent",
     "EmitView",
-    "SetForeground",
+    "Foreground",
     # .view
     "compile_view",
     "create_projection",

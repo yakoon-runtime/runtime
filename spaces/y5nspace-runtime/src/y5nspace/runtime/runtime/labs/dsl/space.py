@@ -4,9 +4,10 @@ from .delay import run as delay
 from .out import run as out
 from .receive import run as receive
 from .send import run as send
+from .suspend import run as suspend
 
 # ----------------------------------
-# LABS
+# DSL
 # ----------------------------------
 
 dsl = Node(
@@ -67,6 +68,20 @@ dsl.add(
     Node(
         key="receive",
         run=receive,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+    )
+)
+
+# ----------------------------------
+# SUSPEND
+# ----------------------------------
+
+dsl.add(
+    Node(
+        key="suspend",
+        run=suspend,
         anonymous=True,
         resolvable=True,
         navigable=False,

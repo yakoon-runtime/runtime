@@ -21,6 +21,9 @@ class Control:
     async def on_wake(self, flow, scheduler, session):
         scheduler.schedule_flow(flow, session)
 
+    async def resume(self, flow, session):
+        pass
+
     def label(self, flow) -> str:
         return self.__class__.__name__
 
@@ -37,6 +40,17 @@ class Stop(Control):
     async def on_enter(self, flow, scheduler, session):
         session.del_flow(flow)
         flow.scheduled = False
+
+
+class Suspend(Control):
+
+    blocking = True
+
+    def is_runnable(self, flow):
+        return False
+
+    async def resume(self, flow, session):
+        flow.control = YieldToScheduler()
 
 
 class Continue(Control):

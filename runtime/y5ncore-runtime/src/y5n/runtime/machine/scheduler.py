@@ -6,7 +6,7 @@ import time
 from collections import deque
 from typing import Protocol
 
-from y5n.base.flow.primitives import Control, Outcome
+from y5n.base.flow.primitives import Control, Outcome, YieldToScheduler
 from y5n.base.nodes import Node
 from y5n.base.projection import Projection
 from y5n.base.runtime import InputContext, InputEvent
@@ -173,6 +173,7 @@ class Scheduler:
                         # ----------------------------------
                         if outcome:
                             await self._handle_outcome(session, flow, outcome)
+                            self._refresh_resumed_flows(session)
                             break  # Flow ist fertig / blockiert
 
                         # ----------------------------------
@@ -217,6 +218,13 @@ class Scheduler:
     # --------------------------------------------------------
     # INTERNAL
     # --------------------------------------------------------
+
+    def _refresh_resumed_flows(self, session):
+
+        for flow in session.flows():
+
+            if isinstance(flow.control, YieldToScheduler) and not flow.scheduled:
+                self.schedule_flow(flow, session)
 
     async def _call_runtime(
         self, session: Session, ctx: InputContext | None, callback, **kwargs

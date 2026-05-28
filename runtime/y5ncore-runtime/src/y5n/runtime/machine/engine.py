@@ -6,15 +6,14 @@ from typing import Protocol
 from uuid import uuid4
 
 from y5n.base.flow.primitives import (
-    AutoFocus,
     AwaitEvent,
+    Background,
     Continue,
     Effect,
     EmitEvent,
     EmitView,
+    Foreground,
     Outcome,
-    SetBackground,
-    SetForeground,
     Stop,
 )
 from y5n.base.nodes import Node, NodePath, NodeSpace, Request
@@ -209,17 +208,15 @@ class CommandEngine:
                     job_id=flow.id,
                 )
 
-            elif isinstance(effect, AutoFocus):
-                session.set_foreground_flow(flow.id)
+            elif isinstance(effect, Foreground):
+                flow_id = effect.flow_id or flow.id
+                session.set_foreground_flow(flow_id)
+
+            elif isinstance(effect, Background):
+                session.set_foreground_flow(None)
 
             elif isinstance(effect, EmitEvent):
                 flow.inbox[effect.channel].append(effect.event)
-
-            elif isinstance(effect, SetForeground):
-                session.set_foreground_flow(effect.flow_id)
-
-            elif isinstance(effect, SetBackground):
-                session.set_foreground_flow(None)
 
     async def _next_step(
         self,
