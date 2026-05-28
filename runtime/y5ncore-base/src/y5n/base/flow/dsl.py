@@ -105,18 +105,13 @@ def background() -> Outcome:
     )
 
 
-@deprecated("Don't use it. -> TODO: Remove")
-def focus(projection: Projection) -> Outcome:
-    """
-    Emit a projection and give this flow focus.
-
-    This marks the flow as the active receiver of subsequent
-    input events. The projection itself defines how input is
-    presented (e.g. structured fields or free input).
-    """
+def prompt(projection: Projection) -> Outcome:
 
     return Outcome(
-        effects=[Foreground(), EmitView(projection)],
+        effects=[
+            Foreground(),
+            EmitView(projection, persist=True),
+        ],
     )
 
 

@@ -6,8 +6,9 @@ class Effect:
 
 
 class EmitView(Effect):
-    def __init__(self, view):
+    def __init__(self, view, persist: bool = False):
         self.view = view
+        self.persist = persist
 
 
 class EmitEvent(Effect):

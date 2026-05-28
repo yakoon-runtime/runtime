@@ -201,6 +201,9 @@ class CommandEngine:
         for effect in effects:
 
             if isinstance(effect, EmitView):
+                if effect.persist:
+                    flow.view = effect.view
+
                 await self.on_projection(
                     session=session,
                     projection=effect.view,

@@ -1,4 +1,13 @@
-from y5n.base.flow import background, delay, foreground, out, receive, send, suspend
+from y5n.base.flow import (
+    background,
+    delay,
+    foreground,
+    out,
+    prompt,
+    receive,
+    send,
+    suspend,
+)
 
 __all__ = [
     "out",
@@ -8,4 +17,5 @@ __all__ = [
     "suspend",
     "foreground",
     "background",
+    "prompt",
 ]

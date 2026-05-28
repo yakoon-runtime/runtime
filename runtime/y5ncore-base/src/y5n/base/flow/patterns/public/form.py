@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from y5n.base.projection import Projection
 
-from ...dsl import focus, receive, send
+from ...dsl import prompt, receive, send
 from ...port import DslContext
 from ..internal.validate import apply_errors, validate
 
@@ -32,7 +32,7 @@ async def form(
     """
 
     while True:
-        yield focus(projection)
+        yield prompt(projection)
 
         event = yield receive()
 

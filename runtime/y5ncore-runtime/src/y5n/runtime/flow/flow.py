@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from y5n.base.flow.primitives import Control
 from y5n.base.runtime import InputEvent
@@ -25,6 +25,7 @@ class Flow:
 
     cursor: FlowCursor
     control: Control | None = None
+    view: Any | None = None
 
     scheduled: bool = False
     wake_at: float | None = None

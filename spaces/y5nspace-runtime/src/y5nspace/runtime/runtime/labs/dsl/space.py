@@ -2,6 +2,7 @@ from y5n.api.nodes import Node
 
 from .delay import run as delay
 from .out import run as out
+from .prompt import run as prompt
 from .receive import run as receive
 from .send import run as send
 from .suspend import run as suspend
@@ -82,6 +83,21 @@ dsl.add(
     Node(
         key="suspend",
         run=suspend,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+    )
+)
+
+
+# ----------------------------------
+# PROMPT
+# ----------------------------------
+
+dsl.add(
+    Node(
+        key="prompt",
+        run=prompt,
         anonymous=True,
         resolvable=True,
         navigable=False,

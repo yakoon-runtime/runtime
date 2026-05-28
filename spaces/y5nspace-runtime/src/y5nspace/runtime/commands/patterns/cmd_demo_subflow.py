@@ -1,5 +1,5 @@
 from y5n.base.commands import Command, Request
-from y5n.base.flow.dsl import focus, receive
+from y5n.base.flow.dsl import prompt, receive
 from y5n.base.flow.patterns import write_text
 
 
@@ -24,7 +24,7 @@ class CmdDemoSubflow(Command):
         projection = await projector.project("view_1")
 
         yield write_text("\nB start")
-        yield focus(projection)
+        yield prompt(projection)
 
         value = yield receive()
         yield write_text("\n" + f"B got {value}")

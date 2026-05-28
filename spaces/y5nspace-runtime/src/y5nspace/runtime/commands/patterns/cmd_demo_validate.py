@@ -1,5 +1,5 @@
 from y5n.base.commands import Command, Request
-from y5n.base.flow import focus, receive
+from y5n.base.flow import prompt, receive
 from y5n.base.flow.patterns import write_text
 from y5n.base.flow.patterns.internal.validate import apply_errors, validate
 
@@ -14,7 +14,7 @@ class CmdDemoValidateSimple(Command):
         projection = await projector.project("view_1")
 
         while True:
-            yield focus(projection)
+            yield prompt(projection)
 
             event = yield receive()
 

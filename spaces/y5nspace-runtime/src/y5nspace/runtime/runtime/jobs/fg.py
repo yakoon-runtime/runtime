@@ -22,3 +22,8 @@ async def run(space: NodeSpace):
     space.session.set_foreground_flow(flow.id)  # type: ignore
     await flow.control.resume(flow, space.session)
     yield out(to_text(f"Job {index} moved to foreground."))
+
+    # Restore the last persisted interaction view
+    # when the flow returns to foreground.
+    if flow.view:
+        yield out(flow.view)

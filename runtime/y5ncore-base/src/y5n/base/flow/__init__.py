@@ -1,10 +1,10 @@
 from .dsl import (
     background,
     delay,
-    focus,
     foreground,
     out,
     present,
+    prompt,
     receive,
     send,
     suspend,
@@ -13,7 +13,7 @@ from .dsl import (
 
 __all__ = [
     # .dsl
-    "focus",
+    "prompt",
     "out",
     "send",
     "delay",
