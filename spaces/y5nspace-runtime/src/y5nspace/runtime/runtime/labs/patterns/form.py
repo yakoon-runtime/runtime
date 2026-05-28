@@ -16,4 +16,14 @@ async def run(_):
         title="Nachname:",
     )
 
+    # you can use subflows
+    yield ask_age(form)
+
     yield out_text(str(form.data))
+
+
+async def ask_age(form):
+    yield form.ask(
+        key="age",
+        title="Alter:",
+    )
