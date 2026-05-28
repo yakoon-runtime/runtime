@@ -8,13 +8,13 @@ from uuid import uuid4
 from y5n.base.flow.primitives import (
     AutoFocus,
     AwaitEvent,
-    ClearFocus,
     Continue,
     Effect,
     EmitEvent,
     EmitView,
     Outcome,
-    SetFocus,
+    SetBackground,
+    SetForeground,
     Stop,
 )
 from y5n.base.nodes import Node, NodePath, NodeSpace, Request
@@ -210,16 +210,16 @@ class CommandEngine:
                 )
 
             elif isinstance(effect, AutoFocus):
-                session.set_interaction(flow.id)
+                session.set_foreground_flow(flow.id)
 
             elif isinstance(effect, EmitEvent):
                 flow.inbox[effect.channel].append(effect.event)
 
-            elif isinstance(effect, SetFocus):
-                session.set_interaction(effect.flow_id)
+            elif isinstance(effect, SetForeground):
+                session.set_foreground_flow(effect.flow_id)
 
-            elif isinstance(effect, ClearFocus):
-                session.set_interaction(None)
+            elif isinstance(effect, SetBackground):
+                session.set_foreground_flow(None)
 
     async def _next_step(
         self,

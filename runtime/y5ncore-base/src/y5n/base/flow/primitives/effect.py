@@ -16,14 +16,14 @@ class EmitEvent(Effect):
         self.event = event
 
 
-class SetFocus(Effect):
+class SetForeground(Effect):
     def __init__(self, flow_id):
         self.flow_id = flow_id
 
 
-class AutoFocus(Effect):
+class SetBackground(Effect):
     pass
 
 
-class ClearFocus(Effect):
+class AutoFocus(Effect):
     pass

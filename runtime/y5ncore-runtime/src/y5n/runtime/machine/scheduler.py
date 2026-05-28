@@ -187,8 +187,8 @@ class Scheduler:
                             break
 
                 except Exception as error:
-                    if session.interaction_flow:
-                        session.del_flow(session.interaction_flow)
+                    if session.foreground_flow:
+                        session.del_flow(session.foreground_flow)
                     await self._show_error(session, None, flow.node, error)
 
             # --------------------------------------------------

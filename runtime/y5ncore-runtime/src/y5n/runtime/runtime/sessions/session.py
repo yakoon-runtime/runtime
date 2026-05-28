@@ -71,7 +71,7 @@ class Session:
 
         self._runtime = SessionRuntime()
         self._flows: dict[str, Flow] = {}
-        self._focus_flow_id: str | None = None
+        self._foreground_flow_id: str | None = None
         self._runtime_flow_id: str | None = None
 
     # ========================================================
@@ -130,25 +130,25 @@ class Session:
     def del_flow(self, flow: Flow):
         if flow.id in self._flows:
             del self._flows[flow.id]
-        if flow.id == self._focus_flow_id:
-            self.set_interaction(None)
+        if flow.id == self._foreground_flow_id:
+            self.set_foreground_flow(None)
 
     def flows(self) -> Sequence[Flow]:
         return list(self._flows.values())
 
-    def has_interaction(self) -> bool:
-        return bool(self.interaction_flow)
+    def has_foreground_flow(self) -> bool:
+        return bool(self.foreground_flow)
 
-    def set_interaction(self, flow_id: str | None):
+    def set_foreground_flow(self, flow_id: str | None):
         if flow_id and flow_id not in self._flows:
             return
-        self._focus_flow_id = flow_id
+        self._foreground_flow_id = flow_id
 
     @property
-    def interaction_flow(self) -> Flow | None:
-        if not self._focus_flow_id:
+    def foreground_flow(self) -> Flow | None:
+        if not self._foreground_flow_id:
             return None
-        return self.get_flow(self._focus_flow_id)
+        return self.get_flow(self._foreground_flow_id)
 
     # ----------------------------
     # TOUCH

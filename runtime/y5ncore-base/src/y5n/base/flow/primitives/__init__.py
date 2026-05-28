@@ -8,7 +8,7 @@ from .control import (
     Stop,
     YieldToScheduler,
 )
-from .effect import AutoFocus, ClearFocus, Effect, EmitEvent, EmitView, SetFocus
+from .effect import AutoFocus, Effect, EmitEvent, EmitView, SetBackground, SetForeground
 from .outcome import Outcome
 from .view import compile_view
 
@@ -25,11 +25,11 @@ __all__ = [
     "YieldToScheduler",
     # .effects
     "AutoFocus",
-    "ClearFocus",
+    "SetBackground",
     "Effect",
     "EmitEvent",
     "EmitView",
-    "SetFocus",
+    "SetForeground",
     # .view
     "compile_view",
     "create_projection",

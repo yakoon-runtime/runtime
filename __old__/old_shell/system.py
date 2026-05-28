@@ -57,10 +57,10 @@ class SystemComposer(Composer):
         ),
         CmdExit: lambda self: CmdExit(
             on_source=self.port(OnSourceRead),
-            on_has_interaction=self.access.has_interaction,
+            on_has_foreground_flow=self.access.has_foreground_flow,
             on_get_active_app=self.access.get_active_app,
             on_set_active_app=self.access.set_active_app,
-            on_set_interaction=self.access.set_interaction,
+            on_set_foreground_flow=self.access.set_foreground_flow,
             on_save_session=self.save_session,
         ),
         CmdLs: lambda self: CmdLs(
@@ -95,8 +95,8 @@ class _SessionAccess(Protocol):
 
     def set_active_app(self, app_id: str) -> None: ...
 
-    def set_interaction(self, flow_id: str | None): ...
+    def set_foreground_flow(self, flow_id: str | None): ...
 
-    def has_interaction(self) -> bool: ...
+    def has_foreground_flow(self) -> bool: ...
 
     def mark(self, name: str): ...

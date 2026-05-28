@@ -26,7 +26,7 @@ class Runner:
             await self.on_dispatch(session=self._session, event=event)
             return
 
-        flow = self._session.interaction_flow
+        flow = self._session.foreground_flow
         if flow:
             flow.push_event(event)
             self.on_schedule_flow(flow=flow, session=self._session)

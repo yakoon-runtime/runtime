@@ -16,7 +16,7 @@ async def run(space: NodeSpace):
 
     yield out(to_text("Active jobs:"))
 
-    focused = space.session.interaction_flow  # type: ignore
+    focused = space.session.foreground_flow  # type: ignore
     for i, f in indexed:
         label = f.node.key
         state = f.control.label(f) if f.control else "run"
