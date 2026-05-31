@@ -1,0 +1,4 @@
+- su - pw mit Dialog -> Fokus form
+- Jobs-flow verwendet derzeit die Platform
+- api.* ist auch inden Plugins zu verwenden
+- Projection asset -> Hier braucht es ein Dict, damit auch Bilder in der Projekte geladen werden können.
