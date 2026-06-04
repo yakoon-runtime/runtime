@@ -5,7 +5,6 @@ from typing import Protocol
 from y5n.api.dsl import out
 from y5n.api.naming import Key, Namespace
 from y5n.api.nodes import NodeSpace, Request
-from y5n.base.runtime.errors import DomainError
 
 from ...models import Group, Membership
 from ...ports import OnProject
@@ -55,7 +54,7 @@ async def _handler(
     namespace = on_get_namespace()
     group = await on_get_group_by_name(name=groupname)
     if not group:
-        raise DomainError(f"Group '{groupname}' not exists.")
+        raise ValueError(f"Group '{groupname}' not exists.")
 
     memberships = await on_list_group_memberships(
         namespace=namespace,

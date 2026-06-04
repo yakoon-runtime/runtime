@@ -5,7 +5,6 @@ from typing import Protocol
 from y5n.api.dsl import out
 from y5n.api.naming import Key, Namespace
 from y5n.api.nodes import NodeSpace, Request
-from y5n.base.runtime.errors import DomainError
 
 from ...models import PermissionGrant, User
 from ...ports import OnProject
@@ -55,7 +54,7 @@ async def _handler(
 
     user = await on_get_user_by_name(name=username)
     if not user:
-        raise DomainError(f"User '{username}' " f"does not exist.")
+        raise ValueError(f"User '{username}' " f"does not exist.")
 
     grants = await on_list_subject_grants(
         namespace=namespace,

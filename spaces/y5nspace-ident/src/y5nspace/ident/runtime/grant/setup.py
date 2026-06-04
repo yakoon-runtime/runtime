@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Protocol
 
 from y5n.api.nodes import NodeSpace
-from y5n.base.runtime.errors import DomainError
 
 from ...models import Group, User
 from ...services import GroupService, Namespaces, UserService
@@ -60,16 +59,16 @@ async def _resolve_subject(
     if subject_type == "user":
         user = await on_get_user_by_name(name=subject_name)
         if not user:
-            raise DomainError(f"User '{subject_name}' " f"does not exist.")
+            raise ValueError(f"User '{subject_name}' " f"does not exist.")
         return user
 
     if subject_type == "group":
         group = await on_get_group_by_name(name=subject_name)
         if not group:
-            raise DomainError(f"Group '{subject_name}' " f"does not exist.")
+            raise ValueError(f"Group '{subject_name}' " f"does not exist.")
         return group
 
-    raise DomainError(f"Unknown subject type: " f"{subject_type}")
+    raise ValueError(f"Unknown subject type: " f"{subject_type}")
 
 
 # ----------------------------------

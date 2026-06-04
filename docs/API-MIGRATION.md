@@ -16,16 +16,9 @@ Stand nach Migration der `y5n.api`-kompatiblen Imports in `y5nspace-ident`.
 
 Erstellt unter `y5n/api/naming.py`, 34 Dateien umgestellt.
 
-### 2. `y5n.base.runtime.errors` → `y5n.api.errors` (7 Dateien)
+### 2. `DomainError` → entfernt (obsolet)
 
-| Symbol | Verwendung |
-|--------|-----------|
-| `DomainError` | grant/setup.py, grant/grant_group.py, grant/grant_user.py, member/membership_add.py, member/membership_remove.py, member/membership_groups.py, member/membership_users.py |
-
-**Vorschlag:** `y5n.api.errors`
-```python
-from y5n.api.errors import DomainError
-```
+`DomainError` war ein reiner Marker ohne spezifische Behandlung im Runtime-Code. Alle 12 raise-Stellen durch `ValueError` ersetzt, Klasse gelöscht. Kein `y5n.api.errors` nötig.
 
 ### 3. `y5n.base.plugins.models` → `y5n.api.models` (2 Dateien)
 
