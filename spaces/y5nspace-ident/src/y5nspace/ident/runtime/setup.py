@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from y5n.base.naming import Key
-from y5n.base.nodes import NodeSpace
-from y5n.base.plugins.ports import OnAuthenticate, OnProjectionResolve
-from y5n.base.projection import Projection
-from y5n.base.resources import ResourceRef
+from y5n.api.naming import Key
+from y5n.api.nodes import NodeSpace
+from y5n.api.ports import OnProjectionResolve
+from y5n.api.projections import Projection
+from y5n.api.resources import ResourceRef
+from y5n.base.plugins.ports import OnAuthenticate
 from y5n.runtime.capabilities.permission import PermissionParser
 from y5nstore.event.wire import build_store
 

@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from y5n.base.projection import Projection
+from y5n.api.projections import Projection
 
 # -------------
 # --- PORTS ---

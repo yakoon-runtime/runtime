@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.nodes import NodeSpace
+from y5n.api.nodes import NodeSpace
 from y5n.base.runtime.errors import DomainError
 
 from ...models import Group, User

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.naming import Namespace
+from y5n.api.naming import Namespace
 from y5n.base.plugins.models import AuthResult
 
 from ..models import User

@@ -1,4 +1,4 @@
-from y5n.base.resources import ResourceRef
+from y5n.api.resources import ResourceRef
 
 # ----------------------------------
 # RESOURCES

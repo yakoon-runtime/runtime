@@ -7,6 +7,7 @@ from y5n.base.nodes import (
     NodeScope,
     NodeSpace,
     NodeVisibility,
+    Request,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "NodeVisibility",
     "NodeScope",
     "NodeKind",
+    "Request",
 ]

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.flow import out
-from y5n.base.naming import Namespace
-from y5n.base.nodes import NodeSpace, Request
+from y5n.api.dsl import out
+from y5n.api.nodes import NodeSpace, Request
+from y5n.api.naming import Namespace
 
 from ...models import User
 from ...ports import OnProject

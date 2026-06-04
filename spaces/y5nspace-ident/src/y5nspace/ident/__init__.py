@@ -1,4 +1,4 @@
-from y5n.base.plugins import ModuleExport, ModuleMeta
+from y5n.api.modules import ModuleExport, ModuleMeta
 
 from .space import ident
 

@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.flow import out
-from y5n.base.naming import Key, Namespace
-from y5n.base.nodes import NodeSpace, Request
+from y5n.api.dsl import out
+from y5n.api.naming import Key, Namespace
+from y5n.api.nodes import NodeSpace, Request
+from y5n.api.ports import OnSessionSave
 from y5n.base.plugins.models import AuthResult
-from y5n.base.plugins.ports import OnAuthenticate, OnSessionSave
+from y5n.base.plugins.ports import OnAuthenticate
 
 from ..ports import OnProject
 from ..services import Namespaces, PermissionResolver

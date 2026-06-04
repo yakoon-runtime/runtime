@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Protocol
 
-from y5n.base.naming import Key, Namespace
+from y5n.api.naming import Key, Namespace
 from y5nstore.event.models import (
     GetResult,
     IndexKey,

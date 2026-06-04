@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from y5n.base.nodes import Invocation, Node, NodeScope
+from y5n.api.invocations import Invocation
+from y5n.api.nodes import Node, NodeScope
 
 from .runtime.grant.space import grant
 from .runtime.group.space import group

@@ -1,6 +1,6 @@
-from y5n.base.flow import out
-from y5n.base.naming import Key
-from y5n.base.nodes import NodeSpace, Request
+from y5n.api.dsl import out
+from y5n.api.naming import Key
+from y5n.api.nodes import NodeSpace, Request
 
 from ..ports import OnProject
 

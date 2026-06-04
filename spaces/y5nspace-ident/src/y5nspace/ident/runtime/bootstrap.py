@@ -1,4 +1,4 @@
-from y5n.base.naming import Key
+from y5n.api.naming import Key
 
 from ..models import (
     Group,

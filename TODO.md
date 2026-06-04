@@ -2,3 +2,11 @@
 - Jobs-flow verwendet derzeit die Platform
 - api.* ist auch inden Plugins zu verwenden
 - Projection asset -> Hier braucht es ein Dict, damit auch Bilder in der Projekte geladen werden können.
+
+# TODOS:
+1. y5nspace-ident → y5n.api (42 Dateien) – das große Migrationsthema für morgen
+2. Web & SSH Apps reparieren (tote Imports, ~3 Minuten)
+3. Zyklische Dependency lösen (session.py → PermissionSet)
+4. Security-Lücken (SSH ohne Auth, Postgres Default Creds, SHA-256 ohne Salt)
+5. Duplikat dsl copy/ löschen
+6. Test-Infrastruktur aufsetzen

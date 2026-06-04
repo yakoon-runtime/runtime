@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.naming import Key, Namespace
+from y5n.api.naming import Key, Namespace
 from y5n.runtime.capabilities.permission import Permission, PermissionSet
 
 from ..models import Membership, PermissionGrant
