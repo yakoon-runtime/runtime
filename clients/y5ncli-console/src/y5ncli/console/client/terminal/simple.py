@@ -13,25 +13,29 @@ class SimpleTerminal(Terminal):
 
         while self._running:
 
-            # Input lesen
-            line = await asyncio.to_thread(sys.stdin.readline)
+            try:
+                line = await asyncio.to_thread(sys.stdin.readline)
+            except KeyboardInterrupt:
+                await self.stop()
+                return
+
+            if not line:
+                await self.stop()
+                return
 
             line = line.strip()
-            await self.on_input(line.strip())
+            if line:
+                await self.on_input(line)
 
     async def stop(self):
         self._running = False
 
-    # wird vom Client gesetzt
     async def on_input(self, text):
         pass
 
-    # ------------------------
-    # Terminal API
-    # ------------------------
-
     def write(self, text):
         sys.stdout.write(text)
+        sys.stdout.flush()
 
     def new_line(self):
         sys.stdout.write("\n")
