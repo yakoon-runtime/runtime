@@ -245,10 +245,10 @@ Wenn ein Node eine Capability per `get()` erhält, kann er sie beliebig an ander
 
 | Kap | Bewertung |
 |-----|-----------|
-| `node.root` | ❌ **Kritisch** – Ambient-Authority-Backdoor |
-| `ports_from()` | ❌ **Kritisch** – Pfadbasierte Capability-Extraktion |
-| `parent`/`children` mutable | ❌ **Schwer** – Beliebige Baumtraversierung |
-| `find(..)` mit `..` | ❌ **Schwer** – Aufwärtstraversal |
+| `node.root` | ❌ **Kritisch** – Ambient-Authority-Backdoor (runtime-intern) |
+| `ports_from()` | ❌ **Kritisch** – Pfadbasierte Capability-Extraktion (runtime-intern) |
+| `parent`/`children` mutable | ❌ **Schwer** – Beliebige Baumtraversierung (runtime-intern) |
+| `find(..)` mit `..` | ❌ **Schwer** – Aufwärtstraversal (runtime-intern) |
 | Kein Widerruf | ⚠️ **Mittel** – Fehlende OCap-Funktion |
 | Typ-Lookup statt Referenz | ⚠️ **Mittel** – Design-Entscheidung |
 | `fork()` post-hoc Visibility | ⚠️ **Mittel** – Leaking Authority |
@@ -258,6 +258,61 @@ Wenn ein Node eine Capability per `get()` erhält, kann er sie beliebig an ander
 | Kein globaler Singleton | ✅ **Folgt OCap** |
 | `mount()`-Autonomie | ✅ **Folgt OCap** |
 | Protokolle als Interfaces | ✅ **Folgt OCap** |
+| **Node verlässt nie die Runtime** | ✅ **OCap-stärkend** – Spaces erhalten nur NodeSpace |
+
+---
+
+## 5a. Die entscheidende Schutzschicht: Node vs. NodeSpace
+
+Die vier als **kritisch/schwer** bewerteten Verletzungen (`root`, `ports_from()`, mutable `parent`/`children`, `find(..)`) existieren auf `Node`-Ebene – aber **Spaces bekommen nie einen `Node`**.
+
+Ein Space-Handler (`ls.py`, `su.py`, …) erhält in `run(space: NodeSpace)` nur ein **NodeSpace**:
+
+```python
+# engine.py:258
+return await flow.cursor.next(
+    node,
+    NodeSpace(
+        path=node.path,
+        request=request,
+        session=session,
+        ports=node.ports,
+        ports_from=node.ports_from,
+    ),
+)
+```
+
+`NodeSpace` exponiert **nicht**:
+- `node.root` → existiert auf NodeSpace nicht
+- `node.parent` / `node.children` → existieren nicht
+- `node.find(..)` → existiert nicht
+- `Node` selbst → niemals übergeben
+
+### Was ein Space tatsächlich hat
+
+```python
+class NodeSpace:
+    path: NodePath       # reiner Pfad (unidirektional, kein Rückweg)
+    request: Request     # geparster Command
+    session: Session     # Protokoll, kein Node
+    ports: NodePorts     # Capability-Container (nur get/provide/publish)
+    ports_from: Callable # Pfadauflösung (kritisch, siehe 4.2)
+```
+
+Die OCap-Verletzungen von Abschnitt 4.1–4.4 sind **runtime-interne Implementierungsdetails**:
+
+| Verletzung | Wer kann sie ausnutzen? | Realität |
+|------------|------------------------|----------|
+| `node.root` | Nur Code, der einen `Node` hält | Nur Runtime-Code (engine, scheduler, machine) |
+| `ports_from(path)` | Wird an NodeSpace exponiert | ❌ **Tatsächliche Lücke** – aber nur die `ports_from`-Methode, nicht der Node selbst |
+| mutable `parent`/`children` | Nur Node-Referenz-Halter | Niemals ein Space |
+| `find(..)` mit `..` | Nur Node-Referenz-Halter | Niemals ein Space |
+
+### Bewertungskorrektur
+
+Die vier Verletzungen sind nicht weniger kritisch **im Runtime-Code**, aber sie sind **für Spaces nicht erreichbar**. Das ist ein wesentlicher OCap-Schutz, der in der ursprünglichen Analyse fehlte. Die effektive Angriffsfläche für Space-Code ist deutlich kleiner als die Node-API vermuten lässt.
+
+**Spaces sind durch das NodeSpace-Interface effektiv eingekapselt** – sie sehen nur das, was die Runtime ihnen geben will, nicht die Node-Struktur. Das entspricht dem OCap-Prinzip der **Kapselung** (Abschnitt 1), auch wenn die Durchsetzung nicht formal, sondern durch Interface-Design erfolgt.
 
 ---
 
