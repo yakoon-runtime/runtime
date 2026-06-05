@@ -31,12 +31,12 @@ class SSHTerminal(Terminal):
     # ------------------------
 
     async def run(self):
-        # nichts aktiv lesen – SSH pusht Daten
-        await asyncio.Future()  # block forever
+        self._done = asyncio.Event()
+        await self._done.wait()
 
     async def stop(self):
         self._running = False
-        self.stdout.exit(0)
+        self._done.set()
         self.stdout.close()
 
     async def on_input(self, text):
