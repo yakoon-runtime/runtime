@@ -148,7 +148,7 @@ def send(channel: str, event):
     """
 
     if not isinstance(event, InputEvent):
-        event = InputEvent.from_raw(event)
+        event = InputEvent.from_raw(str(event))
     return Outcome(
         effects=[EmitEvent(channel, event)],
     )

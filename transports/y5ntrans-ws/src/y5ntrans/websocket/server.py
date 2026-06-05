@@ -66,7 +66,7 @@ def map_to_input_event(data):
     context = payload.get("context") or {}
 
     return InputEvent.from_raw(
-        data=payload.get("raw"),
+        data=payload.get("raw") or "",
         context=InputContext(
             origin=context.get("origin"),
         ),
