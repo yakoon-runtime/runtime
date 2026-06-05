@@ -25,6 +25,7 @@ pip install \
 # clients
 pip install \
   -e clients/y5ncli-console \
+  -e clients/y5ncli-textual \
 
 # apps
 pip install \

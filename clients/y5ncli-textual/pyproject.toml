@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "y5ncli-textual"
+version = "0.1.0"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Stefan Bergmann" }]
+dependencies = [
+    "y5ncli-console",
+    "textual>=0.52.0",
+    ]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
