@@ -20,6 +20,7 @@
     "apps/y5napp-web/src",
     "apps/y5napp-ssh/src",
     "apps/y5napp-console/src",
+    "apps/y5napp-textual/src",
   ],
   "editor.formatOnSave": true,
   "[python]": {
