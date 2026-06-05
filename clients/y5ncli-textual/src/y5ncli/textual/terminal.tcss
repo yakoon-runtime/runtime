@@ -1,0 +1,21 @@
+Screen {
+    layout: vertical;
+}
+
+RichLog {
+    height: 1fr;
+    padding: 0 1;
+}
+
+Input {
+    dock: bottom;
+    margin: 0 4 0 0;
+    padding: 0 1;
+    border: none;
+    border-left: heavy $secondary;
+}
+
+Input:focus {
+    border: none;
+    border-left: heavy $secondary;
+}
