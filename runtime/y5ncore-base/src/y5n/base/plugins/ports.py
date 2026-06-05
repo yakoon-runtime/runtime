@@ -2,7 +2,7 @@ from typing import Protocol
 
 from y5n.base.naming import Namespace
 from y5n.base.nodes import NodePath
-from y5n.base.permissions import PermissionSet
+from y5n.base.permissions import Permission, PermissionSet
 from y5n.base.plugins.models import AuthResult
 from y5n.base.projection import Projection
 from y5n.base.resources import ResourceRef
@@ -67,6 +67,10 @@ class OnBootstrapPermissions(Protocol):
 
 class OnNewPermissionSet(Protocol):
     def __call__(self) -> PermissionSet: ...
+
+
+class OnParsePermissionSpec(Protocol):
+    def __call__(self, *, spec: str) -> Permission: ...
 
 
 # ------------------

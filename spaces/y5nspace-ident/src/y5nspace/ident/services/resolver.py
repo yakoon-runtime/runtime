@@ -6,7 +6,7 @@ from typing import Protocol
 
 from y5n.api.naming import Key, Namespace
 from y5n.api.permissions import Permission, PermissionSet
-from y5n.api.ports import OnNewPermissionSet
+from y5n.api.ports import OnNewPermissionSet, OnParsePermissionSpec
 
 from ..models import Membership, PermissionGrant
 
@@ -103,5 +103,4 @@ class OnListSubjectGrants(Protocol):
     ) -> list[PermissionGrant]: ...
 
 
-class OnParsePermissionSpec(Protocol):
-    def __call__(self, *, spec: str) -> Permission: ...
+

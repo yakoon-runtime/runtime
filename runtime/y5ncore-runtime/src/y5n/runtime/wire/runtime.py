@@ -8,6 +8,7 @@ from y5n.base.plugins.ports import (
     OnErrorResolve,
     OnJinjaRender,
     OnNewPermissionSet,
+    OnParsePermissionSpec,
     OnProjectionResolve,
     OnResourceLoad,
     OnSessionSave,
@@ -18,6 +19,7 @@ from y5n.base.sources import OnSourceRead
 from y5n.runtime.capabilities.audit import AuditLogService
 from y5n.runtime.capabilities.permission import (
     PermissionChecker,
+    PermissionParser,
     PermissionSet,
 )
 from y5n.runtime.projection.rendering import JinjaRenderEngine
@@ -89,6 +91,7 @@ def build_runtime(
     # -------------------
 
     perm_checker = PermissionChecker()
+    perm_parser = PermissionParser()
 
     # ----------------
     # --- PLUGINS ---
@@ -150,6 +153,7 @@ def build_runtime(
     platform.ports.provide(OnAuthorizeRead, perm_checker.can_read)
     platform.ports.provide(OnAuthorizeWrite, perm_checker.can_write)
     platform.ports.provide(OnNewPermissionSet, lambda: PermissionSet())
+    platform.ports.provide(OnParsePermissionSpec, perm_parser.parse)
     platform.ports.provide(OnProjectionResolve, projector.project)
     platform.ports.provide(OnResourceLoad, package_reader.get_text)
     platform.ports.provide(OnJinjaRender, jinja_engine.render_str)
