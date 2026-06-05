@@ -5,6 +5,7 @@ import heapq
 import time
 from collections import deque
 from typing import Protocol
+from uuid import uuid4
 
 from y5n.base.flow.primitives import Control, Outcome, YieldToScheduler
 from y5n.base.nodes import Node
@@ -288,6 +289,7 @@ class Scheduler:
                 session=session,
                 projection=projection,
                 ctx=ctx,
+                job_id=uuid4().hex,
             )
 
 
@@ -319,6 +321,7 @@ class OnShowProjection(Protocol):
         session: Session,
         projection: Projection,
         ctx: InputContext | None,
+        job_id: str = "system",
     ) -> None: ...
 
 

@@ -1,4 +1,3 @@
-from y5n.api.dsl import out_text
 from y5n.api.dsl.patterns import Form
 from y5n.api.dsl.policies import IntPolicy
 
@@ -19,8 +18,6 @@ async def run(_):
 
     # you can use subflows
     yield ask_age(form)
-
-    yield out_text(str(form.data))
 
 
 async def ask_age(form):
