@@ -24,14 +24,15 @@
 | `AuthResult` | `y5n.api.ports.models` ✅ |
 | `DomainError` | entfernt (obsolet) ✅ |
 | `Session` | `y5n.base.runtime.sessions` — Zyklus gelöst ✅ |
+| `Flow` (Protocol) | `y5n.api.flow` (neu) ✅ |
 
-## Noch offen
+## Keine Migration geplant
 
-| Fehlt | Dateien |
-|-------|---------|
-| `y5nstore.*`  (GetResult, IndexSpec, StorageSettings, build_store) | **12** (ident: models, services, setup, settings) |
+| Paket | Begründung |
+|-------|------------|
+| `y5nstore.*` (12 Dateien in ident) | **Bewusste Abhängigkeit.** y5nstore ist eine konkrete Datenbank-Bibliothek, die ident für seine Daten wählt. Anders als bei `PermissionSet`/`PermissionParser` hat die Runtime keine Hoheit über die Speicherung — jeder Space darf sein eigenes Backend wählen. Ein generischer Port würde Typdetails nur verschieben, nicht eliminieren. |
+| `y5n.runtime.flow.Flow` (2 Dateien in y5nspace-runtime) | **Runtime-intern.** Kein Space-Code, sondern Infrastruktur innerhalb der Runtime. |
 
-## Bemerkungen
+## Abgeschlossen
 
-- `y5nstore` ist ein separates Paket (`y5nstore-event`). Eine Fassade in `y5n.api.store` oder als Port (`OnBuildStore` etc.) würde die letzte Kopplung von Spaces an ein konkretes Store-Backend kappen.
-- `y5n.runtime.flow.Flow` in `y5nspace-runtime` ist kein Space-Code, sondern runtime-intern. Keine Migration nötig.
+**Alle drei Spaces haben 0 Imports aus `y5n.base` oder `y5n.runtime`.** Jeder Import geht durch `y5n.api.*` oder ist eine bewusste, nicht abstrahierte Abhängigkeit.

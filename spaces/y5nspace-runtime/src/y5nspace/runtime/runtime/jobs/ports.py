@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from y5n.runtime.flow import Flow
+from y5n.api.flow import Flow
 
 # -------------
 # --- PORTS ---

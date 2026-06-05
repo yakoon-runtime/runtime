@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from y5n.api.flow import Flow
 from y5n.api.nodes import NodeSpace, Request
-from y5n.runtime.flow import Flow
 
 from .ports import OnFlowGetByIndex, OnJobsList
 
