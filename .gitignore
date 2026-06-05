@@ -8,7 +8,8 @@ build/
 .venv/
 db/*
 
-logs/*
+logs/
+**/logs/
 
 # ignore the symlink
 yakoon/loop/runtime
