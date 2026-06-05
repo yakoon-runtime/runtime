@@ -1,5 +1,3 @@
-
-<br/>
 Commands: <br/>
 
 {% for c in state.nodes %}
