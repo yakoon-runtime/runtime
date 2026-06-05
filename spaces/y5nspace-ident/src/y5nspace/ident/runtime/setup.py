@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from y5n.api.naming import Key
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import OnAuthenticate, OnNewPermissionSet, OnParsePermissionSpec, OnProjectionResolve
+from y5n.api.ports import (
+    OnAuthenticate,
+    OnNewPermissionSet,
+    OnParsePermissionSpec,
+    OnProjectionResolve,
+)
 from y5n.api.projections import Projection
 from y5n.api.resources import ResourceRef
 from y5nstore.event.wire import build_store
