@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from .bit import PermBits
-from .model import Permission
+from y5n.base.permissions import PermBits, Permission
 
 
 class PermissionSet:

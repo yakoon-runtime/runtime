@@ -1,7 +1,7 @@
 from typing import Protocol
 
 from y5n.base.naming import Key
-from y5n.runtime.capabilities.permission import PermissionSet
+from y5n.base.permissions import PermissionSet
 
 
 class Session(Protocol):

@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from y5n.api.naming import Key
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import OnProjectionResolve
+from y5n.api.ports import OnAuthenticate, OnNewPermissionSet, OnProjectionResolve
 from y5n.api.projections import Projection
 from y5n.api.resources import ResourceRef
-from y5n.api.ports import OnAuthenticate
 from y5n.runtime.capabilities.permission import PermissionParser
 from y5nstore.event.wire import build_store
 
@@ -110,8 +109,10 @@ async def setup(space: NodeSpace):
     # --- CREATING PERM RESOLVER ---
     # -------------------------------
 
+    on_new_permset = space.ports.get(OnNewPermissionSet)
     perm_parser = PermissionParser()
     perm_resolver = PermissionResolver(
+        on_new_permissionset=on_new_permset,
         on_list_subject_grants=permgrant.list_subject_grants,
         on_list_user_memberships=membership.list_user_memberships,
         on_parse_spec=perm_parser.parse,

@@ -5,7 +5,8 @@ from __future__ import annotations
 from typing import Protocol
 
 from y5n.api.naming import Key, Namespace
-from y5n.runtime.capabilities.permission import Permission, PermissionSet
+from y5n.api.permissions import Permission, PermissionSet
+from y5n.api.ports import OnNewPermissionSet
 
 from ..models import Membership, PermissionGrant
 
@@ -15,10 +16,12 @@ class PermissionResolver:
 
     def __init__(
         self,
+        on_new_permissionset: OnNewPermissionSet,
         on_list_user_memberships: OnListUserMemberships,
         on_list_subject_grants: OnListSubjectGrants,
         on_parse_spec: OnParsePermissionSpec,
     ):
+        self.on_new_permissionset = on_new_permissionset
         self.on_list_user_memberships = on_list_user_memberships
         self.on_list_subject_grants = on_list_subject_grants
         self.on_parse_spec = on_parse_spec
@@ -35,7 +38,7 @@ class PermissionResolver:
         user_key: Key,
     ) -> PermissionSet:
 
-        out = PermissionSet()
+        out = self.on_new_permissionset()
 
         direct_grants = await self.on_list_subject_grants(
             namespace=grant_namespace,

@@ -4,6 +4,7 @@ from y5n.base.plugins.ports import (
     OnErrorResolve,
     OnJinjaRender,
     OnManualResolve,
+    OnNewPermissionSet,
     OnProjectionResolve,
     OnResourceLoad,
     OnSessionSave,
@@ -13,6 +14,7 @@ from y5n.base.sources import OnSourceRead
 __all__ = [
     "OnAuthenticate",
     "OnManualResolve",
+    "OnNewPermissionSet",
     "OnProjectionResolve",
     "OnErrorResolve",
     "OnSessionSave",
