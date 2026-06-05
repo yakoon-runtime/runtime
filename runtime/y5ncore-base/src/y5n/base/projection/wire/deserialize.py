@@ -40,7 +40,7 @@ def _deserialize_state(data):
         return None
 
     return ProjectionState(
-        controller=data.get("controller"),
+        node_path=data.get("node_path"),
         user=data.get("user"),
     )
 

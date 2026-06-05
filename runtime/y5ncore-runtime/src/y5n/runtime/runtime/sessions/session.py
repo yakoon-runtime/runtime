@@ -233,8 +233,7 @@ class Session:
         return replace(
             event,
             state=ProjectionState(
-                user="NO-USER!",
-                # user=self.get_username(),
-                # controller=self.get_current_node(),
+                user=self.data.user_key,
+                node_path=self.data.node_path,
             ),
         )

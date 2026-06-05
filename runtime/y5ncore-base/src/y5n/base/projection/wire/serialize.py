@@ -37,8 +37,8 @@ def _serialize_state(state: ProjectionState | None) -> dict | None:
         return None
 
     data: dict[str, object] = {}
-    if state.controller is not None:
-        data["controller"] = state.controller
+    if state.node_path is not None:
+        data["node_path"] = state.node_path
     if state.user is not None:
         data["user"] = state.user
 

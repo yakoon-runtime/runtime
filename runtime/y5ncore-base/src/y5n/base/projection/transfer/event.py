@@ -12,7 +12,7 @@ from .patch import Patch
 @dataclass(frozen=True, slots=True)
 class ProjectionState:
     user: str | None = None
-    controller: str | None = None
+    node_path: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
