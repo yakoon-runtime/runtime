@@ -10,4 +10,4 @@ async def run(_):
         if not event:
             yield delay(5)
         else:
-            yield out(to_text(f"Result: {event.data}"))
+            yield out(to_text(f"Result: {event.payload}"))

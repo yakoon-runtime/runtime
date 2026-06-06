@@ -140,16 +140,10 @@ def receive(channel: str = "default") -> Outcome:
     return Outcome(control=AwaitEvent(channel))
 
 
-def send(channel: str, event):
+def send(channel: str, event: Event):
     """
     Emit an event to a channel.
-
-    Wraps the given value as an Event (if necessary) and
-    sends it to the specified channel.
     """
-
-    if not isinstance(event, Event):
-        event = Event(payload=str(event))
     return Outcome(
         effects=[EmitEvent(channel, event)],
     )

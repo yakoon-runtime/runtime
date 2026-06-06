@@ -8,11 +8,11 @@ async def run(_):
 
     yield out(to_text("Vorname:"))
     event = yield receive()
-    yield out(to_text(f"Result Vorname: {event.data}"))
+    yield out(to_text(f"Result Vorname: {event.payload}"))
 
     yield out(to_text("see 'jobs"))
     yield suspend()
 
     yield out(to_text("Nachname:"))
     event = yield receive()
-    yield out(to_text(f"Result Nachname: {event.data}"))
+    yield out(to_text(f"Result Nachname: {event.payload}"))
