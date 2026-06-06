@@ -56,8 +56,9 @@ async def run(space: NodeSpace):
 
         user = result.user
         user_key: Key = user["key"]
+        user_name = user["username"]
 
-        space.session.set_identity(user_key)
+        space.session.set_identity(user_key, user_name)
 
         resolver = space.ports.get(PermissionResolver)
         permissions = await resolver.resolve_user_permissions(
@@ -85,6 +86,3 @@ async def run(space: NodeSpace):
         )
 
     yield out(projection)
-
-
-

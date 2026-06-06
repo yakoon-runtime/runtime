@@ -25,6 +25,7 @@ class SessionData:
 
     node_path: str | None = None
     user_key: str | None = None
+    user_name: str | None = None
     account_key: str | None = None
     last_active: datetime | None = None
     lang: str = "de"
@@ -171,16 +172,21 @@ class Session:
     # Identity
     # ----------------------------
 
-    def set_identity(self, user_key) -> None:
+    def set_identity(self, user_key, user_name: str | None = None) -> None:
         self.data.user_key = str(user_key)
+        self.data.user_name = user_name
 
     def get_identity(self) -> Key | None:
         if self.data.user_key:
             return Key.from_str(self.data.user_key)
         return None
 
+    def get_identity_name(self) -> str | None:
+        return self.data.user_name
+
     def clear_identity(self) -> None:
         self.data.user_key = None
+        self.data.user_name = None
 
     def has_identity(self) -> bool:
         return self.data.user_key is not None
@@ -233,7 +239,7 @@ class Session:
         return replace(
             event,
             state=ProjectionState(
-                user=self.data.user_key,
+                user=self.data.user_name,
                 node_path=self.data.node_path,
             ),
         )
