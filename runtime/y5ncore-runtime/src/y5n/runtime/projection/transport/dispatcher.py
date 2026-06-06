@@ -51,6 +51,7 @@ class EventDispatcher:
         *,
         ctx: InputContext | None,
         job_id: str,
+        reset: bool = True,
     ) -> None:
 
         vid = projection.id
@@ -79,14 +80,15 @@ class EventDispatcher:
         stream.node_depth[root] = -1
         stream.published_nodes.add(root)
 
-        await session.emit(
-            self.on_create_begin_event(
-                header=projection.header,
-                ctx=ctx,
-                vid=vid,
-                job_id=stream.job_id,
+        if reset:
+            await session.emit(
+                self.on_create_begin_event(
+                    header=projection.header,
+                    ctx=ctx,
+                    vid=vid,
+                    job_id=stream.job_id,
+                )
             )
-        )
 
     # ---------------------------------------------------------
 

@@ -39,6 +39,7 @@ class EventStreamOutput:
         *,
         ctx: InputContext | None,
         job_id: str = "system",
+        mode: str = "replace",
     ):
         if not projection.id:
             raise RuntimeError("Projection without id.")
@@ -48,6 +49,7 @@ class EventStreamOutput:
             projection=projection,
             ctx=ctx,
             job_id=job_id,
+            reset=(mode == "replace"),
         )
 
         try:
@@ -57,7 +59,6 @@ class EventStreamOutput:
             )
 
         except Exception:
-            # sauber abbrechen (keine halb-fertigen Streams)
             await self.on_abort(
                 session=session,
                 projection_id=projection.id,
@@ -84,6 +85,7 @@ class OnBeginProjection(Protocol):
         projection: Projection,
         ctx: InputContext | None,
         job_id: str,
+        reset: bool = True,
     ) -> None: ...
 
 

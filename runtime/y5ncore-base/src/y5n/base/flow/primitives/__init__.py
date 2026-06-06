@@ -15,6 +15,7 @@ from .effect import (
     EmitEvent,
     EmitView,
     Foreground,
+    Mode,
     StartTask,
     TaskHandle,
 )
@@ -24,6 +25,8 @@ from .view import compile_view
 __all__ = [
     # .outcome
     "Outcome",
+    # .types
+    "Mode",
     # .controls
     "AwaitEvent",
     "Control",

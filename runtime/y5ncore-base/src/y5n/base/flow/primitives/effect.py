@@ -1,8 +1,11 @@
+from typing import Literal
 from uuid import uuid4
 
 from y5n.base.runtime import Event
 
 from .outcome import Outcome
+
+Mode = Literal["replace", "append"]
 
 
 class Effect:
@@ -10,9 +13,11 @@ class Effect:
 
 
 class EmitView(Effect):
-    def __init__(self, view, persist: bool = False):
+    def __init__(self, view, persist: bool = False, mode: Mode = "replace", space: str | None = None):
         self.view = view
         self.persist = persist
+        self.mode = mode
+        self.space = space
 
 
 class EmitEvent(Effect):

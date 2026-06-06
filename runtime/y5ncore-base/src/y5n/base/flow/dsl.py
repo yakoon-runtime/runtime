@@ -45,6 +45,7 @@ from .primitives import (
     EmitEvent,
     EmitView,
     Foreground,
+    Mode,
     Outcome,
     Sleep,
     SleepUntil,
@@ -53,27 +54,44 @@ from .primitives import (
 )
 
 
-def out(value: Projection) -> Outcome:
+def out(
+    projection: Projection,
+    *,
+    mode: Mode = "replace",
+    space: str | None = None,
+) -> Outcome:
     """
     Emit a transient projection to the active client.
 
     The projection is rendered immediately but is not
     persisted as part of the flow interaction state.
+
+    Args:
+        projection: The projection to emit.
+        mode: "replace" (PatchReset + Append) or "append" (nur Append).
+        space: Optional subspace name for independent job_id scoping.
     """
-    return Outcome(value=value)
+    return Outcome(effects=[EmitView(projection, mode=mode, space=space)])
 
 
-def out_text(text: str) -> Outcome:
+def out_text(
+    text: str,
+    *,
+    mode: Mode = "replace",
+    space: str | None = None,
+) -> Outcome:
     """
     Emit a transient text projection to the active client.
 
     Convenience shortcut for:
         out(to_text(...))
 
-    The emitted text is rendered immediately but is not
-    persisted as part of the flow interaction state.
+    Args:
+        text: The text content to display.
+        mode: "replace" (PatchReset + Append) or "append" (nur Append).
+        space: Optional subspace name for independent job_id scoping.
     """
-    return out(to_text(text))
+    return out(to_text(text), mode=mode, space=space)
 
 
 def suspend() -> Outcome:

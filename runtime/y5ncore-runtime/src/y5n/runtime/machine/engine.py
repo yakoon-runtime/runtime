@@ -210,11 +210,14 @@ class CommandEngine:
                 if effect.persist:
                     flow.view = effect.view
 
+                job_id = f"{flow.id}:{effect.space}" if effect.space else flow.id
+
                 await self.on_projection(
                     session=session,
                     projection=effect.view,
                     ctx=flow.event.context,
-                    job_id=flow.id,
+                    job_id=job_id,
+                    mode=effect.mode,
                 )
 
             elif isinstance(effect, Foreground):
@@ -317,6 +320,7 @@ class OnProjection(Protocol):
         projection: Projection,
         ctx: InputContext | None,
         job_id: str = "system",
+        mode: str = "replace",
     ) -> None: ...
 
 

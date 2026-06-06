@@ -200,6 +200,7 @@ class OnProjectionSend(Protocol):
         projection: Projection,
         ctx: InputContext | None,
         job_id: str = "system",
+        mode: str = "replace",
     ) -> None: ...
 
 

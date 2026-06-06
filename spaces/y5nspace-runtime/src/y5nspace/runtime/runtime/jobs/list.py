@@ -14,7 +14,7 @@ async def run(space: NodeSpace):
         yield out(to_text("No jobs active."))
         return
 
-    yield out(to_text("Active jobs:"))
+    yield out(to_text("Active jobs:\n"), mode="append")
 
     focused = space.session.foreground_flow  # type: ignore
     for i, f in indexed:
@@ -22,5 +22,5 @@ async def run(space: NodeSpace):
         state = f.control.label(f) if f.control else "run"
         marker = "  ←" if focused and focused.id == f.id else ""
 
-        result = to_text(f"[{i}] {label} - {state}{marker}\n")
-        yield out(result)
+        result = to_text(f"  [{i}] {label} - {state}{marker}\n")
+        yield out(result, mode="append")
