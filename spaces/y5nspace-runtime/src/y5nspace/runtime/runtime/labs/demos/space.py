@@ -1,31 +1,29 @@
 from y5n.api.nodes import Node, NodeScope
 
-from .form import run as form
+from .pdf import run as pdf
 
 # ----------------------------------
-# PATTERNS
+# DEMOS
 # ----------------------------------
 
-patterns = Node(
-    key="patterns",
+demos = Node(
+    key="demos",
     anonymous=True,
     navigable=True,
     resolvable=False,
 )
 
 # ----------------------------------
-# RECEIVE
+# PDF
 # ----------------------------------
 
-patterns.add(
+demos.add(
     Node(
-        key="form",
-        run=form,
+        key="pdf",
+        run=pdf,
         anonymous=True,
         resolvable=True,
         navigable=False,
         scope=NodeScope.GLOBAL,
     )
 )
-
-

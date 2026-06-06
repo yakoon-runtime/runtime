@@ -1,5 +1,6 @@
 from y5n.api.nodes import Node
 
+from .demos.space import demos
 from .dsl.space import dsl
 from .patterns.space import patterns
 
@@ -17,3 +18,4 @@ labs = Node(
 
 labs.mount(dsl)
 labs.mount(patterns)
+labs.mount(demos)
