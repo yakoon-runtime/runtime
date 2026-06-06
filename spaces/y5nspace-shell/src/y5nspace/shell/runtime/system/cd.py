@@ -50,6 +50,7 @@ async def run(space: NodeSpace):
     path = NodePath.from_string(target)
 
     # Absolute navigation.
+    resolved_path = ""
     if target.startswith("/"):
         resolved_path = path
 
