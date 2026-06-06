@@ -7,6 +7,7 @@ from collections.abc import (
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
 from y5n.base.flow.dsl import Outcome
+from y5n.base.flow.primitives import TaskHandle
 
 if TYPE_CHECKING:
     from .path import NodePath
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 # ----------------------------------
 
 
-FlowYield: TypeAlias = Outcome | AsyncGenerator | None
+FlowYield: TypeAlias = Outcome | TaskHandle | AsyncGenerator | None
 RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]
 
 # ----------------------------------
