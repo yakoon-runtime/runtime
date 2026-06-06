@@ -1,4 +1,5 @@
 from y5n.api.data import DataRequest
+from y5n.api.dsl import out_text
 from y5n.api.nodes import NodePath, NodeSpace
 from y5n.api.ports import OnSourceRead
 
@@ -27,6 +28,7 @@ async def run(space: NodeSpace):
 
     if target == "/":
         space.session.set_current_node(NodePath.root())  # type: ignore
+        yield out_text("OK.")
         return
 
     # ----------------------------------
@@ -38,6 +40,7 @@ async def run(space: NodeSpace):
         if parent:
             space.session.set_current_node(parent)  # type: ignore
 
+        yield out_text("OK.")
         return
 
     # ----------------------------------
@@ -79,3 +82,5 @@ async def run(space: NodeSpace):
     # ----------------------------------
     new_path = target_node["path"]
     space.session.set_current_node(new_path)  # type: ignore
+
+    yield out_text("OK.")
