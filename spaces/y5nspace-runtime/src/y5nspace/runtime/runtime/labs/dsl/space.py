@@ -1,4 +1,4 @@
-from y5n.api.nodes import Node
+from y5n.api.nodes import Node, NodeScope
 
 from .delay import run as delay
 from .out import run as out
@@ -6,11 +6,11 @@ from .prompt import run as prompt
 from .receive import run as receive
 from .send import run as send
 from .suspend import run as suspend
+from .task import run as task
 
 # ----------------------------------
 # DSL
 # ----------------------------------
-
 dsl = Node(
     key="dsl",
     anonymous=True,
@@ -98,6 +98,21 @@ dsl.add(
     Node(
         key="prompt",
         run=prompt,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+    )
+)
+
+# ----------------------------------
+# TASK
+# ----------------------------------
+
+dsl.add(
+    Node(
+        key="task",
+        run=task,
+        scope=NodeScope.GLOBAL,
         anonymous=True,
         resolvable=True,
         navigable=False,

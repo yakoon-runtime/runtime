@@ -49,6 +49,7 @@ from .primitives import (
     Sleep,
     SleepUntil,
     Suspend,
+    TaskHandle,
 )
 
 
@@ -174,3 +175,18 @@ def delay_until(timestamp: float) -> Outcome:
     """
 
     return Outcome(control=SleepUntil.until(timestamp))
+
+
+def run_task(command: str, **kwargs) -> TaskHandle:
+    """
+    Create a TaskHandle for a background task.
+
+    Returns a TaskHandle that can be yielded to start the task.
+    The task's result arrives via receive(task.channel).
+
+    Usage:
+        task = run_task("sleep", seconds=5)
+        yield task
+        result = yield receive(task.channel)
+    """
+    return TaskHandle(command=command, **kwargs)

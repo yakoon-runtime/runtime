@@ -6,6 +6,7 @@ from y5n.base.flow import (
     out_text,
     prompt,
     receive,
+    run_task,
     send,
     suspend,
 )
@@ -20,4 +21,5 @@ __all__ = [
     "foreground",
     "background",
     "prompt",
+    "run_task",
 ]

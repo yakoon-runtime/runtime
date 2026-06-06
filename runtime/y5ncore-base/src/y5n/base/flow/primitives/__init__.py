@@ -15,6 +15,8 @@ from .effect import (
     EmitEvent,
     EmitView,
     Foreground,
+    StartTask,
+    TaskHandle,
 )
 from .outcome import Outcome
 from .view import compile_view
@@ -37,6 +39,8 @@ __all__ = [
     "Effect",
     "EmitEvent",
     "EmitView",
+    "StartTask",
+    "TaskHandle",
     "Foreground",
     # .view
     "compile_view",
