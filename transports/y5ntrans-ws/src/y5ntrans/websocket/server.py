@@ -2,7 +2,7 @@ import json
 
 from y5n.base.clients import ClientConnection
 from y5n.base.projection.wire import serialize_event
-from y5n.base.runtime import InputEvent
+from y5n.base.runtime import Event
 from y5n.base.runtime.input.context import InputContext
 
 
@@ -65,7 +65,7 @@ def map_to_input_event(data):
     payload = data.get("payload", {})
     context = payload.get("context") or {}
 
-    return InputEvent.from_raw(
+    return Event.from_raw(
         data=payload.get("raw") or "",
         context=InputContext(
             origin=context.get("origin"),

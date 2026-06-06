@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from typing import Protocol
 
-from y5n.base.runtime import InputEvent
+from y5n.base.runtime import Event
 from y5n.runtime.flow import Flow
 from y5n.runtime.runtime import Session
 
@@ -44,12 +43,12 @@ class TaskRunner:
                     "stderr": stderr.decode(errors="replace"),
                 }
 
-            event = InputEvent(data=json.dumps(result), tokens=[], payload=result)
+            event = Event(payload=result)
             flow.push_event(event, channel=task.channel)
             self._on_complete(flow=flow, session=session)
 
         except Exception as e:
-            event = InputEvent(data=f"error: {e}", tokens=[], payload={"error": str(e)})
+            event = Event(payload={"error": str(e)})
             flow.push_event(event, channel=task.channel)
             self._on_complete(flow=flow, session=session)
 

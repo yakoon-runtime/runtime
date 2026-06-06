@@ -1,9 +1,9 @@
 from .context import InputContext
-from .event import InputEvent
+from .event import Event
 
 __all__ = [
     # .event.
-    "InputEvent",
+    "Event",
     # .context
     "InputContext",
 ]

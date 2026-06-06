@@ -1,7 +1,7 @@
 import asyncio
 
 from y5n.base.projection import ProjectionEvent, ProjectionQuery
-from y5n.base.runtime import InputEvent
+from y5n.base.runtime import Event
 from y5n.base.transport import Transport
 
 from ..client.output import ConsoleOutput
@@ -45,7 +45,7 @@ class Client:
         async def on_input(text: str):
 
             if not self._current_fields:
-                await connection.dispatch(InputEvent.from_raw(text))
+                await connection.dispatch(Event.from_raw(text))
                 return
 
             field = self._current_fields[self._current_index]
@@ -62,7 +62,7 @@ class Client:
                 args.append(f"--{key}")
                 args.append(str(value))
 
-            event = InputEvent("debug", args)
+            event = Event(payload="debug")
             await connection.dispatch(event)
 
         terminal.on_input = on_input

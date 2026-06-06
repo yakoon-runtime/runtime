@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from y5n.base.runtime.input import InputEvent
+from y5n.base.runtime import Event
 
 if TYPE_CHECKING:
     pass
@@ -69,9 +69,7 @@ class Continue(Control):
         remaining = flow.pipeline[1:]
 
         # 2. Event für nächsten Command vorbereiten
-        event = InputEvent(
-            data=next_cmd, tokens=[], payload=self.data  # später sauber lösen
-        )
+        event = Event(payload=next_cmd)
 
         # 3. Flow weiter schedulen
         await scheduler.continue_flow(session, flow, event, remaining)

@@ -10,7 +10,7 @@ from uuid import uuid4
 from y5n.base.flow.primitives import Control, Outcome, YieldToScheduler
 from y5n.base.nodes import Node
 from y5n.base.projection import Projection
-from y5n.base.runtime import InputContext, InputEvent
+from y5n.base.runtime import Event, InputContext
 from y5n.runtime.flow import Flow, FlowKind
 from y5n.runtime.runtime import Session
 
@@ -62,7 +62,7 @@ class Scheduler:
     async def setup(self, session: Session, node: Node):
         await self._call_runtime(session, None, self.on_setup, node=node)
 
-    async def dispatch(self, session: Session, event: InputEvent):
+    async def dispatch(self, session: Session, event: Event):
         await self._call_runtime(session, event.context, self.on_dispatch, event=event)
 
     async def continue_flow(self, session, old_flow, event, pipeline):
@@ -299,7 +299,7 @@ class Scheduler:
 
 
 class OnDispatch(Protocol):
-    async def __call__(self, *, session: Session, event: InputEvent) -> Flow | None: ...
+    async def __call__(self, *, session: Session, event: Event) -> Flow | None: ...
 
 
 class OnSetup(Protocol):

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.runtime import InputEvent
+from y5n.base.runtime import Event
 from y5n.runtime.runtime import Session
 
 
@@ -20,9 +20,9 @@ class Runner:
         self.on_dispatch = on_dispatch
         self.on_schedule_flow = on_schedule_flow
 
-    async def on_input(self, event: InputEvent):
+    async def on_input(self, event: Event):
 
-        if event.data in self._runtime_commands:
+        if event.payload in self._runtime_commands:
             await self.on_dispatch(session=self._session, event=event)
             return
 

@@ -35,9 +35,9 @@ class Form:
             try:
 
                 if policy:
-                    result = policy.validate(event.data)
+                    result = policy.validate(event.payload)
                 else:
-                    result = event.data
+                    result = event.payload
 
                 value: str = result if result is not None else ""
                 self.data[key] = value

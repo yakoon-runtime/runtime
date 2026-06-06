@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
 from y5n.base.flow.primitives import Control
-from y5n.base.runtime import InputEvent
+from y5n.base.runtime import Event
 
 if TYPE_CHECKING:
     from y5n.base.nodes import Node
@@ -21,9 +21,9 @@ class Flow:
     id: str
 
     node: Node
-    event: InputEvent
-
+    event: Event
     cursor: FlowCursor
+    tokens: list[str] | None = None
     control: Control | None = None
     view: Any | None = None
 
@@ -41,13 +41,13 @@ class Flow:
     def has_mail(self, channel: str = DEFAULT):
         return bool(self.inbox[channel])
 
-    def push_event(self, event: InputEvent, channel: str = DEFAULT):
-        if not isinstance(event, InputEvent):
-            raise TypeError("push_event expects InputEvent")
+    def push_event(self, event: Event, channel: str = DEFAULT):
+        if not isinstance(event, Event):
+            raise TypeError("push_event expects Event")
 
         self.inbox[channel].append(event)
 
-    def pop_event(self, channel: str = DEFAULT) -> InputEvent | None:
+    def pop_event(self, channel: str = DEFAULT) -> Event | None:
         if not self.inbox[channel]:
             return None
         return self.inbox[channel].popleft()

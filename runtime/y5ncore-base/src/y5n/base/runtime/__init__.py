@@ -1,8 +1,8 @@
 from .container import Container
-from .input import InputContext, InputEvent
+from .input import Event, InputContext
 
 __all__ = [
     "Container",
-    "InputEvent",
+    "Event",
     "InputContext",
 ]

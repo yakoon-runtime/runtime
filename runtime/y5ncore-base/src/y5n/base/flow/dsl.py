@@ -37,7 +37,7 @@ Commands = Orchestration
 """
 
 from y5n.base.projection import Projection, to_text
-from y5n.base.runtime import InputEvent
+from y5n.base.runtime import Event
 
 from .primitives import (
     AwaitEvent,
@@ -144,12 +144,12 @@ def send(channel: str, event):
     """
     Emit an event to a channel.
 
-    Wraps the given value as an InputEvent (if necessary) and
+    Wraps the given value as an Event (if necessary) and
     sends it to the specified channel.
     """
 
-    if not isinstance(event, InputEvent):
-        event = InputEvent.from_raw(str(event))
+    if not isinstance(event, Event):
+        event = Event(payload=str(event))
     return Outcome(
         effects=[EmitEvent(channel, event)],
     )

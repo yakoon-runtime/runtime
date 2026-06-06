@@ -4,7 +4,7 @@ import json
 import websockets
 from y5n.base.clients import ClientConnection
 from y5n.base.projection.wire import deserialize_event
-from y5n.base.runtime import InputEvent
+from y5n.base.runtime import Event
 
 
 class WebSocketClientTransport:
@@ -30,11 +30,11 @@ class WebSocketClientTransport:
         # ------------------------
         # Client → Server
         # ------------------------
-        async def send_input(event: InputEvent):
+        async def send_input(event: Event):
             payload = {
                 "type": "input",
                 "payload": {
-                    "raw": event.data,
+                    "raw": str(event.payload),
                     "context": {
                         "origin": getattr(event.context, "origin", None),
                     },

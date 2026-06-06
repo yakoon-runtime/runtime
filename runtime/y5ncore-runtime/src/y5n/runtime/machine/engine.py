@@ -19,7 +19,7 @@ from y5n.base.flow.primitives import (
 )
 from y5n.base.nodes import Node, NodePath, NodeSpace, Request
 from y5n.base.projection import Projection
-from y5n.base.runtime import InputEvent
+from y5n.base.runtime import Event
 from y5n.base.runtime.input import InputContext
 from y5n.runtime.flow import Flow, FlowCursor, FlowKind
 from y5n.runtime.runtime import (
@@ -56,7 +56,7 @@ class CommandEngine:
         flow = Flow(
             id=uuid4().hex,
             node=node,
-            event=InputEvent(node.key, tokens=[]),
+            event=Event(payload=node.key),
             cursor=FlowCursor("setup"),
             kind=self.DEFAULT_FLOW_KIND,
         )
@@ -64,13 +64,13 @@ class CommandEngine:
         session.add_flow(flow)
         return flow
 
-    async def dispatch(self, session: Session, event: InputEvent) -> Flow | None:
+    async def dispatch(self, session: Session, event: Event) -> Flow | None:
 
         # session.execution.reset()
         # session.execution.step(ExecStep.EXECUTION_START)
         node: Node | None = None
-        event, pipeline_commands = self.on_parse_input(event=event)
-        if not event or not event.data:
+        cmd, tokens, pipeline_commands = self.on_parse_input(event=event)
+        if not cmd:
             return None
 
         # session.execution.step(
@@ -79,12 +79,14 @@ class CommandEngine:
         # )
 
         # find node
-        node, tokens = self.on_resolve_command(
+        node, resolved_tokens = self.on_resolve_command(
             parent=session.get_current_node(),
-            key=event.data,
-            tokens=event.tokens,
+            key=cmd,
+            tokens=tokens,
             session=session,
         )
+
+        tokens = resolved_tokens
 
         # TODO: Wie wollen wir darauf später reagieren?
         if not node.has_run():
@@ -106,7 +108,8 @@ class CommandEngine:
             id=uuid4().hex,
             node=node,
             pipeline=pipeline_commands,
-            event=event.update(data=node.key, tokens=tokens),
+            tokens=tokens,
+            event=event.update(payload=node.key),
             cursor=FlowCursor("run"),
             kind=self.DEFAULT_FLOW_KIND,
         )
@@ -129,7 +132,7 @@ class CommandEngine:
             if item is None:
                 return None
 
-            if isinstance(item, InputEvent):
+            if isinstance(item, Event):
                 try:
                     item = await cursor.send(item)
                 except StopAsyncIteration:
@@ -235,7 +238,7 @@ class CommandEngine:
         self,
         flow: Flow,
         node: Node,
-        event: InputEvent,
+        event: Event,
         session: Session,
     ):
 
@@ -258,9 +261,9 @@ class CommandEngine:
         # ----------------------------------
 
         request = Request(
-            event.data,
-            event.tokens,
             event.payload,
+            flow.tokens,
+            None,
             session.lang,
         )
 
@@ -303,7 +306,7 @@ class OnResolveNode(Protocol):
 
 
 class OnParseInput(Protocol):
-    def __call__(self, *, event: InputEvent) -> tuple[InputEvent, list[str]]: ...
+    def __call__(self, *, event: Event) -> tuple[str, list[str], list[str]]: ...
 
 
 class OnProjection(Protocol):
@@ -318,4 +321,4 @@ class OnProjection(Protocol):
 
 
 class OnContinuePipeline(Protocol):
-    async def __call__(self, session: Session, event: InputEvent) -> None: ...
+    async def __call__(self, session: Session, event: Event) -> None: ...

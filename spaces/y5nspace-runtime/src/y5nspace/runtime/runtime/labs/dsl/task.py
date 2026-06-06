@@ -114,7 +114,7 @@ async def run(_):
 
     result_a = yield receive(task_a.channel)
 
-    lines.append(f"→ task A completed: {result_a.data}")
+    lines.append(f"→ task A completed: {result_a.payload}")
     yield render()
 
     lines.append("")
@@ -123,7 +123,7 @@ async def run(_):
 
     result_b = yield receive(task_b.channel)
 
-    lines.append(f"→ task B completed: {result_b.data}")
+    lines.append(f"→ task B completed: {result_b.payload}")
 
     lines.append("")
     lines.append("→ all tasks completed")

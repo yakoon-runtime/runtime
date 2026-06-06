@@ -4,7 +4,7 @@ from typing import Any
 class Request:
     """Parse and query a single command-line style input.
 
-    Tokenization is expected to be done before (e.g. via InputEvent).
+    Tokenization is expected to be done before (e.g. via Event).
 
     Conventions:
         - Command is provided separately.

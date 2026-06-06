@@ -54,7 +54,7 @@ class RuntimeHost:
             runner = self.on_create_runner(session=session)
             self._sessions[session.key] = runner
 
-            # initial_command = InputEvent("")
+
             # await self.engine.dispatch(session, initial_command)
 
         self._connections[connection] = runner

@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import Awaitable, Callable
 
-from y5n.base.runtime.input import InputEvent
+from y5n.base.runtime.input import Event
 
 
 class ClientConnection:
@@ -9,7 +9,7 @@ class ClientConnection:
     def __init__(
         self,
         emit: Callable[[object], Awaitable[None]],
-        dispatch: Callable[[InputEvent], Awaitable[None]],
+        dispatch: Callable[[Event], Awaitable[None]],
     ):
         self._emit = emit
         self._dispatch = dispatch

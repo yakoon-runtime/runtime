@@ -1,32 +1,30 @@
+from __future__ import annotations
+
 import shlex
 
-from y5n.base.runtime.input.event import InputEvent
+from y5n.base.runtime import Event
 
 
 class InputParser:
 
-    def parse(self, event: InputEvent) -> tuple[InputEvent, list[str]]:
+    def parse(self, event: Event) -> tuple[str, list[str], list[str]]:
 
-        parts = self.split_pipes(event.data)
+        parts = self.split_pipes(event.payload)
 
         if not parts:
-            return event, []
+            return "", [], []
 
         # HEAD vorbereiten (für dispatch!)
         head = parts[0]
-        tokens = shlex.split(head)
+        all_tokens = shlex.split(head)
 
-        event = InputEvent(
-            data=tokens[0],
-            tokens=tokens[1:],
-            payload=event.payload,
-            context=event.context,
-        )
+        cmd = all_tokens[0] if all_tokens else ""
+        args = all_tokens[1:]
 
         # Rest bleibt roh
-        commands = parts[1:]
+        pipeline = parts[1:]
 
-        return event, commands
+        return cmd, args, pipeline
 
     def split_pipes(self, raw: str) -> list[str]:
         parts = []

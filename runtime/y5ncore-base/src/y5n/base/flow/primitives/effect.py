@@ -1,6 +1,6 @@
 from uuid import uuid4
 
-from y5n.base.runtime import InputEvent
+from y5n.base.runtime import Event
 
 from .outcome import Outcome
 
@@ -16,7 +16,7 @@ class EmitView(Effect):
 
 
 class EmitEvent(Effect):
-    def __init__(self, channel: str, event: InputEvent):
+    def __init__(self, channel: str, event: Event):
         self.channel = channel
         self.event = event
 
