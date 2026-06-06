@@ -26,7 +26,7 @@ class NodePath:
 
     def __str__(self) -> str:
 
-        return "/" + "/".join(p for p in self.parts if p)
+        return "/" + "/".join(p for p in self.parts if p.strip("/"))
 
     # ----------------------------------
     # EXTENSIONS
