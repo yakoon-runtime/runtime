@@ -15,6 +15,7 @@ from y5n.runtime.machine import (
     RuntimeHost,
     Scheduler,
     SessionBuilder,
+    TaskRunner,
 )
 from y5n.runtime.runtime import Session
 from y5n.runtime.runtime.bus import BusOutput, SessionBus
@@ -50,16 +51,6 @@ def build_machine(
 
     parser = InputParser()
 
-    # ---------------------
-    # --- ORCHESTRATION ---
-    # ----------------------
-
-    engine = CommandEngine(
-        on_resolve_node=resolver.resolve,
-        on_parse_input=parser.parse,
-        on_projection=on_projection_send,
-    )
-
     # --------------
     # --- ERRORS ---
     # --------------
@@ -77,6 +68,23 @@ def build_machine(
             on_error = node.root.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
 
+    # ---------------
+    # --- TASKS  ----
+    # ---------------
+
+    task_runner = TaskRunner()
+
+    # ----------------
+    # --- ENGINE  ----
+    # ----------------
+
+    engine = CommandEngine(
+        on_resolve_node=resolver.resolve,
+        on_parse_input=parser.parse,
+        on_projection=on_projection_send,
+        on_start_task=task_runner.start,
+    )
+
     # -----------------
     # --- EXECUTION ---
     # -----------------
@@ -90,6 +98,12 @@ def build_machine(
         on_audit_warning=on_audit_warning,
         on_error_resolve=on_error_resolve,
     )
+
+    # -------------------------
+    # --- ON TASK COMPLETED ---
+    # -------------------------
+
+    task_runner.on_complete(scheduler.schedule_flow)
 
     # ------------------------
     # --- SESSION HANDLING ---

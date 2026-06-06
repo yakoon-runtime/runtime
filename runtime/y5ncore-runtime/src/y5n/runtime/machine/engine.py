@@ -14,6 +14,7 @@ from y5n.base.flow.primitives import (
     EmitView,
     Foreground,
     Outcome,
+    StartTask,
     Stop,
 )
 from y5n.base.nodes import Node, NodePath, NodeSpace, Request
@@ -35,10 +36,12 @@ class CommandEngine:
         on_resolve_node: OnResolveNode,
         on_parse_input: OnParseInput,
         on_projection: OnProjection,
+        on_start_task: OnTaskStart,
     ):
         self.on_resolve_command = on_resolve_node
         self.on_parse_input = on_parse_input
         self.on_projection = on_projection
+        self.on_start_task = on_start_task
 
     # ----------------------------------------------------
     # PUBLIC API
@@ -221,6 +224,13 @@ class CommandEngine:
             elif isinstance(effect, EmitEvent):
                 flow.inbox[effect.channel].append(effect.event)
 
+            elif isinstance(effect, StartTask):
+                self.on_start_task(
+                    task=effect.handle,
+                    flow=flow,
+                    session=session,
+                )
+
     async def _next_step(
         self,
         flow: Flow,
@@ -269,6 +279,16 @@ class CommandEngine:
 # ----------------------------------
 # PORTS
 # ----------------------------------
+
+
+class OnTaskStart(Protocol):
+    def __call__(
+        self,
+        *,
+        task,
+        flow: Flow,
+        session: Session,
+    ) -> None: ...
 
 
 class OnResolveNode(Protocol):

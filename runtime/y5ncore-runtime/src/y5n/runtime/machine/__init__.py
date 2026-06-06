@@ -6,6 +6,7 @@ from .resolver import InvocationResolver
 from .runner import Runner
 from .scheduler import Scheduler
 from .session import SessionBuilder
+from .task import TaskRunner
 
 __all__ = [
     # .engine
@@ -24,4 +25,6 @@ __all__ = [
     "Scheduler",
     # .session
     "SessionBuilder",
+    # .task_runner
+    "TaskRunner",
 ]
