@@ -6,11 +6,13 @@ from y5n.base.runtime import Event
 async def run(_):
 
     yield send(
-        "form.result",
-        Event(payload={
-            "name": "runtime",
-            "message": "Hello from send()",
-        }),
+        channel="form.result",
+        event=Event(
+            payload={
+                "name": "runtime",
+                "message": "Hello from send()",
+            }
+        ),
     )
 
     event = yield receive("form.result")
