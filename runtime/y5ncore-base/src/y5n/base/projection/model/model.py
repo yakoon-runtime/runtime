@@ -86,5 +86,5 @@ def to_text(text: str) -> Projection:
     return Projection.create(
         blocks=[
             TextBlock.create(text=text),
-        ]
+        ] if text else []
     )

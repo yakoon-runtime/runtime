@@ -22,5 +22,5 @@ async def run(space: NodeSpace):
         state = f.control.label(f) if f.control else "run"
         marker = "  ←" if focused and focused.id == f.id else ""
 
-        result = to_text(f"  [{i}] {label} - {state}{marker}\n")
+        result = to_text(f"  [{i}] {label} - {state}{marker}")
         yield out(result, mode="append")

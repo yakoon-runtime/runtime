@@ -28,7 +28,7 @@ async def run(space: NodeSpace):
 
     if target == "/":
         space.session.set_current_node(NodePath.root())  # type: ignore
-        yield out_text("OK.")
+        yield out_text("")
         return
 
     # ----------------------------------
@@ -40,7 +40,7 @@ async def run(space: NodeSpace):
         if parent:
             space.session.set_current_node(parent)  # type: ignore
 
-        yield out_text("OK.")
+        yield out_text("")
         return
 
     # ----------------------------------
@@ -84,4 +84,4 @@ async def run(space: NodeSpace):
     new_path = target_node["path"]
     space.session.set_current_node(new_path)  # type: ignore
 
-    yield out_text("OK.")
+    yield out_text("")
