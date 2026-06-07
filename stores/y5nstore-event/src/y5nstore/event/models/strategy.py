@@ -51,3 +51,9 @@ class PatchStrategy(Protocol):
         current: JsonValue | None,
         fields: Sequence[str],
     ) -> JsonValue: ...
+
+    def create_tombstone(self) -> JsonValue:
+        """
+        Return a patch that, when applied, sets the entity state to None.
+        """
+        ...

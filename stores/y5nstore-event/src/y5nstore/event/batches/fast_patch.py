@@ -38,10 +38,13 @@ class FastPatchStrategy:
     def validate(self, patch: JsonValue) -> None:
         if not isinstance(patch, dict):
             raise PatchError("FastPatch must be an object.")
-        allowed = {"set", "unset"}
+        allowed = {"set", "unset", "tombstone"}
         unknown = set(patch.keys()) - allowed
         if unknown:
             raise PatchError(f"FastPatch has unknown keys: {sorted(unknown)}")
+
+        if "tombstone" in patch and len(patch) != 1:
+            raise PatchError("tombstone cannot be combined with other keys")
 
         if "set" in patch:
             s = patch["set"]
@@ -61,6 +64,9 @@ class FastPatchStrategy:
 
     def apply(self, current: JsonValue | None, patch: JsonValue) -> JsonValue:
         self.validate(patch)
+
+        if patch.get("tombstone") is True:
+            return None
 
         if current is None or not isinstance(current, dict):
             cur: dict[str, JsonValue] = {}
@@ -112,3 +118,6 @@ class FastPatchStrategy:
         fields: Sequence[str],
     ) -> JsonValue:
         return {"del": list(fields)}
+
+    def create_tombstone(self) -> JsonValue:
+        return {"tombstone": True}

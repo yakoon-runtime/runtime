@@ -227,6 +227,36 @@ class EntityStore:
         )
 
     # ----------------------------
+    # DELETE (Tombstone)
+    # ----------------------------
+
+    async def delete(
+        self,
+        *,
+        key: Key,
+        meta: Mapping[str, object] | None = None,
+        expected_rev: int | None = None,
+    ) -> PutResult:
+        patch = self._writer.create_tombstone()
+        result = await self.append(
+            key=key,
+            patch=patch,
+            indexes=(),  # don't update via append
+            meta=meta,
+            expected_rev=expected_rev,
+        )
+        d, k, s, eid = _dims_from_key(key)
+        await self.on_index_replace_terms(
+            domain_id=d,
+            kind_id=k,
+            space_id=s,
+            entity_id=eid,
+            terms=[],
+            written_at=result.updated_at,
+        )
+        return result
+
+    # ----------------------------
     # GET (inkl. Historie)
     # ----------------------------
 

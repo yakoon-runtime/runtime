@@ -101,6 +101,9 @@ class JsonPatchStrategy:
             )
         return cast(JsonValue, ops)
 
+    def create_tombstone(self) -> JsonValue:
+        return [{"op": "replace", "path": "", "value": None}]
+
 
 def _escape_json_pointer(token: str) -> str:
     # RFC 6901 escaping
