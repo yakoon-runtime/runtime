@@ -5,6 +5,7 @@ from typing import Protocol
 
 from y5n.base.clients.connection import ClientConnection
 from y5n.base.naming.key import Key
+from y5n.base.runtime import RuntimeInfo
 from y5n.runtime.runtime import Session
 
 from .runner import Runner
@@ -14,17 +15,20 @@ class RuntimeHost:
 
     def __init__(
         self,
+        *,
         on_schedule: OnSchedule,
         on_join_bus: OnJoinBus,
         on_get_session: OnGetSession,
         on_create_runner: OnCreateRunner,
         on_setup: OnSetup,
+        info: RuntimeInfo,
     ):
         self.on_schedule = on_schedule
         self.on_join_bus = on_join_bus
         self.on_get_session = on_get_session
         self.on_create_runner = on_create_runner
         self.on_setup = on_setup
+        self.info = info
 
         self._sessions: dict[Key, Runner] = {}
         self._connections: dict[ClientConnection, Runner] = {}
@@ -41,6 +45,7 @@ class RuntimeHost:
         connection: ClientConnection,
         session_key: Key | None = None,
     ):
+        connection.runtime_info = self.info
         self.on_join_bus(client=connection)
 
         # attach existing session
@@ -53,7 +58,6 @@ class RuntimeHost:
 
             runner = self.on_create_runner(session=session)
             self._sessions[session.key] = runner
-
 
             # await self.engine.dispatch(session, initial_command)
 

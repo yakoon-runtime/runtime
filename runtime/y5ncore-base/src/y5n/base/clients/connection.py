@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import asyncio
 from collections.abc import Awaitable, Callable
 
+from y5n.base.runtime.info import RuntimeInfo
 from y5n.base.runtime.input import Event
 
 
 class ClientConnection:
+    runtime_info: RuntimeInfo | None = None
 
     def __init__(
         self,

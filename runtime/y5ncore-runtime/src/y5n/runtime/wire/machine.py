@@ -19,6 +19,7 @@ from y5n.runtime.machine import (
 )
 from y5n.runtime.runtime import Session
 from y5n.runtime.runtime.bus import BusOutput, SessionBus
+from y5n.runtime.settings.version import resolve_runtime_info
 
 # ----------------------------------
 # ERRORS
@@ -164,6 +165,7 @@ def build_machine(
         on_create_runner=create_runner,
         on_get_session=session_builder.create,
         on_setup=setup_nodes,
+        info=resolve_runtime_info(),
     )
 
 

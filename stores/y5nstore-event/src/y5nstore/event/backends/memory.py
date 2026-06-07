@@ -460,6 +460,34 @@ class MemoryBackend:
         existing = self._index_terms_by_entity.get(ent_k, {})
         for t in terms:
             k = str(t.key)
+            old = existing.get(k)
+            if old is None:
+                continue
+            spec = specs.get(k)
+            if spec is None:
+                continue
+
+            old_norm = self._norm_value(spec, old)
+
+            gkey = (str(domain_id), str(kind_id), str(space_id), k)
+            bucket = self._index_inv2.get(gkey)
+            if not bucket:
+                continue
+
+            lst = bucket.get(old_norm, [])
+            lst = [r for r in lst if r.entity_id != entity_id]
+            if lst:
+                bucket[old_norm] = lst
+            else:
+                bucket.pop(old_norm, None)
+
+            if not bucket:
+                self._index_inv2.pop(gkey, None)
+
+        # apply new
+        newmap = dict(existing)
+        for t in terms:
+            k = str(t.key)
             spec = specs.get(k)
             if spec is None:
                 raise KeyError(f"Index not ensured: {k}")
