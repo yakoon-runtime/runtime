@@ -6,3 +6,4 @@
   <item key="Uptime">{{ state.uptime }}</item>
   <item key="Time (UTC)">{{ state.time }}</item>
 </kv>
+<spacer/>
