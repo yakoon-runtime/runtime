@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from y5n.api.dsl import out_text, prompt, receive, to_text
+from y5n.api.dsl import foreground, out_text, receive, to_text
 from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnCallLLM
 from y5n.base.llm import LLMMessage, LLMRequest
@@ -11,15 +11,16 @@ async def run(space: NodeSpace):
     llm = space.ports.get(OnCallLLM)
     messages: list[LLMMessage] = []
 
-    yield out_text("Chat start — /end beendet die Unterhaltung.")
+    yield out_text("Chat start — /end beendet die Unterhaltung.", mode="append")
 
     while True:
-        yield prompt(to_text("> "))
+        yield foreground()
+        yield out_text("> ", mode="append")
         event = yield receive()
         text = event.payload.strip()
 
         if text == "/end":
-            yield out_text("Chat beendet.")
+            yield out_text("Chat beendet.", mode="append")
             return
 
         if not text:
