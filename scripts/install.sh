@@ -4,6 +4,10 @@ cd ..
 pip install \
   -e runtime/y5ncore-base \
 
+# llm providers
+pip install \
+  -e runtime/y5ncore-llm \
+
 # storage
 pip install \
   -e stores/y5nstore-event \

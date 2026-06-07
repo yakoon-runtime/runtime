@@ -1,3 +1,4 @@
+from y5n.base.llm import OnCallLLM
 from y5n.base.plugins.ports import (
     OnAuthenticate,
     OnCompile,
@@ -14,6 +15,7 @@ from y5n.base.sources import OnSourceRead
 
 __all__ = [
     "OnAuthenticate",
+    "OnCallLLM",
     "OnManualResolve",
     "OnNewPermissionSet",
     "OnParsePermissionSpec",
