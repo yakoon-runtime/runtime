@@ -24,7 +24,10 @@ class OpenAICompatibleProvider:
                 headers=self._headers(),
                 json={
                     "model": self._model,
-                    "messages": [{"role": "user", "content": request.prompt}],
+                    "messages": [
+                        {"role": m.role, "content": m.content}
+                        for m in request.messages
+                    ],
                     "stream": False,
                 },
             )

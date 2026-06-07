@@ -14,12 +14,15 @@ class OllamaProvider:
     async def complete(self, request: LLMRequest) -> LLMResponse:
         async with httpx.AsyncClient(timeout=120) as client:
             resp = await client.post(
-                f"{self._base_url}/api/generate",
+                f"{self._base_url}/api/chat",
                 json={
                     "model": self._model,
-                    "prompt": request.prompt,
+                    "messages": [
+                        {"role": m.role, "content": m.content}
+                        for m in request.messages
+                    ],
                     "stream": False,
                 },
             )
             resp.raise_for_status()
-            return LLMResponse(text=resp.json()["response"])
+            return LLMResponse(text=resp.json()["message"]["content"])

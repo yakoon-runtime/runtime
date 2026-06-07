@@ -19,5 +19,6 @@ class GeminiProvider:
         self._model = genai.GenerativeModel(model)
 
     async def complete(self, request: LLMRequest) -> LLMResponse:
-        response = await self._model.generate_content_async(request.prompt)
+        prompt = "\n".join(f"{m.role}: {m.content}" for m in request.messages)
+        response = await self._model.generate_content_async(prompt)
         return LLMResponse(text=response.text)

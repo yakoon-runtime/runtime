@@ -1,5 +1,6 @@
 from y5n.api.nodes import Node, NodeScope
 
+from .chat import run as chat
 from .llm import run as llm
 from .pdf import run as pdf
 from .setup import setup
@@ -38,6 +39,21 @@ demos.add(
     Node(
         key="llm",
         run=llm,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+        scope=NodeScope.GLOBAL,
+    )
+)
+
+# ----------------------------------
+# Chat
+# ----------------------------------
+
+demos.add(
+    Node(
+        key="chat",
+        run=chat,
         anonymous=True,
         resolvable=True,
         navigable=False,
