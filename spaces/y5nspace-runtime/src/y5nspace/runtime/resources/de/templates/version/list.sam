@@ -1,4 +1,3 @@
-<spacer/>
 <kv>
   <item key="Platform Version">{{ state.version }}</item>
   <item key="Python">{{ state.python }}</item>
@@ -6,4 +5,3 @@
   <item key="Uptime">{{ state.uptime }}</item>
   <item key="Time (UTC)">{{ state.time }}</item>
 </kv>
-<spacer/>
