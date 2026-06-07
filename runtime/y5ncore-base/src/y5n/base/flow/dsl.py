@@ -59,7 +59,6 @@ def out(
     *,
     mode: Mode = "replace",
     space: str | None = None,
-    **view_params,
 ) -> Outcome:
     """
     Emit a transient projection to the active client.
@@ -71,19 +70,8 @@ def out(
         projection: The projection to emit.
         mode: "replace" (PatchReset + Append) or "append" (nur Append).
         space: Optional subspace name for independent job_id scoping.
-        view_params: Optional viewport hints forwarded to the client
-                     (e.g. clear=True, scroll_to="top").
     """
-    return Outcome(
-        effects=[
-            EmitView(
-                projection,
-                mode=mode,
-                space=space,
-                view_params=view_params or None,
-            )
-        ]
-    )
+    return Outcome(effects=[EmitView(projection, mode=mode, space=space)])
 
 
 def out_text(
@@ -91,7 +79,6 @@ def out_text(
     *,
     mode: Mode = "replace",
     space: str | None = None,
-    **view_params,
 ) -> Outcome:
     """
     Emit a transient text projection to the active client.
@@ -103,9 +90,8 @@ def out_text(
         text: The text content to display.
         mode: "replace" (PatchReset + Append) or "append" (nur Append).
         space: Optional subspace name for independent job_id scoping.
-        view_params: Optional viewport hints forwarded to the client.
     """
-    return out(to_text(text), mode=mode, space=space, **view_params)
+    return out(to_text(text), mode=mode, space=space)
 
 
 def suspend() -> Outcome:
@@ -208,13 +194,19 @@ def view(**view_params) -> Outcome:
     Send a viewport hint to the client without content.
 
     The client acts on view_params (e.g. clear=True) without
-    rendering a projection. Syntactic sugar for:
-        out_text("", **view_params)
+    rendering a projection.
 
     Args:
         view_params: Viewport hints (e.g. clear=True).
     """
-    return out_text("", **view_params)
+    return Outcome(
+        effects=[
+            EmitView(
+                Projection.create(blocks=[]),
+                view_params=view_params or None,
+            )
+        ]
+    )
 
 
 def run_task(command: str, **kwargs) -> TaskHandle:
