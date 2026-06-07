@@ -52,6 +52,7 @@ class EventDispatcher:
         ctx: InputContext | None,
         job_id: str,
         reset: bool = True,
+        view_params: dict | None = None,
     ) -> None:
 
         vid = projection.id
@@ -65,6 +66,7 @@ class EventDispatcher:
             projection_id=vid,
             ctx=ctx,
             job_id=job_id,
+            view_params=view_params,
             event_queue=[],
             node_depth={},
             published_nodes=set(),
@@ -87,6 +89,7 @@ class EventDispatcher:
                     ctx=ctx,
                     vid=vid,
                     job_id=stream.job_id,
+                    view_params=view_params,
                 )
             )
 
@@ -304,12 +307,11 @@ class _ViewStream:
     projection_id: str
     ctx: InputContext | None
     job_id: str
-
     event_queue: list
-
     node_depth: dict[str, int]
     published_nodes: set[str]
     last_flush: float
+    view_params: dict | None = None
 
 
 # -------------
@@ -325,6 +327,7 @@ class OnCreateBeginEvent(Protocol):
         vid: str,
         ctx: InputContext | None,
         job_id: str,
+        view_params: dict | None = None,
     ) -> ProjectionEvent: ...
 
 

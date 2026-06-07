@@ -13,11 +13,12 @@ class Effect:
 
 
 class EmitView(Effect):
-    def __init__(self, view, persist: bool = False, mode: Mode = "replace", space: str | None = None):
+    def __init__(self, view, persist: bool = False, mode: Mode = "replace", space: str | None = None, view_params: dict | None = None):
         self.view = view
         self.persist = persist
         self.mode = mode
         self.space = space
+        self.view_params = view_params
 
 
 class EmitEvent(Effect):

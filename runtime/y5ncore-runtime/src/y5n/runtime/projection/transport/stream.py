@@ -40,6 +40,7 @@ class EventStreamOutput:
         ctx: InputContext | None,
         job_id: str = "system",
         mode: str = "replace",
+        view_params: dict | None = None,
     ):
         if not projection.id:
             raise RuntimeError("Projection without id.")
@@ -50,6 +51,7 @@ class EventStreamOutput:
             ctx=ctx,
             job_id=job_id,
             reset=(mode == "replace"),
+            view_params=view_params,
         )
 
         try:
@@ -86,6 +88,7 @@ class OnBeginProjection(Protocol):
         ctx: InputContext | None,
         job_id: str,
         reset: bool = True,
+        view_params: dict | None = None,
     ) -> None: ...
 
 

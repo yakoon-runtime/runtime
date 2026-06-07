@@ -9,6 +9,7 @@ from .dsl import (
     run_task,
     send,
     suspend,
+    view,
 )
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "foreground",
     "background",
     "run_task",
+    "view",
 ]

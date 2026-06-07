@@ -218,6 +218,7 @@ class CommandEngine:
                     ctx=flow.event.context,
                     job_id=job_id,
                     mode=effect.mode,
+                    view_params=effect.view_params,
                 )
 
             elif isinstance(effect, Foreground):
@@ -321,6 +322,7 @@ class OnProjection(Protocol):
         ctx: InputContext | None,
         job_id: str = "system",
         mode: str = "replace",
+        view_params: dict | None = None,
     ) -> None: ...
 
 

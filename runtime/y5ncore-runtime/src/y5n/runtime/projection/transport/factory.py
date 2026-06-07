@@ -12,6 +12,7 @@ class EventFactory:
         vid: str,
         ctx: InputContext | None,
         job_id: str,
+        view_params: dict | None = None,
     ) -> ProjectionEvent:
         return ProjectionEvent(
             id=vid,
@@ -19,6 +20,7 @@ class EventFactory:
             ctx=ctx,
             patch=Patch(ops=[PatchReset()], final=False),
             job_id=job_id,
+            view_params=view_params,
         )
 
     def patch_event(

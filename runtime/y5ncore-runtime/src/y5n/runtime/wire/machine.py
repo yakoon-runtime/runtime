@@ -201,6 +201,7 @@ class OnProjectionSend(Protocol):
         ctx: InputContext | None,
         job_id: str = "system",
         mode: str = "replace",
+        view_params: dict | None = None,
     ) -> None: ...
 
 

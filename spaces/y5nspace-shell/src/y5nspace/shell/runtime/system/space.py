@@ -2,6 +2,7 @@ from y5n.api.invocations import Invocation
 from y5n.api.nodes import Node, NodeScope
 
 from .cd import run as cd
+from .clear import run as clear
 from .ls import run as ls
 from .man import run as man
 from .pwd import run as pwd
@@ -75,6 +76,21 @@ system.add(
     Node(
         key="pwd",
         run=pwd,
+        anonymous=True,
+        scope=NodeScope.GLOBAL,
+        resolvable=True,
+        navigable=False,
+    )
+)
+
+# ----------------------------------
+# CLEAR - CLEAR VIEWPORT
+# ----------------------------------
+
+system.add(
+    Node(
+        key="clear",
+        run=clear,
         anonymous=True,
         scope=NodeScope.GLOBAL,
         resolvable=True,

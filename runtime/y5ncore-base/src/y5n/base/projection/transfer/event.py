@@ -36,6 +36,7 @@ class ProjectionEvent:
     state: ProjectionState | None = None
 
     job_id: str = "system"
+    view_params: dict | None = None
     patch: Patch = field(default_factory=Patch)
 
     def is_final(self) -> bool:
