@@ -1,27 +1,33 @@
 from __future__ import annotations
 
-from y5n.api.dsl import out_text
+from y5n.api.dsl import out_text, prompt, receive, to_text
 from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnCallLLM
 from y5n.base.llm import LLMMessage, LLMRequest
 
 
 async def run(space: NodeSpace):
-    prompt = " ".join(space.request.args())
-    if not prompt:
-        yield out_text("Usage: chat <message>")
-        return
 
     llm = space.ports.get(OnCallLLM)
-    result = await llm.complete(
-        LLMRequest(
-            messages=[
-                LLMMessage(
-                    role="system",
-                    content="Du bist ein hilfreicher Assistent.",
-                ),
-                LLMMessage(role="user", content=prompt),
-            ]
-        )
-    )
-    yield out_text(result.text)
+    messages: list[LLMMessage] = []
+
+    yield out_text("Chat start — /end beendet die Unterhaltung.")
+
+    while True:
+        yield prompt(to_text("> "))
+        event = yield receive()
+        text = event.payload.strip()
+
+        if text == "/end":
+            yield out_text("Chat beendet.")
+            return
+
+        if not text:
+            continue
+
+        messages.append(LLMMessage(role="user", content=text))
+        result = await llm.complete(LLMRequest(messages=messages))
+        messages.append(LLMMessage(role="assistant", content=result.text))
+
+        yield out_text(f"You: {text}", mode="append")
+        yield out_text(f"Assistant: {result.text}", mode="append")
