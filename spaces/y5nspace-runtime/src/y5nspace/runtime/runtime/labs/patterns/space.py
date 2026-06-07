@@ -1,4 +1,4 @@
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .form import run as form
 
@@ -24,8 +24,5 @@ patterns.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
     )
 )
-
-

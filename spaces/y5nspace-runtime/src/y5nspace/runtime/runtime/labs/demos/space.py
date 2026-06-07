@@ -1,4 +1,4 @@
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .pdf import run as pdf
 
@@ -24,6 +24,5 @@ demos.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
     )
 )

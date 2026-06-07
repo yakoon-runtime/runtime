@@ -1,4 +1,4 @@
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .delay import run as delay
 from .out import run as out
@@ -112,7 +112,6 @@ dsl.add(
     Node(
         key="task",
         run=task,
-        scope=NodeScope.GLOBAL,
         anonymous=True,
         resolvable=True,
         navigable=False,
