@@ -40,6 +40,3 @@ class SessionBuilder:
 class OnGetSession(Protocol):
     async def __call__(self, *, key: Key) -> Session: ...
 
-
-class OnApplyPermissions(Protocol):
-    def __call__(self, *, session: Session): ...

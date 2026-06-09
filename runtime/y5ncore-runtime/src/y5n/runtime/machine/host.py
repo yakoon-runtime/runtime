@@ -89,10 +89,6 @@ class RuntimeHost:
     def _has_connections(self, runner: Runner) -> bool:
         return any(r is runner for r in self._connections.values())
 
-    def _runner_key(self, runner: Runner) -> int:
-        return id(runner)
-
-
 # ----------------------------------
 # PORTS
 # ----------------------------------

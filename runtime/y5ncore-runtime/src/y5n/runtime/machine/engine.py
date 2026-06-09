@@ -345,6 +345,3 @@ class OnProjection(Protocol):
         view_params: dict | None = None,
     ) -> None: ...
 
-
-class OnContinuePipeline(Protocol):
-    async def __call__(self, session: Session, event: Event) -> None: ...

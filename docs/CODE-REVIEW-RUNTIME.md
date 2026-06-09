@@ -74,17 +74,17 @@ if not isinstance(event.payload, str) or not event.payload.strip():
 | # | Problem | Datei:Zeile |
 |---|---------|-------------|
 | ✅ M1 | `Flow.has_stack()` greift auf `cursor._stack` zu statt `cursor.has_stack()` zu delegieren | `a847caac` |
-| M2 | `RuntimeHost._runner_key()` ist tot (definiert, nie aufgerufen) | `machine/host.py:92` |
-| M3 | `OnBootstrapPermissions` in `wire/machine.py` nirgends referenziert | `wire/machine.py:206` |
-| M4 | `OnContinuePipeline` in `engine.py` tot | `machine/engine.py:354` |
-| M5 | `OnApplyPermissions` in `session.py` tot | `machine/session.py:44` |
+| ✅ M2 | `RuntimeHost._runner_key()` ist tot (definiert, nie aufgerufen) | `(wartet auf Commit)` |
+| ✅ M3 | `OnBootstrapPermissions` in `wire/machine.py` nirgends referenziert | `387aa53a` |
+| ✅ M4 | `OnContinuePipeline` in `engine.py` tot | `(wartet auf Commit)` |
+| ✅ M5 | `OnApplyPermissions` in `session.py` tot | `(wartet auf Commit)` |
 | M6 | `create_projection` + `compile_view` exportiert aber nie konsumiert | `primitives/{builder,view}.py` |
 | M7 | `Outcome.__init__` hat null Typannotationen | `primitives/outcome.py:5-6` |
 | M8 | `TaskRunner._run()` behandelt `"sleep"` als magisches Built-in | `machine/task.py:24` |
 | M9 | `_ensure_step(run_fn)` untypisiert | `flow/cursor.py:57` |
-| M10 | `FlowCursor.next()` fehlt Return-Type | `flow/cursor.py:23` |
-| M11 | `_handle_outcome(outcome)` untypisiert | `machine/scheduler.py:264` |
-| M12 | `_call_runtime(callback)` untypisiert | `machine/scheduler.py:237` |
+| ✅ M10 | `FlowCursor.next()` fehlt Return-Type | `387aa53a` |
+| ✅ M11 | `_handle_outcome(outcome)` untypisiert | `387aa53a` |
+| ✅ M12 | `_call_runtime(callback)` untypisiert | `387aa53a` |
 
 ## LOW — bei Gelegenheit
 
