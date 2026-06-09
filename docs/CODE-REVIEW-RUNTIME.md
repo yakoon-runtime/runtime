@@ -72,7 +72,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 | # | Problem | Datei:Zeile |
 |---|---------|-------------|
 | ✅ L1 | `Flow.view: Any | None` → `Projection | None` | `feefd65b` |
-| L2 | `Effect` Base-Class ist leer (i.O., notiert) | `primitives/effect.py:9` |
+| ✅ L2 | `Effect` Base-Class ist leer (i.O., notiert) | `96ed4213` |
 | L3 | `_schedule_waiting` ist O(n)-Scan → Reverse-Lookup einführen | `machine/scheduler.py:292` |
 | ✅ L4 | Kommentierter Dead Code in engine.py (3 Blöcke) entfernt | `feefd65b` |
 | ✅ L5 | Deutsche Comments → Englisch (engine, scheduler, parser, control) | `feefd65b` |
@@ -88,7 +88,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 
 - **0 HIGH** — alle 7 erledigt (H1/H2/H4/H5/H6/H7 gefixt, H3 kein Bug)
 - **12 MEDIUM** — alle gefixt
-- **5 LOW** gefixt — 6 offen (L3/L6/L7/L8/L11/L12; L2 ist nur Notiz)
+- **6 LOW** gefixt — 5 offen (L3/L6/L7/L8/L11/L12)
 
 Die Core-Abstraktionen (Channel, Effect/Control, Scheduler) stehen gut.
 Der Review findet vor allem Export-Lücken, ungenutzten Code und fehlende
