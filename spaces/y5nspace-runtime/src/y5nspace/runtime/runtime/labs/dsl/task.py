@@ -33,7 +33,7 @@ async def run(_):
     yield render()
 
     ch = uuid4().hex
-    yield start_task("python3", result_channel=ch, args=["-c", "print(42)"])
+    yield start_task("python3", channel=ch, args=["-c", "print(42)"])
 
     lines.append("→ waiting for process result...")
     yield render()
@@ -62,8 +62,8 @@ async def run(_):
     ch_a = uuid4().hex
     ch_b = uuid4().hex
 
-    yield start_task("sleep", result_channel=ch_a, seconds=3)
-    yield start_task("sleep", result_channel=ch_b, seconds=5)
+    yield start_task("sleep", channel=ch_a, seconds=3)
+    yield start_task("sleep", channel=ch_b, seconds=5)
 
     lines.append("→ both tasks are now running in parallel")
     yield render()

@@ -230,38 +230,38 @@ def view(**view_params) -> Outcome:
     )
 
 
-def start_task(command: str, *, result_channel: str, **kwargs) -> Outcome:
+def start_task(command: str, *, channel: str, **kwargs) -> Outcome:
     """
     Start a background task.
 
-    The task runs independently and sends its result to the
-    result_channel (SESSION scope). The caller reads it with receive().
+    The task runs independently and sends its result to the given
+    channel (SESSION scope). The caller reads it with receive().
 
     Usage:
-        yield start_task("sleep", result_channel=ch, seconds=5)
+        yield start_task("sleep", channel=ch, seconds=5)
         result = yield receive(ch, scope=Scope.SESSION)
     """
     return Outcome(
         effects=[
-            StartTask(command, result_channel, **kwargs),
+            StartTask(command, channel, **kwargs),
         ]
     )
 
 
-def start_cmd(command: str, *, result_channel: str) -> Outcome:
+def start_cmd(command: str, *, channel: str) -> Outcome:
     """
     Start a runtime command as a sub-flow.
 
-    The sub-flow's projection output is redirected to the result_channel
-    (SESSION scope). The caller can read results with receive().
+    The sub-flow's projection output is redirected to the given
+    channel (SESSION scope). The caller can read results with receive().
 
     Usage:
         cmd_ch = f"cmd:{uuid4().hex}"
-        yield start_cmd("ls", result_channel=cmd_ch)
+        yield start_cmd("ls", channel=cmd_ch)
         result = yield receive(cmd_ch, scope=Scope.SESSION)
     """
     return Outcome(
         effects=[
-            StartCommand(command, result_channel),
+            StartCommand(command, channel),
         ]
     )

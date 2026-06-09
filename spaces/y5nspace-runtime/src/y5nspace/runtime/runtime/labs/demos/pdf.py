@@ -25,7 +25,7 @@ async def run(_):
     yield out_text(f"Generating PDF for {name}...")
 
     ch = uuid4().hex
-    yield start_task("python3", result_channel=ch, args=[SCRIPT, "--name", name, "--greeting", greeting])
+    yield start_task("python3", channel=ch, args=[SCRIPT, "--name", name, "--greeting", greeting])
 
     result = yield receive(ch, scope=Scope.SESSION)
     payload = result.payload or {}

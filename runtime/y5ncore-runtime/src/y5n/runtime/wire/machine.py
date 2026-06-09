@@ -83,7 +83,7 @@ def build_machine(
     async def on_start_command(
         *,
         command: str,
-        result_channel: str,
+        channel: str,
         flow,
         session,
     ):
@@ -91,12 +91,12 @@ def build_machine(
         try:
             new_flow = await engine.dispatch(session=session, event=event)
         except Exception:
-            session.push_event(Scope.SESSION, result_channel, Event(payload=None))
+            session.push_event(Scope.SESSION, channel, Event(payload=None))
             return
         if new_flow is None:
-            session.push_event(Scope.SESSION, result_channel, Event(payload=None))
+            session.push_event(Scope.SESSION, channel, Event(payload=None))
             return
-        new_flow.out_channel = result_channel
+        new_flow.out_channel = channel
         scheduler.schedule_flow(new_flow, session)
 
     engine = CommandEngine(

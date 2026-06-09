@@ -15,7 +15,7 @@ async def run(_):
     yield render()
 
     result_channel = f"cmd:{uuid4().hex}"
-    yield start_cmd("out", result_channel=result_channel)
+    yield start_cmd("out", channel=result_channel)
 
     lines.append("→ waiting for projection from sub-flow...")
     yield render()

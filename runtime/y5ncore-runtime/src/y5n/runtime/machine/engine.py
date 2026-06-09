@@ -244,7 +244,7 @@ class CommandEngine:
             elif isinstance(effect, StartCommand):
                 await self.on_start_command(
                     command=effect.command,
-                    result_channel=effect.channel,
+                    channel=effect.channel,
                     flow=flow,
                     session=session,
                 )
@@ -317,7 +317,7 @@ class OnCommandStart(Protocol):
         self,
         *,
         command: str,
-        result_channel: str,
+        channel: str,
         flow: Flow,
         session: Session,
     ) -> None: ...
