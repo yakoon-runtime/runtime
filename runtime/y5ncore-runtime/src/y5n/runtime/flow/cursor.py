@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Literal
 
 from y5n.base.flow.primitives import Outcome
@@ -24,7 +25,7 @@ class FlowCursor:
         self,
         node: Node,
         ctx: NodeSpace,
-    ):
+    ) -> Outcome | AsyncGenerator | None:
         if not self._stack:
             if self.handler_name == "run":
                 handler = node.run

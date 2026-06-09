@@ -203,10 +203,6 @@ class OnHasPermission(Protocol):
     def __call__(self, *, session: Session, perm_key: str) -> bool: ...
 
 
-class OnBootstrapPermissions(Protocol):
-    def __call__(self, *, session: Session): ...
-
-
 class OnAuditWarning(Protocol):
     def __call__(self, *, message: str, session: Session) -> None: ...
 

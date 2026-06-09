@@ -4,6 +4,7 @@ import asyncio
 import heapq
 import time
 from collections import deque
+from collections.abc import Awaitable, Callable
 from typing import Protocol
 from uuid import uuid4
 
@@ -234,7 +235,8 @@ class Scheduler:
                 self.schedule_flow(flow, session)
 
     async def _call_runtime(
-        self, session: Session, ctx: InputContext | None, callback, **kwargs
+        self, session: Session, ctx: InputContext | None,
+        callback: Callable[..., Awaitable[Flow | None]], **kwargs
     ):
         node: Node | None = None
         try:
@@ -261,7 +263,7 @@ class Scheduler:
 
             await control.on_wake(flow, self, session)
 
-    async def _handle_outcome(self, session: Session, flow: Flow, outcome):
+    async def _handle_outcome(self, session: Session, flow: Flow, outcome: Outcome):
 
         control = outcome.control
         if control is None:
