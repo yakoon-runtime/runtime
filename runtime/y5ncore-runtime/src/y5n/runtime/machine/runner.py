@@ -29,7 +29,7 @@ class Runner:
 
         flow = self._session.foreground_flow
         if flow:
-            self._session.push_event(Scope.FLOW, "default", event, flow=flow)
+            self._session.push_event(Scope.USER_INPUT, "__user__", event, flow=flow)
             self.on_schedule_flow(flow=flow, session=self._session)
             return
 

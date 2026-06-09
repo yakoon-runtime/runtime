@@ -148,18 +148,31 @@ def prompt(projection: Projection) -> Outcome:
     )
 
 
-def receive(channel: str = "default", scope: Scope = Scope.FLOW) -> Outcome:
+def receive(
+    channel: str | None = None,
+    scope: Scope | None = None,
+) -> Outcome:
     """
     Wait for the next input event.
 
-    Suspends the flow until an event is received on the given
-    channel. Does not emit UI or modify state.
-    """
+    Without arguments — waits on USER_INPUT scope (user input).
+    With a channel argument — waits on FLOW scope (flow-local channel).
+    With explicit scope — uses the given scope.
 
-    if scope == Scope.USER_INPUT and channel != "__user__":
-        raise ValueError(
-            f"USER_INPUT scope requires channel='__user__', got {channel!r}"
-        )
+    Usage:
+        receive()                    # USER_INPUT
+        receive("form.result")       # FLOW
+        receive("cmd:x", scope=Scope.SESSION)  # SESSION
+    """
+    if scope is None:
+        if channel is None:
+            scope = Scope.USER_INPUT
+            channel = "__user__"
+        else:
+            scope = Scope.FLOW
+    elif channel is None:
+        channel = "default"
+
     return Outcome(control=AwaitEvent(channel, scope=scope))
 
 

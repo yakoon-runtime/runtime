@@ -47,53 +47,58 @@ session.has_mail(scope, channel, *, flow=None) -> bool
 ## API auf DSL-Ebene
 
 ```python
-receive()                                            # FLOW, "default"
-receive("form.result")                               # FLOW, "form.result"
-receive("cmd:abc", scope=Scope.SESSION)               # SESSION, "cmd:abc"
-receive("__user__", scope=Scope.USER_INPUT)           # USER_INPUT
+receive()                    # USER_INPUT scope → wartet auf Benutzereingabe
+receive("form.result")       # FLOW scope → wartet auf flow-lokalen Channel
+receive("cmd:abc", scope=Scope.SESSION)  # SESSION scope → Inter-Flow
 
-send("form.result", event)                           # FLOW
-send("cmd:abc", event, scope=Scope.SESSION)           # SESSION
-send(..., scope=Scope.USER_INPUT)                     # → ValueError
+send("form.result", event)               # FLOW scope
+send("cmd:abc", event, scope=Scope.SESSION)  # SESSION scope
+send(..., scope=Scope.USER_INPUT)             # → ValueError
+```
+
+**Überladungsregel** — `receive()` hat zwei implizite Modi:
+
+```
+Kein Channel     → USER_INPUT
+Mit Channel      → FLOW
+Expliziter Scope → überschreibt
+```
+
+```python
+receive()                    # scope=None, channel=None → USER_INPUT/"__user__"
+receive("form.result")       # scope=None, channel="form.result" → FLOW/"form.result"
+receive("x", scope=SESSION)  # scope=SESSION → SESSION/"x"
+receive(scope=FLOW)          # scope=FLOW, channel=None → FLOW/"default"
 ```
 
 ## Validierung
 
-- `USER_INPUT` erfordert `channel="__user__"` — sonst `ValueError`
-- `send()` mit `USER_INPUT` → `ValueError` (USER_INPUT ist Receive-only)
-- Validierung in `AwaitEvent.__init__()` (Effect-Ebene) und in `receive()`/`send()` (DSL-Ebene)
+- `USER_INPUT` erfordert `channel="__user__"` — sonst `ValueError` in `AwaitEvent.__init__()`
+- `send()` mit `USER_INPUT` → `ValueError` (Receive-only)
+- Die DSL (`receive()`) setzt bei USER_INPUT automatisch `channel="__user__"` — kein Fehler aus DSL-Sicht
 
-## Gebauter Stand (Spike, 2026-06-09)
+## Gebauter Stand (2026-06-09)
 
 - `Scope(Enum)` + `resolve()` in `y5n/base/flow/channel.py`
 - `session._channels: dict[str, deque]` als einziger Speicherort
 - `Flow.inbox`, `push_event`, `pop_event`, `has_mail` entfernt
 - `Control.is_runnable(self, flow, session)` — alle Subklassen aktualisiert
 - `AwaitEvent` + `EmitEvent` tragen `scope`-Parameter
-- `receive()`/`send()` symmetrisch mit `scope`
+- `receive()` mit impliziter Überladung (USER_INPUT/FLOW/SESSION)
+- `send()` mit optionalem `scope` (Default FLOW)
 - Engine: `EmitEvent` verwendet `effect.scope`, `_next_step` verwendet `flow.control.scope`
 - Scheduler: `control.is_runnable(flow, session)`
-- Runner: pusht aktuell noch auf `FLOW/"default"` (muss auf `USER_INPUT/"__user__"`)
+- Runner: pusht User-Input auf `USER_INPUT/"__user__"`
 - TaskRunner: pusht auf `FLOW/{task.channel}`
 - `del_flow` räumt FLOW-Channels (`{flow_id}:*`)
-- User-Input wird aktuell noch über `FLOW/"default"` geroutet
 
 ## Noch offen
 
-1. **User-Input auf USER_INPUT umstellen**
-   - Runner → `session.push_event(USER_INPUT, "__user__", event, flow=fg_flow)`
-   - `receive()` → Default auf `USER_INPUT` statt `FLOW`?
-   - Alle bestehenden `receive()`-Aufrufe in labs/examples prüfen
-
-2. **Foreground-Routing**
-   - USER_INPUT-Events nur an den aktuellen Vordergrund-Flow
-   - Beim Foreground-Wechsel: alter Flow verliert __user__-Empfang
-
-3. **`start_cmd` (CommandHandle + StartCommand-Effect)**
+1. **`start_cmd` (CommandHandle + StartCommand-Effect)**
    - Nutzt SESSION-Scope für Channel `cmd:<uuid>`
    - Sub-Flow benachrichtigt Parent über SESSION-Channel
 
-4. **SESSION-Channel-Lebenszyklus**
+2. **SESSION-Channel-Lebenszyklus**
    - Aktuell: nie geräumt (außer bei Session-Tod)
    - Brauchen wir Cleanup für verwaiste SESSION-Channels?
 
