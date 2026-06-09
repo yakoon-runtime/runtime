@@ -30,7 +30,7 @@ oder `suspend()` als Feature entfernen, bis es gebraucht wird.
 
 ### ✅ H4 — Layer-Verletzung: `y5ncore-base` importierte `Flow` aus `runtime`
 
-**Gefixt in:** `a083a45`
+**Gefixt in:** `709264d4`
 
 ---
 
@@ -107,7 +107,7 @@ if not isinstance(event.payload, str) or not event.payload.strip():
 
 ## Zusammenfassung
 
-- **4 HIGH** (H1+H2+H6 gefixt) — 1 schnell fixbar (H7), 3 brauchen Design-Entscheidung (H3/H4/H5)
+- **3 HIGH** (H1+H2+H4+H6 gefixt) — 1 schnell fixbar (H7), 2 brauchen Design-Entscheidung (H3/H5)
 - **12 MEDIUM** — hauptsächlich Dead Code und fehlende Typannotationen
 - **13 LOW** — Hygiene, kleine Präzisionsprobleme
 
