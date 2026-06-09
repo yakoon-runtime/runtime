@@ -17,6 +17,11 @@ HandlerName = Literal[
 
 
 class FlowCursor:
+    """Manages the async generator stack for flow execution.
+
+    Supports push (enter sub-flow) and pop (return to parent),
+    driving the generator with next() and send().
+    """
 
     def __init__(self, handler_name: HandlerName):
         self.handler_name = handler_name

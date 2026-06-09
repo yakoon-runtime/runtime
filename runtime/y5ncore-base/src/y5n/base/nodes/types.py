@@ -2,18 +2,39 @@ from enum import StrEnum
 
 
 class NodeKind(StrEnum):
-    USER = "user"  # normale, user-facing Commands
-    BUILTIN = "builtin"  # shell/core orchestration (use, man, wf.*)
-    WORKFLOW = "workflow"  # workflow entrypoints / workflow-only commands
+    """Classifies node execution semantics.
+
+    USER — normal user-facing commands.
+    BUILTIN — shell/core orchestration (use, man, wf.*).
+    WORKFLOW — workflow entrypoints.
+    """
+
+    USER = "user"
+    BUILTIN = "builtin"
+    WORKFLOW = "workflow"
 
 
 class NodeVisibility(StrEnum):
-    NORMAL = "normal"  # standard in `man`
-    DEVELOPER = "dev"  # nur in `man --all` / `man workflows`
-    INTERNAL = "internal"  # nur in `man --internal`
+    """Controls listing visibility in man/help.
+
+    NORMAL — standard in man.
+    DEVELOPER — only in man --all / man workflows.
+    INTERNAL — only in man --internal.
+    """
+
+    NORMAL = "normal"
+    DEVELOPER = "dev"
+    INTERNAL = "internal"
 
 
 class NodeScope(StrEnum):
-    NODE = "node"  # Only in active node
-    ROOT = "root"  # In owner applcication and in root node
-    GLOBAL = "global"  # global usage
+    """Determines command resolution scope.
+
+    NODE — only in the active node.
+    ROOT — in the owner application and root node.
+    GLOBAL — available everywhere.
+    """
+
+    NODE = "node"
+    ROOT = "root"
+    GLOBAL = "global"

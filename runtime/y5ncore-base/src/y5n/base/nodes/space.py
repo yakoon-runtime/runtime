@@ -14,6 +14,10 @@ from .ports import NodePorts
 
 @dataclass(slots=True)
 class NodeSpace:
+    """Execution context passed to a run handler.
+
+    Provides access to the node path, request, session, and handler ports.
+    """
 
     path: NodePath
     request: Request

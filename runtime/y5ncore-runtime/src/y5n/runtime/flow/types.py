@@ -4,5 +4,10 @@ from enum import StrEnum
 
 
 class FlowKind(StrEnum):
-    USER = "user"  # sichtbare Jobs
-    SYSTEM = "system"  # interne Flows (z.B. jobs, assistant intern)
+    """Distinguishes user-facing flows from system-internal flows.
+
+    System flows are scheduled with higher priority by the scheduler.
+    """
+
+    USER = "user"
+    SYSTEM = "system"

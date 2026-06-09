@@ -7,6 +7,11 @@ from .errors import UnknowOptionsError, UsageError
 
 @dataclass(slots=True)
 class Invocation:
+    """A single command invocation: action + args + options.
+
+    Matched against user input during node resolution.  The validator
+    determines whether a token sequence fits this signature.
+    """
 
     action: str | None = None
     args: list[str] = field(default_factory=list)

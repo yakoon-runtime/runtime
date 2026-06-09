@@ -6,6 +6,10 @@ from y5n.base.runtime import Event
 
 
 class InputParser:
+    """Parse raw input events into command, tokens, and pipeline segments.
+
+    Splits pipe-delimited input and runs shlex on the head segment.
+    """
 
     def parse(self, event: Event) -> tuple[str, list[str], list[str]]:
 

@@ -23,6 +23,12 @@ from y5n.runtime.runtime import Session
 
 
 class Scheduler:
+    """Cooperative async scheduler for flows.
+
+    Maintains ready queues (user/system), a sleep heap for delayed flows,
+    and per-flow step budgets.  The main loop wakes sleeping flows,
+    dispatches ready flows to the engine, and handles outcomes.
+    """
 
     # PULSE
     # --------------------------------------------------------

@@ -8,6 +8,12 @@ from .effect import Effect
 
 
 class Outcome:
+    """Result of a single flow step.
+
+    Carries an optional control (what happens next) and a list of
+    effects (side effects the engine must apply).
+    """
+
     def __init__(
         self,
         control: Control | None = None,

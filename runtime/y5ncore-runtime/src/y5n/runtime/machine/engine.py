@@ -29,6 +29,11 @@ from y5n.runtime.runtime import (
 
 
 class CommandEngine:
+    """Core flow execution engine.
+
+    Steps a flow's async generator, applies effects (emit, start, dispatch),
+    and returns the outcome control to the scheduler.
+    """
 
     DEFAULT_FLOW_KIND = FlowKind.USER
 

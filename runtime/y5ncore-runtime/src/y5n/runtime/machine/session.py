@@ -8,6 +8,10 @@ from y5n.runtime.runtime import Session
 
 
 class SessionBuilder:
+    """Factory for creating runtime Session objects.
+
+    Generates unique session keys and delegates to the OnGetSession port.
+    """
 
     def __init__(
         self,

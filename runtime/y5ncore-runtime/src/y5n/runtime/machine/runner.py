@@ -8,6 +8,11 @@ from y5n.runtime.runtime import Session
 
 
 class Runner:
+    """Per-session input runner.
+
+    Bridges incoming events to the dispatch or foreground flow,
+    routing runtime commands separately from user input.
+    """
 
     def __init__(
         self,

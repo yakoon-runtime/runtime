@@ -12,6 +12,12 @@ from .runner import Runner
 
 
 class RuntimeHost:
+    """Top-level runtime host.
+
+    Manages sessions, client connections, and the session lifecycle
+    (connect, disconnect, receive_input).  Wires sessions to the
+    Runner and Scheduler.
+    """
 
     def __init__(
         self,

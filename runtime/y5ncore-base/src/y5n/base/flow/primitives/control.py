@@ -11,6 +11,12 @@ if TYPE_CHECKING:
 
 
 class Control:
+    """Base class for controls.
+
+    Controls determine what happens next in a flow's lifecycle.
+    Subclasses implement is_runnable, on_enter, and on_wake.
+    """
+
     blocking = False
 
     def is_runnable(self, flow, session) -> bool:
@@ -30,12 +36,21 @@ class Control:
 
 
 class YieldToScheduler(Control):
+    """Yield control back to the scheduler.
+
+    The flow is ready to continue and will be picked up in the next cycle.
+    """
 
     async def on_enter(self, flow, scheduler, session):
         scheduler.schedule_flow(flow, session)
 
 
 class Stop(Control):
+    """Terminate the flow and remove it from the session.
+
+    This is the normal end-of-life for a flow (generator exhausted).
+    """
+
     blocking = True
 
     async def on_enter(self, flow, scheduler, session):
@@ -44,6 +59,11 @@ class Stop(Control):
 
 
 class Suspend(Control):
+    """Suspend the flow indefinitely.
+
+    The flow is blocked until resume() is called externally
+    (e.g. by the job manager).
+    """
 
     blocking = True
 
@@ -55,6 +75,12 @@ class Suspend(Control):
 
 
 class Continue(Control):
+    """Continue to the next command in the pipeline.
+
+    Used internally when a pipeline (cmd | cmd | cmd) advances
+    to the next stage.
+    """
+
     blocking = False
 
     def __init__(self, data):
@@ -82,6 +108,11 @@ class Continue(Control):
 
 
 class AwaitEvent(Control):
+    """Block the flow until an event arrives on the specified channel.
+
+    This is the primitive behind receive(). The scheduler checks
+    *scope* and *channel* for mail; if found, the flow continues.
+    """
 
     blocking = True
 
@@ -110,6 +141,12 @@ class AwaitEvent(Control):
 
 
 class Sleep(Control):
+    """Block the flow for a relative duration.
+
+    The scheduler places the flow on a sleep heap and wakes it
+    after *wake_at* (absolute timestamp).  Users call delay(seconds).
+    """
+
     blocking = True
 
     def __init__(self, wake_at: float):
@@ -138,6 +175,12 @@ class Sleep(Control):
 
 
 class SleepUntil(Control):
+    """Block the flow until an absolute timestamp.
+
+    Like Sleep but takes a fixed wall-clock time instead of a duration.
+    Users call delay_until(timestamp).
+    """
+
     blocking = True
 
     def __init__(self, timestamp: float):

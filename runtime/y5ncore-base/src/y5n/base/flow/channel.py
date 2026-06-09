@@ -8,6 +8,13 @@ if TYPE_CHECKING:
 
 
 class Scope(Enum):
+    """Defines event routing scopes.
+
+    FLOW — events are scoped to a single flow (flow.id + channel).
+    SESSION — events are visible to all flows in a session.
+    USER_INPUT — reserved for user input delivery to the foreground flow.
+    """
+
     FLOW = "flow"
     SESSION = "session"
     USER_INPUT = "user_input"

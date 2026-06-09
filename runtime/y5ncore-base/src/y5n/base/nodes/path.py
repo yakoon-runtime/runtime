@@ -5,6 +5,10 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class NodePath:
+    """Hierarchical node path (e.g. system/session/runtime).
+
+    Used for node resolution, navigation, and identity.
+    """
 
     parts: tuple[str, ...]
 

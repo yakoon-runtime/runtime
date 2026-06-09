@@ -16,6 +16,11 @@ from .types import FlowKind
 
 @dataclass
 class Flow:
+    """Runtime representation of an executing flow.
+
+    Carries the node, event, cursor, control state, and scheduling metadata
+    (wake_at, scheduled, pipeline, out_channel).
+    """
     id: str
 
     node: Node

@@ -12,6 +12,11 @@ from y5n.runtime.runtime import (
 
 
 class InvocationResolver:
+    """Resolve command strings to Node targets.
+
+    Traverses the node tree with scope-aware resolution, permission checks,
+    and argument matching against registered invocations.
+    """
 
     SUGGESTION_LIMIT = 1
 
