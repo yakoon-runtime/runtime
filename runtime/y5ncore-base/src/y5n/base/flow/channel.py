@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, assert_never
 
 if TYPE_CHECKING:
     from .protocol import Flow
@@ -22,4 +22,5 @@ def resolve(scope: Scope, channel: str, *, flow: Flow | None = None) -> str:
     elif scope == Scope.USER_INPUT:
         assert flow is not None, "USER_INPUT scope requires a flow"
         return f"{flow.id}:__user__"
-    raise ValueError(f"Unknown scope: {scope}")
+    else:
+        assert_never(scope)

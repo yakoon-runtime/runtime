@@ -82,13 +82,13 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 | ✅ L9 | `TaskRunner.start/_run` typisiert | `feefd65b` |
 | ✅ L10 | `delay_until` in `__all__` von `y5n.base.flow` | `feefd65b` |
 | ✅ L11 | `StartCommand`/`StartTask` validieren `channel` jetzt | `5a8a0d1e` |
-| L12 | Unreachable `raise` in `channel.py` (defensiv, okay) | `flow/channel.py:25` |
+| ✅ L12 | `raise` → `assert_never(scope)` als exhaustive guard | `(wartet auf Commit)` |
 
 ## Zusammenfassung
 
 - **0 HIGH** — alle 7 erledigt (H1/H2/H4/H5/H6/H7 gefixt, H3 kein Bug)
 - **12 MEDIUM** — alle gefixt
-- **9 LOW** gefixt — 2 offen (L3/L7/L12)
+- **10 LOW** gefixt — 1 offen (L3/L7)
 
 Die Core-Abstraktionen (Channel, Effect/Control, Scheduler) stehen gut.
 Der Review findet vor allem Export-Lücken, ungenutzten Code und fehlende
