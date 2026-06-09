@@ -17,7 +17,6 @@ from y5n.base.runtime import Event
 from y5n.base.transport import IO
 from y5n.runtime.capabilities.permission import PermissionSet
 from y5n.runtime.flow import Flow
-from y5n.runtime.runtime.trace import ExecutionTrace
 from y5nstore.event import GetResult
 
 
@@ -59,7 +58,6 @@ class SessionRuntime:
     marks: set[str] = field(default_factory=set)
     io: IO | None = None
     meta: dict[str, Any] = field(default_factory=dict)
-    execution: ExecutionTrace = field(default_factory=ExecutionTrace)
 
 
 class Session:
@@ -89,10 +87,6 @@ class Session:
     @property
     def debug(self) -> bool:
         return self.data.debug
-
-    @property
-    def execution(self) -> ExecutionTrace:
-        return self._runtime.execution
 
     @property
     def permissions(self) -> PermissionSet:
