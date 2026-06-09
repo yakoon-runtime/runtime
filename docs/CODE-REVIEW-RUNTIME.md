@@ -88,7 +88,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 
 - **0 HIGH** — alle 7 erledigt (H1/H2/H4/H5/H6/H7 gefixt, H3 kein Bug)
 - **12 MEDIUM** — alle gefixt
-- **10 LOW** gefixt — 1 später (L3)
+- **11 LOW** erledigt — 1 später (L3: O(n)-Scan, späterer Performance-Task)
 
 Die Core-Abstraktionen (Channel, Effect/Control, Scheduler) stehen gut.
 Der Review findet vor allem Export-Lücken, ungenutzten Code und fehlende
