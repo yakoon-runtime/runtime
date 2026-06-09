@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from y5n.base.flow.primitives import Control
 from y5n.base.runtime import Event
 
 if TYPE_CHECKING:
     from y5n.base.nodes import Node
+    from y5n.base.projection import Projection
 
 from .cursor import FlowCursor
 from .types import FlowKind
@@ -22,7 +23,7 @@ class Flow:
     cursor: FlowCursor
     tokens: list[str] | None = None
     control: Control | None = None
-    view: Any | None = None
+    view: Projection | None = None
 
     scheduled: bool = False
     wake_at: float | None = None

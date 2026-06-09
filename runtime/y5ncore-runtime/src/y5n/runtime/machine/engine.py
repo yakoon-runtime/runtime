@@ -69,17 +69,10 @@ class CommandEngine:
 
     async def dispatch(self, session: Session, event: Event) -> Flow | None:
 
-        # session.execution.reset()
-        # session.execution.step(ExecStep.EXECUTION_START)
         node: Node | None = None
         cmd, tokens, pipeline_commands = self.on_parse_input(event=event)
         if not cmd:
             return None
-
-        # session.execution.step(
-        #    ExecStep.COMMAND_RECEIVED,
-        #    command=request.raw,
-        # )
 
         # find node
         node, resolved_tokens = self.on_resolve_command(
@@ -91,21 +84,8 @@ class CommandEngine:
 
         tokens = resolved_tokens
 
-        # TODO: Wie wollen wir darauf später reagieren?
         if not node.has_run():
             return None
-
-        # session.execution.step(
-        #    ExecStep.COMMAND_RESOLVED,
-        #    command=command_type.key,
-        #    controller=resolved_controller.id,
-        # )
-
-        # session.execution.step(
-        #    ExecStep.COMMAND_PREPARED,
-        #    command=command_type.key,
-        #    controller=resolved_controller.id,
-        # )
 
         flow = Flow(
             id=uuid4().hex,
@@ -170,12 +150,12 @@ class CommandEngine:
                 return outcome
 
             # ----------------------------------
-            # 6. Kein Ergebnis → nächster Step später
+            # 6. No outcome → next step later
             # ----------------------------------
             return None
 
         except StopAsyncIteration as e:
-            # aktueller Generator ist fertig
+            # current generator is done
             cursor.pop()
 
             if not cursor.has_stack():

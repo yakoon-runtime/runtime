@@ -17,7 +17,7 @@ class InputParser:
         if not parts:
             return "", [], []
 
-        # HEAD vorbereiten (für dispatch!)
+        # Prepare HEAD (for dispatch!)
         head = parts[0]
         all_tokens = shlex.split(head)
 

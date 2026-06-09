@@ -105,7 +105,7 @@ class Scheduler:
             await self._wake_sleeping()
 
             # --------------------------------------------------
-            # Nichts zu tun → warten
+            # Nothing to do → wait
             # --------------------------------------------------
             if not self._ready_user and not self._ready_system:
                 if self._sleeping:
@@ -135,7 +135,7 @@ class Scheduler:
                     break
 
                 # ----------------------------------------------
-                # Flow holen (System priorisiert)
+                # Fetch next flow (system priority)
                 # ----------------------------------------------
                 session: Session
                 if self._ready_system:
@@ -163,7 +163,7 @@ class Scheduler:
                     continue
 
                 # ----------------------------------------------
-                # EXECUTE (mit per-flow Budget)
+                # EXECUTE (with per-flow budget)
                 # ----------------------------------------------
                 flow_steps = 0
                 flow_start = time.time()
@@ -177,15 +177,15 @@ class Scheduler:
                         steps += 1
 
                         # ----------------------------------
-                        # Outcome behandeln
+                        # Handle outcome
                         # ----------------------------------
                         if outcome:
                             await self._handle_outcome(session, flow, outcome)
                             self._refresh_resumed_flows(session)
-                            break  # Flow ist fertig / blockiert
+                            break  # Flow done / blocked
 
                         # ----------------------------------
-                        # Budget prüfen (Flow)
+                        # Check budget (flow)
                         # ----------------------------------
                         if flow_steps >= self.MAX_STEPS_PER_FLOW:
                             self.schedule_flow(flow, session)
@@ -201,7 +201,7 @@ class Scheduler:
                     await self._show_error(session, None, flow.node, error)
 
             # --------------------------------------------------
-            # Yield zurück an Event Loop
+            # Yield back to event loop
             # --------------------------------------------------
             if (
                 steps >= self.MAX_STEPS_PER_CYCLE
@@ -244,7 +244,7 @@ class Scheduler:
             if flow:
                 node = flow.node
 
-            # alle Flows der Session schedulen
+            # Schedule all flows of the session
             for flow in session.flows():
                 self.schedule_flow(flow, session)
 

@@ -1,6 +1,7 @@
 from .dsl import (
     background,
     delay,
+    delay_until,
     foreground,
     out,
     out_text,
@@ -20,6 +21,7 @@ __all__ = [
     "out_text",
     "send",
     "delay",
+    "delay_until",
     "receive",
     "suspend",
     "foreground",

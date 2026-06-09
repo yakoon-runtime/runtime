@@ -65,14 +65,14 @@ class Continue(Control):
         if not flow.pipeline:
             return
 
-        # 1. nächsten Command holen
+        # 1. Fetch next command
         next_cmd = flow.pipeline[0]
         remaining = flow.pipeline[1:]
 
-        # 2. Event für nächsten Command vorbereiten
+        # 2. Prepare event for next command
         event = Event(payload=next_cmd)
 
-        # 3. Flow weiter schedulen
+        # 3. Continue scheduling flow
         await scheduler.continue_flow(session, flow, event, remaining)
 
 

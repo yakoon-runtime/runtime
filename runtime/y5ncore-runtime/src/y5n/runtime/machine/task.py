@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping
 from typing import Protocol
 
 from y5n.base.flow.channel import Scope
@@ -16,10 +17,10 @@ class TaskRunner:
     def on_complete(self, on_complete: OnTaskCompleted):
         self._on_complete = on_complete
 
-    async def start(self, *, command, channel, kwargs, flow, session):
+    async def start(self, *, command: str, channel: str, kwargs: Mapping, flow: Flow, session: Session) -> None:
         asyncio.create_task(self._run(command, channel, kwargs, flow, session))
 
-    async def _run(self, command, channel, kwargs, flow, session):
+    async def _run(self, command: str, channel: str, kwargs: Mapping, flow: Flow, session: Session) -> None:
         try:
             args = kwargs.get("args", [])
             cwd = kwargs.get("cwd", None)

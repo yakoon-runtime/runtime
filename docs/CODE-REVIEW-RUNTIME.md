@@ -71,16 +71,16 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 
 | # | Problem | Datei:Zeile |
 |---|---------|-------------|
-| L1 | `Flow.view: Any | None` → `Projection | None` | `flow/flow.py:25` |
+| ✅ L1 | `Flow.view: Any | None` → `Projection | None` | `feefd65b` |
 | L2 | `Effect` Base-Class ist leer (i.O., notiert) | `primitives/effect.py:9` |
 | L3 | `_schedule_waiting` ist O(n)-Scan → Reverse-Lookup einführen | `machine/scheduler.py:292` |
-| L4 | Kommentierter Dead Code in engine.py (3 Blöcke) | `machine/engine.py:72-108` |
-| L5 | Deutsche + Englische Comments gemischt | mehrere Dateien |
+| ✅ L4 | Kommentierter Dead Code in engine.py (3 Blöcke) entfernt | `feefd65b` |
+| ✅ L5 | Deutsche Comments → Englisch (engine, scheduler, parser, control) | `feefd65b` |
 | L6 | `RuntimeHost.disconnect()` greift auf `runner._session` zu | `machine/host.py:77` |
 | L7 | `SessionBuilder._counter` nicht thread-safe | `machine/session.py:16` |
 | L8 | Hardcoded `None` für Context in Engine | `machine/engine.py:282` |
-| L9 | `TaskRunner.start/_run` komplett untypisiert | `machine/task.py:19-22` |
-| L10 | `delay_until` fehlt in `__all__` von `y5n.base.flow` | `flow/__init__.py` |
+| ✅ L9 | `TaskRunner.start/_run` typisiert | `feefd65b` |
+| ✅ L10 | `delay_until` in `__all__` von `y5n.base.flow` | `feefd65b` |
 | L11 | `StartCommand`/`StartTask` validieren `channel` nicht | `primitives/effect.py:39,46` |
 | L12 | Unreachable `raise` in `channel.py` (defensiv, okay) | `flow/channel.py:25` |
 
@@ -88,7 +88,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 
 - **0 HIGH** — alle 7 erledigt (H1/H2/H4/H5/H6/H7 gefixt, H3 kein Bug)
 - **12 MEDIUM** — alle gefixt
-- **13 LOW** — Hygiene, kleine Präzisionsprobleme
+- **5 LOW** gefixt — 6 offen (L3/L6/L7/L8/L11/L12; L2 ist nur Notiz)
 
 Die Core-Abstraktionen (Channel, Effect/Control, Scheduler) stehen gut.
 Der Review findet vor allem Export-Lücken, ungenutzten Code und fehlende
