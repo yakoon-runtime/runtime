@@ -1,6 +1,6 @@
 # Runtime Code Review — Juni 2026
 
-Stand: `6e093c6b` (alle High gefixt)
+Stand: `26978685` (alle High + Medium gefixt)
 
 ## HIGH — vor nächstem Feature fixen
 
@@ -59,10 +59,10 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 | ✅ M3 | `OnBootstrapPermissions` in `wire/machine.py` war tot | `387aa53a` |
 | ✅ M4 | `OnContinuePipeline` in `engine.py` war tot | `6e093c6b` |
 | ✅ M5 | `OnApplyPermissions` in `session.py` war tot | `6e093c6b` |
-| M6 | `create_projection` + `compile_view` exportiert aber nie konsumiert | `primitives/{builder,view}.py` |
-| ✅ M7 | `Outcome.__init__` hatte null Typannotationen | `(wartet auf Commit)` |
-| M8 | `TaskRunner._run()` behandelt `"sleep"` als magisches Built-in | `machine/task.py:24` |
-| ✅ M9 | `_ensure_step(run_fn)` war untypisiert | `(wartet auf Commit)` |
+| ✅ M6 | `create_projection` + `compile_view` waren ungenutzt, Dateien gelöscht | `26978685` |
+| ✅ M7 | `Outcome.__init__` hatte null Typannotationen | `26978685` |
+| ✅ M8 | `TaskRunner._run()` behandelte `"sleep"` als magisches Built-in → entfernt. Nutze `delay()`! | `26978685` |
+| ✅ M9 | `_ensure_step(run_fn)` war untypisiert | `26978685` |
 | ✅ M10 | `FlowCursor.next()` fehlt Return-Type | `387aa53a` |
 | ✅ M11 | `_handle_outcome(outcome)` untypisiert | `387aa53a` |
 | ✅ M12 | `_call_runtime(callback)` untypisiert | `387aa53a` |
@@ -87,7 +87,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 ## Zusammenfassung
 
 - **0 HIGH** — alle 7 erledigt (H1/H2/H4/H5/H6/H7 gefixt, H3 kein Bug)
-- **12 MEDIUM** — hauptsächlich Dead Code und fehlende Typannotationen
+- **12 MEDIUM** — alle gefixt
 - **13 LOW** — Hygiene, kleine Präzisionsprobleme
 
 Die Core-Abstraktionen (Channel, Effect/Control, Scheduler) stehen gut.

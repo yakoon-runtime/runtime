@@ -21,25 +21,21 @@ class TaskRunner:
 
     async def _run(self, command, channel, kwargs, flow, session):
         try:
-            if command == "sleep":
-                await asyncio.sleep(kwargs.get("seconds", 1))
-                result = {"returncode": 0, "stdout": "done", "stderr": ""}
-            else:
-                args = kwargs.get("args", [])
-                cwd = kwargs.get("cwd", None)
-                proc = await asyncio.create_subprocess_exec(
-                    command,
-                    *args,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    cwd=cwd,
-                )
-                stdout, stderr = await proc.communicate()
-                result = {
-                    "returncode": proc.returncode,
-                    "stdout": stdout.decode(errors="replace"),
-                    "stderr": stderr.decode(errors="replace"),
-                }
+            args = kwargs.get("args", [])
+            cwd = kwargs.get("cwd", None)
+            proc = await asyncio.create_subprocess_exec(
+                command,
+                *args,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=cwd,
+            )
+            stdout, stderr = await proc.communicate()
+            result = {
+                "returncode": proc.returncode,
+                "stdout": stdout.decode(errors="replace"),
+                "stderr": stderr.decode(errors="replace"),
+            }
 
             session.push_event(Scope.SESSION, channel, Event(payload=result))
             self._on_complete(flow=flow, session=session)

@@ -238,7 +238,7 @@ def start_task(command: str, *, channel: str, **kwargs) -> Outcome:
     channel (SESSION scope). The caller reads it with receive().
 
     Usage:
-        yield start_task("sleep", channel=ch, seconds=5)
+        yield start_task("python3", channel=ch, args=["-c", "print(42)"])
         result = yield receive(ch, scope=Scope.SESSION)
     """
     return Outcome(
