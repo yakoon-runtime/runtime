@@ -90,14 +90,14 @@ def build_machine(
         event = Event(payload=command)
         try:
             new_flow = await engine.dispatch(session=session, event=event)
+            if new_flow is None:
+                session.push_event(Scope.SESSION, channel, Event(payload=None))
+                return
+            new_flow.out_channel = channel
+            scheduler.schedule_flow(new_flow, session)
         except Exception:
             session.push_event(Scope.SESSION, channel, Event(payload=None))
             return
-        if new_flow is None:
-            session.push_event(Scope.SESSION, channel, Event(payload=None))
-            return
-        new_flow.out_channel = channel
-        scheduler.schedule_flow(new_flow, session)
 
     engine = CommandEngine(
         on_resolve_node=resolver.resolve,
@@ -126,6 +126,11 @@ def build_machine(
     # -------------------------
 
     task_runner.on_complete(scheduler.schedule_flow)
+
+    async def on_task_error(*, flow, session, error):
+        await on_error_resolve(node=flow.node, session=session, error=error)
+
+    task_runner.on_error(on_task_error)
 
     # ------------------------
     # --- SESSION HANDLING ---
