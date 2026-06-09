@@ -24,6 +24,7 @@ __all__ = [
     "suspend",
     "foreground",
     "background",
+    "start_cmd",
     "start_task",
     "view",
 ]
