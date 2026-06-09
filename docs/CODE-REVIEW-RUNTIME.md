@@ -82,7 +82,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 | ✅ L9 | `TaskRunner.start/_run` typisiert | `feefd65b` |
 | ✅ L10 | `delay_until` in `__all__` von `y5n.base.flow` | `feefd65b` |
 | ✅ L11 | `StartCommand`/`StartTask` validieren `channel` jetzt | `5a8a0d1e` |
-| ✅ L12 | `raise` → `assert_never(scope)` als exhaustive guard | `(wartet auf Commit)` |
+| ✅ L12 | `raise` → `assert_never(scope)` als exhaustive guard | `fab09952` |
 
 ## Zusammenfassung
 
