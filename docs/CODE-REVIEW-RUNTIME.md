@@ -1,17 +1,12 @@
 # Runtime Code Review — Juni 2026
 
-Stand: `e8357ac4` (start_cmd + start_task)
+Stand: `85eaa7e` (inkl. H1 + H6 gefixt)
 
 ## HIGH — vor nächstem Feature fixen
 
-### H1 — `start_cmd` fehlt in `__all__`
+### ✅ H1 — `start_cmd` fehlt in `__all__`
 
-**Datei:** `runtime/y5ncore-base/src/y5n/base/flow/__init__.py:16-28`
-
-`start_cmd` wird aus `dsl.py` importiert (Zeile 10) aber nicht in `__all__` gelistet.
-`from y5n.base.flow import *` droppt es. `y5n.api.dsl.__init__` exportiert es korrekt.
-
-**Fix:** `"start_cmd"` in `__all__` aufnehmen.
+**Gefixt in:** `85eaa7e`
 
 ---
 
@@ -82,25 +77,9 @@ den Call-Stack parametrisieren.
 
 ---
 
-### H6 — Inkonsistente Benennung `channel` vs `result_channel`
+### ✅ H6 — Inkonsistente Benennung `channel` vs `result_channel`
 
-| Ort | Name |
-|-----|------|
-| `StartTask.__init__` | `channel` |
-| `StartCommand.__init__` | `channel` |
-| `OnTaskStart` Protocol | `channel` |
-| `OnCommandStart` Protocol | `result_channel` |
-| `engine.py` `_apply_effects` (start_task) | `channel=effect.channel` |
-| `engine.py` `_apply_effects` (start_cmd) | `result_channel=effect.channel` |
-| `task.py` `TaskRunner.start` | `channel` |
-| `wire/machine.py` `on_start_command` | `result_channel` |
-| `dsl.py` `start_task()` | `result_channel` |
-| `dsl.py` `start_cmd()` | `result_channel` |
-
-Auf der DSL-Ebene ist es `result_channel` (gut). In den darunterliegenden Schichten
-wechselt es zwischen `channel` und `result_channel`.
-
-**Fix:** Standardisieren auf `result_channel` auf allen Ebenen.
+**Gefixt in:** `84fa0b7f` (auf `channel` vereinheitlicht)
 
 ---
 
@@ -155,7 +134,7 @@ if not isinstance(event.payload, str) or not event.payload.strip():
 
 ## Zusammenfassung
 
-- **7 HIGH** — davon 4 schnell fixbar (H1/H2/H6/H7), 3 brauchen Design-Entscheidung (H3/H4/H5)
+- **5 HIGH** (H1+H6 gefixt) — davon 2 schnell fixbar (H2/H7), 3 brauchen Design-Entscheidung (H3/H4/H5)
 - **12 MEDIUM** — hauptsächlich Dead Code und fehlende Typannotationen
 - **13 LOW** — Hygiene, kleine Präzisionsprobleme
 
