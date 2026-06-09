@@ -160,6 +160,10 @@ def receive(
     With a channel argument — waits on FLOW scope (flow-local channel).
     With explicit scope — uses the given scope.
 
+    receive() intentionally has no timeout. Waiting, cancellation,
+    and lifecycle management are handled by the job system,
+    not by the flow.
+
     Usage:
         receive()                    # USER_INPUT
         receive("form.result")       # FLOW
