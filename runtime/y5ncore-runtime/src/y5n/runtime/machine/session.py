@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from itertools import count
 from typing import Protocol
 
 from y5n.base.naming import Key
@@ -13,7 +14,7 @@ class SessionBuilder:
         on_get_session: OnGetSession,
     ):
         self.on_get_session = on_get_session
-        self._counter = 0
+        self._counter = count(1)
 
     async def create(self) -> Session:
         key = self._next_key()
@@ -23,12 +24,11 @@ class SessionBuilder:
         return session
 
     def _next_key(self) -> Key:
-        self._counter += 1
         return Key.from_parts(
             "system",
             "session",
             "runtime",
-            str(self._counter),
+            str(next(self._counter)),
         )
 
 
