@@ -1,16 +1,19 @@
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 
+from y5n.base.flow.channel import Scope, resolve
 from y5n.base.naming import Key
 from y5n.base.nodes.path import NodePath
 from y5n.base.projection import (
     ProjectionEvent,
     ProjectionState,
 )
+from y5n.base.runtime import Event
 from y5n.base.transport import IO
 from y5n.runtime.capabilities.permission import PermissionSet
 from y5n.runtime.flow import Flow
@@ -74,6 +77,7 @@ class Session:
         self._flows: dict[str, Flow] = {}
         self._foreground_flow_id: str | None = None
         self._runtime_flow_id: str | None = None
+        self._channels: dict[str, deque[Event]] = {}  # resolved channel key → queue
 
     # ========================================================
     # PUBLIC API
@@ -131,6 +135,8 @@ class Session:
     def del_flow(self, flow: Flow):
         if flow.id in self._flows:
             del self._flows[flow.id]
+        prefix = f"{flow.id}:"
+        self._channels = {k: v for k, v in self._channels.items() if not k.startswith(prefix)}
         if flow.id == self._foreground_flow_id:
             self.set_foreground_flow(None)
 
@@ -243,3 +249,44 @@ class Session:
                 node_path=self.data.node_path,
             ),
         )
+
+    # ========================================================
+    # CHANNELS
+    # ========================================================
+
+    def push_event(
+        self,
+        scope: Scope,
+        channel: str,
+        event: Event,
+        *,
+        flow: Flow | None = None,
+    ) -> None:
+        key = resolve(scope, channel, flow=flow)
+        if key not in self._channels:
+            self._channels[key] = deque()
+        self._channels[key].append(event)
+
+    def pop_event(
+        self,
+        scope: Scope,
+        channel: str,
+        *,
+        flow: Flow | None = None,
+    ) -> Event | None:
+        key = resolve(scope, channel, flow=flow)
+        q = self._channels.get(key)
+        if q:
+            return q.popleft()
+        return None
+
+    def has_mail(
+        self,
+        scope: Scope,
+        channel: str,
+        *,
+        flow: Flow | None = None,
+    ) -> bool:
+        key = resolve(scope, channel, flow=flow)
+        q = self._channels.get(key)
+        return bool(q)

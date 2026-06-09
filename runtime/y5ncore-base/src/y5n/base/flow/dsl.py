@@ -36,6 +36,7 @@ Patterns = Behavior
 Commands = Orchestration
 """
 
+from y5n.base.flow.channel import Scope
 from y5n.base.projection import Projection, to_text
 from y5n.base.runtime import Event
 
@@ -147,7 +148,7 @@ def prompt(projection: Projection) -> Outcome:
     )
 
 
-def receive(channel: str = "default") -> Outcome:
+def receive(channel: str = "default", scope: Scope = Scope.FLOW) -> Outcome:
     """
     Wait for the next input event.
 
@@ -155,15 +156,21 @@ def receive(channel: str = "default") -> Outcome:
     channel. Does not emit UI or modify state.
     """
 
-    return Outcome(control=AwaitEvent(channel))
+    if scope == Scope.USER_INPUT and channel != "__user__":
+        raise ValueError(
+            f"USER_INPUT scope requires channel='__user__', got {channel!r}"
+        )
+    return Outcome(control=AwaitEvent(channel, scope=scope))
 
 
-def send(channel: str, event: Event):
+def send(channel: str, event: Event, scope: Scope = Scope.FLOW):
     """
     Emit an event to a channel.
     """
+    if scope == Scope.USER_INPUT:
+        raise ValueError("USER_INPUT scope cannot be used with send()")
     return Outcome(
-        effects=[EmitEvent(channel, event)],
+        effects=[EmitEvent(channel, event, scope=scope)],
     )
 
 

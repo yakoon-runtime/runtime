@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
+from y5n.base.flow.channel import Scope
 from y5n.base.runtime import Event
 from y5n.runtime.runtime import Session
 
@@ -28,7 +29,7 @@ class Runner:
 
         flow = self._session.foreground_flow
         if flow:
-            flow.push_event(event)
+            self._session.push_event(Scope.FLOW, "default", event, flow=flow)
             self.on_schedule_flow(flow=flow, session=self._session)
             return
 

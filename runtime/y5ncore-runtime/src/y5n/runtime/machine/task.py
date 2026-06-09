@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 from typing import Protocol
 
+from y5n.base.flow.channel import Scope
 from y5n.base.runtime import Event
 from y5n.runtime.flow import Flow
 from y5n.runtime.runtime import Session
@@ -44,12 +45,12 @@ class TaskRunner:
                 }
 
             event = Event(payload=result)
-            flow.push_event(event, channel=task.channel)
+            session.push_event(Scope.FLOW, task.channel, event, flow=flow)
             self._on_complete(flow=flow, session=session)
 
         except Exception as e:
             event = Event(payload={"error": str(e)})
-            flow.push_event(event, channel=task.channel)
+            session.push_event(Scope.FLOW, task.channel, event, flow=flow)
             self._on_complete(flow=flow, session=session)
 
 

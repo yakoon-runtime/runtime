@@ -3,16 +3,17 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
+from y5n.base.flow.channel import Scope
 from y5n.base.runtime import Event
 
 if TYPE_CHECKING:
-    pass
+    from y5n.runtime.flow import Flow
 
 
 class Control:
     blocking = False
 
-    def is_runnable(self, flow) -> bool:
+    def is_runnable(self, flow, session) -> bool:
         return True
 
     async def on_enter(self, flow, scheduler, session):
@@ -46,7 +47,7 @@ class Suspend(Control):
 
     blocking = True
 
-    def is_runnable(self, flow):
+    def is_runnable(self, flow, session):
         return False
 
     async def resume(self, flow, session):
@@ -84,31 +85,22 @@ class AwaitEvent(Control):
 
     blocking = True
 
-    def __init__(self, channel: str = "default"):
+    def __init__(self, channel: str = "default", scope: Scope = Scope.FLOW):
+        if scope == Scope.USER_INPUT and channel != "__user__":
+            raise ValueError(
+                f"USER_INPUT scope requires channel='__user__', got {channel!r}"
+            )
         self.channel = channel
+        self.scope = scope
 
     def label(self, flow):
         return "wait"
 
-    def is_runnable(self, flow):
-        return flow.has_mail(self.channel)
+    def is_runnable(self, flow: Flow, session) -> bool:
+        return session.has_mail(self.scope, self.channel, flow=flow)
 
     async def on_enter(self, flow, scheduler, session):
-        # IMPORTANT:
-        # If an event is already present, we must explicitly reschedule the flow.
-        #
-        # This is required for intra-tick scenarios like:
-        #   yield send(...)
-        #   data = yield receive(...)
-        #
-        # In this case, no external scheduler trigger exists.
-        # Without this reschedule, the flow would remain blocked
-        # even though the event is already available.
-        #
-        # Note:
-        # This does NOT violate the "one step per tick" rule.
-        # It only ensures the next tick is scheduled.
-        if flow.has_mail(self.channel):
+        if session.has_mail(self.scope, self.channel, flow=flow):
             scheduler.schedule_flow(flow, session)
 
 
@@ -123,7 +115,7 @@ class Sleep(Control):
     def __init__(self, wake_at: float):
         self.wake_at = wake_at
 
-    def is_runnable(self, flow):
+    def is_runnable(self, flow, session):
         return False
 
     async def on_enter(self, flow, scheduler, session):
@@ -151,7 +143,7 @@ class SleepUntil(Control):
     def __init__(self, timestamp: float):
         self.timestamp = timestamp
 
-    def is_runnable(self, flow):
+    def is_runnable(self, flow, session):
         return False
 
     async def on_enter(self, flow, scheduler, session):

@@ -229,7 +229,7 @@ class CommandEngine:
                 session.set_foreground_flow(None)
 
             elif isinstance(effect, EmitEvent):
-                flow.inbox[effect.channel].append(effect.event)
+                session.push_event(effect.scope, effect.channel, effect.event, flow=flow)
 
             elif isinstance(effect, StartTask):
                 self.on_start_task(
@@ -252,8 +252,9 @@ class CommandEngine:
         if isinstance(flow.control, AwaitEvent):
 
             channel = flow.control.channel
+            scope = flow.control.scope
 
-            next_event = flow.pop_event(channel)
+            next_event = session.pop_event(scope, channel, flow=flow)
             if next_event is None:
                 return None
 

@@ -152,7 +152,7 @@ class Scheduler:
                 # ----------------------------------------------
                 # BLOCKED: AwaitEvent
                 # ----------------------------------------------
-                if control and not control.is_runnable(flow):
+                if control and not control.is_runnable(flow, session):
                     continue
 
                 # ----------------------------------------------
