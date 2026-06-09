@@ -116,7 +116,7 @@ class CommandEngine:
             if isinstance(item, Event):
                 try:
                     item = await cursor.send(item)
-                except StopAsyncIteration as e:
+                except StopAsyncIteration:
                     cursor.pop()
                     if not cursor.has_stack():
                         return Outcome(control=Stop())
@@ -154,7 +154,7 @@ class CommandEngine:
             # ----------------------------------
             return None
 
-        except StopAsyncIteration as e:
+        except StopAsyncIteration:
             # current generator is done
             cursor.pop()
 
@@ -324,4 +324,3 @@ class OnProjection(Protocol):
         mode: str = "replace",
         view_params: dict | None = None,
     ) -> None: ...
-

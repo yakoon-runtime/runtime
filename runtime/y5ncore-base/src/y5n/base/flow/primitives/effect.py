@@ -37,6 +37,8 @@ class Background(Effect):
 
 class StartTask(Effect):
     def __init__(self, command: str, channel: str, **kwargs):
+        if not channel:
+            raise ValueError("channel must be a non-empty string")
         self.command = command
         self.channel = channel
         self.kwargs = kwargs
@@ -44,5 +46,7 @@ class StartTask(Effect):
 
 class StartCommand(Effect):
     def __init__(self, command: str, channel: str):
+        if not channel:
+            raise ValueError("channel must be a non-empty string")
         self.command = command
         self.channel = channel
