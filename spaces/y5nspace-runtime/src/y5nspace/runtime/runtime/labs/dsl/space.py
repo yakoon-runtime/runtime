@@ -1,5 +1,7 @@
 from y5n.api.nodes import Node
+from y5n.base.nodes.types import NodeScope
 
+from .cmd import run as cmd
 from .delay import run as delay
 from .out import run as out
 from .prompt import run as prompt
@@ -29,8 +31,25 @@ dsl.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
+        scope=NodeScope.GLOBAL,
     )
 )
+
+# ----------------------------------
+# CMD
+# ----------------------------------
+
+dsl.add(
+    Node(
+        key="cmd",
+        run=cmd,
+        anonymous=True,
+        resolvable=True,
+        scope=NodeScope.GLOBAL,
+        navigable=False,
+    )
+)
+
 
 # ----------------------------------
 # DELAY

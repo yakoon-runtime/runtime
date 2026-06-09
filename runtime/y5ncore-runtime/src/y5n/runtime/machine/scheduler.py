@@ -7,7 +7,13 @@ from collections import deque
 from typing import Protocol
 from uuid import uuid4
 
-from y5n.base.flow.primitives import Control, Outcome, YieldToScheduler
+from y5n.base.flow.primitives import (
+    AwaitEvent,
+    Control,
+    Outcome,
+    Stop,
+    YieldToScheduler,
+)
 from y5n.base.nodes import Node
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event, InputContext
@@ -272,9 +278,22 @@ class Scheduler:
 
         if isinstance(control, Control):
             await control.on_enter(flow, self, session)
+
+            # ----------------------------------
+            # 3. Parent wecken (Projection liegt
+            #    bereits im Channel)
+            # ----------------------------------
+            if isinstance(control, Stop) and flow.out_channel:
+                self._schedule_waiting(session, flow.out_channel)
             return
 
         raise RuntimeError(f"Unhandled control: {type(control)}")
+
+    def _schedule_waiting(self, session: Session, channel: str):
+        for f in session.flows():
+            ctrl = f.control
+            if isinstance(ctrl, AwaitEvent) and ctrl.channel == channel:
+                self.schedule_flow(f, session)
 
     async def _show_error(self, session, ctx, node, error):
 

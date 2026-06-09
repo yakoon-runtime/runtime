@@ -16,6 +16,7 @@ from .effect import (
     EmitView,
     Foreground,
     Mode,
+    StartCommand,
     StartTask,
     TaskHandle,
 )
@@ -42,6 +43,7 @@ __all__ = [
     "Effect",
     "EmitEvent",
     "EmitView",
+    "StartCommand",
     "StartTask",
     "TaskHandle",
     "Foreground",

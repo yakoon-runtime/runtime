@@ -29,6 +29,7 @@ class Flow:
     kind: FlowKind = FlowKind.USER
 
     pipeline: list[str] | None = None
+    out_channel: str | None = None
 
     def has_stack(self):
         return bool(self.cursor._stack)

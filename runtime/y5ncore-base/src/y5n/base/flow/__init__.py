@@ -8,6 +8,7 @@ from .dsl import (
     receive,
     run_task,
     send,
+    start_cmd,
     suspend,
     view,
 )

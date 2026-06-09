@@ -5,15 +5,16 @@ from collections.abc import Sequence
 from typing import Protocol
 from uuid import uuid4
 
+from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import (
     AwaitEvent,
     Background,
-    Continue,
     Effect,
     EmitEvent,
     EmitView,
     Foreground,
     Outcome,
+    StartCommand,
     StartTask,
     Stop,
 )
@@ -37,11 +38,13 @@ class CommandEngine:
         on_parse_input: OnParseInput,
         on_projection: OnProjection,
         on_start_task: OnTaskStart,
+        on_start_command: OnCommandStart,
     ):
         self.on_resolve_command = on_resolve_node
         self.on_parse_input = on_parse_input
         self.on_projection = on_projection
         self.on_start_task = on_start_task
+        self.on_start_command = on_start_command
 
     # ----------------------------------------------------
     # PUBLIC API
@@ -157,17 +160,6 @@ class CommandEngine:
                 outcome = await item.run(flow)
 
             # ----------------------------------
-            # 3.1 OUTCOME value
-            # ----------------------------------
-            if outcome.value is not None:
-                if flow.pipeline:
-                    outcome.control = Continue(outcome.value)
-                else:
-                    if not outcome.effects:
-                        outcome.effects = [EmitView(outcome.value)]
-                        pass
-
-            # ----------------------------------
             # 4. EFFECTS
             # ----------------------------------
             if outcome.effects:
@@ -207,19 +199,26 @@ class CommandEngine:
         for effect in effects:
 
             if isinstance(effect, EmitView):
-                if effect.persist:
-                    flow.view = effect.view
+                if flow.out_channel:
+                    session.push_event(
+                        Scope.SESSION,
+                        flow.out_channel,
+                        Event(payload=effect.view),
+                    )
+                else:
+                    if effect.persist:
+                        flow.view = effect.view
 
-                job_id = f"{flow.id}:{effect.space}" if effect.space else flow.id
+                    job_id = f"{flow.id}:{effect.space}" if effect.space else flow.id
 
-                await self.on_projection(
-                    session=session,
-                    projection=effect.view,
-                    ctx=flow.event.context,
-                    job_id=job_id,
-                    mode=effect.mode,
-                    view_params=effect.view_params,
-                )
+                    await self.on_projection(
+                        session=session,
+                        projection=effect.view,
+                        ctx=flow.event.context,
+                        job_id=job_id,
+                        mode=effect.mode,
+                        view_params=effect.view_params,
+                    )
 
             elif isinstance(effect, Foreground):
                 flow_id = effect.flow_id or flow.id
@@ -229,11 +228,21 @@ class CommandEngine:
                 session.set_foreground_flow(None)
 
             elif isinstance(effect, EmitEvent):
-                session.push_event(effect.scope, effect.channel, effect.event, flow=flow)
+                session.push_event(
+                    effect.scope, effect.channel, effect.event, flow=flow
+                )
 
             elif isinstance(effect, StartTask):
                 self.on_start_task(
                     task=effect.handle,
+                    flow=flow,
+                    session=session,
+                )
+
+            elif isinstance(effect, StartCommand):
+                await self.on_start_command(
+                    command=effect.command,
+                    result_channel=effect.channel,
                     flow=flow,
                     session=session,
                 )
@@ -294,6 +303,17 @@ class OnTaskStart(Protocol):
         self,
         *,
         task,
+        flow: Flow,
+        session: Session,
+    ) -> None: ...
+
+
+class OnCommandStart(Protocol):
+    async def __call__(
+        self,
+        *,
+        command: str,
+        result_channel: str,
         flow: Flow,
         session: Session,
     ) -> None: ...

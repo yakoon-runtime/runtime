@@ -8,6 +8,7 @@ from y5n.base.flow import (
     receive,
     run_task,
     send,
+    start_cmd,
     suspend,
     view,
 )
@@ -25,5 +26,6 @@ __all__ = [
     "background",
     "prompt",
     "run_task",
+    "start_cmd",
     "view",
 ]

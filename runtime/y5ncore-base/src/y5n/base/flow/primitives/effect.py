@@ -52,3 +52,9 @@ class TaskHandle:
 class StartTask(Effect):
     def __init__(self, handle: TaskHandle):
         self.handle = handle
+
+
+class StartCommand(Effect):
+    def __init__(self, command: str, channel: str):
+        self.command = command
+        self.channel = channel

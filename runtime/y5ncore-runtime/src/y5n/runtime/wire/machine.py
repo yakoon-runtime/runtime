@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
+from y5n.base.flow.channel import Scope
 from y5n.base.naming import Key
 from y5n.base.nodes import Node
 from y5n.base.plugins.ports import OnErrorResolve
 from y5n.base.projection import Projection
-from y5n.base.runtime import InputContext
+from y5n.base.runtime import Event, InputContext
 from y5n.runtime.machine import (
     CommandEngine,
     InputParser,
@@ -79,11 +80,31 @@ def build_machine(
     # --- ENGINE  ----
     # ----------------
 
+    async def on_start_command(
+        *,
+        command: str,
+        result_channel: str,
+        flow,
+        session,
+    ):
+        event = Event(payload=command)
+        try:
+            new_flow = await engine.dispatch(session=session, event=event)
+        except Exception:
+            session.push_event(Scope.SESSION, result_channel, Event(payload=None))
+            return
+        if new_flow is None:
+            session.push_event(Scope.SESSION, result_channel, Event(payload=None))
+            return
+        new_flow.out_channel = result_channel
+        scheduler.schedule_flow(new_flow, session)
+
     engine = CommandEngine(
         on_resolve_node=resolver.resolve,
         on_parse_input=parser.parse,
         on_projection=on_projection_send,
         on_start_task=task_runner.start,
+        on_start_command=on_start_command,
     )
 
     # -----------------

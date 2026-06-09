@@ -50,6 +50,7 @@ from .primitives import (
     Outcome,
     Sleep,
     SleepUntil,
+    StartCommand,
     Suspend,
     TaskHandle,
 )
@@ -242,3 +243,22 @@ def run_task(command: str, **kwargs) -> TaskHandle:
         result = yield receive(task.channel)
     """
     return TaskHandle(command=command, **kwargs)
+
+
+def start_cmd(command: str, *, result_channel: str) -> Outcome:
+    """
+    Start a runtime command as a sub-flow.
+
+    The sub-flow's projection output is redirected to the result_channel
+    (SESSION scope). The caller can read results with receive().
+
+    Usage:
+        cmd_ch = f"cmd:{uuid4().hex}"
+        yield start_cmd("ls", result_channel=cmd_ch)
+        result = yield receive(cmd_ch, scope=Scope.SESSION)
+    """
+    return Outcome(
+        effects=[
+            StartCommand(command, result_channel),
+        ]
+    )
