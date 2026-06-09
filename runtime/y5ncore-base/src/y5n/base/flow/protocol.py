@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from y5n.base.flow.primitives import Control
@@ -11,3 +11,8 @@ class Flow(Protocol):
     id: str
     node: Node
     control: Control | None
+    scheduled: bool
+    pipeline: list[str] | None
+    out_channel: str | None
+    view: Any | None
+    kind: Any

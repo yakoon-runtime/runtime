@@ -28,18 +28,9 @@ oder `suspend()` als Feature entfernen, bis es gebraucht wird.
 
 ---
 
-### H4 — Layer-Verletzung: `y5ncore-base` importiert aus `runtime`
+### ✅ H4 — Layer-Verletzung: `y5ncore-base` importierte `Flow` aus `runtime`
 
-**Dateien:**
-- `runtime/y5ncore-base/src/y5n/base/flow/channel.py:7`
-- `runtime/y5ncore-base/src/y5n/base/flow/primitives/control.py:10`
-
-Beide importieren `from y5n.runtime.flow import Flow` (TYPE_CHECKING-geguard).
-
-Es existiert bereits ein `Flow`-Protocol in `y5n.base.flow.protocol.py`, das nie verwendet wird.
-
-**Fix:** Für TYPE_CHECKING-Kontexte das Protocol aus `y5n.base.flow.protocol` nutzen
-statt des konkreten `Flow` aus dem Runtime-Package.
+**Gefixt in:** `a083a45`
 
 ---
 
