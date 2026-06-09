@@ -78,7 +78,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 | ✅ L5 | Deutsche Comments → Englisch (engine, scheduler, parser, control) | `feefd65b` |
 | ✅ L6 | `RuntimeHost.disconnect()` greift auf `runner._session` zu → `runner.session` Property | `4a16d5ce` |
 | L7 | `SessionBuilder._counter` nicht thread-safe | `machine/session.py:16` |
-| L8 | Hardcoded `None` für Context in Engine | `machine/engine.py:282` |
+| ✅ L8 | Hardcoded `None` für Context — `None` ist korrekt für system-setup | `(kein Fix nötig)` |
 | ✅ L9 | `TaskRunner.start/_run` typisiert | `feefd65b` |
 | ✅ L10 | `delay_until` in `__all__` von `y5n.base.flow` | `feefd65b` |
 | L11 | `StartCommand`/`StartTask` validieren `channel` nicht | `primitives/effect.py:39,46` |
@@ -88,7 +88,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 
 - **0 HIGH** — alle 7 erledigt (H1/H2/H4/H5/H6/H7 gefixt, H3 kein Bug)
 - **12 MEDIUM** — alle gefixt
-- **7 LOW** gefixt — 4 offen (L3/L7/L8/L11/L12)
+- **8 LOW** gefixt — 3 offen (L3/L7/L11/L12)
 
 Die Core-Abstraktionen (Channel, Effect/Control, Scheduler) stehen gut.
 Der Review findet vor allem Export-Lücken, ungenutzten Code und fehlende
