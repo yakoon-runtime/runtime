@@ -77,7 +77,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 | ✅ L4 | Kommentierter Dead Code in engine.py (3 Blöcke) entfernt | `feefd65b` |
 | ✅ L5 | Deutsche Comments → Englisch (engine, scheduler, parser, control) | `feefd65b` |
 | ✅ L6 | `RuntimeHost.disconnect()` greift auf `runner._session` zu → `runner.session` Property | `4a16d5ce` |
-| L7 | `SessionBuilder._counter` nicht thread-safe | `machine/session.py:16` |
+| ✅ L7 | `SessionBuilder._counter` nicht thread-safe → `itertools.count()` | `c6f17a98` |
 | ✅ L8 | Hardcoded `None` für Context — `None` ist korrekt für system-setup | `(kein Fix nötig)` |
 | ✅ L9 | `TaskRunner.start/_run` typisiert | `feefd65b` |
 | ✅ L10 | `delay_until` in `__all__` von `y5n.base.flow` | `feefd65b` |
