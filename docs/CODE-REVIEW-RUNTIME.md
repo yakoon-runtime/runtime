@@ -1,6 +1,6 @@
 # Runtime Code Review — Juni 2026
 
-Stand: `85eaa7e` (inkl. H1 + H6 gefixt)
+Stand: `6e093c6b` (alle High gefixt)
 
 ## HIGH — vor nächstem Feature fixen
 
@@ -32,19 +32,9 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 
 ---
 
-### H5 — `session._runtime_flow_id` mit `# type: ignore`
+### ✅ H5 — `session._runtime_flow_id` mit `# type: ignore`
 
-**Datei:** `runtime/y5ncore-runtime/src/y5n/runtime/machine/engine.py:129,189`
-
-```python
-session._runtime_flow_id = flow.id  # type: ignore
-```
-
-Engine greift in privates Attribut von Session und ignoriert den Typechecker.
-Entweder öffentliche Methode auf Session oder Flow-ID explizit durchreichen.
-
-**Fix:** `session` um `set_runtime_flow_id(flow_id)` ergänzen oder die ID über
-den Call-Stack parametrisieren.
+**Gefixt in:** `7cab5444` (entfernt — war toter Code)
 
 ---
 
@@ -56,16 +46,7 @@ den Call-Stack parametrisieren.
 
 ### ✅ H7 — `InputParser.parse()` validiert Payload nicht
 
-**Datei:** `runtime/y5ncore-runtime/src/y5n/runtime/machine/parser.py:10-27`
-
-`parse()` erhält `event.payload` ohne Typ- oder Leer-Check. Bei `None`, Integer
-oder Leerstring crasht `shlex.split()` downstream.
-
-**Fix:**
-```python
-if not isinstance(event.payload, str) or not event.payload.strip():
-    return "", [], []
-```
+**Gefixt in:** `95ea4800`
 
 ---
 
@@ -74,14 +55,14 @@ if not isinstance(event.payload, str) or not event.payload.strip():
 | # | Problem | Datei:Zeile |
 |---|---------|-------------|
 | ✅ M1 | `Flow.has_stack()` greift auf `cursor._stack` zu statt `cursor.has_stack()` zu delegieren | `a847caac` |
-| ✅ M2 | `RuntimeHost._runner_key()` ist tot (definiert, nie aufgerufen) | `(wartet auf Commit)` |
-| ✅ M3 | `OnBootstrapPermissions` in `wire/machine.py` nirgends referenziert | `387aa53a` |
-| ✅ M4 | `OnContinuePipeline` in `engine.py` tot | `(wartet auf Commit)` |
-| ✅ M5 | `OnApplyPermissions` in `session.py` tot | `(wartet auf Commit)` |
+| ✅ M2 | `RuntimeHost._runner_key()` war tot (definiert, nie aufgerufen) | `6e093c6b` |
+| ✅ M3 | `OnBootstrapPermissions` in `wire/machine.py` war tot | `387aa53a` |
+| ✅ M4 | `OnContinuePipeline` in `engine.py` war tot | `6e093c6b` |
+| ✅ M5 | `OnApplyPermissions` in `session.py` war tot | `6e093c6b` |
 | M6 | `create_projection` + `compile_view` exportiert aber nie konsumiert | `primitives/{builder,view}.py` |
-| M7 | `Outcome.__init__` hat null Typannotationen | `primitives/outcome.py:5-6` |
+| ✅ M7 | `Outcome.__init__` hatte null Typannotationen | `(wartet auf Commit)` |
 | M8 | `TaskRunner._run()` behandelt `"sleep"` als magisches Built-in | `machine/task.py:24` |
-| M9 | `_ensure_step(run_fn)` untypisiert | `flow/cursor.py:57` |
+| ✅ M9 | `_ensure_step(run_fn)` war untypisiert | `(wartet auf Commit)` |
 | ✅ M10 | `FlowCursor.next()` fehlt Return-Type | `387aa53a` |
 | ✅ M11 | `_handle_outcome(outcome)` untypisiert | `387aa53a` |
 | ✅ M12 | `_call_runtime(callback)` untypisiert | `387aa53a` |
@@ -105,7 +86,7 @@ if not isinstance(event.payload, str) or not event.payload.strip():
 
 ## Zusammenfassung
 
-- **2 HIGH** (H1+H2+H4+H6 gefixt, H3 kein Bug) — 1 schnell fixbar (H7), 1 offen (H5)
+- **0 HIGH** — alle 7 erledigt (H1/H2/H4/H5/H6/H7 gefixt, H3 kein Bug)
 - **12 MEDIUM** — hauptsächlich Dead Code und fehlende Typannotationen
 - **13 LOW** — Hygiene, kleine Präzisionsprobleme
 

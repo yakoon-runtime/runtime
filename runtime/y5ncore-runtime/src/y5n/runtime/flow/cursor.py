@@ -5,6 +5,7 @@ from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Literal
 
 from y5n.base.flow.primitives import Outcome
+from y5n.base.nodes.handler import RunHandler
 
 if TYPE_CHECKING:
     from y5n.base.nodes import Node, NodeSpace
@@ -60,7 +61,7 @@ class FlowCursor:
         return self._stack[-1]
 
 
-def _ensure_step(run_fn):
+def _ensure_step(run_fn: RunHandler):
 
     def factory(ctx):
 
