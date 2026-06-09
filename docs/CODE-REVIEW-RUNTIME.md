@@ -30,7 +30,7 @@ oder `suspend()` als Feature entfernen, bis es gebraucht wird.
 
 ### ✅ H4 — Layer-Verletzung: `y5ncore-base` importierte `Flow` aus `runtime`
 
-**Gefixt in:** `709264d4`
+**Gefixt in:** `(wartet auf Commit)`
 
 ---
 

@@ -7,7 +7,7 @@ from y5n.base.flow.channel import Scope
 from y5n.base.runtime import Event
 
 if TYPE_CHECKING:
-    from y5n.base.flow.protocol import Flow
+    from ..protocol import Flow
 
 
 class Control:

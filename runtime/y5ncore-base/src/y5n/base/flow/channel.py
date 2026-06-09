@@ -4,7 +4,7 @@ from enum import Enum
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from y5n.base.flow.protocol import Flow
+    from .protocol import Flow
 
 
 class Scope(Enum):
