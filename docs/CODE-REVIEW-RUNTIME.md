@@ -10,27 +10,9 @@ Stand: `85eaa7e` (inkl. H1 + H6 gefixt)
 
 ---
 
-### H2 — `getattr` in `FlowCursor.next()`
+### ✅ H2 — `getattr` in `FlowCursor.next()`
 
-**Datei:** `runtime/y5ncore-runtime/src/y5n/runtime/flow/cursor.py:29`
-
-```python
-handler = getattr(node, self.handler_name)
-```
-
-Gibt jeden beliebigen Attributnamen weiter (`__class__`, `__init__`, ...).
-`handler_name` ist als `Literal["run", "setup"]` typisiert, aber nicht runtime-geprüft.
-
-**Fix:** Explizites Dispatch via `if/elif`:
-
-```python
-if self.handler_name == "run":
-    handler = node.run
-elif self.handler_name == "setup":
-    handler = node.setup
-else:
-    raise ValueError(f"Ungültiger Handler: {self.handler_name}")
-```
+**Gefixt in:** `a847caac`
 
 ---
 
@@ -102,7 +84,7 @@ if not isinstance(event.payload, str) or not event.payload.strip():
 
 | # | Problem | Datei:Zeile |
 |---|---------|-------------|
-| M1 | `Flow.has_stack()` greift auf `cursor._stack` zu statt `cursor.has_stack()` zu delegieren | `flow/flow.py:35` |
+| ✅ M1 | `Flow.has_stack()` greift auf `cursor._stack` zu statt `cursor.has_stack()` zu delegieren | `a847caac` |
 | M2 | `RuntimeHost._runner_key()` ist tot (definiert, nie aufgerufen) | `machine/host.py:92` |
 | M3 | `OnBootstrapPermissions` in `wire/machine.py` nirgends referenziert | `wire/machine.py:206` |
 | M4 | `OnContinuePipeline` in `engine.py` tot | `machine/engine.py:354` |
@@ -134,7 +116,7 @@ if not isinstance(event.payload, str) or not event.payload.strip():
 
 ## Zusammenfassung
 
-- **5 HIGH** (H1+H6 gefixt) — davon 2 schnell fixbar (H2/H7), 3 brauchen Design-Entscheidung (H3/H4/H5)
+- **4 HIGH** (H1+H2+H6 gefixt) — 1 schnell fixbar (H7), 3 brauchen Design-Entscheidung (H3/H4/H5)
 - **12 MEDIUM** — hauptsächlich Dead Code und fehlende Typannotationen
 - **13 LOW** — Hygiene, kleine Präzisionsprobleme
 
