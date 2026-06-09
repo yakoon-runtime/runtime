@@ -16,7 +16,7 @@ Stand: `85eaa7e` (inkl. H1 + H6 gefixt)
 
 ---
 
-### H3 — `Suspend` hängt für immer
+### ✅ H3 — `Suspend` hängt für immer
 
 **Kein Bug.** `Suspend` ist ein Protokoll für das Job-System (analog zu Ctrl+Z / `bg` / `fg`).
 Der Flow blockiert, bis der Job-Manager über `jobs.py` `resume()` aufruft.
@@ -54,7 +54,7 @@ den Call-Stack parametrisieren.
 
 ---
 
-### H7 — `InputParser.parse()` validiert Payload nicht
+### ✅ H7 — `InputParser.parse()` validiert Payload nicht
 
 **Datei:** `runtime/y5ncore-runtime/src/y5n/runtime/machine/parser.py:10-27`
 

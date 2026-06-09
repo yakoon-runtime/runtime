@@ -126,8 +126,6 @@ class CommandEngine:
         cursor = flow.cursor
 
         try:
-            session._runtime_flow_id = flow.id  # type: ignore
-
             # ----------------------------------
             # 21. NORMAL STEP
             # ----------------------------------
@@ -138,7 +136,7 @@ class CommandEngine:
             if isinstance(item, Event):
                 try:
                     item = await cursor.send(item)
-                except StopAsyncIteration:
+                except StopAsyncIteration as e:
                     cursor.pop()
                     if not cursor.has_stack():
                         return Outcome(control=Stop())
@@ -176,7 +174,7 @@ class CommandEngine:
             # ----------------------------------
             return None
 
-        except StopAsyncIteration:
+        except StopAsyncIteration as e:
             # aktueller Generator ist fertig
             cursor.pop()
 
@@ -184,9 +182,6 @@ class CommandEngine:
                 return Outcome(control=Stop())
 
             return None
-
-        finally:
-            session._runtime_flow_id = None  # type: ignore
 
     # ----------------------------------------------------
     # INTERNAL

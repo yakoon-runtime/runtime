@@ -76,7 +76,6 @@ class Session:
         self._runtime = SessionRuntime()
         self._flows: dict[str, Flow] = {}
         self._foreground_flow_id: str | None = None
-        self._runtime_flow_id: str | None = None
         self._channels: dict[str, deque[Event]] = {}  # resolved channel key → queue
 
     # ========================================================
