@@ -74,7 +74,7 @@ class RuntimeHost:
             return
 
         # real session is death
-        session = runner._session
+        session = runner.session
 
         # self.engine.cleanup_session(session)
         self._sessions.pop(session.key, None)

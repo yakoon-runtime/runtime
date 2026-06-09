@@ -21,6 +21,10 @@ class Runner:
         self.on_dispatch = on_dispatch
         self.on_schedule_flow = on_schedule_flow
 
+    @property
+    def session(self) -> Session:
+        return self._session
+
     async def on_input(self, event: Event):
 
         if event.payload in self._runtime_commands:
