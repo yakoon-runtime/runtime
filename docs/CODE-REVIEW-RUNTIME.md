@@ -1,6 +1,6 @@
 # Runtime Code Review — Juni 2026
 
-Stand: `4a16d5ce` (alle High+Medium + 7 Low gefixt)
+Stand: `c6f17a98` (alle High+Medium + 10 Low gefixt, 1 Low später)
 
 ## HIGH — vor nächstem Feature fixen
 
@@ -73,7 +73,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 |---|---------|-------------|
 | ✅ L1 | `Flow.view: Any | None` → `Projection | None` | `feefd65b` |
 | ✅ L2 | `Effect` Base-Class ist leer (i.O., notiert) | `96ed4213` |
-| L3 | `_schedule_waiting` ist O(n)-Scan → Reverse-Lookup einführen | `machine/scheduler.py:292` |
+| L3 | `_schedule_waiting` ist O(n)-Scan — späterer Performance-Task | `machine/scheduler.py:292` |
 | ✅ L4 | Kommentierter Dead Code in engine.py (3 Blöcke) entfernt | `feefd65b` |
 | ✅ L5 | Deutsche Comments → Englisch (engine, scheduler, parser, control) | `feefd65b` |
 | ✅ L6 | `RuntimeHost.disconnect()` greift auf `runner._session` zu → `runner.session` Property | `4a16d5ce` |
@@ -88,7 +88,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 
 - **0 HIGH** — alle 7 erledigt (H1/H2/H4/H5/H6/H7 gefixt, H3 kein Bug)
 - **12 MEDIUM** — alle gefixt
-- **10 LOW** gefixt — 1 offen (L3/L7)
+- **10 LOW** gefixt — 1 später (L3)
 
 Die Core-Abstraktionen (Channel, Effect/Control, Scheduler) stehen gut.
 Der Review findet vor allem Export-Lücken, ungenutzten Code und fehlende
