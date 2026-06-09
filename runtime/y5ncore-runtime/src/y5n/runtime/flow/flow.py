@@ -32,4 +32,4 @@ class Flow:
     out_channel: str | None = None
 
     def has_stack(self):
-        return bool(self.cursor._stack)
+        return self.cursor.has_stack()

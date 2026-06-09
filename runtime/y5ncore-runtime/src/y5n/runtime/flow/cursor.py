@@ -26,7 +26,12 @@ class FlowCursor:
         ctx: NodeSpace,
     ):
         if not self._stack:
-            handler = getattr(node, self.handler_name)
+            if self.handler_name == "run":
+                handler = node.run
+            elif self.handler_name == "setup":
+                handler = node.setup
+            else:
+                raise ValueError(f"Invalid handler: {self.handler_name}")
             gen = _ensure_step(handler)(ctx)
             self._stack.append(gen)
 
