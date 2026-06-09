@@ -1,6 +1,6 @@
 # Runtime Code Review — Juni 2026
 
-Stand: `6c1fc5a5` (alle High+Medium + 5 Low gefixt)
+Stand: `4a16d5ce` (alle High+Medium + 7 Low gefixt)
 
 ## HIGH — vor nächstem Feature fixen
 
@@ -76,7 +76,7 @@ Der Eintrag bleibt als Hinweis, kein Fix nötig.
 | L3 | `_schedule_waiting` ist O(n)-Scan → Reverse-Lookup einführen | `machine/scheduler.py:292` |
 | ✅ L4 | Kommentierter Dead Code in engine.py (3 Blöcke) entfernt | `feefd65b` |
 | ✅ L5 | Deutsche Comments → Englisch (engine, scheduler, parser, control) | `feefd65b` |
-| ✅ L6 | `RuntimeHost.disconnect()` greift auf `runner._session` zu → `runner.session` Property | `(wartet auf Commit)` |
+| ✅ L6 | `RuntimeHost.disconnect()` greift auf `runner._session` zu → `runner.session` Property | `4a16d5ce` |
 | L7 | `SessionBuilder._counter` nicht thread-safe | `machine/session.py:16` |
 | L8 | Hardcoded `None` für Context in Engine | `machine/engine.py:282` |
 | ✅ L9 | `TaskRunner.start/_run` typisiert | `feefd65b` |
