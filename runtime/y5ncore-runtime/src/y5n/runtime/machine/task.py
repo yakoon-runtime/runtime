@@ -37,15 +37,11 @@ class TaskRunner:
                 "stdout": stdout.decode(errors="replace"),
                 "stderr": stderr.decode(errors="replace"),
             }
-
-            session.push_event(Scope.SESSION, channel, Event(payload=result))
-            self._on_complete(flow=flow, session=session)
-
         except Exception as e:
-            session.push_event(
-                Scope.SESSION, channel, Event(payload={"error": str(e)})
-            )
-            self._on_complete(flow=flow, session=session)
+            result = {"error": str(e)}
+
+        session.push_event(Scope.SESSION, channel, Event(payload=result))
+        self._on_complete(flow=flow, session=session)
 
 
 # ----------------------------------
