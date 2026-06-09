@@ -16,22 +16,19 @@ class TaskRunner:
     def on_complete(self, on_complete: OnTaskCompleted):
         self._on_complete = on_complete
 
-    def start(self, *, task, flow: Flow, session: Session):
-        asyncio.create_task(self._run(task, flow, session))
+    async def start(self, *, command, channel, kwargs, flow, session):
+        asyncio.create_task(self._run(command, channel, kwargs, flow, session))
 
-    async def _run(self, task, flow: Flow, session: Session):
+    async def _run(self, command, channel, kwargs, flow, session):
         try:
-            cmd = task.command
-            kwargs = task.kwargs
-
-            if cmd == "sleep":
+            if command == "sleep":
                 await asyncio.sleep(kwargs.get("seconds", 1))
                 result = {"returncode": 0, "stdout": "done", "stderr": ""}
             else:
                 args = kwargs.get("args", [])
                 cwd = kwargs.get("cwd", None)
                 proc = await asyncio.create_subprocess_exec(
-                    cmd,
+                    command,
                     *args,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
@@ -44,13 +41,13 @@ class TaskRunner:
                     "stderr": stderr.decode(errors="replace"),
                 }
 
-            event = Event(payload=result)
-            session.push_event(Scope.FLOW, task.channel, event, flow=flow)
+            session.push_event(Scope.SESSION, channel, Event(payload=result))
             self._on_complete(flow=flow, session=session)
 
         except Exception as e:
-            event = Event(payload={"error": str(e)})
-            session.push_event(Scope.FLOW, task.channel, event, flow=flow)
+            session.push_event(
+                Scope.SESSION, channel, Event(payload={"error": str(e)})
+            )
             self._on_complete(flow=flow, session=session)
 
 

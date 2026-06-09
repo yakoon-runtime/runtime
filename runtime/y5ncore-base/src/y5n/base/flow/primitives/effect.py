@@ -1,10 +1,7 @@
 from typing import Literal
-from uuid import uuid4
 
 from y5n.base.flow.channel import Scope
 from y5n.base.runtime import Event
-
-from .outcome import Outcome
 
 Mode = Literal["replace", "append"]
 
@@ -38,20 +35,11 @@ class Background(Effect):
     pass
 
 
-class TaskHandle:
-    def __init__(self, command: str, **kwargs):
-        self.task_id = uuid4().hex[:8]
-        self.channel = f"task:{self.task_id}"
-        self.command = command
-        self.kwargs = kwargs
-
-    async def run(self, flow):
-        return Outcome(effects=[StartTask(self)])
-
-
 class StartTask(Effect):
-    def __init__(self, handle: TaskHandle):
-        self.handle = handle
+    def __init__(self, command: str, channel: str, **kwargs):
+        self.command = command
+        self.channel = channel
+        self.kwargs = kwargs
 
 
 class StartCommand(Effect):

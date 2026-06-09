@@ -1,7 +1,9 @@
 import os
+from uuid import uuid4
 
-from y5n.api.dsl import out_text, receive, run_task
+from y5n.api.dsl import out_text, receive, start_task
 from y5n.api.dsl.patterns import Form
+from y5n.base.flow.channel import Scope
 
 SCRIPT = os.path.join(
     os.path.dirname(__file__),
@@ -22,14 +24,10 @@ async def run(_):
 
     yield out_text(f"Generating PDF for {name}...")
 
-    task = run_task(
-        "python3",
-        args=[SCRIPT, "--name", name, "--greeting", greeting],
-    )
+    ch = uuid4().hex
+    yield start_task("python3", result_channel=ch, args=[SCRIPT, "--name", name, "--greeting", greeting])
 
-    yield task
-
-    result = yield receive(task.channel)
+    result = yield receive(ch, scope=Scope.SESSION)
     payload = result.payload or {}
 
     lines = [

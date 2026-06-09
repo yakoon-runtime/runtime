@@ -6,9 +6,9 @@ from .dsl import (
     out_text,
     prompt,
     receive,
-    run_task,
     send,
     start_cmd,
+    start_task,
     suspend,
     view,
 )
@@ -24,6 +24,6 @@ __all__ = [
     "suspend",
     "foreground",
     "background",
-    "run_task",
+    "start_task",
     "view",
 ]

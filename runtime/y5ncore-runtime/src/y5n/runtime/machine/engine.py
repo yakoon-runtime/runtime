@@ -233,8 +233,10 @@ class CommandEngine:
                 )
 
             elif isinstance(effect, StartTask):
-                self.on_start_task(
-                    task=effect.handle,
+                await self.on_start_task(
+                    command=effect.command,
+                    channel=effect.channel,
+                    kwargs=effect.kwargs,
                     flow=flow,
                     session=session,
                 )
@@ -299,10 +301,12 @@ class CommandEngine:
 
 
 class OnTaskStart(Protocol):
-    def __call__(
+    async def __call__(
         self,
         *,
-        task,
+        command: str,
+        channel: str,
+        kwargs: dict,
         flow: Flow,
         session: Session,
     ) -> None: ...

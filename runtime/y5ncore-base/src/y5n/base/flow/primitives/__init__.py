@@ -18,7 +18,6 @@ from .effect import (
     Mode,
     StartCommand,
     StartTask,
-    TaskHandle,
 )
 from .outcome import Outcome
 from .view import compile_view
@@ -45,7 +44,6 @@ __all__ = [
     "EmitView",
     "StartCommand",
     "StartTask",
-    "TaskHandle",
     "Foreground",
     # .view
     "compile_view",

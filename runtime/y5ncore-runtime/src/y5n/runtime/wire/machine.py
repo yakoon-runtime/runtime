@@ -103,7 +103,7 @@ def build_machine(
         on_resolve_node=resolver.resolve,
         on_parse_input=parser.parse,
         on_projection=on_projection_send,
-        on_start_task=task_runner.start,
+        on_start_task=task_runner.start,  # async, signature: command/channel/kwargs/flow/session
         on_start_command=on_start_command,
     )
 

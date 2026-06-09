@@ -51,8 +51,8 @@ from .primitives import (
     Sleep,
     SleepUntil,
     StartCommand,
+    StartTask,
     Suspend,
-    TaskHandle,
 )
 
 
@@ -230,19 +230,22 @@ def view(**view_params) -> Outcome:
     )
 
 
-def run_task(command: str, **kwargs) -> TaskHandle:
+def start_task(command: str, *, result_channel: str, **kwargs) -> Outcome:
     """
-    Create a TaskHandle for a background task.
+    Start a background task.
 
-    Returns a TaskHandle that can be yielded to start the task.
-    The task's result arrives via receive(task.channel).
+    The task runs independently and sends its result to the
+    result_channel (SESSION scope). The caller reads it with receive().
 
     Usage:
-        task = run_task("sleep", seconds=5)
-        yield task
-        result = yield receive(task.channel)
+        yield start_task("sleep", result_channel=ch, seconds=5)
+        result = yield receive(ch, scope=Scope.SESSION)
     """
-    return TaskHandle(command=command, **kwargs)
+    return Outcome(
+        effects=[
+            StartTask(command, result_channel, **kwargs),
+        ]
+    )
 
 
 def start_cmd(command: str, *, result_channel: str) -> Outcome:
