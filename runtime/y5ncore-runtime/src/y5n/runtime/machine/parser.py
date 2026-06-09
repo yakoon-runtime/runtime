@@ -9,6 +9,9 @@ class InputParser:
 
     def parse(self, event: Event) -> tuple[str, list[str], list[str]]:
 
+        if not isinstance(event.payload, str) or not event.payload.strip():
+            return "", [], []
+
         parts = self.split_pipes(event.payload)
 
         if not parts:

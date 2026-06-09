@@ -18,19 +18,17 @@ Stand: `85eaa7e` (inkl. H1 + H6 gefixt)
 
 ### H3 — `Suspend` hängt für immer
 
-**Datei:** `runtime/y5ncore-base/src/y5n/base/flow/primitives/control.py:46-54`
+**Kein Bug.** `Suspend` ist ein Protokoll für das Job-System (analog zu Ctrl+Z / `bg` / `fg`).
+Der Flow blockiert, bis der Job-Manager über `jobs.py` `resume()` aufruft.
 
-`Suspend` definiert `resume()` (setzt `flow.control = YieldToScheduler()`), aber `resume()`
-wird **nirgends aufgerufen**. Jeder Flow, der `yield suspend()` macht, blockiert permanent.
-
-**Fix:** Resume-Mechanismus implementieren (z.B. Command, der auf `Suspend`-geblockte Flows lostritt)
-oder `suspend()` als Feature entfernen, bis es gebraucht wird.
+`resume()` wird in `y5nspace` von der Job-Verwaltung getriggert — nicht von der Runtime.
+Der Eintrag bleibt als Hinweis, kein Fix nötig.
 
 ---
 
 ### ✅ H4 — Layer-Verletzung: `y5ncore-base` importierte `Flow` aus `runtime`
 
-**Gefixt in:** `(wartet auf Commit)`
+**Gefixt in:** `fc484d42`
 
 ---
 
@@ -107,7 +105,7 @@ if not isinstance(event.payload, str) or not event.payload.strip():
 
 ## Zusammenfassung
 
-- **3 HIGH** (H1+H2+H4+H6 gefixt) — 1 schnell fixbar (H7), 2 brauchen Design-Entscheidung (H3/H5)
+- **2 HIGH** (H1+H2+H4+H6 gefixt, H3 kein Bug) — 1 schnell fixbar (H7), 1 offen (H5)
 - **12 MEDIUM** — hauptsächlich Dead Code und fehlende Typannotationen
 - **13 LOW** — Hygiene, kleine Präzisionsprobleme
 
