@@ -118,46 +118,37 @@ async def test_session_channel_throughput(harness):
 
 @pytest.mark.asyncio
 async def test_massive_waiting_flows(harness, scheduler):
-    """Benchmark: wartende Flows, dann ein Wake."""
+    """Benchmark: 10k / 50k / 100k wartende Flows, dann ein Wake."""
 
-    N = 10_000
-    ch = uuid4().hex
-    woke = 0
+    for label, N in [("10k", 10_000), ("50k", 50_000), ("100k", 100_000)]:
+        ch = uuid4().hex
+        woke = 0
 
-    async def waiter(ctx):
-        nonlocal woke
-        event = yield receive(ch, scope=Scope.SESSION)
-        woke += 1
-        yield Outcome()
+        async def waiter(ctx):
+            nonlocal woke
+            event = yield receive(ch, scope=Scope.SESSION)
+            woke += 1
+            yield Outcome()
 
-    flows = []
-
-    t0 = time.monotonic()
-    for i in range(N):
-        if i % 1000 == 0:
-            print(f"  creating flow {i}/{N} ...")
-        flow = await harness.start(waiter)
-        outcome = await harness.run_until_blocked(flow)
-        flows.append(flow)
-
-    t1 = time.monotonic()
-    print(f"  created {N} flows in {t1 - t0:.3f}s")
-
-    start = time.monotonic()
-
-    harness.send_session(ch, "wake")
-    scheduler._schedule_waiting(harness.session, ch)
-
-    for flow in flows:
-        if flow.scheduled:
+        flows: list[Flow] = []
+        t0 = time.monotonic()
+        for _ in range(N):
+            flow = await harness.start(waiter)
             await harness.run_until_blocked(flow)
-            break
+            flows.append(flow)
+        t1 = time.monotonic()
 
-    elapsed = time.monotonic() - start
+        harness.send_session(ch, "wake")
+        t_wake_start = time.monotonic()
+        scheduler._schedule_waiting(harness.session, ch)
+        for flow in flows:
+            if flow.scheduled:
+                await harness.run_until_blocked(flow)
+                break
+        t_wake = time.monotonic() - t_wake_start
 
-    print()
-    print(_label("Massive-Parallel (1 wake von 10k)", N, elapsed))
-    print(f"  woke={woke}")
+        create_rate = N / (t1 - t0) if (t1 - t0) > 0 else 0
+        print(f"  {label}: create={t1-t0:.3f}s ({create_rate:,.0f} flows/s), wake={t_wake:.4f}s, woke={woke}")
 
 
 # ----------------------------------------------------------------
