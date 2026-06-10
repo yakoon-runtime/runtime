@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
-from uuid import uuid4
 
 from y5n.base.nodes import Node
 from y5n.base.runtime import Event
@@ -25,7 +24,7 @@ def make_flow(
 ) -> Flow:
     node = Node(key="test", run=handler)  # type: ignore[arg-type]
     flow = Flow(
-        id=uuid4().hex,
+        id=session.next_flow_id(),
         node=node,
         event=Event(payload=payload),
         cursor=FlowCursor("run"),

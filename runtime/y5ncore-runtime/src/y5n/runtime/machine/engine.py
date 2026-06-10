@@ -3,7 +3,6 @@ from __future__ import annotations
 import inspect
 from collections.abc import Sequence
 from typing import Protocol
-from uuid import uuid4
 
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import (
@@ -62,7 +61,7 @@ class CommandEngine:
             return
 
         flow = Flow(
-            id=uuid4().hex,
+            id=session.next_flow_id(),
             node=node,
             event=Event(payload=node.key),
             cursor=FlowCursor("setup"),
@@ -93,7 +92,7 @@ class CommandEngine:
             return None
 
         flow = Flow(
-            id=uuid4().hex,
+            id=session.next_flow_id(),
             node=node,
             pipeline=pipeline_commands,
             tokens=tokens,

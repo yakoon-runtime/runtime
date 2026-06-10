@@ -72,6 +72,7 @@ class Session:
         self.data = data
 
         self._runtime = SessionRuntime()
+        self._flow_id_counter = 0
         self._flows: dict[str, Flow] = {}
         self._foreground_flow_id: str | None = None
         self._channels: dict[str, deque[Event]] = {}  # resolved channel key → queue
@@ -121,6 +122,11 @@ class Session:
     def add_flow(self, flow: Flow) -> str:
         self._flows[flow.id] = flow
         return flow.id
+
+    def next_flow_id(self) -> str:
+        n = self._flow_id_counter
+        self._flow_id_counter += 1
+        return str(n)
 
     def get_flow(self, id: str) -> Flow | None:
         return self._flows.get(id)
