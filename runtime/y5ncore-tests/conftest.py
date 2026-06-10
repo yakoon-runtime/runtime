@@ -1,0 +1,49 @@
+from __future__ import annotations
+
+from unittest.mock import AsyncMock
+
+import pytest
+from y5n.base.naming import Key
+from y5n.base.nodes import Node
+from y5n.runtime.machine.engine import CommandEngine
+from y5n.runtime.machine.scheduler import Scheduler
+from y5n.runtime.runtime.sessions.session import Session, SessionData
+
+from support.runtime import RuntimeHarness
+
+
+@pytest.fixture
+def session():
+    return Session(
+        key=Key.from_parts("test", "session", "runtime", "test-1"),
+        data=SessionData(),
+    )
+
+
+@pytest.fixture
+def engine():
+    return CommandEngine(
+        on_resolve_node=AsyncMock(return_value=(None, [])),
+        on_parse_input=AsyncMock(return_value=("", [], [])),
+        on_projection=AsyncMock(),
+        on_start_task=AsyncMock(),
+        on_start_command=AsyncMock(),
+    )
+
+
+@pytest.fixture
+def scheduler(engine):
+    return Scheduler(
+        platform=Node(key="root"),
+        on_setup=AsyncMock(return_value=None),
+        on_dispatch=AsyncMock(return_value=None),
+        on_step_flow=engine.step_flow,
+        on_show_projection=AsyncMock(),
+        on_audit_warning=lambda **kw: None,
+        on_error_resolve=AsyncMock(return_value=None),
+    )
+
+
+@pytest.fixture
+def harness(session, scheduler, engine):
+    return RuntimeHarness(session=session, scheduler=scheduler, engine=engine)

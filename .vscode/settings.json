@@ -22,6 +22,9 @@
     "apps/y5napp-console/src",
     "apps/y5napp-textual/src",
   ],
+  "python.testing.pytestArgs": ["runtime/y5ncore-tests"],
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
   "editor.formatOnSave": true,
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
