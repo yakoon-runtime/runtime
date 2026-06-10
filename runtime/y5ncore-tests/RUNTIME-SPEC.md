@@ -45,7 +45,8 @@
 ## SUSPEND
 
 - `Suspend()` macht einen Flow nicht runnable
-- Ein suspendierter Flow bleibt blockiert, bis er vom Jobsystem wieder aktiviert wird
+- Ein suspendierter Flow kann durch `resume()` oder das Jobsystem reaktiviert werden
+- Nach Reaktivierung läuft der Flow bis zum nächsten Block oder Stop
 - Der Flow wird im Scheduler nicht weiter bearbeitet
 
 ## STOP
