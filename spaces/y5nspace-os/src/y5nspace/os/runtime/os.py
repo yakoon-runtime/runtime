@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import json
 import platform
-import shlex
 
 from y5n.api.dsl import out_text, receive, start_task
 from y5n.api.nodes import NodeSpace
@@ -12,96 +12,67 @@ from y5n.base.llm import LLMMessage, LLMRequest
 CHANNEL = "os-result"
 
 BLACKLIST = {
-    "rm",
-    "sudo",
-    "su",
-    "passwd",
-    "shutdown",
-    "reboot",
-    "systemctl",
-    "curl",
-    "wget",
-    "scp",
-    "ssh",
-    "mkfs",
-    "dd",
-    "fdisk",
-    "chmod",
-    "chown",
-    "kill",
-    "apt",
-    "dnf",
-    "yum",
-    "pip",
-    "npm",
+    "rm", "sudo", "su", "passwd", "shutdown", "reboot",
+    "systemctl", "curl", "wget", "scp", "ssh",
+    "mkfs", "dd", "fdisk", "chmod", "chown", "kill",
+    "apt", "dnf", "yum", "pip", "npm",
 }
-
-
-def _is_safe(command: str) -> tuple[bool, str]:
-    cmd = shlex.split(command)[0] if command else ""
-    if cmd in BLACKLIST:
-        return False, f"blocked: {cmd}"
-    return True, ""
-
 
 SYSTEM_PROMPT = """Du bist ein OS-Assistent für {system}.
 
-Übersetze die Anfrage in EINES der folgenden Kommandos:
+Kommandos (nur lesend, nur existierende Optionen):
 
   ls       — Dateien auflisten
-  find     — Dateien/Verzeichnisse suchen
-  du       — Dateigrößen ermitteln
+  find     — Dateien suchen
+  du       — Dateigrößen
   df       — Festplattenbelegung
-  free     — RAM-/Swap-Nutzung
-  ps       — Prozesse anzeigen
-  uname    — System-Info
-  whoami   — aktueller Benutzer
-  id       — Benutzer- und Gruppen-IDs
-  groups   — Gruppen des Benutzers
-  uptime   — System-Laufzeit
-  date     — aktuelles Datum/Uhrzeit
-  cal      — Kalender anzeigen
-  pwd      — aktuelles Verzeichnis
-  which    — Pfad eines Programms finden
-  type     — Informationen zu einem Kommando
-  env      — Umgebungsvariablen anzeigen
-  locale   — Locale-Einstellungen
-  cat      — Dateiinhalt ausgeben
-  head     — erste Zeilen einer Datei
-  tail     — letzte Zeilen einer Datei
-  wc       — Zeilen-/Wort-/Zeichenzähler
-  file     — Dateityp ermitteln
-  stat     — detaillierte Datei-Info
-  readlink — Ziel eines Symlinks anzeigen
-  lsblk    — Block-Geräte anzeigen
-  lscpu    — CPU-Informationen
-  lsusb    — USB-Geräte anzeigen
-  lspci    — PCI-Geräte anzeigen
-  lshw     — Hardware-Informationen
+  free     — RAM/Swap
+  ps       — Prozesse
+  uname    — Systeminfo
+  whoami   — Benutzer
+  id       — Benutzer-IDs
+  groups   — Gruppen
+  uptime   — Laufzeit
+  date     — Datum/Uhrzeit
+  pwd      — Verzeichnis
+  which    — Programm-Pfad
+  cat      — Datei anzeigen
+  head     — erste Zeilen
+  tail     — letzte Zeilen
+  wc       — Zähler
+  file     — Dateityp
+  stat     — Datei-Details
+  lsblk    — Block-Geräte
+  lscpu    — CPU
+  lsusb    — USB
+  lspci    — PCI
   echo     — Text ausgeben
-  printf   — formatierte Ausgabe
   lsof     — offene Dateien/Prozesse
-  mount    — eingehängte Dateisysteme
-  dmesg    — Kernel-Ringpuffer
+  mount    — Dateisysteme
+  dmesg    — Kernel-Log
   journalctl — Systemd-Logs (--no-pager)
 
-Antworte NUR mit dem Kommando, ohne Erklärung, ohne Formatierung.
-Beispiele:
-  "zeige alle Prozesse"     → ps aux
-  "wer bin ich"             → whoami
-  "Speicher frei"           → free -h
-  "Plattenbelegung"         → df -h
-  "größte Dateien in /tmp"  → du -sh /tmp
-  "welche Logs in /var/log" → ls -la /var/log
-  "welche USB-Geräte"       → lsusb
-  "wie lange läuft das Sys" → uptime
-  "offene Netzwerk-Ports"   → lsof -i
+Antworte ausschließlich mit JSON:
+
+{{"command": "ls", "args": ["-la", "/tmp"]}}
 
 Regeln:
-- Kein sudo, kein su
-- Nichts verändern — nur lesend
-- Keine Pipe (|), keine Redirection (>, >>), kein Semikolon (;)
-- Keine Shell-Wildcards (*) — das Kommando wird direkt ausgeführt"""
+- command: eines der Kommandos oben.
+- args: Liste der Argumente (kann leer sein []).
+- Verwende nur existierende Optionen. Erfinde keine.
+- Wenn eine Anfrage nicht passt: {{"error": "Begründung"}}.
+- Kein sudo, kein su, keine Änderungen.
+- Keine GUI-Programme (thunderbird, firefox, vi, nano).
+- Keine Pipes, Heredocs, Redirects, Wildcards.
+- Keine Shell-Syntax — nur Executable + Argumente.
+
+Beispiele:
+  "zeige Prozesse"       → {{"command": "ps", "args": ["aux"]}}
+  "wer bin ich"          → {{"command": "whoami", "args": []}}
+  "Speicher frei"        → {{"command": "free", "args": ["-h"]}}
+  "USB-Geräte"           → {{"command": "lsusb", "args": []}}
+  "Logs in /var/log"     → {{"command": "ls", "args": ["-la", "/var/log"]}}
+  "starte Firefox"       → {{"error": "GUI-Programme sind nicht erlaubt"}}"""
 
 
 async def run(space: NodeSpace):
@@ -119,15 +90,28 @@ async def run(space: NodeSpace):
     ]
     result = await llm.complete(LLMRequest(messages=messages))
     raw = result.text.strip()
+    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 
-    safe, reason = _is_safe(raw)
-    if not safe:
-        yield out_text(f"rejected: {reason}")
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        yield out_text(f"invalid response: {raw}")
         return
 
-    parts = shlex.split(raw)
-    command = parts[0]
-    args = parts[1:]
+    if "error" in parsed:
+        yield out_text(f"error: {parsed['error']}")
+        return
+
+    command = parsed.get("command", "")
+    args = parsed.get("args", [])
+
+    if not command:
+        yield out_text(f"invalid response: {raw}")
+        return
+
+    if command in BLACKLIST:
+        yield out_text(f"rejected: {command}")
+        return
 
     yield start_task(command, channel=CHANNEL, args=args)
     event = yield receive(CHANNEL, scope=Scope.SESSION)
