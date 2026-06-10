@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import platform
 
@@ -133,6 +134,7 @@ async def run(space: NodeSpace):
 
         if attempt < MAX_RETRIES:
             yield out_text(f"[retry {attempt + 1}/{MAX_RETRIES}]", mode="append")
+            await asyncio.sleep(1)
             messages.append(
                 LLMMessage(role="assistant", content=json.dumps(parsed))
             )
