@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import asyncio
+import getpass
 import json
+import os as stdlib_os
 import platform
 
 from y5n.api.dsl import out_text, receive, start_task
@@ -38,7 +40,13 @@ BLACKLIST = {
     "npm",
 }
 
-SYSTEM_PROMPT = """Du bist ein OS-Assistent für {system}.
+SYSTEM_PROMPT = """Du bist ein OS-Assistent.
+
+Kontext der Sitzung:
+  Benutzer:     {user}
+  Home:         {home}
+  Arbeitsverz:  {cwd}
+  System:       {system}
 
 Kommandos (nur lesend, nur existierende Optionen):
 
@@ -121,10 +129,16 @@ async def run(space: NodeSpace):
         return
 
     llm: OnCallLLM = space.ports.get(OnCallLLM)
+    user = getpass.getuser()
+    home = stdlib_os.path.expanduser("~")
+    cwd = stdlib_os.getcwd()
     system = f"{platform.system()} {platform.release()}"
 
     messages = [
-        LLMMessage(role="system", content=SYSTEM_PROMPT.format(system=system)),
+        LLMMessage(
+            role="system",
+            content=SYSTEM_PROMPT.format(user=user, home=home, cwd=cwd, system=system),
+        ),
         LLMMessage(role="user", content=request),
     ]
 
