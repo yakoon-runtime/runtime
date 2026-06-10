@@ -66,7 +66,8 @@ Regeln:
 - Kein sudo, kein su, keine Änderungen.
 - Keine GUI-Programme (thunderbird, firefox, vi, nano).
 - Keine Pipes, Heredocs, Redirects, Wildcards.
-- Keine Shell-Syntax — nur Executable + Argumente.
+- Keine Shell-Syntax — kein $(), keine Backticks, keine Variablen.
+- Nur ein JSON-Objekt pro Antwort. Keine Erklärungen.
 
 Beispiele:
   "zeige Prozesse"       → {{"command": "ps", "args": ["aux"]}}
@@ -77,9 +78,22 @@ Beispiele:
   "starte Firefox"       → {{"error": "GUI-Programme sind nicht erlaubt"}}"""
 
 
-def _parse(raw: str) -> dict:
-    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    return json.loads(raw)
+def _find_json(raw: str) -> dict | None:
+    depth = 0
+    start = -1
+    for i, ch in enumerate(raw):
+        if ch == "{":
+            if depth == 0:
+                start = i
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0 and start >= 0:
+                try:
+                    return json.loads(raw[start : i + 1])
+                except json.JSONDecodeError:
+                    start = -1
+    return None
 
 
 async def run(space: NodeSpace):
@@ -99,7 +113,9 @@ async def run(space: NodeSpace):
     for attempt in range(1 + MAX_RETRIES):
         result = await llm.complete(LLMRequest(messages=messages))
         try:
-            parsed = _parse(result.text)
+            parsed = _find_json(result.text)
+            if parsed is None:
+                raise json.JSONDecodeError("no json found", result.text, 0)
         except json.JSONDecodeError:
             yield out_text(f"invalid response: {result.text}")
             return
