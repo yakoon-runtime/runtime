@@ -5,157 +5,122 @@
 ## Was wir gebaut haben
 
 Ein OS-Space (`y5nspace-os`), der natürliche Sprache via LLM in
-Shell-Kommandos übersetzt, gegen eine Blacklist prüft und ausführt:
+Shell-Kommandos übersetzt, gegen eine Blacklist prüft und ausführt.
+
+Drei Iterationen:
+
+### V1: Raw Shell String
 
 ```
 User: "os zeige alle Prozesse"
-  → LLM-Resolver: "ps aux"
-  → Blacklist: ps ∉ BLACKLIST ✓
-  → start_task("ps", args=["aux"])
-  → receive() → out_text(stdout)
+  → LLM: "ps aux"
+  → shlex.split → start_task
 ```
 
-Technisch funktioniert der gesamte Pfad: Plugin-Registrierung,
-LLM-Provider via Port, start_task/receive als Task-Kopplung,
-Blacklist als Sicherheitsgrenze.
+**Problem:** LLM halluziniert Flags (`lsusb -A`), verwendet Heredocs
+(`cat <<EOF`), vergisst Pfade (`find -type f`).
 
-## Was nicht funktioniert
+### V2: Restriktiver Prompt + Command-Whitelist
 
-### 1. LLM halluziniert Shell-Syntax
+Prompt auf ~35 Kommandos eingeschränkt, Regeln für "keine Pipes,
+keine Wildcards, kein sudo" verstärkt.
 
-Das LLM erfindet Flags (`lsusb --all`), verwendet ungültige
-Kombinationen (`find` ohne Pfad), und generiert Shell-Konstrukte
-(Pipes, Heredocs, Wildcards), die ohne Shell nicht interpretiert
-werden können.
+**Problem:** Leicht besser, aber Kernproblem bleibt — LLM generiert
+weiterhin ungültige Shell-Syntax.
 
-Beispiele aus der Praxis:
+### V3: JSON Output Format (Lösung)
 
 ```
-# LLM rät:
-lsusb -A
-# → invalid option
-
-# LLM rät:
-cat <<EOF
-# → Heredoc ohne Shell nicht ausführbar
-
-# LLM rät:
-find -type f
-# → "path must precede expression"
+LLM → {"command": "ps", "args": ["aux"]} → json.loads → start_task
 ```
 
-### 2. Domänenfremde Anfragen
+Prompt definiert ein striktes JSON-Schema:
 
-Das LLM versucht, Anfragen außerhalb der OS-Domäne zu beantworten:
-
-```
-"schreibe Hello world auf russisch" → cat <<EOF (Übersetzung)
-"öffne Mailclient" → thunderbird (GUI-Programm)
+```json
+{"command": "<name>", "args": ["<arg1>", "<arg2>"]}
 ```
 
-Das LLM hat keine natürliche Grenze zwischen "das kann das OS"
-und "das sollte ein anderer Node machen".
+**Ergebnis:** Die Halluzinationen sind praktisch verschwunden.
 
-### 3. receive ohne Timeout
+## Die Erkenntnis
 
-`start_task` → `receive` blockiert unendlich, wenn der Task
-fehlschlägt oder kein Event auf dem Channel landet.
+**Der Prompt war das Problem, nicht die Architektur.**
 
-## Konsequenz
+Die Fehler der V1/V2 waren kein Beleg dafür, dass Shell-Kommandos
+der falsche Abstraktionsgrad sind. Sie waren ein Beleg dafür, dass
+roher Shell-String der falsche Austauschformat ist.
 
-Der Spike bestätigt die These aus `INTELLIGENT-NODES.md`:
+Das JSON-Format zwingt das LLM in eine Struktur, in der es nicht
+mehr raten kann:
 
-**Shell-Kommandos sind der falsche Abstraktionsgrad für einen
-KI-Resolver. Die KI muss semantische Aktionen wählen, keine
-Shell-Syntax generieren.**
+- Kein `lsusb -A` — das LLM muss `args` als Liste explizit angeben
+- Kein `cat <<EOF` — Heredocs passen nicht ins JSON-Schema
+- Kein `find -type f` ohne Pfad — `args` macht fehlende Pfade sichtbar
+- Domänenfremde Anfragen → `{"error": "..."}` statt kreativem Rateversuch
 
-### Aktuelle Architektur (Spike)
+Der entscheidende Satz aus der Diskussion:
+
+> Das LLM denkt in Shell. Die Runtime denkt nicht in Shell.
+> Der Prompt muss diese Lücke schließen.
+
+Der JSON-Zwang schließt diese Lücke.
+
+## Was wir gelernt haben
+
+### 1. Prompt-Engineering ist der Hebel
+
+Nicht "LLM ist zu dumm für Shell", sondern "LLM braucht ein
+Format, das es nicht zum Raten verleitet". Ein strukturiertes
+Output-Format (JSON) wirkt besser als jede noch so detaillierte
+Regel in natürlicher Sprache.
+
+### 2. Blacklist + JSON-Schema = pragmatische Sicherheit
+
+Die Blacklist verhindert destructive Kommandos. Das JSON-Schema
+verhindert syntaktisch ungültige Kommandos.
+Zusammen bilden sie eine ausreichende Sicherheitsgrenze für V1.
+
+### 3. Capabilities sind nicht obsolet — aber später
+
+Die ursprüngliche "Capabilities statt Shell" These ist nicht
+widerlegt. Sie ist nur für den OS-Space noch nicht nötig.
+Für Mail, CRM, ERP wird sie relevant — weil dort nicht
+Shell-Syntax das Problem ist, sondern Geschäftslogik.
+
+### 4. Das Prompt-Verhältnis
 
 ```
-LLM → roher Shell-String → shlex.split → create_subprocess_exec
+V1: Prompt weich, LLM frei      → viele Fehler
+V2: Prompt streng, LLM frei     → weniger Fehler
+V3: Prompt streng, Format fest  → kaum Fehler
 ```
 
-- LLM muss Shell-Syntax beherrschen (tut es nicht zuverlässig)
-- Jeder Fehler im Shell-String killt die Ausführung
-- Sicherheit = Prompt + Blacklist (beides umgehbar)
+## Offene Punkte
 
-### Ziel-Architektur (Intelligent Nodes)
+- **receive ohne Timeout** — wenn `start_task` fehlschlägt und kein
+  Event auf dem Channel landet, blockiert der Flow unendlich.
+  (Entschärfbar per `jobs stop`, aber kein Mechanismus im Handler.)
+- **Channel-Konflikt** — fester Channel `"os-result"` kollidiert bei
+  parallelen Aufrufen.
+- **Fehlerbehandlung bei ungültigem JSON** — das LLM könnte
+  trotzdem valides JSON mit falschem Command liefern
+  (z. B. `{"command": "firefox"}` — dann greift die Blacklist).
 
-```
-LLM → Capability-Auswahl → Action Handler → Port
-```
+## Ausblick
 
-- LLM wählt aus einer Liste von Capabilities (`list_usb_devices`)
-- Action Handler führt die korrekte Port-Implementierung aus
-- Sicherheit = Capability-Registry + Permission-Hierarchie
+Der nächste Schritt ist nicht "Capabilities", sondern:
 
-## Nächste Richtung
+1. Channel-Konzept für parallele Aufrufe (pro Flow oder pro Session)
+2. Timeout-Handling für `receive`
+3. Weitere Domänen-Spaces nach dem gleichen Muster
+   (`y5nspace-git`, `y5nspace-mail`)
 
-### 1. Capabilities statt Shell-Commands
-
-Der OS-Space definiert Capabilities:
-
-```python
-capabilities = {
-    "list_processes":   {"run": ps_handler,     "doc": "Zeigt laufende Prozesse"},
-    "list_usb_devices": {"run": lsusb_handler,  "doc": "Zeigt USB-Geräte"},
-    "disk_usage":       {"run": df_handler,     "doc": "Zeigt Speicherbelegung"},
-}
-```
-
-Der LLM bekommt nur diese Liste. Es antwortet mit einem Capability-Namen,
-nicht mit rohem Shell-String.
-
-### 2. Prompt-Struktur
-
-```text
-Verfügbare Aktionen:
-  list_processes   – Zeigt laufende Prozesse
-  list_usb_devices – Zeigt USB-Geräte
-  disk_usage       – Zeigt Speicherbelegung
-
-Antworte NUR mit dem Aktionsnamen.
-```
-
-Kein Shell-Wissen mehr nötig. Kein Halluzinieren von Flags.
-Keine Syntax-Fehler.
-
-### 3. Action Handler
-
-```python
-async def lsusb_handler(space, args):
-    result = await space.ports.os.run("lsusb")
-    yield out_text(result.stdout)
-```
-
-Der Handler kennt den korrekten Shell-Befehl.
-Der LLM muss nur die richtige Aktion wählen.
-
-### 4. Shell wird zum Port
-
-```python
-class OnRunCommand(Protocol):
-    async def __call__(self, command: str, args: list[str]) -> CommandResult: ...
-```
-
-Der Shell-Aufruf wandert aus dem Handler in einen Port.
-Der OS-Space stellt den Port bereit, Action Handler nutzen ihn.
-
-## Offene Fragen
-
-- Wer definiert die Capabilities? Space-Autor? Admin? User?
-- Können Capabilities dynamisch erweitert werden?
-- Wie sieht das Prompt für Capability-Auswahl aus (System-Prompt
-  vs. Runtime-generiert)?
-- Braucht jede Capability einen eigenen Handler, oder reicht eine
-  Dispatch-Tabelle?
-- Wie vermeiden wir, dass der Shell-Port selbst zur Sicherheitslücke
-  wird (ein Action Handler könnte rm ausführen)?
+Das JSON-Format bleibt als Pattern — jeder Space definiert sein
+eigenes Prompt + Schema, die Blacklist bleibt die gemeinsame
+Sicherheitsgrenze.
 
 ## Zusammenfassung
 
-Der Spike hat gezeigt: Das Pattern (LLM → Resolver → Blacklist → Port)
-funktioniert technisch. Aber der Abstraktionsgrad "Shell-Kommando"
-ist zu niedrig. Das LLM kann keine zuverlässige Shell-Syntax
-generieren. Der nächste Schritt ist der Wechsel zu semantischen
-Capabilities.
+Das LLM braucht kein Shell-Wissen. Es braucht ein Format,
+in dem es korrekt antworten kann. Das haben wir mit JSON
+gefunden.
