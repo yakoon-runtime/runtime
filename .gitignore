@@ -13,3 +13,7 @@ logs/
 
 # ignore the symlink
 yakoon/loop/runtime
+
+# Coverage
+.coverage
+coverage/
