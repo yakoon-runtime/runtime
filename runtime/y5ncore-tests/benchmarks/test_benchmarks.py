@@ -10,6 +10,7 @@ from y5n.base.flow.primitives import Outcome, Stop
 from y5n.base.nodes import Node
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event
+from y5n.runtime.flow import Flow
 
 pytestmark = pytest.mark.benchmark
 
@@ -189,10 +190,15 @@ async def test_runtime_mix(harness):
     harness.engine.on_parse_input = parse_input
     harness.engine.on_resolve_command = resolve_node
 
+    created_sub_flows: list[Flow] = []
+
     async def on_start_command(*, command, channel, flow, session):
-        new_flow = await harness.engine.dispatch(session=session, event=Event(payload=command))
+        new_flow = await harness.engine.dispatch(
+            session=session, event=Event(payload=command)
+        )
         if new_flow is not None:
             new_flow.out_channel = channel
+            created_sub_flows.append(new_flow)
             harness.scheduler.schedule_flow(new_flow, harness.session)
         else:
             harness.send_session(channel, None)
@@ -210,8 +216,17 @@ async def test_runtime_mix(harness):
     flow = await harness.start(main_handler)
 
     start = time.monotonic()
-    outcome = await harness.run_until_stop(flow)
-    assert isinstance(outcome.control, Stop)
+
+    while True:
+        outcome = await harness.run_until_blocked(flow)
+        if isinstance(outcome.control, Stop):
+            break
+
+        # Main flow awaits sub-flow results — drain created sub-flows
+        while created_sub_flows:
+            sub = created_sub_flows.pop(0)
+            await harness.run_until_stop(sub)
+
     elapsed = time.monotonic() - start
 
     print()
