@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, ClassVar
 
 from y5n.base.flow.channel import Scope
 from y5n.base.runtime import Event
@@ -45,19 +46,21 @@ class YieldToScheduler(Control):
         scheduler.schedule_flow(flow, session)
 
 
+@dataclass(slots=True)
 class Stop(Control):
     """Terminate the flow and remove it from the session.
 
     This is the normal end-of-life for a flow (generator exhausted).
     """
 
-    blocking = True
+    blocking: ClassVar[bool] = True
 
     async def on_enter(self, flow, scheduler, session):
         session.del_flow(flow)
         flow.scheduled = False
 
 
+@dataclass(slots=True)
 class Suspend(Control):
     """Suspend the flow indefinitely.
 
@@ -65,7 +68,7 @@ class Suspend(Control):
     (e.g. by the job manager).
     """
 
-    blocking = True
+    blocking: ClassVar[bool] = True
 
     def is_runnable(self, flow, session):
         return False
@@ -74,6 +77,7 @@ class Suspend(Control):
         flow.control = YieldToScheduler()
 
 
+@dataclass(slots=True)
 class Continue(Control):
     """Continue to the next command in the pipeline.
 
@@ -81,10 +85,8 @@ class Continue(Control):
     to the next stage.
     """
 
-    blocking = False
-
-    def __init__(self, data):
-        self.data = data
+    data: object = None
+    blocking: ClassVar[bool] = False
 
     async def on_enter(self, flow, scheduler, session):
 
@@ -107,6 +109,7 @@ class Continue(Control):
 # ------------------------------------------------------------
 
 
+@dataclass(slots=True)
 class AwaitEvent(Control):
     """Block the flow until an event arrives on the specified channel.
 
@@ -114,15 +117,15 @@ class AwaitEvent(Control):
     *scope* and *channel* for mail; if found, the flow continues.
     """
 
-    blocking = True
+    channel: str = "default"
+    scope: Scope = Scope.FLOW
+    blocking: ClassVar[bool] = True
 
-    def __init__(self, channel: str = "default", scope: Scope = Scope.FLOW):
-        if scope == Scope.USER_INPUT and channel != "__user__":
+    def __post_init__(self):
+        if self.scope == Scope.USER_INPUT and self.channel != "__user__":
             raise ValueError(
-                f"USER_INPUT scope requires channel='__user__', got {channel!r}"
+                f"USER_INPUT scope requires channel='__user__', got {self.channel!r}"
             )
-        self.channel = channel
-        self.scope = scope
 
     def label(self, flow):
         return "wait"
@@ -140,6 +143,7 @@ class AwaitEvent(Control):
 # ------------------------------------------------------------
 
 
+@dataclass(slots=True)
 class Sleep(Control):
     """Block the flow for a relative duration.
 
@@ -147,10 +151,8 @@ class Sleep(Control):
     after *wake_at* (absolute timestamp).  Users call delay(seconds).
     """
 
-    blocking = True
-
-    def __init__(self, wake_at: float):
-        self.wake_at = wake_at
+    wake_at: float = 0.0
+    blocking: ClassVar[bool] = True
 
     def is_runnable(self, flow, session):
         return False
@@ -174,6 +176,7 @@ class Sleep(Control):
         return cls(time.time() + seconds)
 
 
+@dataclass(slots=True)
 class SleepUntil(Control):
     """Block the flow until an absolute timestamp.
 
@@ -181,10 +184,8 @@ class SleepUntil(Control):
     Users call delay_until(timestamp).
     """
 
-    blocking = True
-
-    def __init__(self, timestamp: float):
-        self.timestamp = timestamp
+    timestamp: float = 0.0
+    blocking: ClassVar[bool] = True
 
     def is_runnable(self, flow, session):
         return False

@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
 from typing import Literal
 
 from y5n.base.flow.channel import Scope
@@ -14,6 +17,7 @@ class Effect:
     """
 
 
+@dataclass(slots=True)
 class EmitView(Effect):
     """Send a projection to the output layer.
 
@@ -21,36 +25,36 @@ class EmitView(Effect):
     and optionally persisted across steps.
     """
 
-    def __init__(self, view, persist: bool = False, mode: Mode = "replace", space: str | None = None, view_params: dict | None = None):
-        self.view = view
-        self.persist = persist
-        self.mode = mode
-        self.space = space
-        self.view_params = view_params
+    view: object
+    persist: bool = False
+    mode: Mode = "replace"
+    space: str | None = None
+    view_params: dict | None = None
 
 
+@dataclass(slots=True)
 class EmitEvent(Effect):
     """Push an event onto a channel.
 
     The event is delivered to flows waiting on the given channel and scope.
     """
 
-    def __init__(self, channel: str, event: Event, scope: Scope = Scope.FLOW):
-        self.channel = channel
-        self.event = event
-        self.scope = scope
+    channel: str
+    event: Event
+    scope: Scope = Scope.FLOW
 
 
+@dataclass(slots=True)
 class Foreground(Effect):
     """Mark the flow as the session's foreground flow.
 
     A foreground flow receives user input by default.
     """
 
-    def __init__(self, flow_id: str | None = None):
-        self.flow_id = flow_id
+    flow_id: str | None = None
 
 
+@dataclass(slots=True)
 class Background(Effect):
     """Remove the flow from foreground status.
 

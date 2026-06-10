@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from dataclasses import dataclass, field
 from typing import Any
 
 from .control import Control
 from .effect import Effect
 
 
+@dataclass(slots=True)
 class Outcome:
     """Result of a single flow step.
 
@@ -14,12 +16,6 @@ class Outcome:
     effects (side effects the engine must apply).
     """
 
-    def __init__(
-        self,
-        control: Control | None = None,
-        effects: Sequence[Effect] | None = None,
-        value: Any = None,
-    ) -> None:
-        self.control = control
-        self.effects = effects or []
-        self.value = value
+    control: Control | None = None
+    effects: Sequence[Effect] | None = field(default_factory=list)
+    value: Any = None
