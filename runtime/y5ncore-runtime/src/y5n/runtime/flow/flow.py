@@ -14,7 +14,7 @@ from .cursor import FlowCursor
 from .types import FlowKind
 
 
-@dataclass
+@dataclass(slots=True)
 class Flow:
     """Runtime representation of an executing flow.
 
