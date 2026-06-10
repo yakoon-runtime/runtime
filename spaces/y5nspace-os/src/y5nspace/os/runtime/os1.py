@@ -10,7 +10,6 @@ from y5n.base.flow.channel import Scope
 from y5n.base.llm import LLMMessage, LLMRequest
 
 CHANNEL = "os-result"
-MAX_RETRIES = 3
 
 BLACKLIST = {
     "rm", "sudo", "su", "passwd", "shutdown", "reboot",
@@ -76,11 +75,6 @@ Beispiele:
   "starte Firefox"       → {{"error": "GUI-Programme sind nicht erlaubt"}}"""
 
 
-def _parse(raw: str) -> dict:
-    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
-    return json.loads(raw)
-
-
 async def run(space: NodeSpace):
     request = " ".join(space.request.args())
     if not request:
@@ -94,63 +88,43 @@ async def run(space: NodeSpace):
         LLMMessage(role="system", content=SYSTEM_PROMPT.format(system=system)),
         LLMMessage(role="user", content=request),
     ]
+    result = await llm.complete(LLMRequest(messages=messages))
+    raw = result.text.strip()
+    raw = raw.removeprefix("```json").removeprefix("```").removesuffix("```").strip()
 
-    for attempt in range(1 + MAX_RETRIES):
-        result = await llm.complete(LLMRequest(messages=messages))
-        try:
-            parsed = _parse(result.text)
-        except json.JSONDecodeError:
-            yield out_text(f"invalid response: {result.text}")
-            return
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        yield out_text(f"invalid response: {raw}")
+        return
 
-        if "error" in parsed:
-            yield out_text(f"error: {parsed['error']}")
-            return
+    if "error" in parsed:
+        yield out_text(f"error: {parsed['error']}")
+        return
 
-        command = parsed.get("command", "")
-        args = parsed.get("args", [])
+    command = parsed.get("command", "")
+    args = parsed.get("args", [])
 
-        if not command or command in BLACKLIST:
-            yield out_text(f"rejected: {command}" if command else "invalid response")
-            return
+    if not command:
+        yield out_text(f"invalid response: {raw}")
+        return
 
-        yield start_task(command, channel=CHANNEL, args=args)
-        event = yield receive(CHANNEL, scope=Scope.SESSION)
-        payload = event.payload
+    if command in BLACKLIST:
+        yield out_text(f"rejected: {command}")
+        return
 
-        if isinstance(payload, dict) and "error" in payload:
-            yield out_text(f"failed: {payload['error']}")
-            return
+    yield start_task(command, channel=CHANNEL, args=args)
+    event = yield receive(CHANNEL, scope=Scope.SESSION)
+    payload = event.payload
 
-        stdout = payload.get("stdout", "")
-        stderr = payload.get("stderr", "")
-        returncode = payload.get("returncode", 0)
+    if isinstance(payload, dict) and "error" in payload:
+        yield out_text(f"failed: {payload['error']}")
+        return
 
-        if returncode == 0 and not stderr:
-            if stdout:
-                yield out_text(stdout)
-            return
+    stdout = payload.get("stdout", "")
+    stderr = payload.get("stderr", "")
 
-        if attempt < MAX_RETRIES:
-            yield out_text(f"[retry {attempt + 1}/{MAX_RETRIES}]", mode="append")
-            messages.append(
-                LLMMessage(role="assistant", content=json.dumps(parsed))
-            )
-            messages.append(
-                LLMMessage(
-                    role="user",
-                    content=(
-                        f"Das Kommando ist fehlgeschlagen:\n"
-                        f"returncode: {returncode}\n"
-                        f"stderr: {stderr}\n"
-                        f"stdout: {stdout}\n"
-                        f"Versuche es mit einem korrigierten Kommando."
-                    ),
-                )
-            )
-        else:
-            if stdout:
-                yield out_text(stdout)
-            if stderr:
-                yield out_text(f"stderr: {stderr}")
-            return
+    if stdout:
+        yield out_text(stdout)
+    if stderr:
+        yield out_text(f"stderr: {stderr}")
