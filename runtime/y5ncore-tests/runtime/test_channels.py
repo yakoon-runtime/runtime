@@ -122,3 +122,42 @@ async def test_multiple_session_receivers(harness):
     outcome = await harness.run_until_blocked(flow_b)
     assert isinstance(outcome.control, Stop)
     assert received == [("a", "one"), ("b", "two")]
+
+
+@pytest.mark.asyncio
+async def test_schedule_waiting_wakes_flow(harness):
+    """_schedule_waiting weckt einen auf SESSION-Channel wartenden Flow.
+
+    Das Event liegt bereits im Channel, aber der Flow wird erst
+    durch _schedule_waiting in die Ready-Queue gesetzt.
+    """
+
+    received = []
+
+    async def handler(ctx):
+        event = yield receive("wake_ch", scope=Scope.SESSION)
+        received.append(event.payload)
+        yield Outcome()
+
+    flow = await harness.start(handler)
+    outcome = await harness.run_until_blocked(flow)
+    assert isinstance(outcome.control, AwaitEvent)
+    assert outcome.control.scope == Scope.SESSION
+
+    # Flow blockiert — simuliere Zustand nach scheduler.run()-Pop
+    flow.scheduled = False
+    assert not flow.scheduled
+
+    # Event im Channel → Flow ist rüstig, aber noch nicht scheduled
+    harness.send_session("wake_ch", "hello")
+    assert flow.control.is_runnable(flow, harness.session)
+    assert not flow.scheduled
+
+    # _schedule_waiting weckt passende Flows
+    harness.scheduler._schedule_waiting(harness.session, "wake_ch")
+    assert flow.scheduled
+
+    # Flow verarbeitet das Event
+    outcome = await harness.run_until_blocked(flow)
+    assert isinstance(outcome.control, Stop)
+    assert received == ["hello"]
