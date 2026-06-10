@@ -14,10 +14,12 @@
 - `start_cmd("test --flag value", channel=ch)` → `cmd="test"`, `tokens=["--flag", "value"]`
 - Sub-Flow erhält Tokens via `ctx.request.args()`
 
-### P3: Runner — Kein Foreground → Input startet neuen Flow
+### P3: Runner — Kein Foreground → Input startet neuen Flow ✅
 
+- `test_input_without_foreground_dispatches_new_flow` in `test_user_input.py`
+- `test_input_with_foreground_pushes_to_flow` (Runner-Variante)
 - `session.foreground_flow is None` + User Input → `on_dispatch` statt `push_event`
-- Zweite Hälfte der USER_INPUT-Regel (nur Foreground-Fall getestet)
+- `Runner` jetzt in Test-Infrastruktur via `_make_runner`-Helper
 
 ### P4: Scheduler Channel Wake
 
