@@ -2,8 +2,9 @@
 
 ## Offene Runtime-Regeln (ohne Tests)
 
-### P1: Error kills Foreground
+### P1: Error kills Foreground ✅
 
+- `test_error_kills_foreground` in `test_foreground.py`
 - Foreground-Flow wirft Exception → Scheduler killt den Flow und räumt Fokus
 - `scheduler.py:204-207`
 

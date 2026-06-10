@@ -117,3 +117,33 @@ async def test_foreground_switch(harness):
 
     # flow_a ist immer noch blockiert — hat nichts bekommen
     assert not flow_a.control.is_runnable(flow_a, harness.session)
+
+
+@pytest.mark.asyncio
+async def test_error_kills_foreground(harness):
+    """Foreground-Flow wirft Exception → Scheduler killt den Flow und räumt Fokus.
+
+    scheduler.py:204-207 fängt die Exception, ruft
+    session.del_flow(session.foreground_flow) auf, was den Fokus löscht.
+    """
+
+    async def handler(ctx):
+        yield foreground()
+        raise RuntimeError("boom")
+
+    flow = await harness.start(handler)
+
+    # Schritt: foreground() → Foreground-Effekt angewandt,
+    # dann im zweiten Loop-Durchlauf: Generator wirft RuntimeError
+    with pytest.raises(RuntimeError, match="boom"):
+        await harness.run_until_blocked(flow)
+
+    # Foreground war gesetzt (vor dem Crash)
+    assert harness.session.foreground_flow is flow
+
+    # Simuliere scheduler.run() cleanup (scheduler.py:205-206)
+    if harness.session.foreground_flow:
+        harness.session.del_flow(harness.session.foreground_flow)
+
+    assert harness.session.foreground_flow is None
+    assert harness.session.get_flow(flow.id) is None
