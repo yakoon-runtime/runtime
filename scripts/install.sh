@@ -22,9 +22,10 @@ pip install \
 
 # spaces
 pip install \
-  -e spaces/y5nspace-runtime \
   -e spaces/y5nspace-shell \
+  -e spaces/y5nspace-runtime \
   -e spaces/y5nspace-ident \
+  -e spaces/y5nspace-os \
 
 # clients
 pip install \

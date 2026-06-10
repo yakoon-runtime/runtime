@@ -1,3 +1,7 @@
+> __SUPERSEDED__ by `INTELLIGENT-NODES.md` (2025-06-10)
+> Die Idee lebt weiter, aber der Frame hat sich verschoben:
+> Von "KI wählt Tool" zu "KI ist Resolver, Node wird intelligent."
+
 # Demo-Architektur: LLM → Command → Task → Port
 
 Kein LLM → Shell. Stattdessen:

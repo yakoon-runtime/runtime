@@ -12,6 +12,7 @@ async def create_runtime() -> RuntimeHost:
         plugins=[
             "y5nspace.shell",
             "y5nspace.ident",
+            "y5nspace.os",
             "y5nspace.runtime",
         ],
         capabilities={},
