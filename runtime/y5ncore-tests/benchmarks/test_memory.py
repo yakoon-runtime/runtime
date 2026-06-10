@@ -4,7 +4,6 @@ import sys
 from uuid import uuid4
 
 from y5n.base.flow.channel import Scope
-from y5n.base.flow.dsl import out, receive
 from y5n.base.flow.primitives import (
     AwaitEvent,
     Background,
@@ -20,8 +19,7 @@ from y5n.base.flow.primitives import (
 from y5n.base.nodes import Node
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event
-from y5n.runtime.flow import Flow, FlowCursor, FlowKind
-
+from y5n.runtime.flow import Flow, FlowCursor
 
 # ----------------------------------------------------------------
 #  Size helpers
@@ -177,14 +175,22 @@ def run():
     flow_bare_size = sys.getsizeof(flow_bare)
     await_size = sys.getsizeof(AwaitEvent("ch", scope=Scope.SESSION))
     marginal = flow_bare_size + await_size
-    print(f"  sys.getsizeof(Flow instance)           {flow_bare_size:>8} B  ({flow_bare_size/1024:.2f} KB)")
-    print(f"  sys.getsizeof(AwaitEvent)              {await_size:>8} B  ({await_size/1024:.2f} KB)")
-    print(f"  ─────────────────────────────────────────────")
-    print(f"  Marginal cost per waiting flow         {marginal:>8} B  ({marginal/1024:.2f} KB)")
+    print(
+        f"  sys.getsizeof(Flow instance)           {flow_bare_size:>8} B  ({flow_bare_size/1024:.2f} KB)"
+    )
+    print(
+        f"  sys.getsizeof(AwaitEvent)              {await_size:>8} B  ({await_size/1024:.2f} KB)"
+    )
+    print("  ─────────────────────────────────────────────")
+    print(
+        f"  Marginal cost per waiting flow         {marginal:>8} B  ({marginal/1024:.2f} KB)"
+    )
 
     for n in [10_000, 50_000, 100_000, 1_000_000]:
         total = marginal * n
-        print(f"  Marginal × {n:<7,}                    {total:>8} B  ({total/1024:.2f} KB / {total/(1024*1024):.2f} MB)")
+        print(
+            f"  Marginal × {n:<7,}                    {total:>8} B  ({total/1024:.2f} KB / {total/(1024*1024):.2f} MB)"
+        )
 
     print()
     print(f"\n{'='*70}")
