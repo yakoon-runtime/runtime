@@ -181,7 +181,9 @@ async def run(space: NodeSpace):
                         f"returncode: {returncode}\n"
                         f"stderr: {stderr}\n"
                         f"stdout: {stdout}\n"
-                        f"Versuche es mit einem korrigierten Kommando."
+                        f"Erinnere dich: die ursprüngliche Anfrage war \"{request}\".\n"
+                        f"Versuche es mit einem korrigierten Kommando, "
+                        f"das die ursprüngliche Anfrage erfüllt."
                     ),
                 )
             )
