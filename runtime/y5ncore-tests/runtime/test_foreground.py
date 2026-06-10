@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from y5n.base.flow.dsl import background, foreground, receive
-from y5n.base.flow.primitives import Outcome, Stop, Suspend, YieldToScheduler
+from y5n.base.flow.primitives import AwaitEvent, Outcome, Stop, Suspend
 
 
 @pytest.mark.asyncio
@@ -78,3 +78,42 @@ async def test_foreground_receives_user_input(harness):
 
     assert received == ["hello"]
     assert not bg.control.is_runnable(bg, harness.session)
+
+
+@pytest.mark.asyncio
+async def test_foreground_switch(harness):
+    """foreground() wechselt den Fokus zum zuletzt aufgerufenen Flow."""
+
+    received: list[str] = []
+
+    async def handler_a(ctx):
+        yield foreground()
+        event = yield receive()
+        received.append(f"a:{event.payload}")
+        yield Outcome()
+
+    async def handler_b(ctx):
+        yield foreground()
+        event = yield receive()
+        received.append(f"b:{event.payload}")
+        yield Outcome()
+
+    flow_a = await harness.start(handler_a)
+    outcome = await harness.run_until_blocked(flow_a)
+    assert isinstance(outcome.control, AwaitEvent)
+    assert harness.session.foreground_flow is flow_a
+
+    flow_b = await harness.start(handler_b)
+    outcome = await harness.run_until_blocked(flow_b)
+    assert isinstance(outcome.control, AwaitEvent)
+    assert harness.session.foreground_flow is flow_b
+
+    # User Input geht an flow_b (neuer Foreground)
+    harness.send_user_input(flow_b, "hello")
+
+    outcome = await harness.run_until_blocked(flow_b)
+    assert isinstance(outcome.control, Stop)
+    assert received == ["b:hello"]
+
+    # flow_a ist immer noch blockiert — hat nichts bekommen
+    assert not flow_a.control.is_runnable(flow_a, harness.session)

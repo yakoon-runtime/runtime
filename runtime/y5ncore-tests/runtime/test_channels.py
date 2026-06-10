@@ -77,3 +77,48 @@ async def test_session_channel_cross_flow(harness):
     assert isinstance(outcome_b.control, Stop)
 
     assert results == ["cross-flow!"]
+
+
+@pytest.mark.asyncio
+async def test_multiple_session_receivers(harness):
+    """SESSION ist eine Shared Queue — nur einer von mehreren
+    wartenden Flows empfängt ein Event."""
+
+    received: list[tuple[str, object]] = []
+
+    async def listener_a(ctx):
+        event = yield receive("shared", scope=Scope.SESSION)
+        received.append(("a", event.payload))
+        yield Outcome()
+
+    async def listener_b(ctx):
+        event = yield receive("shared", scope=Scope.SESSION)
+        received.append(("b", event.payload))
+        yield Outcome()
+
+    flow_a = await harness.start(listener_a)
+    flow_b = await harness.start(listener_b)
+
+    await harness.run_until_blocked(flow_a)
+    await harness.run_until_blocked(flow_b)
+
+    # Ein Event auf den SESSION-Channel → beide sehen Mail,
+    # aber nur einer kriegt das Event beim Pop
+    harness.send_session("shared", "one")
+
+    assert flow_a.control.is_runnable(flow_a, harness.session)
+    assert flow_b.control.is_runnable(flow_b, harness.session)
+
+    # Flow A poppt das Event und läuft durch
+    outcome = await harness.run_until_blocked(flow_a)
+    assert isinstance(outcome.control, Stop)
+    assert received == [("a", "one")]
+
+    # Flow B poppt None → ist wieder blockiert
+    assert not flow_b.control.is_runnable(flow_b, harness.session)
+
+    # Zweites Event → jetzt kriegt Flow B es
+    harness.send_session("shared", "two")
+    outcome = await harness.run_until_blocked(flow_b)
+    assert isinstance(outcome.control, Stop)
+    assert received == [("a", "one"), ("b", "two")]
