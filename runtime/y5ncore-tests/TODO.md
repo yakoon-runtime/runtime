@@ -8,10 +8,11 @@
 - Foreground-Flow wirft Exception → Scheduler killt den Flow und räumt Fokus
 - `scheduler.py:204-207`
 
-### P2: Parser — Command + Tokens
+### P2: Parser — Command + Tokens ✅
 
-- `start_cmd("ls -la --color", channel=ch)` → `cmd="ls"`, `tokens=["-la", "--color"]`
-- Sub-Flow bekommt die Tokens
+- `test_start_cmd_parses_tokens` in `test_commands.py`
+- `start_cmd("test --flag value", channel=ch)` → `cmd="test"`, `tokens=["--flag", "value"]`
+- Sub-Flow erhält Tokens via `ctx.request.args()`
 
 ### P3: Runner — Kein Foreground → Input startet neuen Flow
 
