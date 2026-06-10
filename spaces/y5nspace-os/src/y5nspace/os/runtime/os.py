@@ -14,10 +14,28 @@ CHANNEL = "os-result"
 MAX_RETRIES = 3
 
 BLACKLIST = {
-    "rm", "sudo", "su", "passwd", "shutdown", "reboot",
-    "systemctl", "curl", "wget", "scp", "ssh",
-    "mkfs", "dd", "fdisk", "chmod", "chown", "kill",
-    "apt", "dnf", "yum", "pip", "npm",
+    "rm",
+    "sudo",
+    "su",
+    "passwd",
+    "shutdown",
+    "reboot",
+    "systemctl",
+    "curl",
+    "wget",
+    "scp",
+    "ssh",
+    "mkfs",
+    "dd",
+    "fdisk",
+    "chmod",
+    "chown",
+    "kill",
+    "apt",
+    "dnf",
+    "yum",
+    "pip",
+    "npm",
 }
 
 SYSTEM_PROMPT = """Du bist ein OS-Assistent für {system}.
@@ -121,7 +139,7 @@ async def run(space: NodeSpace):
             return
 
         if "error" in parsed:
-            yield out_text(f"error: {parsed['error']}")
+            yield out_text(f"error: {parsed['error']}", mode="append")
             return
 
         command = parsed.get("command", "")
@@ -131,12 +149,15 @@ async def run(space: NodeSpace):
             yield out_text(f"rejected: {command}" if command else "invalid response")
             return
 
+        display = command if not args else f"{command} {' '.join(args)}"
+        yield out_text(f"$ {display}", mode="append")
+
         yield start_task(command, channel=CHANNEL, args=args)
         event = yield receive(CHANNEL, scope=Scope.SESSION)
         payload = event.payload
 
         if isinstance(payload, dict) and "error" in payload:
-            yield out_text(f"failed: {payload['error']}")
+            yield out_text(f"failed: {payload['error']}", mode="append")
             return
 
         stdout = payload.get("stdout", "")
@@ -145,15 +166,13 @@ async def run(space: NodeSpace):
 
         if returncode == 0 and not stderr:
             if stdout:
-                yield out_text(stdout)
+                yield out_text(stdout, mode="append")
             return
 
         if attempt < MAX_RETRIES:
             yield out_text(f"[retry {attempt + 1}/{MAX_RETRIES}]", mode="append")
             await asyncio.sleep(1)
-            messages.append(
-                LLMMessage(role="assistant", content=json.dumps(parsed))
-            )
+            messages.append(LLMMessage(role="assistant", content=json.dumps(parsed)))
             messages.append(
                 LLMMessage(
                     role="user",
@@ -168,7 +187,7 @@ async def run(space: NodeSpace):
             )
         else:
             if stdout:
-                yield out_text(stdout)
+                yield out_text(stdout, mode="append")
             if stderr:
-                yield out_text(f"stderr: {stderr}")
+                yield out_text(f"stderr: {stderr}", mode="append")
             return
