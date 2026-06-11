@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+
+import asyncio
+import sys
+
+from websockets.asyncio.server import serve
+from y5n.runtime.settings import Settings
+from y5n.runtime.wire.runtime import build_runtime
+from y5ntrans.websocket.server import WebSocketServerTransport
+
 """Start a headless runtime with WebSocket on a given port.
 
 Usage:
@@ -15,13 +24,6 @@ python scripts/serve-runtime.py 9101     # Headless Runtime B
 /connect ws://localhost:9100 und /connect ws://localhost:9101
 """
 
-import asyncio
-import sys
-
-from websockets.asyncio.server import serve
-from y5n.runtime.settings import Settings
-from y5n.runtime.wire.runtime import build_runtime
-from y5ntrans.websocket.server import WebSocketServerTransport
 
 HOST = "0.0.0.0"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 9100
