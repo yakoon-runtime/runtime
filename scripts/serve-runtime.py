@@ -6,6 +6,15 @@ Usage:
     python scripts/serve-runtime.py 9101 "y5nspace.shell,y5nspace.ident"
 """
 
+"""
+
+python scripts/serve-texture.py          # Texture
+python scripts/serve-runtime.py 9100     # Headless Runtime A
+python scripts/serve-runtime.py 9101     # Headless Runtime B
+
+/connect ws://localhost:9100 und /connect ws://localhost:9101
+"""
+
 import asyncio
 import sys
 
