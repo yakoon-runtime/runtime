@@ -65,11 +65,14 @@ class Agent:
         prompt: str,
         *,
         max_steps: int = 10,
+        max_repeat: int = 1,  # same action + same output twice in a row → loop
     ):
         self._llm = llm
         self._prompt = prompt
         self._max_steps = max_steps
+        self._max_repeat = max_repeat
         self._channel = f"_agent_{id(self)}"
+        self._loop_warning_given = False
         self.result: str | None = None
 
     async def run(
@@ -94,7 +97,11 @@ class Agent:
             LLMMessage(role="user", content=request),
         ]
 
-        for _step in range(self._max_steps):
+        step = 0
+        last_fingerprint: int | None = None
+        repeat_count = 0
+
+        while True:
             response = await self._llm.complete(LLMRequest(messages=messages))
             parsed = _find_json(response.text)
             if parsed is None:
@@ -119,7 +126,9 @@ class Agent:
             display = command if not args else f"{command} {' '.join(args)}"
             yield out_text(f"$ {display}")
 
-            yield start_task(command, channel=self._channel, args=args, scope=Scope.FLOW)
+            yield start_task(
+                command, channel=self._channel, args=args, scope=Scope.FLOW
+            )
             event = yield receive(self._channel, scope=Scope.FLOW)
             payload = event.payload
 
@@ -130,6 +139,34 @@ class Agent:
             stdout = payload.get("stdout", "")
             stderr = payload.get("stderr", "")
             returncode = payload.get("returncode", 0)
+
+            # --- loop detection ---
+            fingerprint = hash((command, tuple(args), stdout, stderr, returncode))
+            if fingerprint == last_fingerprint:
+                repeat_count += 1
+            else:
+                last_fingerprint = fingerprint
+                repeat_count = 0
+
+            if repeat_count >= self._max_repeat:
+                if self._loop_warning_given:
+                    self.result = "loop detected: same command produces same result"
+                    return
+                self._loop_warning_given = True
+                repeat_count = 0
+                last_fingerprint = None
+                yield out_text("! Wiederhole dieselbe Aktion — versuche anderen Ansatz.")
+                messages.append(
+                    LLMMessage(
+                        role="user",
+                        content="Du wiederholst dieselbe Aktion mit demselben Ergebnis. Versuche einen anderen Ansatz.",
+                    )
+                )
+                step += 1
+                if step >= self._max_steps:
+                    self.result = "max steps exceeded"
+                    return
+                continue
 
             output_lines = []
             if stdout:
@@ -153,4 +190,7 @@ class Agent:
                 )
             )
 
-        self.result = "max steps exceeded"
+            step += 1
+            if step >= self._max_steps:
+                self.result = "max steps exceeded"
+                return
