@@ -3,10 +3,9 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncGenerator, Iterable
 
-from y5n.base.flow.dsl import Outcome
-
 from y5n.api.dsl import out_text, receive, start_task
 from y5n.base.flow.channel import Scope
+from y5n.base.flow.dsl import Outcome
 from y5n.base.llm import LLMMessage, LLMRequest, OnCallLLM
 
 
@@ -47,11 +46,11 @@ class Agent:
     """Reusable multi-step agent loop.
 
     Encapsulates the pattern:
-      system prompt → LLM call → parse → execute → observe → loop → done
+      system prompt -> LLM call -> parse -> execute -> observe -> loop -> done
 
     Usage in a handler:
 
-        agent = Agent(llm, SYSTEM_PROMPT, channel="os-result")
+        agent = Agent(llm, SYSTEM_PROMPT)
         yield agent.run(
             request="wie viele PDFs?",
             context={"user": "sbergmann"},
@@ -65,13 +64,12 @@ class Agent:
         llm: OnCallLLM,
         prompt: str,
         *,
-        channel: str = "agent",
         max_steps: int = 10,
     ):
         self._llm = llm
         self._prompt = prompt
-        self._channel = channel
         self._max_steps = max_steps
+        self._channel = f"_agent_{id(self)}"
         self.result: str | None = None
 
     async def run(
@@ -96,7 +94,7 @@ class Agent:
             LLMMessage(role="user", content=request),
         ]
 
-        for step in range(self._max_steps):
+        for _step in range(self._max_steps):
             response = await self._llm.complete(LLMRequest(messages=messages))
             parsed = _find_json(response.text)
             if parsed is None:
@@ -121,8 +119,8 @@ class Agent:
             display = command if not args else f"{command} {' '.join(args)}"
             yield out_text(f"$ {display}")
 
-            yield start_task(command, channel=self._channel, args=args)
-            event = yield receive(self._channel, scope=Scope.SESSION)
+            yield start_task(command, channel=self._channel, args=args, scope=Scope.FLOW)
+            event = yield receive(self._channel, scope=Scope.FLOW)
             payload = event.payload
 
             if isinstance(payload, dict) and "error" in payload:

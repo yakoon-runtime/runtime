@@ -29,7 +29,6 @@ async def run(space: NodeSpace):
     agent = Agent(
         llm=llm,
         prompt=SYSTEM_PROMPT,
-        channel="agent-demo",
         max_steps=5,
     )
 

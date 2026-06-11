@@ -9,7 +9,6 @@ from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnCallLLM
 from y5n.llm.agents import Agent
 
-CHANNEL = "os-result"
 MAX_STEPS = 10
 
 BLACKLIST = {
@@ -71,7 +70,6 @@ async def run(space: NodeSpace):
     agent = Agent(
         llm=llm,
         prompt=SYSTEM_PROMPT,
-        channel=CHANNEL,
         max_steps=MAX_STEPS,
     )
 
