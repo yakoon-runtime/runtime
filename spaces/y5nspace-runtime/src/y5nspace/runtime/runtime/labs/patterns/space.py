@@ -1,6 +1,8 @@
 from y5n.api.nodes import Node
 
+from .agent import run as agent
 from .form import run as form
+from .setup import setup
 
 # ----------------------------------
 # PATTERNS
@@ -11,16 +13,31 @@ patterns = Node(
     anonymous=True,
     navigable=True,
     resolvable=False,
+    setup=setup,
 )
 
 # ----------------------------------
-# RECEIVE
+# FORM
 # ----------------------------------
 
 patterns.add(
     Node(
         key="form",
         run=form,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+    )
+)
+
+# ----------------------------------
+# AGENT (Demo)
+# ----------------------------------
+
+patterns.add(
+    Node(
+        key="agent",
+        run=agent,
         anonymous=True,
         resolvable=True,
         navigable=False,
