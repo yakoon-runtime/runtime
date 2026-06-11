@@ -215,6 +215,7 @@ class CommandEngine:
                 await self.on_start_task(
                     command=effect.command,
                     channel=effect.channel,
+                    scope=effect.scope,
                     kwargs=effect.kwargs,
                     flow=flow,
                     session=session,
@@ -285,6 +286,7 @@ class OnTaskStart(Protocol):
         *,
         command: str,
         channel: str,
+        scope: Scope,
         kwargs: dict,
         flow: Flow,
         session: Session,

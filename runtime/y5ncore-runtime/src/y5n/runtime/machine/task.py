@@ -21,10 +21,10 @@ class TaskRunner:
     def on_error(self, on_error: OnTaskError):
         self._on_error = on_error
 
-    async def start(self, *, command: str, channel: str, kwargs: Mapping, flow: Flow, session: Session) -> None:
-        asyncio.create_task(self._run(command, channel, kwargs, flow, session))
+    async def start(self, *, command: str, channel: str, scope: Scope, kwargs: Mapping, flow: Flow, session: Session) -> None:
+        asyncio.create_task(self._run(command, channel, scope, kwargs, flow, session))
 
-    async def _run(self, command: str, channel: str, kwargs: Mapping, flow: Flow, session: Session) -> None:
+    async def _run(self, command: str, channel: str, scope: Scope, kwargs: Mapping, flow: Flow, session: Session) -> None:
         try:
             try:
                 args = kwargs.get("args", [])
@@ -45,7 +45,7 @@ class TaskRunner:
             except Exception as e:
                 result = {"error": str(e)}
 
-            session.push_event(Scope.SESSION, channel, Event(payload=result))
+            session.push_event(scope, channel, Event(payload=result))
             self._on_complete(flow=flow, session=session)
         except Exception as e:
             await self._on_error(flow=flow, session=session, error=e)

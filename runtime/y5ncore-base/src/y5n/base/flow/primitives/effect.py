@@ -66,14 +66,15 @@ class StartTask(Effect):
     """Run an OS process as a background task.
 
     The process runs independently and sends its result (returncode,
-    stdout, stderr) to *channel* (SESSION scope).
+    stdout, stderr) to *channel* on the given scope.
     """
 
-    def __init__(self, command: str, channel: str, **kwargs):
+    def __init__(self, command: str, channel: str, *, scope: Scope = Scope.SESSION, **kwargs):
         if not channel:
             raise ValueError("channel must be a non-empty string")
         self.command = command
         self.channel = channel
+        self.scope = scope
         self.kwargs = kwargs
 
 

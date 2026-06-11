@@ -234,12 +234,12 @@ def view(**view_params) -> Outcome:
     )
 
 
-def start_task(command: str, *, channel: str, **kwargs) -> Outcome:
+def start_task(command: str, *, channel: str, scope: Scope = Scope.SESSION, **kwargs) -> Outcome:
     """
     Start a background task.
 
     The task runs independently and sends its result to the given
-    channel (SESSION scope). The caller reads it with receive().
+    channel on the specified scope. The caller reads it with receive().
 
     Usage:
         yield start_task("python3", channel=ch, args=["-c", "print(42)"])
@@ -247,7 +247,7 @@ def start_task(command: str, *, channel: str, **kwargs) -> Outcome:
     """
     return Outcome(
         effects=[
-            StartTask(command, channel, **kwargs),
+            StartTask(command, channel, scope=scope, **kwargs),
         ]
     )
 
