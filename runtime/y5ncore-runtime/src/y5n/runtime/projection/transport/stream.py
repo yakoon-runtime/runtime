@@ -65,7 +65,6 @@ class EventStreamOutput:
                 session=session,
                 projection_id=projection.id,
             )
-            raise
 
         else:
             await self.on_finish(

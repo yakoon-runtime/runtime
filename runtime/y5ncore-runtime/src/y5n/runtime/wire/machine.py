@@ -62,7 +62,7 @@ def build_machine(
         node: Node,
         session,
         error: Exception,
-    ) -> Projection | None:
+    ) -> Projection:
         try:
             on_error = node.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)

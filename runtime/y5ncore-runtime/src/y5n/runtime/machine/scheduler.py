@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import heapq
+import logging
 import time
 from collections import deque
 from collections.abc import Awaitable, Callable
@@ -241,8 +242,11 @@ class Scheduler:
                 self.schedule_flow(flow, session)
 
     async def _call_runtime(
-        self, session: Session, ctx: InputContext | None,
-        callback: Callable[..., Awaitable[Flow | None]], **kwargs
+        self,
+        session: Session,
+        ctx: InputContext | None,
+        callback: Callable[..., Awaitable[Flow | None]],
+        **kwargs,
     ):
         node: Node | None = None
         try:
@@ -305,18 +309,29 @@ class Scheduler:
 
     async def _show_error(self, session, ctx, node, error):
 
-        projection = await self.on_error_resolve(
-            node=node or self.platform,
-            session=session,
-            error=error,
-        )
+        try:
+            projection = await self.on_error_resolve(
+                node=node or self.platform,
+                session=session,
+                error=error,
+            )
 
-        if projection:
             await self.on_show_projection(
                 session=session,
                 projection=projection,
                 ctx=ctx,
                 job_id=uuid4().hex,
+            )
+        except Exception:
+            logger = logging.getLogger("error")
+            logger.critical(
+                "Error while showing error projection for: %s",
+                error,
+                exc_info=True,
+            )
+            logger.critical(
+                "Original error that triggered _show_error:",
+                exc_info=(type(error), error, error.__traceback__),
             )
 
 
@@ -359,4 +374,4 @@ class OnErrorResolve(Protocol):
         node: Node,
         session: Session,
         error: Exception,
-    ) -> Projection | None: ...
+    ) -> Projection: ...

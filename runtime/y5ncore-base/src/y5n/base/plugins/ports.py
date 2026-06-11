@@ -35,7 +35,7 @@ class OnErrorResolve(Protocol):
         key: NodePath,
         session: Session,
         error: Exception,
-    ) -> Projection | None: ...
+    ) -> Projection: ...
 
 
 class OnSessionSave(Protocol):
