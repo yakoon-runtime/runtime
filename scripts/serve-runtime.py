@@ -5,22 +5,25 @@ Usage:
     python scripts/serve-runtime.py 9100 "y5nspace.shell,y5nspace.os"
     python scripts/serve-runtime.py 9101 "y5nspace.shell,y5nspace.ident"
 """
+
 import asyncio
 import sys
 
 from websockets.asyncio.server import serve
-
 from y5n.runtime.settings import Settings
 from y5n.runtime.wire.runtime import build_runtime
 from y5ntrans.websocket.server import WebSocketServerTransport
 
-
 HOST = "0.0.0.0"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 9100
-PLUGINS = sys.argv[2].split(",") if len(sys.argv) > 2 else [
-    "y5nspace.shell",
-    "y5nspace.os",
-]
+PLUGINS = (
+    sys.argv[2].split(",")
+    if len(sys.argv) > 2
+    else [
+        "y5nspace.shell",
+        "y5nspace.os",
+    ]
+)
 
 
 async def handler(websocket):
