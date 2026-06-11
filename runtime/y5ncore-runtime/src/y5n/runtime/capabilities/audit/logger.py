@@ -4,8 +4,10 @@ from pathlib import Path
 
 from y5n.runtime.settings import Settings
 
-logdir = Path("logs")
-logdir.mkdir(exist_ok=True)
+settings = Settings()
+
+logdir = Path(settings.logging.log_dir).expanduser()
+logdir.mkdir(parents=True, exist_ok=True)
 
 
 def file_logger(name, filename, level=logging.INFO):
@@ -28,7 +30,6 @@ def file_logger(name, filename, level=logging.INFO):
     return logger
 
 
-settings = Settings()
 if settings.logging.log_audits:
     file_logger("audit", "y5n.audit.log")
 if settings.logging.log_security:

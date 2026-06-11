@@ -22,5 +22,5 @@ class LoggingSettings:
     log_to_file: bool = False
     """If True, logs will also be written to a file."""
 
-    log_file_path: str = "y5n.log"
-    """Path to the log file if log_to_file is enabled."""
+    log_dir: str = "logs"
+    """Directory for log files. Supports ~ expansion."""
