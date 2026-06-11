@@ -102,8 +102,14 @@ class Agent:
         repeat_count = 0
 
         while True:
+
+            # -----------------
+            # THINK
+            # -----------------
+
             response = await self._llm.complete(LLMRequest(messages=messages))
             parsed = _find_json(response.text)
+
             if parsed is None:
                 self.result = f"invalid response: {response.text}"
                 return
@@ -123,6 +129,10 @@ class Agent:
                 self.result = f"rejected: {command}" if command else "invalid response"
                 return
 
+            # -----------------
+            # ACT
+            # -----------------
+
             display = command if not args else f"{command} {' '.join(args)}"
             yield out_text(f"$ {display}")
 
@@ -140,7 +150,10 @@ class Agent:
             stderr = payload.get("stderr", "")
             returncode = payload.get("returncode", 0)
 
-            # --- loop detection ---
+            # -----------------
+            # LOOP DETECTION
+            # -----------------
+
             fingerprint = hash((command, tuple(args), stdout, stderr, returncode))
             if fingerprint == last_fingerprint:
                 repeat_count += 1
@@ -167,6 +180,10 @@ class Agent:
                     self.result = "max steps exceeded"
                     return
                 continue
+
+            # -----------------
+            # OBSERVE
+            # -----------------
 
             output_lines = []
             if stdout:
