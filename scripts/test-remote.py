@@ -75,9 +75,9 @@ async def main():
 
     async def stream_remote_flow(ctx):
         ch = uuid.uuid4().hex
-        yield out_text("── Calling Runtime B (stream) ──")
+        yield out_text("── Calling Runtime B (stream) ──", mode="append")
         yield start_cmd("stream", channel=ch, remote="ws://localhost:9101")
-        yield out_text("── Stream done ──")
+        yield out_text("── Stream done ──", mode="append")
         yield Outcome()
 
     runtime_a = build_runtime(
