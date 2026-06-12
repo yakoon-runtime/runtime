@@ -212,29 +212,3 @@ def build_runtime(
         on_audit_warning=audit_service.warning,
         on_initialize=initialize,
     )
-
-
-# def _compose_policies(c):
-#     policy = "get(FieldPolicyEngine)"
-#     policy.register_defaults()
-#     policy.register_policies(
-#         [
-#             FieldPolicy(
-#                 key="customer.first_name",
-#                 type=FieldType.STRING,
-#                 required=False,
-#             ),
-#             FieldPolicy(
-#                 key="customer.age",
-#                 hint="mit hint",
-#                 type=FieldType.INT,
-#                 required=False,
-#             ),
-#             FieldPolicy(
-#                 key="auth.password",
-#                 hint="kein Echo",
-#                 type=FieldType.STRING,
-#                 secret=True,
-#             ),
-#         ]
-#     )
