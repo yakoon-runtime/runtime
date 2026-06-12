@@ -5,7 +5,6 @@ from .cd import run as cd
 from .clear import run as clear
 from .ls import run as ls
 from .man import run as man
-from .net import run as net
 from .pwd import run as pwd
 
 # ----------------------------------
@@ -92,21 +91,6 @@ system.add(
     Node(
         key="clear",
         run=clear,
-        anonymous=True,
-        scope=NodeScope.GLOBAL,
-        resolvable=True,
-        navigable=False,
-    )
-)
-
-# ----------------------------------
-# NET - SHOW REMOTE RUNTIMES
-# ----------------------------------
-
-system.add(
-    Node(
-        key="net",
-        run=net,
         anonymous=True,
         scope=NodeScope.GLOBAL,
         resolvable=True,

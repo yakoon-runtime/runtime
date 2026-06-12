@@ -31,6 +31,7 @@ PLUGINS = (
     sys.argv[2].split(",")
     if len(sys.argv) > 2
     else [
+        "y5nspace.runtime",
         "y5nspace.shell",
         "y5nspace.os",
     ]
