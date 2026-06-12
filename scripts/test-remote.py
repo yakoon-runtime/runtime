@@ -69,20 +69,21 @@ async def main():
     async def call_flow(ctx):
         ch = uuid.uuid4().hex
         yield out_text("── Calling Runtime B (hello) ──")
-        yield start_cmd("hello", channel=ch, remote="ws://localhost:9101")
+        yield start_cmd("hello", channel=ch, remote="office")
         yield out_text("── Done ──")
         yield Outcome()
 
     async def stream_remote_flow(ctx):
         ch = uuid.uuid4().hex
         yield out_text("── Calling Runtime B (stream) ──", mode="append")
-        yield start_cmd("stream", channel=ch, remote="ws://localhost:9101")
+        yield start_cmd("stream", channel=ch, remote="office")
         yield out_text("── Stream done ──", mode="append")
         yield Outcome()
 
     runtime_a = build_runtime(
         plugins=["y5nspace.shell"],
         settings=Settings(),
+        known_runtimes={"office": "ws://localhost:9101"},
         nodes=[
             Node(
                 key="call",

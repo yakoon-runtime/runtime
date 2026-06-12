@@ -28,6 +28,7 @@ class RuntimeHost:
         on_get_session: OnGetSession,
         on_create_runner: OnCreateRunner,
         on_setup: OnSetup,
+        known_runtimes: dict[str, str] | None = None,
         info: RuntimeInfo,
     ):
         self.on_flow_schedule = on_schedule
@@ -35,6 +36,7 @@ class RuntimeHost:
         self.on_get_session = on_get_session
         self.on_create_runner = on_create_runner
         self.on_setup = on_setup
+        self.known_runtimes = known_runtimes or {}
         self.info = info
 
         self._sessions: dict[Key, Runner] = {}
@@ -52,6 +54,11 @@ class RuntimeHost:
         self, session_key: str, callback: Callable[[], Awaitable[None]]
     ) -> None:
         self._session_done[session_key] = callback
+
+    def resolve_runtime(self, name: str) -> str:
+        if "://" in name:
+            return name
+        return self.known_runtimes[name]
 
     async def flow_complete(self, flow, session) -> None:
         done = self._session_done.get(str(session.key))

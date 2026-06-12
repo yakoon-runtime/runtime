@@ -60,6 +60,7 @@ def build_runtime(
     *,
     plugins: list[str] | None = None,
     nodes: list[Node] | None = None,
+    known_runtimes: dict[str, str] | None = None,
     capabilities: CapabilitySelection | None = None,
     settings: Settings,
 ) -> RuntimeHost:
@@ -211,4 +212,5 @@ def build_runtime(
         on_has_permission=perm_checker.can_execute,
         on_audit_warning=audit_service.warning,
         on_initialize=initialize,
+        known_runtimes=known_runtimes,
     )

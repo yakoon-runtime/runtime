@@ -40,6 +40,7 @@ def build_machine(
     on_has_permission: OnHasPermission,
     on_audit_warning: OnAuditWarning,
     on_initialize: Oninitialize,
+    known_runtimes: dict[str, str] | None = None,
 ) -> RuntimeHost:
 
     # ---------------
@@ -94,7 +95,7 @@ def build_machine(
         remote: str | None = None,
     ):
         if remote:
-            conn = RuntimeConnection(url=remote)
+            conn = RuntimeConnection(url=host.resolve_runtime(remote))
 
             async def on_remote_done():
                 session.push_event(Scope.SESSION, channel, Event(payload=None))
@@ -219,6 +220,7 @@ def build_machine(
         on_create_runner=create_runner,
         on_get_session=session_builder.create,
         on_setup=setup_nodes,
+        known_runtimes=known_runtimes,
         info=resolve_runtime_info(),
     )
 
