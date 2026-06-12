@@ -2,7 +2,7 @@ from y5n.api.nodes import Node, NodeScope
 
 from .runtime.jobs.space import jobs
 from .runtime.labs.space import labs
-from .runtime.net import run as net
+from .runtime.net.space import net
 from .runtime.setup import setup
 from .runtime.version import run as version
 from .runtime.welcome import run as welcome
@@ -49,20 +49,6 @@ runtime.add(
     )
 )
 
-# ----------------------------------
-# NET - SHOW KNOWN REMOTE RUNTIMES
-# ----------------------------------
-
-runtime.add(
-    Node(
-        key="net",
-        run=net,
-        anonymous=True,
-        scope=NodeScope.GLOBAL,
-        resolvable=True,
-        navigable=False,
-    )
-)
-
 runtime.mount(labs)
 runtime.mount(jobs)
+runtime.mount(net)
