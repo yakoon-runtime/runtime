@@ -1,4 +1,4 @@
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .chat import run as chat
 from .llm import run as llm
@@ -42,7 +42,7 @@ demos.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
+        # scope=NodeScope.GLOBAL,
     )
 )
 
@@ -57,6 +57,6 @@ demos.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
+        # scope=NodeScope.GLOBAL,
     )
 )

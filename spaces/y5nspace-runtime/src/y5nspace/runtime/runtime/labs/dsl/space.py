@@ -1,5 +1,4 @@
 from y5n.api.nodes import Node
-from y5n.base.nodes.types import NodeScope
 
 from .cmd import run as cmd
 from .delay import run as delay
@@ -31,7 +30,7 @@ dsl.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
+        # scope=NodeScope.GLOBAL,
     )
 )
 
@@ -45,7 +44,7 @@ dsl.add(
         run=cmd,
         anonymous=True,
         resolvable=True,
-        scope=NodeScope.GLOBAL,
+        # scope=NodeScope.GLOBAL,
         navigable=False,
     )
 )
