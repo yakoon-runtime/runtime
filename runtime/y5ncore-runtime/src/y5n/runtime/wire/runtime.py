@@ -1,3 +1,4 @@
+import copy
 from typing import Literal, TypeAlias
 
 from y5n.base.nodes import Node, NodePath, NodeScope, UnknowOptionsError, UsageError
@@ -61,6 +62,7 @@ def build_runtime(
     plugins: list[str] | None = None,
     capabilities: CapabilitySelection | None = None,
     settings: Settings,
+    extra_nodes: list[Node] | None = None,
 ) -> RuntimeHost:
 
     # -----------------
@@ -164,7 +166,14 @@ def build_runtime(
     # --- ATTACHING ---
     # -----------------
 
+    nodes_to_mount: list[Node] = []
     for node in nodes:
+        nodes_to_mount.append(copy.deepcopy(node))
+    if extra_nodes:
+        for node in extra_nodes:
+            nodes_to_mount.append(copy.deepcopy(node))
+
+    for node in nodes_to_mount:
         platform.mount(node)
 
     # --------------------

@@ -86,7 +86,17 @@ def build_machine(
         channel: str,
         flow,
         session,
+        remote: str | None = None,
     ):
+        if remote:
+            from y5ntrans.websocket.client import WebSocketClientTransport
+
+            transport = WebSocketClientTransport(remote)
+            connection = await transport.connect(session.emit)
+            await connection.dispatch(Event(payload=command))
+            session.push_event(Scope.SESSION, channel, Event(payload=None))
+            return
+
         event = Event(payload=command)
         try:
             new_flow = await engine.dispatch(session=session, event=event)
