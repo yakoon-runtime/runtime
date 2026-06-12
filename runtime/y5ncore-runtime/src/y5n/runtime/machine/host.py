@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from typing import Protocol
 
 from y5n.base.clients.connection import ClientConnection
@@ -32,7 +33,7 @@ class RuntimeHost:
         info: RuntimeInfo,
     ):
         self.platform = platform
-        self.on_schedule = on_schedule
+        self.on_flow_schedule = on_schedule
         self.on_join_bus = on_join_bus
         self.on_get_session = on_get_session
         self.on_create_runner = on_create_runner
@@ -42,12 +43,23 @@ class RuntimeHost:
         self._sessions: dict[Key, Runner] = {}
         self._connections: dict[ClientConnection, Runner] = {}
         self._session_counter = 0
+        self._session_done: dict[str, Callable] = {}
 
-        asyncio.create_task(self.on_schedule())
+        asyncio.create_task(self.on_flow_schedule())
 
     async def setup(self):
         session = await self.on_get_session()
         await self.on_setup(session)
+
+    def register_session_done(
+        self, session_key: str, callback: Callable[[], Awaitable[None]]
+    ) -> None:
+        self._session_done[session_key] = callback
+
+    async def flow_complete(self, flow, session) -> None:
+        done = self._session_done.get(str(session.key))
+        if done:
+            await done()
 
     async def connect(
         self,
@@ -71,7 +83,7 @@ class RuntimeHost:
             # await self.engine.dispatch(session, initial_command)
 
         self._connections[connection] = runner
-        return connection
+        return runner.session
 
     async def disconnect(self, connection: ClientConnection):
         runner = self._connections.pop(connection, None)
@@ -97,6 +109,7 @@ class RuntimeHost:
 
     def _has_connections(self, runner: Runner) -> bool:
         return any(r is runner for r in self._connections.values())
+
 
 # ----------------------------------
 # PORTS

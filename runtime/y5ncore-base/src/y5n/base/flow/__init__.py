@@ -1,3 +1,4 @@
+from .channel import Scope
 from .dsl import (
     background,
     delay,
@@ -15,6 +16,8 @@ from .dsl import (
 )
 
 __all__ = [
+    # .channel
+    "Scope",
     # .dsl
     "prompt",
     "out",

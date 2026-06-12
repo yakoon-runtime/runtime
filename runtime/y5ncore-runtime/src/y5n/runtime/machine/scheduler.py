@@ -51,6 +51,7 @@ class Scheduler:
         on_show_projection: OnShowProjection,
         on_audit_warning: OnAuditWarning,
         on_error_resolve: OnErrorResolve,
+        on_flow_complete: OnFlowComplete,
     ):
         self.platform = platform
 
@@ -61,6 +62,7 @@ class Scheduler:
         self.on_show_projection = on_show_projection
         self.on_audit_warning = on_audit_warning
         self.on_error_resolve = on_error_resolve
+        self.on_flow_complete = on_flow_complete
 
         # Flow-basierte Queue: (session, flow)
         self._ready_user = deque()
@@ -296,13 +298,15 @@ class Scheduler:
             # 3. Parent wecken (Projection liegt
             #    bereits im Channel)
             # ----------------------------------
-            if isinstance(control, Stop) and flow.out_channel:
-                session.push_event(
-                    Scope.SESSION,
-                    flow.out_channel,
-                    Event(payload=None),
-                )
-                self._schedule_waiting(session, flow.out_channel)
+            if isinstance(control, Stop):
+                if flow.out_channel:
+                    session.push_event(
+                        Scope.SESSION,
+                        flow.out_channel,
+                        Event(payload=None),
+                    )
+                    self._schedule_waiting(session, flow.out_channel)
+                await self.on_flow_complete(flow, session)
             return
 
         raise RuntimeError(f"Unhandled control: {type(control)}")
@@ -381,3 +385,11 @@ class OnErrorResolve(Protocol):
         session: Session,
         error: Exception,
     ) -> Projection: ...
+
+
+class OnFlowComplete(Protocol):
+    async def __call__(
+        self,
+        flow: Flow,
+        session: Session,
+    ) -> None: ...

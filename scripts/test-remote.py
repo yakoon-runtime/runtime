@@ -12,11 +12,11 @@ Usage:
   # Type "call"   → remote hello on B
   # Type "stream" → remote stream (1..2..3 with 1s delays)
 """
+
 import asyncio
 import uuid
 
 from websockets.asyncio.server import serve
-
 from y5n.base.flow.dsl import delay, out_text, start_cmd
 from y5n.base.flow.primitives import Outcome
 from y5n.base.nodes import Node, NodeScope
@@ -41,10 +41,22 @@ async def main():
 
     runtime_b = build_runtime(settings=Settings())
     runtime_b.platform.mount(
-        Node(key="hello", run=hello_flow, scope=NodeScope.GLOBAL),
+        Node(
+            key="hello",
+            run=hello_flow,
+            scope=NodeScope.GLOBAL,
+            anonymous=True,
+            resolvable=True,
+        ),
     )
     runtime_b.platform.mount(
-        Node(key="stream", run=stream_flow, scope=NodeScope.GLOBAL),
+        Node(
+            key="stream",
+            run=stream_flow,
+            scope=NodeScope.GLOBAL,
+            anonymous=True,
+            resolvable=True,
+        ),
     )
     await runtime_b.setup()
 
@@ -73,10 +85,22 @@ async def main():
         settings=Settings(),
     )
     runtime_a.platform.mount(
-        Node(key="call", run=call_flow, scope=NodeScope.GLOBAL),
+        Node(
+            key="call",
+            run=call_flow,
+            scope=NodeScope.GLOBAL,
+            anonymous=True,
+            resolvable=True,
+        ),
     )
     runtime_a.platform.mount(
-        Node(key="stream", run=stream_remote_flow, scope=NodeScope.GLOBAL),
+        Node(
+            key="stream",
+            run=stream_remote_flow,
+            scope=NodeScope.GLOBAL,
+            anonymous=True,
+            resolvable=True,
+        ),
     )
     await runtime_a.setup()
 
@@ -86,8 +110,7 @@ async def main():
         await recv()
 
     # ────────── Serve ──────────
-    async with serve(handler_b, "0.0.0.0", 9101), \
-              serve(handler_a, "0.0.0.0", 9100):
+    async with serve(handler_b, "0.0.0.0", 9101), serve(handler_a, "0.0.0.0", 9100):
         print("=" * 55)
         print("Runtimes ready:")
         print("  A: ws://localhost:9100")

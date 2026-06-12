@@ -13,9 +13,7 @@ class WebSocketServerTransport:
 
     async def connect(self, websocket):
 
-        # ------------------------
         # Runtime → Client
-        # ------------------------
         async def send(event):
             payload = {
                 "type": "projection",
@@ -23,9 +21,7 @@ class WebSocketServerTransport:
             }
             await websocket.send(json.dumps(payload))
 
-        # ------------------------
         # Client → Runtime
-        # ------------------------
         async def send_input(event):
             await self._host.receive_input(connection, event)
 
@@ -34,12 +30,16 @@ class WebSocketServerTransport:
             dispatch=send_input,
         )
 
-        # Runtime verbinden
-        await self._host.connect(connection)
+        session = await self._host.connect(connection)
 
-        # ------------------------
-        # RECEIVE LOOP (WICHTIG)
-        # ------------------------
+        # Sende "done" über WS wenn ein Flow auf diesem Host
+        # komplettiert wird.
+        async def session_done():
+            await websocket.send(json.dumps({"type": "done"}))
+
+        self._host.register_session_done(str(session.key), session_done)
+
+        # RECEIVE LOOP
         async def receive_loop():
             try:
                 async for msg in websocket:

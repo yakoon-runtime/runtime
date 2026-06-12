@@ -41,6 +41,7 @@ def scheduler(engine):
         on_show_projection=AsyncMock(),
         on_audit_warning=lambda **kw: None,
         on_error_resolve=AsyncMock(return_value=None),
+        on_flow_complete=AsyncMock(),
     )
 
 

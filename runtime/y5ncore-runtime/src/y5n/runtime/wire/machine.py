@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
-from y5n.base.flow.channel import Scope
+from y5n.base.flow import Scope
 from y5n.base.naming import Key
 from y5n.base.nodes import Node
 from y5n.base.plugins.ports import OnErrorResolve
@@ -12,6 +12,7 @@ from y5n.runtime.connections import (
     RuntimeConnection,
     SessionProjectionRouter,
 )
+from y5n.runtime.flow import Flow
 from y5n.runtime.machine import (
     CommandEngine,
     InputParser,
@@ -94,7 +95,15 @@ def build_machine(
     ):
         if remote:
             conn = RuntimeConnection(url=remote)
+
+            async def on_remote_done():
+                session.push_event(Scope.SESSION, channel, Event(payload=None))
+                # Transport cleanup is handled by the receive-loop finally block.
+                # We do NOT call conn.close() here because we are inside the
+                # transport's own receive-loop task.
+
             await conn.open(on_projection=SessionProjectionRouter(session))
+            conn.set_on_done(on_remote_done)
             await conn.dispatch(Event(payload=command))
             return
 
@@ -119,13 +128,16 @@ def build_machine(
         on_resolve_node=resolver.resolve,
         on_parse_input=parser.parse,
         on_projection=on_projection_send,
-        on_start_task=task_runner.start,  # async, signature: command/channel/kwargs/flow/session
+        on_start_task=task_runner.start,
         on_start_command=on_start_command,
     )
 
     # -----------------
-    # --- EXECUTION ---
+    # --- SCHEDULER ---
     # -----------------
+
+    async def flow_complete(flow: Flow, session: Session) -> None:
+        await host.flow_complete(flow, session)
 
     scheduler = Scheduler(
         platform=platform,
@@ -135,18 +147,18 @@ def build_machine(
         on_show_projection=on_projection_send,
         on_audit_warning=on_audit_warning,
         on_error_resolve=on_error_resolve,
+        on_flow_complete=flow_complete,
     )
 
     # -------------------------
     # --- ON TASK COMPLETED ---
     # -------------------------
 
-    task_runner.on_complete(scheduler.schedule_flow)
-
     async def on_task_error(*, flow, session, error):
         await on_error_resolve(node=flow.node, session=session, error=error)
 
     task_runner.on_error(on_task_error)
+    task_runner.on_complete(scheduler.schedule_flow)
 
     # ------------------------
     # --- SESSION HANDLING ---
@@ -201,7 +213,7 @@ def build_machine(
     # --- HOSTING ---
     # ---------------
 
-    return RuntimeHost(
+    host = RuntimeHost(
         platform=platform,
         on_schedule=scheduler.run,
         on_join_bus=bus.join,
@@ -210,6 +222,8 @@ def build_machine(
         on_setup=setup_nodes,
         info=resolve_runtime_info(),
     )
+
+    return host
 
 
 # ----------------------------------
