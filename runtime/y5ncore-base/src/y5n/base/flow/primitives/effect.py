@@ -85,8 +85,9 @@ class StartCommand(Effect):
     (SESSION scope). The caller reads the result with receive().
     """
 
-    def __init__(self, command: str, channel: str):
+    def __init__(self, command: str, channel: str, remote: str | None = None):
         if not channel:
             raise ValueError("channel must be a non-empty string")
         self.command = command
         self.channel = channel
+        self.remote = remote

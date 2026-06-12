@@ -252,7 +252,7 @@ def start_task(command: str, *, channel: str, scope: Scope = Scope.SESSION, **kw
     )
 
 
-def start_cmd(command: str, *, channel: str) -> Outcome:
+def start_cmd(command: str, *, channel: str, remote: str | None = None) -> Outcome:
     """
     Start a runtime command as a sub-flow.
 
@@ -266,6 +266,6 @@ def start_cmd(command: str, *, channel: str) -> Outcome:
     """
     return Outcome(
         effects=[
-            StartCommand(command, channel),
+            StartCommand(command, channel, remote=remote),
         ]
     )

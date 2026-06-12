@@ -227,6 +227,7 @@ class CommandEngine:
                     channel=effect.channel,
                     flow=flow,
                     session=session,
+                    remote=effect.remote,
                 )
 
     async def _next_step(
@@ -299,8 +300,9 @@ class OnCommandStart(Protocol):
         *,
         command: str,
         channel: str,
-        flow: Flow,
-        session: Session,
+        flow,
+        session,
+        remote: str | None = None,
     ) -> None: ...
 
 
