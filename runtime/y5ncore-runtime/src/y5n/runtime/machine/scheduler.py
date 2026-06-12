@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable
 from typing import Protocol
 from uuid import uuid4
 
+from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import (
     AwaitEvent,
     Control,
@@ -296,6 +297,11 @@ class Scheduler:
             #    bereits im Channel)
             # ----------------------------------
             if isinstance(control, Stop) and flow.out_channel:
+                session.push_event(
+                    Scope.SESSION,
+                    flow.out_channel,
+                    Event(payload=None),
+                )
                 self._schedule_waiting(session, flow.out_channel)
             return
 

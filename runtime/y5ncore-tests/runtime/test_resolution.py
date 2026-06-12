@@ -44,7 +44,7 @@ async def test_command_resolves_and_dispatches_subflow(harness):
     harness.engine.on_resolve_command = resolve_node
 
     # Echter on_start_command: dispatch + schedule
-    async def on_start_command(*, command, channel, flow, session):
+    async def on_start_command(*, command, channel, flow, session, remote=None):
         nonlocal created_flow
         event = Event(payload=command)
         new_flow = await harness.engine.dispatch(session=session, event=event)
@@ -102,7 +102,7 @@ async def test_command_unresolvable_sends_none(harness):
     harness.engine.on_parse_input = parse_input
     harness.engine.on_resolve_command = resolve_node
 
-    async def on_start_command(*, command, channel, flow, session):
+    async def on_start_command(*, command, channel, flow, session, remote=None):
         event = Event(payload=command)
         try:
             new_flow = await harness.engine.dispatch(session=session, event=event)

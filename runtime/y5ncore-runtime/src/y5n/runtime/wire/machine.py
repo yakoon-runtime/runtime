@@ -96,18 +96,22 @@ def build_machine(
             conn = RuntimeConnection(url=remote)
             await conn.open(on_projection=SessionProjectionRouter(session))
             await conn.dispatch(Event(payload=command))
-            session.push_event(Scope.SESSION, channel, Event(payload=None))
             return
 
         event = Event(payload=command)
         try:
             new_flow = await engine.dispatch(session=session, event=event)
             if new_flow is None:
+                # No flow was created (command not found / not executable).
+                # The scheduler will never push a completion event,
+                # so we must unblock the waiting caller ourselves.
                 session.push_event(Scope.SESSION, channel, Event(payload=None))
                 return
             new_flow.out_channel = channel
             scheduler.schedule_flow(new_flow, session)
         except Exception:
+            # An exception during dispatch means no flow was scheduled.
+            # The scheduler will not push completion — unblock the caller.
             session.push_event(Scope.SESSION, channel, Event(payload=None))
             return
 

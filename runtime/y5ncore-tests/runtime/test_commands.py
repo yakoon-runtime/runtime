@@ -79,7 +79,7 @@ async def test_start_cmd_parses_tokens(harness):
     harness.engine.on_parse_input = parse_input
     harness.engine.on_resolve_command = resolve_node
 
-    async def on_start_command(*, command, channel, flow, session):
+    async def on_start_command(*, command, channel, flow, session, remote=None):
         nonlocal created_flow
         event = Event(payload=command)
         new_flow = await harness.engine.dispatch(session=session, event=event)
