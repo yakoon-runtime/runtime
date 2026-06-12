@@ -35,6 +35,7 @@ from y5n.runtime.settings import Settings
 from y5n.runtime.sources import DataSourceRegistry
 from y5n.runtime.sources.data import (
     NodeSource,
+    RuntimeSource,
 )
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
@@ -60,7 +61,6 @@ def build_runtime(
     *,
     plugins: list[str] | None = None,
     nodes: list[Node] | None = None,
-    known_runtimes: dict[str, str] | None = None,
     capabilities: CapabilitySelection | None = None,
     settings: Settings,
 ) -> RuntimeHost:
@@ -177,6 +177,7 @@ def build_runtime(
     # --------------------
 
     ds.bind("system:nodes", NodeSource(platform))
+    ds.bind("system:runtimes", RuntimeSource(settings.runtime.known))
     # ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
 
     # -----------------
@@ -212,5 +213,5 @@ def build_runtime(
         on_has_permission=perm_checker.can_execute,
         on_audit_warning=audit_service.warning,
         on_initialize=initialize,
-        known_runtimes=known_runtimes,
+        known_runtimes=settings.runtime.known,
     )

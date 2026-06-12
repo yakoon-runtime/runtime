@@ -4,7 +4,7 @@ import asyncio
 import sys
 
 from websockets.asyncio.server import serve
-from y5n.runtime.settings import Settings
+from y5n.runtime.settings import RuntimeSettings, Settings
 from y5n.runtime.wire.runtime import build_runtime
 from y5ntrans.websocket.server import WebSocketServerTransport
 
@@ -48,7 +48,14 @@ async def main():
     runtime = build_runtime(
         plugins=PLUGINS,
         capabilities={},
-        settings=Settings(),
+        settings=Settings(
+            runtime=RuntimeSettings(
+                known={
+                    "office": "ws://localhost:9101",
+                    "production": "ws://localhost:9102",
+                }
+            )
+        ),
     )
     host = runtime
     await host.setup()

@@ -20,7 +20,7 @@ from websockets.asyncio.server import serve
 from y5n.base.flow.dsl import delay, out_text, start_cmd
 from y5n.base.flow.primitives import Outcome
 from y5n.base.nodes import Node, NodeScope
-from y5n.runtime.settings import Settings
+from y5n.runtime.settings import RuntimeSettings, Settings
 from y5n.runtime.wire.runtime import build_runtime
 from y5ntrans.websocket.server import WebSocketServerTransport
 
@@ -82,8 +82,7 @@ async def main():
 
     runtime_a = build_runtime(
         plugins=["y5nspace.shell"],
-        settings=Settings(),
-        known_runtimes={"office": "ws://localhost:9101"},
+        settings=Settings(runtime=RuntimeSettings(known={"office": "ws://localhost:9101"})),
         nodes=[
             Node(
                 key="call",
