@@ -16,6 +16,7 @@ def serialize_event(event: ProjectionEvent):
         "context": _serialize_context(event.ctx),
         "state": _serialize_state(event.state),
         "patch": _serialize_patch(event.patch),
+        "view_params": event.view_params,
         "final": event.patch.final,
     }
     return document

@@ -33,6 +33,7 @@ def deserialize_event(data: dict) -> ProjectionEvent:
         ctx=_deserialize_context(data.get("context")),
         state=_deserialize_state(data.get("state")),
         patch=_deserialize_patch(data["patch"]),
+        view_params=data.get("view_params"),
     )
 
 
