@@ -59,6 +59,7 @@ errors = {
 def build_runtime(
     *,
     plugins: list[str] | None = None,
+    nodes: list[Node] | None = None,
     capabilities: CapabilitySelection | None = None,
     settings: Settings,
 ) -> RuntimeHost:
@@ -97,10 +98,10 @@ def build_runtime(
     # --- PLUGINS ---
     # ----------------
 
-    nodes: list[Node] = []
+    plugin_nodes: list[Node] = []
     for module in PluginLoader(plugins or [], capabilities or {}).load():
         if module.export.node:
-            nodes.append(module.export.node)
+            plugin_nodes.append(module.export.node)
 
     # --------------------
     # --- DATASOURCING ---
@@ -164,7 +165,10 @@ def build_runtime(
     # --- ATTACHING ---
     # -----------------
 
-    for node in nodes:
+    for node in plugin_nodes:
+        platform.mount(node)
+
+    for node in nodes or []:
         platform.mount(node)
 
     # --------------------

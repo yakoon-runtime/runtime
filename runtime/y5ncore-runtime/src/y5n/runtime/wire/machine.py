@@ -214,7 +214,6 @@ def build_machine(
     # ---------------
 
     host = RuntimeHost(
-        platform=platform,
         on_schedule=scheduler.run,
         on_join_bus=bus.join,
         on_create_runner=create_runner,

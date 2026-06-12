@@ -6,7 +6,6 @@ from typing import Protocol
 
 from y5n.base.clients.connection import ClientConnection
 from y5n.base.naming.key import Key
-from y5n.base.nodes import Node
 from y5n.base.runtime import RuntimeInfo
 from y5n.runtime.runtime import Session
 
@@ -24,7 +23,6 @@ class RuntimeHost:
     def __init__(
         self,
         *,
-        platform: Node,
         on_schedule: OnSchedule,
         on_join_bus: OnJoinBus,
         on_get_session: OnGetSession,
@@ -32,7 +30,6 @@ class RuntimeHost:
         on_setup: OnSetup,
         info: RuntimeInfo,
     ):
-        self.platform = platform
         self.on_flow_schedule = on_schedule
         self.on_join_bus = on_join_bus
         self.on_get_session = on_get_session
