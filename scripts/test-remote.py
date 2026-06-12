@@ -39,13 +39,12 @@ async def main():
         yield out_text("3")
         yield Outcome()
 
-    runtime_b = build_runtime(
-        plugins=["y5nspace.shell"],
-        settings=Settings(),
-        extra_nodes=[
-            Node(key="hello", run=hello_flow, scope=NodeScope.GLOBAL),
-            Node(key="stream", run=stream_flow, scope=NodeScope.GLOBAL),
-        ],
+    runtime_b = build_runtime(settings=Settings())
+    runtime_b.platform.mount(
+        Node(key="hello", run=hello_flow, scope=NodeScope.GLOBAL),
+    )
+    runtime_b.platform.mount(
+        Node(key="stream", run=stream_flow, scope=NodeScope.GLOBAL),
     )
     await runtime_b.setup()
 
@@ -72,10 +71,12 @@ async def main():
     runtime_a = build_runtime(
         plugins=["y5nspace.shell"],
         settings=Settings(),
-        extra_nodes=[
-            Node(key="call", run=call_flow, scope=NodeScope.GLOBAL),
-            Node(key="stream", run=stream_remote_flow, scope=NodeScope.GLOBAL),
-        ],
+    )
+    runtime_a.platform.mount(
+        Node(key="call", run=call_flow, scope=NodeScope.GLOBAL),
+    )
+    runtime_a.platform.mount(
+        Node(key="stream", run=stream_remote_flow, scope=NodeScope.GLOBAL),
     )
     await runtime_a.setup()
 

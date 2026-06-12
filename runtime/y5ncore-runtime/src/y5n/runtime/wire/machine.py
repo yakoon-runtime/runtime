@@ -8,6 +8,10 @@ from y5n.base.nodes import Node
 from y5n.base.plugins.ports import OnErrorResolve
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event, InputContext
+from y5n.runtime.connections import (
+    RuntimeConnection,
+    SessionProjectionRouter,
+)
 from y5n.runtime.machine import (
     CommandEngine,
     InputParser,
@@ -89,11 +93,9 @@ def build_machine(
         remote: str | None = None,
     ):
         if remote:
-            from y5ntrans.websocket.client import WebSocketClientTransport
-
-            transport = WebSocketClientTransport(remote)
-            connection = await transport.connect(session.emit)
-            await connection.dispatch(Event(payload=command))
+            conn = RuntimeConnection(url=remote)
+            await conn.open(on_projection=SessionProjectionRouter(session))
+            await conn.dispatch(Event(payload=command))
             session.push_event(Scope.SESSION, channel, Event(payload=None))
             return
 
@@ -196,6 +198,7 @@ def build_machine(
     # ---------------
 
     return RuntimeHost(
+        platform=platform,
         on_schedule=scheduler.run,
         on_join_bus=bus.join,
         on_create_runner=create_runner,
