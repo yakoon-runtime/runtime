@@ -1,0 +1,4 @@
+runtimes:
+  - name: local
+    url: ws://localhost:9100
+    autoconnect: true
