@@ -27,15 +27,25 @@ python scripts/serve-runtime.py 9101     # Headless Runtime B
 
 HOST = "0.0.0.0"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 9100
-PLUGINS = (
-    sys.argv[2].split(",")
-    if len(sys.argv) > 2
-    else [
+
+settings = Settings(
+    runtime=RuntimeSettings(
+        known={
+            "office": "ws://localhost:9101",
+            "production": "ws://localhost:9102",
+        }
+    )
+)
+
+if len(sys.argv) > 2:
+    settings.runtime.plugins = sys.argv[2].split(",")
+else:
+    settings.runtime.plugins = [
         "y5nspace.runtime",
         "y5nspace.shell",
+        "y5nspace.ident",
         "y5nspace.os",
     ]
-)
 
 
 async def handler(websocket):
@@ -47,22 +57,14 @@ async def handler(websocket):
 async def main():
     global host
     runtime = build_runtime(
-        plugins=PLUGINS,
         capabilities={},
-        settings=Settings(
-            runtime=RuntimeSettings(
-                known={
-                    "office": "ws://localhost:9101",
-                    "production": "ws://localhost:9102",
-                }
-            )
-        ),
+        settings=settings,
     )
     host = runtime
     await host.setup()
 
     print(f"Runtime ready on ws://{HOST}:{PORT}")
-    print(f"  plugins: {PLUGINS}")
+    print(f"  plugins: {settings.runtime.plugins}")
 
     async with serve(handler, HOST, PORT):
         await asyncio.get_running_loop().create_future()

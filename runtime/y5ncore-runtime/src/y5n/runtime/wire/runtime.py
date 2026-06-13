@@ -100,7 +100,8 @@ def build_runtime(
     # ----------------
 
     plugin_nodes: list[Node] = []
-    for module in PluginLoader(plugins or [], capabilities or {}).load():
+    plugin_list = plugins if plugins is not None else settings.runtime.plugins
+    for module in PluginLoader(plugin_list, capabilities or {}).load():
         if module.export.node:
             plugin_nodes.append(module.export.node)
 
