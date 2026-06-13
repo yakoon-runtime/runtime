@@ -112,19 +112,18 @@ async def test_as_of_returns_historical_state(store: EntityStore) -> None:
 @pytest.mark.asyncio
 async def test_revisions_remain_ordered(store: EntityStore) -> None:
     key = NS.get_key("a")
+    timestamps: list[datetime] = []
     for i in range(1, 6):
-        await store.append(key=key, patch=[{"op": "add", "path": "/x", "value": i}])
+        r = await store.append(
+            key=key,
+            patch=[{"op": "add", "path": "/x", "value": i}],
+        )
+        timestamps.append(r.updated_at)
 
-    loaded = await store.get(key=key)
-    assert loaded.rev == 5
-
-    seen: set[int] = set()
-    for i in range(1, 6):
-        # estimate as_of timestamps between writes — we just verify rev is accessible
-        loaded = await store.get(key=key)
-        seen.add(loaded.rev)
-    # current rev should be 5 regardless
-    assert loaded.rev == 5
+    for i, ts in enumerate(timestamps, start=1):
+        loaded = await store.get(key=key, at_time=ts)
+        assert loaded.rev == i, f"expected rev {i} at timestamp {i}"
+        assert loaded.data == {"x": i}, f"expected data {{'x': {i}}} at timestamp {i}"
 
 
 # ── expected_rev (Optimistic Concurrency) ──
