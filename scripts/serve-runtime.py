@@ -25,7 +25,7 @@ python scripts/serve-runtime.py 9101     # Headless Runtime B
 """
 
 
-HOST = "0.0.0.0"
+HOST = "127.0.0.1"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 9100
 
 settings = Settings(
