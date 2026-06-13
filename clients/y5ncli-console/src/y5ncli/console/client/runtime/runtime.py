@@ -9,7 +9,7 @@ async def create_runtime() -> RuntimeHost:
 
     runtime = build_runtime(
         settings=settings,
-        plugins=[
+        spaces=[
             "y5nspace.shell",
             "y5nspace.ident",
             "y5nspace.os",

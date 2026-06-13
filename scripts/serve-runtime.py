@@ -38,9 +38,9 @@ settings = Settings(
 )
 
 if len(sys.argv) > 2:
-    settings.runtime.plugins = sys.argv[2].split(",")
+    settings.runtime.spaces = sys.argv[2].split(",")
 else:
-    settings.runtime.plugins = [
+    settings.runtime.spaces = [
         "y5nspace.runtime",
         "y5nspace.shell",
         "y5nspace.ident",
@@ -64,7 +64,7 @@ async def main():
     await host.setup()
 
     print(f"Runtime ready on ws://{HOST}:{PORT}")
-    print(f"  plugins: {settings.runtime.plugins}")
+    print(f"  spaces: {settings.runtime.spaces}")
 
     async with serve(handler, HOST, PORT):
         await asyncio.get_running_loop().create_future()

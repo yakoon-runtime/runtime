@@ -7,14 +7,14 @@ from y5n.base.plugins import CapabilitySelection, LoadedModule, ModulePorts
 from y5n.runtime.plugins import ModuleManager, ModuleRegistry
 
 
-class PluginLoader:
+class SpaceLoader:
 
     def __init__(
         self,
-        plugins: list[str],
+        spaces: list[str],
         capabilities: CapabilitySelection,
     ):
-        self._plugins = plugins
+        self._spaces = spaces
         self._capabilities = capabilities
         self._registry = ModuleRegistry()
         self._manager = ModuleManager(
@@ -24,7 +24,7 @@ class PluginLoader:
     def load(self) -> Sequence[LoadedModule]:
         modules: list[LoadedModule] = []
         modules.extend(self._manager.load_capabilities(self._capabilities))
-        modules.extend(self._manager.load_modules(self._plugins))
+        modules.extend(self._manager.load_modules(self._spaces))
 
         return modules
 

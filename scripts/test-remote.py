@@ -81,7 +81,7 @@ async def main():
         yield Outcome()
 
     runtime_a = build_runtime(
-        plugins=["y5nspace.shell"],
+        spaces=["y5nspace.shell"],
         settings=Settings(runtime=RuntimeSettings(known={"office": "ws://localhost:9101"})),
         nodes=[
             Node(

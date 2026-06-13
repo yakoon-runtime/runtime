@@ -39,7 +39,7 @@ from y5n.runtime.sources.data import (
 )
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
-from y5n.runtime.wire.plugins import PluginLoader
+from y5n.runtime.wire.plugins import SpaceLoader
 from y5n.runtime.wire.projector import build_projector
 from y5n.runtime.wire.stream import build_stream
 from y5nstore.event.wire import build_store
@@ -59,7 +59,7 @@ errors = {
 
 def build_runtime(
     *,
-    plugins: list[str] | None = None,
+    spaces: list[str] | None = None,
     nodes: list[Node] | None = None,
     capabilities: CapabilitySelection | None = None,
     settings: Settings,
@@ -100,8 +100,8 @@ def build_runtime(
     # ----------------
 
     plugin_nodes: list[Node] = []
-    plugin_list = plugins if plugins is not None else settings.runtime.plugins
-    for module in PluginLoader(plugin_list, capabilities or {}).load():
+    space_list = spaces if spaces is not None else settings.runtime.spaces
+    for module in SpaceLoader(space_list, capabilities or {}).load():
         if module.export.node:
             plugin_nodes.append(module.export.node)
 
