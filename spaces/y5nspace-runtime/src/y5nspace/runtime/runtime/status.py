@@ -16,7 +16,7 @@ from ..ports import OnProject
 async def run(space: NodeSpace):
 
     projection = await space.ports.get(OnProject)(
-        name="version/list",
+        name="status/list",
         lang=space.session.lang,
         state={
             "time": datetime.now(UTC).isoformat(),

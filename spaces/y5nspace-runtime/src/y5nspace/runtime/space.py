@@ -4,7 +4,7 @@ from .runtime.jobs.space import jobs
 from .runtime.labs.space import labs
 from .runtime.net.space import net
 from .runtime.setup import setup
-from .runtime.version import run as version
+from .runtime.status import run as status
 from .runtime.welcome import run as welcome
 
 # ----------------------------------
@@ -35,13 +35,13 @@ runtime.add(
 )
 
 # ----------------------------------
-# VERSION
+# STATUS
 # ----------------------------------
 
 runtime.add(
     Node(
-        key="version",
-        run=version,
+        key="status",
+        run=status,
         anonymous=True,
         scope=NodeScope.NODE,
         resolvable=True,
