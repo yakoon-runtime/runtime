@@ -65,10 +65,8 @@ class MemoryBackend:
         self._index_terms_by_entity: dict[
             tuple[str, str, str, str], dict[str, IndexValue]
         ] = {}
-        # - inverted: (domain,kind,space,index_key,value_norm) -> sorted list of _IndexRecord
-        self._index_inv: dict[tuple[str, str, str, str, str], list[_IndexRecord]] = {}
         # (domain,kind,space,index_key) -> (value_norm -> sorted list[_IndexRecord])
-        self._index_inv2: dict[
+        self._index_inv: dict[
             tuple[str, str, str, str],
             dict[str, list[_IndexRecord]],
         ] = {}
@@ -321,7 +319,7 @@ class MemoryBackend:
         if spec is None:
             return []
 
-        bucket = self._index_inv2.get(gkey)
+        bucket = self._index_inv.get(gkey)
         if not bucket:
             return []
 
@@ -443,7 +441,7 @@ class MemoryBackend:
                     continue
                 old_norm = self._norm_value(spec, old_val)
                 gkey = (str(domain_id), str(kind_id), str(space_id), k)
-                bucket = self._index_inv2.get(gkey)
+                bucket = self._index_inv.get(gkey)
                 if not bucket:
                     continue
                 lst = bucket.get(old_norm, [])
@@ -453,7 +451,7 @@ class MemoryBackend:
                 else:
                     bucket.pop(old_norm, None)
                 if not bucket:
-                    self._index_inv2.pop(gkey, None)
+                    self._index_inv.pop(gkey, None)
             return
 
         # remove old postings for keys we are about to set
@@ -470,7 +468,7 @@ class MemoryBackend:
             old_norm = self._norm_value(spec, old)
 
             gkey = (str(domain_id), str(kind_id), str(space_id), k)
-            bucket = self._index_inv2.get(gkey)
+            bucket = self._index_inv.get(gkey)
             if not bucket:
                 continue
 
@@ -482,7 +480,7 @@ class MemoryBackend:
                 bucket.pop(old_norm, None)
 
             if not bucket:
-                self._index_inv2.pop(gkey, None)
+                self._index_inv.pop(gkey, None)
 
         # apply new
         newmap = dict(existing)
@@ -496,7 +494,7 @@ class MemoryBackend:
             newmap[k] = t.value
 
             gkey = (str(domain_id), str(kind_id), str(space_id), k)
-            bucket = self._index_inv2.setdefault(gkey, {})
+            bucket = self._index_inv.setdefault(gkey, {})
             lst = bucket.setdefault(norm, [])
 
             # UNIQUE check (optional but strongly recommended)
