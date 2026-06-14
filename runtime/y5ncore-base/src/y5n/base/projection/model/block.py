@@ -167,6 +167,22 @@ class TableColumn:
 
 @dataclass(frozen=True, slots=True)
 class TableBlock:
+    """
+    usage:
+        <table>
+        <column key="name" title="Name"/>
+        <column key="age" title="Age"/>
+        <row>
+            <cell>Stefan</cell>
+            <cell>42</cell>
+        </row>
+        <row>
+            <cell>Anna</cell>
+            <cell>31</cell>
+        </row>
+        </table>
+    """
+
     id: str | None = None
     type: Literal["table"] = "table"
 
@@ -254,7 +270,7 @@ class FlowBlock:
 class CollapsibleBlock:
     """
     usage:
-      <collapsible title="Analyse"></collapsible>
+        <collapsible title="Analyse"></collapsible>
     """
 
     type: Literal["collapsible"] = "collapsible"
