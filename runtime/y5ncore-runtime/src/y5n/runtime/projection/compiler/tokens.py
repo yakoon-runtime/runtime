@@ -11,7 +11,7 @@ class Token:
 
 
 TAG_RE = re.compile(r"<(/?)(\w+)([^>]*)>")
-ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
+ATTR_RE = re.compile(r"""(\w+)=("([^"]*)"|'([^']*)')""")
 
 
 def tokenize_text(text: str) -> list[Token]:
@@ -47,7 +47,12 @@ def _tokenize(text: str) -> list[Token]:
         if is_self:
             raw_attrs = raw_attrs[:-1].strip()
 
-        attrs = dict(ATTR_RE.findall(raw_attrs)) if raw_attrs else {}
+        attrs = {}
+        if raw_attrs:
+            for m in ATTR_RE.finditer(raw_attrs):
+                name = m.group(1)
+                value = m.group(3) if m.group(2).startswith('"') else m.group(4)
+                attrs[name] = value
 
         if is_close:
             tokens.append(Token(type="CLOSE", tag=tag))
