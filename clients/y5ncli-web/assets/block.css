@@ -315,11 +315,12 @@
 /* COLLAPSIBLE */
 
 .collapsible {}
+
 .collapsible-header {
     cursor: pointer;
     user-select: none;
     padding: 4px 0;
-    font-weight: 600;
+    /*font-weight: 600;*/
     color: #007aff;
 }
 
@@ -331,12 +332,12 @@
     margin-right: 4px;
 }
 
-.collapsible.collapsed > :nth-child(n+2) {
+.collapsible.collapsed> :nth-child(n+2) {
     display: none;
 }
 
 .collapsible-title {
-    font-weight: 600;
+    /*font-weight: 600; */
 }
 
 /* TABLE */

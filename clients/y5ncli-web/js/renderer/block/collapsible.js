@@ -10,7 +10,7 @@ registerBlock("collapsible", (node, dispatch, renderer) => {
 
     const icon = document.createElement("span");
     icon.classList.add("collapsible-icon");
-    icon.textContent = "+";
+    icon.textContent = "[+]";
 
     const title = document.createElement("span");
     title.classList.add("collapsible-title");
@@ -23,7 +23,7 @@ registerBlock("collapsible", (node, dispatch, renderer) => {
 
     header.onclick = () => {
         el.classList.toggle("collapsed");
-        icon.textContent = el.classList.contains("collapsed") ? "+" : "−";
+        icon.textContent = el.classList.contains("collapsed") ? "[+]" : "[−]";
     };
 
     el.appendChild(header);
