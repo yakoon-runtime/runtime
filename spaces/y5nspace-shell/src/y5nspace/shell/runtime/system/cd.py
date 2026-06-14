@@ -12,6 +12,7 @@ async def run(space: NodeSpace):
 
     target = space.request.arg(0)
     if not target:
+        yield out_text("")
         return
 
     on_source = space.ports.get(OnSourceRead)
