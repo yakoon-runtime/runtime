@@ -244,6 +244,24 @@ class FlowBlock:
         return tuple(self.blocks)
 
 
+@dataclass(frozen=True, slots=True)
+class CollapsibleBlock:
+    """
+    usage:
+      <collapsible title="Analyse"></collapsible>
+    """
+
+    type: Literal["collapsible"] = "collapsible"
+    id: str | None = None
+
+    title: list[Inline] = field(default_factory=list)
+    expanded: bool = False
+    blocks: list[Block] = field(default_factory=list)
+
+    def children(self) -> tuple[Block, ...]:
+        return tuple(self.blocks)
+
+
 # -----------------
 # MEDIA
 # -----------------
@@ -282,5 +300,6 @@ Block = (
     | SectionBlock
     | StackBlock
     | FlowBlock
+    | CollapsibleBlock
     | ImageBlock
 )

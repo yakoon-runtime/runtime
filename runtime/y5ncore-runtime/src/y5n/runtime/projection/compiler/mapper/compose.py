@@ -2,6 +2,7 @@ from y5n.base.projection.model import ImageBlock
 
 from .block import (
     map_actions,
+    map_collapsible,
     map_fields,
     map_flow,
     map_heading,
@@ -68,5 +69,6 @@ def create_mapper(context: dict) -> Mapper:
     mapper.register_block("stack", map_stack)
     mapper.register_block("flow", map_flow)
     mapper.register_block("image", map_image)
+    mapper.register_block("collapsible", map_collapsible)
 
     return mapper

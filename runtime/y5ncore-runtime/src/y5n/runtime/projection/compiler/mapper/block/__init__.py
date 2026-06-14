@@ -1,4 +1,5 @@
 from .actions import map_actions
+from .collapsible import map_collapsible
 from .fields import map_fields
 from .flow import map_flow
 from .heading import map_heading
@@ -13,6 +14,7 @@ from .stack import map_stack
 
 __all__ = [
     "map_actions",
+    "map_collapsible",
     "map_fields",
     "map_kv",
     "map_list",

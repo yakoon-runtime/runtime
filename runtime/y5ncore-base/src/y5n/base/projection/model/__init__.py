@@ -2,6 +2,7 @@ from .action import Action
 from .block import (
     ActionBlock,
     Block,
+    CollapsibleBlock,
     FieldsBlock,
     FieldsState,
     FlowBlock,
@@ -90,6 +91,7 @@ __all__ = [
     "FieldsBlock",
     "FieldsState",
     "ActionBlock",
+    "CollapsibleBlock",
     "SectionBlock",
     "StackBlock",
     "FlowBlock",
