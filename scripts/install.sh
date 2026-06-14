@@ -27,12 +27,8 @@ pip install \
   -e spaces/y5nspace-ident \
   -e spaces/y5nspace-os \
 
-# clients
-pip install \
-  -e clients/y5ncli-console \
-  -e apps/y5napp-textual \
-
 # apps
 pip install \
   -e apps/y5napp-console \
+  -e apps/y5napp-textual \
   -e apps/y5napp-ssh \
