@@ -14,6 +14,7 @@ from .block import (
     map_section,
     map_spacer,
     map_stack,
+    map_table,
 )
 from .core import Mapper
 from .inline import (
@@ -70,5 +71,6 @@ def create_mapper(context: dict) -> Mapper:
     mapper.register_block("flow", map_flow)
     mapper.register_block("image", map_image)
     mapper.register_block("collapsible", map_collapsible)
+    mapper.register_block("table", map_table)
 
     return mapper

@@ -11,6 +11,7 @@ from .rule import map_rule
 from .section import map_section
 from .spacer import map_spacer
 from .stack import map_stack
+from .table import map_table
 
 __all__ = [
     "map_actions",
@@ -26,4 +27,5 @@ __all__ = [
     "map_stack",
     "map_flow",
     "map_image",
+    "map_table",
 ]
