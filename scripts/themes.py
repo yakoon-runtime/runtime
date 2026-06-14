@@ -5,6 +5,7 @@ Each theme maps to CSS variables used by the web client.
 
 THEMES = {
     "tokyo-night": {
+        "font": '"SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", "DejaVu Sans Mono", monospace',
         "bg": "#1A1B26",
         "surface": "#24283B",
         "text": "#a9b1d6",
@@ -16,6 +17,7 @@ THEMES = {
         "warning": "#E0AF68",
     },
     "dracula": {
+        "font": '"SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", "DejaVu Sans Mono", monospace',
         "bg": "#282a36",
         "surface": "#44475a",
         "text": "#f8f8f2",
