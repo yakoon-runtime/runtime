@@ -8,8 +8,24 @@ from .setup import setup
 from .stop import run as stop
 
 # ----------------------------------
-# JOBS
+# JOBS  (router)
 # ----------------------------------
+
+
+async def run(space):
+    if space.request.has_option("stop"):
+        async for item in stop(space):
+            yield item
+    elif space.request.has_option("fg"):
+        async for item in fg(space):
+            yield item
+    elif space.request.has_option("bg"):
+        async for item in bg(space):
+            yield item
+    else:
+        async for item in list(space):
+            yield item
+
 
 jobs = Node(
     key="jobs",
@@ -17,7 +33,7 @@ jobs = Node(
     anonymous=True,
     navigable=True,
     resolvable=True,
-    run=list,
+    run=run,
     scope=NodeScope.GLOBAL,
 )
 

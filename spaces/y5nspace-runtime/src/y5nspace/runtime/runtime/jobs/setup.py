@@ -18,7 +18,8 @@ async def setup(space: NodeSpace):
 
     def _get_flow_by_index(session, request: Request) -> tuple[Flow | None, int | None]:
         try:
-            index = int(request.arg(0))
+            index_str = request.option("stop") or request.option("fg") or request.arg(0)
+            index = int(index_str)
         except (TypeError, ValueError):
             return None, None
 
