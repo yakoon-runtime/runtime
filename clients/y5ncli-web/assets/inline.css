@@ -60,3 +60,12 @@
 .inline-link:hover {
     border-bottom-color: rgba(0, 122, 255, 0.6);
 }
+
+.inline-arg {
+    font-style: italic;
+    color: #888;
+}
+
+.inline-space {
+    white-space: pre;
+}

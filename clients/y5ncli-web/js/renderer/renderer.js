@@ -15,6 +15,9 @@ import "./block/section.js";
 import "./block/stack.js";
 import "./block/flow.js";
 import "./block/image.js";
+import "./block/spacer.js";
+import "./block/collapsible.js";
+import "./block/table.js";
 
 // inline registrations (side effects)
 import "./inline/text.js";
@@ -28,6 +31,8 @@ import "./inline/underline.js";
 import "./inline/mark.js";
 import "./inline/br.js";
 import "./inline/link.js";
+import "./inline/arg.js";
+import "./inline/space.js";
 
 
 export class Renderer {
