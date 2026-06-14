@@ -1,24 +1,18 @@
 cd ..
 
-# runtime (base)
+# runtime 
 pip install \
   -e runtime/y5ncore-base \
-
-# llm providers
-pip install \
-  -e runtime/y5ncore-llm \
-
-# storage
-pip install \
-  -e stores/y5nstore-event \
-
-# runtime (runtime)
-pip install \
   -e runtime/y5ncore-runtime \
+  -e runtime/y5ncore-llm \
 
 # transport
 pip install \
   -e transports/y5ntrans-ws \
+
+# storage
+pip install \
+  -e stores/y5nstore-event \
 
 # spaces
 pip install \
