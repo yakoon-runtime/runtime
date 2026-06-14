@@ -8,14 +8,22 @@ from .model import RuntimeConfig, YakoonConfig
 
 CONFIG_FILENAME = "yakoon.yml"
 
-CONFIG_SEARCH_PATHS: list[Path] = [
-    Path.cwd() / CONFIG_FILENAME,
-    Path("~/.config/y5n") / CONFIG_FILENAME,
-]
+
+def _search_paths() -> list[Path]:
+    cwd = Path.cwd()
+    paths: list[Path] = []
+    # walk up from CWD to find yakoon.yml
+    for parent in [cwd, *cwd.parents]:
+        p = parent / CONFIG_FILENAME
+        paths.append(p)
+        if p.exists():
+            break
+    paths.append(Path("~/.config/y5n") / CONFIG_FILENAME)
+    return paths
 
 
 def load_config() -> tuple[YakoonConfig, Path | None]:
-    for p in CONFIG_SEARCH_PATHS:
+    for p in _search_paths():
         if p.exists():
             with open(p) as f:
                 data = yaml.safe_load(f)
