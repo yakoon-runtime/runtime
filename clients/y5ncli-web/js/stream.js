@@ -1,8 +1,14 @@
 
-export function createWS(onProjection) {
+const DEFAULT_RUNTIME = "ws://localhost:9100";
 
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
+function getRuntimeUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("runtime") || DEFAULT_RUNTIME;
+}
+
+export function createWS(onProjection) {
+    const url = getRuntimeUrl();
+    const ws = new WebSocket(url);
 
     ws.onopen = () => {
         ws.send(JSON.stringify({ type: "connect" }));
