@@ -18,6 +18,11 @@ function initApp() {
 
     function handleProjection(event) {
 
+        if (event.view_params && event.view_params.clear) {
+            dom.stream.innerHTML = "";
+            return;
+        }
+
         const regionId = event.context.origin;
 
         const regionEl = document.querySelector(`[data-region-id="${regionId}"]`);
@@ -46,8 +51,14 @@ function initApp() {
     wireCommandBar(dom, dispatch, createRootRegion);
     registerSideBarToggle(dom);
 
-    function createRootRegion() {
+    function createRootRegion(command) {
         const container = createElement("div", "turn");
+
+        if (command) {
+            const line = createElement("div", "input-line");
+            line.textContent = `$ ${command}`;
+            container.appendChild(line);
+        }
 
         const region = createElement("div", "turn-region");
         region.dataset.regionId = "r-" + crypto.randomUUID();
@@ -91,7 +102,7 @@ function createDispatcher(ws, createRootRegion) {
     }
 
     function newTurn(command) {
-        const regionEl = createRootRegion();
+        const regionEl = createRootRegion(command);
         send(command, {}, regionEl);
     }
 
@@ -107,7 +118,7 @@ function wireCommandBar(dom, dispatch, createRootRegion) {
         const value = dom.input.value;
         if (!value) return;
 
-        const regionEl = createRootRegion();
+        const regionEl = createRootRegion(value);
 
         dispatch.command(value, {}, regionEl);
 

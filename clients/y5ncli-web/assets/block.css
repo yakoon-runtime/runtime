@@ -4,6 +4,13 @@
     margin-top: 12px;
 }
 
+.input-line {
+    padding: 4px 0;
+    color: #888;
+    font-family: "SF Mono", "Cascadia Code", "Fira Code", "Consolas", monospace;
+    font-size: 13px;
+}
+
 /* Heading bekommt mehr Luft nach oben */
 .heading-2,
 .heading-3 {
