@@ -12,16 +12,6 @@
             },
         },
         {
-            "name": "Yakoon: App SSH",
-            "type": "debugpy",
-            "request": "launch",
-            "module": "y5napp.ssh",
-            "console": "integratedTerminal",
-            "env": {
-                "DEV_MODE": "true"
-            },
-        },
-        {
             "name": "Yakoon: App Web",
             "type": "debugpy",
             "request": "launch",

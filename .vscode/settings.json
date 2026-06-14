@@ -14,15 +14,14 @@
     "spaces/y5nspace-ident/src",
     // transports
     "transports/y5ntrans-ws/src",
-    // clients
-    "clients/y5ncli-console/src",
     // apps
     "apps/y5napp-web/src",
-    "apps/y5napp-ssh/src",
     "apps/y5napp-console/src",
     "apps/y5napp-textual/src",
   ],
-  "python.testing.pytestArgs": ["runtime/y5ncore-tests"],
+  "python.testing.pytestArgs": [
+    "runtime/y5ncore-tests"
+  ],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "editor.formatOnSave": true,
