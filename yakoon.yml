@@ -1,4 +1,5 @@
 runtimes:
-  - name: local
-    url: ws://localhost:9100
-    autoconnect: true
+- autoconnect: true
+  name: local
+  url: ws://localhost:9100
+theme: tokyo-night

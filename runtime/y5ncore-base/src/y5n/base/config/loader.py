@@ -7,6 +7,7 @@ import yaml
 from .model import RuntimeConfig, YakoonConfig
 
 CONFIG_FILENAME = "yakoon.yml"
+
 CONFIG_SEARCH_PATHS: list[Path] = [
     Path.cwd() / CONFIG_FILENAME,
     Path("~/.config/y5n") / CONFIG_FILENAME,
