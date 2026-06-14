@@ -36,4 +36,3 @@ pip install \
 pip install \
   -e apps/y5napp-console \
   -e apps/y5napp-ssh \
-  -e apps/y5napp-web \
