@@ -17,7 +17,7 @@ from pathlib import Path
 HOST = "127.0.0.1"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 
-WEB_DIR = Path(__file__).resolve().parent.parent / "clients" / "y5ncli-web"
+WEB_DIR = Path(__file__).resolve().parent.parent / "apps" / "y5napp-web"
 
 
 class Handler(SimpleHTTPRequestHandler):
