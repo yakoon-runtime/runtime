@@ -17,3 +17,17 @@ Commands: <br/>
   {% endfor %}
 
 {% endif %}
+
+
+<table>
+  <column key="name" title="Name"/>
+  <column key="age" title="Age"/>
+  <row>
+    <cell>Stefan</cell>
+    <cell>42</cell>
+  </row>
+  <row>
+    <cell>Anna</cell>
+    <cell>31</cell>
+  </row>
+</table>

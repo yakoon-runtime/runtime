@@ -160,11 +160,17 @@ class DataBlock:
 
 
 @dataclass(frozen=True, slots=True)
+class TableColumn:
+    key: str = ""
+    title: str = ""
+
+
+@dataclass(frozen=True, slots=True)
 class TableBlock:
     id: str | None = None
     type: Literal["table"] = "table"
 
-    headers: list[str] = field(default_factory=list)
+    columns: list[TableColumn] = field(default_factory=list)
     rows: list[list[str]] = field(default_factory=list)
 
     def children(self) -> tuple[Block, ...]:

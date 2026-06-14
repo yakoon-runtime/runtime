@@ -19,6 +19,7 @@ from .block import (
     SpacerBlock,
     StackBlock,
     TableBlock,
+    TableColumn,
     TextBlock,
 )
 from .field import Field, FieldError, FieldType, SelectOption
@@ -88,6 +89,7 @@ __all__ = [
     "KvItemBlock",
     "KvBlock",
     "TableBlock",
+    "TableColumn",
     "FieldsBlock",
     "FieldsState",
     "ActionBlock",
