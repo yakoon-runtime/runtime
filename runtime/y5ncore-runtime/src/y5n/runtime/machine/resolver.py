@@ -101,6 +101,18 @@ class InvocationResolver:
             current = resolved
 
         # ---------------------------------
+        # Path-style resolution (ident/users/list)
+        # ---------------------------------
+
+        if "/" in key:
+            node = self._resolve_path(
+                current=current,
+                key=key,
+            )
+            if node:
+                return node, tokens
+
+        # ---------------------------------
         # Resolve current node
         # ---------------------------------
 
@@ -142,6 +154,37 @@ class InvocationResolver:
         )
 
         return node, tokens
+
+    # ---------------------------------------------------------------------
+    # Path resolution
+    # ---------------------------------------------------------------------
+
+    def _resolve_path(
+        self,
+        *,
+        current: Node,
+        key: str,
+    ) -> Node | None:
+        """Resolve a path-style key like 'ident/users/list'.
+
+        Walks the node tree segment by segment. The last segment is
+        resolved via _resolve_node (respects scope + resolvable flag).
+        Intermediate segments are resolved by direct child key lookup.
+        """
+        segments = key.split("/")
+
+        # Absolute path starts from root
+        walk = self._root if key.startswith("/") else current
+
+        for seg in segments[:-1]:
+            if not seg:
+                continue
+            child = walk.children.get(seg)
+            if child is None:
+                return None
+            walk = child
+
+        return self._resolve_node(parent=walk, key=segments[-1])
 
     # ---------------------------------------------------------------------
     # Internals
