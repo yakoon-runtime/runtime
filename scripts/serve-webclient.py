@@ -10,19 +10,35 @@ Start the runtime first:
 Then open http://localhost:8000 in a browser.
 """
 
-import io
+import json
 import os
 import sys
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 
-from y5n.base.config import load_config
 from themes import THEMES
+from y5n.base.config import load_config
 
 HOST = "127.0.0.1"
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
 
 WEB_DIR = Path(__file__).resolve().parent.parent / "apps" / "y5napp-web"
+
+
+def _inject_config(html: str) -> str:
+    cfg, _ = load_config()
+    runtimes = []
+    for rt in cfg.runtimes or []:
+        runtimes.append(
+            {
+                "name": rt.name,
+                "url": rt.url,
+                "autoconnect": rt.autoconnect,
+            }
+        )
+    script = f"<script>window.__YAKOON_RUNTIMES = {json.dumps(runtimes)}</script>"
+    return html.replace("</head>", f"{script}\n</head>")
+
 
 def _inject_theme(html: str) -> str:
     cfg, _ = load_config()
@@ -33,9 +49,7 @@ def _inject_theme(html: str) -> str:
     if not colors:
         return html
 
-    css_vars = "\n".join(
-        f"    --{k}: {v};" for k, v in colors.items()
-    )
+    css_vars = "\n".join(f"    --{k}: {v};" for k, v in colors.items())
     style = f"""<style>
   :root {{
 {css_vars}
@@ -51,7 +65,9 @@ class Handler(SimpleHTTPRequestHandler):
     def _serve_html(self, path: str) -> None:
         with open(path, "rb") as f:
             raw = f.read()
-        html = _inject_theme(raw.decode("utf-8"))
+        html = raw.decode("utf-8")
+        html = _inject_config(html)
+        html = _inject_theme(html)
         encoded = html.encode("utf-8")
         self.send_response(200)
         self.send_header("Content-Type", "text/html; charset=utf-8")
@@ -72,5 +88,5 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     server = HTTPServer((HOST, PORT), Handler)
     print(f"Web client serving {WEB_DIR} on http://{HOST}:{PORT}")
-    print(f"Connect to runtime at ws://localhost:9100 (default)")
+    print("Connect to runtime at ws://localhost:9100 (default)")
     server.serve_forever()
