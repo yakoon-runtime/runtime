@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 
-from .model import RuntimeConfig, RuntimeFileConfig, YakoonConfig
+from .model import ClientRuntime, RuntimeConfig, RuntimeFileConfig, ServerConfig, YakoonConfig
 
 CONFIG_FILENAME = "yakoon.yml"
 RUNTIME_FILENAME = "yakoon-runtime.yml"
@@ -39,9 +39,16 @@ def load_config() -> tuple[YakoonConfig, Path | None]:
                 for r in data.get("runtimes", [])
             ]
 
+            server_raw = data.get("server")
+            server = ServerConfig(**server_raw) if isinstance(server_raw, dict) else None
+            runtime_raw = data.get("runtime")
+            runtime_cfg = ClientRuntime(**runtime_raw) if isinstance(runtime_raw, dict) else None
+
             cfg = YakoonConfig(
                 runtimes=runtimes,
                 theme=data.get("theme"),
+                server=server,
+                runtime=runtime_cfg,
             )
             return cfg, p
 
