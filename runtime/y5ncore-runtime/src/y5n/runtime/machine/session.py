@@ -22,8 +22,6 @@ class SessionBuilder:
 
     async def create(self) -> Session:
         key = self._next_key()
-        print(f"[DEBUG:] Session_key: {key}")
-
         session = await self.on_get_session(key=key)
 
         return session
