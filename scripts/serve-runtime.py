@@ -31,7 +31,8 @@ PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 9100
 settings = Settings(
     runtime=RuntimeSettings(
         known={
-            "office": "ws://localhost:9101",
+            "office": "ws://localhost:9100",
+            "server": "ws://localhost:9101",
             "production": "ws://localhost:9102",
         }
     )
