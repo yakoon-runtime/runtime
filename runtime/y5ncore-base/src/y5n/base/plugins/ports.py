@@ -42,6 +42,14 @@ class OnSessionSave(Protocol):
     async def __call__(self, *, session: Session): ...
 
 
+class OnSessionAttach(Protocol):
+    async def __call__(self, *, session: Session, target_key: str): ...
+
+
+class OnSessionDetach(Protocol):
+    async def __call__(self, *, session: Session): ...
+
+
 class OnAuthorizeRead(Protocol):
     def __call__(self, session: Session, perm_key: str) -> bool: ...
 

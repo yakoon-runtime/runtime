@@ -9,6 +9,8 @@ from y5n.base.plugins.ports import (
     OnParsePermissionSpec,
     OnProjectionResolve,
     OnResourceLoad,
+    OnSessionAttach,
+    OnSessionDetach,
     OnSessionSave,
 )
 from y5n.base.sources import OnSourceRead
@@ -21,6 +23,8 @@ __all__ = [
     "OnParsePermissionSpec",
     "OnProjectionResolve",
     "OnErrorResolve",
+    "OnSessionAttach",
+    "OnSessionDetach",
     "OnSessionSave",
     "OnResourceLoad",
     "OnJinjaRender",

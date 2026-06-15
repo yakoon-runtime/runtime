@@ -11,6 +11,8 @@ from y5n.base.plugins.ports import (
     OnParsePermissionSpec,
     OnProjectionResolve,
     OnResourceLoad,
+    OnSessionAttach,
+    OnSessionDetach,
     OnSessionSave,
 )
 from y5n.base.projection import Projection
@@ -219,5 +221,7 @@ def build_runtime(
     )
 
     ds.bind("system:sessions", SessionSource(host))
+    platform.ports.provide(OnSessionAttach, host.attach_session)
+    platform.ports.provide(OnSessionDetach, host.detach_session)
 
     return host

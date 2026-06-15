@@ -11,8 +11,15 @@ async def run(space: NodeSpace):
     result = await on_source(DataRequest("system:sessions --list"))
 
     if not result.rows:
-        yield out(to_text("No active sessions."))
+        yield out(to_text("No sessions."))
         return
 
-    lines = [f"  {r['key']:<45} clients={r['clients']}  flows={r['flows']}" for r in result.rows]
+    current_key = str(space.session.key)
+    lines = []
+    for r in result.rows:
+        marker = "* " if r["key"] == current_key else "  "
+        lines.append(
+            f"{marker}{r['key']:<45} clients={r['clients']}  homes={r['homes']}  flows={r['flows']}"
+        )
+
     yield out(to_text("Active sessions:\n" + "\n".join(lines)))

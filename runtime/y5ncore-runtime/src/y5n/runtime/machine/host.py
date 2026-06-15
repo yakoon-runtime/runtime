@@ -15,9 +15,9 @@ from .runner import Runner
 class RuntimeHost:
     """Top-level runtime host.
 
-    Manages sessions, client connections, and the session lifecycle
-    (connect, disconnect, receive_input).  Wires sessions to the
-    Runner and Scheduler.
+    Manages sessions, client connections, and the session lifecycle.
+    A connection can subscribe to multiple sessions (observing their
+    projections) but has exactly one active session that receives input.
     """
 
     def __init__(
@@ -38,9 +38,10 @@ class RuntimeHost:
         self.info = info
 
         self._sessions: dict[Key, Runner] = {}
-        self._connections: dict[ClientConnection, Runner] = {}
-        self._session_counter = 0
-        self._session_done: dict[str, Callable] = {}
+        self._subscriptions: dict[ClientConnection, set[Runner]] = {}
+        self._connection_home: dict[ClientConnection, Runner] = {}
+        self._active: dict[ClientConnection, Runner] = {}
+        self._session_done: dict[str, list[Callable]] = {}
 
         asyncio.create_task(self.on_flow_schedule())
 
@@ -51,7 +52,7 @@ class RuntimeHost:
     def register_session_done(
         self, session_key: str, callback: Callable[[], Awaitable[None]]
     ) -> None:
-        self._session_done[session_key] = callback
+        self._session_done.setdefault(session_key, []).append(callback)
 
     def resolve_runtime(self, name: str) -> str:
         if "://" in name:
@@ -59,9 +60,8 @@ class RuntimeHost:
         return self.known_runtimes[name]
 
     async def flow_complete(self, flow, session) -> None:
-        done = self._session_done.get(str(session.key))
-        if done:
-            await done()
+        for cb in self._session_done.get(str(session.key), []):
+            await cb()
 
     async def connect(
         self,
@@ -70,61 +70,98 @@ class RuntimeHost:
     ):
         connection.runtime_info = self.info
 
-        # attach existing session
         if session_key and session_key in self._sessions:
             runner = self._sessions[session_key]
-
-        # create new session
         else:
             session = await self.on_get_session()
-
             runner = self.on_create_runner(session=session)
             self._sessions[session.key] = runner
 
         runner.session.join(connection)
-        self._connections[connection] = runner
+        self._subscriptions.setdefault(connection, set()).add(runner)
+        self._connection_home[connection] = runner
+        self._active[connection] = runner
         return runner.session
 
     async def disconnect(self, connection: ClientConnection):
-        runner = self._connections.pop(connection, None)
-        if not runner:
+        subs = self._subscriptions.pop(connection, None)
+        self._active.pop(connection, None)
+        self._connection_home.pop(connection, None)
+        if not subs:
             return
 
-        runner.session.leave(connection)
-
-        # has session other clients
-        if self._has_connections(runner):
-            return
-
-        # real session is death
-        session = runner.session
-
-        # self.engine.cleanup_session(session)
-        self._sessions.pop(session.key, None)
+        for runner in subs:
+            runner.session.leave(connection)
+            self._maybe_cleanup(runner)
 
     async def receive_input(self, connection, event):
-        runner = self._connections.get(connection)
-        if runner is None:
-            raise RuntimeError("receive_input() has no runner for connection")
-
+        runner = self._active[connection]
         await runner.on_input(event)
 
-    def _has_connections(self, runner: Runner) -> bool:
-        return any(r is runner for r in self._connections.values())
+    def _has_subscribers(self, runner: Runner) -> bool:
+        return any(runner in subs for subs in self._subscriptions.values())
+
+    def _maybe_cleanup(self, runner: Runner) -> None:
+        if self._has_subscribers(runner):
+            return
+        if len(list(runner.session.flows())) > 0:
+            return
+        self._sessions.pop(runner.session.key, None)
 
     def list_sessions(self) -> list[dict]:
         rows = []
         for key, runner in self._sessions.items():
             clients = sum(
-                1 for r in self._connections.values() if r is runner
+                1 for subs in self._subscriptions.values() if runner in subs
+            )
+            homes = sum(
+                1 for home in self._connection_home.values() if home is runner
             )
             flows = len(list(runner.session.flows()))
             rows.append({
                 "key": str(key),
                 "clients": clients,
+                "homes": homes,
                 "flows": flows,
             })
         return rows
+
+    async def attach_session(self, session: Session, target_key: str):
+        runner = self._sessions.get(session.key)
+        if not runner:
+            raise RuntimeError(f"Session {session.key} not found")
+
+        target = Key.from_str(target_key)
+        target_runner = self._sessions.get(target)
+        if not target_runner:
+            raise RuntimeError(f"Target session {target_key} not found")
+
+        if target == runner.session.key:
+            return
+
+        connections = [c for c, r in self._active.items() if r is runner]
+
+        for conn in connections:
+            target_runner.session.join(conn)
+            self._subscriptions.setdefault(conn, set()).add(target_runner)
+            self._active[conn] = target_runner
+
+    async def detach_session(self, session: Session):
+        runner = self._sessions.get(session.key)
+        if not runner:
+            raise RuntimeError(f"Session {session.key} not found")
+
+        for conn, active in list(self._active.items()):
+            if active is not runner:
+                continue
+            home = self._connection_home.get(conn)
+            if home is runner:
+                continue
+            runner.session.leave(conn)
+            self._subscriptions.get(conn, set()).discard(runner)
+            self._active[conn] = home
+
+        self._maybe_cleanup(runner)
 
 
 # ----------------------------------
