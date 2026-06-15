@@ -77,3 +77,27 @@ Session als first-class Resource ermöglicht:
 - **Mobilität**: Laptop zu → Session bleibt → Laptop auf → session join research
 - **Agenten**: Agent läuft in Session, mensch kann joinen und beobachten
 - **Workspace**: Session = tmux-Session, aber runtime-native
+
+## Session vs Historie
+
+Eine Session lebt, solange sie Besitzer (homes), Beobachter (clients) oder
+Arbeit (flows) hat. Sobald alle drei auf Null sind, wird sie gelöscht:
+
+```
+homes=0   clients=0   flows=0   →   cleanup
+```
+
+Das ist korrekt, weil **Historie nicht in der Session lebt**. Ein abgeschlossener
+Flow schreibt vor dem Ende seinen `FlowRecord` in einen persistenten Store.
+Die Session selbst ist transient — ihr Verschwinden löscht keine Information.
+
+```
+Runtime
+ ├─ Sessions        (transient, lebt nur mit Arbeit/Beobachtern)
+ ├─ Flows           (lebend, laufen in Sessions)
+ └─ HistoryStore    (persistent, FlowRecords nach Abschluss)
+```
+
+Damit darf `_maybe_cleanup()` gnadenlos bleiben: sobald eine Session keine
+Besitzer, Beobachter oder Arbeit mehr hat, ist sie nur noch Speicher —
+und wird geräumt.
