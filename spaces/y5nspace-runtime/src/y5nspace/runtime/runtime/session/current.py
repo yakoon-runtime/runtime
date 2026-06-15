@@ -15,6 +15,10 @@ async def run(space: NodeSpace):
 
     if current:
         yield out(to_text(f"Session:  {current_key}"))
-        yield out(to_text(f"  clients={current['clients']}  homes={current['homes']}  flows={current['flows']}"))
+        yield out(
+            to_text(
+                f"clients={current['clients']}  homes={current['homes']}  flows={current['flows']}"
+            ),
+        )
     else:
         yield out(to_text(f"Session:  {current_key}"))
