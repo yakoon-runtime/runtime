@@ -36,6 +36,7 @@ from y5n.runtime.sources import DataSourceRegistry
 from y5n.runtime.sources.data import (
     NodeSource,
     RuntimeSource,
+    SessionSource,
 )
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
@@ -206,7 +207,7 @@ def build_runtime(
     # --- MACHINE HANDLING ---
     # ------------------------
 
-    return build_machine(
+    host = build_machine(
         platform=platform,
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
@@ -216,3 +217,7 @@ def build_runtime(
         on_initialize=initialize,
         known_runtimes=settings.runtime.known,
     )
+
+    ds.bind("system:sessions", SessionSource(host))
+
+    return host

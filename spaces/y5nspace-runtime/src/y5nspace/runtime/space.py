@@ -3,6 +3,7 @@ from y5n.api.nodes import Node, NodeScope
 from .runtime.jobs.space import jobs
 from .runtime.labs.space import labs
 from .runtime.net.space import net
+from .runtime.session.space import session
 from .runtime.setup import setup
 from .runtime.status import run as status
 from .runtime.welcome import run as welcome
@@ -52,3 +53,4 @@ runtime.add(
 runtime.mount(labs)
 runtime.mount(jobs)
 runtime.mount(net)
+runtime.mount(session)

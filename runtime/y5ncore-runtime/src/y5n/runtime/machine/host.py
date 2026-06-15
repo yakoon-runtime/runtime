@@ -112,6 +112,20 @@ class RuntimeHost:
     def _has_connections(self, runner: Runner) -> bool:
         return any(r is runner for r in self._connections.values())
 
+    def list_sessions(self) -> list[dict]:
+        rows = []
+        for key, runner in self._sessions.items():
+            clients = sum(
+                1 for r in self._connections.values() if r is runner
+            )
+            flows = len(list(runner.session.flows()))
+            rows.append({
+                "key": str(key),
+                "clients": clients,
+                "flows": flows,
+            })
+        return rows
+
 
 # ----------------------------------
 # PORTS
