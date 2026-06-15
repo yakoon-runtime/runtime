@@ -35,8 +35,8 @@ die Config und verbindet die konfigurierten Runtimes.
 Der Benutzer startet Runtime und Texture getrennt:
 
 ```bash
-python scripts/serve-runtime.py 9100    # Terminal 1
-python scripts/serve-texture.py          # Terminal 2
+python -m y5napp.runtime 9100   # Terminal 1
+python -m y5napp.textual         # Terminal 2
 ```
 
 oder per `texture.yaml` mit `runtime.local.start` (optionaler Befehl).

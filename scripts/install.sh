@@ -24,5 +24,7 @@ pip install \
 # apps
 pip install \
   -e apps/y5napp-console \
+  -e apps/y5napp-runtime \
   -e apps/y5napp-textual \
+  -e apps/y5napp-web \
 
