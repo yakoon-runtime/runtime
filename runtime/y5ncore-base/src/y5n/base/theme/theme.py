@@ -88,6 +88,72 @@ DRACULA = Theme(
     warning="#f1fa8c",
 )
 
+NORD = Theme(
+    name="nord",
+    bg="#2E3440",
+    surface="#3B4252",
+    text="#ECEFF4",
+    accent="#88C0D0",
+    secondary="#81A1C1",
+    primary="#B48EAD",
+    error="#BF616A",
+    success="#A3BE8C",
+    warning="#EBCB8B",
+)
+
+CATPPUCCIN = Theme(
+    name="catppuccin",
+    bg="#1e1e2e",
+    surface="#313244",
+    text="#cdd6f4",
+    accent="#fab387",
+    secondary="#89b4fa",
+    primary="#cba6f7",
+    error="#f38ba8",
+    success="#a6e3a1",
+    warning="#f9e2af",
+)
+
+SOLARIZED_DARK = Theme(
+    name="solarized-dark",
+    bg="#002b36",
+    surface="#073642",
+    text="#839496",
+    accent="#b58900",
+    secondary="#268bd2",
+    primary="#6c71c4",
+    error="#dc322f",
+    success="#859900",
+    warning="#cb4b16",
+)
+
+ONE_DARK = Theme(
+    name="one-dark",
+    bg="#282c34",
+    surface="#353b45",
+    text="#abb2bf",
+    accent="#d19a66",
+    secondary="#61afef",
+    primary="#c678dd",
+    error="#e06c75",
+    success="#98c379",
+    warning="#e5c07b",
+)
+
+
+CATPPUCCIN_MOCHA = Theme(
+    name="catppuccin-mocha",
+    bg="#1e1e2e",
+    surface="#313244",
+    text="#cdd6f4",
+    accent="#fab387",
+    secondary="#89b4fa",
+    primary="#cba6f7",
+    error="#f38ba8",
+    success="#a6e3a1",
+    warning="#f9e2af",
+)
+
 
 def default_themes() -> dict[str, Theme]:
-    return {t.name: t for t in [TOKYO_NIGHT, DRACULA]}
+    return {t.name: t for t in [TOKYO_NIGHT, DRACULA, NORD, CATPPUCCIN, CATPPUCCIN_MOCHA, SOLARIZED_DARK, ONE_DARK]}
