@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 
+from y5n.base.clients import ClientConnection
 from y5n.base.flow.channel import Scope, resolve
 from y5n.base.naming import Key
 from y5n.base.nodes.path import NodePath
@@ -17,6 +18,7 @@ from y5n.base.runtime import Event
 from y5n.base.transport import IO
 from y5n.runtime.capabilities.permission import PermissionSet
 from y5n.runtime.flow import Flow
+from y5n.runtime.runtime.bus import SessionBus
 from y5nstore.event import GetResult
 
 
@@ -72,6 +74,7 @@ class Session:
         self.data = data
 
         self._runtime = SessionRuntime()
+        self._bus = SessionBus()
         self._flow_id_counter = 0
         self._flows: dict[str, Flow] = {}
         self._foreground_flow_id: str | None = None
@@ -116,6 +119,16 @@ class Session:
         self._runtime.io = io
 
     # ----------------------------
+    # client lifecycle
+    # ----------------------------
+
+    def join(self, client: ClientConnection):
+        self._bus.join(client)
+
+    def leave(self, client: ClientConnection):
+        self._bus.leave(client)
+
+    # ----------------------------
     # flow
     # ----------------------------
 
@@ -135,7 +148,9 @@ class Session:
         if flow.id in self._flows:
             del self._flows[flow.id]
         prefix = f"{flow.id}:"
-        self._channels = {k: v for k, v in self._channels.items() if not k.startswith(prefix)}
+        self._channels = {
+            k: v for k, v in self._channels.items() if not k.startswith(prefix)
+        }
         if flow.id == self._foreground_flow_id:
             self.set_foreground_flow(None)
 

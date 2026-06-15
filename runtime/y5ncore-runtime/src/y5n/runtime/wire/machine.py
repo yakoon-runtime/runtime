@@ -24,7 +24,7 @@ from y5n.runtime.machine import (
     TaskRunner,
 )
 from y5n.runtime.runtime import Session
-from y5n.runtime.runtime.bus import BusOutput, SessionBus
+from y5n.runtime.runtime.bus import BusOutput
 from y5n.runtime.settings.version import resolve_runtime_info
 
 # ----------------------------------
@@ -165,12 +165,10 @@ def build_machine(
     # --- SESSION HANDLING ---
     # ------------------------
 
-    bus = SessionBus()
-
     async def get_session(key: Key) -> Session:
         session, _ = await on_session(key=key)
         psession = cast(Session, session)
-        psession.bind_io(BusOutput(bus))
+        psession.bind_io(BusOutput(psession._bus))
         return psession
 
     session_builder = SessionBuilder(
@@ -216,7 +214,6 @@ def build_machine(
 
     host = RuntimeHost(
         on_schedule=scheduler.run,
-        on_join_bus=bus.join,
         on_create_runner=create_runner,
         on_get_session=session_builder.create,
         on_setup=setup_nodes,

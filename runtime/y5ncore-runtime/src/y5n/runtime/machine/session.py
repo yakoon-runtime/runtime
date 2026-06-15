@@ -18,10 +18,11 @@ class SessionBuilder:
         on_get_session: OnGetSession,
     ):
         self.on_get_session = on_get_session
-        self._counter = count(1)
+        self._counter = count(0)
 
     async def create(self) -> Session:
         key = self._next_key()
+        print(f"[DEBUG:] Session_key: {key}")
 
         session = await self.on_get_session(key=key)
 
@@ -43,4 +44,3 @@ class SessionBuilder:
 
 class OnGetSession(Protocol):
     async def __call__(self, *, key: Key) -> Session: ...
-

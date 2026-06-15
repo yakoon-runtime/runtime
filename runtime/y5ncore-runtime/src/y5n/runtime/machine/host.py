@@ -24,7 +24,6 @@ class RuntimeHost:
         self,
         *,
         on_schedule: OnSchedule,
-        on_join_bus: OnJoinBus,
         on_get_session: OnGetSession,
         on_create_runner: OnCreateRunner,
         on_setup: OnSetup,
@@ -32,7 +31,6 @@ class RuntimeHost:
         info: RuntimeInfo,
     ):
         self.on_flow_schedule = on_schedule
-        self.on_join_bus = on_join_bus
         self.on_get_session = on_get_session
         self.on_create_runner = on_create_runner
         self.on_setup = on_setup
@@ -71,7 +69,6 @@ class RuntimeHost:
         session_key: Key | None = None,
     ):
         connection.runtime_info = self.info
-        self.on_join_bus(client=connection)
 
         # attach existing session
         if session_key and session_key in self._sessions:
@@ -84,8 +81,7 @@ class RuntimeHost:
             runner = self.on_create_runner(session=session)
             self._sessions[session.key] = runner
 
-            # await self.engine.dispatch(session, initial_command)
-
+        runner.session.join(connection)
         self._connections[connection] = runner
         return runner.session
 
@@ -93,6 +89,8 @@ class RuntimeHost:
         runner = self._connections.pop(connection, None)
         if not runner:
             return
+
+        runner.session.leave(connection)
 
         # has session other clients
         if self._has_connections(runner):
@@ -122,10 +120,6 @@ class RuntimeHost:
 
 class OnSchedule(Protocol):
     async def __call__(self): ...
-
-
-class OnJoinBus(Protocol):
-    def __call__(self, *, client: ClientConnection): ...
 
 
 class OnGetSession(Protocol):
