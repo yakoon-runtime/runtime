@@ -62,6 +62,9 @@ class RuntimeHost:
     async def flow_complete(self, flow, session) -> None:
         for cb in self._session_done.get(str(session.key), []):
             await cb()
+        runner = self._sessions.get(session.key)
+        if runner:
+            self._maybe_cleanup(runner)
 
     async def connect(
         self,
