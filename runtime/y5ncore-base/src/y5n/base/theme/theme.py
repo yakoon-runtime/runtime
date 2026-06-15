@@ -154,6 +154,32 @@ CATPPUCCIN_MOCHA = Theme(
     warning="#f9e2af",
 )
 
+MONOKAI = Theme(
+    name="monokai",
+    bg="#272822",
+    surface="#383830",
+    text="#f8f8f2",
+    accent="#fd971f",
+    secondary="#66d9ef",
+    primary="#ae81ff",
+    error="#f92672",
+    success="#a6e22e",
+    warning="#e6db74",
+)
+
+ATOM_DARK = Theme(
+    name="atom-dark",
+    bg="#282c34",
+    surface="#353b45",
+    text="#abb2bf",
+    accent="#d19a66",
+    secondary="#61afef",
+    primary="#c678dd",
+    error="#e06c75",
+    success="#98c379",
+    warning="#e5c07b",
+)
+
 
 def default_themes() -> dict[str, Theme]:
-    return {t.name: t for t in [TOKYO_NIGHT, DRACULA, NORD, CATPPUCCIN, CATPPUCCIN_MOCHA, SOLARIZED_DARK, ONE_DARK]}
+    return {t.name: t for t in [TOKYO_NIGHT, DRACULA, NORD, CATPPUCCIN, CATPPUCCIN_MOCHA, SOLARIZED_DARK, ONE_DARK, MONOKAI, ATOM_DARK]}
