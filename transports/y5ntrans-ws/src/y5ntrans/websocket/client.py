@@ -43,12 +43,14 @@ class WebSocketClientTransport:
                 self._websocket = None
 
         async def send_input(event: Event):
+            ctx = event.context or {}
             payload = {
                 "type": "input",
                 "payload": {
                     "raw": str(event.payload),
                     "context": {
-                        "origin": getattr(event.context, "origin", None),
+                        "origin": getattr(ctx, "origin", None),
+                        "echo": getattr(ctx, "echo", None),
                     },
                 },
             }

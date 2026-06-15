@@ -48,6 +48,7 @@ def _deserialize_context(data):
 
     return InputContext(
         origin=data.get("origin"),
+        echo=data.get("echo"),
     )
 
 

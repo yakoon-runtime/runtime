@@ -29,6 +29,8 @@ def _serialize_context(context: InputContext | None) -> dict | None:
     data: dict[str, object] = {}
     if context.origin is not None:
         data["origin"] = context.origin
+    if context.echo is not None:
+        data["echo"] = context.echo
 
     return data or None
 

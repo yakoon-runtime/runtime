@@ -65,9 +65,12 @@ def map_to_input_event(data):
     payload = data.get("payload", {})
     context = payload.get("context") or {}
 
+    raw = payload.get("raw") or ""
+
     return Event.from_raw(
-        data=payload.get("raw") or "",
+        data=raw,
         context=InputContext(
             origin=context.get("origin"),
+            echo=raw,
         ),
     )
