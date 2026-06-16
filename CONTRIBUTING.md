@@ -11,6 +11,24 @@ pip install -e apps/y5napp-runtime
 pip install -e apps/y5napp-textual
 ```
 
+## Commit Conventions
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+<type>(<scope>): <description>
+```
+
+**Common types:** `feat`, `fix`, `refactor`, `docs`, `style`, `test`, `chore`
+
+Examples:
+```
+feat(cli): add project init command
+fix(auth): reject empty passwords
+refactor(realm): move phase logic to store
+docs(readme): update getting started
+```
+
 ## Code Style
 
 - **Formatter**: Black
