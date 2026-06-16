@@ -1,30 +1,30 @@
-# Session als Arbeitskontext
+# Session as Workspace
 
-## Kernidee
+## Core Idea
 
-Session ist kein technischer Container, der mit dem Client lebt und stirbt.
-Session ist ein **Arbeitskontext**: benannt, besitzbar, joinbar, persistent.
+Session is not a technical container that lives and dies with the client.
+Session is a **workspace context**: named, ownable, joinable, persistent.
 
 ```
 Runtime
  └─ Session "research"
       owner=stefan
       flows=1
-      clients=0   ← Laptop zugeklappt, Arbeit läuft weiter
+      clients=0   ← laptop closed, work continues
 ```
 
-## Lebenszyklus
+## Lifecycle
 
 ```
-Session entsteht (erster Client oder explizit)
+Session created (first client or explicit)
   ↓
-Arbeit passiert (flows, jobs, agents)
+Work happens (flows, jobs, agents)
   ↓
-Clients kommen und gehen
+Clients come and go
   ↓
-Session bleibt (wenn flows laufen)
+Session remains (if flows are running)
   ↓
-Session stirbt (keine flows, keine clients)
+Session ends (no flows, no clients)
 ```
 
 ## Naming
@@ -44,11 +44,11 @@ session list
 
 ## Ownership & Access
 
-| owner | Verhalten |
+| owner | Behavior |
 |---|---|
-| `None` | öffentlich — jeder darf joinen |
-| `stefan` | nur stefan darf joinen |
-| `[stefan, anna]` | beide dürfen joinen |
+| `None` | public — anyone may join |
+| `stefan` | only stefan may join |
+| `[stefan, anna]` | both may join |
 
 ## Attach / Detach / Focus
 
@@ -68,36 +68,31 @@ session --list
 
 A connection always has exactly one active session. The **home session** is the connection's "personal workspace" created at connect time. `--attach` visits another session; `--detach` returns home. This is analogous to `git checkout` — switching branches doesn't delete your working directory.
 
-Eine Connection kann mehrere Sessions abonniert haben, aber nur eine ist aktiv.
+A connection may subscribe to multiple sessions, but only one is active.
 
-## Perspektive
+## Perspective
 
-Session als first-class Resource ermöglicht:
-- **Kollaboration**: mehrere Clients in einer Session
-- **Mobilität**: Laptop zu → Session bleibt → Laptop auf → session join research
-- **Agenten**: Agent läuft in Session, mensch kann joinen und beobachten
-- **Workspace**: Session = tmux-Session, aber runtime-native
+Session as a first-class resource enables:
+- **Collaboration**: multiple clients in one session
+- **Mobility**: laptop off → session stays → laptop on → session join research
+- **Agents**: agent runs in session, human can join and observe
+- **Workspace**: session = tmux session, but runtime-native
 
-## Session vs Historie
+## Session vs History
 
-Eine Session lebt, solange sie Besitzer (homes), Beobachter (clients) oder
-Arbeit (flows) hat. Sobald alle drei auf Null sind, wird sie gelöscht:
+A session lives as long as it has owners (homes), observers (clients), or work (flows). Once all three are zero, it is cleaned up:
 
 ```
 homes=0   clients=0   flows=0   →   cleanup
 ```
 
-Das ist korrekt, weil **Historie nicht in der Session lebt**. Ein abgeschlossener
-Flow schreibt vor dem Ende seinen `FlowRecord` in einen persistenten Store.
-Die Session selbst ist transient — ihr Verschwinden löscht keine Information.
+This is correct because **history does not live in the session**. A completed flow writes its `FlowRecord` to a persistent store before ending. The session itself is transient — its disappearance does not delete information.
 
 ```
 Runtime
- ├─ Sessions        (transient, lebt nur mit Arbeit/Beobachtern)
- ├─ Flows           (lebend, laufen in Sessions)
- └─ HistoryStore    (persistent, FlowRecords nach Abschluss)
+ ├─ Sessions        (transient, lives only with work/observers)
+ ├─ Flows           (alive, run in sessions)
+ └─ HistoryStore    (persistent, FlowRecords after completion)
 ```
 
-Damit darf `_maybe_cleanup()` gnadenlos bleiben: sobald eine Session keine
-Besitzer, Beobachter oder Arbeit mehr hat, ist sie nur noch Speicher —
-und wird geräumt.
+Thus `_maybe_cleanup()` can remain ruthless: once a session has no owners, observers, or work, it is just memory — and is freed.

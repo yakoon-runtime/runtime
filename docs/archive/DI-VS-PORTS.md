@@ -1,121 +1,121 @@
-# Warum Yakoon Ports? – Was DI allein nicht löst
+# Why Yakoon Ports? — What DI Alone Doesn't Solve
 
 ## Dependency Injection vs. Yakoon Ports
 
 ---
 
-## 1. Zwei Richtungen statt einer
+## 1. Two Directions Instead of One
 
-Dependency Injection ist **top-down**: der Container hat alles, Konsumenten ziehen sich raus.
+Dependency Injection is **top-down**: the container has everything, consumers pull from it.
 
 ```python
-# DI: nur eine Richtung
+# DI: only one direction
 container.bind(Db, postgres)
 handler = Handler(db=container.get(Db))
 ```
 
-Yakoon braucht **zwei Richtungen**:
+Yakoon needs **two directions**:
 
 ```python
-# ↓ Nach unten delegieren (wer du bist, bestimmt was du darfst)
+# ↓ Delegate downward (who you are determines what you can do)
 root.ports.provide(OnSourceRead, ds.read)
 
-# ↑ Nach oben exportieren (Plugin sagt: "Ich kann das")
+# ↑ Export upward (plugin says: "I can do this")
 space.ports.publish(Namespaces, my_namespace_service)
 ```
 
-Ein Space wie `y5nspace-ident` muss nicht nur Dinge *empfangen*, sondern auch Dinge *anbieten* – dem Eltern-Node seine Identitäts-Dienste zur Verfügung stellen.
+A space like `y5nspace-ident` must not only *receive* things, but also *offer* things — exposing its identity services to the parent node.
 
-In DI müsste der Eltern-Node vorher wissen, welche Dienste das Kind anbietet und alles manuell verdrahten. Yakoon erlaubt **selbstorganisierende Exporte** – ein Space sagt: "Ich bin fertig initialisiert, hier sind meine Capabilities für euch da oben."
+In DI, the parent node would need to know in advance which services the child offers, wiring everything manually. Yakoon enables **self-organizing exports** — a space says: "I'm initialized, here are my capabilities for you above."
 
 ---
 
-## 2. Autorität ist an Position gebunden, nicht an Typ
+## 2. Authority Is Bound to Position, Not Type
 
-In DI bekommt ein Service, was er braucht, weil er es deklariert (`@inject`). Die Position im System ist irrelevant.
+In DI, a service gets what it needs because it declares it (`@inject`). Position in the system is irrelevant.
 
-In Yakoon bestimmt die **Position im Baum**, was du sehen kannst:
+In Yakoon, **position in the tree** determines what you can see:
 
 ```
 Root (OnProjectionResolve, OnSourceRead, OnCompile, ...)
-  └─ system (sieht alles vom Root)
-      └─ ls (sieht alles von system + Root)
-  └─ runtime (sieht alles vom Root)
-      └─ version (sieht alles von runtime + Root, aber NICHT system/ls)
+  └─ system (sees everything from Root)
+      └─ ls (sees everything from system + Root)
+  └─ runtime (sees everything from Root)
+      └─ version (sees everything from runtime + Root, but NOT system/ls)
 ```
 
-Ein tiefer Node im `ident`-Space kann nicht einfach `OnSourceRead` aus dem Root-Space nutzen – er muss im Subtree sein, der unter Root gemountet ist. **Autorität wird durch Hierarchieposition vererbt, nicht durch Import-Deklaration.**
+A deep node in the `ident` space cannot simply use `OnSourceRead` from the Root space — it must be in the subtree mounted under Root. **Authority is inherited through hierarchy position, not through import declarations.**
 
-Ein `@inject`-Dekorator gibt dir keinen Kontext darüber, *wo* im System dieser Code läuft. Yakoon sagt: "Du bist Node X unter Parent Y – also hast du Zugriff auf Z, aber nicht auf W."
+An `@inject` decorator gives no context about *where* in the system this code runs. Yakoon says: "You are Node X under Parent Y — so you have access to Z, but not to W."
 
 ---
 
-## 3. Subtree-Autonomie (Composition without Coordination)
+## 3. Subtree Autonomy (Composition without Coordination)
 
-DI erfordert zentrale Koordination: irgendwo muss ein `WireModule()`, `AppModule` oder `CompositionRoot` stehen, das **alle** Abhängigkeiten kennt.
+DI requires central coordination: somewhere a `WireModule()`, `AppModule` or `CompositionRoot` must know **all** dependencies.
 
 ```python
-# DI: zentrale Koordination
+# DI: central coordination
 class AppModule:
     def configure(self, container):
         container.bind(Projector, ...)
         container.bind(Store, ...)
-        container.bind(UserService, ...)  # Root muss Ident-Service kennen!
-        container.bind(GroupService, ...) # Root muss Ident-Service kennen!
+        container.bind(UserService, ...)  # Root must know about Ident service!
+        container.bind(GroupService, ...) # Root must know about Ident service!
 ```
 
-Yakoon erlaubt **unabhängig entwickelte Subtrees**, die sich selbst versorgen:
+Yakoon allows **independently developed subtrees** that self-configure:
 
 ```python
-# Space-Wiring (unabhängig entwickelt in y5nspace-ident)
+# Space wiring (independently developed in y5nspace-ident)
 async def setup(space):
     store = EntityStore(...)
     space.ports.provide(UserService, UserService(store))
     space.ports.provide(Namespaces, Namespaces())
 
-# Root-Wiring (koordiniert nur das Mounten, kein Detailwissen)
+# Root wiring (coordinates only mounting, no detail knowledge)
 platform.mount(shell_space)
-platform.mount(ident_space)    # weiss nicht, was ident intern macht
-platform.mount(runtime_space)  # weiss nicht, was runtime intern macht
+platform.mount(ident_space)    # doesn't know what ident does internally
+platform.mount(runtime_space)  # doesn't know what runtime does internally
 ```
 
-Der Root muss nicht wissen, was `y5nspace-ident` intern braucht oder anbietet. Er mountet den Space, und der Space organisiert sich selbst. **Das ist ungefähr so, als würde man ein Linux-Modul laden – es registriert sich selbst, ohne dass der Kernel jede Funktion einzeln verdrahten muss.**
+The Root doesn't need to know what `y5nspace-ident` needs or offers internally. It mounts the space, and the space organizes itself. **This is roughly equivalent to loading a Linux module — it registers itself without the kernel wiring every function individually.**
 
 ---
 
-## 4. Capability Security (was du nicht hast, kannst du nicht rufen)
+## 4. Capability Security (What You Don't Have, You Can't Call)
 
-DI löst das Problem "wie kriege ich meine Abhängigkeiten?" – aber nicht das Problem "wie verhindere ich, dass unautorisierter Code an sensible Dienste kommt?"
+DI solves the problem "how do I get my dependencies?" — but not the problem "how do I prevent unauthorized code from accessing sensitive services?"
 
-Ein klassisches DI-Framework gibt dir entweder:
+A classic DI framework gives you either:
 
-- **Globalen Container** → jeder kann alles kriegen (Ambient Authority)
-- **Scoped Container** → aber die Scope-Grenzen sind orthogonal zur Geschäftslogik
+- **Global container** → anyone can get anything (Ambient Authority)
+- **Scoped container** → but scope boundaries are orthogonal to business logic
 
-Yakoon hat mit dem `PermissionChecker` und der hierarchischen Sichtbarkeit einen **eingebauten Autorisierungsmechanismus**:
+Yakoon has a **built-in authorization mechanism** with `PermissionChecker` and hierarchical visibility:
 
 ```python
-# node.py: Position bestimmt Sichtbarkeit
+# node.py: Position determines visibility
 class Node:
-    ports: NodePorts       # meine Capabilities
-    parent: Node | None    # mein Kontext im Baum
-    children: dict[str, Node]  # meine Sub-Nodes
+    ports: NodePorts       # my capabilities
+    parent: Node | None    # my context in the tree
+    children: dict[str, Node]  # my sub-nodes
 ```
 
-- Ein Node in `runtime/labs` sieht andere Capabilities als ein Node in `ident/admin`
-- Selbst wenn Code `ports.get()` aufruft, wird die Capability nur gefunden, wenn die Container-Kette sie liefert
-- `fork()` und `mount()` ziehen explizite Grenzen
+- A node in `runtime/labs` sees different capabilities than a node in `ident/admin`
+- Even if code calls `ports.get()`, the capability is only found if the container chain provides it
+- `fork()` and `mount()` draw explicit boundaries
 
-DI-Frameworks (Guice, Spring, Castle Windsor, etc.) geben dir entweder alles oder nichts – sie haben kein Konzept von **Capability Scopes, die an eine Baumposition gebunden sind**. Ein Service in Spring bekommt seine Dependencies unabhängig davon, *wo* im Request-Graphen er aufgerufen wird.
+DI frameworks (Guice, Spring, Castle Windsor, etc.) give you either everything or nothing — they have no concept of **capability scopes bound to tree position**. A service in Spring gets its dependencies regardless of *where* in the request graph it is called.
 
 ---
 
-## 5. Keine zentrale Dependency-Wire-Orgie
+## 5. No Central Dependency Wire Orgy
 
-In klassischen DI-Systemen wächst der `WireModule` / `AppModule` / `CompositionRoot` mit jeder neuen Komponente. Alles muss zentral bekannt sein.
+In classic DI systems, the `WireModule` / `AppModule` / `CompositionRoot` grows with every new component. Everything must be known centrally.
 
 ```python
-# Typischer DI-Composition-Root (wächst mit jedem Feature)
+# Typical DI composition root (grows with every feature)
 wire = [
     Projector, Compiler, Normalizer,
     UserService, GroupService, MembershipService,
@@ -126,10 +126,10 @@ wire = [
 ]
 ```
 
-Yakoon verteilt das Wiring auf die Spaces:
+Yakoon distributes wiring across spaces:
 
 ```python
-# runtime.py (Root-Wiring) – nur 9 Zeilen Binding
+# runtime.py (Root wiring) — only 9 lines of binding
 platform.ports.provide(OnSourceRead, ds.read)
 platform.ports.provide(OnSessionSave, session_manager.save)
 platform.ports.provide(OnAuthorizeRead, perm_checker.can_read)
@@ -140,46 +140,46 @@ platform.ports.provide(OnJinjaRender, jinja_engine.render_str)
 platform.ports.provide(OnCompile, compiler.compile)
 platform.ports.provide(OnErrorResolve, error_resolve)
 
-# shell/setup.py (Space-Wiring) – völlig eigenständig
+# shell/setup.py (Space wiring) — completely independent
 space.ports.provide(OnManualResolve, manual_resolver)
 
-# ident/setup.py (Space-Wiring) – völlig eigenständig
+# ident/setup.py (Space wiring) — completely independent
 space.ports.provide(UserService, UserService(store))
 space.ports.provide(GroupService, GroupService(store))
 space.ports.publish(OnAuthenticate, authenticator.authenticate)
 ```
 
-**Jeder Space ist sein eigener Composition Root.** Der Root muss nicht wissen, dass der Shell-Space einen `OnManualResolve` braucht oder dass `y5nspace-ident` einen `UserService` anbietet. Der Space kümmert sich selbst darum.
+**Each space is its own composition root.** The Root doesn't need to know that the Shell space needs an `OnManualResolve` or that `y5nspace-ident` offers a `UserService`. The space handles itself.
 
 ---
 
-## 6. Dynamische Plugin-Architektur
+## 6. Dynamic Plugin Architecture
 
-DI-Systeme sind meist **statisch zur Startzeit konfiguriert**. Du sagst: "Diese 5 Module sind verdrahtet."
+DI systems are usually **statically configured at startup**. You say: "These 5 modules are wired."
 
-Yakoon erlaubt **dynamisches Laden von Subtrees**:
+Yakoon allows **dynamic loading of subtrees**:
 
 ```python
-# Ein Space kann zur Laufzeit einen Subtree mounten
+# A space can mount a subtree at runtime
 shell_node.mount(new_space)
 
-# Oder Capabilities nachträglich bereitstellen
+# Or provide capabilities after the fact
 node.ports.provide(NewService, my_service)
 ```
 
-Weil `fork()` eine Eltern-Kette etabliert, sehen neue Nodes automatisch die bestehenden Capabilities. Der neue Subtree muss nicht ins zentrale Wiring aufgenommen werden – er wird einfach eingehängt.
+Because `fork()` establishes a parent chain, new nodes automatically see existing capabilities. The new subtree doesn't need to be added to central wiring — it is simply attached.
 
 ---
 
-## Zusammenfassung
+## Summary
 
 | Problem | Dependency Injection | Yakoon Ports |
 |---------|-------------------|--------------|
-| **Richtung** | Nur top-down | `provide` ↓ + `publish` ↑ |
-| **Autorität** | Deklariert (`@inject`) | Position im Baum |
-| **Subtree-Autonomie** | Zentrale Koordination nötig | Self-wiring Spaces |
-| **Zugriffskontrolle** | Alles oder nichts | Hierarchisch abgestuft |
-| **Composition** | Alles im Root bekannt | Dezentrales Wiring |
-| **Dynamik** | Meist statisch zur Startzeit | Laufzeit-Mounten möglich |
-| **Plugins** | Müssen im Root registriert sein | Melden sich selbst an |
-| **Metapher** | "Hier sind deine Abhängigkeiten" | "Hier ist, wofür du autorisiert bist" |
+| **Direction** | Top-down only | `provide` ↓ + `publish` ↑ |
+| **Authority** | Declared (`@inject`) | Position in tree |
+| **Subtree Autonomy** | Central coordination required | Self-wiring spaces |
+| **Access Control** | All or nothing | Hierarchical, graduated |
+| **Composition** | Everything known at root | Decentralized wiring |
+| **Dynamics** | Mostly static at startup | Runtime mounting possible |
+| **Plugins** | Must be registered at root | Self-registering |
+| **Metaphor** | "Here are your dependencies" | "Here is what you are authorized for" |

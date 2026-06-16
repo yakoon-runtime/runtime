@@ -1,107 +1,107 @@
-# Ports-Mechanismus in Yakoon
+# Ports Mechanism in Yakoon
 
-## Überblick
+## Overview
 
-Das Ports-System ist ein **reines Dependency-Injection-Framework** auf Basis hierarchischer Container – ohne Framework, ohne Dekorateure, ohne Magie. Es erlaubt, Capabilities (Funktionen, Dienste, Services) durch den Node-Baum zu reichen, sodass jeder Node genau das bekommt, was er braucht.
+The Ports system is a **pure dependency injection framework** based on hierarchical containers — without a framework, without decorators, without magic. It allows capabilities (functions, services) to be passed through the node tree so that each node gets exactly what it needs.
 
 ---
 
-## Grundbaustein: `Container`
+## Building Block: `Container`
 
-**Datei:** `runtime/y5ncore-base/src/y5n/base/runtime/container.py`
+**File:** `runtime/y5ncore-base/src/y5n/base/runtime/container.py`
 
-Jeder `Container` ist ein einfaches Key-Value-Store mit zwei Besonderheiten:
+Every `Container` is a simple key-value store with two special features:
 
-1. **Elternkette**: Ein Container hat einen `parent`. Wird ein Port nicht gefunden, wird beim Eltern-Container nachgesehen → **hierarchisches Lookup**.
-2. **Statisch oder lazy**: Man kann fertige Instanzen binden (`bind()`) oder Fabriken (`bind_lazy()`) – lazy wird beim ersten Zugriff ausgeführt und gecached.
+1. **Parent chain**: A container has a `parent`. If a port is not found, the parent container is consulted → **hierarchical lookup**.
+2. **Static or lazy**: You can bind ready instances (`bind()`) or factories (`bind_lazy()`) — lazy is executed on first access and cached.
 
 ```python
 container = Container(allow_override=True)
-container.bind(MyPort, my_instance)        # statisch
+container.bind(MyPort, my_instance)        # static
 container.bind_lazy(MyPort, factory_fn)    # lazy
 container.get(MyPort)                      # → my_instance
 ```
 
-**Methoden:**
+**Methods:**
 
-| Methode | Beschreibung |
+| Method | Description |
 |---------|-------------|
-| `bind(port, capability)` | Registriert eine fertige Capability-Instanz |
-| `bind_lazy(port, factory)` | Registriert eine async-Fabrik (wird beim ersten `get()` ausgeführt) |
-| `get(port)` | Holt Capability aus eigenem Container → Eltern → ... → Root |
-| `contains(port)` | Prüft, ob Port irgendwo in der Kette existiert |
-| `fork()` | Erzeugt Kind-Container mit sich selbst als Parent |
-| `mount(root)` | Hängt Container-Kette an neuen Root (erweitert Lookup) |
+| `bind(port, capability)` | Registers a ready capability instance |
+| `bind_lazy(port, factory)` | Registers an async factory (executed on first `get()`) |
+| `get(port)` | Fetches capability from own container → parent → ... → Root |
+| `contains(port)` | Checks if port exists anywhere in the chain |
+| `fork()` | Creates child container with itself as parent |
+| `mount(root)` | Attaches container chain to new root (extends lookup) |
 
 ---
 
-## `NodePorts` – Die zwei Richtungen
+## `NodePorts` — The Two Directions
 
-**Datei:** `runtime/y5ncore-base/src/y5n/base/nodes/ports.py`
+**File:** `runtime/y5ncore-base/src/y5n/base/nodes/ports.py`
 
-`NodePorts` kapselt **zwei** Container:
+`NodePorts` encapsulates **two** containers:
 
 ```python
 class NodePorts:
-    _publish_to: Container  # nach oben (für Eltern sichtbar)
-    _local: Container       # lokal + nach unten (Kinder erben)
+    _publish_to: Container  # upward (visible to parent)
+    _local: Container       # local + downward (children inherit)
 ```
 
 **API:**
 
-| Methode | Wirkung |
-|---------|---------|
-| `provide(port, capability)` | Registriert im `_local` → sichtbar für diesen Node **und alle Kind-Nodes** |
-| `publish(port, capability)` | Registriert im `_publish_to` → sichtbar **für den Eltern-Node** |
-| `get(port)` | Sucht in `_local` → Eltern-Container → ... → Root |
-| `has(port)` | Prüft, ob Port in der lokalen Kette existiert |
-| `fork()` | Erzeugt Kind-`NodePorts` (siehe Vererbung) |
-| `mount(parent)` | Hängt in Eltern-Baum ein (siehe Mounten) |
+| Method | Effect |
+|---------|--------|
+| `provide(port, capability)` | Registers in `_local` → visible to this node **and all child nodes** |
+| `publish(port, capability)` | Registers in `_publish_to` → visible **to the parent node** |
+| `get(port)` | Searches `_local` → parent container → ... → Root |
+| `has(port)` | Checks if port exists in the local chain |
+| `fork()` | Creates child `NodePorts` (see inheritance) |
+| `mount(parent)` | Attaches into parent tree (see mounting) |
 
 ---
 
-## Vererbungskette: `fork()` und `mount()`
+## Inheritance Chain: `fork()` and `mount()`
 
-### `fork()` – Kind-Node erbt Capabilities
+### `fork()` — Child Node Inherits Capabilities
 
-Wird in `Node.add()` aufgerufen (`node.py:216-217`):
+Called in `Node.add()` (`node.py:216-217`):
 
 ```python
 if self.ports:
     child.ports = self.ports.fork()
 ```
 
-`fork()` erzeugt einen neuen `NodePorts`:
+`fork()` creates new `NodePorts`:
 
 ```python
 def fork(self) -> NodePorts:
     return NodePorts(
-        publish_to=self._local,    # Kind published in Eltern-Lokal
-        local=self._local.fork(),  # Kind-Lokal hat Eltern-Lokal als Parent
+        publish_to=self._local,    # child publishes into parent's local
+        local=self._local.fork(),  # child's local has parent's local as parent
     )
 ```
 
-**Effekt:** Kinder sehen alle Capabilities des Eltern-Nodes, können aber eigene ergänzen oder überschreiben (wenn `allow_override=True`).
+**Effect:** Children see all capabilities of the parent node, but can add or override their own (if `allow_override=True`).
 
-### `mount()` – Subtrees einhängen
+### `mount()` — Attaching Subtrees
 
-Wird in `Node.mount()` und im Runtime-Wiring verwendet:
+Called in `Node.mount()` and in Runtime wiring:
 
 ```python
 def mount(self, parent: NodePorts) -> None:
-    self._local.mount(parent._local)   # Lookup in Elternbaum erweitern
-    self._publish_to = parent._local   # Publikationen gehen zum Eltern-Lokal
+    self._local.mount(parent._local)   # extend lookup into parent tree
+    self._publish_to = parent._local   # publications go to parent's local
 ```
 
-**Effekt:** Der gemountete Tree behält seine interne Hierarchie, erweitert aber sein Lookup in den Elternbaum. Publikationen gehen direkt in den Eltern-Lokal-Container.
+**Effect:** The mounted tree keeps its internal hierarchy but extends its lookup into the parent tree. Publications go directly into the parent's local container.
 
 ---
 
-## Der Wiring-Prozess
+## The Wiring Process
 
-**Datei:** `runtime/y5ncore-runtime/src/y5n/runtime/wire/runtime.py:146-154`
+**File:** `runtime/y5ncore-runtime/src/y5n/runtime/wire/runtime.py:146-154`
 
-Alle Plattform-Dienste werden als Ports auf dem **Root-Node** registriert:
+All platform services are registered as ports on the **Root node**:
 
 ```python
 platform.ports.provide(OnSourceRead, ds.read)
@@ -115,17 +115,17 @@ platform.ports.provide(OnCompile, compiler.compile)
 platform.ports.provide(OnErrorResolve, error_resolve)
 ```
 
-Danach werden alle `Nodes` (Spaces) via `platform.mount(node)` an den Root gehängt → **jeder Node sieht automatisch alle Plattform-Ports via Hierarchie-Lookup**.
+Then all `Nodes` (spaces) are attached via `platform.mount(node)` → **every node automatically sees all platform ports through the hierarchy lookup**.
 
 ---
 
-## Konsum in den Nodes
+## Consumption in Nodes
 
-Jeder Command-Handler bekommt `space: NodeSpace` übergeben. Über `space.ports.get(PortType)` werden benötigte Dienste abgefragt:
+Every command handler receives `space: NodeSpace`. Required services are fetched via `space.ports.get(PortType)`:
 
-### Einfaches Beispiel: `version`-Kommando
+### Simple Example: `version` Command
 
-**Datei:** `spaces/y5nspace-runtime/src/y5nspace/runtime/runtime/version.py`
+**File:** `spaces/y5nspace-runtime/src/y5nspace/runtime/runtime/version.py`
 
 ```python
 async def run(space: NodeSpace):
@@ -137,11 +137,11 @@ async def run(space: NodeSpace):
     yield out(projection)
 ```
 
-Der Handler braucht nur die Projektions-Funktion. Sie wurde vom Runtime-Wiring als `OnProjectionResolve` auf dem Root registriert – der Node sieht sie via Port-Hierarchie.
+The handler only needs the projection function. It was registered by Runtime wiring as `OnProjectionResolve` on Root — the node sees it through the port hierarchy.
 
-### Komplexeres Beispiel: `su`-Kommando
+### Complex Example: `su` Command
 
-**Datei:** `spaces/y5nspace-ident/src/y5nspace/ident/runtime/su.py`
+**File:** `spaces/y5nspace-ident/src/y5nspace/ident/runtime/su.py`
 
 ```python
 async def run(space: NodeSpace):
@@ -153,18 +153,18 @@ async def run(space: NodeSpace):
     ...
 ```
 
-Hier werden mehrere Ports gleichzeitig benötigt:
-- `Namespaces` → vom Ident-Space selbst bereitgestellt (`provide`)
-- `OnAuthenticate` → vom Ident-Space bereitgestellt
-- `OnSessionSave` → vom Runtime-Wiring auf Root bereitgestellt
-- `OnProject` → vom Runtime-Wiring auf Root bereitgestellt
-- `PermissionResolver` → vom Ident-Space bereitgestellt
+Here multiple ports are needed simultaneously:
+- `Namespaces` → provided by the Ident space itself (`provide`)
+- `OnAuthenticate` → provided by the Ident space
+- `OnSessionSave` → provided by Runtime wiring on Root
+- `OnProject` → provided by Runtime wiring on Root
+- `PermissionResolver` → provided by the Ident space
 
 ---
 
-## Ports als Protokolle
+## Ports as Protocols
 
-Ports sind **Protokolle** (keine konkreten Typen) – das ermöglicht loses Koppeln:
+Ports are **protocols** (not concrete types) — this enables loose coupling:
 
 ```python
 # spaces/y5nspace-ident/src/y5nspace/ident/ports.py
@@ -174,116 +174,116 @@ class OnProject(Protocol):
     ) -> Projection: ...
 ```
 
-Das Binding erfolgt rein **strukturell** – die registrierte Funktion muss nur dem Protokoll entsprechen. **Kein Registrierungsdekorator, keine Magic, kein Interface-Registry.** `Container.bind()` prüft nur, ob es eine Instanz ist (keine Klasse), aber nicht den Typ.
+Binding is purely **structural** — the registered function only needs to match the protocol. **No registration decorator, no magic, no interface registry.** `Container.bind()` only checks if it's an instance (not a class), but not the type.
 
 ---
 
-## Zusammenfassung
+## Summary
 
-| Konzept | Bedeutung |
-|---------|-----------|
-| `Container` | Hierarchischer DI-Container mit Eltern-Kette |
-| `NodePorts` | Kapselt zwei Container: lokal (nach unten vererbt) + publish (nach oben) |
-| `provide(port, cap)` | Macht Capability lokal + für Kinder verfügbar |
-| `publish(port, cap)` | Exportiert Capability zum Eltern-Node |
-| `get(port)` | Holt Capability aus lokaler Kette (Node → Eltern → ... → Root) |
-| `fork()` | Erzeugt Kind-Scope: Kind sieht alles vom Eltern-Node, kann ergänzen |
-| `mount(parent)` | Hängt kompletten Subtree ein, erweitert Lookup in Elternbaum |
-| `On*`-Protokolle | Typisierte Port-Definitionen als `Protocol`-Klassen (strukturelles Typing) |
+| Concept | Meaning |
+|---------|---------|
+| `Container` | Hierarchical DI container with parent chain |
+| `NodePorts` | Encapsulates two containers: local (inherited downward) + publish (upward) |
+| `provide(port, cap)` | Makes capability available locally + to children |
+| `publish(port, cap)` | Exports capability to parent node |
+| `get(port)` | Fetches capability from local chain (node → parent → ... → Root) |
+| `fork()` | Creates child scope: child sees everything from parent, can add its own |
+| `mount(parent)` | Attaches complete subtree, extends lookup into parent tree |
+| `On*` protocols | Typed port definitions as `Protocol` classes (structural typing) |
 
-### Datenfluss-Diagramm
+### Data Flow Diagram
 
 ```
-Root-Node (Platform)
+Root Node (Platform)
   _local: [OnProjectionResolve, OnSourceRead, OnSessionSave, ...]
   |
-  mount() → Ident-Space
+  mount() → Ident Space
   |   _local: [Namespaces, UserService, GroupService, ...]
-  |   _local.parent → Root._local  (sieht Plattform-Ports)
+  |   _local.parent → Root._local  (sees platform ports)
   |   |
-  |   add() → "su"-Node
-  |       _local: []  (leer, aber geerbt von Ident-Space)
-  |       _local.parent → Ident-Space._local
+  |   add() → "su" Node
+  |       _local: []  (empty, but inherited from Ident Space)
+  |       _local.parent → Ident Space._local
   |       _local.parent.parent → Root._local
   |
-  mount() → Shell-Space
+  mount() → Shell Space
       _local: [...]
       _local.parent → Root._local
 ```
 
-Ein `get(OnProject)` im `su`-Node wandert:
-1. `su-Node._local` → nicht gefunden
-2. `Ident-Space._local` → nicht gefunden
-3. `Root._local` → **gefunden** (wurde dort per `provide` registriert)
+A `get(OnProject)` in the `su` node traverses:
+1. `su Node._local` → not found
+2. `Ident Space._local` → not found
+3. `Root._local` → **found** (registered there via `provide`)
 
 ---
 
 ## Capability System vs. Dependency Injection
 
-Die Implementierung verwendet DI-Mechanik (`Container.bind/get`, Eltern-Kette). Der **Entwurf** ist jedoch ein Capability System.
+The implementation uses DI mechanics (`Container.bind/get`, parent chain). The **design** is a Capability System.
 
-### Was spricht für Capability System?
+### What Makes It a Capability System
 
-**1. Zwei Richtungen (`provide` vs `publish`)**
+**1. Two directions (`provide` vs `publish`)**
 
-Echtes DI kennt nur Container, Konsumenten ziehen sich raus. `NodePorts` hat zwei explizite Richtungen:
+Real DI only knows a container with consumers pulling from it. `NodePorts` has two explicit directions:
 
 ```python
 def provide(self, port, capability):
-    self._local.bind(port, capability)  # ↓ delegiert nach unten (für Kinder)
+    self._local.bind(port, capability)  # ↓ delegates downward (for children)
 
 def publish(self, port, capability):
-    self._publish_to.bind(port, capability)  # ↑ exportiert nach oben (für Eltern)
+    self._publish_to.bind(port, capability)  # ↑ exports upward (for parent)
 ```
 
-`provide` **delegiert Autorität** nach unten – ein Node gibt Kindern bewusst eine Fähigkeit.
-`publish` **exportiert Autorität** nach oben – ein Node macht dem Eltern-Node etwas zugänglich.
-Das ist keine reine Dependency-Versorgung mehr, sondern **explizite Autoritätsweitergabe** mit Richtung.
+`provide` **delegates authority** downward — a node consciously gives a capability to children.
+`publish` **exports authority** upward — a node makes something accessible to its parent.
+This is no longer pure dependency supply, but **explicit authority transfer with direction**.
 
-**2. `fork()` erzeugt Autoritätsgrenzen, nicht nur Scopes**
+**2. `fork()` creates authority boundaries, not just scopes**
 
 ```python
 def fork(self) -> NodePorts:
     return NodePorts(
-        publish_to=self._local,    # Kind published in Eltern-Lokal
-        local=self._local.fork(),  # Kind sieht Eltern-Lokal als Parent
+        publish_to=self._local,    # child publishes into parent local
+        local=self._local.fork(),  # child sees parent local as parent
     )
 ```
 
-Jedes `fork()` zieht eine Grenze: Das Kind sieht via Lookup zwar Eltern-Caps, aber `publish()` schreibt gezielt in den Eltern-Container. Es geht nicht um Bequemlichkeit, sondern um **wer darf was wohin exportieren**. In DI wäre das einfach `child = parent.fork()` – flach, ohne Richtung.
+Every `fork()` draws a boundary: the child can see parent capabilities via lookup, but `publish()` writes specifically into the parent container. It's not about convenience, but about **who is allowed to export what where**. In DI this would be simply `child = parent.fork()` — flat, without direction.
 
-**3. `mount()` etabliert Vertrauenszonen**
+**3. `mount()` establishes trust zones**
 
 ```python
 def mount(self, parent: NodePorts) -> None:
-    self._local.mount(parent._local)    # Lookup erweitern
-    self._publish_to = parent._local    # Publikationen umleiten
+    self._local.mount(parent._local)    # extend lookup
+    self._publish_to = parent._local    # redirect publications
 ```
 
-Ein gemounteter Subtree (z.B. `y5nspace-ident`) behält seine interne Autoritätsstruktur, bekommt aber Lookup-Zugriff auf den Elternbaum. **Der Subtree bleibt autonom** – er entscheidet selbst, welche internen Capabilities er per `publish()` nach oben gibt. Das ist **Principle of Least Authority** (POLA).
+A mounted subtree (e.g. `y5nspace-ident`) keeps its internal authority structure but gets lookup access to the parent tree. **The subtree remains autonomous** — it decides which internal capabilities it exports upward via `publish()`. This is the **Principle of Least Authority** (POLA).
 
-**4. Kein globaler Container, keine Ambient Authority**
+**4. No global container, no ambient authority**
 
-In klassischem DI gibt es meist einen Root-Container mit Ambient Authority: *jeder* Service ist *überall* verfügbar. In Yakoon gibt es zwar einen Root, aber:
-- Nicht alle Ports sind auf Root registriert – viele sind tief in Spaces (`Namespaces`, `UserService`, `GroupService`)
-- Ein Node im `ident`-Space sieht Root-Ports (Projektion, SourceRead), aber nicht die internen Ports des `runtime`-Spaces
-- **Sichtbarkeit ist eine Frage der Hierarchieposition**, nicht der Registrierung
+In classic DI there's usually a root container with ambient authority: *every* service is available *everywhere*. Yakoon does have a root, but:
+- Not all ports are registered on Root — many are deep in spaces (`Namespaces`, `UserService`, `GroupService`)
+- A node in the `ident` space sees Root ports (projection, sourceRead), but not the internal ports of the `runtime` space
+- **Visibility is a matter of hierarchy position, not registration**
 
-### Konzeptuelle Unterschiede
+### Conceptual Differences
 
-| Aspekt | Dependency Injection | Capability System |
+| Aspect | Dependency Injection | Capability System |
 |--------|-------------------|-------------------|
-| **Grundfrage** | "Was braucht dieser Code?" | "Was darf dieser Code tun?" |
-| **Autorität** | Ambient (alles im Container ist verfügbar) | Transferiert (explizit weitergereicht) |
-| **Richtung** | Meist top-down oder zentral | Explizit: provide ↓, publish ↑ |
-| **Granularität** | Ganze Dienste | Einzelne berechtigte Operationen |
-| **Grenzen** | Logische Paketgrenzen (import) | Hierarchische Autoritätsgrenzen (fork/mount) |
-| **Sicherheit** | Nachträglich (Auth-Checks in Methoden) | Eingebaut (was du nicht hast, kannst du nicht rufen) |
-| **Metapher** | "Hole dir was du brauchst" | "Hier ist genau das, wofür du autorisiert bist" |
+| **Core question** | "What does this code need?" | "What is this code allowed to do?" |
+| **Authority** | Ambient (everything in container is available) | Transferred (explicitly passed) |
+| **Direction** | Mostly top-down or central | Explicit: provide ↓, publish ↑ |
+| **Granularity** | Whole services | Individual authorized operations |
+| **Boundaries** | Logical package boundaries (import) | Hierarchical authority boundaries (fork/mount) |
+| **Security** | Retroactive (auth checks in methods) | Built-in (what you don't have, you can't call) |
+| **Metaphor** | "Get what you need" | "Here is exactly what you are authorized for" |
 
-### Fazit
+### Conclusion
 
-DI ist das **Wie** (die technische Umsetzung mit `Container.bind/get`).
-Capabilities sind das **Was** (das Architekturkonzept).
+DI is the **How** (the technical implementation with `Container.bind/get`).
+Capabilities are the **What** (the architectural concept).
 
-`NodePorts` beantwortet nicht die DI-Frage "wie kriege ich meine Abhängigkeiten?", sondern die Capability-Frage **"welche Operationen darf dieser Knoten im Baum ausführen und wem gibt er sie weiter?"** Das ist der Unterschied zwischen einem DI-Framework und einem Capability System.
+`NodePorts` doesn't answer the DI question "how do I get my dependencies?" but the Capability question **"which operations is this tree node allowed to execute and who does it pass them to?"** That is the difference between a DI framework and a Capability System.

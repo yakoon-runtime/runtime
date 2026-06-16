@@ -1,6 +1,6 @@
 # EntityStore Contracts
 
-Der EntityStore garantiert folgende Verträge — unabhängig vom Backend (Memory, Postgres, …).
+The EntityStore guarantees the following contracts — independent of backend (Memory, Postgres, ...).
 
 ## append & Revisionen
 
