@@ -8,7 +8,7 @@ version = "0.5.0"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Stefan Bergmann" }]
-dependencies = []
+dependencies = ["jsonpatch", "asyncpg"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
