@@ -31,11 +31,28 @@ This makes long-running work observable, resumable, and independent of individua
 pip install -e apps/y5napp-runtime
 pip install -e apps/y5napp-textual
 
-yakoon-runtime 9100     # Terminal 1: Runtime
-yakoon-texture           # Terminal 2: TUI client
+# Terminal 1: Runtime
+yakoon-runtime
+
+# Terminal 2: TUI client
+yakoon-texture
 ```
 
-See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for details.
+### Package vs Module vs Executable
+
+| Package (pip) | Python Module | Command |
+|---|---|---|
+| `y5napp-runtime` | `y5napp.runtime` | `yakoon-runtime` |
+| `y5napp-textual` | `y5napp.textual` | `yakoon-texture` |
+
+For development or debugging, use `python -m` instead:
+
+```bash
+python -m y5napp.runtime
+python -m y5napp.textual
+```
+
+See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for full setup details.
 
 ## AI Integration
 
