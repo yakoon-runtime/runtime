@@ -1,44 +1,44 @@
-# Das Yakoon-Manifest
+# The Yakoon Manifesto
 
-## Warum die gängige Erzählung falsch ist und was wir anders machen
-
----
-
-## 1. Die gängige Erzählung
-
-Die aktuelle Begründung für Cloud-Architektur lautet:
-
-```
-KI → braucht riesige Modelle → riesige Modelle laufen in der Cloud
-→ also muss alles in die Cloud
-```
-
-Das wird fast wie ein Naturgesetz behandelt. Als wäre Cloud eine technische Notwendigkeit für KI.
-
-**Aber diese Kausalität ist historisch, nicht technisch.**
+## Why the common narrative is wrong and what we do differently
 
 ---
 
-## 2. Die umgekehrte Kausalität
+## 1. The Common Narrative
 
-> Unternehmen sind nicht in die Cloud gegangen, weil KI das verlangt.
+The current justification for cloud architecture goes:
+
+```
+AI → needs huge models → huge models run in the cloud
+→ therefore everything must be in the cloud
+```
+
+This is treated almost like a law of nature. As if the cloud were a technical necessity for AI.
+
+**But this causality is historical, not technical.**
+
+---
+
+## 2. The Reversed Causality
+
+> Companies didn't move to the cloud because AI demanded it.
 >
-> KI funktioniert heute so gut mit der Cloud, weil Unternehmen ihre Daten bereits in die Cloud ausgelagert haben.
+> AI works so well with the cloud today because companies had already moved their data there.
 
-Das ist ein fundamentaler Unterschied.
+That's a fundamental difference.
 
-### Phase 1: Alles im Haus
+### Phase 1: Everything on-prem
 
 ```
 ERP     CRM     Fileserver     Exchange
 │       │       │              │
 └───────┴───────┴──────────────┘
-         Unternehmen (on-prem)
+         Enterprise (on-prem)
 ```
 
-Daten lagen dort, wo das Unternehmen arbeitete. Sicher, kontrolliert, aber schwer zu updaten, teuer im Betrieb.
+Data lived where the company worked. Secure, controlled, but hard to update, expensive to operate.
 
-### Phase 2: Daten wandern nach aussen
+### Phase 2: Data moves outward
 
 ```
 Salesforce     Office365     Jira Cloud     HubSpot     Slack
@@ -47,177 +47,135 @@ Salesforce     Office365     Jira Cloud     HubSpot     Slack
                      Cloud (SaaS)
 ```
 
-Nicht wegen KI. Sondern wegen:
-- Einfacherer Updates
-- Geringerer IT-Kosten
-- Geringerer Einstiegshürden
+Not because of AI. But because of:
+- Easier updates
+- Lower IT costs
+- Lower entry barriers
 
-Die Cloud löste ein **Betriebsproblem**, kein **Datenproblem**.
+The cloud solved an **operations problem**, not a **data problem**.
 
-### Phase 3: KI erscheint
+### Phase 3: AI appears
 
-Jetzt heisst es plötzlich: **"Die KI funktioniert dort, wo die Daten liegen."**
+Now suddenly: **"AI works where the data is."**
 
-Natürlich. Die Daten liegen ja längst dort.
+Of course. The data was already there.
 
-> **Die Cloud löst nicht das KI-Problem. Die Cloud versteckt das Datenproblem.**
+> **The cloud doesn't solve the AI problem. The cloud hides the data problem.**
 
 ---
 
-## 3. Die falsche Frage
+## 3. The Wrong Question
 
-Die Industrie fragt: "Welches Modell ist das beste?"
+The industry asks: "Which model is the best?"
 
-Die richtige Frage wäre: **"Warum glauben wir, dass ein einziges Modell alles können muss?"**
+The right question would be: **"Why do we believe a single model can do everything?"**
 
-Ein Unternehmen hat:
-- Rechnungen
-- Projekte
-- Personal
-- Einkauf
-- Produktion
+An enterprise has:
+- Invoices
+- Projects
+- HR
+- Procurement
+- Production
 
-Das sind völlig unterschiedliche Domänen mit unterschiedlichen Daten, unterschiedlichen Regeln, unterschiedlichen Sicherheitsanforderungen.
+These are completely different domains with different data, different rules, different security requirements.
 
-**Warum sollte eine einzige, zentrale KI alles perfekt können?**
+**Why should one centralized AI be perfect at everything?**
 
-Warum nicht:
+Why not:
 
 ```
-Rechnungs-KI     Projekt-KI     Vertrags-KI     Support-KI
-│                │              │               │
-└────────────────┴──────────────┴───────────────┘
+Invoice AI     Project AI     Contract AI     Support AI
+│              │              │               │
+└──────────────┴──────────────┴───────────────┘
            Yakoon Runtime
 ```
 
-Alle lokal bei den jeweiligen Daten. Klein, spezialisiert, kontrolliert.
-
-Das erinnert eher an die Realität von Organisationen als an einen Science-Fiction-Allmacht-KI.
+All local, with their respective data. Small, specialized, controlled.
 
 ---
 
-## 4. Yakoon stellt eine andere Frage
+## 4. Yakoon Asks a Different Question
 
-> **Was wäre, wenn die Runtime zu den Daten geht statt die Daten zur Runtime?**
+> **What if the runtime goes to the data instead of the data going to the runtime?**
 
-Das ist die Umkehrung der SaaS-Idee.
+This is the inversion of the SaaS idea.
 
-| SaaS-Philosophie | Yakoon-Philosophie |
+| SaaS Philosophy | Yakoon Philosophy |
 |-----------------|-------------------|
-| Daten in die Cloud bringen | Runtime zu den Daten bringen |
-| Eine Plattform für alle | Ein Kernel für jede Domäne |
-| Zentrale KI | Domänen-KI (pro Space/Node) |
-| Cloud = Voraussetzung | Cloud = Option |
+| Move data to the cloud | Move runtime to the data |
+| One platform for all | One kernel per domain |
+| Central AI | Domain AI (per space/node) |
+| Cloud = prerequisite | Cloud = option |
 
-Yakoon sagt nicht "Cloud ist schlecht". Yakoon sagt: **"Die Runtime entscheidet, wo die Daten bleiben – nicht der Hosting-Provider."**
+Yakoon doesn't say "cloud is bad." Yakoon says: **"The runtime decides where the data stays — not the hosting provider."**
 
 ---
 
-## 5. Was Yakoon anders macht
+## 5. What Yakoon Does Differently
 
-Yakoon kann je nach Space/Node/Domain eine **ganz andere KI** anbinden:
+Yakoon can connect a **completely different AI** per space/node/domain:
 
 ```python
-# Space "billing" → kleine spezialisierte KI für Rechnungen
+# Space "billing" → small specialized invoice AI
 billing.ports.provide(OnAI, Ollama("billing-llama:7b"))
 
-# Space "legal" → lokale KI, die nie das Firmennetz verlässt
+# Space "legal" → local AI that never leaves the corporate network
 legal.ports.provide(OnAI, Ollama("legal-mistral:7b"))
 
-# Space "creative" → grosse Cloud-KI für Brainstorming
+# Space "creative" → large cloud AI for brainstorming
 creative.ports.provide(OnAI, Remote("gpt-7"))
 
-# Space "support" → hybrid: lokal vorverarbeiten, Cloud für komplexe Fälle
+# Space "support" → hybrid: local pre-processing, cloud for complex cases
 support.ports.provide(OnAI, Hybrid(
     local=Ollama("support-fast:3b"),
     fallback=Remote("claude-5"),
 ))
 ```
 
-**Die Runtime entkoppelt die KI von der Infrastruktur.** Ein Space bekommt genau die KI, die er braucht – nicht mehr, nicht weniger.
+**The runtime decouples AI from infrastructure.** A space gets exactly the AI it needs — no more, no less.
 
 ---
 
-## 6. Der provokanteste Satz
+## 6. The Most Provocative Sentence
 
-> **"Die Cloud löst nicht das KI-Problem. Die Cloud versteckt das Datenproblem."**
+> **"The cloud doesn't solve the AI problem. The cloud hides the data problem."**
 
-Denn viele Unternehmen haben kein KI-Problem. Sie haben:
-- Datensilos
-- Fehlende Autorisierung
-- Fehlende Governance
-- Fehlende Struktur
+Because many companies don't have an AI problem. They have:
+- Data silos
+- Missing authorization
+- Missing governance
+- Missing structure
 
-Und solange das ungelöst bleibt, wird auch GPT-9 nicht plötzlich das Unternehmen steuern.
+And as long as that remains unsolved, even GPT-9 won't suddenly run the company.
 
-Yakoon löst das Strukturproblem: Es definiert, wer auf welche Daten zugreifen darf (Permissions), welche Operationen möglich sind (Nodes), und welche KI was tun darf (Ports).
+Yakoon solves the structure problem: it defines who can access which data (permissions), which operations are possible (nodes), and which AI can do what (ports).
 
-**Erst die Struktur, dann die KI. Nicht umgekehrt.**
-
----
-
-## 7. Die zugrunde liegende Annahme
-
-Die Frage in diesem Artikel ist nie:
-
-> Welche Technologie ist besser?
-
-Sondern:
-
-> **Welche Annahme halten wir für selbstverständlich, obwohl sie nur eine Folge früherer Entscheidungen ist?**
-
-Bei ERP/CRM war das die Anwendungskategorie.
-Bei Entscheidungsräumen die Hierarchie.
-Und hier:
-
-> **"Alles muss in die Cloud, damit KI funktioniert" ist keine Ursache. Es ist eine Folge der Art, wie wir Software in den letzten 15 Jahren gebaut haben.**
-
-Yakoon baut anders.
+**Structure first, then AI. Not the other way around.**
 
 ---
 
-## 8. Zusammenfassung
+## 7. Review
 
-| Annahme | Hinterfragung |
-|---------|---------------|
-| KI braucht riesige Modelle | Vielleicht braucht jede Domäne ihr eigenes, kleines Modell |
-| Riesige Modelle laufen in der Cloud | Kleine Modelle laufen lokal |
-| Also muss alles in die Cloud | Also muss die Runtime zu den Daten |
-| Ein Modell für alles | Viele spezialisierte Modelle, vermittelt durch die Runtime |
-| Cloud = Voraussetzung für KI | Cloud = historische Konsequenz der SaaS-Ära |
+### What is strong
 
-> **Yakoon ist nicht anti-Cloud. Yakoon ist pro-Kontrolle.**
+The argument chain is not attackable because it doesn't argue against cloud — it questions **causality**. Nobody can say "cloud is wrong." But the question "Is cloud really a prerequisite or just a consequence?" can't be answered with "cloud is good." It forces reflection.
+
+### What's missing
+
+The article needs a **counter-proof**. A concrete example where the centralized AI approach fails because data cannot be in the cloud:
+
+- **Legal/Compliance**: Law firm with attorney-client privilege. No cloud model may see contracts. A local 7B model on the firm's server can.
+- **Production**: Machine builder whose CAD data must never leave the corporate network (export control).
+- **Healthcare**: Patient data that must not leave the jurisdiction (GDPR).
+
+### The biggest risk
+
+The article could be misunderstood as "cloud is evil, local is good." That would be too simple. The strength is the nuance: "Cloud is not the answer — cloud is yesterday's question."
+
+### Prediction
+
+If published, this will be **cited**. Not because it's right (time will tell). But because it asks a question everyone working with AI in enterprises is asking — and nobody has articulated clearly.
+
+> **The question isn't "cloud or local." The question is "Who controls the data and the decisions?"**
 >
-> Die Runtime geht zu den Daten. Die KI wird pro Domäne gewählt. Das Unternehmen behält die Kontrolle.
->
-> **Nicht weil Cloud schlecht ist. Sondern weil die falsche Frage war.**
-
----
-
-## 9. Bewertung des Manifests
-
-### Was stark ist
-
-Die Argumentkette ist nicht angreifbar, weil sie nicht gegen Cloud argumentiert – sie stellt die **Kausalität** in Frage. Niemand kann sagen "Cloud ist falsch". Aber die Frage "Ist Cloud wirklich eine Voraussetzung oder nur eine Folge?" kann man nicht mit "Cloud ist gut" beantworten. Das zwingt zum Nachdenken.
-
-### Was fehlt
-
-Der Artikel braucht einen **Gegenbeweis**. Ein konkretes Beispiel, wo der zentrale KI-Ansatz scheitert, weil die Daten nicht in der Cloud liegen dürfen:
-
-- **Legal/Compliance**: Anwaltskanzlei mit Mandatsgeheimnis. Kein Cloud-Modell darf Verträge sehen. Ein lokales 7B-Modell auf dem Kanzlei-Server schon.
-- **Produktion**: Maschinenbauer, dessen CAD-Daten nie das Firmennetz verlassen dürfen (Exportkontrolle).
-- **Healthcare**: Patientendaten, die nicht in die USA dürfen (DSGVO).
-
-Das wären die **Beweise**, dass die These nicht nur theoretisch ist.
-
-### Das grösste Risiko
-
-Der Artikel könnte als "Cloud ist böse, lokal ist gut" missverstanden werden. Das wäre zu einfach. Die Stärke ist gerade die Nuance: "Cloud ist nicht die Antwort – Cloud ist die Frage von gestern." Das muss im Ton rüberkommen, nicht kämpferisch, sondern: "Habt ihr mal darüber nachgedacht?"
-
-### Prognose
-
-Wenn der Artikel erscheint, wird er **zitiert werden**. Nicht weil er recht hat (das wird sich zeigen). Sondern weil er eine Frage stellt, die sich alle stellen, die mit KI in Unternehmen arbeiten – und die bisher keiner klar formuliert hat.
-
-> **Die Frage ist nicht "Cloud oder lokal". Die Frage ist "Wer hat die Kontrolle über die Daten und die Entscheidungen?"**
->
-> Und darauf gibt Yakoon eine klare Antwort: **Das Unternehmen. Nicht der Cloud-Anbieter. Nicht die KI. Das Unternehmen.**
+> And Yakoon gives a clear answer: **The enterprise. Not the cloud provider. Not the AI. The enterprise.**
