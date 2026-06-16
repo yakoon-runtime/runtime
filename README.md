@@ -1,18 +1,10 @@
-# Yakoon — Operative Runtime for Semantic Spaces
+# Yakoon — Operative Runtime for Long-running Flows
 
-Yakoon is a server-driven, event-sourced UI runtime with deterministic projection. It is an **operative runtime** — not a framework, not a platform, not an application server.
+Yakoon is a deterministic runtime for flows, state, and projections. It is an **operative runtime** — not a framework, not a platform, not an application server.
 
-## Why Yakoon?
+An operative runtime owns execution, context, and state. Clients merely observe and interact with it.
 
-Most software is built around the assumption that **data must go to the application**. Yakoon inverts this: **the runtime goes to the data.**
-
-Yakoon defines:
-- **What** can be done (commands per space/node)
-- **Who** can do it (permissions, roles)
-- **How** it is presented (deterministic projection → any UI)
-- **Which** AI handles which domain (pluggable per space)
-
-It is designed for small, specialized, local AI models per domain — not one centralized model.
+Clients are transient. The runtime is the source of truth.
 
 ## Core Architecture
 
@@ -20,10 +12,18 @@ It is designed for small, specialized, local AI models per domain — not one ce
 Flow → State → Projection → UI
 ```
 
-- **Flow** — State machine (async generators)
-- **State** — Deterministic, immutable
+- **Flow** — Executable state machine (async generators)
+- **State** — Deterministic, captures decisions
 - **Projection** — Pure function: `projection = f(state)`
-- **Client** — Any UI (console, web, TUI, SSH)
+- **Client** — Any UI (console, web, TUI, SSH); never owns state
+
+## Why Yakoon?
+
+Most software sends **data to the application**. Yakoon sends **the runtime to the data**.
+
+Sessions may outlive clients. Flows may outlive sessions. Runtime, not UI, is the persistent layer.
+
+This makes long-running work observable, resumable, and independent of individual clients.
 
 ## Quick Start
 
@@ -36,6 +36,12 @@ yakoon-texture           # Terminal 2: TUI client
 ```
 
 See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for details.
+
+## AI Integration
+
+AI is a capability, not the product. Yakoon can connect different AI models per domain — small local models for sensitive data, large cloud models for creative work. The runtime decouples AI from infrastructure.
+
+See [docs/MANIFEST.md](docs/MANIFEST.md) for the full reasoning.
 
 ## Documentation
 
@@ -50,4 +56,4 @@ See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for details.
 
 ## License
 
-See [LICENSE](LICENSE) or the `pyproject.toml` in each package.
+Apache 2.0. See [LICENSE](LICENSE).
