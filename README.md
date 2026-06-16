@@ -1,10 +1,26 @@
 # Yakoon — Operative Runtime for Long-running Flows
 
-Yakoon is a deterministic runtime for flows, state, and projections. It is an **operative runtime** — not a framework, not a platform, not an application server.
-
-An operative runtime owns execution, context, and state. Clients merely observe and interact with it.
-
 Clients are transient. The runtime is the source of truth.
+
+Sessions may outlive clients. Flows may outlive sessions.
+
+```
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│   Texture   │  │     Web     │  │     SSH     │
+│  (TUI)      │  │  (Browser)  │  │  (Terminal) │
+└──────┬──────┘  └──────┬──────┘  └──────┬──────┘
+       │                │                │
+       └────────────────┼────────────────┘
+                        │
+                ┌───────▼────────┐
+                │    Runtime     │
+                │  Flows         │
+                │  Sessions      │
+                │  State         │
+                └────────────────┘
+```
+
+Connect from any client. The runtime keeps working.
 
 ## Core Architecture
 
@@ -20,8 +36,6 @@ Flow → State → Projection → UI
 ## Why Yakoon?
 
 Most software sends **data to the application**. Yakoon sends **the runtime to the data**.
-
-Sessions may outlive clients. Flows may outlive sessions. Runtime, not UI, is the persistent layer.
 
 This makes long-running work observable, resumable, and independent of individual clients.
 
@@ -45,7 +59,7 @@ yakoon-texture
 | `y5napp-runtime` | `y5napp.runtime` | `yakoon-runtime` |
 | `y5napp-textual` | `y5napp.textual` | `yakoon-texture` |
 
-For development or debugging, use `python -m` instead:
+For development or debugging:
 
 ```bash
 python -m y5napp.runtime
