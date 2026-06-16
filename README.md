@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)]()
-[![Tests](https://img.shields.io/badge/Tests-0%20of%20~235-orange.svg)](docs/TESTING.md)
+[![Tests](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml/badge.svg)](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml)
 
 Clients are transient. The runtime is the source of truth.
 

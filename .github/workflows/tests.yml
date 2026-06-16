@@ -1,0 +1,36 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -e runtime/y5ncore-base
+          pip install -e runtime/y5ncore-runtime
+          pip install -e runtime/y5ncore-llm
+          pip install -e transports/y5ntrans-ws
+          pip install -e stores/y5nstore-event
+          pip install -e spaces/y5nspace-shell
+          pip install -e spaces/y5nspace-runtime
+          pip install -e spaces/y5nspace-ident
+          pip install -e spaces/y5nspace-os
+          pip install -e apps/y5napp-console
+          pip install -e apps/y5napp-runtime
+          pip install -e apps/y5napp-textual
+          pip install -e apps/y5napp-web
+          pip install pytest pytest-asyncio
+
+      - name: Run tests
+        run: pytest
