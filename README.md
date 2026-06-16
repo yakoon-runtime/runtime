@@ -29,10 +29,6 @@ If processes are real objects of an enterprise, software must be designed around
 
 Yakoon is an experiment to test that assumption.
 
----
-
-Yakoon is an open-source runtime for persistent enterprise processes.
-
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
 │   Texture   │  │     Web     │  │   Console   │
