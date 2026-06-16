@@ -1,19 +1,37 @@
-# Yakoon — Operative Runtime for Long-running Flows
+# Yakoon
 
 [![Version](https://img.shields.io/badge/Version-0.8.0-blue.svg)]()
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)]()
 [![Tests](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml/badge.svg)](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml)
 
-Processes are real objects of an enterprise — not properties of a user interface.
+Most software systems are organized around applications, screens and users.
 
-Work exists independently of its current representation.
+We rarely question this.
 
-Clients are transient.
-The runtime is the source of truth.
+A process starts in a client.
+A user owns the workflow.
+Closing the application often means interrupting the work.
 
-Sessions may outlive clients.
-Flows continue running even when no client is attached.
+This model has become so familiar that it appears natural.
+
+But enterprises are not made of screens.
+
+They are made of decisions, responsibilities, information and processes.
+
+Processes exist whether a browser is open or not.
+
+They continue when employees change.
+They continue when clients disconnect.
+They continue when systems are replaced.
+
+If processes are real objects of an enterprise, software must be designed around them.
+
+Yakoon is an experiment to test that assumption.
+
+---
+
+Yakoon is an open-source runtime for persistent enterprise processes.
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
@@ -46,12 +64,6 @@ Flow → State → Projection → UI
 - **State** — Deterministic, captures decisions
 - **Projection** — Pure function: `projection = f(state)`
 - **Client** — Any UI (console, web, TUI, SSH); never owns state
-
-## Why Yakoon?
-
-Most software sends **data to the application**. Yakoon sends **the runtime to the data**.
-
-This makes long-running work observable, resumable, and independent of individual clients.
 
 ## Current Status
 
