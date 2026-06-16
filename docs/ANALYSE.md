@@ -1,10 +1,10 @@
 # Repository-Analyse: Yakoon
 
-> Erstellt am 2026-06-04
+> Erstellt am 2026-06-04 · Aktualisiert am 2026-06-16
 
 ## 1. Zweck der Anwendung
 
-**Yakoon** (Yet Another Kernel for Ontological Networks) v0.4.0 ist ein **servergesteuertes, event-sourced UI-Runtime-System** in Python 3.11+. Es implementiert ein deklaratives Projektionsmodell nach dem SAM-Pattern (State-Action-Model). Der Kernel koordiniert Flows, verwaltet Zustand, steuert Blocking, delegiert Rendering und bleibt UI-agnostisch.
+**Yakoon** (Yet Another Kernel for Ontological Networks) v0.7+ ist ein **servergesteuertes, event-sourced UI-Runtime-System** in Python 3.11+. Es implementiert ein deklaratives Projektionsmodell nach dem SAM-Pattern (State-Action-Model). Der Kernel koordiniert Flows, verwaltet Zustand, steuert Blocking, delegiert Rendering und bleibt UI-agnostisch.
 
 Die Kernidee: Ein "Flow" ist die Single Source of Truth. Projektion ist eine deterministische Funktion des Zustands, und der Zustand wird durch Event-Sourcing getrieben. Die Anwendung ist als **Text-UI- und Web-Terminal-Plattform** konzipiert – ähnlich einer Kommandozeile, aber mit strukturierten, reichhaltigen UI-Projektionen.
 
@@ -19,8 +19,8 @@ y5ncore-base             (öffentliche API / Vertragsschicht, 0 deps)
   └─ y5nstore-event      (Event-Store, deps: y5ncore-base)
       └─ y5ncore-runtime (Engine, Scheduler, Projector, Compiler, Sessions, Auth)
           ├─ y5ntrans-ws (WebSocket-Transport)
-          ├─ y5nspace-{shell,ident,runtime} (Plugin-Module)
-          └─ y5napp-{console,web,ssh} (App-Einstiegspunkte)
+          ├─ y5nspace-{shell,ident,runtime,os} (Plugin-Module)
+          └─ y5napp-{runtime,textual,web} (App-Einstiegspunkte)
 ```
 
 ### Datenfluss
@@ -34,13 +34,16 @@ Input (Tastatur/WebSocket) → InputParser → InputEvent
           → EventDispatcher → Transport → Client
 ```
 
-### Kernprinzipien (aus `docs/ARCH.md` und `docs/DECISIONS.md`)
+### Kernprinzipien (aus `docs/DECISIONS.md` und `docs/session-as-workspace.md`)
 
 - Der Kernel bleibt domain-neutral – Domänen entstehen durch Komposition
-- Das Platform definiert Topologie, nicht Semantik – Plugins besitzen die Sprache
+- Das Platform definiert Topologie, nicht Semantik – Spaces besitzen die Sprache
 - **Stateless Engine, Stateful Execution (Generatoren)** – kein Semaphor, keine Tasks, kein Async-Event
 - **Flow ist die Single Source of Truth** – Projektion ist deterministische Funktion des Zustands
 - Capabilities werden an den Ort der Nutzung weitergereicht ("Fähigkeiten werden bis ans Ziel gereicht")
+- **Session als Workspace** – Jede Verbindung hat ein Home-Session und ein Active-Session. Detach kehrt zum Home zurück.
+- **Config ist app-lokal** – Jede App (runtime, web, texture) hat eigene `conf.py` + `yakoon-*.yml`
+- **Theme ist ein gemeinsam genutzter Service** – `y5n.base.theme.ThemeManager` für alle Clients
 
 ---
 
@@ -82,7 +85,8 @@ Input (Tastatur/WebSocket) → InputParser → InputEvent
 
 - **`y5nspace-shell`**: Shell-Root-Node, `system`-Kommando
 - **`y5nspace-ident`**: Identität & Authentifizierung – `user`, `group`, `grant`, `membership`, `whoami`, `su`
-- **`y5nspace-runtime`**: `welcome`, `version`, `labs`, `jobs` (bg, fg, list, stop)
+- **`y5nspace-runtime`**: `welcome`, `version`, `labs`, `jobs` (bg, fg, list, stop), `session` (attach, detach, list)
+- **`y5nspace-os`**: OS-Agent-Domäne mit Multi-Step-Loop, LLM-Integration
 
 ### 3.5 Transporte
 
@@ -90,9 +94,10 @@ Input (Tastatur/WebSocket) → InputParser → InputEvent
 
 ### 3.6 Clients & Apps
 
-- **`y5ncli-console` / `y5napp-console`**: PromptToolkit-basiertes Terminal-UI, Block/Inline-Renderer
-- **`y5ncli-web` / `y5napp-web`**: FastAPI + uvicorn + vanilla JS Frontend (WebSocket-Client)
-- **`y5napp-ssh`**: asyncssh-Server
+- **`y5napp-runtime`**: Headless Runtime mit WebSocket-Server (`yakoon-runtime`), lädt Spaces, hostet Sessions
+- **`y5napp-textual`**: Textual-basierter Desktop-Client (`yakoon-texture`), Multi-Tab, per-Tab Input
+- **`y5napp-web`**: Static-HTTP + JS WebSocket-Client (`yakoon-web`), injectiert Config + Theme via HTML
+- **`y5napp-console`**: PromptToolkit-basiertes Terminal-UI (historisch, wird von texture abgelöst)
 
 ---
 
@@ -179,7 +184,6 @@ class Node:
 | **Dead Import: `y5n.client` fehlt** | `apps/y5napp-ssh/src/y5napp/ssh/app.py:4-5` | App stürzt beim Import ab |
 | **Ungenügender Passwortschutz** | `spaces/y5nspace-ident/src/y5nspace/ident/services/verifier.py:8-16` | Plaintext-Vergleich + unsalted SHA-256 |
 | **SSH-Server ohne Auth** | `apps/y5napp-ssh/src/y5napp/ssh/app.py:54-55` | `return False` ("keine Auth nötig") |
-| **Keine Tests** | gesamtes Repository | ~400 Python-Dateien, 0 Tests, kein Test-Runner konfiguriert |
 
 ### P1 – Hoch
 
@@ -211,11 +215,21 @@ class Node:
 
 | Issue | Datei(en) | Beschreibung |
 |-------|-----------|--------------|
-| **`__old__/`-Verzeichnis** | `__old__/` | Sollte archiviert werden (Git-Tag/Branch) |
-| **Kein Docker/CI-CD** | – | Auf Roadmap (v0.1) aber nicht umgesetzt |
+| **Kein Docker/CI-CD** | – | Auf Roadmap aber nicht umgesetzt |
 | **`print()` statt `logging`** | `__old__/` | Legacy-print-Anweisungen |
-| **Kein Lockfile** | – | Nur `requirements.txt` mit gepinnten Versionen, kein `poetry.lock` |
+| **Kein Lockfile** | – | Nur `requirements.txt` mit gepinnten Versionen, kein Lockfile |
 | **Ollama-URL default HTTP** | `runtime/y5ncore-runtime/src/y5n/runtime/settings/ai.py:7` | `http://localhost:11434` (akzeptabel für Dev) |
+
+### Erledigt seit Analyse
+
+| Issue | Status |
+|-------|--------|
+| **Keine Tests** | 47 Tests in `runtime/y5ncore-tests/` (Session-Contracts, Store, Runtime) |
+| **`__old__/`-Verzeichnis** | Entfernt |
+| **`dsl copy/`-Duplikat** | (prüfen ob noch vorhanden) |
+| **Session-Management** | Session-as-Workspace implementiert (Home/Active, Attach/Detach, Cleanup) |
+| **Config-Split** | `yakoon-{runtime,web,texture}.yml` app-lokal, keine gemeinsame Config mehr |
+| **`y5n.api` geklärt** | Re-Exports dokumentiert und reduziert |
 
 ---
 
@@ -223,11 +237,10 @@ class Node:
 
 ### Kurzfristig (sofort umsetzbar)
 
-1. **`dsl copy/`-Verzeichnis löschen** – unbeabsichtigtes Duplikat verursacht Import-Konfusion
+1. ~~**`dsl copy/`-Verzeichnis löschen** – unbeabsichtigtes Duplikat verursacht Import-Konfusion~~ ✅ erledigt
 2. **Fehlende Abhängigkeiten in `pyproject.toml` eintragen:**
    - `y5nstore-event` → `dependencies = ["y5ncore-base"]`
-   - `y5ncli-console` → `dependencies = ["y5ncore-base", "y5ncore-runtime"]`
-   - `y5napp-web` → `dependencies = ["y5ncore-base", "y5ncore-runtime"]`
+   - `y5napp-console` → `dependencies = ["y5ncore-base", "y5ncore-runtime"]`
 3. **Dead Imports korrigieren** – `y5n.compose`, `y5n.client` ersetzen oder anlegen
 
 ### Mittelfristig
@@ -236,10 +249,7 @@ class Node:
 5. **EntityStore aufsplitten** – `ScanEngine`, `SnapshotManager`, `IndexManager` extrahieren
 6. **Node entschlacken** – Hierarchie-Traversal in `NodeTree`/`NodeWalker` auslagern
 7. **Passwort-Hashing auf bcrypt/argon2 umstellen** – Unsalted SHA-256 ist nicht sicher
-8. **Test-Infrastruktur aufsetzen:**
-   - `pytest`, `pytest-asyncio`, `pytest-cov` in `requirements.txt` aufnehmen
-   - `pyproject.toml` mit `[tool.pytest.ini_options]` konfigurieren
-   - CI/CD-Pipeline (z.B. GitHub Actions) für automatisierte Testausführung
+8. **Testabdeckung ausbauen:** 47 Tests vorhanden, Ziel >100
 9. **Jinja2 autoescape aktivieren** oder Output-Sanitisierung implementieren
 10. **Broad `except Exception:` ersetzen** durch spezifische Exception-Typen plus Logging
 11. **SQL-Query-Builder** für `index_scan` verwenden, String-Konkatenation vermeiden
@@ -249,8 +259,6 @@ class Node:
 12. **Debug-Modus standardmäßig deaktivieren** – `debug: bool = False` in BaseSettings
 13. **SSH-Authentifizierung implementieren** – Kombiniert mit hohem Risiko (port 8022 + "keine Auth nötig")
 14. **WebSocket-Rate-Limiting** – Schutz vor Command-Flooding
-15. **`__old__/` entfernen** – In Git-Tag `archive/pre-v0.4.0` auslagern
+15. ~~**`__old__/` entfernen** – In Git-Tag `archive/pre-v0.4.0` auslagern~~ ✅ erledigt
 16. **Docker-Containerisierung** – Wie in ROADMAP.md vorgesehen
 17. **Lockfile einführen** – `pip freeze > requirements.lock` für reproduzierbare Builds
-18. **`y5n.api` klären** – Entweder dokumentieren (Public-API-Facade) oder entfernen
-19. **Error-Handling-Richtlinie festlegen** – Einheitliche Exception-Hierarchie für Domain-Errors
