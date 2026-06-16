@@ -1,5 +1,9 @@
 # Yakoon — Operative Runtime for Long-running Flows
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)]()
+[![Tests](https://img.shields.io/badge/Tests-0%20of%20~235-orange.svg)](docs/TESTING.md)
+
 Clients are transient. The runtime is the source of truth.
 
 Sessions may outlive clients. Flows continue running even when no client is attached.

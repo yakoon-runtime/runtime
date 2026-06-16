@@ -1,3 +1,11 @@
+[project]
+name = "yakoon"
+version = "0.1.0"
+description = "Operative runtime for long-running flows, state, and projections"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Stefan Bergmann" }]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 norecursedirs = ["benchmarks"]
