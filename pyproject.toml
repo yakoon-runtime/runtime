@@ -1,6 +1,6 @@
 [project]
 name = "yakoon"
-version = "0.1.0"
+version = "0.8.0"
 description = "Operative runtime for long-running flows, state, and projections"
 requires-python = ">=3.11"
 license = { text = "Apache-2.0" }
