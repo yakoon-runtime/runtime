@@ -5,9 +5,13 @@
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)]()
 [![Tests](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml/badge.svg)](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml)
 
-Clients are transient. The runtime is the source of truth.
+Processes are real objects of an enterprise — not properties of a user interface.
 
-Sessions may outlive clients. Flows continue running even when no client is attached.
+Clients are transient.
+The runtime is the source of truth.
+
+Sessions may outlive clients.
+Flows continue running even when no client is attached.
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
