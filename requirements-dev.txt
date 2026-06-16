@@ -1,0 +1,13 @@
+# Development dependencies
+# Generated from: pip freeze
+# Update after adding new dependencies
+
+pytest==9.0.2
+pytest-asyncio==1.4.0
+
+# Core dependencies (also declared in pyproject.toml)
+jsonpatch==1.33
+asyncpg==0.31.0
+websockets==16.0
+pyyaml==6.0.3
+textual==8.2.7

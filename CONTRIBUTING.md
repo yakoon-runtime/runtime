@@ -9,6 +9,7 @@ python -m venv .venv
 source .venv/bin/activate
 pip install -e apps/y5napp-runtime
 pip install -e apps/y5napp-textual
+pip install -r requirements-dev.txt
 ```
 
 ## Commit Conventions
@@ -53,6 +54,7 @@ If you make an architectural decision, add an entry there. The rule: **document 
 Tests use pytest with asyncio mode. See [docs/TESTING.md](docs/TESTING.md) for the full strategy.
 
 ```bash
+pip install -r requirements-dev.txt
 pytest
 ```
 
