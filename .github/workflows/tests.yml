@@ -26,10 +26,7 @@ jobs:
           pip install -e spaces/y5nspace-runtime
           pip install -e spaces/y5nspace-ident
           pip install -e spaces/y5nspace-os
-          pip install -e apps/y5napp-console
-          pip install -e apps/y5napp-runtime
-          pip install -e apps/y5napp-textual
-          pip install -e apps/y5napp-web
+          pip install asyncpg
           pip install pytest pytest-asyncio
 
       - name: Run tests
