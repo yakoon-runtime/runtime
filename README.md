@@ -7,6 +7,8 @@
 
 Processes are real objects of an enterprise — not properties of a user interface.
 
+Work exists independently of its current representation.
+
 Clients are transient.
 The runtime is the source of truth.
 
