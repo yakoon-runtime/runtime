@@ -46,6 +46,10 @@ Most software sends **data to the application**. Yakoon sends **the runtime to t
 
 This makes long-running work observable, resumable, and independent of individual clients.
 
+## Current Status
+
+Yakoon is under active development. Persistent storage, session lifecycle management and multi-client orchestration are still evolving toward the 1.0 release.
+
 ## Example Session
 
 The Texture client connected to a runtime — showing spaces, commands, and live projections.
