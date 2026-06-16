@@ -2,21 +2,22 @@
 
 Clients are transient. The runtime is the source of truth.
 
-Sessions may outlive clients. Flows may outlive sessions.
+Sessions may outlive clients. Flows continue running even when no client is attached.
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
 │   Texture   │  │     Web     │  │   Console   │
-│  (TUI)      │  │  (Browser)  │  │  (Terminal) │
+│   --------  │  │   -------   │  │   -------   │
+│    (TUI)    │  │  (Browser)  │  │  (Terminal) │
 └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
        │                │                │
        └────────────────┼────────────────┘
                         │
                 ┌───────▼────────┐
                 │    Runtime     │
-                │  Flows         │
-                │  Sessions      │
-                │  State         │
+                │     Flows      │
+                │    Sessions    │
+                │     State      │
                 └────────────────┘
 ```
 
