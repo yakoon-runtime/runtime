@@ -22,6 +22,8 @@ Sessions may outlive clients. Flows may outlive sessions.
 
 Connect from any client. The runtime keeps working.
 
+Clients and runtimes use the same connection model. A runtime can observe another runtime just like any other client.
+
 ## Core Architecture
 
 ```
