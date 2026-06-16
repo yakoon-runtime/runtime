@@ -46,6 +46,12 @@ Most software sends **data to the application**. Yakoon sends **the runtime to t
 
 This makes long-running work observable, resumable, and independent of individual clients.
 
+## Example Session
+
+The Texture client connected to a runtime — showing spaces, commands, and live projections.
+
+![Texture Client](docs/screenshots/texture-session.png)
+
 ## Quick Start
 
 ```bash
