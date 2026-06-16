@@ -6,7 +6,7 @@ Sessions may outlive clients. Flows may outlive sessions.
 
 ```
 ┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│   Texture   │  │     Web     │  │     SSH     │
+│   Texture   │  │     Web     │  │   Console   │
 │  (TUI)      │  │  (Browser)  │  │  (Terminal) │
 └──────┬──────┘  └──────┬──────┘  └──────┬──────┘
        │                │                │
