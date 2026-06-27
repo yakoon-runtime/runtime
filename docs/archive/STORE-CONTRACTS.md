@@ -2,7 +2,7 @@
 
 The EntityStore guarantees the following contracts — independent of backend (Memory, Postgres, ...).
 
-## append & Revisionen
+## Append & Revisions
 
 1. **append erzeugt Revision**  
    `append(key, patch={...})` → `put.rev == 1`, `get(key).rev == 1`
@@ -30,7 +30,7 @@ The EntityStore guarantees the following contracts — independent of backend (M
 7. **expected_rev erlaubt korrekten Fortschritt**  
    `append(key, ..., expected_rev=2)` bei aktuellem `rev=2` → Erfolg, `rev=3`
 
-## replace & delete
+## Replace & Delete
 
 8. **replace überschreibt vollständig**  
    `append(key, {"a": 1})` + `replace(key, {"b": 2})` → `get(key).data == {"b": 2}`
@@ -45,7 +45,7 @@ The EntityStore guarantees the following contracts — independent of backend (M
     → `get(key).data == letzter_stand`  
     → alle `as_of`-Aufrufe liefern weiterhin korrete Zwischenstände
 
-## Indexe
+## Indexes
 
 11. **scan findet Indexeinträge**  
     `append(key, ..., indexes=[IndexSpec("email", value)])`  
@@ -62,7 +62,7 @@ The EntityStore guarantees the following contracts — independent of backend (M
     `delete(key)`  
     → `scan("email", "a") == []`
 
-## Backend-Gleichheit
+## Backend Parity
 
 14. **Memory == Postgres**  
     Alle obigen Tests laufen identisch mit beiden Backends.
