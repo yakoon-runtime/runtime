@@ -1,12 +1,7 @@
-from . import contact_add, contact_delete, contact_edit, contact_find, contact_list, contact_show
+from .contact.space import contacts
 from .setup import setup
 
 __all__ = [
-    "contact_add",
-    "contact_delete",
-    "contact_find",
-    "contact_edit",
-    "contact_list",
-    "contact_show",
+    "contacts",
     "setup",
 ]

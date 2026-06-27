@@ -6,8 +6,8 @@ from y5n.api.dsl import out
 from y5n.api.naming import Namespace
 from y5n.api.nodes import NodeSpace, Request
 
-from ..ports import OnProject
-from ..services import ContactService, Namespaces
+from ...ports import OnProject
+from ...services import ContactService, Namespaces
 
 
 async def run(space: NodeSpace):

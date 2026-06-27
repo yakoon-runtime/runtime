@@ -6,9 +6,9 @@ from y5n.api.dsl import out
 from y5n.api.naming import Namespace
 from y5n.api.nodes import NodeSpace, Request
 
-from ..models import Contact
-from ..ports import OnProject
-from ..services import ContactService, Namespaces
+from ...models import Contact
+from ...ports import OnProject
+from ...services import ContactService, Namespaces
 
 
 async def run(space: NodeSpace):
@@ -17,7 +17,7 @@ async def run(space: NodeSpace):
         request=space.request,
         on_project=space.ports.get(OnProject),
         on_get_namespace=space.ports.get(Namespaces).contact_namespace,
-        on_add_contact=space.ports.get(ContactService).add_contact,
+        on_edit_contact=space.ports.get(ContactService).edit_contact,
     )
 
 
@@ -26,31 +26,31 @@ async def _handler(
     request: Request,
     on_project: OnProject,
     on_get_namespace: OnGetNamespace,
-    on_add_contact: OnAddContact,
+    on_edit_contact: OnEditContact,
 ):
     name = request.arg(0)
-    company = request.option("company") or ""
-    email = request.option("email") or ""
-    phone = request.option("phone") or ""
-    street = request.option("street") or ""
-    zip = request.option("zip") or ""
-    city = request.option("city") or ""
-    country = request.option("country") or ""
-    notes = request.option("notes") or ""
+
+    changes = {}
+    for field in (
+        "company",
+        "email",
+        "phone",
+        "street",
+        "zip",
+        "city",
+        "country",
+        "notes",
+    ):
+        val = request.option(field)
+        if val is not None:
+            changes[field] = val
 
     namespace = on_get_namespace()
     try:
-        contact = await on_add_contact(
+        contact = await on_edit_contact(
             namespace=namespace,
             name=name,
-            company=company,
-            email=email,
-            phone=phone,
-            street=street,
-            zip=zip,
-            city=city,
-            country=country,
-            notes=notes,
+            changes=changes,
         )
     except ValueError as e:
         projection = await on_project(
@@ -61,7 +61,7 @@ async def _handler(
         return out(projection)
 
     projection = await on_project(
-        name="contact/add",
+        name="contact/edit",
         lang=request.lang,
         state={"contact": contact},
     )
@@ -72,18 +72,11 @@ class OnGetNamespace(Protocol):
     def __call__(self) -> Namespace: ...
 
 
-class OnAddContact(Protocol):
+class OnEditContact(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
         name: str,
-        company: str = "",
-        email: str = "",
-        phone: str = "",
-        street: str = "",
-        zip: str = "",
-        city: str = "",
-        country: str = "",
-        notes: str = "",
+        changes: dict,
     ) -> Contact: ...
