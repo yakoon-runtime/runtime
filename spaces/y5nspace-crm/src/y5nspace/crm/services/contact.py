@@ -47,12 +47,14 @@ class ContactService:
         on_replace: OnReplace,
         on_get_many: OnGetMany,
         on_scan: OnScan,
+        on_delete: OnDelete,
     ):
         self.on_get = on_get
         self.on_append = on_append
         self.on_replace = on_replace
         self.on_get_many = on_get_many
         self.on_scan = on_scan
+        self.on_delete = on_delete
 
     async def get_by_key(self, key: Key) -> Contact | None:
         row = await self.on_get(key=key)
@@ -169,13 +171,7 @@ class ContactService:
         if not contact:
             raise ValueError(f"Contact not found: {name}")
 
-        # Soft-delete via store removal
-        await self.on_replace(
-            key=contact.key,
-            doc={"name": contact.data.name, "deleted": True},
-            indexes=[IndexTerm(key=IDX_CONTACT_NAME_KEY, value=contact.data.name)],
-            snapshot_hint=SnapshotHint.COMMIT,
-        )
+        await self.on_delete(key=contact.key)
 
 
 class OnAppend(Protocol):
@@ -233,3 +229,13 @@ class OnScan(Protocol):
         prefix: str | None = None,
         cursor: str | None = None,
     ) -> tuple[list[Key], str | None]: ...
+
+
+class OnDelete(Protocol):
+    async def __call__(
+        self,
+        *,
+        key: Key,
+        meta: Mapping[str, object] | None = None,
+        expected_rev: int | None = None,
+    ) -> PutResult: ...

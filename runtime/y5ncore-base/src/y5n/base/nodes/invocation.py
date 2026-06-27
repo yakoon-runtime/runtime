@@ -111,9 +111,19 @@ class InvocationValidator:
             # POSITIONAL ARGS
             # ----------------------------------
 
-            positional = [x for x in tokens[offset:] if not x.startswith("--")]
+            positional: list[str] = []
+            i = offset
+            while i < len(tokens):
+                tok = tokens[i]
+                if tok.startswith("--"):
+                    i += 1
+                    if i < len(tokens) and not tokens[i].startswith("--"):
+                        i += 1
+                    continue
+                positional.append(tok)
+                i += 1
 
-            if len(positional) < len(invocation.args):
+            if len(positional) != len(invocation.args):
                 continue
 
             # ----------------------------------
