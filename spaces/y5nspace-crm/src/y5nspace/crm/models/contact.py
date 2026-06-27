@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
-from typing import Any
 
 from y5n.api.naming import Key
 from y5nstore.event import GetResult

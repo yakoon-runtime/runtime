@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 from y5n.api.dsl import out
 from y5n.api.naming import Namespace
 from y5n.api.nodes import NodeSpace, Request
@@ -66,11 +68,11 @@ async def _handler(
     return out(projection)
 
 
-class OnGetNamespace:
+class OnGetNamespace(Protocol):
     def __call__(self) -> Namespace: ...
 
 
-class OnAddContact:
+class OnAddContact(Protocol):
     async def __call__(
         self,
         *,

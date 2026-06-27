@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 from y5n.api.dsl import out
 from y5n.api.naming import Namespace
 from y5n.api.nodes import NodeSpace, Request
 
-from ..models import Contact
 from ..ports import OnProject
 from ..services import ContactService, Namespaces
 
@@ -47,9 +48,9 @@ async def _handler(
     return out(projection)
 
 
-class OnGetNamespace:
+class OnGetNamespace(Protocol):
     def __call__(self) -> Namespace: ...
 
 
-class OnDeleteContact:
+class OnDeleteContact(Protocol):
     async def __call__(self, *, namespace: Namespace, name: str) -> None: ...

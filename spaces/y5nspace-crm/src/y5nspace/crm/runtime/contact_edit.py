@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Protocol
+
 from y5n.api.dsl import out
 from y5n.api.naming import Namespace
 from y5n.api.nodes import NodeSpace, Request
@@ -29,7 +31,16 @@ async def _handler(
     name = request.arg(0)
 
     changes = {}
-    for field in ("company", "email", "phone", "street", "zip", "city", "country", "notes"):
+    for field in (
+        "company",
+        "email",
+        "phone",
+        "street",
+        "zip",
+        "city",
+        "country",
+        "notes",
+    ):
         val = request.option(field)
         if val is not None:
             changes[field] = val
@@ -57,11 +68,11 @@ async def _handler(
     return out(projection)
 
 
-class OnGetNamespace:
+class OnGetNamespace(Protocol):
     def __call__(self) -> Namespace: ...
 
 
-class OnEditContact:
+class OnEditContact(Protocol):
     async def __call__(
         self,
         *,
