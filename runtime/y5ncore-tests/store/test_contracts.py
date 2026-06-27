@@ -33,6 +33,7 @@ def build_store() -> EntityStore:
         on_index_list=backend.index_list,
         on_index_replace_terms=backend.index_replace_terms,
         on_index_scan=backend.index_scan,
+        on_query_index=backend.query_index,
         on_gc=backend.gc,
         on_gc_global=backend.gc_global,
         writer=PATCH,
