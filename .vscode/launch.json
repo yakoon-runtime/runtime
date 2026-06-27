@@ -31,5 +31,16 @@
                 "DEV_MODE": "true"
             },
         },
+        {
+            "name": "Yakoon: Runtime",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "y5napp.runtime",
+            "args": ["9100"],
+            "console": "integratedTerminal",
+            "env": {
+                "DEV_MODE": "true"
+            },
+        },
     ]
 }
