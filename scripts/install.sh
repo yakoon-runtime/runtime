@@ -20,6 +20,7 @@ pip install \
   -e spaces/y5nspace-runtime \
   -e spaces/y5nspace-ident \
   -e spaces/y5nspace-os \
+  -e spaces/y5nspace-crm \
 
 # apps
 pip install \
