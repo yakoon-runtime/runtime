@@ -33,12 +33,71 @@ IDX_CONTACT_COMPANY_SPEC = IndexSpec(
     unique=False,
 )
 
+IDX_CONTACT_EMAIL_KEY = IndexKey("contact.email")
+IDX_CONTACT_EMAIL_SPEC = IndexSpec(
+    key=IDX_CONTACT_EMAIL_KEY,
+    value_type=ValueType.TEXT,
+    unique=False,
+)
+
+IDX_CONTACT_PHONE_KEY = IndexKey("contact.phone")
+IDX_CONTACT_PHONE_SPEC = IndexSpec(
+    key=IDX_CONTACT_PHONE_KEY,
+    value_type=ValueType.TEXT,
+    unique=False,
+)
+
+IDX_CONTACT_CITY_KEY = IndexKey("contact.city")
+IDX_CONTACT_CITY_SPEC = IndexSpec(
+    key=IDX_CONTACT_CITY_KEY,
+    value_type=ValueType.TEXT,
+    unique=False,
+)
+
+IDX_CONTACT_COUNTRY_KEY = IndexKey("contact.country")
+IDX_CONTACT_COUNTRY_SPEC = IndexSpec(
+    key=IDX_CONTACT_COUNTRY_KEY,
+    value_type=ValueType.TEXT,
+    unique=False,
+)
+
+IDX_CONTACT_STREET_KEY = IndexKey("contact.street")
+IDX_CONTACT_STREET_SPEC = IndexSpec(
+    key=IDX_CONTACT_STREET_KEY,
+    value_type=ValueType.TEXT,
+    unique=False,
+)
+
+IDX_CONTACT_ZIP_KEY = IndexKey("contact.zip")
+IDX_CONTACT_ZIP_SPEC = IndexSpec(
+    key=IDX_CONTACT_ZIP_KEY,
+    value_type=ValueType.TEXT,
+    unique=False,
+)
+
+IDX_CONTACT_NOTES_KEY = IndexKey("contact.notes")
+IDX_CONTACT_NOTES_SPEC = IndexSpec(
+    key=IDX_CONTACT_NOTES_KEY,
+    value_type=ValueType.TEXT,
+    unique=False,
+)
+
 
 class ContactService:
 
     @staticmethod
     def index_specs():
-        return [IDX_CONTACT_NAME_SPEC, IDX_CONTACT_COMPANY_SPEC]
+        return [
+            IDX_CONTACT_NAME_SPEC,
+            IDX_CONTACT_COMPANY_SPEC,
+            IDX_CONTACT_EMAIL_SPEC,
+            IDX_CONTACT_PHONE_SPEC,
+            IDX_CONTACT_CITY_SPEC,
+            IDX_CONTACT_COUNTRY_SPEC,
+            IDX_CONTACT_STREET_SPEC,
+            IDX_CONTACT_ZIP_SPEC,
+            IDX_CONTACT_NOTES_SPEC,
+        ]
 
     def __init__(
         self,
@@ -76,16 +135,26 @@ class ContactService:
             return None
         return Contact.from_row(row=row)
 
+    _INDEX_FIELDS: tuple[tuple[str, IndexKey], ...] = (
+        ("name", IDX_CONTACT_NAME_KEY),
+        ("company", IDX_CONTACT_COMPANY_KEY),
+        ("email", IDX_CONTACT_EMAIL_KEY),
+        ("phone", IDX_CONTACT_PHONE_KEY),
+        ("city", IDX_CONTACT_CITY_KEY),
+        ("country", IDX_CONTACT_COUNTRY_KEY),
+        ("street", IDX_CONTACT_STREET_KEY),
+        ("zip", IDX_CONTACT_ZIP_KEY),
+        ("notes", IDX_CONTACT_NOTES_KEY),
+    )
+
     async def save(self, contact: Contact) -> None:
         doc = contact.data.to_dict()
-        name = doc.get("name")
-        if not isinstance(name, str):
-            raise TypeError("Contact.name must be a string")
 
-        company = doc.get("company", "")
-        indexes = [IndexTerm(key=IDX_CONTACT_NAME_KEY, value=name)]
-        if company:
-            indexes.append(IndexTerm(key=IDX_CONTACT_COMPANY_KEY, value=company))
+        indexes: list[IndexTerm] = []
+        for field, idx_key in self._INDEX_FIELDS:
+            val = doc.get(field, "")
+            if isinstance(val, str) and val:
+                indexes.append(IndexTerm(key=idx_key, value=val))
 
         await self.on_replace(
             key=contact.key,
@@ -101,6 +170,30 @@ class ContactService:
         )
         rows = await self.on_get_many(keys=keys)
         return [Contact.from_row(row) for row in rows if row.ok]
+
+    async def find_contacts(
+        self,
+        namespace: Namespace,
+        **filters: str,
+    ) -> list[Contact]:
+        keys, _ = await self.on_scan(
+            namespace=namespace,
+            index_key=IDX_CONTACT_NAME_KEY,
+        )
+        rows = await self.on_get_many(keys=keys)
+        contacts = [Contact.from_row(row) for row in rows if row.ok]
+
+        if not filters:
+            return contacts
+
+        result: list[Contact] = []
+        for c in contacts:
+            for field, value in filters.items():
+                candidate = c.data.to_dict().get(field, "")
+                if isinstance(candidate, str) and value.lower() in candidate.lower():
+                    result.append(c)
+                    break
+        return result
 
     async def add_contact(
         self,

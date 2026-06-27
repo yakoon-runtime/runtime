@@ -16,6 +16,7 @@ class Invocation:
     action: str | None = None
     args: list[str] = field(default_factory=list)
     options: list[str] = field(default_factory=list)
+    min_options: int = 0
     default: bool | None = None
 
     def usage_data(
@@ -28,6 +29,7 @@ class Invocation:
             "action": self.action,
             "args": self.args,
             "options": self.options,
+            "min_options": self.min_options,
         }
 
 
@@ -158,6 +160,23 @@ class InvocationValidator:
                         [invocation],
                     ),
                 )
+
+            # ----------------------------------
+            # MIN OPTIONS
+            # ----------------------------------
+
+            if invocation.min_options > 0:
+
+                option_count = 0
+                for token in tokens[offset:]:
+                    if not token.startswith("--"):
+                        continue
+                    key = token.split("=")[0]
+                    if key in valid_options:
+                        option_count += 1
+
+                if option_count < invocation.min_options:
+                    continue
 
             # ----------------------------------
             # MATCH

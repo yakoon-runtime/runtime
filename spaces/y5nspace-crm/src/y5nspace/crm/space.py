@@ -5,6 +5,7 @@ from .runtime import (
     contact_add,
     contact_delete,
     contact_edit,
+    contact_find,
     contact_list,
     contact_show,
     setup,
@@ -78,6 +79,28 @@ crm.add(
                     "city",
                     "country",
                     "notes",
+                ],
+            ),
+        ],
+    )
+)
+crm.add(
+    Node(
+        key="contact-find",
+        name="Contact find",
+        run=contact_find.run,
+        anonymous=True,
+        invocations=[
+            Invocation(
+                default=True,
+                min_options=1,
+                options=[
+                    "name",
+                    "company",
+                    "email",
+                    "phone",
+                    "city",
+                    "country",
                 ],
             ),
         ],
