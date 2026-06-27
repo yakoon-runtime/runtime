@@ -180,20 +180,6 @@ pytest-cov>=5.0
 syrupy>=4.0        # Snapshot testing for Projections
 ```
 
----
 
-## 6. Summary
-
-| Metric | Today | Target |
-|--------|-------|--------|
-| Tests | 0 | ~235 |
-| Code Coverage | 0% | >80% |
-| Test Runner | None | pytest + asyncio |
-| CI | None | GitHub Actions |
-| Snapshot Tests | None | syrupy for Projections |
-
-**The architecture is testable.** Ports are natural mock points. Generator flows are testable without a scheduler. The compiler is decomposed into pure functions. Projections are immutable dataclasses.
-
-Only the files are missing.
 
 
