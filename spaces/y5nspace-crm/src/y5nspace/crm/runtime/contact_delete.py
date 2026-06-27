@@ -27,13 +27,6 @@ async def _handler(
     on_delete_contact: OnDeleteContact,
 ):
     name = request.arg(0)
-    if not name:
-        projection = await on_project(
-            name="contact/error",
-            lang=request.lang,
-            state={"message": "Name erforderlich"},
-        )
-        return out(projection)
 
     namespace = on_get_namespace()
     try:

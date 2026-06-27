@@ -27,13 +27,6 @@ async def _handler(
     on_edit_contact: OnEditContact,
 ):
     name = request.arg(0)
-    if not name:
-        projection = await on_project(
-            name="contact/error",
-            lang=request.lang,
-            state={"message": "Name erforderlich"},
-        )
-        return out(projection)
 
     changes = {}
     for field in ("company", "email", "phone", "street", "zip", "city", "country", "notes"):
