@@ -134,48 +134,4 @@ support.ports.provide(OnAI, Hybrid(
 
 **The runtime decouples AI from infrastructure.** A space gets exactly the AI it needs — no more, no less.
 
----
 
-## 6. The Most Provocative Sentence
-
-> **"The cloud doesn't solve the AI problem. The cloud hides the data problem."**
-
-Because many companies don't have an AI problem. They have:
-- Data silos
-- Missing authorization
-- Missing governance
-- Missing structure
-
-And as long as that remains unsolved, even GPT-9 won't suddenly run the company.
-
-Yakoon solves the structure problem: it defines who can access which data (permissions), which operations are possible (nodes), and which AI can do what (ports).
-
-**Structure first, then AI. Not the other way around.**
-
----
-
-## 7. Review
-
-### What is strong
-
-The argument chain is not attackable because it doesn't argue against cloud — it questions **causality**. Nobody can say "cloud is wrong." But the question "Is cloud really a prerequisite or just a consequence?" can't be answered with "cloud is good." It forces reflection.
-
-### What's missing
-
-The article needs a **counter-proof**. A concrete example where the centralized AI approach fails because data cannot be in the cloud:
-
-- **Legal/Compliance**: Law firm with attorney-client privilege. No cloud model may see contracts. A local 7B model on the firm's server can.
-- **Production**: Machine builder whose CAD data must never leave the corporate network (export control).
-- **Healthcare**: Patient data that must not leave the jurisdiction (GDPR).
-
-### The biggest risk
-
-The article could be misunderstood as "cloud is evil, local is good." That would be too simple. The strength is the nuance: "Cloud is not the answer — cloud is yesterday's question."
-
-### Prediction
-
-If published, this will be **cited**. Not because it's right (time will tell). But because it asks a question everyone working with AI in enterprises is asking — and nobody has articulated clearly.
-
-> **The question isn't "cloud or local." The question is "Who controls the data and the decisions?"**
->
-> And Yakoon gives a clear answer: **The enterprise. Not the cloud provider. Not the AI. The enterprise.**
