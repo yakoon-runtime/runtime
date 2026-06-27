@@ -2,12 +2,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Protocol
+from typing import Literal, Protocol
 
 from y5n.api.naming import Key, Namespace
 from y5nstore.event.models import (
     GetResult,
     IndexKey,
+    IndexQueryTerm,
     IndexSpec,
     IndexTerm,
     IndexValue,
@@ -83,6 +84,17 @@ IDX_CONTACT_NOTES_SPEC = IndexSpec(
 )
 
 
+class OnQueryIndex(Protocol):
+    async def __call__(
+        self,
+        *,
+        namespace: Namespace,
+        terms: Sequence[IndexQueryTerm],
+        mode: Literal["and", "or"],
+        limit: int = 100,
+    ) -> tuple[list[Key], str | None]: ...
+
+
 class ContactService:
 
     @staticmethod
@@ -107,6 +119,7 @@ class ContactService:
         on_get_many: OnGetMany,
         on_scan: OnScan,
         on_delete: OnDelete,
+        on_query_index: OnQueryIndex,
     ):
         self.on_get = on_get
         self.on_append = on_append
@@ -114,6 +127,7 @@ class ContactService:
         self.on_get_many = on_get_many
         self.on_scan = on_scan
         self.on_delete = on_delete
+        self.on_query_index = on_query_index
 
     async def get_by_key(self, key: Key) -> Contact | None:
         row = await self.on_get(key=key)
@@ -171,29 +185,48 @@ class ContactService:
         rows = await self.on_get_many(keys=keys)
         return [Contact.from_row(row) for row in rows if row.ok]
 
+    _FIELD_TO_INDEX_KEY: dict[str, IndexKey] = {
+        "name": IDX_CONTACT_NAME_KEY,
+        "company": IDX_CONTACT_COMPANY_KEY,
+        "email": IDX_CONTACT_EMAIL_KEY,
+        "phone": IDX_CONTACT_PHONE_KEY,
+        "city": IDX_CONTACT_CITY_KEY,
+        "country": IDX_CONTACT_COUNTRY_KEY,
+        "street": IDX_CONTACT_STREET_KEY,
+        "zip": IDX_CONTACT_ZIP_KEY,
+        "notes": IDX_CONTACT_NOTES_KEY,
+    }
+
     async def find_contacts(
         self,
         namespace: Namespace,
         **filters: str,
     ) -> list[Contact]:
-        keys, _ = await self.on_scan(
+        terms: list[IndexQueryTerm] = []
+        for field, value in filters.items():
+            index_key = self._FIELD_TO_INDEX_KEY.get(field)
+            if not index_key:
+                raise ValueError(f"Unknown contact filter: {field}")
+            if value:
+                terms.append(
+                    IndexQueryTerm(index_key=index_key, op="contains", value=value)
+                )
+
+        if not terms:
+            return await self.list_contacts(namespace)
+
+        keys, _ = await self.on_query_index(
             namespace=namespace,
-            index_key=IDX_CONTACT_NAME_KEY,
+            terms=terms,
+            mode="and",
+            limit=100,
         )
+
+        if not keys:
+            return []
+
         rows = await self.on_get_many(keys=keys)
-        contacts = [Contact.from_row(row) for row in rows if row.ok]
-
-        if not filters:
-            return contacts
-
-        result: list[Contact] = []
-        for c in contacts:
-            for field, value in filters.items():
-                candidate = c.data.to_dict().get(field, "")
-                if isinstance(candidate, str) and value.lower() in candidate.lower():
-                    result.append(c)
-                    break
-        return result
+        return [Contact.from_row(row) for row in rows if row.ok]
 
     async def add_contact(
         self,
@@ -246,7 +279,16 @@ class ContactService:
         if not contact:
             raise ValueError(f"Contact not found: {name}")
 
-        for field in ("company", "email", "phone", "street", "zip", "city", "country", "notes"):
+        for field in (
+            "company",
+            "email",
+            "phone",
+            "street",
+            "zip",
+            "city",
+            "country",
+            "notes",
+        ):
             if field in changes:
                 setattr(contact.data, field, changes[field])
 
@@ -332,3 +374,6 @@ class OnDelete(Protocol):
         meta: Mapping[str, object] | None = None,
         expected_rev: int | None = None,
     ) -> PutResult: ...
+
+
+

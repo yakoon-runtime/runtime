@@ -41,6 +41,18 @@ IndexValue: TypeAlias = str | int | float | bool
 
 
 # ----------------------------
+# Index query
+# ----------------------------
+
+
+@dataclass(frozen=True)
+class IndexQueryTerm:
+    index_key: IndexKey
+    op: Literal["eq", "prefix", "contains"]
+    value: str
+
+
+# ----------------------------
 # Index model
 # ----------------------------
 

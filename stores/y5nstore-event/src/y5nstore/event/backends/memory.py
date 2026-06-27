@@ -5,11 +5,13 @@ import bisect
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Literal
 
 from ..models.entity import (
     DomainId,
     EntityId,
     IndexKey,
+    IndexQueryTerm,
     IndexSpec,
     IndexTerm,
     IndexValue,
@@ -412,6 +414,68 @@ class MemoryBackend:
                     return rows
 
         return rows
+
+    async def query_index(
+        self,
+        *,
+        domain_id: DomainId,
+        kind_id: KindId,
+        space_id: SpaceId,
+        terms: Sequence[IndexQueryTerm],
+        mode: Literal["and", "or"],
+        limit: int = 100,
+    ) -> list[EntityId]:
+
+        sp = self._sp(domain_id=domain_id, kind_id=kind_id, space_id=space_id)
+        specs = self._index_specs.get(sp, {})
+
+        candidate_sets: list[set[EntityId]] = []
+        for term in terms:
+            spec = specs.get(str(term.index_key))
+            if spec is None:
+                continue
+
+            gkey = (str(domain_id), str(kind_id), str(space_id), str(term.index_key))
+            bucket = self._index_inv.get(gkey)
+            if not bucket:
+                continue
+
+            q = self._norm_value(spec, term.value)
+
+            matched: set[EntityId] = set()
+            if term.op == "eq":
+                recs = bucket.get(q, [])
+                matched.update(r.entity_id for r in recs)
+
+            elif term.op == "prefix":
+                for stored_val, recs in bucket.items():
+                    if stored_val.startswith(q):
+                        matched.update(r.entity_id for r in recs)
+
+            elif term.op == "contains":
+                for stored_val, recs in bucket.items():
+                    if q in stored_val:
+                        matched.update(r.entity_id for r in recs)
+
+            candidate_sets.append(matched)
+
+        if not candidate_sets:
+            return []
+
+        if mode == "and":
+            result = candidate_sets[0]
+            for s in candidate_sets[1:]:
+                result &= s
+                if not result:
+                    break
+            entity_ids = list(result)
+        else:
+            union: set[EntityId] = set()
+            for s in candidate_sets:
+                union |= s
+            entity_ids = list(union)
+
+        return entity_ids[:limit]
 
     async def index_replace_terms(
         self,

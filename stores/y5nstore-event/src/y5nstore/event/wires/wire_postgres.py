@@ -32,6 +32,7 @@ def build_store(settings: StorageSettings):
             on_index_list=exec.index_list,
             on_index_replace_terms=exec.index_replace_terms,
             on_index_scan=exec.index_scan,
+            on_query_index=exec.query_index,
             on_gc=exec.gc,
             on_gc_global=exec.gc_global,
             writer=patch,

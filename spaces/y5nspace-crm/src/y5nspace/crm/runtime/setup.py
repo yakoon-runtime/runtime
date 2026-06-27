@@ -27,6 +27,7 @@ async def setup(space: NodeSpace):
         on_get_many=store.objects.get_many,
         on_scan=store.objects.scan,
         on_delete=store.objects.delete,
+        on_query_index=store.objects.query_index,
     )
 
     async def on_project(

@@ -4,13 +4,14 @@ import json
 from collections.abc import Sequence
 from contextlib import asynccontextmanager
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 import asyncpg
 
 from ...models import (
     CurrentRow,
     EntityId,
+    IndexQueryTerm,
     IndexSpec,
     IndexTerm,
     IndexValue,
@@ -409,6 +410,88 @@ class _PostgresExec:
         rows = await self.conn.fetch(query, *params)
 
         return [(r["value"], EntityId(r["entity_id"])) for r in rows]
+
+    async def query_index(
+        self,
+        *,
+        domain_id,
+        kind_id,
+        space_id,
+        terms: Sequence[IndexQueryTerm],
+        mode: Literal["and", "or"],
+        limit: int = 100,
+    ) -> list[EntityId]:
+
+        if not terms:
+            return []
+
+        # load specs to normalize values
+        rows = await self.conn.fetch(
+            """
+            SELECT key, value_type
+            FROM index_specs
+            WHERE domain=$1 AND kind=$2 AND space=$3
+            """,
+            str(domain_id), str(kind_id), str(space_id),
+        )
+        specs = {r["key"]: ValueType(r["value_type"]) for r in rows}
+
+        conditions: list[str] = []
+        params: list[str] = []
+        idx = 4  # first 3 params are domain, kind, space
+
+        for term in terms:
+            sk = str(term.index_key)
+            vt = specs.get(sk)
+            if vt is None:
+                continue
+
+            norm = _norm_value(vt, term.value)
+
+            if term.op == "eq":
+                conditions.append(f"(index_key = ${idx} AND value = ${idx + 1})")
+                params.extend([sk, norm])
+                idx += 2
+
+            elif term.op == "prefix":
+                conditions.append(f"(index_key = ${idx} AND value ILIKE ${idx + 1} || '%')")
+                params.extend([sk, norm])
+                idx += 2
+
+            elif term.op == "contains":
+                conditions.append(f"(index_key = ${idx} AND value ILIKE '%' || ${idx + 1} || '%')")
+                params.extend([sk, norm])
+                idx += 2
+
+        if not conditions:
+            return []
+
+        where = "domain=$1 AND kind=$2 AND space=$3 AND ({})".format(
+            f" {mode.upper()} ".join(conditions),
+        )
+
+        if mode == "and":
+            having = f"COUNT(DISTINCT index_key) = {len(conditions)}"
+            query = f"""
+                SELECT entity_id
+                FROM index_entries
+                WHERE {where}
+                GROUP BY entity_id
+                HAVING {having}
+                LIMIT ${idx}
+            """
+        else:
+            query = f"""
+                SELECT DISTINCT entity_id
+                FROM index_entries
+                WHERE {where}
+                LIMIT ${idx}
+            """
+
+        params.append(str(limit))
+
+        rows = await self.conn.fetch(query, str(domain_id), str(kind_id), str(space_id), *params)
+        return [EntityId(r["entity_id"]) for r in rows]
 
     # ----------------------------
     # GC (stub)

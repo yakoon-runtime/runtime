@@ -5,7 +5,7 @@ import json
 from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
-from typing import Protocol
+from typing import Literal, Protocol
 
 from y5n.base.naming import Key, Namespace
 
@@ -15,6 +15,7 @@ from .models import (
     EntityId,
     GetResult,
     IndexKey,
+    IndexQueryTerm,
     IndexSpec,
     IndexTerm,
     IndexValue,
@@ -50,6 +51,7 @@ class EntityStore:
         on_index_list: OnIndexList,
         on_index_replace_terms: OnIndexReplaceTerms,
         on_index_scan: OnIndexScan,
+        on_query_index: OnQueryIndex,
         on_gc: OnGC,
         on_gc_global: OnGCGlobal,
         writer: PatchStrategy,
@@ -68,6 +70,7 @@ class EntityStore:
         self.on_index_list = on_index_list
         self.on_index_replace_terms = on_index_replace_terms
         self.on_index_scan = on_index_scan
+        self.on_query_index = on_query_index
 
         self.on_gc = on_gc
         self.on_gc_global = on_gc_global
@@ -485,6 +488,29 @@ class EntityStore:
 
         return keys, next_cursor
 
+    async def query_index(
+        self,
+        *,
+        namespace: Namespace,
+        terms: Sequence[IndexQueryTerm],
+        mode: Literal["and", "or"],
+        limit: int = 100,
+    ) -> tuple[list[Key], str | None]:
+        d, k, s = _dims_from_namespace(namespace)
+        entity_ids = await self.on_query_index(
+            domain_id=d, kind_id=k, space_id=s, terms=terms, mode=mode, limit=limit,
+        )
+        keys = [
+            Key.from_parts(
+                domain=namespace.domain,
+                kind=namespace.kind,
+                space=namespace.space,
+                id=str(eid),
+            )
+            for eid in entity_ids
+        ]
+        return keys, None
+
     # ----------------------------
     # GC
     # ----------------------------
@@ -736,6 +762,19 @@ class OnIndexScan(Protocol):
         limit: int,
         as_of: datetime,
     ) -> Sequence[tuple[IndexValue, EntityId]]: ...
+
+
+class OnQueryIndex(Protocol):
+    async def __call__(
+        self,
+        *,
+        domain_id: DomainId,
+        kind_id: KindId,
+        space_id: SpaceId,
+        terms: Sequence[IndexQueryTerm],
+        mode: Literal["and", "or"],
+        limit: int = 100,
+    ) -> list[EntityId]: ...
 
 
 class OnGC(Protocol):
