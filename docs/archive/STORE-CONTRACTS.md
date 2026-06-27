@@ -4,60 +4,60 @@ The EntityStore guarantees the following contracts — independent of backend (M
 
 ## Append & Revisions
 
-1. **append erzeugt Revision**  
+1. **append creates a revision**  
    `append(key, patch={...})` → `put.rev == 1`, `get(key).rev == 1`
 
-2. **append erhöht Revision**  
+2. **append increases the revision**  
    `append` × 3 → `put.rev == 3`, `get(key).rev == 3`
 
-3. **get liefert aktuellen Zustand**  
+3. **get returns the current state**  
    `append(key, patch={"name": "a"})` + `append(key, patch={"name": "b"})`  
    → `get(key).data["name"] == "b"`
 
-4. **as_of liefert historischen Zustand**  
-   `append` bei `t1`, `append` bei `t2`  
-   → `get(key, as_of=t1).data == zustand_nach_t1`  
-   → `get(key, as_of=t2).data == zustand_nach_t2`
+4. **as_of returns historical state**  
+   `append` at `t1`, `append` at `t2`  
+   → `get(key, as_of=t1).data == state_after_t1`  
+   → `get(key, as_of=t2).data == state_after_t2`
 
-5. **Revisionen bleiben geordnet**  
-   3 × `append` → `get(key).rev == 3`, jede Zwischenrevision ist via `as_of` erreichbar.
+5. **Revisions remain ordered**  
+   3 × `append` → `get(key).rev == 3`, every intermediate revision is reachable via `as_of`.
 
 ## Optimistic Concurrency
 
-6. **expected_rev verhindert Konflikte**  
-   `append(key, ..., expected_rev=1)` bei aktuellem `rev=2` → `ConcurrencyError`
+6. **expected_rev prevents conflicts**  
+   `append(key, ..., expected_rev=1)` at current `rev=2` → `ConcurrencyError`
 
-7. **expected_rev erlaubt korrekten Fortschritt**  
-   `append(key, ..., expected_rev=2)` bei aktuellem `rev=2` → Erfolg, `rev=3`
+7. **expected_rev allows correct progress**  
+   `append(key, ..., expected_rev=2)` at current `rev=2` → success, `rev=3`
 
 ## Replace & Delete
 
-8. **replace überschreibt vollständig**  
+8. **replace overwrites completely**  
    `append(key, {"a": 1})` + `replace(key, {"b": 2})` → `get(key).data == {"b": 2}`
 
-9. **delete setzt Zustand auf None**  
+9. **delete sets state to None**  
    `append(key, ...)` + `delete(key)` → `get(key).ok == False`
 
 ## Snapshots
 
-10. **Snapshot verändert Ergebnis nicht**  
-    100 × `append` (löst periodische Snapshots aus)  
-    → `get(key).data == letzter_stand`  
-    → alle `as_of`-Aufrufe liefern weiterhin korrete Zwischenstände
+10. **Snapshot does not change results**  
+    100 × `append` (triggers periodic snapshots)  
+    → `get(key).data == latest_state`  
+    → all `as_of` calls still return correct intermediate states
 
 ## Indexes
 
-11. **scan findet Indexeinträge**  
+11. **scan finds index entries**  
     `append(key, ..., indexes=[IndexSpec("email", value)])`  
     → `scan(email_key, value) == [key]`
 
-12. **scan nach replace aktualisiert**  
+12. **scan after replace updates**  
     `append(key, ..., indexes=[...("email", "a")])`  
     `replace(key, ..., indexes=[...("email", "b")])`  
     → `scan("email", "a") == []`  
     → `scan("email", "b") == [key]`
 
-13. **scan nach delete entfernt**  
+13. **scan after delete removes**  
     `append(key, ..., indexes=[...("email", "a")])`  
     `delete(key)`  
     → `scan("email", "a") == []`
@@ -65,4 +65,4 @@ The EntityStore guarantees the following contracts — independent of backend (M
 ## Backend Parity
 
 14. **Memory == Postgres**  
-    Alle obigen Tests laufen identisch mit beiden Backends.
+    All tests above run identically with both backends.
