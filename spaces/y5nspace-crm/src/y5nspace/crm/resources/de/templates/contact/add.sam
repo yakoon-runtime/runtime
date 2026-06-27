@@ -1,0 +1,1 @@
+Kontakt angelegt: {{ state.contact.data.name }}

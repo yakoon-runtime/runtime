@@ -1,7 +1,7 @@
 {% if not state.contacts %}
-No contacts found
+Keine Kontakte gefunden.
 {% else %}
-Contacts: <list>
+Kontakte: <list>
   {% for c in state.contacts %}
   <item>{{ c.data.name }}{% if c.data.company %} — {{ c.data.company }}{% endif %}</item>
   {% endfor %}
