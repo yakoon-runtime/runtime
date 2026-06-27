@@ -17,3 +17,6 @@ yakoon/loop/runtime
 # Coverage
 .coverage
 coverage/
+
+# Local evolution log
+evolution.log
