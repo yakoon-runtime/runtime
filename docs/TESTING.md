@@ -129,72 +129,7 @@ normalize_ast(ast)
 projection = Mapper().map_projection(ast)
 ```
 
----
-
-## 4. Test Pyramid
-
-```
-      /\
-     /  \
-    / E2E \             ← 3-5 tests (system: Dispatch → Flow → Client)
-   /--------\
-  /Integration\         ← 20-30 tests (Compiler, Scheduler, Postgres backend)
- /----------------\
-/   Unit Tests    \    ← 200-400 tests (Handler, Ports, Nodes, Flows, Model)
-/------------------\
-```
-
-### Unit Tests (Base)
-
-| Component | Tests | Description |
-|-----------|-------|-------------|
-| Node (add, mount, find) | ~20 | Hierarchy operations |
-| NodePorts (provide, publish, get, fork) | ~15 | Container chains |
-| Container (bind, get, fork, mount) | ~10 | Base container |
-| FlowCursor (next, send, push, pop) | ~15 | Generator stack |
-| Outcome, Control, Effect | ~10 | Primitives |
-| Projection models (blocks, inlines) | ~30 | Dataclass tests |
-| Compiler (Tokenize, AST, Normalize) | ~20 | Pure functions |
-| Mapper (Block mapper, Inline mapper) | ~30 | Tag→Model |
-| Serializer/Deserializer | ~10 | Wire protocol |
-| PermissionChecker | ~10 | RBAC logic |
-| Naming allocation | ~5 | Naming |
-| **Total Unit** | **~175** | |
-
-### Integration Tests
-
-| Component | Tests | Description |
-|-----------|-------|-------------|
-| Projector (Jinja2 → Projection) | ~10 | Full pipeline test |
-| Scheduler (Queue, Dispatch, Sleep) | ~10 | Scheduling logic |
-| Engine (step_flow, dispatch) | ~10 | Flow lifecycle |
-| Postgres backend | ~10 | DB operations |
-| Identity space (user, group, grant) | ~15 | Cross-space |
-| **Total Integration** | **~55** | |
-
-### E2E Tests
-
-| Scenario | Description |
-|---------|-------------|
-| Command input → Projection output | Full Dispatch→Flow→Projection chain |
-| `receive` → input → response | Interactive flow across steps |
-| Background job (bg/fg/list/stop) | Job lifecycle |
-| Permission check (allowed/denied) | Auth + Node resolution |
-| **Total E2E** | ~5 |
-
-### Summary
-
-```
-Unit:         ~175 tests
-Integration:  ~55 tests
-E2E:           ~5 tests
-─────────────────────
-Total:        ~235 tests
-```
-
----
-
-## 5. Mocking Strategy
+## 4. Mocking Strategy
 
 ### What is NOT mocked
 
@@ -224,7 +159,7 @@ class FakeSession:
 
 ---
 
-## 6. Test Runner Setup
+## 5. Test Runner Setup
 
 ```toml
 [tool.pytest.ini_options]
@@ -247,7 +182,7 @@ syrupy>=4.0        # Snapshot testing for Projections
 
 ---
 
-## 7. Summary
+## 6. Summary
 
 | Metric | Today | Target |
 |--------|-------|--------|
