@@ -1,3 +1,4 @@
+from y5n.api.invocations import Invocation
 from y5n.api.nodes import Node
 
 from .runtime import (
@@ -31,6 +32,21 @@ crm.add(
         name="Contact add",
         run=contact_add.run,
         anonymous=True,
+        invocations=[
+            Invocation(
+                args=["name"],
+                options=[
+                    "company",
+                    "email",
+                    "phone",
+                    "street",
+                    "zip",
+                    "city",
+                    "country",
+                    "notes",
+                ],
+            ),
+        ],
     )
 )
 crm.add(
@@ -39,6 +55,9 @@ crm.add(
         name="Contact show",
         run=contact_show.run,
         anonymous=True,
+        invocations=[
+            Invocation(args=["name"]),
+        ],
     )
 )
 crm.add(
@@ -47,6 +66,21 @@ crm.add(
         name="Contact edit",
         run=contact_edit.run,
         anonymous=True,
+        invocations=[
+            Invocation(
+                args=["name"],
+                options=[
+                    "company",
+                    "email",
+                    "phone",
+                    "street",
+                    "zip",
+                    "city",
+                    "country",
+                    "notes",
+                ],
+            ),
+        ],
     )
 )
 crm.add(
@@ -55,5 +89,8 @@ crm.add(
         name="Contact delete",
         run=contact_delete.run,
         anonymous=True,
+        invocations=[
+            Invocation(args=["name"]),
+        ],
     )
 )

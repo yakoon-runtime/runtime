@@ -27,6 +27,14 @@ async def _handler(
     on_add_contact: OnAddContact,
 ):
     name = request.arg(0)
+    if not name:
+        projection = await on_project(
+            name="contact/error",
+            lang=request.lang,
+            state={"message": "Name erforderlich"},
+        )
+        return out(projection)
+
     company = request.option("company") or ""
     email = request.option("email") or ""
     phone = request.option("phone") or ""
@@ -37,18 +45,26 @@ async def _handler(
     notes = request.option("notes") or ""
 
     namespace = on_get_namespace()
-    contact = await on_add_contact(
-        namespace=namespace,
-        name=name,
-        company=company,
-        email=email,
-        phone=phone,
-        street=street,
-        zip=zip,
-        city=city,
-        country=country,
-        notes=notes,
-    )
+    try:
+        contact = await on_add_contact(
+            namespace=namespace,
+            name=name,
+            company=company,
+            email=email,
+            phone=phone,
+            street=street,
+            zip=zip,
+            city=city,
+            country=country,
+            notes=notes,
+        )
+    except ValueError as e:
+        projection = await on_project(
+            name="contact/error",
+            lang=request.lang,
+            state={"message": str(e)},
+        )
+        return out(projection)
 
     projection = await on_project(
         name="contact/add",
