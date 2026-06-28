@@ -8,6 +8,7 @@
     "runtime/y5ncore-runtime/src",
     // stores (event)
     "stores/y5nstore-event/src",
+    "stores/y5nstore-sequence/src",
     // spaces
     "spaces/y5nspace-runtime/src",
     "spaces/y5nspace-shell/src",

@@ -17,6 +17,7 @@ from y5nstore.event.models import (
     SnapshotHint,
     ValueType,
 )
+from y5nstore.sequence import OnNextId
 
 from ..models import Contact, ContactData
 
@@ -120,6 +121,7 @@ class ContactService:
         on_scan: OnScan,
         on_delete: OnDelete,
         on_query_index: OnQueryIndex,
+        on_next_id: OnNextId,
     ):
         self.on_get = on_get
         self.on_append = on_append
@@ -128,6 +130,7 @@ class ContactService:
         self.on_scan = on_scan
         self.on_delete = on_delete
         self.on_query_index = on_query_index
+        self.on_next_id = on_next_id
 
     async def get_by_key(self, key: Key) -> Contact | None:
         row = await self.on_get(key=key)
@@ -242,11 +245,8 @@ class ContactService:
         country: str = "",
         notes: str = "",
     ) -> Contact:
-        key = Key(namespace=namespace, id=name)
-
-        existing = await self.get_by_key(key)
-        if existing:
-            raise ValueError(f"Contact already exists: {name}")
+        contact_id = await self.on_next_id(prefix="contact")
+        key = Key(namespace=namespace, id=contact_id)
 
         now = datetime.now().isoformat()
         contact = Contact(
@@ -374,6 +374,3 @@ class OnDelete(Protocol):
         meta: Mapping[str, object] | None = None,
         expected_rev: int | None = None,
     ) -> PutResult: ...
-
-
-

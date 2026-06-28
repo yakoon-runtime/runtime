@@ -1,5 +1,6 @@
-from .runtime import Sequencer
+from .runtime import OnNextId, Sequencer
 
 __all__ = [
+    "OnNextId",
     "Sequencer",
 ]

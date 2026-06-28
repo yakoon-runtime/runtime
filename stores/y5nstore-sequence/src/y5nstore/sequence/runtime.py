@@ -31,6 +31,10 @@ class Sequencer:
             await self.on_shutdown()
 
 
+class OnNextId(Protocol):
+    async def __call__(self, prefix: str) -> str: ...
+
+
 class OnInitialize(Protocol):
     async def __call__(self) -> None: ...
 

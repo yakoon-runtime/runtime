@@ -5,6 +5,7 @@ from y5n.api.ports import OnProjectionResolve
 from y5n.api.projections import Projection
 from y5n.api.resources import ResourceRef
 from y5nstore.event.wire import build_store
+from y5nstore.sequence.wire import build_store as build_sequencer
 
 from ..ports import OnProject
 from ..services import ContactService, Namespaces
@@ -20,6 +21,9 @@ async def setup(space: NodeSpace):
     store = build_store(settings.storage)
     await _build_index(store)
 
+    sequencer = build_sequencer(settings.sequencer)
+    await sequencer.initialize()
+
     contacts = ContactService(
         on_get=store.objects.get,
         on_append=store.objects.append,
@@ -28,6 +32,7 @@ async def setup(space: NodeSpace):
         on_scan=store.objects.scan,
         on_delete=store.objects.delete,
         on_query_index=store.objects.query_index,
+        on_next_id=sequencer.next_id,
     )
 
     async def on_project(
