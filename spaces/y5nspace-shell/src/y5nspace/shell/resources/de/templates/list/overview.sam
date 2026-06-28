@@ -1,18 +1,16 @@
-{% for c in state.nodes %}
-    {% if not c.navigable %}
-      <cmd command="{{ c.key }}">{{ c.key }}</cmd>
-      <space count="3"/> 
-    {% endif %}
+<strong>Commands</strong>
+<br/>
+▷<space count="2"/>
+{% for c in state.commands %}
+  <cmd command="{{ c.key }}" variant="{{ c.variant }}">{{ c.key }}</cmd>
+  <space count="3"/>
 {% endfor %}
-{% if state.navigables %}
-  <br/>
-  <collapsible title="Spaces" expanded="0">
-  {% for c in state.navigables %}
-      {% if c.navigable %}
-        └─<space count="1"/> 
-        <cmd command="{{ c.key }}">{{ c.key }}</cmd><br/>
-      {% endif %}
-  {% endfor %}
-  </collapsible>
 
-{% endif %}
+<br/><br/>
+<strong>Spaces</strong>
+<br/>
+▷<space count="2"/>
+{% for c in state.spaces %}
+  <cmd command="{{ c.key }}" variant="{{ c.variant }}">{{ c.key }}</cmd>
+  <space count="3"/>
+{% endfor %}

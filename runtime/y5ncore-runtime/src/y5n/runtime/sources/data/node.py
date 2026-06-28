@@ -219,6 +219,9 @@ class NodeSource(DataSource):
 
         for global_node in self._globals.values():
 
+            if global_node.path == node.path:
+                continue
+
             visible[str(global_node)] = global_node
 
         # ---------------------------------

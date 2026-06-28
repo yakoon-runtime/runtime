@@ -38,6 +38,7 @@ class InlineSelect:
 class InlineCmd:
     type: Literal["cmd"] = "cmd"
     command: str = ""
+    variant: str | None = None
     children: list["Inline"] | None = None
 
 

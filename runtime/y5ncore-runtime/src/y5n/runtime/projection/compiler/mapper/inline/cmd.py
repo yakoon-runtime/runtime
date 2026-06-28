@@ -11,7 +11,10 @@ def map_cmd(mapper, node):
     if not children:
         raise ValueError("<cmd> requires label")
 
+    variant = node.attrs.get("variant")
+
     return InlineCmd(
         command=command,
+        variant=variant,
         children=children,
     )

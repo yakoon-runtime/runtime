@@ -13,18 +13,34 @@ from ...ports import OnProject
 async def run(space: NodeSpace):
 
     current_node = space.session.get_current_node()  # type: ignore
+    current_path = str(current_node)
 
     on_source = space.ports.get(OnSourceRead)
     result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))
 
-    navigables = [x for x in result.rows if x["navigable"]]
+    commands = []
+    spaces = []
+    for x in result.rows:
+        path = str(x.get("path", ""))
+        if x["scope"] == "global" and not (current_path != "/" and path.startswith(current_path)):
+            x["variant"] = "global"
+        else:
+            x["variant"] = "local"
+
+        if x["navigable"]:
+            spaces.append(x)
+        else:
+            commands.append(x)
+
+    commands.sort(key=lambda i: i["key"])
+    spaces.sort(key=lambda i: i["key"])
 
     projection = await space.ports.get(OnProject)(
         name="list/overview",
         lang=space.session.lang,
         state={
-            "nodes": result.rows,
-            "navigables": navigables,
+            "commands": commands,
+            "spaces": spaces,
         },
     )
 

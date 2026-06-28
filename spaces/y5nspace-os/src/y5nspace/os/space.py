@@ -8,7 +8,7 @@ os = Node(
     anonymous=True,
     setup=setup,
     run=run,
-    navigable=True,
+    navigable=False,
     resolvable=True,
     scope=NodeScope.GLOBAL,
 )
