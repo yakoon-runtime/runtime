@@ -13,7 +13,7 @@ from ..settings import Settings
 
 async def setup(space: NodeSpace):
 
-    settings = Settings()
+    settings = Settings.load()
 
     namespaces = Namespaces()
 
