@@ -1,0 +1,7 @@
+runtime:
+  spaces:
+    - y5nspace.shell
+    - y5nspace.ident
+    - y5nspace.os
+    - y5nspace.runtime
+    - y5nspace.crm
