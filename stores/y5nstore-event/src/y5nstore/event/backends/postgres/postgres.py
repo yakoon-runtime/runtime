@@ -509,7 +509,8 @@ class _PoolExec:
         self.backend = backend
 
     async def _run(self, fn, *args, **kwargs):
-        assert self.backend.pool, "PostgresBackend not initialized"
+        if not self.backend.pool:
+            await self.backend.initialize()
         async with self.backend.pool.acquire() as conn:
             exec = _PostgresExec(conn)
             return await getattr(exec, fn)(*args, **kwargs)
@@ -540,6 +541,9 @@ class _PoolExec:
 
     async def index_scan(self, **kwargs):
         return await self._run("index_scan", **kwargs)
+
+    async def query_index(self, **kwargs):
+        return await self._run("query_index", **kwargs)
 
     async def gc(self, **kwargs):
         return await self._run("gc", **kwargs)

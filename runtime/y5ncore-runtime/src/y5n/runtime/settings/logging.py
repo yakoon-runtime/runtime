@@ -22,5 +22,5 @@ class LoggingSettings:
     log_to_file: bool = False
     """If True, logs will also be written to a file."""
 
-    log_dir: str = "logs"
+    log_dir: str = "~/.local/state/yakoon/logs"
     """Directory for log files. Supports ~ expansion."""
