@@ -20,6 +20,7 @@ jobs:
           pip install -e runtime/y5ncore-base
           pip install -e transports/y5ntrans-ws
           pip install -e stores/y5nstore-event
+          pip install -e stores/y5nstore-sequence
           pip install -e runtime/y5ncore-runtime
           pip install -e runtime/y5ncore-llm
           pip install -e spaces/y5nspace-shell
