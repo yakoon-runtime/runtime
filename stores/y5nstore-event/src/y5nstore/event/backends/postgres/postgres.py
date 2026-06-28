@@ -488,7 +488,7 @@ class _PostgresExec:
                 LIMIT ${idx}
             """
 
-        params.append(str(limit))
+        params.append(limit)
 
         rows = await self.conn.fetch(query, str(domain_id), str(kind_id), str(space_id), *params)
         return [EntityId(r["entity_id"]) for r in rows]
