@@ -23,17 +23,16 @@ class Settings:
     def load(cls, config_dir: Path | None = None) -> Settings:
         data = resolve_space_config("crm", config_dir)
         storage_data = data.get("storage", {})
-        defaults = StorageSettings()
 
         return cls(
             storage=StorageSettings(
                 backend=_backend(
                     os.getenv("CRM_STORE_BACKEND")
                     or storage_data.get("backend"),
-                    defaults.backend,
+                    "memory",
                 ),
                 dsn=os.getenv("CRM_STORE_DSN")
                     or storage_data.get("dsn")
-                    or defaults.dsn,
+                    or "postgresql://postgres:secret@localhost:5432/yakoon_crm",
             )
         )
