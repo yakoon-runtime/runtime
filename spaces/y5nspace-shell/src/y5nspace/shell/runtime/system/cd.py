@@ -68,6 +68,7 @@ async def run(space: NodeSpace):
     )
 
     if target_result.status != "ok":
+        yield out_text(f"Directory not found: {resolved_path}")
         return
 
     target_node = target_result.one()
@@ -77,6 +78,7 @@ async def run(space: NodeSpace):
     # ----------------------------------
 
     if not target_node["navigable"]:
+        yield out_text(f"Directory not navigable: {resolved_path}")
         return
 
     # ----------------------------------
