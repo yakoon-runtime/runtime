@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import pytest
-from y5nstore.sequence.allocator import ShardAllocator
-from y5nstore.sequence.backends.memory import MemoryShardRepository
-from y5nstore.sequence.runtime import Sequencer
+
+try:
+    from y5nstore.sequence.allocator import ShardAllocator
+    from y5nstore.sequence.backends.memory import MemoryShardRepository
+    from y5nstore.sequence.runtime import Sequencer
+except ImportError:
+    pytest.skip("y5nstore.sequence not installed", allow_module_level=True)
 
 
 @pytest.fixture
