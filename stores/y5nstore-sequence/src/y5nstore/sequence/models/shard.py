@@ -4,10 +4,10 @@ from dataclasses import dataclass
 @dataclass
 class Shard:
     prefix: str
-    shard_id: int  # unique shard identifier (could be range end)
-    range_start: int  # inclusive
-    range_end: int  # exclusive
-    value: int  # current counter in this shard
+    shard_id: int
+    range_start: int
+    range_end: int
+    value: int
     created_at: str | None = None
 
     def is_full(self) -> bool:

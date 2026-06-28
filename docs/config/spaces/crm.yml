@@ -1,3 +1,7 @@
 storage:
   backend: postgres
   dsn: postgresql://postgres:secret@localhost:5432/yakoon_crm
+
+sequencer:
+  backend: postgres
+  dsn: postgresql://postgres:secret@localhost:5432/yakoon_crm_seq

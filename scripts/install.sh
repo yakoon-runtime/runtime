@@ -13,6 +13,7 @@ pip install \
 # storage
 pip install \
   -e stores/y5nstore-event \
+  -e stores/y5nstore-sequence \
 
 # spaces
 pip install \
