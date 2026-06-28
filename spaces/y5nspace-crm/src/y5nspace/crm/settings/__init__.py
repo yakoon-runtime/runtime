@@ -33,6 +33,6 @@ class Settings:
                 ),
                 dsn=os.getenv("CRM_STORE_DSN")
                     or storage_data.get("dsn")
-                    or "postgresql://postgres:secret@localhost:5432/yakoon_crm",
+                    or "",
             )
         )
