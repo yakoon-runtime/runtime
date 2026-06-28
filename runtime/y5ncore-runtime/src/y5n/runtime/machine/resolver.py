@@ -110,6 +110,11 @@ class InvocationResolver:
                 key=key,
             )
             if node:
+                self._ensure_invocation(
+                    session,
+                    node,
+                    tokens,
+                )
                 return node, tokens
 
         # ---------------------------------
