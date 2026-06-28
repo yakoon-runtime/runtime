@@ -3,9 +3,16 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 from y5n.base.config import resolve_space_config
-from y5nstore.event.settings import StorageSettings
+from y5nstore.event.settings import Backend, StorageSettings
+
+
+def _backend(value: str | Any | None, default: Backend) -> Backend:
+    if isinstance(value, str) and value in ("memory", "postgres"):
+        return value  # type: ignore[return-value]
+    return default
 
 
 @dataclass
@@ -20,9 +27,11 @@ class Settings:
 
         return cls(
             storage=StorageSettings(
-                backend=os.getenv("CRM_STORE_BACKEND")
-                    or storage_data.get("backend")
-                    or defaults.backend,
+                backend=_backend(
+                    os.getenv("CRM_STORE_BACKEND")
+                    or storage_data.get("backend"),
+                    defaults.backend,
+                ),
                 dsn=os.getenv("CRM_STORE_DSN")
                     or storage_data.get("dsn")
                     or defaults.dsn,
