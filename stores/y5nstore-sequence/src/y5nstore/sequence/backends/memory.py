@@ -25,7 +25,6 @@ class MemoryShardRepository:
         shard = self._shards.get((prefix, shard_id))
         if shard is None or shard.value != current_value:
             return False
-        shard.value += 1
         return True
 
     async def get_max_shard_id(self, prefix: str) -> int | None:

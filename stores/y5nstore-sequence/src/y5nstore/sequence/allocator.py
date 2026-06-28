@@ -15,6 +15,8 @@ class ShardAllocator:
     async def pick_writable_shard(self, prefix: str) -> Shard:
         shards = await self.repository.list_shards(prefix)
 
+        last_id = await self.repository.get_max_shard_id(prefix)
+
         full_shards = [s for s in shards if s.is_full()]
         for shard in full_shards:
             await self.repository.delete_shard(shard.prefix, shard.shard_id)
@@ -30,7 +32,6 @@ class ShardAllocator:
                 shard.value += 1
                 return shard
 
-        last_id = await self.repository.get_max_shard_id(prefix)
         new_start = 0 if last_id is None else last_id + self.range_size
         new_end = new_start + self.range_size
 
