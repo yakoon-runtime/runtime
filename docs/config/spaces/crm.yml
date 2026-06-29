@@ -4,4 +4,4 @@ storage:
 
 sequencer:
   backend: postgres
-  dsn: postgresql://postgres:secret@localhost:5432/yakoon_crm_seq
+  dsn: postgresql://postgres:secret@localhost:5432/yakoon_crm
