@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .errors import UnknowOptionsError, UsageError
+from .request import Request
 
 
 @dataclass(slots=True)
@@ -61,6 +62,7 @@ class InvocationInput:
 
     Keys correspond to Param.key.  Values are the unconverted user input.
     """
+
     values: dict[str, Any]
 
 
@@ -84,7 +86,7 @@ class BoundInvocation:
             if val is not None:
                 tokens.append(f"--{param.key}")
                 tokens.append(str(val))
-        from .request import Request
+
         return Request(command=command, tokens=tokens, payload=None, lang=lang)
 
 

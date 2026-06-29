@@ -16,6 +16,7 @@ from y5n.runtime.flow import Flow
 from y5n.runtime.machine import (
     CommandEngine,
     InputParser,
+    Interactor,
     InvocationResolver,
     Runner,
     RuntimeHost,
@@ -125,12 +126,15 @@ def build_machine(
             session.push_event(Scope.SESSION, channel, Event(payload=None))
             return
 
+    interactor = Interactor()
+
     engine = CommandEngine(
         on_resolve_node=resolver.resolve,
         on_parse_input=parser.parse,
         on_projection=on_projection_send,
         on_start_task=task_runner.start,
         on_start_command=on_start_command,
+        on_intercept=interactor.intercept,
     )
 
     # -----------------

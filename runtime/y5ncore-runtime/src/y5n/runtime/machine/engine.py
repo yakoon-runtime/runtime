@@ -43,12 +43,14 @@ class CommandEngine:
         on_projection: OnProjection,
         on_start_task: OnTaskStart,
         on_start_command: OnCommandStart,
+        on_intercept: OnIntercept,
     ):
         self.on_resolve_command = on_resolve_node
         self.on_parse_input = on_parse_input
         self.on_projection = on_projection
         self.on_start_task = on_start_task
         self.on_start_command = on_start_command
+        self._on_intercept = on_intercept
 
     # ----------------------------------------------------
     # PUBLIC API
@@ -87,6 +89,12 @@ class CommandEngine:
         )
 
         tokens = resolved_tokens
+
+        node, tokens = await self._on_intercept(
+            node=node,
+            tokens=tokens,
+            session=session,
+        )
 
         if not node.has_run():
             return None
@@ -319,6 +327,22 @@ class OnResolveNode(Protocol):
 
 class OnParseInput(Protocol):
     def __call__(self, *, event: Event) -> tuple[str, list[str], list[str]]: ...
+
+
+class OnIntercept(Protocol):
+    """Pipeline stage between node resolution and flow execution.
+
+    Pass-through by default.  A Renderer (e.g. FormRenderer) can
+    collect missing input before the command runs.
+    """
+
+    async def __call__(
+        self,
+        *,
+        node: Node,
+        tokens: list[str],
+        session: Session,
+    ) -> tuple[Node, list[str]]: ...
 
 
 class OnProjection(Protocol):

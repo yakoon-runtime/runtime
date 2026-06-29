@@ -1,5 +1,6 @@
 from .engine import CommandEngine
 from .host import RuntimeHost
+from .interactor import Interactor
 from .parser import InputParser
 from .resolver import InvocationResolver
 from .runner import Runner
@@ -12,6 +13,8 @@ __all__ = [
     "CommandEngine",
     # .host
     "RuntimeHost",
+    # .interactor
+    "Interactor",
     # .parser
     "InputParser",
     # .resolver
