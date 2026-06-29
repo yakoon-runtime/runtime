@@ -16,7 +16,8 @@ class FormRenderer:
     async def render(
         self, invocation: Invocation
     ) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
-        form = Form()
+        all_fields = list(invocation.args) + list(invocation.options)
+        form = Form(fields=all_fields, title=invocation.action or "")
 
         for param in invocation.args:
             yield form.ask(

@@ -30,6 +30,7 @@ class EmitView(Effect):
     mode: Mode = "replace"
     space: str | None = None
     view_params: dict | None = None
+    job_id: str | None = None
 
 
 @dataclass(slots=True)
