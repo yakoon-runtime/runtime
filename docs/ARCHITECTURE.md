@@ -162,6 +162,51 @@ Yakoon does the same for long-running flows: it schedules them, manages their st
 
 ---
 
+---
+
+## Interaction as Flow
+
+An interactive dialog is not a special case.
+It is a flow that waits for input.
+
+```text
+crm/contact/add
+    ↓
+FormRenderer yields sub-generators
+    ↓
+Engine pushes each prompt as a sub-generator
+    ↓
+Flow pauses (AwaitEvent)
+    ↓
+User provides input
+    ↓
+Flow resumes
+    ↓
+BoundInvocation is wrapped in a Request
+    ↓
+Continue dispatches the Request as a new flow
+    ↓
+Command runs with all parameters
+```
+
+The scheduler does not know about forms, dialogs, or wizards.
+It only sees flows with `AwaitEvent` controls.
+
+### Consequences
+
+* **Dialog suspension works naturally** — `:bg` / `:fg` pause and resume the flow, not a separate dialog manager.
+* **Pipeline chaining works** — a form's `Request` sits in `flow.pipeline` like any other command.
+* **Agent and human are interchangeable** — both dispatch `Request` objects with `origin` for routing context.
+* **Remote delegation works** — `on_start_command` dispatches the same `Request` on a remote runtime.
+* **Multiple concurrent dialogs are independent flows** — the user chooses which to foreground.
+
+### What this replaces
+
+No `DialogManager`, no `FormSession`, no `WizardContext`, no modal stack.
+A dialog is a flow. A form is a projection of that flow.
+
+---
+
 ## Design Goal
 
 Yakoon aims to make long-running work observable, resumable and independent of individual clients.

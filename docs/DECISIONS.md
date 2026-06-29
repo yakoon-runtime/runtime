@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-06-29 — Interaction is Flow
+
+Interactive dialogs (forms, wizards, input prompts) are not a separate subsystem. They are regular flows that pause on `AwaitEvent` and produce a `Request` via `Context(control=Continue(...))`.
+
+**Key insight:** The `FormRenderer` does not render — it collects input. The form is a projection. The interaction is a flow.
+
+**What this enables:**
+- Dialog suspension (`:bg`/`:fg`) uses the existing flow scheduler — no dialog manager needed
+- Pipeline chaining works for forms as for any command
+- Agents, humans, and remote runtimes all interact via the same `Request`/`Continue` mechanism
+- Multiple concurrent dialogs are independent flows with independent state
+
 ## 2026-05-19 — Architectural Shift to Operative Runtime
 
 Yakoon has moved away from a classic Command/Controller framework toward an operative runtime with navigable semantic spaces.
