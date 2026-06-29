@@ -1,4 +1,4 @@
-from y5n.api.invocations import Invocation
+from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node, NodeScope
 
 from .bg import run as bg
@@ -64,7 +64,7 @@ jobs.add(
         resolvable=True,
         navigable=False,
         invocations=[
-            Invocation(args=["index"], default=True),
+            Invocation(args=[Param(key="index")], default=True),
         ],
     )
 )
@@ -83,7 +83,7 @@ jobs.add(
         navigable=False,
         scope=NodeScope.GLOBAL,
         invocations=[
-            Invocation(args=["index"], default=True),
+            Invocation(args=[Param(key="index")], default=True),
         ],
     )
 )

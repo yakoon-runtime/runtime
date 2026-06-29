@@ -1,5 +1,5 @@
 from .errors import UnknowOptionsError, UsageError
-from .invocation import Invocation
+from .invocation import Invocation, Param
 from .node import Node
 from .path import NodePath
 from .request import Request

@@ -1,4 +1,4 @@
-from y5n.api.invocations import Invocation
+from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node, NodeScope
 
 from .cd import run as cd
@@ -33,7 +33,7 @@ system.add(
         resolvable=True,
         navigable=False,
         invocations=[
-            Invocation(args=["command"], default=True),
+            Invocation(args=[Param(key="command")], default=True),
         ],
     )
 )

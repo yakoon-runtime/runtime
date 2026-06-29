@@ -1,8 +1,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 from .errors import UnknowOptionsError, UsageError
+
+
+@dataclass(slots=True)
+class Param:
+    """A single named parameter within an Invocation."""
+
+    key: str
+    title: str = ""
+    placeholder: str = ""
+    default: Any = None
+    help: str = ""
+    policy: Any = None
+    required: bool = True
 
 
 @dataclass(slots=True)
@@ -14,10 +28,18 @@ class Invocation:
     """
 
     action: str | None = None
-    args: list[str] = field(default_factory=list)
-    options: list[str] = field(default_factory=list)
+    args: list[Param] = field(default_factory=list)
+    options: list[Param] = field(default_factory=list)
     min_options: int = 0
     default: bool | None = None
+
+    @property
+    def arg_keys(self) -> list[str]:
+        return [p.key for p in self.args]
+
+    @property
+    def option_keys(self) -> list[str]:
+        return [p.key for p in self.options]
 
     def usage_data(
         self,
@@ -27,8 +49,8 @@ class Invocation:
         return {
             "key": key,
             "action": self.action,
-            "args": self.args,
-            "options": self.options,
+            "args": self.arg_keys,
+            "options": self.option_keys,
             "min_options": self.min_options,
         }
 
@@ -132,7 +154,7 @@ class InvocationValidator:
             # OPTIONS
             # ----------------------------------
 
-            valid_options = {f"--{x}" for x in invocation.options}
+            valid_options = {f"--{x.key}" for x in invocation.options}
 
             unknown_options: list[str] = []
 

@@ -1,4 +1,4 @@
-from y5n.api.invocations import Invocation
+from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
 
 from .group_add import run as group_add
@@ -48,14 +48,10 @@ group.add(
         navigable=False,
         run=group_add,
         invocations=[
-            Invocation(args=["groupname"]),
+            Invocation(args=[Param(key="groupname")]),
         ],
     ),
 )
-
-# ----------------------------------
-# EDIT
-# ----------------------------------
 
 group.add(
     Node(
@@ -65,7 +61,7 @@ group.add(
         navigable=False,
         run=group_edit,
         invocations=[
-            Invocation(args=["groupname"], options=["enabled"]),
+            Invocation(args=[Param(key="groupname")], options=[Param(key="enabled")]),
         ],
     ),
 )
@@ -81,6 +77,6 @@ group.add(
         resolvable=True,
         navigable=False,
         run=group_delete,
-        invocations=[Invocation(args=["groupname"])],
+        invocations=[Invocation(args=[Param(key="groupname")])],
     ),
 )

@@ -1,4 +1,4 @@
-from y5n.api.invocations import Invocation
+from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
 
 from .user_add import run as user_add
@@ -48,7 +48,7 @@ user.add(
         navigable=False,
         run=user_add,
         invocations=[
-            Invocation(args=["username"], options=["password"]),
+            Invocation(args=[Param(key="username")], options=[Param(key="password")]),
         ],
     ),
 )
@@ -65,7 +65,10 @@ user.add(
         navigable=False,
         run=user_edit,
         invocations=[
-            Invocation(args=["username"], options=["password", "enabled"]),
+            Invocation(
+                args=[Param(key="username")],
+                options=[Param(key="password"), Param(key="enabled")],
+            ),
         ],
     ),
 )
@@ -81,6 +84,6 @@ user.add(
         resolvable=True,
         navigable=False,
         run=user_delete,
-        invocations=[Invocation(args=["username"])],
+        invocations=[Invocation(args=[Param(key="username")])],
     ),
 )

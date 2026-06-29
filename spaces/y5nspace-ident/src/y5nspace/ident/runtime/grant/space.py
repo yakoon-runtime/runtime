@@ -1,4 +1,4 @@
-from y5n.api.invocations import Invocation
+from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
 
 from .grant_add import run as grant_add
@@ -21,14 +21,10 @@ grant = Node(
     setup=setup,
     run=grant_user,
     invocations=[
-        Invocation(action="user", args=["username"]),
+        Invocation(action="user", args=[Param(key="username")]),
     ],
 )
 
-
-# ----------------------------------
-# ADD
-# ----------------------------------
 
 grant.add(
     Node(
@@ -38,14 +34,13 @@ grant.add(
         navigable=False,
         run=grant_add,
         invocations=[
-            Invocation(args=["type", "name", "permission"], options=["bits", "deny"]),
+            Invocation(
+                args=[Param(key="type"), Param(key="name"), Param(key="permission")],
+                options=[Param(key="bits"), Param(key="deny")],
+            ),
         ],
     ),
 )
-
-# ----------------------------------
-# REMOVE
-# ----------------------------------
 
 grant.add(
     Node(
@@ -54,14 +49,12 @@ grant.add(
         resolvable=True,
         navigable=False,
         run=grant_remove,
-        invocations=[Invocation(args=["type", "name", "permission"])],
+        invocations=[
+            Invocation(args=[Param(key="type"), Param(key="name"), Param(key="permission")]),
+        ],
     ),
 )
 
-
-# ----------------------------------
-# USER
-# ----------------------------------
 
 grant.add(
     Node(
@@ -71,14 +64,10 @@ grant.add(
         navigable=False,
         run=grant_user,
         invocations=[
-            Invocation(action="user", args=["username"]),
+            Invocation(action="user", args=[Param(key="username")]),
         ],
     ),
 )
-
-# ----------------------------------
-# GROUP
-# ----------------------------------
 
 grant.add(
     Node(
@@ -87,13 +76,9 @@ grant.add(
         resolvable=True,
         navigable=False,
         run=grant_group,
-        invocations=[Invocation(args=["groupname"])],
+        invocations=[Invocation(args=[Param(key="groupname")])],
     ),
 )
-
-# ----------------------------------
-# PERMISSION
-# ----------------------------------
 
 grant.add(
     Node(
@@ -102,6 +87,6 @@ grant.add(
         resolvable=True,
         navigable=False,
         run=grant_perm,
-        invocations=[Invocation(args=["permission"])],
+        invocations=[Invocation(args=[Param(key="permission")])],
     ),
 )

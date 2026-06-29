@@ -1,4 +1,4 @@
-from y5n.api.invocations import Invocation
+from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
 
 from .membership_add import run as membership_add
@@ -33,7 +33,7 @@ membership.add(
         resolvable=True,
         navigable=False,
         run=membership_add,
-        invocations=[Invocation(args=["username", "groupname"])],
+        invocations=[Invocation(args=[Param(key="username"), Param(key="groupname")])],
     ),
 )
 
@@ -48,7 +48,7 @@ membership.add(
         resolvable=True,
         navigable=False,
         run=membership_users,
-        invocations=[Invocation(args=["groupname"])],
+        invocations=[Invocation(args=[Param(key="groupname")])],
     ),
 )
 
@@ -63,7 +63,7 @@ membership.add(
         resolvable=True,
         navigable=False,
         run=membership_groups,
-        invocations=[Invocation(args=["username"])],
+        invocations=[Invocation(args=[Param(key="username")])],
     ),
 )
 
@@ -78,6 +78,6 @@ membership.add(
         resolvable=True,
         navigable=False,
         run=membership_remove,
-        invocations=[Invocation(args=["username", "groupname"])],
+        invocations=[Invocation(args=[Param(key="username"), Param(key="groupname")])],
     ),
 )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from y5n.api.invocations import Invocation
+from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node, NodeScope
 
 from .runtime.grant.space import grant
@@ -59,7 +59,7 @@ ident.add(
         run=su,
         scope=NodeScope.GLOBAL,
         invocations=[
-            Invocation(args=["user"], options=["password"]),
+            Invocation(args=[Param(key="user")], options=[Param(key="password")]),
         ],
     )
 )
