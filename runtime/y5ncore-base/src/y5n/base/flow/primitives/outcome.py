@@ -16,10 +16,10 @@ class Outcome:
     """Result of a single flow step.
 
     Carries:
-      * control   – what happens next (Stop / Continue / …)
-      * effects   – side effects the engine must apply
-      * pipeline  – items to prepend to the flow's pipeline list
-      * value     – optional result value
+      * control   - what happens next (Stop / Continue / …)
+      * effects   - side effects the engine must apply
+      * pipeline  - items to prepend to the flow's pipeline list
+      * value     - optional result value
     """
 
     control: Control | None = None
