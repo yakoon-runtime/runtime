@@ -153,7 +153,7 @@ class FakeSession:
 
 ### What is NOT mocked (integration)
 
-- **Compiler** — full pipeline test with real `.sam` templates
+- **Compiler** — full pipeline test with real `.yak` templates
 - **Projector** — Jinja2 + Compiler as integration
 - **Scheduler** — real queue + event loop
 

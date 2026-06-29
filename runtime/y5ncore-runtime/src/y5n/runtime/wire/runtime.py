@@ -52,11 +52,11 @@ CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
 
 
 errors = {
-    Exception: "error.sam",
-    NodeNotFound: "command/not_found.sam",
-    UsageError: "command/usage.sam",
-    UnknowOptionsError: "command/unknown_options.sam",
-    PermissionDenied: "permissions/denied.sam",
+    Exception: "error.yak",
+    NodeNotFound: "command/not_found.yak",
+    UsageError: "command/usage.yak",
+    UnknowOptionsError: "command/unknown_options.yak",
+    PermissionDenied: "permissions/denied.yak",
 }
 
 
@@ -139,7 +139,7 @@ def build_runtime(
         elif type(error) not in errors:
             audit_service.error(exc=error, session=session)
 
-        parts = errors.get(type(error), "error.sam")
+        parts = errors.get(type(error), "error.yak")
         resource = ResourceRef(
             package="y5n.runtime",
             path=f"templates/{session.lang}/{parts}",
