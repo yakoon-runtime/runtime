@@ -1,4 +1,5 @@
 from .engine import CommandEngine
+from .form_renderer import FormRenderer
 from .host import RuntimeHost
 from .interactor import Interactor
 from .parser import InputParser
@@ -11,6 +12,8 @@ from .task import TaskRunner
 __all__ = [
     # .engine
     "CommandEngine",
+    # .form_renderer
+    "FormRenderer",
     # .host
     "RuntimeHost",
     # .interactor
