@@ -61,11 +61,30 @@ class Interactor:
 
         form_node = Node(
             key=node.key,
-            run=_make_form_handler(node, inv, self._on_form_render, self._on_form_bind),
+            run=self._make_form_handler(node, inv),
             ports=node.ports,
             parent=node.parent,
         )
         return form_node, []
+
+    def _make_form_handler(
+        self,
+        original_node: Node,
+        inv: Invocation,
+    ):
+
+        async def handler(space):
+            async for outcome in self._on_form_render(inv):
+                yield outcome
+
+            bound = self._on_form_bind(inv)
+            req = RequestBuilder().build(
+                bound, command=original_node.key, lang=space.session.lang
+            )
+
+            yield Outcome(control=Continue(), next_steps=[req])
+
+        return handler
 
 
 # ----------------------------------
@@ -88,27 +107,6 @@ def resolve_interaction(
 # ----------------------------------
 # INTERNALS
 # ----------------------------------
-
-
-def _make_form_handler(
-    original_node: Node,
-    inv: Invocation,
-    on_form_render: OnFormRender,
-    on_form_bind: OnFormBind,
-):
-
-    async def handler(space):
-        async for outcome in on_form_render(inv):
-            yield outcome
-
-        bound = on_form_bind(inv)
-        req = RequestBuilder().build(
-            bound, command=original_node.key, lang=space.session.lang
-        )
-
-        yield Outcome(control=Continue(), next_steps=[req])
-
-    return handler
 
 
 def _pop_override(tokens: list[str]) -> str | None:
