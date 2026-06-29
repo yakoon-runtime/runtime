@@ -5,7 +5,8 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar
 
 from y5n.base.flow.channel import Scope
-from y5n.base.runtime import Event
+from y5n.base.runtime import Event, InputContext
+from y5n.base.runtime.input import Origin
 
 if TYPE_CHECKING:
     from ..protocol import Flow
@@ -81,11 +82,10 @@ class Suspend(Control):
 class Continue(Control):
     """Continue to the next command in the pipeline.
 
-    Used internally when a pipeline (cmd | cmd | cmd) advances
-    to the next stage.
+    Pops the next entry from *flow.pipeline* (a command string or a
+    pre-built ``Request``) and dispatches it as the next flow.
     """
 
-    data: object = None
     blocking: ClassVar[bool] = False
 
     async def on_enter(self, flow, scheduler, session):
@@ -93,14 +93,12 @@ class Continue(Control):
         if not flow.pipeline:
             return
 
-        # 1. Fetch next command
-        next_cmd = flow.pipeline[0]
-        remaining = flow.pipeline[1:]
-
-        # 2. Prepare event for next command
-        event = Event(payload=next_cmd)
-
-        # 3. Continue scheduling flow
+        next_cmd = flow.pipeline.pop(0)
+        remaining = flow.pipeline[:]
+        event = Event(
+            payload=next_cmd,
+            context=InputContext(origin=Origin.SCHEDULER),
+        )
         await scheduler.continue_flow(session, flow, event, remaining)
 
 

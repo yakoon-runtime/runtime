@@ -4,11 +4,10 @@ from .invocation import (
     Invocation,
     InvocationInput,
     Param,
-    bind_invocation,
 )
 from .node import Node
 from .path import NodePath
-from .request import Request
+from .request import Request, RequestBuilder
 from .space import NodeSpace
 from .types import NodeKind, NodeScope, NodeVisibility
 
@@ -25,12 +24,12 @@ __all__ = [
     "NodePath",
     # .request
     "Request",
+    "RequestBuilder",
     # .invocation
     "Invocation",
     "BoundInvocation",
     "InvocationInput",
     "Param",
-    "bind_invocation",
     # .errors
     "UnknowOptionsError",
     "UsageError",

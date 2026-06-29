@@ -15,6 +15,7 @@ from y5n.base.projection import (
     ProjectionState,
 )
 from y5n.base.runtime import Event
+from y5n.base.runtime.input import Interaction
 from y5n.base.transport import IO
 from y5n.runtime.capabilities.permission import PermissionSet
 from y5n.runtime.flow import Flow
@@ -60,6 +61,7 @@ class SessionRuntime:
     marks: set[str] = field(default_factory=set)
     io: IO | None = None
     meta: dict[str, Any] = field(default_factory=dict)
+    interaction: Interaction = Interaction.CLI
 
 
 class Session:
@@ -87,6 +89,14 @@ class Session:
     @property
     def lang(self) -> str:
         return self.data.lang
+
+    @property
+    def interaction(self) -> Interaction:
+        return self._runtime.interaction
+
+    @interaction.setter
+    def interaction(self, value: Interaction) -> None:
+        self._runtime.interaction = value
 
     @property
     def debug(self) -> bool:

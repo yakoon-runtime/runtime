@@ -33,7 +33,7 @@ async def test_command_channel_contract(harness):
 
     sub_node = Node(key="test", run=sub_flow)
 
-    async def resolve(parent, key, tokens, session):
+    async def resolve(parent, key, tokens, session, strict=True):
         return sub_node, tokens or []
 
     harness.engine.on_resolve_node = resolve
@@ -71,7 +71,7 @@ async def test_start_cmd_parses_tokens(harness):
         cmd, *rest = event.payload.strip().split()
         return cmd, rest, []
 
-    def resolve_node(*, parent, key, tokens, session):
+    def resolve_node(*, parent, key, tokens, session, strict=True):
         if key == "test":
             return sub_node, tokens or []
         return None, tokens or []

@@ -3,7 +3,7 @@ import json
 from y5n.base.clients import ClientConnection
 from y5n.base.projection.wire import serialize_event
 from y5n.base.runtime import Event
-from y5n.base.runtime.input.context import InputContext
+from y5n.base.runtime.input.context import InputContext, Origin
 
 
 class WebSocketServerTransport:
@@ -67,10 +67,13 @@ def map_to_input_event(data):
 
     raw = payload.get("raw") or ""
 
+    origin_str = context.get("origin")
+    origin = Origin(origin_str) if origin_str else Origin.HUMAN
     return Event.from_raw(
         data=raw,
         context=InputContext(
-            origin=context.get("origin"),
+            origin=origin,
+            channel=context.get("channel"),
             echo=raw,
         ),
     )

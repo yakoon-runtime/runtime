@@ -173,7 +173,7 @@ async def test_runtime_mix(harness):
         cmd, *rest = event.payload.strip().split()
         return cmd, rest, []
 
-    def resolve_node(*, parent, key, tokens, session):
+    def resolve_node(*, parent, key, tokens, session, strict=True):
         if key == "sub":
             return sub_node, tokens or []
         return None, tokens or []

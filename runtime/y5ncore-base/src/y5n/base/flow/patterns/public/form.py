@@ -1,4 +1,9 @@
-from y5n.base.flow.dsl import out_text, prompt, receive, to_text
+from __future__ import annotations
+
+from collections.abc import AsyncGenerator
+from typing import Any
+
+from y5n.base.flow.dsl import Outcome, out_text, prompt, receive, to_text
 from y5n.base.flow.policies import BasePolicy, ValidationError
 
 
@@ -25,7 +30,7 @@ class Form:
         key: str,
         title: str,
         policy: BasePolicy | None = None,
-    ):
+    ) -> AsyncGenerator[Outcome, Any]:
 
         while True:
 

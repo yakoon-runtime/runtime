@@ -20,8 +20,9 @@ from y5n.base.flow.primitives import (
 from y5n.base.nodes import Node, NodePath, NodeSpace, Request
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event
-from y5n.base.runtime.input import InputContext
+from y5n.base.runtime.input import InputContext, Interaction
 from y5n.runtime.flow import Flow, FlowCursor, FlowKind
+from y5n.runtime.interaction import resolve_interaction
 from y5n.runtime.runtime import (
     Session,
 )
@@ -80,12 +81,19 @@ class CommandEngine:
         if not cmd:
             return None
 
+        # Determine strictness before resolve — lenient allows
+        # the Interceptor to collect missing params via FormRenderer.
+        caller = event.context.origin if event.context else None
+        policy = resolve_interaction(caller, None, session.interaction)
+        strict = policy is Interaction.CLI
+
         # find node
         node, resolved_tokens = self.on_resolve_command(
             parent=session.get_current_node(),
             key=cmd,
             tokens=tokens,
             session=session,
+            strict=strict,
         )
 
         tokens = resolved_tokens
@@ -94,6 +102,7 @@ class CommandEngine:
             node=node,
             tokens=tokens,
             session=session,
+            context=event.context,
         )
 
         if not node.has_run():
@@ -150,19 +159,25 @@ class CommandEngine:
                 outcome = await item.run(flow)
 
             # ----------------------------------
-            # 4. EFFECTS
+            # 4. PIPELINE
+            # ----------------------------------
+            if outcome.next_steps:
+                flow.pipeline = list(outcome.next_steps) + (flow.pipeline or [])
+
+            # ----------------------------------
+            # 5. EFFECTS
             # ----------------------------------
             if outcome.effects:
                 await self._apply_effects(outcome.effects, session, flow)
 
             # ----------------------------------
-            # 5. CONTROL (Scheduler übernimmt)
+            # 6. CONTROL (Scheduler übernimmt)
             # ----------------------------------
             if outcome.control is not None:
                 return outcome
 
             # ----------------------------------
-            # 6. No outcome → next step later
+            # 7. No outcome → next step later
             # ----------------------------------
             return None
 
@@ -322,6 +337,7 @@ class OnResolveNode(Protocol):
         key: str,
         tokens: list[str] | None,
         session: Session,
+        strict: bool = True,
     ) -> tuple[Node, list[str]]: ...
 
 
@@ -342,6 +358,7 @@ class OnIntercept(Protocol):
         node: Node,
         tokens: list[str],
         session: Session,
+        context: InputContext | None,
     ) -> tuple[Node, list[str]]: ...
 
 

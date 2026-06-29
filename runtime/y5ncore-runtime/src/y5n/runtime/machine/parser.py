@@ -2,16 +2,23 @@ from __future__ import annotations
 
 import shlex
 
+from y5n.base.nodes import Request
 from y5n.base.runtime import Event
 
 
 class InputParser:
     """Parse raw input events into command, tokens, and pipeline segments.
 
-    Splits pipe-delimited input and runs shlex on the head segment.
+    When the event carries a pre-built ``Request`` object (e.g. from a
+    pipeline stage like ``Continue(next=Request(...))``) the command and
+    tokens are taken directly, skipping string parsing.
     """
 
     def parse(self, event: Event) -> tuple[str, list[str], list[str]]:
+
+        if isinstance(event.payload, Request):
+            req = event.payload
+            return req.command, list(req.args()), []
 
         if not isinstance(event.payload, str) or not event.payload.strip():
             return "", [], []

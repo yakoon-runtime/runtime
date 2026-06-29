@@ -2,6 +2,7 @@ from typing import Protocol
 
 from y5n.base.naming import Key
 from y5n.base.permissions import PermissionSet
+from y5n.base.runtime.input import Interaction
 
 
 class Session(Protocol):
@@ -19,3 +20,8 @@ class Session(Protocol):
     def set_identity(self, user_key, user_name: str | None = None) -> None: ...
     def get_identity(self) -> Key | None: ...
     def get_identity_name(self) -> str | None: ...
+
+    @property
+    def interaction(self) -> Interaction: ...
+    @interaction.setter
+    def interaction(self, value: Interaction) -> None: ...

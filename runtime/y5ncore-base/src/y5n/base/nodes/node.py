@@ -63,8 +63,12 @@ class Node:
     invocations: list[Invocation] = field(default_factory=list)
     validator: InvocationValidator = field(default_factory=InvocationValidator)
 
-    def validate(self, tokens: list[str] | None) -> Invocation | None:
-        return self.validator.validate(node=self, tokens=tokens)
+    def validate(
+        self,
+        tokens: list[str] | None,
+        strict: bool = True,
+    ) -> Invocation | None:
+        return self.validator.validate(node=self, tokens=tokens, strict=strict)
 
     def consumes(self, tokens: list[str] | None) -> bool:
         if not self.invocations:

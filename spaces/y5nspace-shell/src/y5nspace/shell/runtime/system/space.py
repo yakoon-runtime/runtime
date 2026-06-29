@@ -6,6 +6,7 @@ from .clear import run as clear
 from .ls import run as ls
 from .man import run as man
 from .pwd import run as pwd
+from .set import run as set
 
 # ----------------------------------
 # SYSTEM
@@ -95,5 +96,30 @@ system.add(
         scope=NodeScope.GLOBAL,
         resolvable=True,
         navigable=False,
+    )
+)
+
+# ----------------------------------
+# :SET - SET SETTINGS
+# ----------------------------------
+
+system.add(
+    Node(
+        key="set",
+        run=set,
+        anonymous=True,
+        scope=NodeScope.GLOBAL,
+        resolvable=True,
+        navigable=False,
+        invocations=[
+            Invocation(
+                options=[
+                    Param(key="interaction"),
+                    Param(key="lang"),
+                ],
+                min_options=1,
+                default=True,
+            ),
+        ],
     )
 )

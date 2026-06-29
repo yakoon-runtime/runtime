@@ -76,6 +76,7 @@ class InvocationResolver:
         key: str,
         tokens: list[str] | None,
         session: Session,
+        strict: bool = True,
     ) -> tuple[Node, list[str]]:
 
         tokens = tokens or []
@@ -114,6 +115,7 @@ class InvocationResolver:
                     session,
                     node,
                     tokens,
+                    strict=strict,
                 )
                 return node, tokens
 
@@ -156,6 +158,7 @@ class InvocationResolver:
             session,
             node,
             tokens,
+            strict=strict,
         )
 
         return node, tokens
@@ -284,8 +287,9 @@ class InvocationResolver:
         session: Session,
         node: Node,
         tokens: list[str] | None,
+        strict: bool = True,
     ):
-        node.validate(tokens)
+        node.validate(tokens, strict=strict)
 
         if node.anonymous:
             return

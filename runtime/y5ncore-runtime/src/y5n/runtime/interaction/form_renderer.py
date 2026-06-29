@@ -1,24 +1,21 @@
 from __future__ import annotations
 
-from y5n.api.dsl.patterns import Form
-from y5n.base.nodes import Invocation, InvocationInput
+from collections.abc import AsyncGenerator
+from typing import Any
+
+from y5n.base.flow.dsl import Outcome
+from y5n.base.flow.patterns.public.form import Form
+from y5n.base.nodes import BoundInvocation, Invocation, InvocationInput
 
 
 class FormRenderer:
-    """Collects parameter values for an Invocation via interactive Form prompts.
-
-    Usage inside a flow handler::
-
-        renderer = FormRenderer()
-        async for outcome in renderer.render(invocation):
-            yield outcome
-        invocation_input = renderer.result
-    """
 
     def __init__(self) -> None:
         self.result: InvocationInput | None = None
 
-    async def render(self, invocation: Invocation):
+    async def render(
+        self, invocation: Invocation
+    ) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
         form = Form()
 
         for param in invocation.args:
@@ -36,3 +33,7 @@ class FormRenderer:
             )
 
         self.result = InvocationInput(values=dict(form.data))
+
+    def bound(self, invocation: Invocation) -> BoundInvocation:
+        assert self.result is not None
+        return invocation.bind(self.result)

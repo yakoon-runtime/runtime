@@ -3,7 +3,6 @@ from y5n.base.nodes import (
     Invocation,
     InvocationInput,
     Param,
-    bind_invocation,
 )
 
 __all__ = [
@@ -11,5 +10,4 @@ __all__ = [
     "Invocation",
     "InvocationInput",
     "Param",
-    "bind_invocation",
 ]

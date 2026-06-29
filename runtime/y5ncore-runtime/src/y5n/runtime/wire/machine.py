@@ -8,15 +8,16 @@ from y5n.base.nodes import Node
 from y5n.base.plugins.ports import OnErrorResolve
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event, InputContext
+from y5n.base.runtime.input import Origin
 from y5n.runtime.connections import (
     RuntimeConnection,
     SessionProjectionRouter,
 )
 from y5n.runtime.flow import Flow
+from y5n.runtime.interaction import FormRenderer, Interactor
 from y5n.runtime.machine import (
     CommandEngine,
     InputParser,
-    Interactor,
     InvocationResolver,
     Runner,
     RuntimeHost,
@@ -87,7 +88,11 @@ def build_machine(
     # --- INTERACTOR ---
     # ------------------
 
-    interactor = Interactor()
+    form_renderer = FormRenderer()
+    interactor = Interactor(
+        on_form_render=form_renderer.render,
+        on_form_bind=form_renderer.bound,
+    )
 
     # ----------------
     # --- ENGINE  ----
@@ -115,7 +120,7 @@ def build_machine(
             await conn.dispatch(Event(payload=command))
             return
 
-        event = Event(payload=command)
+        event = Event(payload=command, context=InputContext(origin=Origin.SCHEDULER))
         try:
             new_flow = await engine.dispatch(session=session, event=event)
             if new_flow is None:

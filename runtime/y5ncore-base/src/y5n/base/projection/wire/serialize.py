@@ -26,13 +26,15 @@ def _serialize_context(context: InputContext | None) -> dict | None:
     if context is None:
         return None
 
-    data: dict[str, object] = {}
-    if context.origin is not None:
-        data["origin"] = context.origin
+    data: dict[str, object] = {
+        "origin": context.origin.value,
+    }
+    if context.channel is not None:
+        data["channel"] = context.channel
     if context.echo is not None:
         data["echo"] = context.echo
 
-    return data or None
+    return data
 
 
 def _serialize_state(state: ProjectionState | None) -> dict | None:

@@ -3,13 +3,16 @@ from __future__ import annotations
 from unittest.mock import AsyncMock
 
 import pytest
+from support.runtime import RuntimeHarness
 from y5n.base.naming import Key
 from y5n.base.nodes import Node
 from y5n.runtime.machine.engine import CommandEngine
 from y5n.runtime.machine.scheduler import Scheduler
 from y5n.runtime.runtime.sessions.session import Session, SessionData
 
-from support.runtime import RuntimeHarness
+
+async def _passthrough_intercept(*, node, tokens, session, context):
+    return node, tokens
 
 
 @pytest.fixture
@@ -28,6 +31,7 @@ def engine():
         on_projection=AsyncMock(),
         on_start_task=AsyncMock(),
         on_start_command=AsyncMock(),
+        on_intercept=_passthrough_intercept,
     )
 
 

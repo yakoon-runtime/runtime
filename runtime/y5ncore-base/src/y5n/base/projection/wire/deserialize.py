@@ -1,4 +1,7 @@
+from typing import Any
+
 from y5n.base.projection import ProjectionEvent
+from y5n.base.projection.model.header import ProjectionHeader
 from y5n.base.projection.model.inline import (
     Inline,
     InlineArg,
@@ -22,13 +25,13 @@ from y5n.base.projection.transfer import (
     ProjectionState,
 )
 from y5n.base.projection.transfer.node import Node
-from y5n.base.runtime.input import InputContext
+from y5n.base.runtime.input import InputContext, Origin
 
 
 def deserialize_event(data: dict) -> ProjectionEvent:
     return ProjectionEvent(
         id=data["id"],
-        job_id=data.get("job"),
+        job_id=data.get("job", "system"),
         header=_deserialize_header(data.get("header")),
         ctx=_deserialize_context(data.get("context")),
         state=_deserialize_state(data.get("state")),
@@ -42,17 +45,20 @@ def deserialize_event(data: dict) -> ProjectionEvent:
 # ------------------------
 
 
-def _deserialize_context(data):
+def _deserialize_context(data: dict | None) -> InputContext | None:
     if not data:
         return None
 
+    origin_str = data.get("origin")
+    origin = Origin(origin_str) if origin_str else Origin.HUMAN
     return InputContext(
-        origin=data.get("origin"),
+        origin=origin,
+        channel=data.get("channel"),
         echo=data.get("echo"),
     )
 
 
-def _deserialize_state(data):
+def _deserialize_state(data: dict | None) -> ProjectionState | None:
     if not data:
         return None
 
@@ -62,12 +68,18 @@ def _deserialize_state(data):
     )
 
 
-def _deserialize_header(data):
+def _deserialize_header(data: dict | None) -> ProjectionHeader | None:
     if not data:
         return None
 
-    # ggf. eigene Header-Klasse nutzen
-    return type("Header", (), data)()
+    return ProjectionHeader(
+        role=data.get("role"),
+        title=data.get("title"),
+        subtitle=data.get("subtitle"),
+        error_kind=data.get("error_kind"),
+        error_code=data.get("error_code"),
+        meta=data.get("meta"),
+    )
 
 
 # ------------------------
@@ -75,7 +87,7 @@ def _deserialize_header(data):
 # ------------------------
 
 
-def _deserialize_patch(data):
+def _deserialize_patch(data: dict) -> Patch:
     ops = [_deserialize_op(op) for op in data["ops"]]
 
     return Patch(
@@ -84,7 +96,7 @@ def _deserialize_patch(data):
     )
 
 
-def _deserialize_op(data):
+def _deserialize_op(data: dict):
     op_type = data["op"]
 
     if op_type == "reset":
@@ -108,13 +120,13 @@ def _deserialize_op(data):
 # ------------------------
 
 
-def _deserialize_node(data):
+def _deserialize_node(data: dict) -> Node:
     props = _reconstruct_inlines(data.get("props", {}))
     return Node(
         id=data["id"],
         type=data["type"],
         parent=data.get("parent"),
-        depth=data.get("depth"),
+        depth=data.get("depth", 0),
         props=props,
     )
 
@@ -135,7 +147,7 @@ INLINE_TYPES = {
 }
 
 
-def _reconstruct_inlines(value):
+def _reconstruct_inlines(value: Any) -> Any:
     if isinstance(value, list):
         return [_reconstruct_inlines(v) for v in value]
     if isinstance(value, dict):

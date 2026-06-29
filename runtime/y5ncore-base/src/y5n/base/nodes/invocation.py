@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
 from .errors import UnknowOptionsError, UsageError
-from .request import Request
 
 
 @dataclass(slots=True)
@@ -55,6 +55,22 @@ class Invocation:
             "min_options": self.min_options,
         }
 
+    def bind(self, input: InvocationInput) -> BoundInvocation:
+        """Bind concrete values, filling defaults as needed."""
+        values = dict(input.values)
+        for param in (*self.args, *self.options):
+            if param.key not in values:
+                if param.default is not None:
+                    values[param.key] = param.default
+                elif param.required:
+                    raise ValueError(f"Missing required parameter: {param.key!r}")
+        return BoundInvocation(invocation=self, values=values)
+
+    def has_required(self, tokens: list[str]) -> bool:
+        """Check whether all required positional args are covered by *tokens*."""
+        positional = [t for t in tokens if not t.startswith("--")]
+        return len(positional) >= len(self.args)
+
 
 @dataclass(frozen=True, slots=True)
 class InvocationInput:
@@ -63,7 +79,7 @@ class InvocationInput:
     Keys correspond to Param.key.  Values are the unconverted user input.
     """
 
-    values: dict[str, Any]
+    values: Mapping[str, Any]
 
 
 @dataclass(slots=True)
@@ -71,38 +87,7 @@ class BoundInvocation:
     """A fully bound invocation with concrete values for every parameter."""
 
     invocation: Invocation
-    values: dict[str, Any]
-
-    def to_request(self, command: str, lang: str) -> Request:
-        tokens: list[str] = []
-        if self.invocation.action:
-            tokens.append(self.invocation.action)
-        for param in self.invocation.args:
-            val = self.values.get(param.key)
-            if val is not None:
-                tokens.append(str(val))
-        for param in self.invocation.options:
-            val = self.values.get(param.key)
-            if val is not None:
-                tokens.append(f"--{param.key}")
-                tokens.append(str(val))
-
-        return Request(command=command, tokens=tokens, payload=None, lang=lang)
-
-
-def bind_invocation(
-    invocation: Invocation,
-    input: InvocationInput,
-) -> BoundInvocation:
-    """Bind concrete values to an Invocation, filling defaults as needed."""
-    values = dict(input.values)
-    for param in (*invocation.args, *invocation.options):
-        if param.key not in values:
-            if param.default is not None:
-                values[param.key] = param.default
-            elif param.required:
-                raise ValueError(f"Missing required parameter: {param.key!r}")
-    return BoundInvocation(invocation=invocation, values=values)
+    values: Mapping[str, Any]
 
 
 class InvocationValidator:
@@ -111,6 +96,7 @@ class InvocationValidator:
         self,
         node,
         tokens: list[str] | None,
+        strict: bool = True,
     ) -> Invocation | None:
 
         invocations = node.invocations
@@ -198,7 +184,8 @@ class InvocationValidator:
                 i += 1
 
             if len(positional) != len(invocation.args):
-                continue
+                if strict or len(positional) > len(invocation.args):
+                    continue
 
             # ----------------------------------
             # OPTIONS
@@ -237,7 +224,7 @@ class InvocationValidator:
             # MIN OPTIONS
             # ----------------------------------
 
-            if invocation.min_options > 0:
+            if invocation.min_options > 0 and strict:
 
                 option_count = 0
                 for token in tokens[offset:]:

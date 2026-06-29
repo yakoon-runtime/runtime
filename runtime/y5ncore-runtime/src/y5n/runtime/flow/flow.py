@@ -7,7 +7,7 @@ from y5n.base.flow.primitives import Control
 from y5n.base.runtime import Event
 
 if TYPE_CHECKING:
-    from y5n.base.nodes import Node
+    from y5n.base.nodes import Node, Request
     from y5n.base.projection import Projection
 
 from .cursor import FlowCursor
@@ -34,7 +34,7 @@ class Flow:
     wake_at: float | None = None
     kind: FlowKind = FlowKind.USER
 
-    pipeline: list[str] | None = None
+    pipeline: list[str | Request] | None = None
     out_channel: str | None = None
 
     def has_stack(self):
