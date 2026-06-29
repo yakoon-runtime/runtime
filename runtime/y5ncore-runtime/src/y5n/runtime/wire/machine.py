@@ -83,6 +83,12 @@ def build_machine(
 
     task_runner = TaskRunner()
 
+    # ------------------
+    # --- INTERACTOR ---
+    # ------------------
+
+    interactor = Interactor()
+
     # ----------------
     # --- ENGINE  ----
     # ----------------
@@ -125,8 +131,6 @@ def build_machine(
             # The scheduler will not push completion — unblock the caller.
             session.push_event(Scope.SESSION, channel, Event(payload=None))
             return
-
-    interactor = Interactor()
 
     engine = CommandEngine(
         on_resolve_node=resolver.resolve,

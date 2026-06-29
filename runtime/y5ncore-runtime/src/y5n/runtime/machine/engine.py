@@ -43,7 +43,7 @@ class CommandEngine:
         on_projection: OnProjection,
         on_start_task: OnTaskStart,
         on_start_command: OnCommandStart,
-        on_intercept: OnIntercept | None = None,
+        on_intercept: OnIntercept,
     ):
         self.on_resolve_command = on_resolve_node
         self.on_parse_input = on_parse_input
@@ -90,12 +90,11 @@ class CommandEngine:
 
         tokens = resolved_tokens
 
-        if self._on_intercept is not None:
-            node, tokens = await self._on_intercept(
-                node=node,
-                tokens=tokens,
-                session=session,
-            )
+        node, tokens = await self._on_intercept(
+            node=node,
+            tokens=tokens,
+            session=session,
+        )
 
         if not node.has_run():
             return None
