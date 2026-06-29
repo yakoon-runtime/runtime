@@ -55,6 +55,54 @@ class Invocation:
         }
 
 
+@dataclass(frozen=True, slots=True)
+class InvocationInput:
+    """Raw key/value data produced by a Renderer (Form, Chat, …).
+
+    Keys correspond to Param.key.  Values are the unconverted user input.
+    """
+    values: dict[str, Any]
+
+
+@dataclass(slots=True)
+class BoundInvocation:
+    """A fully bound invocation with concrete values for every parameter."""
+
+    invocation: Invocation
+    values: dict[str, Any]
+
+    def to_request(self, command: str, lang: str) -> Request:
+        tokens: list[str] = []
+        if self.invocation.action:
+            tokens.append(self.invocation.action)
+        for param in self.invocation.args:
+            val = self.values.get(param.key)
+            if val is not None:
+                tokens.append(str(val))
+        for param in self.invocation.options:
+            val = self.values.get(param.key)
+            if val is not None:
+                tokens.append(f"--{param.key}")
+                tokens.append(str(val))
+        from .request import Request
+        return Request(command=command, tokens=tokens, payload=None, lang=lang)
+
+
+def bind_invocation(
+    invocation: Invocation,
+    input: InvocationInput,
+) -> BoundInvocation:
+    """Bind concrete values to an Invocation, filling defaults as needed."""
+    values = dict(input.values)
+    for param in (*invocation.args, *invocation.options):
+        if param.key not in values:
+            if param.default is not None:
+                values[param.key] = param.default
+            elif param.required:
+                raise ValueError(f"Missing required parameter: {param.key!r}")
+    return BoundInvocation(invocation=invocation, values=values)
+
+
 class InvocationValidator:
 
     def validate(

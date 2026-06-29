@@ -1,5 +1,11 @@
 from .errors import UnknowOptionsError, UsageError
-from .invocation import Invocation, Param
+from .invocation import (
+    BoundInvocation,
+    Invocation,
+    InvocationInput,
+    Param,
+    bind_invocation,
+)
 from .node import Node
 from .path import NodePath
 from .request import Request
@@ -21,6 +27,10 @@ __all__ = [
     "Request",
     # .invocation
     "Invocation",
+    "BoundInvocation",
+    "InvocationInput",
+    "Param",
+    "bind_invocation",
     # .errors
     "UnknowOptionsError",
     "UsageError",
