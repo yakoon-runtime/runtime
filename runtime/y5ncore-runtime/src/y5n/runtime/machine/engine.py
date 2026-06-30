@@ -208,15 +208,20 @@ class CommandEngine:
                         Event(payload=effect.view),
                     )
                 else:
-                    if effect.persist:
-                        flow.view = effect.view
+                    ctx = effect.ctx or flow.event.context
+                    view = effect.view
 
-                    job_id = f"{flow.id}:{effect.space}" if effect.space else flow.id
+                    if effect.persist:
+                        flow.view = view
+
+                    job_id = effect.job_id or (
+                        f"{flow.id}:{effect.space}" if effect.space else flow.id
+                    )
 
                     await self.on_projection(
                         session=session,
-                        projection=effect.view,
-                        ctx=flow.event.context,
+                        projection=view,
+                        ctx=ctx,
                         job_id=job_id,
                         mode=effect.mode,
                         view_params=effect.view_params,

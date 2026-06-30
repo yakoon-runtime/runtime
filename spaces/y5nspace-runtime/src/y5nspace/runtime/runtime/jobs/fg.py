@@ -30,4 +30,8 @@ async def run(space: NodeSpace):
     # projection replaces the original form group instead of
     # creating a duplicate.
     if flow.view:
-        yield Outcome(effects=[EmitView(flow.view, job_id=flow.id)])
+        yield Outcome(effects=[EmitView(
+            flow.view,
+            job_id=flow.id,
+            ctx=flow.event.context,
+        )])

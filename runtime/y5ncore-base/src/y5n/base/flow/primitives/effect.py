@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Literal
 
 from y5n.base.flow.channel import Scope
-from y5n.base.runtime import Event
+from y5n.base.runtime import Event, InputContext
 
 Mode = Literal["replace", "append"]
 
@@ -31,6 +31,7 @@ class EmitView(Effect):
     space: str | None = None
     view_params: dict | None = None
     job_id: str | None = None
+    ctx: InputContext | None = None
 
 
 @dataclass(slots=True)
