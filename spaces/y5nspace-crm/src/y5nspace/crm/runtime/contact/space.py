@@ -1,5 +1,6 @@
 from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
+from y5n.api.runtime import Interaction
 
 from .add import run as contact_add
 from .delete import run as contact_delete
@@ -48,6 +49,7 @@ contacts.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
+        interaction=Interaction.INHERIT,
         run=contact_add,
         invocations=[
             Invocation(
@@ -94,6 +96,7 @@ contacts.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
+        interaction=Interaction.INHERIT,
         run=contact_edit,
         invocations=[
             Invocation(

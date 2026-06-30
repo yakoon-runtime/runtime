@@ -28,7 +28,7 @@ class Interactor:
         override = _pop_override(tokens)
 
         caller = context.origin if context else None
-        policy = resolve_interaction(caller, override, session.interaction)
+        policy = resolve_interaction(caller, override, node.interaction, session.interaction)
 
         if policy is Interaction.CLI:
             return node, tokens
@@ -95,13 +95,16 @@ class Interactor:
 def resolve_interaction(
     caller: str | None,
     override: str | None,
-    preference: Interaction,
+    node_interaction: Interaction,
+    session_interaction: Interaction,
 ) -> Interaction:
     if override is not None:
         return Interaction(override)
     if caller in (Origin.AGENT, Origin.SCHEDULER):
         return Interaction.CLI
-    return preference
+    if node_interaction is not Interaction.INHERIT:
+        return node_interaction
+    return session_interaction
 
 
 # ----------------------------------
@@ -110,7 +113,7 @@ def resolve_interaction(
 
 
 def _pop_override(tokens: list[str]) -> str | None:
-    for prefix in ("--cli", "--form", "--auto"):
+    for prefix in ("--cli", "--form", "--inherit"):
         if prefix in tokens:
             tokens.remove(prefix)
             return prefix.lstrip("--")

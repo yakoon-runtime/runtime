@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from typing import Any, TypeVar
 
 from y5n.base.runtime import Container
+from y5n.base.runtime.input import Interaction
 
 from .handler import RunHandler
 from .invocation import Invocation, InvocationValidator
@@ -117,6 +118,12 @@ class Node:
     navigable: bool = True
     resolvable: bool = True
     contextual: bool = False
+
+    # ----------------------------------
+    # INTERACTION MODE
+    # ----------------------------------
+
+    interaction: Interaction = Interaction.CLI
 
     # ----------------------------------
     # ATTACH TO RUNTIME

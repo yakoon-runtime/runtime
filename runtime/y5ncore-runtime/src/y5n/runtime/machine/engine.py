@@ -84,7 +84,7 @@ class CommandEngine:
         # Determine strictness before resolve — lenient allows
         # the Interceptor to collect missing params via FormRenderer.
         caller = event.context.origin if event.context else None
-        policy = resolve_interaction(caller, None, session.interaction)
+        policy = resolve_interaction(caller, None, Interaction.INHERIT, session.interaction)
         strict = policy is Interaction.CLI
 
         # find node

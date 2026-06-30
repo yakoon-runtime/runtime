@@ -6,4 +6,4 @@ from enum import StrEnum
 class Interaction(StrEnum):
     CLI = "cli"
     FORM = "form"
-    AUTO = "auto"
+    INHERIT = "inherit"
