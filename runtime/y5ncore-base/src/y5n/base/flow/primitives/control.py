@@ -33,6 +33,14 @@ class Control:
     async def resume(self, flow, session):
         pass
 
+    def on_activate(self):
+        """Return the control state when the flow is activated.
+
+        Override in subclasses that need to unblock or change
+        state when the flow is brought to the foreground.
+        """
+        return self
+
     def label(self, flow) -> str:
         return self.__class__.__name__
 
@@ -76,6 +84,9 @@ class Suspend(Control):
 
     async def resume(self, flow, session):
         flow.control = YieldToScheduler()
+
+    def on_activate(self):
+        return YieldToScheduler()
 
 
 @dataclass(slots=True)

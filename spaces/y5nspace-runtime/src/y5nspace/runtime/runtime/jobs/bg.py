@@ -5,9 +5,10 @@ from y5n.api.projections import to_text
 
 async def run(space: NodeSpace):
 
-    if not space.session.has_foreground_flow():  # type: ignore
+    fg = space.session.foreground_flow  # type: ignore
+    if not fg:
         yield out(to_text("No job in foreground."))
         return
 
-    space.session.set_foreground_flow(None)  # type: ignore
     yield out(to_text("Job moved to background."))
+    yield fg.deactivate()

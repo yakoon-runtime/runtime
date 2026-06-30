@@ -3,7 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
-from y5n.base.flow.primitives import Control
+from y5n.base.flow.primitives import (
+    Background,
+    Control,
+    EmitView,
+    Foreground,
+    Outcome,
+)
 from y5n.base.runtime import Event
 
 if TYPE_CHECKING:
@@ -39,3 +45,20 @@ class Flow:
 
     def has_stack(self):
         return self.cursor.has_stack()
+
+    def activate(self):
+        """Bring this flow to the foreground and restore its view."""
+        if self.control:
+            self.control = self.control.on_activate()
+
+        effects = [Foreground(flow_id=self.id)]
+        if self.view:
+            effects.append(EmitView(
+                self.view, job_id=self.id, ctx=self.event.context,
+            ))
+        return Outcome(effects=effects)
+
+    def deactivate(self):
+        """Remove this flow from the foreground."""
+        effects = [Background()]
+        return Outcome(effects=effects)
