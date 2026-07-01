@@ -42,6 +42,9 @@ class Runner:
             self.on_schedule_flow(flow=flow, session=self._session)
             return
 
+        if not event.payload:
+            return
+
         await self.on_dispatch(session=self._session, event=event)
 
 
