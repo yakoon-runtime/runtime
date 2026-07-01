@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,10 +27,12 @@ class FieldError:
     code: str | None = None
 
 
+FieldsState = Literal["idle", "active", "done"]
+
+
 @dataclass(frozen=True, slots=True)
 class Field:
-    """
-    Canonical field definition used by FieldsBlock.
+    """Canonical field definition used by FieldsBlock.
     """
 
     policy: str
@@ -53,6 +55,7 @@ class Field:
     # Runtime State
     # ------------------------
 
+    state: FieldsState = "idle"
     value: Any | None = None
     query: Any | None = None
     errors: tuple[FieldError, ...] = ()

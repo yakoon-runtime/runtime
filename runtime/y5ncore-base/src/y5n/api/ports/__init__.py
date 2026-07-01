@@ -13,6 +13,7 @@ from y5n.base.plugins.ports import (
     OnSessionDetach,
     OnSessionSave,
 )
+from y5n.base.runtime.input import OnPrepareInput
 from y5n.base.sources import OnSourceRead
 
 __all__ = [
@@ -23,6 +24,7 @@ __all__ = [
     "OnParsePermissionSpec",
     "OnProjectionResolve",
     "OnErrorResolve",
+    "OnPrepareInput",
     "OnSessionAttach",
     "OnSessionDetach",
     "OnSessionSave",

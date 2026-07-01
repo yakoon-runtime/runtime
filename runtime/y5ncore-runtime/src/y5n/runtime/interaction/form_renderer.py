@@ -9,15 +9,40 @@ from y5n.base.nodes import BoundInvocation, Invocation, InvocationInput
 
 
 class FormRenderer:
+    """Renders an Invocation as an interactive form.
+
+    Converts the parameter definitions (args + options) of an Invocation
+    into a Form object and collects field input sequentially (render).
+    After successful collection, bound() produces a BoundInvocation.
+
+    initial may carry pre-filled values (e.g. from OnPrepareInput).
+    The FormRenderer itself has no knowledge of add, edit, duplicate —
+    it only receives values.
+    """
 
     def __init__(self) -> None:
         self.result: InvocationInput | None = None
 
     async def render(
-        self, invocation: Invocation
+        self,
+        invocation: Invocation,
+        initial: InvocationInput | None = None,
     ) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
         all_fields = list(invocation.args) + list(invocation.options)
-        form = Form(fields=all_fields, title=invocation.action or "")
+
+        titles: dict[str, str] = {}
+        for param in invocation.args:
+            titles[param.key] = param.title or param.key.title()
+        for param in invocation.options:
+            titles[param.key] = param.title or param.key.title()
+
+        form = Form(
+            fields=all_fields,
+            title=invocation.action or "",
+            initial=dict(initial.values) if initial else None,
+            titles=titles,
+            option_keys={p.key for p in invocation.options},
+        )
 
         for param in invocation.args:
             yield form.ask(
@@ -29,7 +54,7 @@ class FormRenderer:
         for param in invocation.options:
             yield form.ask(
                 key=param.key,
-                title=f"{param.title or param.key.title()} (optional)",
+                title=param.title or param.key.title(),
                 policy=param.policy,
             )
 

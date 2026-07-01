@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from y5n.api.invocations import InvocationInput
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import OnProjectionResolve
+from y5n.api.ports import OnPrepareInput, OnProjectionResolve
 from y5n.api.projections import Projection
 from y5n.api.resources import ResourceRef
 from y5nstore.event.wire import build_store
@@ -53,6 +54,34 @@ async def setup(space: NodeSpace):
     space.ports.provide(Namespaces, namespaces)
     space.ports.provide(ContactService, contacts)
     space.ports.provide(OnProject, on_project)
+
+    async def on_prepare_input(*, node, invocation, tokens, session):
+        if node.key != "edit":
+            return None
+
+        name = tokens[0] if tokens else None
+        if name is None:
+            return None
+
+        contact = await contacts.get_by_name(namespaces.contact_namespace(), name)
+        if contact is None:
+            return None
+
+        return InvocationInput(
+            values={
+                "name": contact.name,
+                "company": contact.data.company,
+                "email": contact.data.email,
+                "phone": contact.data.phone,
+                "street": contact.data.street,
+                "zip": contact.data.zip,
+                "city": contact.data.city,
+                "country": contact.data.country,
+                "notes": contact.data.notes,
+            }
+        )
+
+    space.ports.provide(OnPrepareInput, on_prepare_input)
 
 
 async def _build_index(store):

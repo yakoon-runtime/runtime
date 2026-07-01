@@ -1,17 +1,29 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import Continue
-from y5n.base.nodes import BoundInvocation, Invocation, Node
+from y5n.base.nodes import BoundInvocation, Invocation, InvocationInput, Node
 from y5n.base.nodes.request.builder import RequestBuilder
-from y5n.base.runtime.input import InputContext, Interaction, Origin
+from y5n.base.runtime.input import InputContext, Interaction, OnPrepareInput, Origin
+from y5n.base.runtime.sessions import Session as BaseSession
 from y5n.runtime.runtime import Session
 
 
 class Interactor:
+    """Decides between CLI and form mode for an invocation.
+
+    In CLI mode (override, agent/scheduler caller, node.interaction=CLI)
+    the request passes through unchanged. In form mode, _run_form creates
+    a replacement node whose run handler collects fields via FormRenderer.
+
+    If a node provides OnPrepareInput via its port hierarchy, initial
+    values are loaded before rendering (e.g. entity data on edit).
+    The Interactor itself has no knowledge about the origin of these
+    values.
+    """
 
     def __init__(self, on_form_render: OnFormRender, on_form_bind: OnFormBind):
         self._on_form_render = on_form_render
@@ -41,17 +53,18 @@ class Interactor:
                 and any(t.startswith("--") for t in tokens)
             ):
                 return node, tokens
-            return self._run_form(node, tokens)
+            return await self._run_form(node, tokens, session)
 
         inv = _matched_invocation(node)
         if inv is not None and inv.has_required(tokens):
             return node, tokens
-        return self._run_form(node, tokens)
+        return await self._run_form(node, tokens, session)
 
-    def _run_form(
+    async def _run_form(
         self,
         node: Node,
         tokens: list[str],
+        session: Session,
     ) -> tuple[Node, list[str]]:
 
         inv = _matched_invocation(node)
@@ -59,9 +72,19 @@ class Interactor:
         if inv is None:
             return node, tokens
 
+        initial = None
+        if node.ports is not None:
+            try:
+                on_prepare = node.ports.get(OnPrepareInput)
+                initial = await on_prepare(
+                    node=node, invocation=inv, tokens=tokens, session=cast(BaseSession, session),
+                )
+            except KeyError:
+                pass
+
         form_node = Node(
             key=node.key,
-            run=self._make_form_handler(node, inv),
+            run=self._make_form_handler(node, inv, initial),
             ports=node.ports,
             parent=node.parent,
         )
@@ -71,10 +94,11 @@ class Interactor:
         self,
         original_node: Node,
         inv: Invocation,
+        initial: InvocationInput | None = None,
     ):
 
         async def handler(space):
-            async for outcome in self._on_form_render(inv):
+            async for outcome in self._on_form_render(inv, initial=initial):
                 yield outcome
 
             bound = self._on_form_bind(inv)
@@ -116,7 +140,7 @@ def _pop_override(tokens: list[str]) -> str | None:
     for prefix in ("--cli", "--form", "--inherit"):
         if prefix in tokens:
             tokens.remove(prefix)
-            return prefix.lstrip("--")
+            return prefix.removeprefix("--")
     return None
 
 
@@ -136,7 +160,9 @@ def _matched_invocation(node: Node) -> Invocation | None:
 
 class OnFormRender(Protocol):
     def __call__(
-        self, invocation: Invocation
+        self,
+        invocation: Invocation,
+        initial: InvocationInput | None = None,
     ) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]: ...
 
 

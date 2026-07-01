@@ -17,7 +17,6 @@ class Param:
     default: Any = None
     help: str = ""
     policy: Any = None
-    required: bool = True
 
 
 @dataclass(slots=True)
@@ -58,12 +57,15 @@ class Invocation:
     def bind(self, input: InvocationInput) -> BoundInvocation:
         """Bind concrete values, filling defaults as needed."""
         values = dict(input.values)
-        for param in (*self.args, *self.options):
+        for param in self.args:
             if param.key not in values:
                 if param.default is not None:
                     values[param.key] = param.default
-                elif param.required:
+                else:
                     raise ValueError(f"Missing required parameter: {param.key!r}")
+        for param in self.options:
+            if param.key not in values and param.default is not None:
+                values[param.key] = param.default
         return BoundInvocation(invocation=self, values=values)
 
     def has_required(self, tokens: list[str]) -> bool:
