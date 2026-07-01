@@ -12,7 +12,7 @@ Interactive dialogs (forms, wizards, input prompts) are not a separate subsystem
 **Key insight:** The `FormRenderer` does not render — it collects input. The form is a projection. The interaction is a flow.
 
 **What this enables:**
-- Dialog suspension (`:bg`/`:fg`) uses the existing flow scheduler — no dialog manager needed
+- Dialog suspension (`bg`/`fg`) uses the existing flow scheduler — no dialog manager needed
 - Pipeline chaining works for forms as for any command
 - Agents, humans, and remote runtimes all interact via the same `Request`/`Continue` mechanism
 - Multiple concurrent dialogs are independent flows with independent state

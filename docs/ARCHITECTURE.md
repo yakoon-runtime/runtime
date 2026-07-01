@@ -194,7 +194,7 @@ It only sees flows with `AwaitEvent` controls.
 
 ### Consequences
 
-* **Dialog suspension works naturally** — `:bg` / `:fg` pause and resume the flow, not a separate dialog manager.
+* **Dialog suspension works naturally** — `bg` / `fg` pause and resume the flow, not a separate dialog manager.
 * **Pipeline chaining works** — a form's `Request` sits in `flow.pipeline` like any other command.
 * **Agent and human are interchangeable** — both dispatch `Request` objects with `origin` for routing context.
 * **Remote delegation works** — `on_start_command` dispatches the same `Request` on a remote runtime.
