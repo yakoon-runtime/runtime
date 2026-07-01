@@ -76,7 +76,7 @@ jobs.add(
 
 jobs.add(
     Node(
-        key=":fg",
+        key="fg",
         run=fg,
         anonymous=True,
         resolvable=True,
@@ -95,7 +95,7 @@ jobs.add(
 
 jobs.add(
     Node(
-        key=":bg",
+        key="bg",
         run=bg,
         anonymous=True,
         resolvable=True,

@@ -208,9 +208,7 @@ def build_machine(
     def create_runner(session: Session) -> Runner:
         runner = Runner(
             session=session,
-            runtime_commands={
-                ":bg",
-            },
+            runtime_commands={"bg"},
             on_dispatch=scheduler.dispatch,
             on_schedule_flow=scheduler.schedule_flow,
         )
