@@ -2,25 +2,13 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Sequence
-from typing import Protocol
+from typing import Protocol, cast
 
-from y5n.base.flow.channel import Scope
-from y5n.base.flow.primitives import (
-    AwaitEvent,
-    Background,
-    Effect,
-    EmitEvent,
-    EmitView,
-    Foreground,
-    Outcome,
-    StartCommand,
-    StartTask,
-    Stop,
-)
+from y5n.base.flow.primitives import AwaitEvent, Effect, Outcome, Stop
 from y5n.base.nodes import Node, NodePath, NodeSpace, Request
-from y5n.base.projection import Projection
 from y5n.base.runtime import Event
 from y5n.base.runtime.input import InputContext, Interaction
+from y5n.base.runtime.sessions import Session as BaseSession
 from y5n.runtime.flow import Flow, FlowCursor, FlowKind
 from y5n.runtime.interaction import resolve_interaction
 from y5n.runtime.runtime import (
@@ -41,17 +29,13 @@ class CommandEngine:
         self,
         on_resolve_node: OnResolveNode,
         on_parse_input: OnParseInput,
-        on_projection: OnProjection,
-        on_start_task: OnTaskStart,
-        on_start_command: OnCommandStart,
         on_intercept: OnIntercept,
+        on_apply_effects: OnApplyEffects,
     ):
         self.on_resolve_command = on_resolve_node
         self.on_parse_input = on_parse_input
-        self.on_projection = on_projection
-        self.on_start_task = on_start_task
-        self.on_start_command = on_start_command
         self._on_intercept = on_intercept
+        self._on_apply_effects = on_apply_effects
 
     # ----------------------------------------------------
     # PUBLIC API
@@ -77,14 +61,16 @@ class CommandEngine:
     async def dispatch(self, session: Session, event: Event) -> Flow | None:
 
         node: Node | None = None
-        cmd, tokens, pipeline_commands = self.on_parse_input(event=event)
+        cmd, tokens, pipeline = self.on_parse_input(event=event)
         if not cmd:
             return None
 
         # Determine strictness before resolve — lenient allows
         # the Interceptor to collect missing params via FormRenderer.
         caller = event.context.origin if event.context else None
-        policy = resolve_interaction(caller, None, Interaction.INHERIT, session.interaction)
+        policy = resolve_interaction(
+            caller, None, Interaction.INHERIT, session.interaction
+        )
         strict = policy is Interaction.CLI
 
         # find node
@@ -111,8 +97,8 @@ class CommandEngine:
         flow = Flow(
             id=session.next_flow_id(),
             node=node,
-            pipeline=pipeline_commands,
             tokens=tokens,
+            pipeline=pipeline,
             event=event.update(payload=node.key),
             cursor=FlowCursor("run"),
             kind=self.DEFAULT_FLOW_KIND,
@@ -153,22 +139,20 @@ class CommandEngine:
             # ----------------------------------
             # 3. OUTCOME direkt
             # ----------------------------------
-            if isinstance(item, Outcome):
-                outcome = item
-            else:
-                outcome = await item.run(flow)
+            assert isinstance(item, Outcome)
+            outcome = item
 
             # ----------------------------------
             # 4. PIPELINE
             # ----------------------------------
             if outcome.next_steps:
-                flow.pipeline = list(outcome.next_steps) + (flow.pipeline or [])
+                flow.pipeline = list(outcome.next_steps) + list(flow.pipeline or [])
 
             # ----------------------------------
             # 5. EFFECTS
             # ----------------------------------
             if outcome.effects:
-                await self._apply_effects(outcome.effects, session, flow)
+                await self._on_apply_effects(outcome.effects, session, flow)
 
             # ----------------------------------
             # 6. CONTROL (Scheduler übernimmt)
@@ -189,74 +173,6 @@ class CommandEngine:
                 return Outcome(control=Stop())
 
             return None
-
-    # ----------------------------------------------------
-    # INTERNAL
-    # ----------------------------------------------------
-
-    async def _apply_effects(
-        self, effects: Sequence[Effect], session: Session, flow: Flow
-    ):
-
-        for effect in effects:
-
-            if isinstance(effect, EmitView):
-                if flow.out_channel:
-                    session.push_event(
-                        Scope.SESSION,
-                        flow.out_channel,
-                        Event(payload=effect.view),
-                    )
-                else:
-                    ctx = effect.ctx or flow.event.context
-                    view = effect.view
-
-                    if effect.persist:
-                        flow.view = view
-
-                    job_id = effect.job_id or (
-                        f"{flow.id}:{effect.space}" if effect.space else flow.id
-                    )
-
-                    await self.on_projection(
-                        session=session,
-                        projection=view,
-                        ctx=ctx,
-                        job_id=job_id,
-                        mode=effect.mode,
-                        view_params=effect.view_params,
-                    )
-
-            elif isinstance(effect, Foreground):
-                flow_id = effect.flow_id or flow.id
-                session.set_foreground_flow(flow_id)
-
-            elif isinstance(effect, Background):
-                session.set_foreground_flow(None)
-
-            elif isinstance(effect, EmitEvent):
-                session.push_event(
-                    effect.scope, effect.channel, effect.event, flow=flow
-                )
-
-            elif isinstance(effect, StartTask):
-                await self.on_start_task(
-                    command=effect.command,
-                    channel=effect.channel,
-                    scope=effect.scope,
-                    kwargs=effect.kwargs,
-                    flow=flow,
-                    session=session,
-                )
-
-            elif isinstance(effect, StartCommand):
-                await self.on_start_command(
-                    command=effect.command,
-                    channel=effect.channel,
-                    flow=flow,
-                    session=session,
-                    remote=effect.remote,
-                )
 
     async def _next_step(
         self,
@@ -297,7 +213,7 @@ class CommandEngine:
             NodeSpace(
                 path=node.path,
                 request=request,
-                session=session,
+                session=cast(BaseSession, session),
                 ports=node.ports,
                 ports_from=node.ports_from,
             ),
@@ -309,28 +225,12 @@ class CommandEngine:
 # ----------------------------------
 
 
-class OnTaskStart(Protocol):
+class OnApplyEffects(Protocol):
     async def __call__(
         self,
-        *,
-        command: str,
-        channel: str,
-        scope: Scope,
-        kwargs: dict,
-        flow: Flow,
+        effects: Sequence[Effect],
         session: Session,
-    ) -> None: ...
-
-
-class OnCommandStart(Protocol):
-    async def __call__(
-        self,
-        *,
-        command: str,
-        channel: str,
-        flow,
-        session,
-        remote: str | None = None,
+        flow: Flow,
     ) -> None: ...
 
 
@@ -365,16 +265,3 @@ class OnIntercept(Protocol):
         session: Session,
         context: InputContext | None,
     ) -> tuple[Node, list[str]]: ...
-
-
-class OnProjection(Protocol):
-    async def __call__(
-        self,
-        *,
-        session: Session,
-        projection: Projection,
-        ctx: InputContext | None,
-        job_id: str = "system",
-        mode: str = "replace",
-        view_params: dict | None = None,
-    ) -> None: ...

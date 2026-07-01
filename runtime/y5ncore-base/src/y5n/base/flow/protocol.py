@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
@@ -19,7 +20,7 @@ class Flow(Protocol):
     node: Node
     control: Control | None
     scheduled: bool
-    pipeline: list[str | Request] | None
+    pipeline: Sequence[str | Request] | None
     out_channel: str | None
     view: Any | None
     kind: Any

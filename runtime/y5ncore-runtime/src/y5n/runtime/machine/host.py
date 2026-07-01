@@ -162,7 +162,10 @@ class RuntimeHost:
                 continue
             runner.session.leave(conn)
             self._subscriptions.get(conn, set()).discard(runner)
-            self._active[conn] = home
+            if home is None:
+                self._active.pop(conn, None)
+            else:
+                self._active[conn] = home
 
         self._maybe_cleanup(runner)
 

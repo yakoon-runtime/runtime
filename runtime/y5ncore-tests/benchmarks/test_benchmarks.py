@@ -6,10 +6,11 @@ from uuid import uuid4
 import pytest
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.dsl import out, receive, send, start_cmd
-from y5n.base.flow.primitives import Outcome, Stop
+from y5n.base.flow.primitives import Outcome, StartCommand, Stop
 from y5n.base.nodes import Node
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event
+from y5n.runtime.machine.effects import StartCommandHandler
 from y5n.runtime.flow import Flow
 
 pytestmark = pytest.mark.benchmark
@@ -194,7 +195,10 @@ async def test_runtime_mix(harness):
         else:
             harness.send_session(channel, None)
 
-    harness.engine.on_start_command = on_start_command
+    harness.engine.effect_executor.register(
+        StartCommand,
+        StartCommandHandler(on_start_command),
+    )
 
     async def main_handler(ctx):
         for _ in range(N):

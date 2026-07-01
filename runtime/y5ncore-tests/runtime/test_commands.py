@@ -5,10 +5,11 @@ from uuid import uuid4
 import pytest
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.dsl import out, receive, start_cmd
-from y5n.base.flow.primitives import AwaitEvent, Outcome, Stop
+from y5n.base.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
 from y5n.base.nodes import Node
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event
+from y5n.runtime.machine.effects import StartCommandHandler
 
 
 @pytest.mark.asyncio
@@ -53,7 +54,7 @@ async def test_command_channel_contract(harness):
 
 
 @pytest.mark.asyncio
-async def test_start_cmd_parses_tokens(harness):
+async def test_start_cmd_parses_tokens(harness, effect_executor):
     """start_cmd("test --flag value") zerlegt den Command-String
     in cmd + args und übergibt die Tokens an den Sub-Flow."""
 
@@ -90,7 +91,10 @@ async def test_start_cmd_parses_tokens(harness):
         else:
             harness.send_session(channel, None)
 
-    harness.engine.on_start_command = on_start_command
+    effect_executor.register(
+        StartCommand,
+        StartCommandHandler(on_start_command),
+    )
 
     async def caller(ctx):
         ch = uuid4().hex

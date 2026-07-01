@@ -6,13 +6,14 @@ from uuid import uuid4
 import pytest
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.dsl import receive, start_cmd
-from y5n.base.flow.primitives import AwaitEvent, Outcome, Stop
+from y5n.base.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
 from y5n.base.nodes import Node
 from y5n.base.runtime import Event
+from y5n.runtime.machine.effects import StartCommandHandler
 
 
 @pytest.mark.asyncio
-async def test_command_resolves_and_dispatches_subflow(harness):
+async def test_command_resolves_and_dispatches_subflow(harness, effect_executor):
     """start_cmd resolviert den Command zu einem Node,
     dispatched einen Sub-Flow und leitet dessen Projektion
     auf den angegebenen Channel um."""
@@ -53,7 +54,10 @@ async def test_command_resolves_and_dispatches_subflow(harness):
             created_flow = new_flow
             harness.scheduler.schedule_flow(new_flow, harness.session)
 
-    harness.engine.on_start_command = on_start_command
+    effect_executor.register(
+        StartCommand,
+        StartCommandHandler(on_start_command),
+    )
 
     async def caller(ctx):
         ch = uuid4().hex
@@ -86,7 +90,7 @@ async def test_command_resolves_and_dispatches_subflow(harness):
 
 
 @pytest.mark.asyncio
-async def test_command_unresolvable_sends_none(harness):
+async def test_command_unresolvable_sends_none(harness, effect_executor):
     """Ein nicht auflösbarer Command sendet None auf den Channel."""
 
     received: list[object] = []
@@ -114,7 +118,10 @@ async def test_command_unresolvable_sends_none(harness):
         except Exception:
             harness.send_session(channel, None)
 
-    harness.engine.on_start_command = on_start_command
+    effect_executor.register(
+        StartCommand,
+        StartCommandHandler(on_start_command),
+    )
 
     async def caller(ctx):
         ch = uuid4().hex

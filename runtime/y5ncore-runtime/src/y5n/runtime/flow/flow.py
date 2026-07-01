@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from y5n.base.flow.primitives import (
     Background,
     Control,
+    Effect,
     EmitView,
     Foreground,
     Outcome,
@@ -27,6 +29,7 @@ class Flow:
     Carries the node, event, cursor, control state, and scheduling metadata
     (wake_at, scheduled, pipeline, out_channel).
     """
+
     id: str
 
     node: Node
@@ -40,7 +43,7 @@ class Flow:
     wake_at: float | None = None
     kind: FlowKind = FlowKind.USER
 
-    pipeline: list[str | Request] | None = None
+    pipeline: Sequence[str | Request] | None = None
     out_channel: str | None = None
 
     def has_stack(self):
@@ -51,11 +54,15 @@ class Flow:
         if self.control:
             self.control = self.control.on_activate()
 
-        effects = [Foreground(flow_id=self.id)]
+        effects: list[Effect] = [Foreground(flow_id=self.id)]
         if self.view:
-            effects.append(EmitView(
-                self.view, job_id=self.id, ctx=self.event.context,
-            ))
+            effects.append(
+                EmitView(
+                    self.view,
+                    job_id=self.id,
+                    ctx=self.event.context,
+                )
+            )
         return Outcome(effects=effects)
 
     def deactivate(self):

@@ -6,6 +6,7 @@ import pytest
 from support.runtime import RuntimeHarness
 from y5n.base.naming import Key
 from y5n.base.nodes import Node
+from y5n.runtime.machine.effects import EffectExecutor
 from y5n.runtime.machine.engine import CommandEngine
 from y5n.runtime.machine.scheduler import Scheduler
 from y5n.runtime.runtime.sessions.session import Session, SessionData
@@ -24,14 +25,21 @@ def session():
 
 
 @pytest.fixture
-def engine():
-    return CommandEngine(
-        on_resolve_node=AsyncMock(return_value=(None, [])),
-        on_parse_input=AsyncMock(return_value=("", [], [])),
+def effect_executor():
+    return EffectExecutor(
         on_projection=AsyncMock(),
         on_start_task=AsyncMock(),
         on_start_command=AsyncMock(),
+    )
+
+
+@pytest.fixture
+def engine(effect_executor):
+    return CommandEngine(
+        on_resolve_node=AsyncMock(return_value=(None, [])),
+        on_parse_input=AsyncMock(return_value=("", [], [])),
         on_intercept=_passthrough_intercept,
+        on_apply_effects=effect_executor.execute,
     )
 
 

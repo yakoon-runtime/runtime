@@ -25,6 +25,7 @@ from y5n.runtime.machine import (
     SessionBuilder,
     TaskRunner,
 )
+from y5n.runtime.machine.effects import EffectExecutor
 from y5n.runtime.runtime import Session
 from y5n.runtime.runtime.bus import BusOutput
 from y5n.runtime.settings.version import resolve_runtime_info
@@ -94,9 +95,9 @@ def build_machine(
         on_form_bind=form_renderer.bound,
     )
 
-    # ----------------
-    # --- ENGINE  ----
-    # ----------------
+    # -----------------------
+    # --- START COMMAND  ----
+    # -----------------------
 
     async def on_start_command(
         *,
@@ -137,13 +138,25 @@ def build_machine(
             session.push_event(Scope.SESSION, channel, Event(payload=None))
             return
 
-    engine = CommandEngine(
-        on_resolve_node=resolver.resolve,
-        on_parse_input=parser.parse,
+    # ----------------
+    # --- EFFECTS ----
+    # ----------------
+
+    effect_executor = EffectExecutor(
         on_projection=on_projection_send,
         on_start_task=task_runner.start,
         on_start_command=on_start_command,
+    )
+
+    # ---------------
+    # --- ENGINE ----
+    # ---------------
+
+    engine = CommandEngine(
+        on_resolve_node=resolver.resolve,
+        on_parse_input=parser.parse,
         on_intercept=interactor.intercept,
+        on_apply_effects=effect_executor.execute,
     )
 
     # -----------------

@@ -7,7 +7,7 @@ from y5n.base.flow.primitives import AwaitEvent, Outcome, Stop
 
 
 @pytest.mark.asyncio
-async def test_multiple_commands_parallel(harness):
+async def test_multiple_commands_parallel(harness, effect_executor):
     """Mehrere start_cmd-Effects werden nacheinander dispatchet,
     bevor der Handler auf receive() blockiert."""
 
@@ -34,7 +34,7 @@ async def test_multiple_commands_parallel(harness):
     assert isinstance(outcome.control, AwaitEvent)
 
     # Beide Commands wurden dispatchet, bevor der erste receive() blockte
-    assert harness.engine.on_start_command.call_count == 2
+    assert effect_executor.on_start_command.call_count == 2
 
     # Ergebnisse simulieren
     ch1 = outcome.control.channel
@@ -51,7 +51,7 @@ async def test_multiple_commands_parallel(harness):
 
 
 @pytest.mark.asyncio
-async def test_multiple_tasks_parallel(harness):
+async def test_multiple_tasks_parallel(harness, effect_executor):
     """Mehrere start_task-Effects werden nacheinander dispatchet,
     bevor der Handler auf receive() blockiert."""
 
@@ -78,7 +78,7 @@ async def test_multiple_tasks_parallel(harness):
     assert isinstance(outcome.control, AwaitEvent)
 
     # Beide Tasks wurden dispatchet, bevor der erste receive() blockte
-    assert harness.engine.on_start_task.call_count == 2
+    assert effect_executor.on_start_task.call_count == 2
 
     # Ergebnisse simulieren
     ch1 = outcome.control.channel

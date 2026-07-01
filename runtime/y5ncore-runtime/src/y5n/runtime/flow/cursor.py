@@ -39,6 +39,8 @@ class FlowCursor:
                 handler = node.setup
             else:
                 raise ValueError(f"Invalid handler: {self.handler_name}")
+            if handler is None:
+                raise RuntimeError(f"Node {node} has no {self.handler_name} handler")
             gen = _ensure_step(handler)(ctx)
             self._stack.append(gen)
 
