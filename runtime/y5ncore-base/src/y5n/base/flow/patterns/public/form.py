@@ -42,7 +42,6 @@ class Form:
         title: str = "",
         initial: dict[str, str] | None = None,
         titles: dict[str, str] | None = None,
-        option_keys: set[str] | None = None,
     ):
         self._fields = fields
         self._title = title
@@ -51,7 +50,6 @@ class Form:
             self._field_map = {p.key: p for p in fields}
         self.data: dict[str, str] = dict(initial or {})
         self._titles: dict[str, str] = dict(titles) if titles else {}
-        self._option_keys: set[str] = option_keys or set()
         self._error: str | None = None
 
     def _render(self, active_key: str = "") -> Projection:
@@ -86,7 +84,7 @@ class Form:
                 Field(
                     policy=str(param.policy) if param.policy else "string",
                     title=self._titles.get(param.key, param.title or param.key.title()),
-                    required=param.key not in self._option_keys,
+                    required=param.required if self._fields else True,
                     name=param.key,
                     value=self.data.get(param.key),
                     state=state,

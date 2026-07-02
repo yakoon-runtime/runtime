@@ -34,7 +34,10 @@ system.add(
         resolvable=True,
         navigable=False,
         invocations=[
-            Invocation(args=[Param(key="command")], default=True),
+            Invocation(
+                params=[Param(key="command", required=True, positional=True)],
+                default=True,
+            ),
         ],
     )
 )
@@ -113,7 +116,7 @@ system.add(
         navigable=False,
         invocations=[
             Invocation(
-                options=[
+                params=[
                     Param(key="interaction"),
                     Param(key="lang"),
                 ],

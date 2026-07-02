@@ -53,8 +53,8 @@ contacts.add(
         run=contact_add,
         invocations=[
             Invocation(
-                args=[Param(key="name")],
-                options=[
+                params=[
+                    Param(key="name", required=True, positional=True),
                     Param(key="company"),
                     Param(key="email"),
                     Param(key="phone"),
@@ -81,7 +81,7 @@ contacts.add(
         navigable=False,
         run=contact_show,
         invocations=[
-            Invocation(args=[Param(key="name")]),
+            Invocation(params=[Param(key="name", required=True, positional=True)]),
         ],
     ),
 )
@@ -100,8 +100,8 @@ contacts.add(
         run=contact_edit,
         invocations=[
             Invocation(
-                args=[Param(key="name")],
-                options=[
+                params=[
+                    Param(key="name", required=True, positional=True),
                     Param(key="company"),
                     Param(key="email"),
                     Param(key="phone"),
@@ -128,7 +128,7 @@ contacts.add(
         navigable=False,
         run=contact_delete,
         invocations=[
-            Invocation(args=[Param(key="name")]),
+            Invocation(params=[Param(key="name", required=True, positional=True)]),
         ],
     ),
 )
@@ -148,7 +148,7 @@ contacts.add(
             Invocation(
                 default=True,
                 min_options=1,
-                options=[
+                params=[
                     Param(key="name"),
                     Param(key="company"),
                     Param(key="email"),

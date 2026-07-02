@@ -17,29 +17,30 @@ class Param:
     default: Any = None
     help: str = ""
     policy: Any = None
+    required: bool = False
+    positional: bool = False
 
 
 @dataclass(slots=True)
 class Invocation:
-    """A single command invocation: action + args + options.
+    """A single command invocation: action + parameters.
 
     Matched against user input during node resolution.  The validator
     determines whether a token sequence fits this signature.
     """
 
     action: str | None = None
-    args: list[Param] = field(default_factory=list)
-    options: list[Param] = field(default_factory=list)
+    params: list[Param] = field(default_factory=list)
     min_options: int = 0
     default: bool | None = None
 
     @property
     def arg_keys(self) -> list[str]:
-        return [p.key for p in self.args]
+        return [p.key for p in self.params if p.positional]
 
     @property
     def option_keys(self) -> list[str]:
-        return [p.key for p in self.options]
+        return [p.key for p in self.params if not p.positional]
 
     def usage_data(
         self,
@@ -57,21 +58,37 @@ class Invocation:
     def bind(self, input: InvocationInput) -> BoundInvocation:
         """Bind concrete values, filling defaults as needed."""
         values = dict(input.values)
-        for param in self.args:
+        for param in self.params:
             if param.key not in values:
                 if param.default is not None:
                     values[param.key] = param.default
-                else:
+                elif param.required:
                     raise ValueError(f"Missing required parameter: {param.key!r}")
-        for param in self.options:
-            if param.key not in values and param.default is not None:
-                values[param.key] = param.default
         return BoundInvocation(invocation=self, values=values)
 
     def has_required(self, tokens: list[str]) -> bool:
-        """Check whether all required positional args are covered by *tokens*."""
-        positional = [t for t in tokens if not t.startswith("--")]
-        return len(positional) >= len(self.args)
+        """Check whether all required params are covered by *tokens*."""
+        required_keys = {p.key for p in self.params if p.required}
+        if not required_keys:
+            return True
+
+        missing = set(required_keys)
+        positional_tokens = [t for t in tokens if not t.startswith("--")]
+
+        pos_idx = 0
+        for param in self.params:
+            if not param.positional:
+                continue
+            if pos_idx < len(positional_tokens):
+                missing.discard(param.key)
+                pos_idx += 1
+
+        for token in tokens:
+            if token.startswith("--"):
+                key = token.split("=")[0].removeprefix("--")
+                missing.discard(key)
+
+        return len(missing) == 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -170,7 +187,7 @@ class InvocationValidator:
             offset = 1 if invocation.action else 0
 
             # ----------------------------------
-            # POSITIONAL ARGS
+            # POSITIONAL TOKENS
             # ----------------------------------
 
             positional: list[str] = []
@@ -185,15 +202,41 @@ class InvocationValidator:
                 positional.append(tok)
                 i += 1
 
-            if len(positional) != len(invocation.args):
-                if strict or len(positional) > len(invocation.args):
+            # ----------------------------------
+            # REQUIRED PARAMS
+            # ----------------------------------
+
+            num_positional = sum(1 for p in invocation.params if p.positional)
+
+            if len(positional) > num_positional:
+                continue
+
+            required_keys = {p.key for p in invocation.params if p.required}
+            provided: set[str] = set()
+
+            pos_idx = 0
+            for param in invocation.params:
+                if not param.positional:
                     continue
+                if pos_idx < len(positional):
+                    provided.add(param.key)
+                    pos_idx += 1
+
+            for token in tokens[offset:]:
+                if not token.startswith("--"):
+                    continue
+                key = token.split("=")[0].removeprefix("--")
+                if key in required_keys:
+                    provided.add(key)
+
+            if strict and required_keys != provided:
+                continue
 
             # ----------------------------------
             # OPTIONS
             # ----------------------------------
 
-            valid_options = {f"--{x.key}" for x in invocation.options}
+            valid_options = {f"--{x.key}" for x in invocation.params}
 
             unknown_options: list[str] = []
 

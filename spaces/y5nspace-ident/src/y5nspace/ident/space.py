@@ -59,7 +59,12 @@ ident.add(
         run=su,
         scope=NodeScope.GLOBAL,
         invocations=[
-            Invocation(args=[Param(key="user")], options=[Param(key="password")]),
+            Invocation(
+                params=[
+                    Param(key="user", required=True, positional=True),
+                    Param(key="password"),
+                ]
+            ),
         ],
     )
 )

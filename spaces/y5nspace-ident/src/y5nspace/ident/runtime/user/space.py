@@ -48,7 +48,12 @@ user.add(
         navigable=False,
         run=user_add,
         invocations=[
-            Invocation(args=[Param(key="username")], options=[Param(key="password")]),
+            Invocation(
+                params=[
+                    Param(key="username", required=True, positional=True),
+                    Param(key="password"),
+                ]
+            ),
         ],
     ),
 )
@@ -66,8 +71,11 @@ user.add(
         run=user_edit,
         invocations=[
             Invocation(
-                args=[Param(key="username")],
-                options=[Param(key="password"), Param(key="enabled")],
+                params=[
+                    Param(key="username", required=True, positional=True),
+                    Param(key="password"),
+                    Param(key="enabled"),
+                ],
             ),
         ],
     ),
@@ -84,6 +92,8 @@ user.add(
         resolvable=True,
         navigable=False,
         run=user_delete,
-        invocations=[Invocation(args=[Param(key="username")])],
+        invocations=[
+            Invocation(params=[Param(key="username", required=True, positional=True)])
+        ],
     ),
 )

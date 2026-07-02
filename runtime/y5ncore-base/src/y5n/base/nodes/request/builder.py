@@ -22,15 +22,13 @@ class RequestBuilder:
         if bound.invocation.action:
             tokens.append(bound.invocation.action)
 
-        for param in bound.invocation.args:
+        for param in bound.invocation.params:
             val = bound.values.get(param.key)
             if val is not None:
-                tokens.append(str(val))
-
-        for param in bound.invocation.options:
-            val = bound.values.get(param.key)
-            if val is not None:
-                tokens.append(f"--{param.key}")
-                tokens.append(str(val))
+                if param.positional:
+                    tokens.append(str(val))
+                else:
+                    tokens.append(f"--{param.key}")
+                    tokens.append(str(val))
 
         return Request(command=command, tokens=tokens, payload=None, lang=lang)

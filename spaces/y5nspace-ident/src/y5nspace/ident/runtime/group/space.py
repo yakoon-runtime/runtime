@@ -48,7 +48,7 @@ group.add(
         navigable=False,
         run=group_add,
         invocations=[
-            Invocation(args=[Param(key="groupname")]),
+            Invocation(params=[Param(key="groupname", required=True, positional=True)]),
         ],
     ),
 )
@@ -61,7 +61,12 @@ group.add(
         navigable=False,
         run=group_edit,
         invocations=[
-            Invocation(args=[Param(key="groupname")], options=[Param(key="enabled")]),
+            Invocation(
+                params=[
+                    Param(key="groupname", required=True, positional=True),
+                    Param(key="enabled"),
+                ]
+            ),
         ],
     ),
 )
@@ -77,6 +82,8 @@ group.add(
         resolvable=True,
         navigable=False,
         run=group_delete,
-        invocations=[Invocation(args=[Param(key="groupname")])],
+        invocations=[
+            Invocation(params=[Param(key="groupname", required=True, positional=True)])
+        ],
     ),
 )

@@ -64,7 +64,10 @@ jobs.add(
         resolvable=True,
         navigable=False,
         invocations=[
-            Invocation(args=[Param(key="index")], default=True),
+            Invocation(
+                params=[Param(key="index", required=True, positional=True)],
+                default=True,
+            ),
         ],
     )
 )
@@ -83,7 +86,10 @@ jobs.add(
         navigable=False,
         scope=NodeScope.GLOBAL,
         invocations=[
-            Invocation(args=[Param(key="index")], default=True),
+            Invocation(
+                params=[Param(key="index", required=True, positional=True)],
+                default=True,
+            ),
         ],
     )
 )

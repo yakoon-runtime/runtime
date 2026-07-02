@@ -28,12 +28,10 @@ class FormRenderer:
         invocation: Invocation,
         initial: InvocationInput | None = None,
     ) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
-        all_fields = list(invocation.args) + list(invocation.options)
+        all_fields = list(invocation.params)
 
         titles: dict[str, str] = {}
-        for param in invocation.args:
-            titles[param.key] = param.title or param.key.title()
-        for param in invocation.options:
+        for param in invocation.params:
             titles[param.key] = param.title or param.key.title()
 
         form = Form(
@@ -41,17 +39,9 @@ class FormRenderer:
             title=invocation.action or "",
             initial=dict(initial.values) if initial else None,
             titles=titles,
-            option_keys={p.key for p in invocation.options},
         )
 
-        for param in invocation.args:
-            yield form.ask(
-                key=param.key,
-                title=param.title or param.key.title(),
-                policy=param.policy,
-            )
-
-        for param in invocation.options:
+        for param in invocation.params:
             yield form.ask(
                 key=param.key,
                 title=param.title or param.key.title(),

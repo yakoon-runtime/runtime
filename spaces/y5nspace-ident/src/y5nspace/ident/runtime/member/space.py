@@ -33,7 +33,14 @@ membership.add(
         resolvable=True,
         navigable=False,
         run=membership_add,
-        invocations=[Invocation(args=[Param(key="username"), Param(key="groupname")])],
+        invocations=[
+            Invocation(
+                params=[
+                    Param(key="username", required=True, positional=True),
+                    Param(key="groupname", required=True, positional=True),
+                ]
+            )
+        ],
     ),
 )
 
@@ -48,7 +55,9 @@ membership.add(
         resolvable=True,
         navigable=False,
         run=membership_users,
-        invocations=[Invocation(args=[Param(key="groupname")])],
+        invocations=[
+            Invocation(params=[Param(key="groupname", required=True, positional=True)])
+        ],
     ),
 )
 
@@ -63,7 +72,9 @@ membership.add(
         resolvable=True,
         navigable=False,
         run=membership_groups,
-        invocations=[Invocation(args=[Param(key="username")])],
+        invocations=[
+            Invocation(params=[Param(key="username", required=True, positional=True)])
+        ],
     ),
 )
 
@@ -78,6 +89,13 @@ membership.add(
         resolvable=True,
         navigable=False,
         run=membership_remove,
-        invocations=[Invocation(args=[Param(key="username"), Param(key="groupname")])],
+        invocations=[
+            Invocation(
+                params=[
+                    Param(key="username", required=True, positional=True),
+                    Param(key="groupname", required=True, positional=True),
+                ]
+            )
+        ],
     ),
 )

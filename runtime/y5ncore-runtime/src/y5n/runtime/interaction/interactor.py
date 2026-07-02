@@ -5,7 +5,13 @@ from typing import Any, Protocol, cast
 
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import Continue
-from y5n.base.nodes import BoundInvocation, Invocation, InvocationInput, Node
+from y5n.base.nodes import (
+    BoundInvocation,
+    Invocation,
+    InvocationInput,
+    Node,
+    UsageError,
+)
 from y5n.base.nodes.request.builder import RequestBuilder
 from y5n.base.runtime.input import InputContext, Interaction, OnPrepareInput, Origin
 from y5n.base.runtime.sessions import Session as BaseSession
@@ -40,20 +46,20 @@ class Interactor:
         override = _pop_override(tokens)
 
         caller = context.origin if context else None
-        policy = resolve_interaction(caller, override, node.interaction, session.interaction)
+        policy = resolve_interaction(
+            caller, override, node.interaction, session.interaction
+        )
 
         if policy is Interaction.CLI:
             return node, tokens
 
         if policy is Interaction.FORM:
             inv = _matched_invocation(node)
-            if (
-                inv is not None
-                and inv.has_required(tokens)
-                and any(t.startswith("--") for t in tokens)
-            ):
-                return node, tokens
-            return await self._run_form(node, tokens, session)
+            if inv is not None:
+                if not inv.has_required(tokens):
+                    raise UsageError(usages=[inv.usage_data(node.key)])
+                return await self._run_form(node, tokens, session)
+            return node, tokens
 
         inv = _matched_invocation(node)
         if inv is not None and inv.has_required(tokens):
@@ -77,7 +83,10 @@ class Interactor:
             try:
                 on_prepare = node.ports.get(OnPrepareInput)
                 initial = await on_prepare(
-                    node=node, invocation=inv, tokens=tokens, session=cast(BaseSession, session),
+                    node=node,
+                    invocation=inv,
+                    tokens=tokens,
+                    session=cast(BaseSession, session),
                 )
             except KeyError:
                 pass

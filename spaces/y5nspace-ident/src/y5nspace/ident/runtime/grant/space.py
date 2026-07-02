@@ -21,7 +21,10 @@ grant = Node(
     setup=setup,
     run=grant_user,
     invocations=[
-        Invocation(action="user", args=[Param(key="username")]),
+        Invocation(
+            action="user",
+            params=[Param(key="username", required=True, positional=True)],
+        ),
     ],
 )
 
@@ -35,8 +38,13 @@ grant.add(
         run=grant_add,
         invocations=[
             Invocation(
-                args=[Param(key="type"), Param(key="name"), Param(key="permission")],
-                options=[Param(key="bits"), Param(key="deny")],
+                params=[
+                    Param(key="type", required=True, positional=True),
+                    Param(key="name", required=True, positional=True),
+                    Param(key="permission", required=True, positional=True),
+                    Param(key="bits"),
+                    Param(key="deny"),
+                ],
             ),
         ],
     ),
@@ -50,7 +58,13 @@ grant.add(
         navigable=False,
         run=grant_remove,
         invocations=[
-            Invocation(args=[Param(key="type"), Param(key="name"), Param(key="permission")]),
+            Invocation(
+                params=[
+                    Param(key="type", required=True, positional=True),
+                    Param(key="name", required=True, positional=True),
+                    Param(key="permission", required=True, positional=True),
+                ]
+            ),
         ],
     ),
 )
@@ -64,7 +78,10 @@ grant.add(
         navigable=False,
         run=grant_user,
         invocations=[
-            Invocation(action="user", args=[Param(key="username")]),
+            Invocation(
+                action="user",
+                params=[Param(key="username", required=True, positional=True)],
+            ),
         ],
     ),
 )
@@ -76,7 +93,9 @@ grant.add(
         resolvable=True,
         navigable=False,
         run=grant_group,
-        invocations=[Invocation(args=[Param(key="groupname")])],
+        invocations=[
+            Invocation(params=[Param(key="groupname", required=True, positional=True)])
+        ],
     ),
 )
 
@@ -87,6 +106,8 @@ grant.add(
         resolvable=True,
         navigable=False,
         run=grant_perm,
-        invocations=[Invocation(args=[Param(key="permission")])],
+        invocations=[
+            Invocation(params=[Param(key="permission", required=True, positional=True)])
+        ],
     ),
 )
