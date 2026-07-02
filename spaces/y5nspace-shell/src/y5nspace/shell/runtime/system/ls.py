@@ -12,6 +12,8 @@ from ...ports import OnProject
 
 async def run(space: NodeSpace):
 
+    show_all = space.request.has_option("all")
+
     current_node = space.session.get_current_node()  # type: ignore
     current_path = str(current_node)
 
@@ -31,6 +33,10 @@ async def run(space: NodeSpace):
             spaces.append(x)
         else:
             commands.append(x)
+
+    if not show_all:
+        commands = [c for c in commands if c["variant"] != "global"]
+        spaces = [s for s in spaces if s["variant"] != "global"]
 
     commands.sort(key=lambda i: i["key"])
     spaces.sort(key=lambda i: i["key"])

@@ -54,6 +54,14 @@ system.add(
         scope=NodeScope.GLOBAL,
         resolvable=True,
         navigable=False,
+        invocations=[
+            Invocation(
+                params=[
+                    Param(key="all"),
+                ],
+                default=True,
+            ),
+        ],
     )
 )
 
