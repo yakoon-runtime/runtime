@@ -219,7 +219,8 @@ class InvocationValidator:
                 if not param.positional:
                     continue
                 if pos_idx < len(positional):
-                    provided.add(param.key)
+                    if param.key in required_keys:
+                        provided.add(param.key)
                     pos_idx += 1
 
             for token in tokens[offset:]:

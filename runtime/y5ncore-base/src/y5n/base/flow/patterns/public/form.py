@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING, Any
+from collections.abc import AsyncGenerator, Mapping
+from typing import Any
 
 from y5n.base.flow.dsl import Outcome, out, prompt, receive
 from y5n.base.flow.policies import BasePolicy, ValidationError
-from y5n.base.projection import Projection, ProjectionHeader, to_text
+from y5n.base.nodes import Param
+from y5n.base.projection import Projection, ProjectionHeader
 from y5n.base.projection.model.block import FieldsBlock, SectionBlock
 from y5n.base.projection.model.field import Field, FieldsState
-
-if TYPE_CHECKING:
-    from y5n.base.nodes import Param
-
 
 
 class Form:
@@ -32,7 +29,11 @@ class Form:
             yield outcome
         async for outcome in form.ask("company", "Company"):
             yield outcome
-        values = dict(form.data)
+        values = form.values
+
+    For automatic field iteration:
+        async for outcome in form.run():
+            yield outcome
     """
 
     def __init__(
@@ -41,35 +42,38 @@ class Form:
         *,
         title: str = "",
         initial: dict[str, str] | None = None,
-        titles: dict[str, str] | None = None,
     ):
-        self._fields = fields
+        self._fields: list[Param] = list(fields) if fields is not None else []
         self._title = title
-        self._field_map: dict[str, Param] = {}
-        if fields:
-            self._field_map = {p.key: p for p in fields}
+        self._field_map: dict[str, Param] = {p.key: p for p in self._fields}
         self.data: dict[str, str] = dict(initial or {})
-        self._titles: dict[str, str] = dict(titles) if titles else {}
         self._error: str | None = None
 
-    def _render(self, active_key: str = "") -> Projection:
-        if self._fields is not None:
-            return self._render_structured(active_key)
-        return self._render_text(active_key)
+    # --------------------------------------------------------
+    # Dialog
+    # --------------------------------------------------------
 
-    def _render_text(self, title: str = "") -> Projection:
-        lines = []
-        for key, value in self.data.items():
-            label = self._titles.get(key, key.replace("_", " ").title())
-            lines.append(f"{label}: {value}")
-        if title:
-            lines.append(title)
-        if self._error:
-            lines.append(f"  ! {self._error}")
-        return to_text("\n".join(lines))
+    async def run(self) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
+        """Iterate all registered fields and yield sub-generators for each."""
+        for param in self._fields:
+            yield self.ask(
+                key=param.key,
+                title=param.title or param.key.title(),
+                policy=param.policy,
+            )
+
+    @property
+    def values(self) -> Mapping[str, str]:
+        return dict(self.data)
+
+    # --------------------------------------------------------
+    # Rendering
+    # --------------------------------------------------------
+
+    def _render(self, active_key: str = "") -> Projection:
+        return self._render_structured(active_key)
 
     def _render_structured(self, active_key: str) -> Projection:
-        assert self._fields is not None
         fb_fields: list[Field] = []
 
         for param in self._fields:
@@ -83,11 +87,12 @@ class Form:
             fb_fields.append(
                 Field(
                     policy=str(param.policy) if param.policy else "string",
-                    title=self._titles.get(param.key, param.title or param.key.title()),
-                    required=param.required if self._fields else True,
+                    title=param.title or param.key.title(),
+                    required=param.required,
                     name=param.key,
                     value=self.data.get(param.key),
                     state=state,
+                    error=self._error if param.key == active_key and self._error else None,
                 )
             )
 
@@ -103,6 +108,10 @@ class Form:
             blocks=[SectionBlock(blocks=[fields_block])],
         )
 
+    # --------------------------------------------------------
+    # Field lifecycle
+    # --------------------------------------------------------
+
     async def ask(
         self,
         key: str,
@@ -110,7 +119,10 @@ class Form:
         policy: BasePolicy | None = None,
     ) -> AsyncGenerator[Outcome, Any]:
 
-        self._titles[key] = title.rstrip(": ")
+        if key not in self._field_map:
+            param = Param(key=key, title=title.rstrip(": "), policy=policy)
+            self._fields.append(param)
+            self._field_map[key] = param
 
         while True:
 

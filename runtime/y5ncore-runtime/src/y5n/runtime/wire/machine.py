@@ -14,7 +14,7 @@ from y5n.runtime.connections import (
     SessionProjectionRouter,
 )
 from y5n.runtime.flow import Flow
-from y5n.runtime.interaction import FormRenderer, Interactor
+from y5n.runtime.interaction import Interactor
 from y5n.runtime.machine import (
     CommandEngine,
     InputParser,
@@ -89,11 +89,7 @@ def build_machine(
     # --- INTERACTOR ---
     # ------------------
 
-    form_renderer = FormRenderer()
-    interactor = Interactor(
-        on_form_render=form_renderer.render,
-        on_form_bind=form_renderer.bound,
-    )
+    interactor = Interactor()
 
     # -----------------------
     # --- START COMMAND  ----

@@ -1,29 +1,18 @@
 from y5n.api.dsl.patterns import Form
 from y5n.api.dsl.policies import IntPolicy
+from y5n.api.invocations import Param
 
 
 async def run(_):
 
-    form = Form()
-
-    yield form.ask(
-        key="first_name",
-        title="Vorname:",
+    form = Form(
+        title="Example Form",
+        fields=[
+            Param(key="first_name", title="Vorname"),
+            Param(key="last_name", title="Nachname"),
+            Param(key="age", title="Alter", policy=IntPolicy(min=1, max=99)),
+        ],
     )
 
-    yield form.ask(
-        key="last_name",
-        title="Nachname:",
-    )
-
-    # you can use subflows
-    yield ask_age(form)
-
-
-async def ask_age(form):
-
-    yield form.ask(
-        key="age",
-        title="Alter:",
-        policy=IntPolicy(min=1, max=99),
-    )
+    async for outcome in form.run():
+        yield outcome

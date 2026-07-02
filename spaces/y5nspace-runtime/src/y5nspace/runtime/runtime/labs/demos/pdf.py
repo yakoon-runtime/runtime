@@ -3,6 +3,7 @@ from uuid import uuid4
 
 from y5n.api.dsl import out_text, receive, start_task
 from y5n.api.dsl.patterns import Form
+from y5n.api.invocations import Param
 from y5n.base.flow.channel import Scope
 
 SCRIPT = os.path.join(
@@ -14,13 +15,19 @@ SCRIPT = os.path.join(
 
 async def run(_):
 
-    form = Form()
+    form = Form(
+        title="PDF",
+        fields=[
+            Param(key="name", title="Name"),
+            Param(key="greeting", title="Greeting"),
+        ],
+    )
 
-    yield form.ask(key="name", title="Name")
-    yield form.ask(key="greeting", title="Greeting")
+    async for outcome in form.run():
+        yield outcome
 
-    name = form.data.get("name", "World")
-    greeting = form.data.get("greeting", "Hello")
+    name = form.values.get("name", "World")
+    greeting = form.values.get("greeting", "Hello")
 
     yield out_text(f"Generating PDF for {name}...")
 

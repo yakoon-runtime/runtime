@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
-from typing import Any, Protocol, cast
+from typing import cast
 
 from y5n.base.flow.dsl import Outcome
+from y5n.base.flow.patterns.public.form import Form
 from y5n.base.flow.primitives import Continue
 from y5n.base.nodes import (
-    BoundInvocation,
     Invocation,
     InvocationInput,
     Node,
@@ -23,17 +22,13 @@ class Interactor:
 
     In CLI mode (override, agent/scheduler caller, node.interaction=CLI)
     the request passes through unchanged. In form mode, _run_form creates
-    a replacement node whose run handler collects fields via FormRenderer.
+    a replacement node whose run handler drives a Form directly.
 
     If a node provides OnPrepareInput via its port hierarchy, initial
     values are loaded before rendering (e.g. entity data on edit).
     The Interactor itself has no knowledge about the origin of these
     values.
     """
-
-    def __init__(self, on_form_render: OnFormRender, on_form_bind: OnFormBind):
-        self._on_form_render = on_form_render
-        self._on_form_bind = on_form_bind
 
     async def intercept(
         self,
@@ -107,10 +102,15 @@ class Interactor:
     ):
 
         async def handler(space):
-            async for outcome in self._on_form_render(inv, initial=initial):
+            form = Form(
+                fields=list(inv.params),
+                title=inv.action or "",
+                initial=dict(initial.values) if initial else None,
+            )
+            async for outcome in form.run():
                 yield outcome
 
-            bound = self._on_form_bind(inv)
+            bound = inv.bind(InvocationInput(values=form.values))
             req = RequestBuilder().build(
                 bound, command=original_node.key, lang=space.session.lang
             )
@@ -160,20 +160,3 @@ def _matched_invocation(node: Node) -> Invocation | None:
     if len(invs) == 1:
         return invs[0]
     return invs[0]
-
-
-# ----------------------------------
-# PORTS
-# ----------------------------------
-
-
-class OnFormRender(Protocol):
-    def __call__(
-        self,
-        invocation: Invocation,
-        initial: InvocationInput | None = None,
-    ) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]: ...
-
-
-class OnFormBind(Protocol):
-    def __call__(self, invocation: Invocation) -> BoundInvocation: ...

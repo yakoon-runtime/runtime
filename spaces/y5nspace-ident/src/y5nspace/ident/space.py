@@ -61,7 +61,7 @@ ident.add(
         invocations=[
             Invocation(
                 params=[
-                    Param(key="user", required=True, positional=True),
+                    Param(key="user", positional=True),
                     Param(key="password"),
                 ]
             ),
