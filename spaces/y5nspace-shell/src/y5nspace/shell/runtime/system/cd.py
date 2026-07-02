@@ -68,7 +68,7 @@ async def run(space: NodeSpace):
     )
 
     if target_result.status != "ok":
-        yield out_text(f"Directory not found: {resolved_path}")
+        yield out_text(f"Not found: {resolved_path}")
         return
 
     target_node = target_result.one()
