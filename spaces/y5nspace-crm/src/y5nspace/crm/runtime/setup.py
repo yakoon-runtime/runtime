@@ -36,6 +36,10 @@ async def setup(space: NodeSpace):
         on_next_id=sequencer.next_id,
     )
 
+    # ----------------------------------
+    # ON PROJECT
+    # ----------------------------------
+
     async def on_project(
         *,
         name: str,
@@ -51,9 +55,9 @@ async def setup(space: NodeSpace):
         on_project = space.ports.get(OnProjectionResolve)
         return await on_project(resource=resource, state=state)
 
-    space.ports.provide(Namespaces, namespaces)
-    space.ports.provide(ContactService, contacts)
-    space.ports.provide(OnProject, on_project)
+    # ----------------------------------
+    # ON PREPARE INPUT
+    # ----------------------------------
 
     async def on_prepare_input(*, node, invocation, tokens, session):
         if node.key != "edit":
@@ -81,6 +85,9 @@ async def setup(space: NodeSpace):
             }
         )
 
+    space.ports.provide(Namespaces, namespaces)
+    space.ports.provide(ContactService, contacts)
+    space.ports.provide(OnProject, on_project)
     space.ports.provide(OnPrepareInput, on_prepare_input)
 
 
