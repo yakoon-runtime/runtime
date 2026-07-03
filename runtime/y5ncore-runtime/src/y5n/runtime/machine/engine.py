@@ -43,9 +43,8 @@ class CommandEngine:
 
     async def setup(self, session: Session, node: Node) -> Flow | None:
 
-        # TODO: Wie wollen wir darauf später reagieren?
         if not node.has_setup():
-            return
+            return None
 
         flow = Flow(
             id=session.next_flow_id(),
@@ -66,7 +65,7 @@ class CommandEngine:
             return None
 
         # Determine strictness before resolve — lenient allows
-        # the Interceptor to collect missing params via FormRenderer.
+        # the Interceptor to collect missing params via form.
         caller = event.context.origin if event.context else None
         policy = resolve_interaction(
             caller, None, Interaction.INHERIT, session.interaction
@@ -253,8 +252,7 @@ class OnParseInput(Protocol):
 class OnIntercept(Protocol):
     """Pipeline stage between node resolution and flow execution.
 
-    Pass-through by default.  A Renderer (e.g. FormRenderer) can
-    collect missing input before the command runs.
+    Collects missing input (e.g. via a Form) before the command runs.
     """
 
     async def __call__(
