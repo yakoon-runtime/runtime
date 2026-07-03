@@ -1,4 +1,8 @@
-# Yakoon
+<p align="center">
+    <img src="brand/png/logo-dark.png" width="420">
+</p>
+
+A runtime for process-oriented software.
 
 [![Version](https://img.shields.io/badge/Version-0.8.0-blue.svg)]()
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
