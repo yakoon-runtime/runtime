@@ -40,10 +40,7 @@ class ThemeManager:
         theme = self._themes.get(name)
         if not theme:
             return ""
-        pairs = [
-            f"    --{k}: {v};"
-            for k, v in _css_map(theme).items()
-        ]
+        pairs = [f"    --{k}: {v};" for k, v in _css_map(theme).items()]
         return ":root {\n" + "\n".join(pairs) + "\n}"
 
 
@@ -60,6 +57,20 @@ def _css_map(theme: Theme) -> dict[str, str]:
         "success": theme.success,
         "warning": theme.warning,
     }
+
+
+YAKOON_NIGHT = Theme(
+    name="yakoon-night",
+    bg="#0B1220",
+    surface="#0B1220",
+    text="#ffffff",
+    accent="#FF9E64",
+    secondary="#D4AF37",
+    primary="#F2D07A",
+    error="#F7768E",
+    success="#9ECE6A",
+    warning="#E0AF68",
+)
 
 
 TOKYO_NIGHT = Theme(
@@ -182,4 +193,18 @@ ATOM_DARK = Theme(
 
 
 def default_themes() -> dict[str, Theme]:
-    return {t.name: t for t in [TOKYO_NIGHT, DRACULA, NORD, CATPPUCCIN, CATPPUCCIN_MOCHA, SOLARIZED_DARK, ONE_DARK, MONOKAI, ATOM_DARK]}
+    return {
+        t.name: t
+        for t in [
+            YAKOON_NIGHT,
+            TOKYO_NIGHT,
+            DRACULA,
+            NORD,
+            CATPPUCCIN,
+            CATPPUCCIN_MOCHA,
+            SOLARIZED_DARK,
+            ONE_DARK,
+            MONOKAI,
+            ATOM_DARK,
+        ]
+    }
