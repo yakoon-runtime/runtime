@@ -15,6 +15,12 @@ class MemoryExitService(ExitService):
         self._next_id += 1
         return str(n)
 
+    async def get_exit(self, exit_id: str) -> Exit | None:
+        return self._store.get(exit_id)
+
+    async def list_exits(self, *, world_id: str) -> list[Exit]:
+        return [e for e in self._store.values() if e.world_id == world_id]
+
     async def find_from(self, box_id: str) -> list[Exit]:
         return [e for e in self._store.values() if e.source_box_id == box_id]
 

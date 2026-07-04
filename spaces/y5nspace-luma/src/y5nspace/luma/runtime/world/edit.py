@@ -7,7 +7,8 @@ from ...services.contracts import WorldService
 
 
 async def run(space: NodeSpace):
-    name = space.request.arg(0)
+    name = space.request.arg(0)  # current world name
+    new_name = space.request.option("new-name")
     description = space.request.option("description")
     entry_box_id = space.request.option("entry")
 
@@ -20,7 +21,7 @@ async def run(space: NodeSpace):
     try:
         await worlds.update_world(
             world_id=world.id,
-            name=name,
+            name=new_name or name,
             description=description,
             entry_box_id=entry_box_id,
         )
@@ -28,4 +29,5 @@ async def run(space: NodeSpace):
         yield out_text(f"Error: {e}")
         return
 
-    yield out_text(f"World '{name}' updated.")
+    display_name = new_name or name
+    yield out_text(f"World '{display_name}' updated.")

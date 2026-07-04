@@ -2,109 +2,99 @@ from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
 from y5n.api.runtime import Interaction
 
-from .add import run as box_add
-from .delete import run as box_delete
-from .edit import run as box_edit
-from .list import run as box_list
-from .show import run as box_show
+from .delete import run as exit_delete
+from .edit import run as exit_edit
+from .list import run as exit_list
+from .show import run as exit_show
 
-box = Node(
-    key="box",
-    name="Box",
+exit_node = Node(
+    key="exit",
+    name="Exit",
     anonymous=True,
     resolvable=True,
     navigable=True,
     contextual=True,
-    run=box_list,
+    run=exit_list,
     invocations=[
         Invocation(action=None, default=True),
     ],
 )
 
-box.add(
+exit_node.add(
     Node(
         key="list",
         anonymous=True,
         resolvable=True,
         navigable=False,
-        run=box_list,
+        run=exit_list,
         invocations=[
             Invocation(
                 params=[
                     Param(key="world", required=True, positional=False),
-                    Param(key="parent"),
+                    Param(key="box"),
                 ],
             ),
         ],
     ),
 )
 
-box.add(
-    Node(
-        key="add",
-        anonymous=True,
-        resolvable=True,
-        navigable=False,
-        interaction=Interaction.INHERIT,
-        run=box_add,
-        invocations=[
-            Invocation(
-                params=[
-                    Param(key="world", required=True, positional=False),
-                    Param(key="parent"),
-                    Param(key="name", required=True, positional=True),
-                    Param(key="description"),
-                ],
-            ),
-        ],
-    ),
-)
-
-box.add(
+exit_node.add(
     Node(
         key="show",
         anonymous=True,
         resolvable=True,
         navigable=False,
-        run=box_show,
-        invocations=[
-            Invocation(
-                params=[Param(key="id", required=True, positional=True)],
-            ),
-        ],
-    ),
-)
-
-box.add(
-    Node(
-        key="edit",
-        anonymous=True,
-        resolvable=True,
-        navigable=False,
-        interaction=Interaction.INHERIT,
-        run=box_edit,
+        run=exit_show,
         invocations=[
             Invocation(
                 params=[
-                    Param(key="name", required=True, positional=True),
+                    Param(key="exit", required=True, positional=True),
                     Param(key="world", required=True, positional=False),
-                    Param(key="new-name"),
-                    Param(key="description"),
+                    Param(key="box", required=True, positional=False),
                 ],
             ),
         ],
     ),
 )
 
-box.add(
+exit_node.add(
+    Node(
+        key="edit",
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+        run=exit_edit,
+        interaction=Interaction.INHERIT,
+        invocations=[
+            Invocation(
+                params=[
+                    Param(key="exit", required=True, positional=True),
+                    Param(key="world", required=True, positional=False),
+                    Param(key="box", required=True, positional=False),
+                    Param(key="new-name"),
+                    Param(key="description"),
+                    Param(key="direction"),
+                ],
+            ),
+        ],
+    ),
+)
+
+exit_node.add(
     Node(
         key="delete",
         anonymous=True,
         resolvable=True,
         navigable=False,
-        run=box_delete,
+        run=exit_delete,
         invocations=[
-            Invocation(params=[Param(key="id", required=True, positional=True)]),
+            Invocation(
+                params=[
+                    Param(key="exit", required=True, positional=True),
+                    Param(key="world", required=True, positional=False),
+                    Param(key="box", required=True, positional=False),
+                ],
+            ),
         ],
     ),
 )

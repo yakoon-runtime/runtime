@@ -95,6 +95,7 @@ world.add(
             Invocation(
                 params=[
                     Param(key="name", required=True, positional=True),
+                    Param(key="new-name"),
                     Param(key="description"),
                 ],
             ),

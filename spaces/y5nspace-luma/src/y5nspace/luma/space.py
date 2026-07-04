@@ -2,6 +2,7 @@ from y5n.api.nodes import Node
 
 from .runtime import setup
 from .runtime.box import box
+from .runtime.exit import exit_node
 from .runtime.nav import connect, dig, enter, entry, go, leave, look
 from .runtime.world import world
 
@@ -14,6 +15,7 @@ luma = Node(
 
 luma.mount(world)
 luma.mount(box)
+luma.mount(exit_node)
 luma.mount(enter)
 luma.mount(entry)
 luma.mount(leave)

@@ -1,0 +1,63 @@
+from __future__ import annotations
+
+from y5n.api.dsl import out_text
+from y5n.api.nodes import NodeSpace
+
+from ...services.contracts import BoxService, ExitService, WorldService
+
+
+async def run(space: NodeSpace):
+    exit_name = space.request.arg(0)
+    world_ref = space.request.option("world")
+    box_ref = space.request.option("box")
+    new_name = space.request.option("new-name")
+    description = space.request.option("description")
+    direction = space.request.option("direction")
+
+    if not exit_name:
+        yield out_text("Error: exit name is required.")
+        return
+    if not world_ref:
+        yield out_text("Error: --world is required.")
+        return
+    if not box_ref:
+        yield out_text("Error: --box is required.")
+        return
+
+    worlds = space.ports.get(WorldService)
+    world_id = world_ref
+    if not world_id.isdigit():
+        w = await worlds.get_world_by_name(world_id)
+        if w is None:
+            yield out_text(f"World not found.")
+            return
+        world_id = w.id
+
+    boxes = space.ports.get(BoxService)
+    all_boxes = await boxes.list_boxes(world_id=world_id, parent_id=None)
+    src = next((b for b in all_boxes if b.name.lower() == box_ref.lower()), None)
+    if src is None:
+        yield out_text(f"Box '{box_ref}' not found.")
+        return
+
+    exits = space.ports.get(ExitService)
+    from_src = await exits.find_from(src.id)
+    e = next((ex for ex in from_src if ex.name.lower() == exit_name.lower()), None)
+    if e is None:
+        yield out_text(f"Exit '{exit_name}' not found in '{box_ref}'.")
+        return
+
+    final_name = new_name if new_name is not None else e.name
+    final_desc = description if description is not None else e.description
+    final_dir = direction if direction is not None else e.direction
+
+    await exits.disconnect(e.id)
+    await exits.connect(
+        world_id=e.world_id,
+        source_box_id=e.source_box_id,
+        target_box_id=e.target_box_id,
+        name=final_name,
+        description=final_desc,
+        direction=final_dir,
+    )
+    yield out_text(f"Exit '{exit_name}' updated.")
