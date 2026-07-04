@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from ..models import Box, World
+from ..models import Box, Exit, World
 
 
 class WorldService(Protocol):
@@ -33,3 +33,14 @@ class BoxService(Protocol):
     async def update_box(self, *, box_id: str, name: str, description: str) -> Box: ...
 
     async def delete_box(self, box_id: str) -> None: ...
+
+
+class ExitService(Protocol):
+
+    async def find_from(self, box_id: str) -> list[Exit]: ...
+
+    async def find_to(self, box_id: str) -> list[Exit]: ...
+
+    async def connect(self, *, world_id: str, source_box_id: str, target_box_id: str, name: str, description: str = "", direction: str = "") -> Exit: ...
+
+    async def disconnect(self, exit_id: str) -> None: ...

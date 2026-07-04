@@ -28,6 +28,14 @@ box.add(
         resolvable=True,
         navigable=False,
         run=box_list,
+        invocations=[
+            Invocation(
+                params=[
+                    Param(key="world", required=True, positional=False),
+                    Param(key="parent"),
+                ],
+            ),
+        ],
     ),
 )
 
