@@ -19,7 +19,7 @@ async def run(space: NodeSpace):
     if not world_id.isdigit():
         w = await worlds.get_world_by_name(world_id)
         if w is None:
-            yield out_text(f"World not found.")
+            yield out_text("World not found.")
             return
         world_id = w.id
 
@@ -28,7 +28,9 @@ async def run(space: NodeSpace):
 
     if box_ref:
         all_boxes = await boxes.list_boxes(world_id=world_id, parent_id=None)
-        box_id = next((b.id for b in all_boxes if b.name.lower() == box_ref.lower()), None)
+        box_id = next(
+            (b.id for b in all_boxes if b.name.lower() == box_ref.lower()), None
+        )
         if box_id is None:
             yield out_text(f"Box '{box_ref}' not found.")
             return

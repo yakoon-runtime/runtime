@@ -17,7 +17,14 @@ box = Node(
     contextual=True,
     run=box_list,
     invocations=[
-        Invocation(action=None, default=True),
+        Invocation(
+            action=None,
+            default=True,
+            params=[
+                Param(key="world", required=True, positional=False),
+                Param(key="parent"),
+            ],
+        ),
     ],
 )
 
@@ -69,7 +76,10 @@ box.add(
         run=box_show,
         invocations=[
             Invocation(
-                params=[Param(key="id", required=True, positional=True)],
+                params=[
+                    Param(key="name", required=True, positional=True),
+                    Param(key="world", required=True, positional=False),
+                ],
             ),
         ],
     ),
@@ -104,7 +114,12 @@ box.add(
         navigable=False,
         run=box_delete,
         invocations=[
-            Invocation(params=[Param(key="id", required=True, positional=True)]),
+            Invocation(
+                params=[
+                    Param(key="name", required=True, positional=True),
+                    Param(key="world", required=True, positional=False),
+                ],
+            ),
         ],
     ),
 )

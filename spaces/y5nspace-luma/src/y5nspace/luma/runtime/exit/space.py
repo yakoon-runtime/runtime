@@ -16,7 +16,14 @@ exit_node = Node(
     contextual=True,
     run=exit_list,
     invocations=[
-        Invocation(action=None, default=True),
+        Invocation(
+            action=None,
+            default=True,
+            params=[
+                Param(key="world", required=True, positional=False),
+                Param(key="box"),
+            ],
+        ),
     ],
 )
 
@@ -48,7 +55,7 @@ exit_node.add(
         invocations=[
             Invocation(
                 params=[
-                    Param(key="exit", required=True, positional=True),
+                    Param(key="name", required=True, positional=True),
                     Param(key="world", required=True, positional=False),
                     Param(key="box", required=True, positional=False),
                 ],
@@ -68,7 +75,7 @@ exit_node.add(
         invocations=[
             Invocation(
                 params=[
-                    Param(key="exit", required=True, positional=True),
+                    Param(key="name", required=True, positional=True),
                     Param(key="world", required=True, positional=False),
                     Param(key="box", required=True, positional=False),
                     Param(key="new-name"),
@@ -90,7 +97,7 @@ exit_node.add(
         invocations=[
             Invocation(
                 params=[
-                    Param(key="exit", required=True, positional=True),
+                    Param(key="name", required=True, positional=True),
                     Param(key="world", required=True, positional=False),
                     Param(key="box", required=True, positional=False),
                 ],

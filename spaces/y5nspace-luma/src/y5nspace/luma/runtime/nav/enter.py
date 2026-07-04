@@ -21,6 +21,10 @@ async def run(space: NodeSpace):
     world_name = space.request.arg(0)
     box_ref = space.request.option("box")
 
+    if not world_name:
+        yield out_text("Enter where?")
+        return
+
     worlds = space.ports.get(WorldService)
     world = await worlds.get_world_by_name(world_name)
     if world is None:
