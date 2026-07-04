@@ -12,9 +12,9 @@ async def run(space: NodeSpace):
 
     worlds = space.ports.get(WorldService)
     try:
-        await worlds.add_world(name=name, description=description)
+        world = await worlds.add_world(name=name, description=description)
     except ValueError as e:
         yield out_text(f"Error: {e}")
         return
 
-    yield out_text(f"World '{name}' created.")
+    yield out_text(f"World #{world.id} '{world.name}' created.")

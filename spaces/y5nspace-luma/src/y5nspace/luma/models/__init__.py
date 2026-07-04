@@ -1,9 +1,7 @@
-from __future__ import annotations
+from .box import Box
+from .world import World
 
-from dataclasses import dataclass
-
-
-@dataclass
-class World:
-    name: str
-    description: str = ""
+__all__ = [
+    "Box",
+    "World",
+]

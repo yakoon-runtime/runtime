@@ -44,6 +44,15 @@ class SessionData:
             d["last_active"] = self.last_active.astimezone(UTC).isoformat()
         return d
 
+    def get(self, key: str, default: Any = None) -> Any:
+        return self.data.get(key, default)
+
+    def set(self, key: str, value: Any) -> None:
+        self.data[key] = value
+
+    def pop(self, key: str, default: Any = None) -> Any:
+        return self.data.pop(key, default)
+
     @classmethod
     def from_dict(cls, d: dict) -> SessionData:
 

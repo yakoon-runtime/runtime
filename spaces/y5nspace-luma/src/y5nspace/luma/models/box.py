@@ -4,8 +4,9 @@ from dataclasses import dataclass
 
 
 @dataclass
-class World:
+class Box:
     id: str
-    name: str
+    world_id: str
+    parent_id: str | None = None
+    name: str = ""
     description: str = ""
-    entry_box_id: str | None = None

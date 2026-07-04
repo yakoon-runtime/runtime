@@ -10,8 +10,13 @@ async def run(space: NodeSpace):
     name = space.request.arg(0)
 
     worlds = space.ports.get(WorldService)
+    world = await worlds.get_world_by_name(name)
+    if world is None:
+        yield out_text(f"Not found: {name}")
+        return
+
     try:
-        await worlds.delete_world(name)
+        await worlds.delete_world(world.id)
     except ValueError as e:
         yield out_text(f"Error: {e}")
         return

@@ -16,5 +16,8 @@ async def run(space: NodeSpace):
 
     lines = ["Worlds:"]
     for w in all_worlds:
-        lines.append(f"  {w.name} — {w.description or '(no description)'}")
+        entry = f"  #{w.id} {w.name}"
+        if w.description:
+            entry += f" — {w.description}"
+        lines.append(entry)
     yield out_text("\n".join(lines))

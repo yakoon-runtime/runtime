@@ -12,6 +12,7 @@
     // spaces
     "spaces/y5nspace-runtime/src",
     "spaces/y5nspace-shell/src",
+    "spaces/y5nspace-luma/src",
     "spaces/y5nspace-ident/src",
     // transports
     "transports/y5ntrans-ws/src",
