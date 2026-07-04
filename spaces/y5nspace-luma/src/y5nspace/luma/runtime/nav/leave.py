@@ -5,15 +5,15 @@ from y5n.api.nodes import NodeSpace
 
 
 async def run(space: NodeSpace):
-    current_world = space.session.data.get("luma.current_world")
-    current_box = space.session.data.get("luma.current_box")
+    current_world = space.session.get_data("luma.current_world")
+    current_box = space.session.get_data("luma.current_box")
 
     if current_world is None and current_box is None:
         yield out_text("Nowhere to leave.")
         return
 
-    space.session.data.pop("luma.current_world", None)
-    space.session.data.pop("luma.current_box", None)
+    space.session.del_data("luma.current_world", None)
+    space.session.del_data("luma.current_box", None)
 
     parts = []
     if current_world:

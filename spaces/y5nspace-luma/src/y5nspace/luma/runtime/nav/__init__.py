@@ -1,11 +1,28 @@
-from .space import connect, dig, enter, entry, go, leave, look
+from .space import (
+    connect,
+    dig,
+    drop,
+    enter,
+    entry,
+    go,
+    inv,
+    leave,
+    look,
+    move,
+    place,
+    take,
+)
 
 __all__ = [
     "connect",
     "dig",
+    "drop",
     "enter",
     "entry",
     "go",
+    "inv",
     "leave",
     "look",
+    "place",
+    "take",
 ]

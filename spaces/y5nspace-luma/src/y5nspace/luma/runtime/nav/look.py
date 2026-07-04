@@ -7,8 +7,8 @@ from ...services.contracts import BoxService, ExitService, WorldService
 
 
 async def run(space: NodeSpace):
-    current_box = space.session.data.get("luma.current_box")
-    current_world = space.session.data.get("luma.current_world")
+    current_box = space.session.get_data("luma.current_box")
+    current_world = space.session.get_data("luma.current_world")
 
     if not current_box:
         yield out_text("You are not inside any box. Use 'enter' first.")
@@ -41,5 +41,16 @@ async def run(space: NodeSpace):
                 lines.append(f"  {e.direction}: {label} → {target_name}")
             else:
                 lines.append(f"  {label} → {target_name}")
+
+    items = await boxes.list_boxes(world_id=current_world, parent_id=current_box)
+    items = [b for b in items if b.portable]
+    if items:
+        lines.append("")
+        lines.append("Contents:")
+        for b in items:
+            parts = [f"  {b.name}"]
+            if b.description:
+                parts.append(f" — {b.description}")
+            lines.append("".join(parts))
 
     yield out_text("\n".join(lines))

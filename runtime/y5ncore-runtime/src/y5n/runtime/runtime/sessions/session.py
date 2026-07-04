@@ -55,7 +55,6 @@ class SessionData:
 
     @classmethod
     def from_dict(cls, d: dict) -> SessionData:
-
         d = dict(d)
         raw_last_active = d.pop("last_active", None)
         state = cls(**d)
@@ -98,6 +97,15 @@ class Session:
     @property
     def lang(self) -> str:
         return self.data.lang
+
+    def get_data(self, key: str, default: Any = None) -> Any:
+        return self.data.get(key, default)
+
+    def set_data(self, key: str, value: Any) -> None:
+        self.data.set(key, value)
+
+    def del_data(self, key: str, default: Any = None) -> Any:
+        return self.data.pop(key, default)
 
     @property
     def interaction(self) -> Interaction:

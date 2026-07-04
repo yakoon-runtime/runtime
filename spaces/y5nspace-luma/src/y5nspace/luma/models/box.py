@@ -10,3 +10,4 @@ class Box:
     parent_id: str | None = None
     name: str = ""
     description: str = ""
+    portable: bool = False

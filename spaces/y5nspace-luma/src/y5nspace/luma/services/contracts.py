@@ -15,7 +15,14 @@ class WorldService(Protocol):
 
     async def get_world_by_name(self, name: str) -> World | None: ...
 
-    async def update_world(self, *, world_id: str, name: str | None, description: str | None, entry_box_id: str | None = None) -> World: ...
+    async def update_world(
+        self,
+        *,
+        world_id: str,
+        name: str | None,
+        description: str | None,
+        entry_box_id: str | None = None,
+    ) -> World: ...
 
     async def delete_world(self, world_id: str) -> None: ...
 
@@ -24,15 +31,27 @@ class WorldService(Protocol):
 
 class BoxService(Protocol):
 
-    async def add_box(self, *, world_id: str, parent_id: str | None, name: str, description: str) -> Box: ...
+    async def add_box(
+        self,
+        *,
+        world_id: str,
+        parent_id: str | None,
+        name: str,
+        description: str,
+        portable: bool = False,
+    ) -> Box: ...
 
     async def get_box(self, box_id: str) -> Box | None: ...
 
-    async def list_boxes(self, *, world_id: str, parent_id: str | None) -> list[Box]: ...
+    async def list_boxes(
+        self, *, world_id: str, parent_id: str | None
+    ) -> list[Box]: ...
 
     async def update_box(self, *, box_id: str, name: str, description: str) -> Box: ...
 
     async def delete_box(self, box_id: str) -> None: ...
+
+    async def move_box(self, box_id: str, new_parent_id: str | None) -> Box: ...
 
 
 class ExitService(Protocol):
@@ -45,6 +64,15 @@ class ExitService(Protocol):
 
     async def find_to(self, box_id: str) -> list[Exit]: ...
 
-    async def connect(self, *, world_id: str, source_box_id: str, target_box_id: str, name: str, description: str = "", direction: str = "") -> Exit: ...
+    async def connect(
+        self,
+        *,
+        world_id: str,
+        source_box_id: str,
+        target_box_id: str,
+        name: str,
+        description: str = "",
+        direction: str = "",
+    ) -> Exit: ...
 
     async def disconnect(self, exit_id: str) -> None: ...

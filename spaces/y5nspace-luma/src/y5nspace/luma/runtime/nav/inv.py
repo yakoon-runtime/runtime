@@ -1,0 +1,27 @@
+from __future__ import annotations
+
+from y5n.api.dsl import out_text
+from y5n.api.nodes import NodeSpace
+
+from ...services.contracts import BoxService
+
+
+async def run(space: NodeSpace):
+    current_world = space.session.get_data("luma.current_world")
+    inv_id = space.session.get_data("luma.inventory_id")
+
+    if not inv_id or not current_world:
+        yield out_text("Nothing in inventory.")
+        return
+
+    boxes = space.ports.get(BoxService)
+    items = await boxes.list_boxes(world_id=current_world, parent_id=inv_id)
+
+    if not items:
+        yield out_text("Nothing in inventory.")
+        return
+
+    lines = ["Inventory:"]
+    for b in items:
+        lines.append(f"  {b.name}")
+    yield out_text("\n".join(lines))

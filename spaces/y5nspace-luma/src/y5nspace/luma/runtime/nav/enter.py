@@ -49,7 +49,7 @@ async def run(space: NodeSpace):
         yield out_text(f"Entry box #{target} not found.")
         return
 
-    space.session.data.set("luma.current_world", world.id)
-    space.session.data.set("luma.current_box", box.id)
+    space.session.set_data("luma.current_world", world.id)
+    space.session.set_data("luma.current_box", box.id)
 
     yield out_text(f"Entered '{world.name}' at '{box.name}'.")

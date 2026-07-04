@@ -16,7 +16,13 @@ class MemoryBoxService(BoxService):
         return str(n)
 
     async def add_box(
-        self, *, world_id: str, parent_id: str | None, name: str, description: str
+        self,
+        *,
+        world_id: str,
+        parent_id: str | None,
+        name: str,
+        description: str,
+        portable: bool = False,
     ) -> Box:
         for b in self._store.values():
             if b.world_id == world_id and b.name.lower() == name.lower():
@@ -27,6 +33,7 @@ class MemoryBoxService(BoxService):
             parent_id=parent_id,
             name=name,
             description=description,
+            portable=portable,
         )
         self._store[box.id] = box
         return box
@@ -57,3 +64,12 @@ class MemoryBoxService(BoxService):
         if box_id not in self._store:
             raise ValueError(f"Box '{box_id}' not found.")
         del self._store[box_id]
+
+    async def move_box(self, box_id: str, new_parent_id: str | None) -> Box:
+        box = self._store.get(box_id)
+        if box is None:
+            raise ValueError(f"Box '{box_id}' not found.")
+        if not box.portable:
+            raise ValueError(f"Box '{box.name}' is not portable.")
+        box.parent_id = new_parent_id
+        return box

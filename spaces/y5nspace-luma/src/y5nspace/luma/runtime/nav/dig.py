@@ -8,8 +8,8 @@ from ...services.directions import Directions
 
 
 async def run(space: NodeSpace):
-    current_box = space.session.data.get("luma.current_box")
-    current_world = space.session.data.get("luma.current_world")
+    current_box = space.session.get_data("luma.current_box")
+    current_world = space.session.get_data("luma.current_world")
     if not current_box or not current_world:
         yield out_text("You are not inside any box. Use 'enter' first.")
         return

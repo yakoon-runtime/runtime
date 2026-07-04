@@ -7,7 +7,7 @@ from ...services.contracts import BoxService, ExitService
 
 
 async def run(space: NodeSpace):
-    current_box = space.session.data.get("luma.current_box")
+    current_box = space.session.get_data("luma.current_box")
     if not current_box:
         yield out_text("You are not inside any box.")
         return
@@ -45,5 +45,5 @@ async def run(space: NodeSpace):
         yield out_text(f"Exit leads nowhere (box #{exit.target_box_id} missing).")
         return
 
-    space.session.data.set("luma.current_box", target.id)
+    space.session.set_data("luma.current_box", target.id)
     yield out_text(f"{target.name}")
