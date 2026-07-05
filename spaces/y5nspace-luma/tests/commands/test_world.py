@@ -44,5 +44,5 @@ async def test_world_lifecycle(fresh_space):
 
     # set entry
     w2 = await worlds.add_world(name="WithEntry", description="")
-    await worlds.set_entry(world_id=w2.id, box_id="42")
-    assert w2.entry_box_id == "42"
+    updated = await worlds.set_entry(world_id=w2.id, box_id="42")
+    assert updated.entry_box_id == "42"
