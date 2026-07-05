@@ -32,9 +32,10 @@ def _make_adapters(store):
         results = await store.objects.get_many(keys=keys)
         return [r for r in results if r is not None]
 
-    async def replace(*, key, value):
+    async def replace(*, key, doc, indexes=(), snapshot_hint=None, expected_rev=None):
+        idx = list(indexes) + [IndexTerm(key=IndexKey("all"), value="1")]
         return await store.objects.replace(
-            key=key, doc=value, indexes=[IndexTerm(key=IndexKey("all"), value="1")]
+            key=key, doc=doc, indexes=idx,
         )
 
     return scan, replace

@@ -95,7 +95,10 @@ class ExitService:
             description=description,
             direction=direction,
         )
-        await self._on_replace(key=exit_key(str(next_id)), value=data.to_dict())
+        await self._on_replace(
+            key=exit_key(str(next_id)),
+            doc=data.to_dict(),
+        )
         return Exit(
             id=str(next_id),
             world_id=world_id,

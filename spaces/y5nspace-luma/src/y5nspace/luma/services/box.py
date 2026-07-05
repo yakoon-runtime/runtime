@@ -68,7 +68,10 @@ class BoxService:
             description=description,
             portable=portable,
         )
-        await self._on_replace(key=box_key(str(next_id)), value=data.to_dict())
+        await self._on_replace(
+            key=box_key(str(next_id)),
+            doc=data.to_dict(),
+        )
         return Box(
             id=str(next_id),
             world_id=world_id,
@@ -114,7 +117,7 @@ class BoxService:
             description=description,
             portable=box.portable,
         )
-        await self._on_replace(key=box_key(box_id), value=data.to_dict())
+        await self._on_replace(key=box_key(box_id), doc=data.to_dict())
         return Box(
             id=box_id,
             world_id=box.world_id,
@@ -140,7 +143,7 @@ class BoxService:
             description=box.description,
             portable=box.portable,
         )
-        await self._on_replace(key=box_key(box_id), value=data.to_dict())
+        await self._on_replace(key=box_key(box_id), doc=data.to_dict())
         return Box(
             id=box_id,
             world_id=box.world_id,

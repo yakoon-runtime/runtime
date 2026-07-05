@@ -43,7 +43,10 @@ class WorldService:
             raise ValueError(f"World '{name}' already exists.")
         next_id = await self._on_next_id(prefix="w")
         data = WorldData(name=name, description=description)
-        await self._on_replace(key=world_key(str(next_id)), value=data.to_dict())
+        await self._on_replace(
+            key=world_key(str(next_id)),
+            doc=data.to_dict(),
+        )
         return World(id=str(next_id), name=name, description=description)
 
     async def get_world(self, world_id: str) -> World | None:
@@ -84,7 +87,7 @@ class WorldService:
         new_desc = description if description is not None else world.description
         new_entry = entry_box_id if entry_box_id is not None else world.entry_box_id
         data = WorldData(name=new_name, description=new_desc, entry_box_id=new_entry)
-        await self._on_replace(key=world_key(world_id), value=data.to_dict())
+        await self._on_replace(key=world_key(world_id), doc=data.to_dict())
         return World(
             id=world_id, name=new_name, description=new_desc, entry_box_id=new_entry
         )

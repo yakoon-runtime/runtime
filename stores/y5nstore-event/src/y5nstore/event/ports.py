@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from typing import Protocol
+from collections.abc import Mapping, Sequence
+from datetime import datetime
+from typing import Literal, Protocol
 
 from y5n.base.naming import Key, Namespace
 
@@ -12,6 +13,7 @@ from .models import (
     IndexSpec,
     IndexTerm,
     IndexValue,
+    JsonValue,
     PutResult,
     SnapshotHint,
 )
@@ -19,45 +21,47 @@ from .models import (
 
 class OnGet(Protocol):
     async def __call__(
-        self, *, key: Key, snapshot: SnapshotHint | None = None
-    ) -> GetResult | None: ...
+        self, *, key: Key, at_time: datetime | None = None
+    ) -> GetResult: ...
 
 
 class OnGetMany(Protocol):
-    async def __call__(self, *, keys: Sequence[Key]) -> list[GetResult | None]: ...
-
-
-class OnReplace(Protocol):
-    async def __call__(
-        self, *, key: Key, value: dict, indexes: Sequence[IndexTerm] = ()
-    ) -> PutResult: ...
-
-
-class OnDelete(Protocol):
-    async def __call__(self, *, key: Key) -> PutResult: ...
+    async def __call__(self, *, keys: Sequence[Key]) -> list[GetResult]: ...
 
 
 class OnAppend(Protocol):
     async def __call__(
-        self, *, key: Key, patch: dict, snapshot_hint: SnapshotHint = SnapshotHint.AUTO
+        self,
+        *,
+        key: Key,
+        patch: JsonValue,
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        meta: Mapping[str, object] | None = None,
+        expected_rev: int | None = None,
     ) -> PutResult: ...
 
 
-class OnEnsureIndexes(Protocol):
-    async def __call__(
-        self, *, namespace: Namespace, specs: Sequence[IndexSpec]
-    ) -> None: ...
-
-
-class OnQueryIndex(Protocol):
+class OnReplace(Protocol):
     async def __call__(
         self,
         *,
-        namespace: Namespace,
-        terms: Sequence[IndexQueryTerm],
-        mode: str,
-        limit: int = 100,
-    ) -> tuple[list[Key], str | None]: ...
+        key: Key,
+        doc: Mapping[str, JsonValue],
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        expected_rev: int | None = None,
+    ) -> PutResult: ...
+
+
+class OnDelete(Protocol):
+    async def __call__(
+        self,
+        *,
+        key: Key,
+        meta: Mapping[str, object] | None = None,
+        expected_rev: int | None = None,
+    ) -> PutResult: ...
 
 
 class OnScan(Protocol):
@@ -70,4 +74,23 @@ class OnScan(Protocol):
         lo: IndexValue | None = None,
         hi: IndexValue | None = None,
         limit: int = 100,
+        prefix: str | None = None,
+        cursor: str | None = None,
     ) -> tuple[list[Key], str | None]: ...
+
+
+class OnQueryIndex(Protocol):
+    async def __call__(
+        self,
+        *,
+        namespace: Namespace,
+        terms: Sequence[IndexQueryTerm],
+        mode: Literal["and", "or"],
+        limit: int = 100,
+    ) -> tuple[list[Key], str | None]: ...
+
+
+class OnEnsureIndexes(Protocol):
+    async def __call__(
+        self, *, namespace: Namespace, specs: Sequence[IndexSpec]
+    ) -> None: ...

@@ -46,7 +46,10 @@ class NoteService:
                 raise ValueError(f"Note '{name}' already exists.")
         next_id = await self._on_next_id(prefix="n")
         data = NoteData(name=name, content=content)
-        await self._on_replace(key=note_key(str(next_id)), value=data.to_dict())
+        await self._on_replace(
+            key=note_key(str(next_id)),
+            doc=data.to_dict(),
+        )
         return Note(id=str(next_id), name=name, content=content)
 
     async def get_note(self, note_id: str) -> Note | None:
@@ -67,7 +70,7 @@ class NoteService:
         if note is None:
             raise ValueError(f"Note '{note_id}' not found.")
         data = NoteData(name=name, content=content)
-        await self._on_replace(key=note_key(note_id), value=data.to_dict())
+        await self._on_replace(key=note_key(note_id), doc=data.to_dict())
         return Note(id=note_id, name=name, content=content)
 
     async def delete_note(self, note_id: str) -> None:
@@ -104,7 +107,7 @@ class NoteService:
                 raise ValueError("Already linked.")
         next_id = await self._on_next_id(prefix="n")
         data = {"note_id": note_id, "box_id": box_id}
-        await self._on_replace(key=note_key(f"link_{next_id}"), value=data)
+        await self._on_replace(key=note_key(f"link_{next_id}"), doc=data)
         return NoteLink(id=str(next_id), note_id=note_id, box_id=box_id)
 
     async def unlink(self, note_id: str, box_id: str) -> None:

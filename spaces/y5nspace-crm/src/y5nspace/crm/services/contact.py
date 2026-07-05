@@ -1,21 +1,23 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from datetime import datetime
-from typing import Literal, Protocol
 
 from y5n.api.naming import Key, Namespace
 from y5nstore.event.models import (
-    GetResult,
     IndexKey,
     IndexQueryTerm,
     IndexSpec,
     IndexTerm,
-    IndexValue,
-    JsonValue,
-    PutResult,
     SnapshotHint,
     ValueType,
+)
+from y5nstore.event.ports import (
+    OnDelete,
+    OnGet,
+    OnGetMany,
+    OnQueryIndex,
+    OnReplace,
+    OnScan,
 )
 from y5nstore.sequence import OnNextId
 
@@ -85,17 +87,6 @@ IDX_CONTACT_NOTES_SPEC = IndexSpec(
 )
 
 
-class OnQueryIndex(Protocol):
-    async def __call__(
-        self,
-        *,
-        namespace: Namespace,
-        terms: Sequence[IndexQueryTerm],
-        mode: Literal["and", "or"],
-        limit: int = 100,
-    ) -> tuple[list[Key], str | None]: ...
-
-
 class ContactService:
 
     @staticmethod
@@ -115,7 +106,6 @@ class ContactService:
     def __init__(
         self,
         on_get: OnGet,
-        on_append: OnAppend,
         on_replace: OnReplace,
         on_get_many: OnGetMany,
         on_scan: OnScan,
@@ -124,7 +114,6 @@ class ContactService:
         on_next_id: OnNextId,
     ):
         self.on_get = on_get
-        self.on_append = on_append
         self.on_replace = on_replace
         self.on_get_many = on_get_many
         self.on_scan = on_scan
@@ -307,70 +296,3 @@ class ContactService:
             raise ValueError(f"Contact not found: {name}")
 
         await self.on_delete(key=contact.key)
-
-
-class OnAppend(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        patch: JsonValue,
-        indexes: Sequence[IndexTerm] = (),
-        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
-        meta: Mapping[str, object] | None = None,
-        expected_rev: int | None = None,
-    ) -> PutResult: ...
-
-
-class OnReplace(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        doc: Mapping[str, JsonValue],
-        indexes: Sequence[IndexTerm] = (),
-        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
-        expected_rev: int | None = None,
-    ) -> PutResult: ...
-
-
-class OnGet(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        at_time: datetime | None = None,
-    ) -> GetResult: ...
-
-
-class OnGetMany(Protocol):
-    async def __call__(
-        self,
-        *,
-        keys: Sequence[Key],
-    ) -> list[GetResult]: ...
-
-
-class OnScan(Protocol):
-    async def __call__(
-        self,
-        *,
-        namespace: Namespace,
-        index_key: IndexKey,
-        value: IndexValue | None = None,
-        lo: IndexValue | None = None,
-        hi: IndexValue | None = None,
-        limit: int = 100,
-        prefix: str | None = None,
-        cursor: str | None = None,
-    ) -> tuple[list[Key], str | None]: ...
-
-
-class OnDelete(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        meta: Mapping[str, object] | None = None,
-        expected_rev: int | None = None,
-    ) -> PutResult: ...

@@ -27,7 +27,6 @@ async def setup(space: NodeSpace):
 
     contacts = ContactService(
         on_get=store.objects.get,
-        on_append=store.objects.append,
         on_replace=store.objects.replace,
         on_get_many=store.objects.get_many,
         on_scan=store.objects.scan,
