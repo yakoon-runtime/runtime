@@ -57,6 +57,7 @@ system.add(
         invocations=[
             Invocation(
                 params=[
+                    Param(key="name", positional=True),
                     Param(key="all"),
                 ],
                 default=True,

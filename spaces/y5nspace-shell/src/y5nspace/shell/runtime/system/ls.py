@@ -13,12 +13,19 @@ from ...ports import OnProject
 async def run(space: NodeSpace):
 
     show_all = space.request.has_option("all")
+    target_name = space.request.arg(0)
 
     current_node = space.session.get_current_node()  # type: ignore
+
+    if target_name:
+        scope = str(current_node) + "/" + target_name
+    else:
+        scope = str(current_node)
+
     current_path = str(current_node)
 
     on_source = space.ports.get(OnSourceRead)
-    result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))
+    result = await on_source(DataRequest(f"system:nodes --scope {scope}"))
 
     commands = []
     spaces = []
