@@ -144,7 +144,19 @@ class Node:
         Args:
             node:
                 Existing runtime subtree root.
+
+        Raises:
+            ValueError:
+                If *node* is the same instance — cannot self-mount.
         """
+
+        if node is self:
+            raise ValueError("Cannot mount a node onto itself.")
+
+        if node.parent is not None:
+            raise ValueError(
+                f"Node '{node.key}' is already mounted under '{node.parent.key}'."
+            )
 
         node.parent = self
 
@@ -216,10 +228,23 @@ class Node:
         current node, creating a hierarchical runtime visibility
         chain.
 
+        Use add() for new leaf nodes.  Use mount() for existing
+        subtrees that already carry a hierarchy.
+
         Args:
             child:
                 The child runtime node.
+
+        Raises:
+            ValueError:
+                If *child* already has children — use mount() instead.
         """
+
+        if child.children:
+            raise ValueError(
+                f"Node '{child.key}' already has children. Use mount() "
+                f"for existing subtrees, not add()."
+            )
 
         child.parent = self
 
