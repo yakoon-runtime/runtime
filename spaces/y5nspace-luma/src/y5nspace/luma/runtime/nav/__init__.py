@@ -5,6 +5,7 @@ from .space import (
     enter,
     entry,
     go,
+    inspect,
     inv,
     leave,
     look,

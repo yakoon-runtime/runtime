@@ -46,7 +46,7 @@ async def run(space: NodeSpace):
     items = [b for b in items if b.portable]
     if items:
         lines.append("")
-        lines.append("Contents:")
+        lines.append("Contains:")
         for b in items:
             parts = [f"  {b.name}"]
             if b.description:

@@ -10,6 +10,7 @@ from .runtime.nav import (
     enter,
     entry,
     go,
+    inspect,
     inv,
     leave,
     look,
@@ -50,3 +51,4 @@ luma.mount(move)
 luma.mount(take)
 luma.mount(drop)
 luma.mount(inv)
+luma.mount(inspect)

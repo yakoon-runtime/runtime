@@ -8,6 +8,7 @@ from .drop import run as drop_run
 from .enter import run as enter_run
 from .entry import run as entry_run
 from .go import run as go_run
+from .inspect import run as inspect_run
 from .inv import run as inv_run
 from .leave import run as leave_run
 from .look import run as look_run
@@ -222,10 +223,29 @@ drop = Node(
     ],
 )
 
+
+# ----------------------------------
+# INSPECT
+# ----------------------------------
+
+inspect = Node(
+    key="inspect",
+    anonymous=True,
+    resolvable=True,
+    navigable=False,
+    run=inspect_run,
+    invocations=[
+        Invocation(
+            params=[
+                Param(key="name", required=True, positional=True),
+            ],
+        ),
+    ],
+)
+
 # ----------------------------------
 # INVENTORY
 # ----------------------------------
-
 inv = Node(
     key="inv",
     anonymous=True,
