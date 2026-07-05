@@ -25,3 +25,5 @@ Always:
 2. Explain architectural consequences.
 3. Keep changes minimal.
 4. Do not introduce technical debt to satisfy a request.
+5. Never perform Git write operations (commit, amend, rebase, push, tag, reset) unless explicitly requested.
+6. Do not modify project structure or architecture unless the request explicitly requires it.
