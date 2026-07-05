@@ -5,6 +5,7 @@ from y5n.api.runtime import Interaction
 from .add import run as box_add
 from .delete import run as box_delete
 from .edit import run as box_edit
+from .find import run as box_find
 from .list import run as box_list
 from .show import run as box_show
 
@@ -26,6 +27,24 @@ box = Node(
             ],
         ),
     ],
+)
+
+box.add(
+    Node(
+        key="find",
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+        run=box_find,
+        invocations=[
+            Invocation(
+                params=[
+                    Param(key="name", required=True, positional=True),
+                    Param(key="world", required=True, positional=False),
+                ],
+            ),
+        ],
+    ),
 )
 
 box.add(
