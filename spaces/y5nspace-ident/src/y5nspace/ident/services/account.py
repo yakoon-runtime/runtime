@@ -1,20 +1,22 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Protocol
 
-from y5n.api.naming import Key, Namespace
+from y5n.api.naming import Key
 from y5nstore.event.models import (
     GetResult,
     IndexKey,
     IndexSpec,
     IndexTerm,
-    IndexValue,
     JsonValue,
-    PutResult,
     SnapshotHint,
     ValueType,
+)
+from y5nstore.event.ports import (
+    OnAppend,
+    OnReplace,
+    OnScan,
 )
 
 from ..models import Account
@@ -90,40 +92,6 @@ class AccountService:
 # ----------------------------------
 
 
-class OnAppend(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        patch: JsonValue,
-        indexes: Sequence[IndexTerm] = (),
-        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
-        meta: Mapping[str, object] | None = None,
-        expected_rev: int | None = None,
-    ) -> PutResult: ...
-
-
-class OnReplace(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        doc: Mapping[str, JsonValue],
-        indexes: Sequence[IndexTerm] = (),
-        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
-        expected_rev: int | None = None,
-    ) -> PutResult: ...
-
-
-class OnGetByName(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        at_time: datetime | None = None,
-    ) -> GetResult: ...
-
-
 class OnGetByKey(Protocol):
     async def __call__(
         self,
@@ -131,18 +99,3 @@ class OnGetByKey(Protocol):
         key: Key,
         at_time: datetime | None = None,
     ) -> GetResult: ...
-
-
-class OnScan(Protocol):
-    async def __call__(
-        self,
-        *,
-        namespace: Namespace,
-        index_key: IndexKey,
-        value: IndexValue | None = None,
-        lo: IndexValue | None = None,
-        hi: IndexValue | None = None,
-        limit: int = 100,
-        prefix: str | None = None,
-        cursor: str | None = None,
-    ) -> tuple[list[Key], str | None]: ...

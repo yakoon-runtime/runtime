@@ -22,6 +22,14 @@ from ..models import (
     PermissionGrantData,
 )
 
+from y5nstore.event.ports import (
+    OnAppend,
+    OnGet,
+    OnGetMany,
+    OnReplace,
+    OnScan,
+)
+
 # ----------------------------------
 # INDEX
 # ----------------------------------
@@ -257,58 +265,3 @@ class PermissionGrantService:
 # ----------------------------------
 
 
-class OnAppend(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        patch: JsonValue,
-        indexes: Sequence[IndexTerm] = (),
-        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
-        meta: Mapping[str, object] | None = None,
-        expected_rev: int | None = None,
-    ) -> PutResult: ...
-
-
-class OnReplace(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        doc: Mapping[str, JsonValue],
-        indexes: Sequence[IndexTerm] = (),
-        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
-        expected_rev: int | None = None,
-    ) -> PutResult: ...
-
-
-class OnGet(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        at_time: datetime | None = None,
-    ) -> GetResult: ...
-
-
-class OnGetMany(Protocol):
-    async def __call__(
-        self,
-        *,
-        keys: Sequence[Key],
-    ) -> list[GetResult]: ...
-
-
-class OnScan(Protocol):
-    async def __call__(
-        self,
-        *,
-        namespace: Namespace,
-        index_key: IndexKey,
-        value: IndexValue | None = None,
-        lo: IndexValue | None = None,
-        hi: IndexValue | None = None,
-        limit: int = 100,
-        prefix: str | None = None,
-        cursor: str | None = None,
-    ) -> tuple[list[Key], str | None]: ...
