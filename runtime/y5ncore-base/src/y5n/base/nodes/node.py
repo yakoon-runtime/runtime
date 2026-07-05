@@ -40,15 +40,23 @@ class Node:
     """
 
     key: str
+    """Unique identifier used for CLI resolution and node lookup."""
+
     name: str | None = None
+    """Human-readable display name. Falls back to *key* when not set."""
 
     # ----------------------------------
     # EXECUTION METADATA
     # ----------------------------------
 
     kind: NodeKind = NodeKind.USER
+    """Runtime-level classification (USER, SYSTEM, …)."""
+
     scope: NodeScope = NodeScope.NODE
+    """Visibility scope for resolution (NODE, ROOT, GLOBAL)."""
+
     visibility: NodeVisibility = NodeVisibility.NORMAL
+    """Controls whether the node appears in listings."""
 
     ports: NodePorts = field(
         default_factory=lambda: NodePorts(
@@ -56,13 +64,17 @@ class Node:
             Container(allow_override=True),
         )
     )
+    """Hierarchical capability scope.  Children inherit a forked copy."""
 
     # ----------------------------------
     # INVOCATIONS
     # ----------------------------------
 
     invocations: list[Invocation] = field(default_factory=list)
+    """Declared CLI signatures.  Matched against user input during resolution."""
+
     validator: InvocationValidator = field(default_factory=InvocationValidator)
+    """Strategy object that matches tokens against *invocations*."""
 
     def validate(
         self,
@@ -92,38 +104,62 @@ class Node:
     # ----------------------------------
 
     anonymous: bool = False
+    """Skip permission checks when True.  Used for public/utility nodes."""
 
     # ----------------------------------
     # RUN HANDLER
     # ----------------------------------
 
     run: RunHandler | None = None
+    """Async generator invoked when the node is executed as a command."""
+
     setup: RunHandler | None = None
+    """Async generator called once during node initialisation."""
 
     # ----------------------------------
-    # FIELDS
+    # TREE STRUCTURE
     # ----------------------------------
 
     parent: Node | None = None
+    """Parent node in the runtime tree.  Set by add() or mount()."""
+
     children: dict[str, Node] = field(default_factory=dict)
+    """Direct child nodes, keyed by their *key* attribute."""
+
     metadata: dict[str, Any] = field(default_factory=dict)
+    """Arbitrary key-value storage for space-specific data."""
 
     # ----------------------------------
-    # PROPERTIES
+    # RENDERING HINTS
     # ----------------------------------
 
     is_shell: bool = False
+    """Marks the root of a shell/REPL space for display purposes."""
+
     listed: bool = True
+    """Show this node in ls / overview listings when True."""
 
     navigable: bool = True
+    """Allow cd / enter into this node when True."""
+
     resolvable: bool = True
+    """Consider this node during command resolution when True."""
+
     contextual: bool = False
+    """Walk into child nodes during resolution when the current
+    node does not match the next token."""
 
     # ----------------------------------
     # INTERACTION MODE
     # ----------------------------------
 
     interaction: Interaction = Interaction.CLI
+    """Default input mode for this node.
+    Overridden by --cli / --form / --inherit at runtime.
+    CLI     → always command line (default).
+    FORM    → always interactive form.
+    INHERIT → inherit from session setting.
+    """
 
     # ----------------------------------
     # ATTACH TO RUNTIME
@@ -132,10 +168,10 @@ class Node:
     def mount(self, node: T) -> T:
         """Mountes an existing runtime subtree.
 
-        Unlike add(), attach() preserves the existing capability
-        hierarchy of the attached subtree.
+        Unlike add(), mount() preserves the existing capability
+        hierarchy of the mounted subtree.
 
-        The attached subtree keeps its internal local scopes while
+        The mounted subtree keeps its internal local scopes while
         extending hierarchical lookup into the current runtime node.
 
         Published capabilities remain directed only to the direct
@@ -148,6 +184,8 @@ class Node:
         Raises:
             ValueError:
                 If *node* is the same instance — cannot self-mount.
+                If *node* already belongs to another parent.
+                If *node* is an ancestor — would create a cycle.
         """
 
         if node is self:
@@ -157,6 +195,15 @@ class Node:
             raise ValueError(
                 f"Node '{node.key}' is already mounted under '{node.parent.key}'."
             )
+
+        # Prevent cycles: walk up from self, ensure node is not an ancestor
+        current = self
+        while current is not None:
+            if current is node:
+                raise ValueError(
+                    "Cannot mount an ancestor into its own subtree."
+                )
+            current = current.parent
 
         node.parent = self
 
@@ -238,12 +285,19 @@ class Node:
         Raises:
             ValueError:
                 If *child* already has children — use mount() instead.
+                If *child* already belongs to another parent.
         """
 
         if child.children:
             raise ValueError(
                 f"Node '{child.key}' already has children. Use mount() "
                 f"for existing subtrees, not add()."
+            )
+
+        if child.parent is not None:
+            raise ValueError(
+                f"Node '{child.key}' already belongs to "
+                f"'{child.parent.key}'. Detach it first."
             )
 
         child.parent = self
