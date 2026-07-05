@@ -29,8 +29,7 @@ async def run(space: NodeSpace):
         world_id = w.id
 
     boxes = space.ports.get(BoxService)
-    all_boxes = await boxes.list_boxes(world_id=world_id, parent_id=None)
-    box = next((b for b in all_boxes if b.name.lower() == name_ref.lower()), None)
+    box = await boxes.find_box(world_id=world_id, name=name_ref)
     if box is None:
         yield out_text(f"Box '{name_ref}' not found.")
         return

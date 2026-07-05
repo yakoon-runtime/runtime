@@ -53,6 +53,8 @@ class BoxService(Protocol):
 
     async def move_box(self, box_id: str, new_parent_id: str | None) -> Box: ...
 
+    async def find_box(self, *, world_id: str, name: str) -> Box | None: ...
+
 
 class ExitService(Protocol):
 

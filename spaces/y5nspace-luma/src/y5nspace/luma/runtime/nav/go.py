@@ -8,6 +8,7 @@ from ...services.contracts import BoxService, ExitService
 
 async def run(space: NodeSpace):
     current_box = space.session.get_data("luma.current_box")
+    current_world = space.session.get_data("luma.current_world")
     if not current_box:
         yield out_text("You are not inside any box.")
         return
@@ -17,6 +18,28 @@ async def run(space: NodeSpace):
         yield out_text("Go where?")
         return
 
+    boxes = space.ports.get(BoxService)
+
+    # 0. go up (parent)
+    if ref == "..":
+        box = await boxes.get_box(current_box)
+        if box is None or box.parent_id is None:
+            yield out_text("Cannot go up from here.")
+            return
+        parent = await boxes.get_box(box.parent_id)
+        space.session.set_data("luma.current_box", box.parent_id)
+        yield out_text(f"{parent.name if parent else '..'}")
+        return
+
+    # 1. look for a child box (container / parent relation)
+    children = await boxes.list_boxes(world_id=current_world, parent_id=current_box)
+    child = next((c for c in children if c.name.lower() == ref.lower()), None)
+    if child is not None:
+        space.session.set_data("luma.current_box", child.id)
+        yield out_text(f"{child.name}")
+        return
+
+    # 2. look for an exit
     exits = space.ports.get(ExitService)
     from_here = await exits.find_from(current_box)
 

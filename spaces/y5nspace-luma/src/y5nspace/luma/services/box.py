@@ -73,3 +73,9 @@ class MemoryBoxService(BoxService):
             raise ValueError(f"Box '{box.name}' is not portable.")
         box.parent_id = new_parent_id
         return box
+
+    async def find_box(self, *, world_id: str, name: str) -> Box | None:
+        for b in self._store.values():
+            if b.world_id == world_id and b.name.lower() == name.lower():
+                return b
+        return None

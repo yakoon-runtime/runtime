@@ -23,5 +23,8 @@ async def run(space: NodeSpace):
 
     lines = ["Inventory:"]
     for b in items:
-        lines.append(f"  {b.name}")
+        parts = [f"  {b.name}"]
+        if b.description:
+            parts.append(f" — {b.description}")
+        lines.append("".join(parts))
     yield out_text("\n".join(lines))
