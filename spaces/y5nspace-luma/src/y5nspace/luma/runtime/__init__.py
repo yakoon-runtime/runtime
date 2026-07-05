@@ -15,6 +15,7 @@ from .nav.space import (
     place,
     take,
 )
+from .note.space import note_node
 from .setup import setup
 from .world.space import world
 
@@ -32,6 +33,7 @@ __all__ = [
     "leave",
     "look",
     "move",
+    "note_node",
     "place",
     "setup",
     "take",

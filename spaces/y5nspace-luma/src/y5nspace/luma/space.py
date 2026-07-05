@@ -18,6 +18,7 @@ from .runtime.nav import (
     place,
     take,
 )
+from .runtime.note import note_node
 from .runtime.world import world
 
 luma = Node(
@@ -34,6 +35,7 @@ luma = Node(
 luma.mount(world)
 luma.mount(box)
 luma.mount(exit_node)
+luma.mount(note_node)
 
 # ----------------------------------
 # MOUNT NODES

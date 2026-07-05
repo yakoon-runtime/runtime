@@ -3,7 +3,7 @@ from __future__ import annotations
 from y5n.api.dsl import out_text
 from y5n.api.nodes import NodeSpace
 
-from ...services.contracts import BoxService, WorldService
+from ...services.contracts import BoxService, NoteService, WorldService
 
 
 async def run(space: NodeSpace):
@@ -39,5 +39,13 @@ async def run(space: NodeSpace):
             if b.description:
                 parts.append(f" — {b.description}")
             lines.append("".join(parts))
+
+    notes = space.ports.get(NoteService)
+    linked = await notes.notes_for_box(box.id)
+    if linked:
+        lines.append("")
+        lines.append("Notes:")
+        for n in linked:
+            lines.append(f"  {n.name}")
 
     yield out_text("\n".join(lines))
