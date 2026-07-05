@@ -1,11 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Protocol
-
 from y5n.api.naming import Key
 from y5nstore.event.models import (
-    GetResult,
     IndexKey,
     IndexSpec,
     IndexTerm,
@@ -15,6 +11,7 @@ from y5nstore.event.models import (
 )
 from y5nstore.event.ports import (
     OnAppend,
+    OnGet,
     OnReplace,
     OnScan,
 )
@@ -43,7 +40,7 @@ class AccountService:
         self,
         on_append: OnAppend,
         on_replace: OnReplace,
-        on_get_by_key: OnGetByKey,
+        on_get_by_key: OnGet,
         on_scan: OnScan,
     ):
         self.on_append = on_append
@@ -85,17 +82,3 @@ class AccountService:
             patch=[patch],
             snapshot_hint=SnapshotHint.COMMIT,
         )
-
-
-# ----------------------------------
-# PORTS
-# ----------------------------------
-
-
-class OnGetByKey(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: Key,
-        at_time: datetime | None = None,
-    ) -> GetResult: ...

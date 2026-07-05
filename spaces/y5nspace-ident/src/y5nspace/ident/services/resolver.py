@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from y5n.api.naming import Key, Namespace
-from y5n.api.permissions import Permission, PermissionSet
+from y5n.api.permissions import PermissionSet
 from y5n.api.ports import OnNewPermissionSet, OnParsePermissionSpec
 
 from ..models import Membership, PermissionGrant
@@ -101,6 +101,3 @@ class OnListSubjectGrants(Protocol):
         namespace: Namespace,
         subject_key: Key,
     ) -> list[PermissionGrant]: ...
-
-
-

@@ -1,23 +1,13 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from datetime import datetime
-from typing import Protocol
-
 from y5n.api.naming import Key, Namespace
 from y5nstore.event.models import (
-    GetResult,
     IndexKey,
     IndexSpec,
     IndexTerm,
-    IndexValue,
-    JsonValue,
-    PutResult,
     SnapshotHint,
     ValueType,
 )
-
-from ..models import Membership, MembershipData
 from y5nstore.event.ports import (
     OnAppend,
     OnGet,
@@ -25,6 +15,8 @@ from y5nstore.event.ports import (
     OnReplace,
     OnScan,
 )
+
+from ..models import Membership, MembershipData
 
 # ----------------------------------
 # INDEX
@@ -245,5 +237,3 @@ class MembershipService:
 # ----------------------------------
 # PORTS
 # ----------------------------------
-
-
