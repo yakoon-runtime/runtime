@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from typing import Protocol
+
+from y5nstore.event.ports import OnDelete, OnGet, OnReplace
+
 from ..data import BoxData
 from ..models import Box
-from ..ports import OnDelete, OnGet, OnReplace, OnScan
 from .namespaces import box_key, box_namespace
+
+
+class OnScan(Protocol):
+    async def __call__(self, *, namespace) -> list: ...
 
 
 class BoxService:

@@ -1,9 +1,16 @@
 from __future__ import annotations
 
+from typing import Protocol
+
+from y5nstore.event.ports import OnDelete, OnGet, OnReplace
+
 from ..data import ExitData
 from ..models import Exit
-from ..ports import OnDelete, OnGet, OnReplace, OnScan
 from .namespaces import exit_key, exit_namespace
+
+
+class OnScan(Protocol):
+    async def __call__(self, *, namespace) -> list: ...
 
 
 class ExitService:

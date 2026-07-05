@@ -1,9 +1,20 @@
 from __future__ import annotations
 
+from typing import Protocol
+
+from y5nstore.event.ports import (
+    OnDelete,
+    OnGet,
+    OnReplace,
+)
+
 from ..data import WorldData
 from ..models import World
-from ..ports import OnDelete, OnGet, OnReplace, OnScan
 from .namespaces import world_key, world_namespace
+
+
+class OnScan(Protocol):
+    async def __call__(self, *, namespace) -> list: ...
 
 
 class WorldService:
@@ -31,9 +42,8 @@ class WorldService:
         if existing:
             raise ValueError(f"World '{name}' already exists.")
         next_id = await self._on_next_id(prefix="w")
-        key = world_key(str(next_id))
         data = WorldData(name=name, description=description)
-        await self._on_replace(key=key, value=data.to_dict())
+        await self._on_replace(key=world_key(str(next_id)), value=data.to_dict())
         return World(id=str(next_id), name=name, description=description)
 
     async def get_world(self, world_id: str) -> World | None:
