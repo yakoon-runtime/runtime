@@ -10,8 +10,8 @@ from y5n.base.flow.primitives import Outcome, StartCommand, Stop
 from y5n.base.nodes import Node
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event
-from y5n.runtime.machine.effects import StartCommandHandler
 from y5n.runtime.flow import Flow
+from y5n.runtime.machine.effects import StartCommandHandler
 
 pytestmark = pytest.mark.benchmark
 
@@ -149,7 +149,9 @@ async def test_massive_waiting_flows(harness, scheduler):
         t_wake = time.monotonic() - t_wake_start
 
         create_rate = N / (t1 - t0) if (t1 - t0) > 0 else 0
-        print(f"  {label}: create={t1-t0:.3f}s ({create_rate:,.0f} flows/s), wake={t_wake:.4f}s, woke={woke}")
+        print(
+            f"  {label}: create={t1-t0:.3f}s ({create_rate:,.0f} flows/s), wake={t_wake:.4f}s, woke={woke}"
+        )
 
 
 # ----------------------------------------------------------------

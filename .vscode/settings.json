@@ -22,7 +22,9 @@
     "apps/y5napp-textual/src",
   ],
   "python.testing.pytestArgs": [
-    "runtime/y5ncore-tests",
+    "runtime/y5ncore-runtime/tests",
+    "stores/y5nstore-event/tests",
+    "stores/y5nstore-sequence/tests",
     "spaces/y5nspace-luma/tests",
   ],
   "python.testing.pytestEnabled": true,
