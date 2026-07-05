@@ -26,6 +26,7 @@ jobs:
           pip install -e spaces/y5nspace-shell
           pip install -e spaces/y5nspace-runtime
           pip install -e spaces/y5nspace-ident
+          pip install -e runtime/y5ncore-luma
           pip install -e spaces/y5nspace-os
           pip install -r requirements-dev.txt
 
