@@ -33,9 +33,11 @@ class TextBlock:
 
 
 @dataclass(frozen=True, slots=True)
-class CodeBlock:
+class PreBlock:
+    """Preformatted text"""
+
     id: str | None = None
-    type: Literal["code"] = "code"
+    type: Literal["pre"] = "pre"
 
     code: str = ""
     language: str | None = None
@@ -335,6 +337,6 @@ Block = (
     | StackBlock
     | FlowBlock
     | CollapsibleBlock
-    | CodeBlock
+    | PreBlock
     | ImageBlock
 )

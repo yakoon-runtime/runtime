@@ -1,5 +1,4 @@
 from .actions import map_actions
-from .code import map_code_block
 from .collapsible import map_collapsible
 from .fields import map_fields
 from .flow import map_flow
@@ -8,6 +7,7 @@ from .image import map_image
 from .kv import map_kv
 from .list import map_list
 from .paragraph import map_paragraph
+from .pre import map_pre
 from .rule import map_rule
 from .section import map_section
 from .spacer import map_spacer
@@ -16,7 +16,7 @@ from .table import map_table
 
 __all__ = [
     "map_actions",
-    "map_code_block",
+    "map_pre",
     "map_collapsible",
     "map_fields",
     "map_kv",

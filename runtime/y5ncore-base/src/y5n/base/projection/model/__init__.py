@@ -2,7 +2,6 @@ from .action import Action
 from .block import (
     ActionBlock,
     Block,
-    CodeBlock,
     CollapsibleBlock,
     FieldsBlock,
     FieldsState,
@@ -14,6 +13,7 @@ from .block import (
     ListBlock,
     ListItemBlock,
     ParagraphBlock,
+    PreBlock,
     RuleBlock,
     RuleStyle,
     SectionBlock,
@@ -79,7 +79,7 @@ __all__ = [
     "InlineMark",
     # .blocks
     "Block",
-    "CodeBlock",
+    "PreBlock",
     "ParagraphBlock",
     "HeadingBlock",
     "RuleStyle",
