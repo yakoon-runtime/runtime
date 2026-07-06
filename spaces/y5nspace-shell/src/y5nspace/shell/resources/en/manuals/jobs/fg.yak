@@ -1,0 +1,30 @@
+<heading>fg - Bring a job to the foreground.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  fg index
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Brings a suspended or background flow to the foreground
+and resumes interactive input for it.
+
+Use the list command to see active flows and their indices.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+bg, stop, list, man
+</paragraph>

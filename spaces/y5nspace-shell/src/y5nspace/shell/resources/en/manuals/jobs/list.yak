@@ -1,1 +1,31 @@
-Man for list....
+<heading>list - Show running flows.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  list
+  list --all
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all active flows (jobs) in the current session.
+
+By default only foreground and suspended flows are shown.
+Add --all to include background and completed flows.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+bg, stop, fg, man
+</paragraph>

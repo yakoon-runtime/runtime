@@ -1,0 +1,30 @@
+<heading>stop - Cancel a running flow.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  stop index
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Cancels a running flow identified by its job index.
+
+Use the list command to see active flows and their indices.
+Once stopped, the flow cannot be resumed.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+list, bg, fg, man
+</paragraph>

@@ -1,1 +1,31 @@
-Man for bg....
+<heading>bg - Resume a background flow.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  bg
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Brings a suspended background flow to the foreground.
+
+A flow started with start_cmd or start_task may go into the
+background when its job is suspended.  bg resumes it to the
+current foreground slot.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+jobs, stop, fg, man
+</paragraph>

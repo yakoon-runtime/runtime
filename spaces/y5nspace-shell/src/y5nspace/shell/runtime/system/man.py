@@ -62,6 +62,7 @@ async def run(space: NodeSpace):
     if ports and ports.has(OnManualResolve):
         on_manual_resolve = ports.get(OnManualResolve)
         try:
+            assert found
             projection = await on_manual_resolve(
                 key=found["path"],
                 lang=space.request.lang,
