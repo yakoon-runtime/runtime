@@ -189,6 +189,9 @@ class InvocationResolver:
                 continue
             child = walk.children.get(seg)
             if child is None:
+                # GLOBAL and ROOT nodes behave like virtual children of every runtime space.
+                child = self._global_nodes.get(seg) or self._root_nodes.get(seg)
+            if child is None:
                 return None
             walk = child
 
