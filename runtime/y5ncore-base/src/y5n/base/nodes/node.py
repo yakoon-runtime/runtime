@@ -93,6 +93,11 @@ class Node:
 
         action = tokens[0]
 
+        # Options (--key) are always consumed by the invocation system,
+        # not by child nodes.
+        if action.startswith("--"):
+            return True
+
         for invocation in self.invocations:
             if invocation.action == action:
                 return True

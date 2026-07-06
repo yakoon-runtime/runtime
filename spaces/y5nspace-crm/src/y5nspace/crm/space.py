@@ -14,7 +14,7 @@ crm = Node(
 )
 
 # ----------------------------------
-# MOUNT TREES
+# MOUNT CONTACTS
 # ----------------------------------
 
 crm.mount(contacts)
