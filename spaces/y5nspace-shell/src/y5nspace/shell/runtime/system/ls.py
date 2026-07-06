@@ -31,7 +31,9 @@ async def run(space: NodeSpace):
     spaces = []
     for x in result.rows:
         path = str(x.get("path", ""))
-        if x["scope"] == "global" and not (current_path != "/" and path.startswith(current_path)):
+        if x["scope"] == "global" and not (
+            current_path != "/" and path.startswith(current_path)
+        ):
             x["variant"] = "global"
         else:
             x["variant"] = "local"
@@ -49,7 +51,7 @@ async def run(space: NodeSpace):
     spaces.sort(key=lambda i: i["key"])
 
     projection = await space.ports.get(OnProject)(
-        name="list/overview",
+        name="ls/overview",
         lang=space.session.lang,
         state={
             "commands": commands,

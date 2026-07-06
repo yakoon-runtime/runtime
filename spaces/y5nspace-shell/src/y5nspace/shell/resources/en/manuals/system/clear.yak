@@ -1,0 +1,43 @@
+<heading>clear - Clear the current viewport.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  clear
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Clears the current terminal viewport.
+
+The runtime context and command history remain unchanged.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+clear
+  Clear the current viewport.
+</pre>
+
+<paragraph>
+Use clear whenever you want to remove previous output and
+continue working with a clean screen.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+pwd
+</paragraph>

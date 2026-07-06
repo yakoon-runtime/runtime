@@ -1,6 +1,53 @@
-Manual for cd <br/>
---------------<br/>
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
-invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. 
-At vero eos et accusam et justo duo dolores et ea rebum. 
-Stet clita kasd gubergren, no sea takimata sanc
+<heading>cd - Change the current runtime context.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  cd shell
+  cd ..
+  cd /
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Changes the current runtime context.
+
+Subsequent commands operate relative to the new location.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+cd shell
+  Enter the shell runtime space.
+
+cd ..
+  Move to the parent runtime space.
+
+cd /
+  Return to the runtime root.
+</pre>
+
+<paragraph>
+Use cd when you want to work inside another runtime space.
+
+Use ls when you only want to inspect another location without
+changing the current context.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+ls, man
+</paragraph>

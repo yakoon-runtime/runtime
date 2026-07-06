@@ -1,6 +1,53 @@
-Manual for man <br/>
----------------<br/>
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
-invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. 
-At vero eos et accusam et justo duo dolores et ea rebum. 
-Stet clita kasd gubergren, no sea takimata sanc
+<heading>man - Show command manuals.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  man
+  man ls
+  man cd
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Displays the manual for a command.
+
+If no command is specified, the available manuals are listed.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+man
+  List all available manuals.
+
+man ls
+  Show the manual for ls.
+
+man cd
+  Show the manual for cd.
+</pre>
+
+<paragraph>
+Manuals explain the purpose, usage and typical examples of a command.
+
+They are intended as concise documentation rather than a complete
+reference.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+ls, cd
+</paragraph>

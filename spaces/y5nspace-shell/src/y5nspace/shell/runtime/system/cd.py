@@ -15,6 +15,7 @@ async def run(space: NodeSpace):
         yield out_text("")
         return
 
+    raise TypeError("my error")
     on_source = space.ports.get(OnSourceRead)
 
     # ----------------------------------

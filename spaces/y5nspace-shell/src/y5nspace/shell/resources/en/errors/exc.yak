@@ -1,5 +1,9 @@
-Error <br/>
-------<br/>
-...
+<heading>Error - Internal runtime error.</heading>
 
-Message: {{ state.message }}
+<rule/>
+
+<heading level="2">
+Message
+</heading>
+
+{{ state.message }}
