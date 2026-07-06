@@ -21,11 +21,9 @@ shell = Node(
     setup=setup,
 )
 
-shell.mount(system)
-shell.mount(jobs)
-shell.mount(labs)
-shell.mount(net)
-shell.mount(session)
+# ----------------------------------
+# STATUS
+# ----------------------------------
 
 shell.add(
     Node(
@@ -37,6 +35,10 @@ shell.add(
     )
 )
 
+# ----------------------------------
+# WELCOME
+# ----------------------------------
+
 shell.add(
     Node(
         key="welcome",
@@ -46,3 +48,14 @@ shell.add(
         navigable=False,
     )
 )
+
+
+# ----------------------------------
+# MOUNT
+# ----------------------------------
+
+shell.mount(system)
+shell.mount(jobs)
+shell.mount(labs)
+shell.mount(net)
+shell.mount(session)

@@ -24,7 +24,6 @@ jobs:
           pip install -e runtime/y5ncore-runtime
           pip install -e runtime/y5ncore-llm
           pip install -e spaces/y5nspace-shell
-          pip install -e spaces/y5nspace-runtime
           pip install -e spaces/y5nspace-ident
           pip install -e spaces/y5nspace-luma
           pip install -e spaces/y5nspace-crm
