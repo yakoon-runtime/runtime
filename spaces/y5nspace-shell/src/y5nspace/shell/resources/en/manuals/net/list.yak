@@ -1,0 +1,31 @@
+<heading>list - Show known runtimes.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  net list
+  net
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all known remote runtimes and their connection status.
+
+Runtimes are configured in the runtime settings file.
+Each entry has a name and a WebSocket URL.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+net connect, man
+</paragraph>

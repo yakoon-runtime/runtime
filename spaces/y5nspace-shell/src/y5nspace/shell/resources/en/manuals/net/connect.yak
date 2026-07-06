@@ -1,0 +1,31 @@
+<heading>connect - Connect to a remote runtime.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  net name
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Opens a new connection to a remote Yakoon runtime identified
+by its configured name.
+
+The target must be listed in the known runtimes section of
+the configuration file.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+net list, man
+</paragraph>
