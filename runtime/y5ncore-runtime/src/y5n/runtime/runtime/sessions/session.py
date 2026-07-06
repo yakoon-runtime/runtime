@@ -33,7 +33,7 @@ class SessionData:
     user_name: str | None = None
     account_key: str | None = None
     last_active: datetime | None = None
-    lang: str = "de"
+    lang: str = "en"
     debug: bool = True
     data: dict[str, Any] = field(default_factory=dict)
     _v: int = field(default=CURRENT_VERSION)

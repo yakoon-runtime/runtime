@@ -1,5 +1,0 @@
-Fehler <br/>
-------<br/>
-...
-
-Message: {{ state.message }}

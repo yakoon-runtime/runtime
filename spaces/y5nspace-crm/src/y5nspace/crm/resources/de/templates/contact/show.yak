@@ -1,9 +1,0 @@
-Kontakt: {{ state.contact.data.name }}<br/>
-
-{% if state.contact.data.company %}  Firma:    {{ state.contact.data.company }}<br/>{% endif %}
-{% if state.contact.data.email %}  E-Mail:   {{ state.contact.data.email }}<br/>{% endif %}
-{% if state.contact.data.phone %}  Telefon:  {{ state.contact.data.phone }}<br/>{% endif %}
-{% if state.contact.data.street %}  Strasse:  {{ state.contact.data.street }}<br/>{% endif %}
-{% if state.contact.data.zip or state.contact.data.city %}  Ort:      {{ state.contact.data.zip }} {{ state.contact.data.city }}<br/>{% endif %}
-{% if state.contact.data.country %}  Land:     {{ state.contact.data.country }}<br/>{% endif %}
-{% if state.contact.data.notes %}  Notizen:  {{ state.contact.data.notes }}<br/>{% endif %}

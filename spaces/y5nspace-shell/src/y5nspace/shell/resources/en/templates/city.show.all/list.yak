@@ -1,0 +1,14 @@
+Here are all <strong>available</strong> cities:
+<em>Or something else</em>
+
+<actions>
+  <action command="city.show.all --offset {{state.prev_offset}}"><</action>
+  <action command="city.show.all --offset {{state.next_offset}}">></action>
+</actions>
+
+<list>
+{% for item in state["items"] %}
+ <!-- <item>{{ item }}</item> -->
+ <item><select value="{{ item }}">{{ item }}</select></item> 
+{% endfor %}
+</list>

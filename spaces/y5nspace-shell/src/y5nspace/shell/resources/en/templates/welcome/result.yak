@@ -1,0 +1,17 @@
+<br/>
+
+WELCOME
+<br count="2"/>
+
+{% if state.name %}
+  {{ state.name }}
+{% endif %}
+
+What you can do now:
+<rule/>
+<list>
+  <item>man          - Shows help for commands</item>
+  <item>use prg      - Run a program</item>
+  <item>version      - Shows system information</item>
+</list>
+
