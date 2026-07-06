@@ -1,5 +1,5 @@
 <text>
-  Befehl "<strong>{{ state.command }}</strong>" wurde nicht gefunden.
+  Command "<strong>{{ state.command }}</strong>" not found.
 </text>
 
 {% if state.suggestions is defined and state.suggestions %}
@@ -7,14 +7,14 @@
   {% if state.suggestions|length == 1 %}
 
     <text>
-      Meintest du "<cmd command="{{ state.suggestions[0] }}">
+      Did you mean "<cmd command="{{ state.suggestions[0] }}">
         {{ state.suggestions[0] }}
       </cmd>"?
     </text>
 
   {% else %}
 
-    <text>Meintest du:</text>
+    <text>Did you mean:</text>
 
     <list>
       {% for item in state.suggestions %}

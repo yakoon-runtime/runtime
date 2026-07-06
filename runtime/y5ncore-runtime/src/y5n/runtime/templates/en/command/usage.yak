@@ -1,4 +1,4 @@
-<text>Verwendung:</text>
+<text>Usage:</text>
 
 <list>
 {% for usage in state.usages %}

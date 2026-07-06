@@ -1,4 +1,4 @@
-<text>Unbekannte Optionen:</text>
+<text>Unknown options:</text>
 
 <list>
 {% for item in state.unknown_options %}
@@ -10,7 +10,7 @@
 
 <spacer/>
 
-<text>Unterstützte Optionen:</text>
+<text>Supported options:</text>
 
 <list>
 {% for item in state.valid_options %}
@@ -22,7 +22,7 @@
 
 <spacer/>
 
-<text>Verwendung:</text>
+<text>Usage:</text>
 
 <list>
 {% for usage in state.usages %}
