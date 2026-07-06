@@ -2,6 +2,7 @@ from y5n.base.projection.model import ImageBlock
 
 from .block import (
     map_actions,
+    map_code_block,
     map_collapsible,
     map_fields,
     map_flow,
@@ -62,15 +63,18 @@ def create_mapper(context: dict) -> Mapper:
     mapper.register_block("actions", map_actions)
     mapper.register_block("fields", map_fields)
     mapper.register_block("p", map_paragraph)
+    mapper.register_block("paragraph", map_paragraph)
     mapper.register_block("text", map_paragraph)
     mapper.register_block("h1", map_heading(1))
     mapper.register_block("h2", map_heading(2))
     mapper.register_block("h3", map_heading(3))
+    mapper.register_block("heading", map_heading(1))
     mapper.register_block("section", map_section)
     mapper.register_block("stack", map_stack)
     mapper.register_block("flow", map_flow)
     mapper.register_block("image", map_image)
     mapper.register_block("collapsible", map_collapsible)
     mapper.register_block("table", map_table)
+    mapper.register_block("code", map_code_block)
 
     return mapper

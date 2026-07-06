@@ -51,7 +51,7 @@ async def run(space: NodeSpace):
                 key=found["path"],
                 lang=space.request.lang,
             )
-        except Exception:
+        except LookupError:
             pass
 
     # ----------------------------------

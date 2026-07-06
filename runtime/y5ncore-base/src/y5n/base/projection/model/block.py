@@ -33,6 +33,18 @@ class TextBlock:
 
 
 @dataclass(frozen=True, slots=True)
+class CodeBlock:
+    id: str | None = None
+    type: Literal["code"] = "code"
+
+    code: str = ""
+    language: str | None = None
+
+    def children(self) -> tuple[Block, ...]:
+        return ()
+
+
+@dataclass(frozen=True, slots=True)
 class ParagraphBlock:
     type: Literal["paragraph"] = "paragraph"
     id: str | None = None
@@ -323,5 +335,6 @@ Block = (
     | StackBlock
     | FlowBlock
     | CollapsibleBlock
+    | CodeBlock
     | ImageBlock
 )

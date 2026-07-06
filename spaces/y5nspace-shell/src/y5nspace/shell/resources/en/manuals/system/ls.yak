@@ -1,6 +1,64 @@
-Manual for ls <br/>
----------------<br/>
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor 
-invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. 
-At vero eos et accusam et justo duo dolores et ea rebum. 
-Stet clita kasd gubergren, no sea takimata sanc
+<heading>ls</heading>
+
+<rule/>
+
+<paragraph>
+List runtime spaces and commands.
+</paragraph>
+
+<heading level="2">
+Usage
+</heading>
+
+<code>
+  ls
+  ls system
+  ls /
+</code>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists the visible child nodes of the current runtime space.
+
+When a path is provided, ls inspects that runtime space without
+changing the current context.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<code>
+ls
+  List the current runtime space.
+
+ls world
+  List the contents of the world subspace.
+
+ls luma/world
+  List another runtime space.
+
+ls ..
+  List the parent runtime space.
+
+ls /
+  List the runtime root.
+</code>
+
+<paragraph>
+ls never changes the current runtime context.
+
+Use cd when you want to work somewhere.
+Use ls when you only want to inspect.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+cd, man
+</paragraph>
