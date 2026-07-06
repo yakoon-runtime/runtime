@@ -1,10 +1,10 @@
 from y5n.api.nodes import Node
 
-from .runtime.setup import setup
 from .runtime.jobs.space import jobs
 from .runtime.labs.space import labs
 from .runtime.net.space import net
 from .runtime.session.space import session
+from .runtime.setup import setup
 from .runtime.status import run as status_run
 from .runtime.system.space import system
 from .runtime.welcome import run as welcome_run
@@ -46,4 +46,3 @@ shell.add(
         navigable=False,
     )
 )
-

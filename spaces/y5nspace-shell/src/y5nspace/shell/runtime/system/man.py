@@ -17,10 +17,25 @@ async def run(space: NodeSpace):
     # Resolve visible nodes
     # ----------------------------------
 
+    found = None
     on_source = space.ports.get(OnSourceRead)
 
-    result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))
-    found = next((x for x in result.rows if x["key"] == key), None)
+    if "/" in key:
+        parent_name, child_name = key.rsplit("/", 1)
+        parent_result = await on_source(
+            DataRequest(f"system:nodes --by-key {parent_name}")
+        )
+
+        if parent_result.status == "ok":
+            parent_path = str(parent_result.one().get("path", ""))
+            child_result = await on_source(
+                DataRequest(f"system:nodes --scope {parent_path}")
+            )
+            found = next((x for x in child_result.rows if x["key"] == child_name), None)
+
+    else:
+        result = await on_source(DataRequest(f"system:nodes --scope {current_node}"))
+        found = next((x for x in result.rows if x["key"] == key), None)
 
     # ----------------------------------
     # Node not found
