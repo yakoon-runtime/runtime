@@ -16,7 +16,9 @@ Description
 
 <paragraph>
 Clears the current terminal viewport.
+</paragraph>
 
+<paragraph>
 The runtime context and command history remain unchanged.
 </paragraph>
 

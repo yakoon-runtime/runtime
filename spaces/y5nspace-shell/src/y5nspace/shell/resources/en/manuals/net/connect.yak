@@ -7,7 +7,7 @@ Usage
 </heading>
 
 <pre>
-  net name
+  connect NAME
 </pre>
 
 <heading level="2">
@@ -17,9 +17,28 @@ Description
 <paragraph>
 Opens a new connection to a remote Yakoon runtime identified
 by its configured name.
+</paragraph>
 
+<paragraph>
 The target must be listed in the known runtimes section of
 the configuration file.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+connect office
+  Connect to a runtime named office.
+
+net/connect production
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use connect to attach to a remote runtime and interact with
+it through the current session.
 </paragraph>
 
 <heading level="2">
@@ -27,5 +46,5 @@ See also
 </heading>
 
 <paragraph>
-net list, man
+list, man
 </paragraph>

@@ -18,7 +18,9 @@ Description
 
 <paragraph>
 Changes the current runtime context.
+</paragraph>
 
+<paragraph>
 Subsequent commands operate relative to the new location.
 </paragraph>
 
@@ -39,7 +41,9 @@ cd /
 
 <paragraph>
 Use cd when you want to work inside another runtime space.
+</paragraph>
 
+<paragraph>
 Use ls when you only want to inspect another location without
 changing the current context.
 </paragraph>

@@ -20,7 +20,7 @@ details.
 </paragraph>
 
 <paragraph>
-Sessions are listed by key with attached clients, homes,
+Sessions are listed by key with attached clients, homes
 and active flows. The current session is marked with
 an asterisk.
 </paragraph>
@@ -32,11 +32,14 @@ Examples
 <pre>
 list
   List all active sessions.
+
+session/list
+  From another space, qualify the path.
 </pre>
 
 <paragraph>
-Use session list to see which sessions are active and
-which one you are currently using.
+Use list to see which sessions are active and which one
+you are currently using.
 </paragraph>
 
 <heading level="2">

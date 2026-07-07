@@ -17,7 +17,9 @@ Description
 
 <paragraph>
 Lists the visible child nodes of the current runtime space.
+</paragraph>
 
+<paragraph>
 When a path is provided, ls inspects that runtime space without
 changing the current context.
 </paragraph>
@@ -45,7 +47,9 @@ ls /
 
 <paragraph>
 ls never changes the current runtime context.
+</paragraph>
 
+<paragraph>
 Use cd when you want to work somewhere.
 Use ls when you only want to inspect.
 </paragraph>

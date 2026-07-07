@@ -30,11 +30,14 @@ Examples
 <pre>
 detach
   Return to the home session.
+
+session/detach
+  From another space, qualify the path.
 </pre>
 
 <paragraph>
-Use session detach after attaching to another
-session to go back to where you started.
+Use detach after attaching to another session to go
+back to where you started.
 </paragraph>
 
 <heading level="2">
@@ -42,5 +45,5 @@ See also
 </heading>
 
 <paragraph>
-attach, list, current, man
+attach, current, list, man
 </paragraph>

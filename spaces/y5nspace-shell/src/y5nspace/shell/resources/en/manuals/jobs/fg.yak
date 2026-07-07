@@ -7,7 +7,7 @@ Usage
 </heading>
 
 <pre>
-  fg index
+  fg INDEX
 </pre>
 
 <heading level="2">
@@ -17,8 +17,27 @@ Description
 <paragraph>
 Brings a suspended or background flow to the foreground
 and resumes interactive input for it.
+</paragraph>
 
-Use the list command to see active flows and their indices.
+<paragraph>
+Use list to see active flows and their indices.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+fg 2
+  Bring flow index 2 to the foreground.
+
+jobs/fg 2
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use fg to resume a background flow and continue working
+with it interactively.
 </paragraph>
 
 <heading level="2">
@@ -26,5 +45,5 @@ See also
 </heading>
 
 <paragraph>
-bg, stop, list, man
+bg, list, stop, man
 </paragraph>

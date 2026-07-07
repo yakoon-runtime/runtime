@@ -16,10 +16,29 @@ Description
 </heading>
 
 <paragraph>
-Lists all active flows (jobs) in the current session.
+Lists all active flows in the current session.
+</paragraph>
 
+<paragraph>
 By default only foreground and suspended flows are shown.
 Add --all to include background and completed flows.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+list
+  List active flows.
+
+jobs/list
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use list to see what is running before deciding to bring
+a flow to the foreground or stop it.
 </paragraph>
 
 <heading level="2">
@@ -27,5 +46,5 @@ See also
 </heading>
 
 <paragraph>
-bg, stop, fg, man
+bg, fg, stop, man
 </paragraph>

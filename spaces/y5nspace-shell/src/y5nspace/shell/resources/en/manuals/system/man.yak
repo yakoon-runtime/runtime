@@ -18,7 +18,9 @@ Description
 
 <paragraph>
 Displays the manual for a command.
+</paragraph>
 
+<paragraph>
 If no command is specified, the available manuals are listed.
 </paragraph>
 
@@ -39,7 +41,9 @@ man cd
 
 <paragraph>
 Manuals explain the purpose, usage and typical examples of a command.
+</paragraph>
 
+<paragraph>
 They are intended as concise documentation rather than a complete
 reference.
 </paragraph>

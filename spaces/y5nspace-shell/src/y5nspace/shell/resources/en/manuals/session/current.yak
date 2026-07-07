@@ -26,11 +26,13 @@ Examples
 <pre>
 current
   Show the current session details.
+
+session/current
+  From another space, qualify the path.
 </pre>
 
 <paragraph>
-Use session current to verify which session you are
-operating in.
+Use current to verify which session you are operating in.
 </paragraph>
 
 <heading level="2">
@@ -38,5 +40,5 @@ See also
 </heading>
 
 <paragraph>
-list, attach, detach, man
+attach, detach, list, man
 </paragraph>

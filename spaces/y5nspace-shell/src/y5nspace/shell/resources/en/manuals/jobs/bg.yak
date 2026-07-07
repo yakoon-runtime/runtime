@@ -1,4 +1,4 @@
-<heading>bg - Resume a background flow.</heading>
+<heading>bg - Send the foreground flow to background.</heading>
 
 <rule/>
 
@@ -15,11 +15,29 @@ Description
 </heading>
 
 <paragraph>
-Brings a suspended background flow to the foreground.
+Moves the current foreground flow to the background.
+</paragraph>
 
-A flow started with start_cmd or start_task may go into the
-background when its job is suspended.  bg resumes it to the
-current foreground slot.
+<paragraph>
+A flow in the background continues running but no longer
+receives interactive input. Use list to see background
+flows and fg to bring one back.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+bg
+  Move the current foreground flow to the background.
+
+jobs/bg
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use bg to suspend interactive work without stopping the flow.
 </paragraph>
 
 <heading level="2">
@@ -27,5 +45,5 @@ See also
 </heading>
 
 <paragraph>
-jobs, stop, fg, man
+fg, list, stop, man
 </paragraph>

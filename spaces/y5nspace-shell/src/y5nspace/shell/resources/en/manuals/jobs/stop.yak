@@ -7,7 +7,7 @@ Usage
 </heading>
 
 <pre>
-  stop index
+  stop INDEX
 </pre>
 
 <heading level="2">
@@ -16,9 +16,27 @@ Description
 
 <paragraph>
 Cancels a running flow identified by its job index.
+</paragraph>
 
-Use the list command to see active flows and their indices.
+<paragraph>
+Use list to see active flows and their indices.
 Once stopped, the flow cannot be resumed.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+stop 3
+  Stop the flow with index 3.
+
+jobs/stop 3
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use stop to terminate a flow that is no longer needed.
 </paragraph>
 
 <heading level="2">
@@ -26,5 +44,5 @@ See also
 </heading>
 
 <paragraph>
-list, bg, fg, man
+bg, fg, list, man
 </paragraph>

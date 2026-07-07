@@ -18,7 +18,9 @@ Description
 
 <paragraph>
 Changes settings of the current runtime session.
+</paragraph>
 
+<paragraph>
 Settings take effect immediately and remain active for the
 current session.
 </paragraph>
@@ -40,7 +42,9 @@ set --lang en
 
 <paragraph>
 Settings affect the current session only.
+</paragraph>
 
+<paragraph>
 Unknown settings or invalid values are rejected.
 </paragraph>
 

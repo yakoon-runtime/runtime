@@ -7,7 +7,7 @@ Usage
 </heading>
 
 <pre>
-  attach key
+  attach KEY
 </pre>
 
 <heading level="2">
@@ -21,8 +21,8 @@ the given key.
 
 <paragraph>
 After attaching, the client operates in the target session.
-The home session remains unchanged.
-Use session detach to return to the home session.
+The home session remains unchanged. Use detach to return
+to the home session.
 </paragraph>
 
 <heading level="2">
@@ -35,11 +35,14 @@ attach default
 
 attach work-1
   Attach to a specific session.
+
+session/attach office
+  From another space, qualify the path.
 </pre>
 
 <paragraph>
 The session key must be an existing active session.
-Use session list to see available sessions.
+Use list to see available sessions.
 </paragraph>
 
 <heading level="2">
@@ -47,5 +50,5 @@ See also
 </heading>
 
 <paragraph>
-list, detach, current, man
+current, detach, list, man
 </paragraph>

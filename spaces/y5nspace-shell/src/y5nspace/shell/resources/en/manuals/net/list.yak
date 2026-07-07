@@ -7,8 +7,7 @@ Usage
 </heading>
 
 <pre>
-  net list
-  net
+  list
 </pre>
 
 <heading level="2">
@@ -17,9 +16,28 @@ Description
 
 <paragraph>
 Lists all known remote runtimes and their connection status.
+</paragraph>
 
+<paragraph>
 Runtimes are configured in the runtime settings file.
 Each entry has a name and a WebSocket URL.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+list
+  List all known runtimes.
+
+net/list
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use list to see which runtimes are available before
+connecting.
 </paragraph>
 
 <heading level="2">
@@ -27,5 +45,5 @@ See also
 </heading>
 
 <paragraph>
-net connect, man
+connect, man
 </paragraph>
