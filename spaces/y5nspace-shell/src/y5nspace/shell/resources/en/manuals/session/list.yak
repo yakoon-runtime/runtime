@@ -1,0 +1,48 @@
+<heading>list - List active sessions.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  list
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all active runtime sessions and their connection
+details.
+</paragraph>
+
+<paragraph>
+Sessions are listed by key with attached clients, homes,
+and active flows. The current session is marked with
+an asterisk.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+list
+  List all active sessions.
+</pre>
+
+<paragraph>
+Use session list to see which sessions are active and
+which one you are currently using.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+attach, current, detach, man
+</paragraph>

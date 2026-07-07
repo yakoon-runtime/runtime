@@ -1,0 +1,46 @@
+<heading>detach - Return to the home session.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  detach
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Returns the current client to its home session.
+</paragraph>
+
+<paragraph>
+If the client is already in the home session,
+detach has no effect.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+detach
+  Return to the home session.
+</pre>
+
+<paragraph>
+Use session detach after attaching to another
+session to go back to where you started.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+attach, list, current, man
+</paragraph>
