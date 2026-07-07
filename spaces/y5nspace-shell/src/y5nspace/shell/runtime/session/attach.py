@@ -6,9 +6,9 @@ from y5n.api.projections import to_text
 
 async def run(space: NodeSpace):
 
-    target = space.request.option("attach")
+    target = space.request.arg(0)
     if not target:
-        yield out(to_text("Usage: session --attach <key>"))
+        yield out(to_text("Usage: session attach <key>"))
         return
 
     on_attach = space.ports.get(OnSessionAttach)

@@ -1,3 +1,4 @@
+from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node, NodeScope
 
 from .attach import run as attach
@@ -6,31 +7,15 @@ from .detach import run as detach
 from .list import run as list
 
 # ----------------------------------
-# SESSION  (router)
+# SESSION
 # ----------------------------------
-
-
-async def run(space):
-    if space.request.has_option("attach"):
-        async for item in attach(space):
-            yield item
-    elif space.request.has_option("detach"):
-        async for item in detach(space):
-            yield item
-    elif space.request.has_option("list"):
-        async for item in list(space):
-            yield item
-    else:
-        async for item in current(space):
-            yield item
-
 
 session = Node(
     key="session",
     anonymous=True,
     navigable=True,
     resolvable=True,
-    run=run,
+    run=list,
     scope=NodeScope.GLOBAL,
 )
 
@@ -48,3 +33,51 @@ session.add(
     )
 )
 
+# ----------------------------------
+# ATTACH
+# ----------------------------------
+
+session.add(
+    Node(
+        key="attach",
+        run=attach,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+        invocations=[
+            Invocation(
+                params=[
+                    Param(key="key", required=True, positional=True),
+                ],
+            ),
+        ],
+    )
+)
+
+# ----------------------------------
+# DETACH
+# ----------------------------------
+
+session.add(
+    Node(
+        key="detach",
+        run=detach,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+    )
+)
+
+# ----------------------------------
+# CURRENT
+# ----------------------------------
+
+session.add(
+    Node(
+        key="current",
+        run=current,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+    )
+)
