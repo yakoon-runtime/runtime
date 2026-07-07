@@ -27,17 +27,15 @@ async def run(space: NodeSpace):
         )
 
         parent_path = ""
-        if parent_result.status == "ok":
+        scope_result = await on_source(
+            DataRequest(f"system:nodes --scope {current_node}")
+        )
+        parent = next((x for x in scope_result.rows if x["key"] == parent_name), None)
+
+        if parent:
+            parent_path = parent["path"]
+        elif parent_result.status == "ok":
             parent_path = parent_result.one()["path"]
-        else:
-            scope_result = await on_source(
-                DataRequest(f"system:nodes --scope {current_node}")
-            )
-            parent = next(
-                (x for x in scope_result.rows if x["key"] == parent_name), None
-            )
-            if parent:
-                parent_path = parent["path"]
 
         if parent_path:
             child_result = await on_source(
