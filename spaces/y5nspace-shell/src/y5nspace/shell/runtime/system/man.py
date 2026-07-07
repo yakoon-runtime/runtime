@@ -13,6 +13,12 @@ async def run(space: NodeSpace):
 
     current_node = space.session.get_current_node()  # type: ignore
 
+    # Manual resolution intentionally avoids the runtime resolver.
+    #
+    # Manuals only need simple parent/child lookup. Keeping this logic
+    # separate prevents coupling Shell to runtime node resolution
+    # semantics (multi-segment paths, .., /, scope chains).
+    #
     # ----------------------------------
     # Resolve visible nodes
     # ----------------------------------
