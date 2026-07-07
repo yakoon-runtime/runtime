@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from y5n.api.dsl import out
 from y5n.api.dsl.patterns import Form
+from y5n.api.invocations import Param
 from y5n.api.naming import Key
 from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnAuthenticate, OnSessionSave
@@ -17,23 +18,38 @@ from ..services import Namespaces, PermissionResolver
 async def run(space: NodeSpace):
 
     namespaces = space.ports.get(Namespaces)
-    form = Form()
     request = space.request
 
     # ----------------------------------
-    # CREDENTIALS (Batch oder Form)
+    # CREDENTIALS (Form oder Batch)
     # ----------------------------------
 
     username = request.arg(0) or request.option("user")
     secret = request.option("password")
 
-    if not username:
-        yield form.ask("username", "Benutzername:")
-        username = form.data.get("username", "")
+    if not username or not secret:
 
-    if not secret:
-        yield form.ask("password", "Passwort:")
-        secret = form.data.get("password", "")
+        initial = {}
+
+        if username:
+            initial["username"] = username
+        if secret:
+            initial["password"] = secret
+
+        form = Form(
+            title="Login",
+            fields=[
+                Param(key="username", title="Benutzername"),
+                Param(key="password", title="Passwort"),
+            ],
+            initial=initial,
+        )
+
+        async for step in form.run():
+            yield step
+
+        username = form.data.get("username") or username
+        secret = form.data.get("password") or secret
 
     # ----------------------------------
     # AUTHENTICATE
