@@ -1,0 +1,49 @@
+<heading>delete - Delete an exit.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  delete NAME --world NAME --box NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Permanently removes an exit connection between two boxes.
+</paragraph>
+
+<paragraph>
+The boxes themselves remain unchanged. Only the connection
+is removed.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+delete Door --world Work --box Office
+  Delete the exit called Door.
+
+exit/delete Passage --world Research --box Lab
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use delete to remove an exit you no longer need.
+The boxes on both sides stay intact.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+edit, list, man, show
+</paragraph>
