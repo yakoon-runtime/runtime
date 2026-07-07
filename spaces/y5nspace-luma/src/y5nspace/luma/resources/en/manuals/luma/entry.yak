@@ -1,0 +1,54 @@
+<heading>entry - Show or set the entry box of a world.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  entry NAME
+  entry NAME --box NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Shows or sets the entry box of a world.
+</paragraph>
+
+<paragraph>
+The entry box is where you arrive when you enter a world.
+Each world has exactly one entry.
+</paragraph>
+
+<paragraph>
+Without --box, the current entry is displayed.
+With --box, the entry is changed to the specified box.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+entry Work
+  Show the current entry box of the Work world.
+
+entry Work --box Garden
+  Set the entry of Work to the Garden box.
+</pre>
+
+<paragraph>
+Use entry to control where enter takes you in a world.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+enter, go, leave, look, man
+</paragraph>

@@ -1,0 +1,52 @@
+<heading>delete - Delete a note.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  delete NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Permanently removes a note and its content.
+</paragraph>
+
+<paragraph>
+If the note was placed on a box, it is automatically
+removed from that box.
+</paragraph>
+
+<paragraph>
+This action cannot be undone.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+delete Ideas
+  Delete the note called Ideas.
+
+note/delete Todo
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use delete to remove a note you no longer need.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, edit, inbox, list, man, put, remove, show
+</paragraph>

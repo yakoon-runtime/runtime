@@ -1,0 +1,60 @@
+<heading>dig - Create a box and connect to it.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  dig NAME
+  dig NAME --direction north
+  dig NAME --direction east --twoway
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Creates a new box in the current world and connects it
+to the current box via an exit.
+</paragraph>
+
+<paragraph>
+If a box with the given name already exists, only the
+exit is created.
+</paragraph>
+
+<paragraph>
+The --direction flag sets a direction label on the exit.
+Use --twoway to create a return exit as well.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+dig Garden
+  Create a box and connect to it.
+
+dig Office --direction east
+  Create a box with a directional exit.
+
+dig Basement --direction down --twoway
+  Create a two-way connection.
+</pre>
+
+<paragraph>
+Use dig to extend the world by creating new places
+connected to your current location.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+connect, enter, go, leave, look, man, place
+</paragraph>

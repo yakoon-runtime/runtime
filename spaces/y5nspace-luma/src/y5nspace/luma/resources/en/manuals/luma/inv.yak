@@ -1,0 +1,45 @@
+<heading>inv - Show your inventory.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  inv
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all portable boxes you are currently carrying.
+</paragraph>
+
+<paragraph>
+Items are added to inventory with take and removed
+with drop.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+inv
+  Show your inventory.
+</pre>
+
+<paragraph>
+Use inv to see which items you are carrying.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+drop, look, man, move, place, take
+</paragraph>

@@ -1,0 +1,49 @@
+<heading>inbox - List unplaced notes.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  inbox
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all notes that have not been placed in any box.
+</paragraph>
+
+<paragraph>
+Notes start in the inbox after creation. They remain
+there until placed somewhere with note put.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+inbox
+  List all unplaced notes.
+
+note/inbox
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use inbox to see which notes still need a place.
+Place them with note put.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, delete, edit, list, man, put, remove, show
+</paragraph>

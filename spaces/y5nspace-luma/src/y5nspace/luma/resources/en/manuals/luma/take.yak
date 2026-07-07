@@ -1,0 +1,47 @@
+<heading>take - Pick up a portable box.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  take NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Picks up a portable box from the current location
+and adds it to your inventory.
+</paragraph>
+
+<paragraph>
+Only portable boxes can be taken. Items in your
+inventory can be viewed with inv and dropped
+with drop.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+take Key
+  Pick up the Key and add it to your inventory.
+</pre>
+
+<paragraph>
+Use take to carry portable items with you.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+drop, inv, look, man, move, place
+</paragraph>

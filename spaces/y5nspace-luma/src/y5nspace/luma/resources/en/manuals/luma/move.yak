@@ -1,0 +1,47 @@
+<heading>move - Move a portable box.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  move NAME --box BOX
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Moves a portable box from the current location into
+another box at the same location.
+</paragraph>
+
+<paragraph>
+The --box option specifies the target container.
+Only portable boxes can be moved.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+move Key --box Drawer
+  Move the Key into the Drawer box.
+</pre>
+
+<paragraph>
+Use move to reorganize portable items within
+your current location.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+drop, inv, look, man, place, take
+</paragraph>

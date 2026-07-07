@@ -1,0 +1,46 @@
+<heading>leave - Exit the current world context.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  leave
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Exits the current world and box context.
+</paragraph>
+
+<paragraph>
+After leaving, navigation commands like look and go
+are no longer available until you enter a world again.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+leave
+  Exit the current world.
+</pre>
+
+<paragraph>
+Use leave when you are finished navigating inside
+a world.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+enter, entry, go, look, man
+</paragraph>

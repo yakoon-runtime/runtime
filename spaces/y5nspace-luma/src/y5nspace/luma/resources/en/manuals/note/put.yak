@@ -1,0 +1,54 @@
+<heading>put - Place a note in a box.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  put NAME
+  put NAME --box NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Places a note on a box. Without --box, the note is placed
+in the current box context.
+</paragraph>
+
+<paragraph>
+A note can be placed on multiple boxes. Placing a note
+does not remove it from the inbox.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+put Ideas
+  Place a note in the current box.
+
+put Todo --box Desk
+  Place a note on a specific box.
+
+note/put Meeting --box Board
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+Use put to attach a note to a box. Notes remain visible
+in the inbox until explicitly removed.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, delete, edit, inbox, list, man, remove, show
+</paragraph>
