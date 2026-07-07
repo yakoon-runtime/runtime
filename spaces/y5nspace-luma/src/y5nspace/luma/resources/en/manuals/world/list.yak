@@ -1,0 +1,50 @@
+<heading>list - List all worlds.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  list
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all worlds with their ID, name and description.
+</paragraph>
+
+<paragraph>
+The world space itself also runs list by default, so
+navigating to world and running the command without
+arguments produces the same result.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+list
+  List all worlds.
+
+world
+  Same as list when inside or outside the world space.
+</pre>
+
+<paragraph>
+Use list to see which worlds exist before navigating
+into them with enter.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, delete, edit, enter, man, show
+</paragraph>

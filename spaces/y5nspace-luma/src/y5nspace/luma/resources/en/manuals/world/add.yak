@@ -1,1 +1,59 @@
-Test
+<heading>add - Create a new world.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  add NAME
+  add NAME --description "My notes"
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Creates a new empty world with the given name.
+</paragraph>
+
+<paragraph>
+A world is the top-level container in Luma. Everything in Luma
+belongs to a world — boxes, exits and notes.
+</paragraph>
+
+<paragraph>
+The optional --description flag lets you attach a short
+description to the world.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+add Work
+  Create a world called Work.
+
+add Research --description "Research notes"
+  Create a world with a description.
+
+world/add Office
+  From another space, qualify the path.
+</pre>
+
+<paragraph>
+When you are inside the world space, the local command is
+simply add. From other spaces, use the qualified path
+world/add.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+delete, edit, enter, list, man, show
+</paragraph>
