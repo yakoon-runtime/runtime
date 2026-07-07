@@ -31,7 +31,7 @@ attach work
 
 ls shell/session
 
-cd net
+cd /net
 connect office
 ```
 

@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from y5n.api.nodes import NodeSpace
+from y5n.api.nodes import NodePath, NodeSpace
+from y5n.api.ports import (
+    OnErrorResolve,
+    OnManualResolve,
+    OnProjectionResolve,
+)
+from y5n.base.projection import Projection
+from y5n.base.resources import ResourceRef
+from y5n.base.runtime.sessions import Session
 from y5nstore.event.models import IndexKey, IndexSpec, IndexTerm, ValueType
 from y5nstore.event.wire import build_store as build_event_store
 from y5nstore.sequence.wire import build_store as build_sequencer
@@ -35,7 +43,9 @@ def _make_adapters(store):
     async def replace(*, key, doc, indexes=(), snapshot_hint=None, expected_rev=None):
         idx = list(indexes) + [IndexTerm(key=IndexKey("all"), value="1")]
         return await store.objects.replace(
-            key=key, doc=doc, indexes=idx,
+            key=key,
+            doc=doc,
+            indexes=idx,
         )
 
     return scan, replace
@@ -87,6 +97,55 @@ async def setup(space: NodeSpace):
         on_delete=store.objects.delete,
         on_next_id=sequencer.next_id,
     )
+
+    # ------------------
+    # --- ON MANUAL ---
+    # ------------------
+
+    async def on_manual(
+        *,
+        key: NodePath,
+        lang: str,
+        state: dict | None = None,
+    ) -> Projection:
+
+        resource = ResourceRef(
+            package="y5nspace.luma",
+            path=f"resources/{lang}/manuals/{key.parent.last}/{key.last}",
+        )
+
+        on_project = space.ports.get(OnProjectionResolve)
+        return await on_project(resource=resource, state=state)
+
+    # ------------------
+    # --- ON MANUAL ---
+    # ------------------
+
+    async def on_error(
+        *,
+        key: NodePath,
+        session: Session,
+        error: Exception,
+    ) -> Projection:
+
+        resource = ResourceRef(
+            package="y5nspace.shell",
+            path=f"resources/{session.lang}/errors/exc",
+        )
+
+        on_project = space.ports.get(OnProjectionResolve)
+
+        return await on_project(
+            resource=resource,
+            state={"message": error.args[0]},
+        )
+
+    # ------------------------
+    # --- PROVIDE INTERNAL ---
+    # ------------------------
+
+    space.ports.provide(OnManualResolve, on_manual)
+    space.ports.provide(OnErrorResolve, on_error)
 
     space.ports.provide(WorldServiceProtocol, worlds)
     space.ports.provide(BoxServiceProtocol, boxes)
