@@ -13,27 +13,34 @@ from y5n.base.projection.model.field import Field, FieldsState
 
 
 class Form:
-    """Interactive form for collecting field input with validation.
+    """Interactive form for collecting structured user input.
 
-    Renders as a FieldsBlock inside a SectionBlock projection. Each field
-    is collected individually via ask() — the client shows them sequentially
-    or bundled. Completed fields are marked as "done", the active one as
-    "active".
+    A form consists of one or more fields that are validated individually.
+    After each input the form is re-rendered, allowing clients to display
+    progress and validation errors.
 
-    initial sets pre-filled values (e.g. from a loaded entity on edit).
-    Pre-filled fields are displayed and can be overwritten. The first
-    field without a value is marked as active by the client.
+    Fields may be registered upfront or added dynamically while the dialog
+    is running.
 
-    Usage (inside a run handler):
-        async for outcome in form.ask("name", "Name"):
-            yield outcome
-        async for outcome in form.ask("company", "Company"):
-            yield outcome
-        values = form.values
+    Modes
 
-    For automatic field iteration:
-        async for outcome in form.run():
-            yield outcome
+        Form
+            All fields are known before execution.
+
+            async for step in form.run():
+                yield step
+
+        Dialog
+            Fields are added incrementally.
+
+            yield form.ask("first_name", "First name")
+            yield form.ask("last_name", "Last name")
+
+    Initial values
+
+        `initial` provides pre-filled values (for example when editing an
+        existing entity). Existing values are displayed and may be changed.
+        The first field without a value becomes the active field.
     """
 
     def __init__(
@@ -54,7 +61,13 @@ class Form:
     # --------------------------------------------------------
 
     async def run(self) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
-        """Iterate all registered fields and yield sub-generators for each."""
+        """Yield a sub-generator for each registered field.
+
+        The caller forwards each sub-generator to the engine:
+
+            async for step in form.run():
+                yield step
+        """
         for param in self._fields:
             yield self.ask(
                 key=param.key,
@@ -92,7 +105,9 @@ class Form:
                     name=param.key,
                     value=self.data.get(param.key),
                     state=state,
-                    error=self._error if param.key == active_key and self._error else None,
+                    error=(
+                        self._error if param.key == active_key and self._error else None
+                    ),
                 )
             )
 

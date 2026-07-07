@@ -2,6 +2,7 @@ from y5n.api.nodes import Node
 from y5n.base.nodes.types import NodeScope
 
 from .agent import run as agent
+from .dlg import run as dlg
 from .form import run as form
 from .setup import setup
 
@@ -25,6 +26,20 @@ patterns.add(
     Node(
         key="form",
         run=form,
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+    )
+)
+
+# ----------------------------------
+# DLG (Dialog / field by field)
+# ----------------------------------
+
+patterns.add(
+    Node(
+        key="dlg",
+        run=dlg,
         anonymous=True,
         resolvable=True,
         navigable=False,
