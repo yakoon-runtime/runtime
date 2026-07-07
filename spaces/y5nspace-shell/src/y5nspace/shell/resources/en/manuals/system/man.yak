@@ -29,8 +29,8 @@ Examples
 </heading>
 
 <pre>
-man
-  List all available manuals.
+man man
+  Show this manual.
 
 man ls
   Show the manual for ls.

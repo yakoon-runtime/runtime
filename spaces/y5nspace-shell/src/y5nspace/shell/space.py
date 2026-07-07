@@ -1,11 +1,11 @@
 from y5n.api.nodes import Node
 
+from .runtime.info import run as info
 from .runtime.jobs.space import jobs
 from .runtime.labs.space import labs
 from .runtime.net.space import net
 from .runtime.session.space import session
 from .runtime.setup import setup
-from .runtime.status import run as status_run
 from .runtime.system.space import system
 from .runtime.welcome import run as welcome_run
 
@@ -27,8 +27,8 @@ shell = Node(
 
 shell.add(
     Node(
-        key="status",
-        run=status_run,
+        key="info",
+        run=info,
         anonymous=True,
         resolvable=True,
         navigable=False,

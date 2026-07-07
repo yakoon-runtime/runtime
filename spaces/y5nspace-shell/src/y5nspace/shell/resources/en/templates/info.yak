@@ -1,3 +1,4 @@
+
 <kv>
   <item key="Platform Version">{{ state.version }}</item>
   <item key="Python">{{ state.python }}</item>
