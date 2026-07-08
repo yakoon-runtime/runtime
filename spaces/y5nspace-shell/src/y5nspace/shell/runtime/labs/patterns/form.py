@@ -5,6 +5,10 @@ from y5n.api.invocations import Param
 
 async def run(_):
 
+    initial = {}
+    initial["first_name"] = "stefan"
+    initial["last_name"] = "bergmann"
+
     form = Form(
         title="Example Form",
         fields=[
@@ -12,6 +16,7 @@ async def run(_):
             Param(key="last_name", title="Nachname"),
             Param(key="age", title="Alter", policy=IntPolicy(min=1, max=99)),
         ],
+        initial=initial,
     )
 
     async for outcome in form.run():
