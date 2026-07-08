@@ -3,7 +3,7 @@ import json
 from y5n.base.clients import ClientConnection
 from y5n.base.flow.patterns.public import FormAction
 from y5n.base.projection.wire import serialize_event
-from y5n.base.runtime import Event
+from y5n.base.runtime import Event, Routing
 from y5n.base.runtime.input.context import InputContext, Origin
 
 
@@ -82,5 +82,7 @@ def map_to_input_event(data):
             context=ctx,
         )
 
+    routing_name = payload.get("__routing__")
+    routing = Routing[routing_name] if routing_name else Routing.DEFAULT
     raw = payload.get("raw") or ""
-    return Event.from_raw(data=raw, context=ctx)
+    return Event.from_raw(data=raw, context=ctx, routing=routing)

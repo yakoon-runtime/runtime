@@ -39,7 +39,6 @@ async def host():
         on_create_runner=MagicMock(
             side_effect=lambda *, session: Runner(
                 session=session,
-                runtime_commands=set(),
                 on_dispatch=AsyncMock(),
                 on_schedule_flow=MagicMock(),
             )

@@ -5,7 +5,7 @@ import websockets
 from y5n.base.clients import ClientConnection
 from y5n.base.flow.patterns.public import FormAction
 from y5n.base.projection.wire import deserialize_event
-from y5n.base.runtime import Event
+from y5n.base.runtime import Event, Routing
 
 
 class WebSocketClientTransport:
@@ -26,6 +26,7 @@ class WebSocketClientTransport:
 
         async def receive_loop():
             try:
+                assert self._websocket is not None
                 async for msg in self._websocket:
                     data = json.loads(msg)
 
@@ -62,6 +63,9 @@ class WebSocketClientTransport:
                 msg["payload"].update(payload.to_wire())
             else:
                 msg["payload"]["raw"] = str(payload)
+
+            if event.routing is not Routing.DEFAULT:
+                msg["payload"]["__routing__"] = event.routing.name
 
             await self._websocket.send(json.dumps(msg))
 

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import pytest
-from y5n.base.flow.channel import Scope
-from y5n.base.flow.dsl import out, receive
+from y5n.base.flow.dsl import receive
 from y5n.base.flow.primitives import AwaitEvent, Outcome, Stop
 from y5n.base.nodes import Node
-from y5n.base.projection import Projection
 from y5n.base.runtime import Event
 from y5n.runtime.machine.runner import Runner
 
@@ -34,9 +32,7 @@ async def test_receive_user_input(harness):
     assert received == ["hello"]
 
 
-def _make_runner(harness, *, runtime_commands=None):
-    if runtime_commands is None:
-        runtime_commands = set()
+def _make_runner(harness):
     """Helper: erzeugt einen Runner mit dispatchendem on_dispatch."""
 
     async def on_dispatch(*, session, event):
@@ -46,7 +42,6 @@ def _make_runner(harness, *, runtime_commands=None):
 
     return Runner(
         session=harness.session,
-        runtime_commands=runtime_commands,
         on_dispatch=on_dispatch,
         on_schedule_flow=harness.scheduler.schedule_flow,
     )

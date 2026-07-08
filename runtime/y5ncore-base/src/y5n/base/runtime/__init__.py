@@ -1,6 +1,6 @@
 from .container import Container
 from .info import RuntimeInfo
-from .input import Event, InputContext, Interaction
+from .input import Event, InputContext, Interaction, Routing
 
 __all__ = [
     "Container",
@@ -8,4 +8,5 @@ __all__ = [
     "InputContext",
     "Interaction",
     "RuntimeInfo",
+    "Routing",
 ]
