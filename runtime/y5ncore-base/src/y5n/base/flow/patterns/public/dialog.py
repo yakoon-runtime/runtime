@@ -42,6 +42,14 @@ class Dialog:
         return self._fields
 
     @property
+    def index(self) -> int:
+        return self._idx
+
+    @property
+    def count(self) -> int:
+        return len(self._fields)
+
+    @property
     def current(self) -> Any | None:
         if self._idx >= len(self._fields):
             return None
@@ -50,6 +58,14 @@ class Dialog:
     @property
     def completed(self) -> bool:
         return self._idx >= len(self._fields)
+
+    @property
+    def has_previous(self) -> bool:
+        return self._idx > 0
+
+    @property
+    def has_next(self) -> bool:
+        return self._idx < len(self._fields) - 1
 
     # --------------------------------------------------------
     # Cursor movement
@@ -62,6 +78,10 @@ class Dialog:
     def previous(self) -> None:
         if self._idx > 0:
             self._idx -= 1
+
+    def move(self, offset: int) -> None:
+        target = self._idx + offset
+        self._idx = max(0, min(len(self._fields) - 1, target))
 
     def focus(self, key: str) -> None:
         for i, f in enumerate(self._fields):
