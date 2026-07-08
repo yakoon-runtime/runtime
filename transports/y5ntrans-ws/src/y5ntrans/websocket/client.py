@@ -3,6 +3,7 @@ import json
 
 import websockets
 from y5n.base.clients import ClientConnection
+from y5n.base.flow.patterns.public import FormAction
 from y5n.base.projection.wire import deserialize_event
 from y5n.base.runtime import Event
 
@@ -44,17 +45,25 @@ class WebSocketClientTransport:
 
         async def send_input(event: Event):
             ctx = event.context or {}
-            payload = {
+            payload = event.payload
+            msg: dict = {
                 "type": "input",
                 "payload": {
-                    "raw": str(event.payload),
                     "context": {
                         "origin": getattr(ctx, "origin", None),
                         "echo": getattr(ctx, "echo", None),
                     },
                 },
             }
-            await self._websocket.send(json.dumps(payload))
+
+            if isinstance(payload, str):
+                msg["payload"]["raw"] = payload
+            elif isinstance(payload, FormAction):
+                msg["payload"].update(payload.to_wire())
+            else:
+                msg["payload"]["raw"] = str(payload)
+
+            await self._websocket.send(json.dumps(msg))
 
         connection = ClientConnection(
             emit=on_emit,

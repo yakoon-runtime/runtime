@@ -1,6 +1,7 @@
 import json
 
 from y5n.base.clients import ClientConnection
+from y5n.base.flow.patterns.public import FormAction
 from y5n.base.projection.wire import serialize_event
 from y5n.base.runtime import Event
 from y5n.base.runtime.input.context import InputContext, Origin
@@ -65,15 +66,21 @@ def map_to_input_event(data):
     payload = data.get("payload", {})
     context = payload.get("context") or {}
 
-    raw = payload.get("raw") or ""
-
     origin_str = context.get("origin")
     origin = Origin(origin_str) if origin_str else Origin.HUMAN
-    return Event.from_raw(
-        data=raw,
-        context=InputContext(
-            origin=origin,
-            channel=context.get("channel"),
-            echo=raw,
-        ),
+    ctx = InputContext(
+        origin=origin,
+        channel=context.get("channel"),
+        echo=payload.get("raw") or "",
     )
+
+    type_hint = payload.get("__type__")
+
+    if type_hint == "FormAction":
+        return Event(
+            payload=FormAction.from_wire(payload),
+            context=ctx,
+        )
+
+    raw = payload.get("raw") or ""
+    return Event.from_raw(data=raw, context=ctx)

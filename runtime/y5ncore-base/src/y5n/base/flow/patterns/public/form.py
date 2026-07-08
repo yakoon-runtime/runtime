@@ -65,6 +65,7 @@ class Form:
         self.data: dict[str, str] = dict(initial or {})
         self._error: str | None = None
         self._focus_key = focus
+        self._navigated = False
 
     # --------------------------------------------------------
     # Dialog
@@ -91,6 +92,9 @@ class Form:
                 title=param.title or param.key.title(),
                 policy=param.policy,
             )
+            if self._navigated:
+                self._navigated = False
+                continue
             self._dialog.next()
 
     @property
@@ -111,9 +115,7 @@ class Form:
             case "focus":
                 if action.target:
                     self._dialog.focus(action.target)
-            case "submit" | "cancel":
-                while not self._dialog.completed:
-                    self._dialog.next()
+
 
     # --------------------------------------------------------
     # Rendering
@@ -188,12 +190,21 @@ class Form:
         title: str,
         policy: BasePolicy | None = None,
     ) -> AsyncGenerator[Outcome, Any]:
-        """Core lifecycle for a single field: prompt, receive, validate."""
+        """Core lifecycle for a single field: prompt, receive, validate.
+
+        If the incoming event is a FormAction, it is applied to the dialog
+        and the sub-generator returns — run() re-evaluates the cursor.
+        """
 
         while True:
 
             yield prompt(self._render(key))
             event = yield receive()
+
+            if isinstance(event.payload, FormAction):
+                self.apply(event.payload)
+                self._navigated = True
+                return
 
             try:
 
