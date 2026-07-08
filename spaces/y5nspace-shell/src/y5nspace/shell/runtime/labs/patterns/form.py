@@ -17,6 +17,7 @@ async def run(_):
             Param(key="age", title="Alter", policy=IntPolicy(min=1, max=99)),
         ],
         initial=initial,
+        focus="last_name",
     )
 
     async for outcome in form.run():

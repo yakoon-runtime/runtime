@@ -11,6 +11,8 @@ from y5n.base.projection import Projection, ProjectionHeader
 from y5n.base.projection.model.block import FieldsBlock, SectionBlock
 from y5n.base.projection.model.field import Field, FieldsState
 
+from .dialog import Dialog
+
 
 class Form:
     """Interactive form for collecting structured user input.
@@ -19,34 +21,26 @@ class Form:
     After each input the form is re-rendered, allowing clients to display
     progress and validation errors.
 
-    Fields may be registered upfront or added dynamically while the dialog
-    is running.
+    Fields may be registered upfront or added on the fly.
 
-    Modes
+    Two modes of operation:
 
-        Form
-            All fields are known before execution.
-
+        Form (all fields upfront):
             async for step in form.run():
                 yield step
 
-        Dialog
-            Fields are added incrementally.
-
+        Dialog (field-by-field):
             yield form.ask("first_name", "First name")
             yield form.ask("last_name", "Last name")
 
     Initial values
 
-        `initial` provides pre-filled values (for example when editing an
-        existing entity). Existing values are displayed and may be changed.
-        The first field without a value becomes the active field.
+        `initial` provides pre-filled values. Existing values are
+        displayed as "done" and are skipped by run().
 
     Focus
 
-        `focus` sets the field that receives input focus first. Fields
-        before it that already have a value are shown as done; fields
-        before it without a value are visited after the focused field.
+        `focus` sets the field where the cursor starts.
 
             Form(
                 fields=[Param("username", ...), Param("password", ...)],
@@ -63,42 +57,40 @@ class Form:
         initial: dict[str, str] | None = None,
         focus: str | None = None,
     ):
-        self._fields: list[Param] = list(fields) if fields is not None else []
+        self._dialog = Dialog(fields or [], focus_key=focus)
+        self._fields: list[Param] = self._dialog.fields  # reference
         self._title = title
         self._field_map: dict[str, Param] = {p.key: p for p in self._fields}
         self.data: dict[str, str] = dict(initial or {})
         self._error: str | None = None
-        self._focus = focus
+        self._focus_key = focus
 
     # --------------------------------------------------------
     # Dialog
     # --------------------------------------------------------
 
     async def run(self) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
-        """Yield a sub-generator for each registered field.
+        """Yield a sub-generator for each field until the dialog completes.
 
-        When `focus` is set, iteration starts at that field and continues
-        to the end of the field list. Fields before the focus are not
-        visited — they are expected to have values from `initial`.
-
+        Fields that already have a value (from `initial`) are skipped.
         The caller forwards each sub-generator to the engine:
 
             async for step in form.run():
                 yield step
         """
-        for param in self._fields_to_visit():
-            yield self.ask(
+        while not self._dialog.completed:
+            param = self._dialog.current
+            if param is None:
+                break
+            if param.key in self.data and param.key != self._focus_key:
+                self._dialog.next()
+                continue
+            yield self._ask_field(
                 key=param.key,
                 title=param.title or param.key.title(),
                 policy=param.policy,
             )
-
-    def _fields_to_visit(self) -> list[Param]:
-        """Return fields from focus onward, or all fields when no focus."""
-        if self._focus and self._focus in self._field_map:
-            idx = next(i for i, p in enumerate(self._fields) if p.key == self._focus)
-            return self._fields[idx:]
-        return list(self._fields)
+            self._dialog.next()
 
     @property
     def values(self) -> Mapping[str, str]:
@@ -149,20 +141,35 @@ class Form:
         )
 
     # --------------------------------------------------------
-    # Field lifecycle
+    # Field lifecycle (used by both run() and standalone ask())
     # --------------------------------------------------------
 
-    async def ask(
+    def ask(
         self,
         key: str,
         title: str,
         policy: BasePolicy | None = None,
     ) -> AsyncGenerator[Outcome, Any]:
+        """Register a field on the fly and return its input sub-generator.
 
+        Used in dialog mode (field-by-field):
+
+            yield form.ask("first_name", "First name")
+        """
         if key not in self._field_map:
             param = Param(key=key, title=title.rstrip(": "), policy=policy)
             self._fields.append(param)
             self._field_map[key] = param
+
+        return self._ask_field(key, title, policy)
+
+    async def _ask_field(
+        self,
+        key: str,
+        title: str,
+        policy: BasePolicy | None = None,
+    ) -> AsyncGenerator[Outcome, Any]:
+        """Core lifecycle for a single field: prompt, receive, validate."""
 
         while True:
 
