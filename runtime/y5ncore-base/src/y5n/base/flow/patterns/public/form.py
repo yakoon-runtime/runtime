@@ -64,7 +64,6 @@ class Form:
         self._field_map: dict[str, Param] = {p.key: p for p in self._fields}
         self.data: dict[str, str] = dict(initial or {})
         self._error: str | None = None
-        self._focus_key = focus
         self._navigated = False
 
     # --------------------------------------------------------
@@ -74,7 +73,6 @@ class Form:
     async def run(self) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
         """Yield a sub-generator for each field until the dialog completes.
 
-        Fields that already have a value (from `initial`) are skipped.
         The caller forwards each sub-generator to the engine:
 
             async for step in form.run():
@@ -84,9 +82,6 @@ class Form:
             param = self._dialog.current
             if param is None:
                 break
-            if param.key in self.data and param.key != self._focus_key:
-                self._dialog.next()
-                continue
             yield self._ask_field(
                 key=param.key,
                 title=param.title or param.key.title(),
