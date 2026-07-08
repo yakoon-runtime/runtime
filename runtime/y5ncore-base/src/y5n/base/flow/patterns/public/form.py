@@ -12,6 +12,7 @@ from y5n.base.projection.model.block import FieldsBlock, SectionBlock
 from y5n.base.projection.model.field import Field, FieldsState
 
 from .dialog import Dialog
+from .form_action import FormAction
 
 
 class Form:
@@ -95,6 +96,24 @@ class Form:
     @property
     def values(self) -> Mapping[str, str]:
         return dict(self.data)
+
+    # --------------------------------------------------------
+    # Actions
+    # --------------------------------------------------------
+
+    def apply(self, action: FormAction) -> None:
+        """Apply a navigation action to the form cursor."""
+        match action.action:
+            case "next":
+                self._dialog.next()
+            case "previous":
+                self._dialog.previous()
+            case "focus":
+                if action.target:
+                    self._dialog.focus(action.target)
+            case "submit" | "cancel":
+                while not self._dialog.completed:
+                    self._dialog.next()
 
     # --------------------------------------------------------
     # Rendering
