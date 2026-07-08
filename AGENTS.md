@@ -16,6 +16,7 @@
 - Keep functions small and explicit.
 - Avoid boolean flags that change behavior.
 - Preserve backwards compatibility unless instructed otherwise.
+- All comments and Git commit messages must be written in English.
 
 ## Before finishing
 
