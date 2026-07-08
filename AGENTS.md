@@ -17,6 +17,7 @@
 - Avoid boolean flags that change behavior.
 - Preserve backwards compatibility unless instructed otherwise.
 - All comments and Git commit messages must be written in English.
+- Git commit messages follow conventional commits: feat(scope), fix(scope), docs(scope), refactor(scope), chore(scope), etc. No commits without explicit user request.
 
 ## Before finishing
 
