@@ -16,7 +16,7 @@ class FormAction:
         FormAction("focus", target="username")
     """
 
-    action: Literal["next", "previous", "focus"]
+    action: Literal["next", "previous", "focus", "submit"]
     target: str | None = None
 
     # --------------------------------------------------------

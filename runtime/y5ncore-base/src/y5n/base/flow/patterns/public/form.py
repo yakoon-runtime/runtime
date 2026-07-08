@@ -90,7 +90,7 @@ class Form:
             if self._navigated:
                 self._navigated = False
                 continue
-            self._dialog.next()
+            self._advance()
 
     @property
     def values(self) -> Mapping[str, str]:
@@ -104,13 +104,41 @@ class Form:
         """Apply a navigation action to the form cursor."""
         match action.action:
             case "next":
-                self._dialog.next()
+                if self._dialog.has_next:
+                    self._dialog.next()
             case "previous":
                 self._dialog.previous()
             case "focus":
                 if action.target:
                     self._dialog.focus(action.target)
+            case "submit":
+                self._submit()
 
+
+    def _advance(self) -> None:
+        self._dialog.next()
+        if self._dialog.completed:
+            missing = self._first_missing_required()
+            if missing:
+                self._dialog.focus(missing.key)
+                self._navigated = True
+
+    def _submit(self) -> None:
+        missing = self._first_missing_required()
+        if missing:
+            self._dialog.focus(missing.key)
+            self._navigated = True
+        else:
+            self._dialog.next()
+
+    def _first_missing_required(self) -> Param | None:
+        for p in self._fields:
+            if p.required and not self._is_filled(p.key):
+                return p
+        return None
+
+    def _is_filled(self, key: str) -> bool:
+        return self.data.get(key) not in (None, "")
 
     # --------------------------------------------------------
     # Rendering
@@ -125,7 +153,7 @@ class Form:
         for param in self._fields:
             if param.key == active_key:
                 state: FieldsState = "active"
-            elif param.key in self.data:
+            elif self._is_filled(param.key):
                 state = "done"
             else:
                 state = "idle"
@@ -208,9 +236,15 @@ class Form:
                 else:
                     result = event.payload
 
-                value: str = result if result is not None else ""
+                value = str(result) if result is not None else ""
                 if not value:
                     value = self.data.get(key, "")
+
+                param = self._field_map.get(key)
+                if param and param.required and not value:
+                    yield prompt(self._render(key))
+                    continue
+
                 self.data[key] = value
                 self._error = None
                 yield out(self._render())
