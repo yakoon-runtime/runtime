@@ -43,6 +43,7 @@ async def run(space: NodeSpace):
                 Param(key="password", title="Passwort"),
             ],
             initial=initial,
+            focus="password" if username else None,
         )
 
         async for step in form.run():

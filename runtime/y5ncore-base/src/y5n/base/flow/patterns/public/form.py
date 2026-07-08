@@ -41,6 +41,18 @@ class Form:
         `initial` provides pre-filled values (for example when editing an
         existing entity). Existing values are displayed and may be changed.
         The first field without a value becomes the active field.
+
+    Focus
+
+        `focus` sets the field that receives input focus first. Fields
+        before it that already have a value are shown as done; fields
+        before it without a value are visited after the focused field.
+
+            Form(
+                fields=[Param("username", ...), Param("password", ...)],
+                initial={"username": "stefan"},
+                focus="password",
+            )
     """
 
     def __init__(
@@ -49,12 +61,14 @@ class Form:
         *,
         title: str = "",
         initial: dict[str, str] | None = None,
+        focus: str | None = None,
     ):
         self._fields: list[Param] = list(fields) if fields is not None else []
         self._title = title
         self._field_map: dict[str, Param] = {p.key: p for p in self._fields}
         self.data: dict[str, str] = dict(initial or {})
         self._error: str | None = None
+        self._focus = focus
 
     # --------------------------------------------------------
     # Dialog
@@ -63,17 +77,28 @@ class Form:
     async def run(self) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
         """Yield a sub-generator for each registered field.
 
+        When `focus` is set, iteration starts at that field and continues
+        to the end of the field list. Fields before the focus are not
+        visited — they are expected to have values from `initial`.
+
         The caller forwards each sub-generator to the engine:
 
             async for step in form.run():
                 yield step
         """
-        for param in self._fields:
+        for param in self._fields_to_visit():
             yield self.ask(
                 key=param.key,
                 title=param.title or param.key.title(),
                 policy=param.policy,
             )
+
+    def _fields_to_visit(self) -> list[Param]:
+        """Return fields from focus onward, or all fields when no focus."""
+        if self._focus and self._focus in self._field_map:
+            idx = next(i for i, p in enumerate(self._fields) if p.key == self._focus)
+            return self._fields[idx:]
+        return list(self._fields)
 
     @property
     def values(self) -> Mapping[str, str]:
