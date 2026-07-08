@@ -1,0 +1,74 @@
+<heading>import - Import notes from a JSON file.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  import --file PATH
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Imports notes from a JSON file. The file must contain an array
+of objects, each with a name and an optional content field.
+</paragraph>
+
+<paragraph>
+Import is idempotent. Existing notes are updated by name;
+missing notes are created. Run the same file any number of
+times — only content changes are applied, no duplicates are
+created.
+</paragraph>
+
+<paragraph>
+Notes are imported as independent objects. They are not
+attached to any box. Use note put or note/put to organise
+them afterwards.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+import --file notes.json
+  Import from a JSON file.
+
+note/import --file backup.json
+  From another space, qualify the path.
+</pre>
+
+<pre>
+JSON format:
+
+[
+  {
+    "name": "README",
+    "content": "# Project documentation"
+  },
+  {
+    "name": "Vision",
+    "content": "A tool for thought."
+  }
+]
+</pre>
+
+<paragraph>
+Import reports how many notes were created and how many
+were updated:<br/>
+Import completed. 8 created 15 updated
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, delete, edit, inbox, list, man, put, remove, show
+</paragraph>
