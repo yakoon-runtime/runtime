@@ -41,7 +41,15 @@ class Form:
 
     Focus
 
-        `focus` sets the field where the cursor starts.
+        `intro` is an optional paragraph shown between the title and the
+    fields to give context or instructions.
+
+            Form(
+                title="Kontakt",
+                intro="Bitte geben Sie die Stammdaten des neuen Kontakts ein.",
+            )
+
+    `focus` sets the field where the cursor starts.
 
             Form(
                 fields=[Param("username", ...), Param("password", ...)],
@@ -65,12 +73,14 @@ class Form:
         fields: list[Param] | None = None,
         *,
         title: str = "",
+        intro: str = "",
         initial: dict[str, str] | None = None,
         focus: str | None = None,
     ):
         self._dialog = Dialog(fields or [], focus_key=focus)
         self._fields: list[Param] = self._dialog.fields  # reference
         self._title = title
+        self._intro = intro
         self._field_map: dict[str, Param] = {p.key: p for p in self._fields}
         self.data: dict[str, str] = dict(initial or {})
         self._error: str | None = None
@@ -123,7 +133,6 @@ class Form:
                     self._dialog.focus(action.target)
             case "submit":
                 self._submit()
-
 
     def _advance(self) -> None:
         self._dialog.next()
@@ -186,6 +195,7 @@ class Form:
             id=f"fld.{uuid.uuid4().hex[:8]}",
             name=self._title,
             fields=fb_fields,
+            intro=self._intro or None,
             state="active",
         )
         header = ProjectionHeader(title=self._title, role="info")

@@ -10,6 +10,7 @@ async def run(_):
 
     form = Form(
         title="Example Form",
+        intro="A quick test — please fill in all required fields.",
         fields=[
             Param(key="first_name", title="Vorname"),
             Param(key="last_name", title="Nachname", required=True),

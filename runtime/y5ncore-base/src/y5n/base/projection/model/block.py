@@ -221,6 +221,7 @@ class FieldsBlock:
     fields: list[Field] = field(default_factory=list)
 
     title: str | None = None
+    intro: str | None = None
     step_key: str | None = None
     batch_id: str | None = None
 

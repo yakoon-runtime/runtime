@@ -1,2 +1,4 @@
-Denied! 
-> {{state.reason}}  
+Switch user failed:
+<pre>
+  {{state.reason}}
+</pre>
