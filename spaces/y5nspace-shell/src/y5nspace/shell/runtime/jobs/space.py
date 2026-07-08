@@ -65,7 +65,10 @@ jobs.add(
         navigable=False,
         invocations=[
             Invocation(
-                params=[Param(key="index", required=True, positional=True)],
+                params=[
+                    Param(key="index", required=False, positional=True),
+                    Param(key="current", required=False, positional=False),
+                ],
                 default=True,
             ),
         ],

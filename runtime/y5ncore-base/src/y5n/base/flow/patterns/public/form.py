@@ -48,6 +48,16 @@ class Form:
                 initial={"username": "stefan"},
                 focus="password",
             )
+
+    Keyboard shortcuts (ShellInput)
+
+        Enter      Accept the current field and advance.
+        Ctrl+Up    Move to the previous field.
+        Ctrl+Down  Move to the next field.
+        Ctrl+N     Jump to the next empty required field,
+                   or complete the form when all are filled.
+        Esc        Suspend the foreground flow (sends /jobs/bg).
+        Ctrl+X     Cancel the current flow (sends /jobs/stop --current).
     """
 
     def __init__(

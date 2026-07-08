@@ -42,10 +42,8 @@ class PackageReader:
         base = ir.files(package)
 
         for ext in exts:
-            if not name.endswith(ext):
-                name += ext
-
-            full_name = clean_rel(name)
+            candidate_name = name if name.endswith(ext) else name + ext
+            full_name = clean_rel(candidate_name)
             candidate = base.joinpath(full_name)
             try:
                 if candidate.is_file():

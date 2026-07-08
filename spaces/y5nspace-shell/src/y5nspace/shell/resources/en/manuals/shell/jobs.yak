@@ -1,0 +1,71 @@
+<heading>jobs - Manage running flows.</heading>
+
+<rule/>
+
+<heading level="2">
+Subcommands
+</heading>
+
+<pre>
+  bg          Move the foreground flow to background
+  fg INDEX    Bring a background flow to the foreground
+  list        Show running flows
+  stop INDEX  Cancel a running flow
+  stop --current  Cancel the current foreground flow
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Each command or interactive session runs as a flow. Use
+jobs to inspect, suspend, resume, or terminate flows.
+</paragraph>
+
+<paragraph>
+At most one flow is in the foreground at any time and
+receives interactive input. The remaining flows run in
+the background or are suspended.
+</paragraph>
+
+<heading level="2">
+Keyboard shortcuts
+</heading>
+
+<pre>
+  Esc       /jobs/bg                Background the current flow
+  Ctrl+X    /jobs/stop --current    Cancel the current flow
+</pre>
+
+<paragraph>
+These shortcuts work from any foreground flow, including
+forms and dialogs. They send the corresponding command
+directly, bypassing the active flow.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+jobs
+  List all flows (default subcommand).
+
+jobs/bg
+  Send the foreground flow to the background.
+
+jobs/stop 3
+  Stop the flow with index 3.
+
+jobs/stop --current
+  Stop the current foreground flow.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+bg, fg, list, stop, man
+</paragraph>

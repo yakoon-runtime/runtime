@@ -49,9 +49,10 @@ async def setup(space: NodeSpace):
         state: dict | None = None,
     ) -> Projection:
 
+        parent = key.parent.last or ""
         resource = ResourceRef(
             package="y5nspace.shell",
-            path=f"resources/{lang}/manuals/{key.parent.last}/{key.last}",
+            path=f"resources/{lang}/manuals/{parent}/{key.last}",
         )
 
         on_project = space.ports.get(OnProjectionResolve)

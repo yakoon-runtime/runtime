@@ -32,9 +32,11 @@ class Runner:
 
     async def on_input(self, event: Event):
 
-        if event.payload in self._runtime_commands:
-            await self.on_dispatch(session=self._session, event=event)
-            return
+        if isinstance(event.payload, str):
+            cmd = event.payload.strip().split(maxsplit=1)[0]
+            if cmd in self._runtime_commands:
+                await self.on_dispatch(session=self._session, event=event)
+                return
 
         flow = self._session.foreground_flow
         if flow:
