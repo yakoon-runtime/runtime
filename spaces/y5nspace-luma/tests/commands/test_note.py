@@ -68,3 +68,76 @@ async def test_note_lifecycle(fresh_space):
     await notes.add_note(name="Unique", content="")
     with pytest.raises(ValueError):
         await notes.add_note(name="Unique", content="")
+
+
+@pytest.mark.asyncio
+async def test_note_import_upsert_by_name(fresh_space):
+    """Import semantics: find by name → update or create."""
+    session, space = fresh_space
+    notes = space.ports.get(NoteService)
+
+    created = await notes.add_note(name="Readme", content="Old content")
+
+    existing = await notes.find_note_by_name("Readme")
+    if existing:
+        await notes.update_note(
+            note_id=existing.id, name=existing.name, content="Updated content"
+        )
+    else:
+        await notes.add_note(name="Readme", content="Updated content")
+
+    updated = await notes.get_note(created.id)
+    assert updated.content == "Updated content"
+
+    existing = await notes.find_note_by_name("Changelog")
+    if existing:
+        await notes.update_note(
+            note_id=existing.id, name=existing.name, content="v1.0"
+        )
+    else:
+        created2 = await notes.add_note(name="Changelog", content="v1.0")
+        assert created2 is not None
+
+    changelog = await notes.find_note_by_name("Changelog")
+    assert changelog is not None
+    assert changelog.content == "v1.0"
+
+
+@pytest.mark.asyncio
+async def test_note_import_idempotent(fresh_space):
+    """Importing the same data twice must not create duplicates."""
+    session, space = fresh_space
+    notes = space.ports.get(NoteService)
+
+    async def _import(items: list[dict]) -> tuple[int, int]:
+        created = updated = 0
+        for item in items:
+            name = item.get("name")
+            content = item.get("content", "")
+            if not name:
+                continue
+            existing = await notes.find_note_by_name(name)
+            if existing:
+                await notes.update_note(
+                    note_id=existing.id, name=existing.name, content=content
+                )
+                updated += 1
+            else:
+                await notes.add_note(name=name, content=content)
+                created += 1
+        return created, updated
+
+    data = [
+        {"name": "Alpha", "content": "First"},
+        {"name": "Beta", "content": "Second"},
+    ]
+
+    c, u = await _import(data)
+    assert c == 2
+    assert u == 0
+
+    c, u = await _import(data)
+    assert c == 0
+    assert u == 2
+
+    assert len(await notes.list_notes()) == 2

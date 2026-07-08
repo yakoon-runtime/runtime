@@ -5,6 +5,7 @@ from y5n.api.runtime import Interaction
 from .add import run as note_add
 from .delete import run as note_delete
 from .edit import run as note_edit
+from .import_ import run as note_import
 from .inbox import run as note_inbox
 from .list import run as note_list
 from .put import run as note_put
@@ -156,6 +157,24 @@ note_node.add(
             Invocation(
                 params=[
                     Param(key="name", required=True, positional=True),
+                ],
+            ),
+        ],
+    ),
+)
+
+note_node.add(
+    Node(
+        key="import",
+        anonymous=True,
+        resolvable=True,
+        navigable=False,
+        run=note_import,
+        interaction=Interaction.INHERIT,
+        invocations=[
+            Invocation(
+                params=[
+                    Param(key="file", required=True),
                 ],
             ),
         ],
