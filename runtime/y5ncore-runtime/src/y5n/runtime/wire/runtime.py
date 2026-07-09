@@ -28,6 +28,7 @@ from y5n.runtime.projection.rendering import JinjaRenderEngine
 from y5n.runtime.resources import PackageReader
 from y5n.runtime.runtime import (
     NodeNotFound,
+    NodeNotExecutable,
     PermissionDenied,
     Session,
     SessionService,
@@ -54,6 +55,7 @@ CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
 errors = {
     Exception: "error.yak",
     NodeNotFound: "command/not_found.yak",
+    NodeNotExecutable: "command/not_executable.yak",
     UsageError: "command/usage.yak",
     UnknowOptionsError: "command/unknown_options.yak",
     PermissionDenied: "permissions/denied.yak",

@@ -5,6 +5,7 @@ from typing import Protocol
 from y5n.base.nodes import Node, NodePath, NodeScope
 from y5n.runtime.capabilities.permission import Permission
 from y5n.runtime.runtime import (
+    NodeNotExecutable,
     NodeNotFound,
     PermissionDenied,
     Session,
@@ -151,6 +152,13 @@ class InvocationResolver:
                 )
 
         # ---------------------------------
+        # Reject non-executable final target
+        # ---------------------------------
+
+        if not node.resolvable:
+            raise NodeNotExecutable(command=key)
+
+        # ---------------------------------
         # Validate invocation
         # ---------------------------------
 
@@ -222,6 +230,15 @@ class InvocationResolver:
 
             if node.key == key:
                 return node
+
+        # ---------------------------------
+        # Non-resolvable but contextual nodes
+        # (containers that pass tokens through to children)
+        # ---------------------------------
+
+        child = parent.children.get(key)
+        if child is not None and child.contextual and not child.resolvable:
+            return child
 
         # ---------------------------------
         # ROOT scope

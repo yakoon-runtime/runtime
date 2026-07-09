@@ -12,17 +12,9 @@ from .show import run as user_show
 user = Node(
     key="user",
     anonymous=True,
-    resolvable=True,
+    resolvable=False,
     navigable=True,
     contextual=True,
-    run=user_show,
-    invocations=[
-        Invocation(
-            action=None,
-            default=True,
-            params=[Param(key="name", required=True, positional=True)],
-        ),
-    ],
 )
 
 user.add(

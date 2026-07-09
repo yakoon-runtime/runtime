@@ -1,4 +1,5 @@
 from .error import (
+    NodeNotExecutable,
     NodeNotFound,
     PermissionDenied,
 )
@@ -8,5 +9,6 @@ __all__ = [
     "SessionService",
     "Session",
     "NodeNotFound",
+    "NodeNotExecutable",
     "PermissionDenied",
 ]

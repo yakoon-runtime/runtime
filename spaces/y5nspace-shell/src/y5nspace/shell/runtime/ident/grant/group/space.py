@@ -12,17 +12,9 @@ from .show import run as group_show
 group = Node(
     key="group",
     anonymous=True,
-    resolvable=True,
+    resolvable=False,
     navigable=True,
     contextual=True,
-    run=group_show,
-    invocations=[
-        Invocation(
-            action=None,
-            default=True,
-            params=[Param(key="name", required=True, positional=True)],
-        ),
-    ],
 )
 
 group.add(

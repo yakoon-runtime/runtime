@@ -14,6 +14,12 @@ class NodeNotFound(Exception):
         self.suggestions = suggestions or []
 
 
+class NodeNotExecutable(Exception):
+
+    def __init__(self, command: str):
+        self.command = command
+
+
 class NodeNotRunnable(Exception):
     pass
 

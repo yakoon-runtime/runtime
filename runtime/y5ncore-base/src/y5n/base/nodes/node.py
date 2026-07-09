@@ -84,7 +84,7 @@ class Node:
         return self.validator.validate(node=self, tokens=tokens, strict=strict)
 
     def consumes(self, tokens: list[str] | None) -> bool:
-        if not self.invocations:
+        if not self.resolvable or not self.invocations:
             return False
 
         tokens = tokens or []

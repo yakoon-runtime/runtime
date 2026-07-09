@@ -10,17 +10,9 @@ from .show import run as permission_show
 permission = Node(
     key="permission",
     anonymous=True,
-    resolvable=True,
+    resolvable=False,
     navigable=True,
     contextual=True,
-    run=permission_show,
-    invocations=[
-        Invocation(
-            action=None,
-            default=True,
-            params=[Param(key="permission", required=True, positional=True)],
-        ),
-    ],
 )
 
 permission.add(

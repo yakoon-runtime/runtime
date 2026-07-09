@@ -12,28 +12,13 @@ from .stop import run as stop
 # ----------------------------------
 
 
-async def run(space):
-    if space.request.has_option("stop"):
-        async for item in stop(space):
-            yield item
-    elif space.request.has_option("fg"):
-        async for item in fg(space):
-            yield item
-    elif space.request.has_option("bg"):
-        async for item in bg(space):
-            yield item
-    else:
-        async for item in list(space):
-            yield item
-
-
 jobs = Node(
     key="jobs",
     setup=setup,
     anonymous=True,
     navigable=True,
     resolvable=True,
-    run=run,
+    run=list,
     scope=NodeScope.GLOBAL,
 )
 
@@ -87,6 +72,7 @@ jobs.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
+        scope=NodeScope.GLOBAL,
         invocations=[
             Invocation(
                 params=[Param(key="index", required=True, positional=True)],
@@ -108,5 +94,6 @@ jobs.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
+        scope=NodeScope.GLOBAL,
     )
 )
