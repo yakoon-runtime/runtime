@@ -6,34 +6,29 @@ from y5n.api.dsl import out
 from y5n.api.naming import Key, Namespace
 from y5n.api.nodes import NodeSpace, Request
 
-from ....models.ident import PermissionGrant
-from ....ports import OnProject
-from ....services.ident import Namespaces, PermissionGrantService
-from .ports import OnResolveSubject
-
-# ----------------------------------
-# RUN
-# ----------------------------------
+from .....models.ident import PermissionGrant
+from .....ports import OnProject
+from .....services.ident import GroupService, Namespaces, PermissionGrantService
 
 
 async def run(space: NodeSpace):
-
     namespaces = space.ports.get(Namespaces)
+    group_service = space.ports.get(GroupService)
     permgrant_service = space.ports.get(PermissionGrantService)
-    resolve_subject = space.ports.get(OnResolveSubject)
+
+    async def get_group(name: str):
+        return await group_service.get_by_name(
+            namespace=namespaces.group_namespace(),
+            name=name,
+        )
 
     yield await _handler(
         request=space.request,
         on_project=space.ports.get(OnProject),
         on_get_namespace=namespaces.permgrant_namespace,
         on_add_grant=permgrant_service.add_grant,
-        on_resolve_subject=resolve_subject,
+        on_get_group=get_group,
     )
-
-
-# ----------------------------------
-# HANDLER
-# ----------------------------------
 
 
 async def _handler(
@@ -42,33 +37,29 @@ async def _handler(
     on_project: OnProject,
     on_get_namespace: OnGetNamespace,
     on_add_grant: OnAddGrant,
-    on_resolve_subject: OnResolveSubject,
+    on_get_group: OnGetGroup,
 ):
-    subject_type = request.arg(0)
-    subject_name = request.arg(1)
-
-    permission_key = request.arg(2)
-
+    groupname = request.arg(0)
+    permission_key = request.arg(1)
     bits = request.option("bits") or "x"
     deny = bool(request.option("deny"))
 
     namespace = on_get_namespace()
 
-    subject = await on_resolve_subject(
-        subject_type=subject_type,
-        subject_name=subject_name,
-    )
+    group = await on_get_group(name=groupname)
+    if not group:
+        raise ValueError(f"Group '{groupname}' does not exist.")
 
     grant = await on_add_grant(
         namespace=namespace,
-        subject_key=subject.key,
+        subject_key=group.key,
         permission_key=permission_key,
         bits=bits,
         deny=deny,
     )
 
     projection = await on_project(
-        name="grant/add",
+        name="grant/group/add",
         lang=request.lang,
         state={
             "grant": grant,
@@ -77,13 +68,12 @@ async def _handler(
     return out(projection)
 
 
-# ----------------------------------
-# PORTS
-# ----------------------------------
-
-
 class OnGetNamespace(Protocol):
     def __call__(self) -> Namespace: ...
+
+
+class OnGetGroup(Protocol):
+    async def __call__(self, *, name: str): ...
 
 
 class OnAddGrant(Protocol):

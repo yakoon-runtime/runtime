@@ -1,22 +1,14 @@
 from __future__ import annotations
 
-from typing import Protocol
-
 from y5n.api.dsl import out
 from y5n.api.naming import Namespace
 from y5n.api.nodes import NodeSpace, Request
 
-from ....models.ident import PermissionGrant
-from ....ports import OnProject
-from ....services.ident import Namespaces, PermissionGrantService
-
-# ----------------------------------
-# RUN
-# ----------------------------------
+from .....ports import OnProject
+from .....services.ident import Namespaces, PermissionGrantService
 
 
 async def run(space: NodeSpace):
-
     namespaces = space.ports.get(Namespaces)
     permgrant_service = space.ports.get(PermissionGrantService)
 
@@ -28,11 +20,6 @@ async def run(space: NodeSpace):
     )
 
 
-# ----------------------------------
-# HANDLER
-# ----------------------------------
-
-
 async def _handler(
     *,
     request: Request,
@@ -40,18 +27,16 @@ async def _handler(
     on_get_namespace: OnGetNamespace,
     on_list_permission_grants: OnListPermissionGrants,
 ):
-
     permission_key = request.arg(0)
 
     namespace = on_get_namespace()
-
     grants = await on_list_permission_grants(
         namespace=namespace,
         permission_key=permission_key,
     )
 
     projection = await on_project(
-        name="grant/permission",
+        name="grant/permission/show",
         lang=request.lang,
         state={
             "permission": permission_key,
@@ -61,19 +46,9 @@ async def _handler(
     return out(projection)
 
 
-# ----------------------------------
-# PORTS
-# ----------------------------------
-
-
-class OnGetNamespace(Protocol):
+class OnGetNamespace:
     def __call__(self) -> Namespace: ...
 
 
-class OnListPermissionGrants(Protocol):
-    async def __call__(
-        self,
-        *,
-        namespace: Namespace,
-        permission_key: str,
-    ) -> list[PermissionGrant]: ...
+class OnListPermissionGrants:
+    async def __call__(self, *, namespace: Namespace, permission_key: str): ...

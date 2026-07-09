@@ -6,17 +6,12 @@ from y5n.api.dsl import out
 from y5n.api.naming import Key, Namespace
 from y5n.api.nodes import NodeSpace, Request
 
-from ....models.ident import Group, PermissionGrant
-from ....ports import OnProject
-from ....services.ident import GroupService, Namespaces, PermissionGrantService
-
-# ----------------------------------
-# RUN
-# ----------------------------------
+from .....models.ident import Group, PermissionGrant
+from .....ports import OnProject
+from .....services.ident import GroupService, Namespaces, PermissionGrantService
 
 
 async def run(space: NodeSpace):
-
     namespaces = space.ports.get(Namespaces)
     group_service = space.ports.get(GroupService)
     permgrant_service = space.ports.get(PermissionGrantService)
@@ -30,15 +25,10 @@ async def run(space: NodeSpace):
     yield await _handler(
         request=space.request,
         on_project=space.ports.get(OnProject),
-        on_get_namespace=namespaces.join_namespace,
+        on_get_namespace=namespaces.permgrant_namespace,
         on_get_group_by_name=get_group_by_name,
         on_list_subject_grants=permgrant_service.list_subject_grants,
     )
-
-
-# ----------------------------------
-# HANDLER
-# ----------------------------------
 
 
 async def _handler(
@@ -49,13 +39,12 @@ async def _handler(
     on_get_group_by_name: OnGetGroupByName,
     on_list_subject_grants: OnListSubjectGrants,
 ):
-
     groupname = request.arg(0)
-
     namespace = on_get_namespace()
+
     group = await on_get_group_by_name(name=groupname)
     if not group:
-        raise ValueError(f"Group '{groupname}' " f"does not exist.")
+        raise ValueError(f"Group '{groupname}' does not exist.")
 
     grants = await on_list_subject_grants(
         namespace=namespace,
@@ -63,7 +52,7 @@ async def _handler(
     )
 
     projection = await on_project(
-        name="grant/group",
+        name="grant/group/show",
         lang=request.lang,
         state={
             "group": groupname,
@@ -73,27 +62,15 @@ async def _handler(
     return out(projection)
 
 
-# ----------------------------------
-# PORTS
-# ----------------------------------
-
-
 class OnGetNamespace(Protocol):
     def __call__(self) -> Namespace: ...
 
 
 class OnGetGroupByName(Protocol):
-    async def __call__(
-        self,
-        *,
-        name: str,
-    ) -> Group | None: ...
+    async def __call__(self, *, name: str) -> Group | None: ...
 
 
 class OnListSubjectGrants(Protocol):
     async def __call__(
-        self,
-        *,
-        namespace: Namespace,
-        subject_key: Key,
+        self, *, namespace: Namespace, subject_key: Key
     ) -> list[PermissionGrant]: ...
