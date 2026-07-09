@@ -1,10 +1,10 @@
 from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
 
-from .user_add import run as user_add
-from .user_delete import run as user_delete
-from .user_edit import run as user_edit
-from .user_list import run as user_list
+from .add import run as user_add
+from .delete import run as user_delete
+from .edit import run as user_edit
+from .list import run as user_list
 
 # ----------------------------------
 # USER

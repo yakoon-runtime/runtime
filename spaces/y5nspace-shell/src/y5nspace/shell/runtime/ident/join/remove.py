@@ -6,9 +6,9 @@ from y5n.api.dsl import out
 from y5n.api.naming import Key, Namespace
 from y5n.api.nodes import NodeSpace, Request
 
-from ....models.ident import Group, Membership
+from ....models.ident import Group, Membership, User
 from ....ports import OnProject
-from ....services.ident import GroupService, MembershipService, Namespaces
+from ....services.ident import GroupService, MembershipService, Namespaces, UserService
 
 # ----------------------------------
 # RUN
@@ -18,11 +18,18 @@ from ....services.ident import GroupService, MembershipService, Namespaces
 async def run(space: NodeSpace):
 
     namespaces = space.ports.get(Namespaces)
-    groups = space.ports.get(GroupService)
-    members = space.ports.get(MembershipService)
+    user_service = space.ports.get(UserService)
+    group_service = space.ports.get(GroupService)
+    membership_service = space.ports.get(MembershipService)
+
+    async def get_user_by_name(name: str) -> User | None:
+        return await user_service.get_by_username(
+            namespace=namespaces.user_namespace(),
+            username=name,
+        )
 
     async def get_group_by_name(name: str) -> Group | None:
-        return await groups.get_by_name(
+        return await group_service.get_by_name(
             namespace=namespaces.group_namespace(),
             name=name,
         )
@@ -31,8 +38,9 @@ async def run(space: NodeSpace):
         request=space.request,
         on_project=space.ports.get(OnProject),
         on_get_namespace=namespaces.membership_namespace,
-        on_list_group_memberships=members.list_group_memberships,
+        on_get_user_by_name=get_user_by_name,
         on_get_group_by_name=get_group_by_name,
+        on_remove_membership=membership_service.remove_membership,
     )
 
 
@@ -46,27 +54,34 @@ async def _handler(
     request: Request,
     on_project: OnProject,
     on_get_namespace: OnGetNamespace,
+    on_get_user_by_name: OnGetUserByName,
     on_get_group_by_name: OnGetGroupByName,
-    on_list_group_memberships: OnListGroupMemberships,
+    on_remove_membership: OnRemoveMembership,
 ):
-    groupname = request.arg(0)
+    username = request.arg(0)
+    groupname = request.arg(1)
 
     namespace = on_get_namespace()
+
+    user = await on_get_user_by_name(name=username)
+    if not user:
+        raise ValueError(f"User '{username}' not exists.")
+
     group = await on_get_group_by_name(name=groupname)
     if not group:
-        raise ValueError(f"Group '{groupname}' not exists.")
+        raise ValueError(f"Group '{groupname}' does not exist.")
 
-    memberships = await on_list_group_memberships(
+    membership = await on_remove_membership(
         namespace=namespace,
+        user_key=user.key,
         group_key=group.key,
     )
 
     projection = await on_project(
-        name="membership/users",
+        name="join/remove",
         lang=request.lang,
         state={
-            "memberships": memberships,
-            "group": groupname,
+            "join": membership,
         },
     )
     return out(projection)
@@ -81,14 +96,19 @@ class OnGetNamespace(Protocol):
     def __call__(self) -> Namespace: ...
 
 
+class OnGetUserByName(Protocol):
+    async def __call__(self, *, name: str) -> User | None: ...
+
+
 class OnGetGroupByName(Protocol):
     async def __call__(self, *, name: str) -> Group | None: ...
 
 
-class OnListGroupMemberships(Protocol):
+class OnRemoveMembership(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
+        user_key: Key,
         group_key: Key,
-    ) -> list[Membership]: ...
+    ) -> Membership: ...

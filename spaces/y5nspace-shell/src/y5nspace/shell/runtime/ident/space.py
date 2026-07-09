@@ -5,7 +5,7 @@ from y5n.api.nodes import Node, NodeScope
 
 from .grant.space import grant
 from .group.space import group
-from .member.space import membership
+from .join.space import join_node
 from .setup import setup
 from .su import run as su
 from .user.space import user
@@ -29,7 +29,7 @@ ident = Node(
 ident.mount(user)
 ident.mount(group)
 ident.mount(grant)
-ident.mount(membership)
+ident.mount(join_node)
 
 # ----------------------------------
 # WHOAMI

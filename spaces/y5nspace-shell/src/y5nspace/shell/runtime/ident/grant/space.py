@@ -1,11 +1,11 @@
 from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
 
-from .grant_add import run as grant_add
-from .grant_group import run as grant_group
-from .grant_perm import run as grant_perm
-from .grant_remove import run as grant_remove
-from .grant_user import run as grant_user
+from .add import run as grant_add
+from .group import run as grant_group
+from .perm import run as grant_perm
+from .remove import run as grant_remove
+from .user import run as grant_user
 from .setup import setup
 
 # ----------------------------------

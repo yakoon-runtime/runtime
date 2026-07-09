@@ -1,10 +1,10 @@
 from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
 
-from .group_add import run as group_add
-from .group_delete import run as group_delete
-from .group_edit import run as group_edit
-from .group_list import run as group_list
+from .add import run as group_add
+from .delete import run as group_delete
+from .edit import run as group_edit
+from .list import run as group_list
 
 # ----------------------------------
 # GROUP

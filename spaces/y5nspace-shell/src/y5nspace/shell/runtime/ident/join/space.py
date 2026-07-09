@@ -1,22 +1,22 @@
 from y5n.api.invocations import Invocation, Param
 from y5n.api.nodes import Node
 
-from .membership_add import run as membership_add
-from .membership_groups import run as membership_groups
-from .membership_remove import run as membership_remove
-from .membership_users import run as membership_users
+from .add import run as join_add
+from .groups import run as join_groups
+from .remove import run as join_remove
+from .users import run as join_users
 
 # ----------------------------------
-# MEMBERSHIP
+# JOINS
 # ----------------------------------
 
-membership = Node(
+join_node = Node(
     key="joins",
     anonymous=True,
     resolvable=True,
     navigable=True,
     contextual=True,
-    run=membership_users,
+    run=join_users,
     invocations=[
         Invocation(action=None, default=True),
     ],
@@ -26,13 +26,13 @@ membership = Node(
 # ADD
 # ----------------------------------
 
-membership.add(
+join_node.add(
     Node(
         key="add",
         anonymous=True,
         resolvable=True,
         navigable=False,
-        run=membership_add,
+        run=join_add,
         invocations=[
             Invocation(
                 params=[
@@ -48,13 +48,13 @@ membership.add(
 # USERS (LIST BY GROUPS)
 # ----------------------------------
 
-membership.add(
+join_node.add(
     Node(
         key="users",
         anonymous=True,
         resolvable=True,
         navigable=False,
-        run=membership_users,
+        run=join_users,
         invocations=[
             Invocation(params=[Param(key="group", required=True, positional=True)])
         ],
@@ -65,13 +65,13 @@ membership.add(
 # GROUPS (LIST BY USERS)
 # ----------------------------------
 
-membership.add(
+join_node.add(
     Node(
         key="groups",
         anonymous=True,
         resolvable=True,
         navigable=False,
-        run=membership_groups,
+        run=join_groups,
         invocations=[
             Invocation(params=[Param(key="user", required=True, positional=True)])
         ],
@@ -82,13 +82,13 @@ membership.add(
 # REMOVE
 # ----------------------------------
 
-membership.add(
+join_node.add(
     Node(
         key="remove",
         anonymous=True,
         resolvable=True,
         navigable=False,
-        run=membership_remove,
+        run=join_remove,
         invocations=[
             Invocation(
                 params=[
