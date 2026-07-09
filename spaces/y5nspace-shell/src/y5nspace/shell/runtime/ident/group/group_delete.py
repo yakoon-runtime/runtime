@@ -48,7 +48,7 @@ async def _handler(
         name="group/delete",
         lang=request.lang,
         state={
-            "groupname": groupname,
+            "name": groupname,
         },
     )
     return out(projection)

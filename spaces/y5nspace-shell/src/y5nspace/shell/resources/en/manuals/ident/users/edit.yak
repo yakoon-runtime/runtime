@@ -7,8 +7,8 @@ Usage
 </heading>
 
 <pre>
-  users edit USERNAME --password NEW_SECRET
-  users edit USERNAME --enabled yes
+  edit NAME --password NEW_SECRET
+  edit NAME --enabled yes
 </pre>
 
 <heading level="2">
@@ -16,8 +16,7 @@ Description
 </heading>
 
 <paragraph>
-Updates an existing user. At least one option must be
-provided.
+Updates an existing user. At least one option must be provided.
 </paragraph>
 
 <paragraph>
@@ -29,14 +28,14 @@ Examples
 </heading>
 
 <pre>
-users edit bob --password newpass
+edit bob --password newpass
   Change bob's password.
 
-users edit alice --enabled no
+edit alice --enabled no
   Disable alice's account.
 
-ident users edit bob --password newpass
-  From another space, qualify the path.
+users/edit bob --password newpass
+  From another space, qualifies the path.
 </pre>
 
 <heading level="2">
@@ -44,5 +43,5 @@ See also
 </heading>
 
 <paragraph>
-users list, users add, users delete, groups, joins
+list, add, delete, groups, joins
 </paragraph>

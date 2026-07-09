@@ -50,7 +50,7 @@ user.add(
         invocations=[
             Invocation(
                 params=[
-                    Param(key="username", required=True, positional=True),
+                    Param(key="name", required=True, positional=True),
                     Param(key="password"),
                 ]
             ),
@@ -72,7 +72,7 @@ user.add(
         invocations=[
             Invocation(
                 params=[
-                    Param(key="username", required=True, positional=True),
+                    Param(key="name", required=True, positional=True),
                     Param(key="password"),
                     Param(key="enabled"),
                 ],
@@ -93,7 +93,7 @@ user.add(
         navigable=False,
         run=user_delete,
         invocations=[
-            Invocation(params=[Param(key="username", required=True, positional=True)])
+            Invocation(params=[Param(key="name", required=True, positional=True)])
         ],
     ),
 )

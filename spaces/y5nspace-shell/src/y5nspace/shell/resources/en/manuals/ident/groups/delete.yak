@@ -1,4 +1,4 @@
-<heading>users delete - Remove a user.</heading>
+<heading>groups delete - Remove a group.</heading>
 
 <rule/>
 
@@ -15,8 +15,8 @@ Description
 </heading>
 
 <paragraph>
-Deletes a user account. The account is soft-deleted: it is
-marked as disabled rather than removed permanently.
+Deletes a group. The group is soft-deleted: it is marked as
+disabled rather than removed permanently.
 </paragraph>
 
 <heading level="2">
@@ -24,10 +24,10 @@ Examples
 </heading>
 
 <pre>
-delete bob
-  Delete user bob.
+delete editors
+  Delete the editors group.
 
-users/delete bob
+groups/delete editors
   From another space, qualifies the path.
 </pre>
 
@@ -36,5 +36,5 @@ See also
 </heading>
 
 <paragraph>
-list, add, edit, groups, joins
+list, add, edit, users, joins
 </paragraph>

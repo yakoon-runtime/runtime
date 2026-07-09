@@ -23,7 +23,7 @@ grant = Node(
     invocations=[
         Invocation(
             action="user",
-            params=[Param(key="username", required=True, positional=True)],
+            params=[Param(key="name", required=True, positional=True)],
         ),
     ],
 )
@@ -80,7 +80,7 @@ grant.add(
         invocations=[
             Invocation(
                 action="user",
-                params=[Param(key="username", required=True, positional=True)],
+                params=[Param(key="name", required=True, positional=True)],
             ),
         ],
     ),
@@ -94,7 +94,7 @@ grant.add(
         navigable=False,
         run=grant_group,
         invocations=[
-            Invocation(params=[Param(key="groupname", required=True, positional=True)])
+            Invocation(params=[Param(key="name", required=True, positional=True)])
         ],
     ),
 )

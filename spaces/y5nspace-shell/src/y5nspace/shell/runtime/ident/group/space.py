@@ -48,7 +48,7 @@ group.add(
         navigable=False,
         run=group_add,
         invocations=[
-            Invocation(params=[Param(key="groupname", required=True, positional=True)]),
+            Invocation(params=[Param(key="name", required=True, positional=True)]),
         ],
     ),
 )
@@ -63,7 +63,7 @@ group.add(
         invocations=[
             Invocation(
                 params=[
-                    Param(key="groupname", required=True, positional=True),
+                    Param(key="name", required=True, positional=True),
                     Param(key="enabled"),
                 ]
             ),
@@ -83,7 +83,7 @@ group.add(
         navigable=False,
         run=group_delete,
         invocations=[
-            Invocation(params=[Param(key="groupname", required=True, positional=True)])
+            Invocation(params=[Param(key="name", required=True, positional=True)])
         ],
     ),
 )

@@ -1,4 +1,4 @@
-<heading>users delete - Remove a user.</heading>
+<heading>groups edit - Update a group.</heading>
 
 <rule/>
 
@@ -7,7 +7,7 @@ Usage
 </heading>
 
 <pre>
-  delete NAME
+  edit NAME --enabled yes
 </pre>
 
 <heading level="2">
@@ -15,8 +15,8 @@ Description
 </heading>
 
 <paragraph>
-Deletes a user account. The account is soft-deleted: it is
-marked as disabled rather than removed permanently.
+Updates an existing group. Use --enabled to activate or
+deactivate a group.
 </paragraph>
 
 <heading level="2">
@@ -24,10 +24,10 @@ Examples
 </heading>
 
 <pre>
-delete bob
-  Delete user bob.
+edit admins --enabled no
+  Disable the admins group.
 
-users/delete bob
+groups/edit editors --enabled yes
   From another space, qualifies the path.
 </pre>
 
@@ -36,5 +36,5 @@ See also
 </heading>
 
 <paragraph>
-list, add, edit, groups, joins
+list, add, delete, users, joins
 </paragraph>

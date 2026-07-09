@@ -7,8 +7,8 @@ Usage
 </heading>
 
 <pre>
-  users add USERNAME
-  users add USERNAME --password SECRET
+  add NAME
+  add NAME --password SECRET
 </pre>
 
 <heading level="2">
@@ -16,9 +16,8 @@ Description
 </heading>
 
 <paragraph>
-Creates a new user with the given username. If the
---password option is omitted, the user is created
-without a password.
+Creates a new user with the given name. If the --password
+option is omitted, the user is created without a password.
 </paragraph>
 
 <heading level="2">
@@ -26,11 +25,14 @@ Examples
 </heading>
 
 <pre>
-users add alice
+add alice
   Create user alice without a password.
 
-users add bob --password secret123
+add bob --password secret123
   Create user bob with a password.
+
+users/add bob --password secret123
+  From another space, qualifies the path.
 </pre>
 
 <heading level="2">
@@ -38,5 +40,5 @@ See also
 </heading>
 
 <paragraph>
-users list, users edit, users delete, groups, joins
+list, edit, delete, groups, joins
 </paragraph>

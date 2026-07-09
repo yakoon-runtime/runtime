@@ -7,7 +7,7 @@ Usage
 </heading>
 
 <pre>
-  users list
+  list
 </pre>
 
 <heading level="2">
@@ -16,9 +16,7 @@ Description
 
 <paragraph>
 Lists all registered users. This is the default action when
-entering the users subspace, so navigating to shell ident
-users and running the command without arguments produces
-the same result.
+entering the users subspace.
 </paragraph>
 
 <heading level="2">
@@ -26,22 +24,17 @@ Examples
 </heading>
 
 <pre>
-users list
+list
   Show all users.
 
-ident users
+users/list
   From another space, qualifies the path.
 </pre>
-
-<paragraph>
-Use users list to see existing accounts before editing or
-deleting them.
-</paragraph>
 
 <heading level="2">
 See also
 </heading>
 
 <paragraph>
-users add, users edit, users delete, groups, joins
+add, edit, delete, groups, joins
 </paragraph>

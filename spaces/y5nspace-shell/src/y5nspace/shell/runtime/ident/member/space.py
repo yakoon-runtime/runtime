@@ -36,8 +36,8 @@ membership.add(
         invocations=[
             Invocation(
                 params=[
-                    Param(key="username", required=True, positional=True),
-                    Param(key="groupname", required=True, positional=True),
+                    Param(key="user", required=True, positional=True),
+                    Param(key="group", required=True, positional=True),
                 ]
             )
         ],
@@ -56,7 +56,7 @@ membership.add(
         navigable=False,
         run=membership_users,
         invocations=[
-            Invocation(params=[Param(key="groupname", required=True, positional=True)])
+            Invocation(params=[Param(key="group", required=True, positional=True)])
         ],
     ),
 )
@@ -73,7 +73,7 @@ membership.add(
         navigable=False,
         run=membership_groups,
         invocations=[
-            Invocation(params=[Param(key="username", required=True, positional=True)])
+            Invocation(params=[Param(key="user", required=True, positional=True)])
         ],
     ),
 )
@@ -92,8 +92,8 @@ membership.add(
         invocations=[
             Invocation(
                 params=[
-                    Param(key="username", required=True, positional=True),
-                    Param(key="groupname", required=True, positional=True),
+                    Param(key="user", required=True, positional=True),
+                    Param(key="group", required=True, positional=True),
                 ]
             )
         ],

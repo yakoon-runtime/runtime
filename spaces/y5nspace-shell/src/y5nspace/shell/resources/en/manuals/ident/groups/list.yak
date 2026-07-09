@@ -1,4 +1,4 @@
-<heading>users delete - Remove a user.</heading>
+<heading>groups list - List all groups.</heading>
 
 <rule/>
 
@@ -7,7 +7,7 @@ Usage
 </heading>
 
 <pre>
-  delete NAME
+  list
 </pre>
 
 <heading level="2">
@@ -15,8 +15,8 @@ Description
 </heading>
 
 <paragraph>
-Deletes a user account. The account is soft-deleted: it is
-marked as disabled rather than removed permanently.
+Lists all registered groups. This is the default action when
+entering the groups subspace.
 </paragraph>
 
 <heading level="2">
@@ -24,10 +24,10 @@ Examples
 </heading>
 
 <pre>
-delete bob
-  Delete user bob.
+list
+  Show all groups.
 
-users/delete bob
+groups/list
   From another space, qualifies the path.
 </pre>
 
@@ -36,5 +36,5 @@ See also
 </heading>
 
 <paragraph>
-list, add, edit, groups, joins
+add, edit, delete, users, joins
 </paragraph>
