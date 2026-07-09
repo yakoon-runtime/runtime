@@ -2,9 +2,7 @@
 
 <list>
 {% for usage in state.usages %}
-
   <item>
-    
     <cmd command="..." variant="usage">
         {{ usage.key }}
 
@@ -20,10 +18,7 @@
            <space/> --{{ opt }} 
            <space/> <arg>{{ opt }}</arg>
         {% endfor %}
-        
     </cmd>
-
   </item>
-
 {% endfor %}
 </list>

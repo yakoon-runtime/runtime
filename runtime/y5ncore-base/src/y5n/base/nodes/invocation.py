@@ -179,6 +179,13 @@ class InvocationValidator:
             )
 
         # ----------------------------------
+        # OPTIONS KNOWN BY THE CANDIDATE INVOCATIONS
+        # ----------------------------------
+
+        allowed_options = self._allowed_options(matching)
+        self._raise_unknown_options(tokens, allowed_options, node, matching)
+
+        # ----------------------------------
         # VALIDATE MATCHES
         # ----------------------------------
 
@@ -234,41 +241,10 @@ class InvocationValidator:
                 continue
 
             # ----------------------------------
-            # OPTIONS
+            # MIN OPTIONS
             # ----------------------------------
 
             valid_options = {f"--{x.key}" for x in invocation.params}
-
-            unknown_options: list[str] = []
-
-            for token in tokens[offset:]:
-
-                if not token.startswith("--"):
-                    continue
-
-                key = token.split("=")[0]
-
-                if key not in valid_options:
-                    unknown_options.append(key)
-
-            # ----------------------------------
-            # UNKNOWN OPTIONS
-            # ----------------------------------
-
-            if unknown_options:
-
-                raise UnknowOptionsError(
-                    unknown_options=sorted(unknown_options),
-                    valid_options=sorted(valid_options),
-                    usages=self._usage_data(
-                        node,
-                        [invocation],
-                    ),
-                )
-
-            # ----------------------------------
-            # MIN OPTIONS
-            # ----------------------------------
 
             if invocation.min_options > 0 and strict:
 
@@ -303,6 +279,36 @@ class InvocationValidator:
     # ----------------------------------
     # HELPERS
     # ----------------------------------
+
+    @staticmethod
+    def _allowed_options(invocations: list[Invocation]) -> set[str]:
+        allowed: set[str] = set()
+        for inv in invocations:
+            for p in inv.params:
+                if not p.positional:
+                    allowed.add(f"--{p.key}")
+        return allowed
+
+    def _raise_unknown_options(
+        self,
+        tokens: list[str],
+        allowed_options: set[str],
+        node,
+        matching: list[Invocation],
+    ) -> None:
+        unknown: list[str] = []
+        for token in (tokens or []):
+            if not token.startswith("--"):
+                continue
+            key = token.split("=")[0]
+            if key not in allowed_options:
+                unknown.append(key)
+        if unknown:
+            raise UnknowOptionsError(
+                unknown_options=sorted(unknown),
+                valid_options=sorted(allowed_options),
+                usages=self._usage_data(node, matching),
+            )
 
     def _usage_data(
         self,
