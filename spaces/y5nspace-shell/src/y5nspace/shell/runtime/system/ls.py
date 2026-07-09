@@ -29,14 +29,16 @@ async def run(space: NodeSpace):
 
     commands = []
     spaces = []
+
+    # local if the node is a direct child of the current scope,
+    # global if it is inherited from a parent or sibling scope
+
     for x in result.rows:
         path = str(x.get("path", ""))
-        if x["scope"] == "global" and not (
-            current_path != "/" and path.startswith(current_path)
-        ):
-            x["variant"] = "global"
-        else:
-            x["variant"] = "local"
+        parent_path = path.rsplit("/", 1)[0] if "/" in path else ""
+        if not parent_path:
+            parent_path = "/"
+        x["variant"] = "local" if parent_path == current_path else "global"
 
         if x["navigable"]:
             spaces.append(x)
