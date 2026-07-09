@@ -5,7 +5,7 @@
 
   <item>
     
-    <cmd command="...">
+    <cmd command="..." variant="usage">
         {{ usage.key }}
 
         {% if usage.action %}
