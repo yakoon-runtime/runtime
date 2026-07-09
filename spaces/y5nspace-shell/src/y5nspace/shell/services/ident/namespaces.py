@@ -16,8 +16,8 @@ class Namespaces:
     def group_namespace(self) -> Namespace:
         return Namespace(self.domain, "group", self.space)
 
-    def membership_namespace(self) -> Namespace:
-        return Namespace(self.domain, "membership", self.space)
+    def join_namespace(self) -> Namespace:
+        return Namespace(self.domain, "join", self.space)
 
     def permgrant_namespace(self) -> Namespace:
         return Namespace(self.domain, "permgrant", self.space)

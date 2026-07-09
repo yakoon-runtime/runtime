@@ -82,7 +82,7 @@ async def run(space: NodeSpace):
         resolver = space.ports.get(PermissionResolver)
         permissions = await resolver.resolve_user_permissions(
             grant_namespace=namespaces.permgrant_namespace(),
-            membership_namespace=namespaces.membership_namespace(),
+            join_namespace=namespaces.join_namespace(),
             user_key=user_key,
         )
         space.session.set_permissions(permissions)

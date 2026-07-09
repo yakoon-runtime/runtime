@@ -16,22 +16,22 @@ from y5nstore.event.ports import (
     OnScan,
 )
 
-from ...models.ident import Membership, MembershipData
+from ...models.ident import Join, JoinData
 
 # ----------------------------------
 # INDEX
 # ----------------------------------
 
-IDX_MEMBERSHIP_USER_KEY = IndexKey("membership.user_key")
-IDX_MEMBERSHIP_USER_SPEC = IndexSpec(
-    key=IDX_MEMBERSHIP_USER_KEY,
+IDX_JOIN_USER_KEY = IndexKey("join.user_key")
+IDX_JOIN_USER_SPEC = IndexSpec(
+    key=IDX_JOIN_USER_KEY,
     value_type=ValueType.TEXT,
     unique=False,
 )
 
-IDX_MEMBERSHIP_GROUP_KEY = IndexKey("membership.group_key")
-IDX_MEMBERSHIP_GROUP_SPEC = IndexSpec(
-    key=IDX_MEMBERSHIP_GROUP_KEY,
+IDX_JOIN_GROUP_KEY = IndexKey("join.group_key")
+IDX_JOIN_GROUP_SPEC = IndexSpec(
+    key=IDX_JOIN_GROUP_KEY,
     value_type=ValueType.TEXT,
     unique=False,
 )
@@ -42,13 +42,13 @@ IDX_MEMBERSHIP_GROUP_SPEC = IndexSpec(
 # ----------------------------------
 
 
-class MembershipService:
+class JoinService:
 
     @staticmethod
     def index_specs():
         return [
-            IDX_MEMBERSHIP_USER_SPEC,
-            IDX_MEMBERSHIP_GROUP_SPEC,
+            IDX_JOIN_USER_SPEC,
+            IDX_JOIN_GROUP_SPEC,
         ]
 
     def __init__(
@@ -72,14 +72,14 @@ class MembershipService:
     async def get_by_key(
         self,
         key: Key,
-    ) -> Membership | None:
+    ) -> Join | None:
 
         row = await self.on_get(key=key)
 
         if not row.ok:
             return None
 
-        return Membership.from_row(row=row)
+        return Join.from_row(row=row)
 
     async def get_by_user_and_group(
         self,
@@ -87,9 +87,9 @@ class MembershipService:
         namespace: Namespace,
         user_key: Key,
         group_key: Key,
-    ) -> Membership | None:
+    ) -> Join | None:
 
-        key = Membership.build_key(
+        key = Join.build_key(
             namespace=namespace,
             user_key=user_key,
             group_key=group_key,
@@ -97,84 +97,84 @@ class MembershipService:
 
         return await self.get_by_key(key)
 
-    async def list_memberships(
+    async def list_joins(
         self,
         *,
         namespace: Namespace,
-    ) -> list[Membership]:
+    ) -> list[Join]:
 
         keys, _ = await self.on_scan(
             namespace=namespace,
-            index_key=IDX_MEMBERSHIP_USER_KEY,
+            index_key=IDX_JOIN_USER_KEY,
         )
 
         rows = await self.on_get_many(keys=keys)
 
-        memberships = [Membership.from_row(row) for row in rows if row.ok]
-        return [m for m in memberships if m.data.enabled]
+        joins = [Join.from_row(row) for row in rows if row.ok]
+        return [m for m in joins if m.data.enabled]
 
-    async def list_user_memberships(
+    async def list_user_joins(
         self,
         *,
         namespace: Namespace,
         user_key: Key,
-    ) -> list[Membership]:
+    ) -> list[Join]:
 
         keys, _ = await self.on_scan(
             namespace=namespace,
-            index_key=IDX_MEMBERSHIP_USER_KEY,
+            index_key=IDX_JOIN_USER_KEY,
             value=str(user_key),
         )
 
         rows = await self.on_get_many(keys=keys)
 
-        memberships = [Membership.from_row(row) for row in rows if row.ok]
-        return [m for m in memberships if m.data.enabled]
+        joins = [Join.from_row(row) for row in rows if row.ok]
+        return [m for m in joins if m.data.enabled]
 
-    async def list_group_memberships(
+    async def list_group_joins(
         self,
         *,
         namespace: Namespace,
         group_key: Key,
-    ) -> list[Membership]:
+    ) -> list[Join]:
 
         keys, _ = await self.on_scan(
             namespace=namespace,
-            index_key=IDX_MEMBERSHIP_GROUP_KEY,
+            index_key=IDX_JOIN_GROUP_KEY,
             value=str(group_key),
         )
 
         rows = await self.on_get_many(keys=keys)
 
-        memberships = [Membership.from_row(row) for row in rows if row.ok]
-        return [m for m in memberships if m.data.enabled]
+        joins = [Join.from_row(row) for row in rows if row.ok]
+        return [m for m in joins if m.data.enabled]
 
     async def save(
         self,
-        membership: Membership,
+        join_obj: Join,
     ) -> None:
 
-        doc = membership.data.to_dict()
+        doc = join_obj.data.to_dict()
 
         user_key = doc.get("user_key")
         group_key = doc.get("group_key")
 
         if not isinstance(user_key, str):
-            raise TypeError("Membership.user_key must be a string")
+            raise TypeError("Join.user_key must be a string")
 
         if not isinstance(group_key, str):
-            raise TypeError("Membership.group_key must be a string")
+            raise TypeError("Join.group_key must be a string")
 
         await self.on_replace(
-            key=membership.key,
+            key=join_obj.key,
             doc=doc,
             indexes=[
                 IndexTerm(
-                    key=IDX_MEMBERSHIP_USER_KEY,
+                    key=IDX_JOIN_USER_KEY,
                     value=user_key,
                 ),
                 IndexTerm(
-                    key=IDX_MEMBERSHIP_GROUP_KEY,
+                    key=IDX_JOIN_GROUP_KEY,
                     value=group_key,
                 ),
             ],
@@ -185,53 +185,53 @@ class MembershipService:
     # CONNECTION USER / GROUP
     # ----------------------------------
 
-    async def add_membership(
+    async def add_join(
         self,
         *,
         namespace: Namespace,
         user_key: Key,
         group_key: Key,
-    ) -> Membership:
+    ) -> Join:
 
-        key = Membership.build_key(
+        key = Join.build_key(
             namespace=namespace,
             user_key=user_key,
             group_key=group_key,
         )
 
-        membership = Membership(
+        join_obj = Join(
             key=key,
-            data=MembershipData(
+            data=JoinData(
                 user_key=user_key,
                 group_key=group_key,
                 enabled=True,
             ),
         )
 
-        await self.save(membership)
-        return membership
+        await self.save(join_obj)
+        return join_obj
 
-    async def remove_membership(
+    async def remove_join(
         self,
         *,
         namespace: Namespace,
         user_key: Key,
         group_key: Key,
-    ) -> Membership:
+    ) -> Join:
 
-        membership = await self.get_by_user_and_group(
+        join_obj = await self.get_by_user_and_group(
             namespace=namespace,
             user_key=user_key,
             group_key=group_key,
         )
 
-        if not membership:
-            raise ValueError("Membership not found")
+        if not join_obj:
+            raise ValueError("Join not found")
 
-        membership.data.enabled = False
+        join_obj.data.enabled = False
 
-        await self.save(membership)
-        return membership
+        await self.save(join_obj)
+        return join_obj
 
 
 # ----------------------------------

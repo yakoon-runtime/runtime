@@ -8,7 +8,7 @@ from y5n.api.naming import Key, Namespace
 from y5n.api.permissions import PermissionSet
 from y5n.api.ports import OnNewPermissionSet, OnParsePermissionSpec
 
-from ...models.ident import Membership, PermissionGrant
+from ...models.ident import Join, PermissionGrant
 
 
 class PermissionResolver:
@@ -17,12 +17,12 @@ class PermissionResolver:
     def __init__(
         self,
         on_new_permissionset: OnNewPermissionSet,
-        on_list_user_memberships: OnListUserMemberships,
+        on_list_user_joins: OnListUserJoins,
         on_list_subject_grants: OnListSubjectGrants,
         on_parse_spec: OnParsePermissionSpec,
     ):
         self.on_new_permissionset = on_new_permissionset
-        self.on_list_user_memberships = on_list_user_memberships
+        self.on_list_user_joins = on_list_user_joins
         self.on_list_subject_grants = on_list_subject_grants
         self.on_parse_spec = on_parse_spec
 
@@ -34,7 +34,7 @@ class PermissionResolver:
         self,
         *,
         grant_namespace: Namespace,
-        membership_namespace: Namespace,
+        join_namespace: Namespace,
         user_key: Key,
     ) -> PermissionSet:
 
@@ -47,15 +47,15 @@ class PermissionResolver:
 
         self._merge_grants(out, direct_grants)
 
-        memberships = await self.on_list_user_memberships(
-            namespace=membership_namespace,
+        joins = await self.on_list_user_joins(
+            namespace=join_namespace,
             user_key=user_key,
         )
 
-        for membership in memberships:
+        for join in joins:
             grants = await self.on_list_subject_grants(
                 namespace=grant_namespace,
-                subject_key=(membership.group_key),
+                subject_key=(join.group_key),
             )
 
             self._merge_grants(out, grants)
@@ -85,13 +85,13 @@ class PermissionResolver:
 # ----------------------------------
 
 
-class OnListUserMemberships(Protocol):
+class OnListUserJoins(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
         user_key: Key,
-    ) -> list[Membership]: ...
+    ) -> list[Join]: ...
 
 
 class OnListSubjectGrants(Protocol):

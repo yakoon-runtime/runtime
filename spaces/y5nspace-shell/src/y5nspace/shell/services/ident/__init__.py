@@ -1,7 +1,7 @@
 from .account import AccountService
 from .authentication import AuthenticationService
 from .group import GroupService
-from .membership import MembershipService
+from .join import JoinService
 from .namespaces import Namespaces
 from .permgrant import PermissionGrantService
 from .resolver import PermissionResolver
@@ -14,7 +14,7 @@ __all__ = [
     "AllowAllSecretVerifier",
     "UserService",
     "GroupService",
-    "MembershipService",
+    "JoinService",
     "Namespaces",
     "PermissionGrantService",
     "PermissionResolver",

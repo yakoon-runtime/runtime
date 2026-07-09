@@ -19,7 +19,7 @@ from ...services.ident import (
     AllowAllSecretVerifier,
     AuthenticationService,
     GroupService,
-    MembershipService,
+    JoinService,
     Namespaces,
     PermissionGrantService,
     PermissionResolver,
@@ -74,11 +74,11 @@ async def setup(space: NodeSpace):
         on_scan=store.objects.scan,
     )
 
-    # --------------------------
-    # --- CREATING MS ACCESS ---
-    # --------------------------
+    # ----------------------------
+    # --- CREATING JOIN ACCESS ---
+    # ----------------------------
 
-    membership = MembershipService(
+    join_svc = JoinService(
         on_get=store.objects.get,
         on_append=store.objects.append,
         on_replace=store.objects.replace,
@@ -118,7 +118,7 @@ async def setup(space: NodeSpace):
     perm_resolver = PermissionResolver(
         on_new_permissionset=on_new_permset,
         on_list_subject_grants=permgrant.list_subject_grants,
-        on_list_user_memberships=membership.list_user_memberships,
+        on_list_user_joins=join_svc.list_user_joins,
         on_parse_spec=on_parse_spec,
     )
 
@@ -150,7 +150,7 @@ async def setup(space: NodeSpace):
     await bootstrap(
         users=users,
         groups=groups,
-        membership=membership,
+        join_svc=join_svc,
         permgrant=permgrant,
     )
 
@@ -186,7 +186,7 @@ async def setup(space: NodeSpace):
     space.ports.provide(Namespaces, namespaces)
     space.ports.provide(UserService, users)
     space.ports.provide(GroupService, groups)
-    space.ports.provide(MembershipService, membership)
+    space.ports.provide(JoinService, join_svc)
     space.ports.provide(PermissionGrantService, permgrant)
     space.ports.provide(PermissionResolver, perm_resolver)
     space.ports.provide(OnProject, on_project)
@@ -210,8 +210,8 @@ async def _build_index(store):
         specs=GroupService.index_specs(),
     )
     await store.objects.ensure_indexes(
-        namespace=namespaces.membership_namespace(),
-        specs=MembershipService.index_specs(),
+        namespace=namespaces.join_namespace(),
+        specs=JoinService.index_specs(),
     )
     await store.objects.ensure_indexes(
         namespace=namespaces.permgrant_namespace(),

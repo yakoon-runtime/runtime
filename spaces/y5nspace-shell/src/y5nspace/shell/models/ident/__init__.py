@@ -1,6 +1,6 @@
 from .account import Account, AccountData
 from .group import Group, GroupData
-from .membership import Membership, MembershipData
+from .join import Join, JoinData
 from .permgrant import PermissionGrant, PermissionGrantData
 from .user import User, UserData
 
@@ -9,8 +9,8 @@ __all__ = [
     "AccountData",
     "User",
     "UserData",
-    "Membership",
-    "MembershipData",
+    "Join",
+    "JoinData",
     "Group",
     "GroupData",
     "PermissionGrant",

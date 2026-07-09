@@ -18,11 +18,11 @@ from ....services.ident import GroupService, Namespaces, PermissionGrantService
 async def run(space: NodeSpace):
 
     namespaces = space.ports.get(Namespaces)
-    groups = space.ports.get(GroupService)
+    group_service = space.ports.get(GroupService)
     permgrant_service = space.ports.get(PermissionGrantService)
 
     async def get_group_by_name(name: str) -> Group | None:
-        return await groups.get_by_name(
+        return await group_service.get_by_name(
             namespace=namespaces.group_namespace(),
             name=name,
         )
@@ -30,7 +30,7 @@ async def run(space: NodeSpace):
     yield await _handler(
         request=space.request,
         on_project=space.ports.get(OnProject),
-        on_get_namespace=namespaces.membership_namespace,
+        on_get_namespace=namespaces.join_namespace,
         on_get_group_by_name=get_group_by_name,
         on_list_subject_grants=permgrant_service.list_subject_grants,
     )

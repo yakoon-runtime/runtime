@@ -6,9 +6,9 @@ from y5n.api.dsl import out
 from y5n.api.naming import Key, Namespace
 from y5n.api.nodes import NodeSpace, Request
 
-from ....models.ident import Group, Membership
+from ....models.ident import Group, Join
 from ....ports import OnProject
-from ....services.ident import GroupService, MembershipService, Namespaces
+from ....services.ident import GroupService, JoinService, Namespaces
 
 # ----------------------------------
 # RUN
@@ -18,11 +18,11 @@ from ....services.ident import GroupService, MembershipService, Namespaces
 async def run(space: NodeSpace):
 
     namespaces = space.ports.get(Namespaces)
-    groups = space.ports.get(GroupService)
-    members = space.ports.get(MembershipService)
+    group_service = space.ports.get(GroupService)
+    join_service = space.ports.get(JoinService)
 
     async def get_group_by_name(name: str) -> Group | None:
-        return await groups.get_by_name(
+        return await group_service.get_by_name(
             namespace=namespaces.group_namespace(),
             name=name,
         )
@@ -30,8 +30,8 @@ async def run(space: NodeSpace):
     yield await _handler(
         request=space.request,
         on_project=space.ports.get(OnProject),
-        on_get_namespace=namespaces.membership_namespace,
-        on_list_group_memberships=members.list_group_memberships,
+        on_get_namespace=namespaces.join_namespace,
+        on_list_group_joins=join_service.list_group_joins,
         on_get_group_by_name=get_group_by_name,
     )
 
@@ -47,7 +47,7 @@ async def _handler(
     on_project: OnProject,
     on_get_namespace: OnGetNamespace,
     on_get_group_by_name: OnGetGroupByName,
-    on_list_group_memberships: OnListGroupMemberships,
+    on_list_group_joins: OnListGroupJoins,
 ):
     groupname = request.arg(0)
 
@@ -56,7 +56,7 @@ async def _handler(
     if not group:
         raise ValueError(f"Group '{groupname}' not exists.")
 
-    memberships = await on_list_group_memberships(
+    joins = await on_list_group_joins(
         namespace=namespace,
         group_key=group.key,
     )
@@ -65,7 +65,7 @@ async def _handler(
         name="join/users",
         lang=request.lang,
         state={
-            "joins": memberships,
+            "joins": joins,
             "group": groupname,
         },
     )
@@ -85,10 +85,10 @@ class OnGetGroupByName(Protocol):
     async def __call__(self, *, name: str) -> Group | None: ...
 
 
-class OnListGroupMemberships(Protocol):
+class OnListGroupJoins(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
         group_key: Key,
-    ) -> list[Membership]: ...
+    ) -> list[Join]: ...

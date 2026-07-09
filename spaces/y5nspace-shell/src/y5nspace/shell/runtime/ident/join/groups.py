@@ -6,9 +6,9 @@ from y5n.api.dsl import out
 from y5n.api.naming import Key, Namespace
 from y5n.api.nodes import NodeSpace, Request
 
-from ....models.ident import Membership, User
+from ....models.ident import Join, User
 from ....ports import OnProject
-from ....services.ident import MembershipService, Namespaces, UserService
+from ....services.ident import JoinService, Namespaces, UserService
 
 # ----------------------------------
 # RUN
@@ -18,11 +18,11 @@ from ....services.ident import MembershipService, Namespaces, UserService
 async def run(space: NodeSpace):
 
     namespaces = space.ports.get(Namespaces)
-    users = space.ports.get(UserService)
-    members = space.ports.get(MembershipService)
+    user_service = space.ports.get(UserService)
+    join_service = space.ports.get(JoinService)
 
     async def get_user_by_name(name: str) -> User | None:
-        return await users.get_by_username(
+        return await user_service.get_by_username(
             namespace=namespaces.user_namespace(),
             username=name,
         )
@@ -30,8 +30,8 @@ async def run(space: NodeSpace):
     yield await _handler(
         request=space.request,
         on_project=space.ports.get(OnProject),
-        on_get_namespace=namespaces.membership_namespace,
-        on_list_user_memberships=members.list_user_memberships,
+        on_get_namespace=namespaces.join_namespace,
+        on_list_user_joins=join_service.list_user_joins,
         on_get_user_by_name=get_user_by_name,
     )
 
@@ -47,7 +47,7 @@ async def _handler(
     on_project: OnProject,
     on_get_namespace: OnGetNamespace,
     on_get_user_by_name: OnGetUserByName,
-    on_list_user_memberships: OnListUserMemberships,
+    on_list_user_joins: OnListUserJoins,
 ):
     username = request.arg(0)
 
@@ -56,7 +56,7 @@ async def _handler(
     if not user:
         raise ValueError(f"User '{username}' not exists.")
 
-    memberships = await on_list_user_memberships(
+    joins = await on_list_user_joins(
         namespace=namespace,
         user_key=user.key,
     )
@@ -65,7 +65,7 @@ async def _handler(
         name="join/groups",
         lang=request.lang,
         state={
-            "joins": memberships,
+            "joins": joins,
             "user": username,
         },
     )
@@ -85,10 +85,10 @@ class OnGetUserByName(Protocol):
     async def __call__(self, *, name: str) -> User | None: ...
 
 
-class OnListUserMemberships(Protocol):
+class OnListUserJoins(Protocol):
     async def __call__(
         self,
         *,
         namespace: Namespace,
         user_key: Key,
-    ) -> list[Membership]: ...
+    ) -> list[Join]: ...

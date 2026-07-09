@@ -3,8 +3,8 @@ from y5n.api.naming import Key
 from ...models.ident import (
     Group,
     GroupData,
-    Membership,
-    MembershipData,
+    Join,
+    JoinData,
     PermissionGrant,
     PermissionGrantData,
     User,
@@ -12,7 +12,7 @@ from ...models.ident import (
 )
 from ...services.ident import (
     GroupService,
-    MembershipService,
+    JoinService,
     Namespaces,
     PermissionGrantService,
     UserService,
@@ -32,11 +32,11 @@ _root_grant_specs = [
     "ident-app:group.edit|rwx",
     "ident-app:group.delete|rwx",
     # ident - member
-    "ident-app:membership|rwx",
-    "ident-app:membership.add|rwx",
-    "ident-app:membership.remove|rwx",
-    "ident-app:membership.groups|rwx",
-    "ident-app:membership.users|rwx",
+    "ident-app:join|rwx",
+    "ident-app:join.add|rwx",
+    "ident-app:join.remove|rwx",
+    "ident-app:join.groups|rwx",
+    "ident-app:join.users|rwx",
     # ident - grant
     "ident-app:grant|rwx",
     "ident-app:grant.add|rwx",
@@ -50,7 +50,7 @@ _root_grant_specs = [
 async def bootstrap(
     users: UserService,
     groups: GroupService,
-    membership: MembershipService,
+    join_svc: JoinService,
     permgrant: PermissionGrantService,
 ) -> None:
 
@@ -58,7 +58,7 @@ async def bootstrap(
 
     user_ns = namespaces.user_namespace()
     group_ns = namespaces.group_namespace()
-    membership_ns = namespaces.membership_namespace()
+    join_ns = namespaces.join_namespace()
     grant_ns = namespaces.permgrant_namespace()
 
     # -------------------
@@ -75,8 +75,8 @@ async def bootstrap(
         id="admins",
     )
 
-    membership_key = Membership.build_key(
-        namespace=membership_ns,
+    join_key = Join.build_key(
+        namespace=join_ns,
         user_key=root_key,
         group_key=admins_key,
     )
@@ -116,12 +116,12 @@ async def bootstrap(
     # --- ROOT MEMBERSHIP ---
     # -----------------------
 
-    if not await membership.get_by_key(membership_key):
+    if not await join_svc.get_by_key(join_key):
 
-        await membership.save(
-            Membership(
-                key=membership_key,
-                data=MembershipData(
+        await join_svc.save(
+            Join(
+                key=join_key,
+                data=JoinData(
                     user_key=root_key,
                     group_key=admins_key,
                 ),

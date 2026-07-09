@@ -7,7 +7,7 @@ from y5nstore.event import GetResult
 
 
 @dataclass
-class MembershipData:
+class JoinData:
 
     CURRENT_VERSION = 1
 
@@ -30,7 +30,7 @@ class MembershipData:
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> MembershipData:
+    def from_dict(cls, d: dict) -> JoinData:
         d = dict(d or {})
 
         return cls(
@@ -41,8 +41,8 @@ class MembershipData:
         )
 
 
-class Membership:
-    def __init__(self, key: Key, data: MembershipData):
+class Join:
+    def __init__(self, key: Key, data: JoinData):
         self.key = key
         self.data = data
 
@@ -62,9 +62,9 @@ class Membership:
         return self.data.is_active()
 
     @classmethod
-    def from_row(cls, row: GetResult) -> Membership:
+    def from_row(cls, row: GetResult) -> Join:
         data = row.require_object()
         return cls(
             key=row.key,
-            data=MembershipData.from_dict(data),
+            data=JoinData.from_dict(data),
         )
