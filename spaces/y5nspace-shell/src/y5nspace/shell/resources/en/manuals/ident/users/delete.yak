@@ -1,0 +1,40 @@
+<heading>users delete - Remove a user.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  users delete USERNAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Deletes a user account. The account is soft-deleted:
+it is marked as disabled rather than removed permanently.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+users delete bob
+  Delete user bob.
+
+ident users delete bob
+  From another space, qualify the path.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+users list, users add, users edit, groups, joins
+</paragraph>

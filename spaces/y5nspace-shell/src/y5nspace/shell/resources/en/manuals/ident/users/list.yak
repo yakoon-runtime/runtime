@@ -1,0 +1,47 @@
+<heading>users list - List all users.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  users list
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all registered users. This is the default action when
+entering the users subspace, so navigating to shell ident
+users and running the command without arguments produces
+the same result.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+users list
+  Show all users.
+
+ident users
+  From another space, qualifies the path.
+</pre>
+
+<paragraph>
+Use users list to see existing accounts before editing or
+deleting them.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+users add, users edit, users delete, groups, joins
+</paragraph>
