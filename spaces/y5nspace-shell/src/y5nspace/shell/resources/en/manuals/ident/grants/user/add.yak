@@ -1,0 +1,43 @@
+<heading>grants user add - Grant a permission to a user.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  add NAME PERMISSION
+  add NAME PERMISSION --bits rwx
+  add NAME PERMISSION --deny
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Grants a permission to a user. Use --bits to control
+read/write/execute access and --deny to explicitly forbid
+an action.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+add bob note:app --bits r
+  Grant bob read access to note:app.
+
+user/add bob note:app --bits rwx
+  From another space, qualifies the path.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+user/show, user/remove, group/add, permission/show
+</paragraph>
