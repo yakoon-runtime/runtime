@@ -87,7 +87,6 @@ jobs.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
         invocations=[
             Invocation(
                 params=[Param(key="index", required=True, positional=True)],
@@ -109,6 +108,5 @@ jobs.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
     )
 )

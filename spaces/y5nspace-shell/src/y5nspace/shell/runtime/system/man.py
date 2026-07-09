@@ -59,7 +59,7 @@ async def run(space: NodeSpace):
 
     if not found:
         projection = await space.ports.get(OnProject)(
-            name="man/missing",
+            name="system/man",
             lang=space.session.lang,
             state={
                 "key": key,
@@ -91,7 +91,7 @@ async def run(space: NodeSpace):
 
     if not projection:
         projection = await space.ports.get(OnProject)(
-            name="man/missing",
+            name="system/man",
             lang=space.session.lang,
             state={
                 "key": key,

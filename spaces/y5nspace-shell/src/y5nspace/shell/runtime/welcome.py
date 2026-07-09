@@ -11,7 +11,7 @@ from ..ports import OnProject
 async def run(space: NodeSpace):
 
     projection = await space.ports.get(OnProject)(
-        name="welcome",
+        name="system/welcome",
         lang=space.session.lang,
         state={"name": space.request.payload},
     )

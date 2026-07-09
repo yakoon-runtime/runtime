@@ -1,5 +1,6 @@
 from y5n.api.nodes import Node
 
+from .runtime.ident.space import ident
 from .runtime.info import run as info
 from .runtime.jobs.space import jobs
 from .runtime.labs.space import labs
@@ -59,3 +60,4 @@ shell.mount(jobs)
 shell.mount(labs)
 shell.mount(net)
 shell.mount(session)
+shell.mount(ident)

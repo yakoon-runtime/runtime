@@ -51,7 +51,7 @@ async def run(space: NodeSpace):
     spaces.sort(key=lambda i: i["key"])
 
     projection = await space.ports.get(OnProject)(
-        name="ls/overview",
+        name="system/ls",
         lang=space.session.lang,
         state={
             "commands": commands,

@@ -1,0 +1,1 @@
+Group '{{ state.group_name }}' was deleted.

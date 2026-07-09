@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from y5n.base.runtime import Container
 
 # ----------------------------------
@@ -78,7 +80,7 @@ class NodePorts:
         """
         self._local.bind(port, capability)
 
-    def get(self, port):
+    def get(self, port) -> Any:
         """Resolves a capability from the local hierarchy.
 
         Resolution follows hierarchical scope lookup:

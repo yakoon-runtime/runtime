@@ -1,0 +1,1 @@
+Group '{{ state.group.name }}' was added.

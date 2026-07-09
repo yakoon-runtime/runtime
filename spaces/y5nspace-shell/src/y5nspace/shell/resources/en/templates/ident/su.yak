@@ -1,0 +1,8 @@
+{% if state.reason %}
+Switch user failed:
+<pre>
+  {{state.reason}}
+</pre>
+{% else %}
+You are now '{{state.user}}'
+{% endif %}
