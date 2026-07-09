@@ -27,8 +27,8 @@ from y5n.runtime.capabilities.permission import (
 from y5n.runtime.projection.rendering import JinjaRenderEngine
 from y5n.runtime.resources import PackageReader
 from y5n.runtime.runtime import (
-    NodeNotFound,
     NodeNotExecutable,
+    NodeNotFound,
     PermissionDenied,
     Session,
     SessionService,

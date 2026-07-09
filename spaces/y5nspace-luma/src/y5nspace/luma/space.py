@@ -25,6 +25,8 @@ luma = Node(
     key="luma",
     name="Luma",
     anonymous=True,
+    resolvable=False,
+    navigable=True,
     setup=setup,
 )
 

@@ -11,7 +11,7 @@ from .user.space import user as user_node
 grant = Node(
     key="grants",
     anonymous=True,
-    resolvable=True,
+    resolvable=False,
     navigable=True,
     contextual=True,
 )

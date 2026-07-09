@@ -19,6 +19,8 @@ ident = Node(
     key="ident",
     name="Identity",
     anonymous=True,
+    resolvable=False,
+    navigable=True,
     setup=setup,
 )
 

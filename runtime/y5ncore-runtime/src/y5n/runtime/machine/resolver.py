@@ -232,12 +232,12 @@ class InvocationResolver:
                 return node
 
         # ---------------------------------
-        # Non-resolvable but contextual nodes
-        # (containers that pass tokens through to children)
+        # Non-resolvable nodes (containers, namespaces)
+        # Found by direct key lookup for proper error messaging
         # ---------------------------------
 
         child = parent.children.get(key)
-        if child is not None and child.contextual and not child.resolvable:
+        if child is not None and not child.resolvable:
             return child
 
         # ---------------------------------

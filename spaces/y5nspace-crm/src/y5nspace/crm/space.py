@@ -10,6 +10,8 @@ crm = Node(
     key="crm",
     name="CRM",
     anonymous=True,
+    resolvable=False,
+    navigable=True,
     setup=setup,
 )
 

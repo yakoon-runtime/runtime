@@ -19,6 +19,8 @@ shell = Node(
     name="Shell",
     is_shell=True,
     anonymous=True,
+    resolvable=False,
+    navigable=True,
     setup=setup,
 )
 
