@@ -78,7 +78,7 @@ async def run(space: NodeSpace):
     # ----------------------------------
 
     if not target_node["navigable"]:
-        yield out_text(f"Directory not navigable: {resolved_path}")
+        yield out_text(f"Not navigable: {resolved_path}")
         return
 
     # ----------------------------------
