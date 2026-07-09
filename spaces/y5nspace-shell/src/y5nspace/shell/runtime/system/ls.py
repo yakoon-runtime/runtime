@@ -41,8 +41,6 @@ async def run(space: NodeSpace):
         x["variant"] = "local" if parent_path == current_path else "global"
 
         if x["navigable"]:
-            if not x.get("resolvable", True):
-                x["variant"] = "container"
             spaces.append(x)
         else:
             commands.append(x)

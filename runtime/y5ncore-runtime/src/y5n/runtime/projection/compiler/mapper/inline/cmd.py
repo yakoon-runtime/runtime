@@ -1,6 +1,12 @@
 from y5n.base.projection.model import InlineCmd
 
 
+def _bool(value: str | None) -> bool | None:
+    if value is None:
+        return None
+    return value.lower() in ("true", "1", "yes")
+
+
 def map_cmd(mapper, node):
     command = node.attrs.get("command")
     if not command:
@@ -11,10 +17,11 @@ def map_cmd(mapper, node):
     if not children:
         raise ValueError("<cmd> requires label")
 
-    variant = node.attrs.get("variant")
-
     return InlineCmd(
         command=command,
-        variant=variant,
+        variant=node.attrs.get("variant"),
+        navigable=_bool(node.attrs.get("navigable")),
+        resolvable=_bool(node.attrs.get("resolvable")),
+        contextual=_bool(node.attrs.get("contextual")),
         children=children,
     )
