@@ -1,17 +1,3 @@
-<text>Unknown options:</text>
-{% for item in state.unknown_options %}
-    <pre>  {{ item }}</pre>
-{% endfor %}
-
-{% if state.valid_options %}
-<space count="1"/>
-<text>Available options:</text>
-  {% for item in state.valid_options %}
-      <pre>  {{ item }}</pre>
-  {% endfor %}
-{% endif %}
-
-<space count="1"/>
 <text>Usage:</text>
 
 <list>
@@ -36,3 +22,18 @@
   </item>
 {% endfor %}
 </list>
+
+<space count="1"/>
+<text>Unknown options:</text>
+{% for item in state.unknown_options %}
+    <pre>  {{ item }}</pre>
+{% endfor %}
+
+{% if state.valid_options %}
+<space count="1"/>
+<text>Available options:</text>
+  {% for item in state.valid_options %}
+      <pre>  {{ item }}</pre>
+  {% endfor %}
+{% endif %}
+

@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from .errors import UnknowOptionsError, UsageError
+from .errors import UnknownOptionsError, UsageError
 
 
 @dataclass(slots=True)
@@ -304,7 +304,7 @@ class InvocationValidator:
             if key not in allowed_options:
                 unknown.append(key)
         if unknown:
-            raise UnknowOptionsError(
+            raise UnknownOptionsError(
                 unknown_options=sorted(unknown),
                 valid_options=sorted(allowed_options),
                 usages=self._usage_data(node, matching),

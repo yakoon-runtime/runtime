@@ -1,15 +1,19 @@
 # ----------------------------------------
-# USAGE ERROR
+# INVOCATION ERRORS
 # ----------------------------------------
 
 
-class UsageError(Exception):
+class InvocationError(Exception):
+    """Base class for invocation validation errors."""
+
+
+class UsageError(InvocationError):
 
     def __init__(self, usages: list[dict]):
         self.usages = usages
 
 
-class UnknowOptionsError(Exception):
+class UnknownOptionsError(InvocationError):
 
     def __init__(
         self,

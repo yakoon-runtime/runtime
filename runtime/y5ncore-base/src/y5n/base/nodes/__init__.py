@@ -1,4 +1,4 @@
-from .errors import UnknowOptionsError, UsageError
+from .errors import InvocationError, UnknownOptionsError, UsageError
 from .invocation import (
     BoundInvocation,
     Invocation,
@@ -31,6 +31,7 @@ __all__ = [
     "InvocationInput",
     "Param",
     # .errors
-    "UnknowOptionsError",
+    "InvocationError",
+    "UnknownOptionsError",
     "UsageError",
 ]

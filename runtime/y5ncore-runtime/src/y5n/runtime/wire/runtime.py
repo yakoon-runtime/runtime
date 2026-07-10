@@ -1,6 +1,6 @@
 from typing import Literal, TypeAlias
 
-from y5n.base.nodes import Node, NodePath, NodeScope, UnknowOptionsError, UsageError
+from y5n.base.nodes import Node, NodePath, NodeScope, UnknownOptionsError, UsageError
 from y5n.base.plugins.ports import (
     OnAuthorizeRead,
     OnAuthorizeWrite,
@@ -57,7 +57,7 @@ errors = {
     NodeNotFound: "command/not_found.yak",
     NodeNotExecutable: "command/not_executable.yak",
     UsageError: "command/usage.yak",
-    UnknowOptionsError: "command/unknown_options.yak",
+    UnknownOptionsError: "command/unknown_options.yak",
     PermissionDenied: "permissions/denied.yak",
 }
 
