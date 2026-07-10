@@ -6,13 +6,11 @@ from y5n.api.projections import to_text
 
 from ...ports import OnProject
 
-# ----------------------------------
-# HELPERS
-# ----------------------------------
-
 
 def _get_cwd(space: NodeSpace) -> Path:
-    raw = space.session.get_data("fs:cwd", str(Path.home() / ".yakoon" / "test"))
+    raw = space.session.get_data("fs:cwd")
+    if not raw:
+        raw = space.session.get_data("fs:root", str(Path.home() / ".yakoon"))
     return Path(raw).resolve()
 
 

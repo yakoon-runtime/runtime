@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol, cast
 
 from y5n.base.flow import Scope
@@ -28,6 +29,7 @@ from y5n.runtime.machine import (
 from y5n.runtime.machine.effects import EffectExecutor
 from y5n.runtime.runtime import Session
 from y5n.runtime.runtime.bus import BusOutput
+from y5n.runtime.settings import Settings
 from y5n.runtime.settings.version import resolve_runtime_info
 
 # ----------------------------------
@@ -44,7 +46,16 @@ def build_machine(
     on_audit_warning: OnAuditWarning,
     on_initialize: Oninitialize,
     known_runtimes: dict[str, str] | None = None,
+    settings: Settings | None = None,
 ) -> RuntimeHost:
+
+    # ---------------------------------
+    # --- RESOLVE ROOT PATHS ---
+    # ---------------------------------
+
+    _raw = settings.runtime.root_path if settings else ""
+    _root_path = str(Path(_raw).resolve()) if _raw else None
+    _bundles_path = Path(_root_path) / "usr" / "bin" if _root_path else None
 
     # ---------------
     # --- ROUTING ---
@@ -54,6 +65,7 @@ def build_machine(
         root=platform,
         on_authorize=on_has_permission,
         on_suggest=on_suggest,
+        bundles_path=_bundles_path,
     )
 
     # ---------------
@@ -191,6 +203,10 @@ def build_machine(
         session, _ = await on_session(key=key)
         psession = cast(Session, session)
         psession.bind_io(BusOutput(psession._bus))
+        if not psession.get_data("fs:root"):
+            root = _root_path or str(Path.home() / ".yakoon")
+            psession.set_data("fs:root", root)
+            psession.set_data("fs:cwd", root)
         return psession
 
     session_builder = SessionBuilder(

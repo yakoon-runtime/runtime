@@ -1,0 +1,6 @@
+name: ls
+description: List directory contents
+executor: python
+resolvable: true
+navigable: false
+scope: GLOBAL

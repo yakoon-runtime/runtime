@@ -1,0 +1,6 @@
+name: cd
+description: Change directory
+executor: python
+resolvable: true
+navigable: false
+scope: GLOBAL

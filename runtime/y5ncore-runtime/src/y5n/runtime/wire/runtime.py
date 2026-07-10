@@ -220,6 +220,7 @@ def build_runtime(
         on_audit_warning=audit_service.warning,
         on_initialize=initialize,
         known_runtimes=settings.runtime.known,
+        settings=settings,
     )
 
     ds.bind("system:sessions", SessionSource(host))

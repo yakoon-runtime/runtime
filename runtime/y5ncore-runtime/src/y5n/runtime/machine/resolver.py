@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import importlib.util
+from pathlib import Path
 from typing import Protocol
 
+import yaml
 from y5n.base.nodes import Node, NodePath, NodeScope, UsageError
 from y5n.runtime.capabilities.permission import Permission
 from y5n.runtime.runtime import (
@@ -27,6 +30,7 @@ class InvocationResolver:
         on_authorize: OnAuthorize,
         on_suggest: OnSuggest,
         root: Node,
+        bundles_path: str | Path | None = None,
     ):
 
         self._root = root
@@ -36,6 +40,9 @@ class InvocationResolver:
 
         self._global_nodes: dict[str, Node] = {}
         self._root_nodes: dict[str, Node] = {}
+
+        self._bundles_path = self._resolve_bundles_path(bundles_path)
+        self._bundle_cache: dict[str, Node] = {}
 
         self._build()
 
@@ -321,6 +328,15 @@ class InvocationResolver:
     ) -> Node | None:
 
         # ---------------------------------
+        # Bundle check (experiment/fs-namespace)
+        # Bundles in YAKOON_PATH take priority over semantic tree
+        # ---------------------------------
+
+        bundle_node = self._resolve_bundle(key)
+        if bundle_node:
+            return bundle_node
+
+        # ---------------------------------
         # Local runtime scope
         # ---------------------------------
 
@@ -360,6 +376,59 @@ class InvocationResolver:
         # ---------------------------------
 
         return self._global_nodes.get(key)
+
+    # ---------------------------------------------------------------------
+    # Bundle path resolution
+    # ---------------------------------------------------------------------
+
+    @staticmethod
+    def _resolve_bundles_path(override: str | Path | None) -> Path:
+        if override:
+            return Path(override).resolve()
+        raise RuntimeError(
+            "No bundles_path configured. Set root_path in yakoon-runtime.yml "
+            "or pass bundles_path to InvocationResolver."
+        )
+
+    # ---------------------------------------------------------------------
+    # Bundle resolution
+    # ---------------------------------------------------------------------
+
+    def _resolve_bundle(self, key: str) -> Node | None:
+        bundle_dir = self._bundles_path / f"{key}.bndl"
+        if not bundle_dir.is_dir():
+            return None
+
+        cached = self._bundle_cache.get(key)
+        if cached:
+            return cached
+
+        meta_file = bundle_dir / "bundle.yaml"
+        if not meta_file.exists():
+            return None
+
+        with open(meta_file) as f:
+            meta = yaml.safe_load(f) or {}
+
+        executor = meta.get("executor", "python")
+        run_file = bundle_dir / "run" / f"{executor}.py"
+        if not run_file.exists():
+            return None
+
+        spec = importlib.util.spec_from_file_location(f"_bundle_{key}", run_file)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        node = Node(
+            key=key,
+            run=mod.run,
+            resolvable=meta.get("resolvable", True),
+            navigable=meta.get("navigable", False),
+            anonymous=True,
+            scope=NodeScope.GLOBAL,
+        )
+        self._bundle_cache[key] = node
+        return node
 
     def _raise_usage(
         self,
