@@ -23,9 +23,12 @@ Start by exploring.
 </list>
 
 <heading level="2">
+Quick syntax:
+</heading>
+<pre>  
+  ls ?    Show syntax
+  man ls  Show documentation</pre>
+
+<heading level="2">
 See also
 </heading>
-
-<paragraph>
-man
-</paragraph>

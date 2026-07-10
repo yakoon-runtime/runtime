@@ -9,8 +9,9 @@ class InvocationError(Exception):
 
 class UsageError(InvocationError):
 
-    def __init__(self, usages: list[dict]):
+    def __init__(self, usages: list[dict], command: str | None = None):
         self.usages = usages
+        self.command = command
 
 
 class UnknownOptionsError(InvocationError):

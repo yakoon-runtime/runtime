@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.nodes import Node, NodePath, NodeScope
+from y5n.base.nodes import Node, NodePath, NodeScope, UsageError
 from y5n.runtime.capabilities.permission import Permission
 from y5n.runtime.runtime import (
     NodeNotExecutable,
@@ -20,6 +20,7 @@ class InvocationResolver:
     """
 
     SUGGESTION_LIMIT = 1
+    USAGE_TOKEN = "?"
 
     def __init__(
         self,
@@ -88,6 +89,14 @@ class InvocationResolver:
             raise NodeNotFound(command=key)
 
         # ---------------------------------
+        # '?' shows usage instead of executing
+        # ---------------------------------
+
+        show_usage = tokens and tokens[-1] == self.USAGE_TOKEN
+        if show_usage:
+            tokens = tokens[:-1]
+
+        # ---------------------------------
         # Resolve parent runtime space
         # ---------------------------------
 
@@ -112,6 +121,8 @@ class InvocationResolver:
                 key=key,
             )
             if node:
+                if show_usage:
+                    self._raise_usage(node)
                 self._ensure_invocation(
                     session,
                     node,
@@ -136,6 +147,7 @@ class InvocationResolver:
             )
 
         assert node
+
         # ---------------------------------
         # Continue contextual traversal
         # ---------------------------------
@@ -150,6 +162,13 @@ class InvocationResolver:
                     tokens=tokens[1:],
                     session=session,
                 )
+
+        # ---------------------------------
+        # Show usage for resolved node
+        # ---------------------------------
+
+        if show_usage:
+            self._raise_usage(node)
 
         # ---------------------------------
         # Reject non-executable final target
@@ -170,51 +189,6 @@ class InvocationResolver:
         )
 
         return node, tokens
-
-    # ---------------------------------------------------------------------
-    # Path resolution
-    # ---------------------------------------------------------------------
-
-    def _resolve_path(
-        self,
-        *,
-        current: Node,
-        key: str,
-    ) -> Node | None:
-        """Resolve a path-style key like 'ident/users/list'.
-
-        Walks the node tree segment by segment. The last segment is
-        resolved via _resolve_node (respects scope + resolvable flag).
-        Intermediate segments are resolved by direct child key lookup.
-        """
-        segments = key.split("/")
-
-        # Absolute path starts from root
-        walk = self._root if key.startswith("/") else current
-
-        for seg in segments[:-1]:
-            if not seg:
-                continue
-            child = walk.children.get(seg)
-            if child is None:
-                # GLOBAL and ROOT nodes behave like virtual children of every runtime space.
-                child = self._global_nodes.get(seg) or self._root_nodes.get(seg)
-            if child is None:
-                return None
-            walk = child
-
-        return self._resolve_node(parent=walk, key=segments[-1])
-
-    # ---------------------------------------------------------------------
-    # Internals
-    # ---------------------------------------------------------------------
-
-    def _resolve_node(
-        self,
-        *,
-        parent: Node,
-        key: str,
-    ) -> Node | None:
 
         # ---------------------------------
         # Local runtime scope
@@ -301,6 +275,102 @@ class InvocationResolver:
             command=key,
             suggestions=suggestions,
         )
+
+    # ---------------------------------------------------------------------
+    # Path resolution
+    # ---------------------------------------------------------------------
+
+    def _resolve_path(
+        self,
+        *,
+        current: Node,
+        key: str,
+    ) -> Node | None:
+        """Resolve a path-style key like 'ident/users/list'.
+
+        Walks the node tree segment by segment. The last segment is
+        resolved via _resolve_node (respects scope + resolvable flag).
+        Intermediate segments are resolved by direct child key lookup.
+        """
+        segments = key.split("/")
+
+        # Absolute path starts from root
+        walk = self._root if key.startswith("/") else current
+
+        for seg in segments[:-1]:
+            if not seg:
+                continue
+            child = walk.children.get(seg)
+            if child is None:
+                child = self._global_nodes.get(seg) or self._root_nodes.get(seg)
+            if child is None:
+                return None
+            walk = child
+
+        return self._resolve_node(parent=walk, key=segments[-1])
+
+    # ---------------------------------------------------------------------
+    # Internals
+    # ---------------------------------------------------------------------
+
+    def _resolve_node(
+        self,
+        *,
+        parent: Node,
+        key: str,
+    ) -> Node | None:
+
+        # ---------------------------------
+        # Local runtime scope
+        # ---------------------------------
+
+        for node in parent.find_resolvable():
+
+            if node.scope not in (
+                NodeScope.NODE,
+                NodeScope.ROOT,
+            ):
+                continue
+
+            if node.key == key:
+                return node
+
+        # ---------------------------------
+        # Non-resolvable nodes (containers, namespaces)
+        # Found by direct key lookup for proper error messaging
+        # ---------------------------------
+
+        child = parent.children.get(key)
+        if child is not None and not child.resolvable:
+            return child
+
+        # ---------------------------------
+        # ROOT scope
+        # ---------------------------------
+
+        if parent == self._root:
+
+            node = self._root_nodes.get(key)
+
+            if node:
+                return node
+
+        # ---------------------------------
+        # GLOBAL scope
+        # ---------------------------------
+
+        return self._global_nodes.get(key)
+
+    def _raise_usage(
+        self,
+        node: Node,
+    ) -> None:
+        usages = [inv.usage_data(node.key) for inv in (node.invocations or [])]
+        if not usages:
+            for child in node.children.values():
+                for inv in child.invocations or []:
+                    usages.append(inv.usage_data(child.key))
+        raise UsageError(usages=usages, command=node.key)
 
     def _ensure_invocation(
         self,

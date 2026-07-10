@@ -1,4 +1,4 @@
-from y5n.api.dsl import out
+from y5n.api.dsl import out, view
 from y5n.api.nodes import NodeSpace
 
 from ..ports import OnProject
@@ -16,4 +16,5 @@ async def run(space: NodeSpace):
         state={"name": space.request.payload},
     )
 
+    yield view(clear=True)
     yield out(projection)
