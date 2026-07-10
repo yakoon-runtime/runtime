@@ -1,7 +1,23 @@
-from y5n.api.data import DataRequest
+from pathlib import Path
+
 from y5n.api.dsl import out_text
-from y5n.api.nodes import NodePath, NodeSpace
-from y5n.api.ports import OnSourceRead
+from y5n.api.nodes import NodeSpace
+
+# ----------------------------------
+# HELPERS
+# ----------------------------------
+
+ROOT = "/"
+
+
+def _get_cwd(space: NodeSpace) -> Path:
+    raw = space.session.get_data("fs:cwd", str(Path.home() / ".yakoon" / "test"))
+    return Path(raw).resolve()
+
+
+def _set_cwd(space: NodeSpace, path: Path) -> None:
+    space.session.set_data("fs:cwd", str(path.resolve()))
+
 
 # ----------------------------------
 # RUN
@@ -15,20 +31,14 @@ async def run(space: NodeSpace):
         yield out_text("")
         return
 
-    on_source = space.ports.get(OnSourceRead)
-
-    # ----------------------------------
-    # CURRENT RUNTIME SPACE
-    # ----------------------------------
-
-    current_path = space.session.get_current_node()  # type: ignore
+    current_path = _get_cwd(space)
 
     # ----------------------------------
     # ROOT
     # ----------------------------------
 
-    if target == "/":
-        space.session.set_current_node(NodePath.root())  # type: ignore
+    if target == ROOT:
+        _set_cwd(space, Path(ROOT))
         yield out_text("")
         return
 
@@ -38,9 +48,7 @@ async def run(space: NodeSpace):
 
     if target == "..":
         parent = current_path.parent
-        if parent:
-            space.session.set_current_node(parent)  # type: ignore
-
+        _set_cwd(space, parent)
         yield out_text("")
         return
 
@@ -48,43 +56,25 @@ async def run(space: NodeSpace):
     # PATH
     # ----------------------------------
 
-    path = NodePath.from_string(target)
-
-    # Absolute navigation.
-    resolved_path = ""
-    if target.startswith("/"):
-        resolved_path = path
-
-    # Relative navigation.
-    else:
-        resolved_path = current_path.join(path)
+    raw = Path(target)
+    resolved = raw if target.startswith(ROOT) else (current_path / raw)
+    resolved = resolved.resolve()
 
     # ----------------------------------
-    # RESOLVE TARGET
+    # VALIDATE TARGET
     # ----------------------------------
 
-    target_result = await on_source(
-        DataRequest(f"system:nodes --by-key {resolved_path}")
-    )
-
-    if target_result.status != "ok":
-        yield out_text(f"Not found: {resolved_path}")
+    if not resolved.exists():
+        yield out_text(f"Not found: {resolved}")
         return
 
-    target_node = target_result.one()
-
-    # ----------------------------------
-    # NAVIGABLE
-    # ----------------------------------
-
-    if not target_node["navigable"]:
-        yield out_text(f"Not navigable: {resolved_path}")
+    if not resolved.is_dir():
+        yield out_text(f"Not a directory: {resolved}")
         return
 
     # ----------------------------------
-    # ACTIVATE RUNTIME SPACE
+    # ACTIVATE
     # ----------------------------------
-    new_path = target_node["path"]
-    space.session.set_current_node(new_path)  # type: ignore
 
+    _set_cwd(space, resolved)
     yield out_text("")

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
 from y5n.api.projections import to_text
@@ -9,5 +11,5 @@ from y5n.api.projections import to_text
 
 async def run(space: NodeSpace):
 
-    path = space.session.get_current_node()  # type: ignore
-    yield out(to_text(str(path)))
+    raw = space.session.get_data("fs:cwd", str(Path.home() / ".yakoon" / "test"))
+    yield out(to_text(raw))

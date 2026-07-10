@@ -1,9 +1,20 @@
-from y5n.api.data import DataRequest
+from pathlib import Path
+
 from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import OnSourceRead
+from y5n.api.projections import to_text
 
 from ...ports import OnProject
+
+# ----------------------------------
+# HELPERS
+# ----------------------------------
+
+
+def _get_cwd(space: NodeSpace) -> Path:
+    raw = space.session.get_data("fs:cwd", str(Path.home() / ".yakoon" / "test"))
+    return Path(raw).resolve()
+
 
 # ----------------------------------
 # RUN
@@ -15,49 +26,54 @@ async def run(space: NodeSpace):
     show_all = space.request.has_option("all")
     target_name = space.request.arg(0)
 
-    current_node = space.session.get_current_node()  # type: ignore
+    current_path = _get_cwd(space)
 
-    if target_name:
-        scope = str(current_node) + "/" + target_name
-    else:
-        scope = str(current_node)
+    # ----------------------------------
+    # RESOLVE PATH
+    # ----------------------------------
 
-    current_path = str(current_node)
+    target = current_path / target_name if target_name else current_path
+    target = target.resolve()
 
-    on_source = space.ports.get(OnSourceRead)
-    result = await on_source(DataRequest(f"system:nodes --scope {scope}"))
+    if not target.exists():
+        yield out(to_text(f"Not found: {target}"))
+        return
 
-    commands = []
-    spaces = []
+    if not target.is_dir():
+        yield out(to_text(f"{target.name}"))
+        return
 
-    # local if the node is a direct child of the current scope,
-    # global if it is inherited from a parent or sibling scope
+    # ----------------------------------
+    # LIST DIRECTORY
+    # ----------------------------------
 
-    for x in result.rows:
-        path = str(x.get("path", ""))
-        parent_path = path.rsplit("/", 1)[0] if "/" in path else ""
-        if not parent_path:
-            parent_path = "/"
-        x["variant"] = "local" if parent_path == current_path else "global"
+    entries = sorted(target.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
 
-        if x["navigable"]:
-            spaces.append(x)
+    dirs = []
+    files = []
+
+    for p in entries:
+        is_dir = p.is_dir()
+        if is_dir:
+            dirs.append({"name": p.name, "is_dir": True, "size": 0})
         else:
-            commands.append(x)
+            try:
+                size = p.stat().st_size
+            except OSError:
+                size = 0
+            files.append({"name": p.name, "is_dir": False, "size": size})
 
-    if not show_all:
-        commands = [c for c in commands if c["variant"] != "global"]
-        spaces = [s for s in spaces if s["variant"] != "global"]
-
-    commands.sort(key=lambda i: i["key"])
-    spaces.sort(key=lambda i: i["key"])
+    # ----------------------------------
+    # PROJECT
+    # ----------------------------------
 
     projection = await space.ports.get(OnProject)(
         name="system/ls",
         lang=space.session.lang,
         state={
-            "commands": commands,
-            "spaces": spaces,
+            "dirs": dirs,
+            "files": files,
+            "path": str(target),
         },
     )
 

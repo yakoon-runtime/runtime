@@ -1,22 +1,16 @@
-{% if state.commands %}
-<strong>Commands</strong>
+<text foreground="bright_black">{{ state.path }}/</text>
 <br/>
-▷<space count="2"/>
-{% for c in state.commands %}
-  <cmd command="{{ c.key }}" variant="{{ c.variant }}" navigable="{{ c.navigable }}" resolvable="{{ c.resolvable }}">{{ c.key }}</cmd>
+<br/>
+{% if state.dirs %}
+{% for d in state.dirs %}
+  <cmd command="{{ d.name }}" variant="local" navigable="true" resolvable="false">{{ d.name }}/</cmd>
   <space count="3"/>
 {% endfor %}
-
-{% endif %}
-{% if state.spaces %}
-{% if state.commands %}
-<br/><br/>
-{% endif %}
-<strong>Spaces</strong>
 <br/>
-▷<space count="2"/>
-{% for c in state.spaces %}
-  <cmd command="{{ c.key }}" variant="{{ c.variant }}" navigable="{{ c.navigable }}" resolvable="{{ c.resolvable }}">{{ c.key }}</cmd>
+{% endif %}
+{% if state.files %}
+{% for f in state.files %}
+  <cmd command="{{ f.name }}" variant="local" navigable="false" resolvable="true">{{ f.name }}</cmd>
   <space count="3"/>
 {% endfor %}
 {% endif %}

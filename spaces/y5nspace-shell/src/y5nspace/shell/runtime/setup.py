@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from y5n.api.nodes import NodePath, NodeSpace
 from y5n.api.ports import (
     OnErrorResolve,
@@ -13,11 +15,26 @@ from y5n.api.sessions import Session
 from ..ports import OnProject
 
 # ----------------------------------
+# INIT
+# ----------------------------------
+
+TEST_ROOT = str(Path.home() / ".yakoon" / "test")
+
+
+def _init_fs_cwd(space: NodeSpace) -> None:
+    cwd = space.session.get_data("fs:cwd")
+    if not cwd:
+        space.session.set_data("fs:cwd", TEST_ROOT)
+
+
+# ----------------------------------
 # RUN
 # ----------------------------------
 
 
 async def setup(space: NodeSpace):
+
+    _init_fs_cwd(space)
 
     # ------------------
     # --- ON PROJECT ---
