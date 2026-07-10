@@ -30,18 +30,18 @@ class InvocationResolver:
         on_authorize: OnAuthorize,
         on_suggest: OnSuggest,
         root: Node,
-        bundles_path: str | Path | None = None,
+        on_get_path: OnGetPath | None = None,
     ):
 
         self._root = root
 
         self.on_authorize = on_authorize
         self.on_suggest = on_suggest
+        self._on_get_path = on_get_path
 
         self._global_nodes: dict[str, Node] = {}
         self._root_nodes: dict[str, Node] = {}
 
-        self._bundles_path = self._resolve_bundles_path(bundles_path)
         self._bundle_cache: dict[str, Node] = {}
 
         self._build()
@@ -378,57 +378,52 @@ class InvocationResolver:
         return self._global_nodes.get(key)
 
     # ---------------------------------------------------------------------
-    # Bundle path resolution
-    # ---------------------------------------------------------------------
-
-    @staticmethod
-    def _resolve_bundles_path(override: str | Path | None) -> Path:
-        if override:
-            return Path(override).resolve()
-        raise RuntimeError(
-            "No bundles_path configured. Set root_path in yakoon-runtime.yml "
-            "or pass bundles_path to InvocationResolver."
-        )
-
-    # ---------------------------------------------------------------------
     # Bundle resolution
     # ---------------------------------------------------------------------
 
     def _resolve_bundle(self, key: str) -> Node | None:
-        bundle_dir = self._bundles_path / f"{key}.bndl"
-        if not bundle_dir.is_dir():
+
+        if not self._on_get_path:
             return None
 
         cached = self._bundle_cache.get(key)
         if cached:
             return cached
 
-        meta_file = bundle_dir / "bundle.yaml"
-        if not meta_file.exists():
-            return None
+        search_dirs = self._on_get_path()
+        for raw_dir in search_dirs:
+            bundle_dir = Path(raw_dir) / f"{key}.bndl"
+            if not bundle_dir.is_dir():
+                continue
 
-        with open(meta_file) as f:
-            meta = yaml.safe_load(f) or {}
+            meta_file = bundle_dir / "bundle.yaml"
+            if not meta_file.exists():
+                continue
 
-        executor = meta.get("executor", "python")
-        run_file = bundle_dir / "run" / f"{executor}.py"
-        if not run_file.exists():
-            return None
+            with open(meta_file) as f:
+                meta = yaml.safe_load(f) or {}
 
-        spec = importlib.util.spec_from_file_location(f"_bundle_{key}", run_file)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+            executor = meta.get("executor", "python")
+            run_file = bundle_dir / "run" / f"{executor}.py"
+            if not run_file.exists():
+                continue
 
-        node = Node(
-            key=key,
-            run=mod.run,
-            resolvable=meta.get("resolvable", True),
-            navigable=meta.get("navigable", False),
-            anonymous=True,
-            scope=NodeScope.GLOBAL,
-        )
-        self._bundle_cache[key] = node
-        return node
+            spec = importlib.util.spec_from_file_location(f"_bundle_{key}", run_file)
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+
+            node = Node(
+                key=key,
+                run=mod.run,
+                resolvable=meta.get("resolvable", True),
+                navigable=meta.get("navigable", False),
+                anonymous=True,
+                scope=NodeScope.GLOBAL,
+            )
+            self._bundle_cache[key] = node
+            return node
+
+        return None
 
     def _raise_usage(
         self,
@@ -495,3 +490,7 @@ class OnSuggest(Protocol):
         limit: int = 3,
         cutoff: float = 0.5,
     ) -> list[str]: ...
+
+
+class OnGetPath(Protocol):
+    def __call__(self, subdir: str | None = None) -> list[str]: ...

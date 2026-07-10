@@ -27,6 +27,7 @@ from y5n.runtime.machine import (
     TaskRunner,
 )
 from y5n.runtime.machine.effects import EffectExecutor
+from y5n.runtime.machine.resolver import OnGetPath
 from y5n.runtime.runtime import Session
 from y5n.runtime.runtime.bus import BusOutput
 from y5n.runtime.settings import Settings
@@ -47,15 +48,11 @@ def build_machine(
     on_initialize: Oninitialize,
     known_runtimes: dict[str, str] | None = None,
     settings: Settings | None = None,
+    on_get_path: OnGetPath | None = None,
 ) -> RuntimeHost:
-
-    # ---------------------------------
-    # --- RESOLVE ROOT PATHS ---
-    # ---------------------------------
 
     _raw = settings.runtime.root_path if settings else ""
     _root_path = str(Path(_raw).resolve()) if _raw else None
-    _bundles_path = Path(_root_path) / "usr" / "bin" if _root_path else None
 
     # ---------------
     # --- ROUTING ---
@@ -65,7 +62,7 @@ def build_machine(
         root=platform,
         on_authorize=on_has_permission,
         on_suggest=on_suggest,
-        bundles_path=_bundles_path,
+        on_get_path=on_get_path,
     )
 
     # ---------------
