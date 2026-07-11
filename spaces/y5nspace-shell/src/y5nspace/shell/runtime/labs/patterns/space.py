@@ -1,5 +1,5 @@
 from y5n.api.nodes import Node
-from y5n.base.nodes.types import NodeScope
+
 
 from .agent import run as agent
 from .dlg import run as dlg
@@ -54,9 +54,8 @@ patterns.add(
     Node(
         key="agent",
         run=agent,
-        anonymous=True,
+        anonymous=True,  # GLOBAL
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
     )
 )

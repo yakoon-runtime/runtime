@@ -1,5 +1,5 @@
 from y5n.api.invocations import Invocation, Param
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .cd import run as cd
 from .clear import run as clear
@@ -29,8 +29,7 @@ system.add(
     Node(
         key="man",
         run=man,
-        anonymous=True,
-        scope=NodeScope.GLOBAL,
+        anonymous=True,  # GLOBAL → will move to .yak/ search paths
         resolvable=True,
         navigable=False,
         invocations=[
@@ -50,8 +49,7 @@ system.add(
     Node(
         key="ls",
         run=ls,
-        anonymous=True,
-        scope=NodeScope.GLOBAL,
+        anonymous=True,  # GLOBAL → will move to .yak/ search paths
         resolvable=True,
         navigable=False,
         invocations=[
@@ -74,8 +72,7 @@ system.add(
     Node(
         key="cd",
         run=cd,
-        anonymous=True,
-        scope=NodeScope.GLOBAL,
+        anonymous=True,  # GLOBAL → will move to .yak/ search paths
         resolvable=True,
         navigable=False,
     )
@@ -89,8 +86,7 @@ system.add(
     Node(
         key="pwd",
         run=pwd,
-        anonymous=True,
-        scope=NodeScope.GLOBAL,
+        anonymous=True,  # GLOBAL → will move to .yak/ search paths
         resolvable=True,
         navigable=False,
     )
@@ -104,8 +100,7 @@ system.add(
     Node(
         key="clear",
         run=clear,
-        anonymous=True,
-        scope=NodeScope.GLOBAL,
+        anonymous=True,  # GLOBAL → will move to .yak/ search paths
         resolvable=True,
         navigable=False,
     )
@@ -119,8 +114,7 @@ system.add(
     Node(
         key="set",
         run=set,
-        anonymous=True,
-        scope=NodeScope.GLOBAL,
+        anonymous=True,  # GLOBAL → will move to .yak/ search paths
         resolvable=True,
         navigable=False,
         invocations=[

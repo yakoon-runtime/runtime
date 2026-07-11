@@ -19,7 +19,7 @@ import uuid
 from websockets.asyncio.server import serve
 from y5n.base.flow.dsl import delay, out_text, start_cmd
 from y5n.base.flow.primitives import Outcome
-from y5n.base.nodes import Node, NodeScope
+from y5n.base.nodes import Node
 from y5n.runtime.settings import RuntimeSettings, Settings
 from y5n.runtime.wire.runtime import build_runtime
 from y5ntrans.websocket.server import WebSocketServerTransport
@@ -45,15 +45,13 @@ async def main():
             Node(
                 key="hello",
                 run=hello_flow,
-                scope=NodeScope.GLOBAL,
-                anonymous=True,
+                anonymous=True,  # GLOBAL
                 resolvable=True,
             ),
             Node(
                 key="stream",
                 run=stream_flow,
-                scope=NodeScope.GLOBAL,
-                anonymous=True,
+                anonymous=True,  # GLOBAL
                 resolvable=True,
             ),
         ],
@@ -87,15 +85,13 @@ async def main():
             Node(
                 key="call",
                 run=call_flow,
-                scope=NodeScope.GLOBAL,
-                anonymous=True,
+                anonymous=True,  # GLOBAL
                 resolvable=True,
             ),
             Node(
                 key="stream",
                 run=stream_remote_flow,
-                scope=NodeScope.GLOBAL,
-                anonymous=True,
+                anonymous=True,  # GLOBAL
                 resolvable=True,
             ),
         ],

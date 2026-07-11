@@ -42,7 +42,7 @@ demos.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        # scope=NodeScope.GLOBAL,
+
     )
 )
 
@@ -57,6 +57,6 @@ demos.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        # scope=NodeScope.GLOBAL,
+
     )
 )

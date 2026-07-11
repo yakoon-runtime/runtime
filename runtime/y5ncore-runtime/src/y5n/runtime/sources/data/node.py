@@ -2,7 +2,6 @@ from typing import Any
 
 from y5n.base.nodes.node import Node
 from y5n.base.nodes.path import NodePath
-from y5n.base.nodes.types import NodeScope
 from y5n.base.sources import DataRequest, DataResult, DataSource
 
 
@@ -242,9 +241,6 @@ class NodeSource(DataSource):
 
     def _build(self):
 
-        globals_: dict[str, Node] = {}
-        roots_: dict[str, Node] = {}
-
         def collect(node: Node):
 
             if node.is_shell:
@@ -252,20 +248,7 @@ class NodeSource(DataSource):
                     raise ValueError("Duplicate shell node")
                 self._shell = node
 
-            if node.scope == NodeScope.GLOBAL:
-                if node.key in globals_:
-                    raise ValueError(f"GLOBAL conflict: {node.key}")
-                globals_[node.key] = node
-
-            if node.scope == NodeScope.ROOT:
-                if node.key in roots_:
-                    raise ValueError(f"ROOT conflict: {node.key}")
-                roots_[node.key] = node
-
         self._root.walk(collect)
-
-        self._globals = globals_
-        self._roots = roots_
 
     def _to_row(self, node: Node) -> dict[str, Any]:
 

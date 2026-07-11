@@ -1,6 +1,6 @@
 from typing import Literal, TypeAlias
 
-from y5n.base.nodes import Node, NodePath, NodeScope, UnknownOptionsError, UsageError
+from y5n.base.nodes import Node, NodePath, UnknownOptionsError, UsageError
 from y5n.base.plugins.ports import (
     OnAuthorizeRead,
     OnAuthorizeWrite,
@@ -123,7 +123,7 @@ def build_runtime(
 
     platform = Node(
         key="/",
-        scope=NodeScope.NODE,
+
     )
 
     # -----------------------

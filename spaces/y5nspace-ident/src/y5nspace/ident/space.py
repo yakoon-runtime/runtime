@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from y5n.api.invocations import Invocation, Param
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .runtime.grant.space import grant
 from .runtime.group.space import group
@@ -38,11 +38,10 @@ ident.mount(membership)
 ident.add(
     Node(
         key="whoami",
-        anonymous=True,
+        anonymous=True,  # GLOBAL
         resolvable=True,
         navigable=False,
         run=whoami,
-        scope=NodeScope.GLOBAL,
     )
 )
 
@@ -53,11 +52,11 @@ ident.add(
 ident.add(
     Node(
         key="su",
-        anonymous=True,
+        anonymous=True,  # GLOBAL
         resolvable=True,
         navigable=False,
         run=su,
-        scope=NodeScope.GLOBAL,
+
         invocations=[
             Invocation(
                 params=[

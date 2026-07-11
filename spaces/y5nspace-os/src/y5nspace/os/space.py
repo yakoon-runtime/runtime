@@ -1,14 +1,13 @@
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .runtime.os import run
 from .runtime.setup import setup
 
 os = Node(
     key="os",
-    anonymous=True,
+    anonymous=True,  # GLOBAL
     setup=setup,
     run=run,
     navigable=False,
     resolvable=True,
-    scope=NodeScope.GLOBAL,
 )

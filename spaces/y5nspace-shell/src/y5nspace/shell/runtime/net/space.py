@@ -1,5 +1,5 @@
 from y5n.api.invocations import Invocation, Param
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .connect import run as connect
 from .list import run as list
@@ -10,11 +10,10 @@ from .list import run as list
 
 net = Node(
     key="net",
-    anonymous=True,
+    anonymous=True,  # GLOBAL
     navigable=True,
     resolvable=True,
     run=list,
-    scope=NodeScope.GLOBAL,
 )
 
 # ----------------------------------

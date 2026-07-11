@@ -1,5 +1,5 @@
 from y5n.api.invocations import Invocation, Param
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .bg import run as bg
 from .fg import run as fg
@@ -15,11 +15,10 @@ from .stop import run as stop
 jobs = Node(
     key="jobs",
     setup=setup,
-    anonymous=True,
+    anonymous=True,  # GLOBAL
     navigable=True,
     resolvable=True,
     run=list,
-    scope=NodeScope.GLOBAL,
 )
 
 # ----------------------------------
@@ -72,7 +71,7 @@ jobs.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
+
         invocations=[
             Invocation(
                 params=[Param(key="index", required=True, positional=True)],
@@ -94,6 +93,6 @@ jobs.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        scope=NodeScope.GLOBAL,
+
     )
 )

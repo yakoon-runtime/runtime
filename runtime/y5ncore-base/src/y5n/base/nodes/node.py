@@ -11,7 +11,7 @@ from .handler import RunHandler
 from .invocation import Invocation, InvocationValidator
 from .path import NodePath
 from .ports import NodePorts
-from .types import NodeKind, NodeScope, NodeVisibility
+from .types import NodeKind, NodeVisibility
 
 # ----------------------------------
 # NODE
@@ -51,9 +51,6 @@ class Node:
 
     kind: NodeKind = NodeKind.USER
     """Runtime-level classification (USER, SYSTEM, …)."""
-
-    scope: NodeScope = NodeScope.NODE
-    """Visibility scope for resolution (NODE, ROOT, GLOBAL)."""
 
     visibility: NodeVisibility = NodeVisibility.NORMAL
     """Controls whether the node appears in listings."""

@@ -26,15 +26,3 @@ class NodeVisibility(StrEnum):
     DEVELOPER = "dev"
     INTERNAL = "internal"
 
-
-class NodeScope(StrEnum):
-    """Determines command resolution scope.
-
-    NODE — only in the active node.
-    ROOT — in the owner application and root node.
-    GLOBAL — available everywhere.
-    """
-
-    NODE = "node"
-    ROOT = "root"
-    GLOBAL = "global"

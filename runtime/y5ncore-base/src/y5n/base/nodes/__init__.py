@@ -9,7 +9,7 @@ from .node import Node
 from .path import NodePath
 from .request import Request, RequestBuilder
 from .space import NodeSpace
-from .types import NodeKind, NodeScope, NodeVisibility
+from .types import NodeKind, NodeVisibility
 
 __all__ = [
     # .space
@@ -18,7 +18,6 @@ __all__ = [
     "Node",
     # .types
     "NodeVisibility",
-    "NodeScope",
     "NodeKind",
     # .path
     "NodePath",

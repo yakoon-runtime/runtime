@@ -1,5 +1,5 @@
 from y5n.api.invocations import Invocation, Param
-from y5n.api.nodes import Node, NodeScope
+from y5n.api.nodes import Node
 
 from .attach import run as attach
 from .current import run as current
@@ -12,11 +12,10 @@ from .list import run as list
 
 session = Node(
     key="session",
-    anonymous=True,
+    anonymous=True,  # GLOBAL
     navigable=True,
     resolvable=True,
     run=list,
-    scope=NodeScope.GLOBAL,
 )
 
 # ----------------------------------

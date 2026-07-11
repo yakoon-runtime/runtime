@@ -30,7 +30,7 @@ dsl.add(
         anonymous=True,
         resolvable=True,
         navigable=False,
-        # scope=NodeScope.GLOBAL,
+
     )
 )
 
@@ -44,7 +44,7 @@ dsl.add(
         run=cmd,
         anonymous=True,
         resolvable=True,
-        # scope=NodeScope.GLOBAL,
+
         navigable=False,
     )
 )
