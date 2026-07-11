@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Protocol
 
 from y5n.base.naming import Namespace
@@ -17,6 +16,7 @@ class AuthResult:
     ok: bool
     user: dict | None = None
     reason: str | None = None
+
 
 # -------------------
 # -- PLUGIN PORTS ---
