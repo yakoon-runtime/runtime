@@ -1,5 +1,10 @@
 executor: python
 entry: python.py
 
+invocation:
+  params:
+    - key: name
+      positional: true
+
 man:
   default: resources/ls.yak

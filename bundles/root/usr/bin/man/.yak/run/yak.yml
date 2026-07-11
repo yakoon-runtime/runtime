@@ -1,6 +1,12 @@
 executor: python
 entry: python.py
 
+invocation:
+  params:
+    - key: command
+      positional: true
+      required: true
+
 projection:
   default: resources/default.yak
 
