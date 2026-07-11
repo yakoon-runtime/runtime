@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.nodes import Node, NodePath, NodeScope, UsageError
+from y5n.base.nodes import Node, NodePath, UsageError
 from y5n.runtime.capabilities.permission import Permission
 from y5n.runtime.runtime import (
     NodeNotExecutable,
@@ -35,9 +35,6 @@ class InvocationResolver:
         self.on_authorize = on_authorize
         self.on_suggest = on_suggest
         self.on_get_node = on_get_node
-
-        self._global_nodes: dict[str, Node] = {}
-        self._root_nodes: dict[str, Node] = {}
 
     # ---------------------------------------------------------------------
     # Public API
@@ -168,36 +165,9 @@ class InvocationResolver:
         key: str,
     ) -> None:
 
-        choices: list[str] = []
-
-        # ---------------------------------
-        # Local runtime scope
-        # ---------------------------------
-
-        for node in parent.find_resolvable():
-
-            if node.scope in (
-                NodeScope.NODE,
-                NodeScope.ROOT,
-            ):
-                choices.append(node.key)
-
-        # ---------------------------------
-        # ROOT scope
-        # ---------------------------------
-
-        if parent == self._root:
-            choices.extend(self._root_nodes.keys())
-
-        # ---------------------------------
-        # GLOBAL scope
-        # ---------------------------------
-
-        choices.extend(self._global_nodes.keys())
-
         suggestions = self.on_suggest(
             value=key,
-            choices=choices,
+            choices=[],
             limit=self.SUGGESTION_LIMIT,
         )
 
@@ -231,11 +201,7 @@ class InvocationResolver:
         for seg in segments[:-1]:
             if not seg:
                 continue
-            child = walk.children.get(seg)
-            if child is None:
-                child = self.on_get_node(walk, seg)
-            if child is None:
-                child = self._global_nodes.get(seg) or self._root_nodes.get(seg)
+            child = self.on_get_node(walk, seg)
             if child is None:
                 return None
             walk = child
@@ -253,54 +219,7 @@ class InvocationResolver:
         key: str,
     ) -> Node | None:
 
-        # ---------------------------------
-        # Yak tree index (takes priority over semantic tree)
-        # ---------------------------------
-
-        node = self.on_get_node(parent, key)
-        if node:
-            return node
-
-        # ---------------------------------
-        # Local runtime scope
-        # ---------------------------------
-
-        for node in parent.find_resolvable():
-
-            if node.scope not in (
-                NodeScope.NODE,
-                NodeScope.ROOT,
-            ):
-                continue
-
-            if node.key == key:
-                return node
-
-        # ---------------------------------
-        # Non-resolvable nodes (containers, namespaces)
-        # Found by direct key lookup for proper error messaging
-        # ---------------------------------
-
-        child = parent.children.get(key)
-        if child is not None and not child.resolvable:
-            return child
-
-        # ---------------------------------
-        # ROOT scope
-        # ---------------------------------
-
-        if parent == self._root:
-
-            node = self._root_nodes.get(key)
-
-            if node:
-                return node
-
-        # ---------------------------------
-        # GLOBAL scope
-        # ---------------------------------
-
-        return self._global_nodes.get(key)
+        return self.on_get_node(parent, key)
 
     def _raise_usage(
         self,
