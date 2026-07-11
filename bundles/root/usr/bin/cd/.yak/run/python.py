@@ -9,7 +9,7 @@ ROOT = "/"
 def _get_cwd(space: NodeSpace) -> Path:
     raw = space.session.get_data("fs:cwd")
     if not raw:
-        raw = space.session.get_data("fs:root", str(Path.home() / ".yakoon"))
+        raw = space.session.get_data("fs:root", str(Path.home() / ".yak"))
     return Path(raw).resolve()
 
 

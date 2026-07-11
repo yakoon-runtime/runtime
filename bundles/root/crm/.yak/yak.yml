@@ -1,0 +1,5 @@
+name: crm
+title: Customer Relationship Management
+resolvable: false
+navigable: true
+contextual: true

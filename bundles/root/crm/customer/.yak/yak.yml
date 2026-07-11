@@ -1,0 +1,5 @@
+name: customer
+title: Customer records
+resolvable: false
+navigable: true
+contextual: true

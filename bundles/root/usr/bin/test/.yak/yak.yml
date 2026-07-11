@@ -1,0 +1,5 @@
+name: test
+title: Test port resolution from context
+resolvable: true
+navigable: false
+contextual: false
