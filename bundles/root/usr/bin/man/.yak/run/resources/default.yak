@@ -1,10 +1,25 @@
-<heading>Manual</heading>
-<br/>
-<b>Usage:</b> man command
-<br count="2"/>
-Show the manual page for a command.
-<br count="2"/>
+<heading>man - Show command manuals.</heading>
 
-Available manuals:
+<rule/>
 
-{{ commands }}
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  man
+  man ls
+  man cd
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Displays the manual for a command.
+</paragraph>
+
+<paragraph>
+If no command is specified, the available manuals are listed.
+</paragraph>

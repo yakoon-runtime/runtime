@@ -11,7 +11,6 @@ from y5n.base.plugins.ports import (
     OnParsePermissionSpec,
     OnProject,
     OnProjectionResolve,
-    OnResolveNode,
     OnResourceLoad,
     OnSessionAttach,
     OnSessionDetach,
@@ -181,7 +180,6 @@ def build_runtime(
     platform.ports.provide(OnJinjaRender, jinja_engine.render_str)
     platform.ports.provide(OnCompile, compiler.compile)
     platform.ports.provide(OnErrorResolve, error_resolve)
-    platform.ports.provide(OnResolveNode, tree.find_by_key)
 
     # ----------------- ^
     # --- ATTACHING ---
@@ -197,7 +195,7 @@ def build_runtime(
     # --- DATASOURCING ---
     # --------------------
 
-    ds.bind("system:nodes", NodeSource(platform))
+    ds.bind("system:nodes", NodeSource(tree))
     ds.bind("system:runtimes", RuntimeSource(settings.runtime.known))
     # ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
 

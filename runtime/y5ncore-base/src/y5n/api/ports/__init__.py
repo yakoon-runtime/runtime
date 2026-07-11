@@ -9,7 +9,6 @@ from y5n.base.plugins.ports import (
     OnParsePermissionSpec,
     OnProject,
     OnProjectionResolve,
-    OnResolveNode,
     OnResourceLoad,
     OnSessionAttach,
     OnSessionDetach,
@@ -35,5 +34,4 @@ __all__ = [
     "OnCompile",
     "OnSourceRead",
     "OnProject",
-    "OnResolveNode",
 ]

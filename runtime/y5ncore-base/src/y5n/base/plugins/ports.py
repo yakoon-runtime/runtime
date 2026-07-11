@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol
 
 from y5n.base.naming import Namespace

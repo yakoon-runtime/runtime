@@ -3,6 +3,7 @@ from typing import Any
 from y5n.base.nodes.node import Node
 from y5n.base.nodes.path import NodePath
 from y5n.base.sources import DataRequest, DataResult, DataSource
+from y5n.runtime.nodes.tree import Tree
 
 
 class NodeSource(DataSource):
@@ -47,9 +48,9 @@ class NodeSource(DataSource):
 
     """
 
-    def __init__(self, root: Node):
+    def __init__(self, tree: Tree):
 
-        self._root = root
+        self._tree = tree
 
         self._resolvers = {
             "by-key": self._resolve_by_key,
@@ -97,7 +98,7 @@ class NodeSource(DataSource):
         raw = request.option("by-key")
         path = NodePath.from_string(raw)
 
-        node = self._root.find(path)
+        node = self._tree.find(str(path)) or self._tree.find_by_key(raw)
 
         if not node:
             return DataResult.not_found(id=str(path))
@@ -108,17 +109,17 @@ class NodeSource(DataSource):
 
         raw = request.option("children")
 
-        # Root children.
         if not raw:
+            root = self._tree.root()
+            if root is None:
+                return DataResult.not_found(id="/")
             return DataResult.ok(
-                rows=[self._to_row(child) for child in self._root.children.values()]
+                rows=[self._to_row(child) for child in root.children.values()]
             )
 
-        path = NodePath.from_string(raw)
-
-        node = self._root.find(path)
+        node = self._tree.find(f"/{raw.lstrip('/')}")
         if not node:
-            return DataResult.not_found(id=str(path))
+            return DataResult.not_found(id=str(raw))
 
         return DataResult.ok(
             rows=[self._to_row(child) for child in node.children.values()]
@@ -132,6 +133,10 @@ class NodeSource(DataSource):
 
     def _to_row(self, node: Node) -> dict[str, Any]:
 
+        resources: dict[str, dict[str, str]] = {}
+        for rtype, variants in node.resources.items():
+            resources[rtype] = {v: str(p) for v, p in variants.items()}
+
         return {
             "key": node.key,
             "name": node.name,
@@ -141,5 +146,6 @@ class NodeSource(DataSource):
             "kind": str(node.kind),
             "visibility": str(node.visibility),
             "parent": node.parent.key if node.parent else None,
-            "path": node.path,
+            "path": str(node.path),
+            "resources": resources,
         }
