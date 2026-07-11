@@ -2,4 +2,4 @@ executor: python
 entry: python.py
 
 man:
-  default: resources/cd.yak
+  default: resources/man.yak

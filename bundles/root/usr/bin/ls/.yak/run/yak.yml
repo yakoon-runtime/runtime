@@ -8,4 +8,4 @@ invocation:
     - key: l
 
 man:
-  default: resources/ls.yak
+  default: resources/man.yak
