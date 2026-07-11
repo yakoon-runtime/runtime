@@ -5,6 +5,7 @@ invocation:
   params:
     - key: name
       positional: true
+    - key: l
 
 man:
   default: resources/ls.yak

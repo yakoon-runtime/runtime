@@ -1,4 +1,4 @@
-<heading>ls - List runtime spaces and commands.</heading>
+<heading>ls - List directory contents.</heading>
 
 <rule/>
 
@@ -7,8 +7,16 @@ Usage
 </heading>
 <pre>
   ls
-  ls shell
-  ls --all
+  ls &lt;path&gt;
+  ls --l
+</pre>
+
+<heading level="2">
+Options
+</heading>
+
+<pre>
+  --l    List format (one entry per line)
 </pre>
 
 <heading level="2">
@@ -16,12 +24,12 @@ Description
 </heading>
 
 <paragraph>
-Lists the visible child nodes of the current runtime space.
+Lists the contents of a directory.
 </paragraph>
 
 <paragraph>
-When a path is provided, ls inspects that runtime space without
-changing the current context.
+Without options, entries are shown side by side.
+With <em>--l</em>, each entry is shown on its own line.
 </paragraph>
 
 <heading level="2">
@@ -29,30 +37,15 @@ Examples
 </heading>
 
 <pre>
-ls
-  List the current runtime space.
+  ls
+    List current directory.
 
-ls shell
-  List the contents of the shell subspace.
+  ls crm
+    List contents of the crm directory.
 
-ls shell/system
-  List another runtime space.
-
-ls ..
-  List the parent runtime space.
-
-ls /
-  List the runtime root.
+  ls --l
+    List current directory, one entry per line.
 </pre>
-
-<paragraph>
-ls never changes the current runtime context.
-</paragraph>
-
-<paragraph>
-Use cd when you want to work somewhere.
-Use ls when you only want to inspect.
-</paragraph>
 
 <heading level="2">
 See also

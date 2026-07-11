@@ -8,6 +8,8 @@ from y5n.api.projections import to_text
 async def run(space: NodeSpace):
 
     target_name = space.request.arg(0)
+    use_list = space.request.has_option("l")
+
     cwd_raw = space.session.get_data("fs:cwd")
     if not cwd_raw:
         cwd_raw = space.session.get_data("fs:root", str(Path.home() / ".yak"))
@@ -25,8 +27,9 @@ async def run(space: NodeSpace):
         return
 
     entries = sorted(target.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
-    lines = []
-    for p in entries:
-        lines.append(f"{p.name}/" if p.is_dir() else p.name)
+    items = [f"{p.name}/" if p.is_dir() else p.name for p in entries]
 
-    yield out(to_text("\n".join(lines)))
+    if use_list:
+        yield out(to_text("\n".join(items)))
+    else:
+        yield out(to_text("  ".join(items)))
