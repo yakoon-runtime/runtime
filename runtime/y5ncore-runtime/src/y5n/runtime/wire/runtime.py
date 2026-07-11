@@ -11,6 +11,7 @@ from y5n.base.plugins.ports import (
     OnParsePermissionSpec,
     OnProject,
     OnProjectionResolve,
+    OnResolveNode,
     OnResourceLoad,
     OnSessionAttach,
     OnSessionDetach,
@@ -127,6 +128,17 @@ def build_runtime(
     )
 
     # -----------------------
+    # --- YAK TREE BUILD ---
+    # -----------------------
+
+    tree = Tree(
+        root_ports=platform.ports,
+        root_path=settings.runtime.root_path,
+    )
+
+    tree.build()
+
+    # -----------------------
     # --- ERROR RESOLVING ---
     # -----------------------
 
@@ -169,8 +181,9 @@ def build_runtime(
     platform.ports.provide(OnJinjaRender, jinja_engine.render_str)
     platform.ports.provide(OnCompile, compiler.compile)
     platform.ports.provide(OnErrorResolve, error_resolve)
+    platform.ports.provide(OnResolveNode, tree.find_by_key)
 
-    # -----------------
+    # ----------------- ^
     # --- ATTACHING ---
     # -----------------
 
@@ -208,17 +221,6 @@ def build_runtime(
 
     async def build_index():
         pass
-
-    # -----------------------
-    # --- YAK TREE BUILD ---
-    # -----------------------
-
-    tree = Tree(
-        root_ports=platform.ports,
-        root_path=settings.runtime.root_path,
-    )
-
-    tree.build()
 
     # ------------------------
     # --- MACHINE HANDLING ---

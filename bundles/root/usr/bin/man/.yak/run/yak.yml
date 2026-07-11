@@ -3,7 +3,3 @@ entry: python.py
 
 projection:
   default: resources/default.yak
-  de: resources/de.yak
-
-man:
-  default: resources/man_default.yak

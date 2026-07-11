@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any, Protocol
 
 from y5n.base.nodes.space import NodeSpace
@@ -53,10 +54,12 @@ class Projector:
         space: NodeSpace,
         resource: str = "projection",
         state: dict[str, Any] | None = None,
+        resources: dict[str, dict[str, Path]] | None = None,
     ) -> Projection:
         if self.on_render_str is None:
             raise RuntimeError("OnProject port not configured")
-        variants = space.resources.get(resource, {}) if space.resources else {}
+        source = resources if resources is not None else space.resources
+        variants = source.get(resource, {}) if source else {}
         template_path = self._resolve_variant(variants, space.session.lang)
         if template_path is None:
             raise FileNotFoundError(

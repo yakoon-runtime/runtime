@@ -1,0 +1,10 @@
+<heading>Manual</heading>
+<br/>
+<b>Usage:</b> man command
+<br count="2"/>
+Show the manual page for a command.
+<br count="2"/>
+
+Available manuals:
+
+{{ commands }}

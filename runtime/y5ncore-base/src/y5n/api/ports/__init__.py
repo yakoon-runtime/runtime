@@ -7,7 +7,9 @@ from y5n.base.plugins.ports import (
     OnManualResolve,
     OnNewPermissionSet,
     OnParsePermissionSpec,
+    OnProject,
     OnProjectionResolve,
+    OnResolveNode,
     OnResourceLoad,
     OnSessionAttach,
     OnSessionDetach,
@@ -32,4 +34,6 @@ __all__ = [
     "OnJinjaRender",
     "OnCompile",
     "OnSourceRead",
+    "OnProject",
+    "OnResolveNode",
 ]

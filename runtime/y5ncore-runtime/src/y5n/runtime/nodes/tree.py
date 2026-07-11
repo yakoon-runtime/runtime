@@ -216,6 +216,12 @@ class Tree:
     def find(self, path: str) -> Node | None:
         return self._nodes.get(path)
 
+    def find_by_key(self, key: str) -> Node | None:
+        for node in self._nodes.values():
+            if node.key == key:
+                return node
+        return None
+
     def resolve(self, parent: Node, key: str) -> Node | None:
         ppath = str(parent.path)
         full = f"/{key}" if ppath == "/" else f"{ppath}/{key}"
