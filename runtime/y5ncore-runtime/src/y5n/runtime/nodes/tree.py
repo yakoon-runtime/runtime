@@ -1,12 +1,25 @@
 from __future__ import annotations
 
 import importlib.util
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 import yaml
 from y5n.base.nodes import Node
 from y5n.base.nodes.ports import NodePorts
+
+
+@dataclass
+class BuildState:
+    """Accumulated inherited context during tree assembly.
+
+    Carried top-down through the node hierarchy. Each level may
+    contribute additional entries that are inherited by all children.
+    """
+
+    search_paths: list[str] = field(default_factory=list)
+    """Search path prefixes inherited from parent levels."""
 
 
 class Tree:
@@ -23,47 +36,36 @@ class Tree:
         self._root: Node | None = None
 
     # ------------------------------------------------------------------
-    # Build
+    # Build pipeline
     # ------------------------------------------------------------------
 
     def build(self) -> None:
-        yak_dirs = sorted(
-            p.parent.parent for p in self._root_path.rglob(".yak/yak.yml")
+        dirs = self._scan()
+        nodes = self._create_nodes(dirs)
+        self._link_nodes(nodes)
+        self._assemble()
+
+    # ------------------------------------------------------------------
+    # Phase 1 – Scan
+    # ------------------------------------------------------------------
+
+    def _scan(self) -> list[Path]:
+        return sorted(
+            p.parent.parent
+            for p in self._root_path.rglob(".yak/yak.yml")
+            if p.parent.parent != self._root_path
         )
 
-        pending: dict[str, Node] = {}
+    # ------------------------------------------------------------------
+    # Phase 2 – Create
+    # ------------------------------------------------------------------
 
-        for dir_path in yak_dirs:
-            if dir_path == self._root_path:
-                continue
+    def _create_nodes(self, dirs: list[Path]) -> dict[str, Node]:
+        nodes: dict[str, Node] = {}
+        for dir_path in dirs:
             rel = str(dir_path.relative_to(self._root_path))
-            pending[rel] = self._build_node(dir_path)
-
-        # Sort by depth so parents are created before children
-        sorted_rels = sorted(pending.keys(), key=lambda r: len(Path(r).parts))
-
-        # Build root node
-        root_meta = _read_yaml(self._root_path / ".yak" / "yak.yml")
-        self._root = Node(
-            key="/",
-            name=root_meta.get("title", "root"),
-            resolvable=False,
-            navigable=True,
-            ports=self._root_ports.fork(),
-        )
-        self._nodes["/"] = self._root
-
-        # Attach children to parents
-        for rel_str in sorted_rels:
-            node = pending[rel_str]
-            parent_rel = str(Path(rel_str).parent)
-            parent_key = f"/{parent_rel}" if parent_rel != "." else "/"
-            parent = self._nodes.get(parent_key) or self._root
-            parent.add(node)
-            self._nodes[f"/{rel_str}"] = node
-
-        # Assemble context top-down
-        self._assemble_recursive(self._root, self._root_path)
+            nodes[rel] = self._build_node(dir_path)
+        return nodes
 
     def _build_node(self, dir_path: Path) -> Node:
         meta = _read_yaml(dir_path / ".yak" / "yak.yml")
@@ -89,30 +91,60 @@ class Tree:
         entry_file = cap_dir / entry
         if not entry_file.is_file():
             return None
-        return _load_module(f"_cap_{cap_dir.parent.parent.name}_{cap_dir.name}", entry_file)
+        return _load_module(
+            f"_cap_{cap_dir.parent.parent.name}_{cap_dir.name}", entry_file
+        )
 
-    def _assemble_recursive(
-        self,
-        node: Node,
-        dir_path: Path | None,
-        inherited: list[str] | None = None,
+    # ------------------------------------------------------------------
+    # Phase 3 – Link
+    # ------------------------------------------------------------------
+
+    def _link_nodes(self, created: dict[str, Node]) -> None:
+        sorted_rels = sorted(created.keys(), key=lambda r: len(Path(r).parts))
+
+        root_meta = _read_yaml(self._root_path / ".yak" / "yak.yml")
+        self._root = Node(
+            key="/",
+            name=root_meta.get("title", "root"),
+            resolvable=False,
+            navigable=True,
+            ports=self._root_ports.fork(),
+        )
+        self._nodes["/"] = self._root
+
+        for rel_str in sorted_rels:
+            node = created[rel_str]
+            parent_rel = str(Path(rel_str).parent)
+            parent_key = f"/{parent_rel}" if parent_rel != "." else "/"
+            parent = self._nodes.get(parent_key) or self._root
+            parent.add(node)
+            self._nodes[f"/{rel_str}"] = node
+
+    # ------------------------------------------------------------------
+    # Phase 4 – Assemble
+    # ------------------------------------------------------------------
+
+    def _assemble(self) -> None:
+        self._assemble_node(self._root, self._root_path, BuildState())
+
+    def _assemble_node(
+        self, node: Node, dir_path: Path | None, state: BuildState
     ) -> None:
-        if inherited is None:
-            inherited = []
-
-        paths = list(inherited)
+        current = BuildState(search_paths=list(state.search_paths))
 
         if dir_path:
-            self._merge_search_paths(node, dir_path, paths)
+            self._merge_search_paths(node, dir_path, current)
             self._run_setup(node, dir_path)
 
-        node.search_paths = paths
+        node.search_paths = current.search_paths
 
         for child_key, child_node in node.children.items():
             child_path = (dir_path / child_key) if dir_path else None
-            self._assemble_recursive(child_node, child_path, paths)
+            self._assemble_node(child_node, child_path, current)
 
-    def _merge_search_paths(self, node: Node, dir_path: Path, paths: list[str]) -> None:
+    def _merge_search_paths(
+        self, node: Node, dir_path: Path, state: BuildState
+    ) -> None:
         path_file = dir_path / ".yak" / "path"
         if not path_file.is_file():
             return
@@ -123,7 +155,7 @@ class Tree:
                 continue
             sub = line[2:] if line.startswith("./") else line
             tree_path = f"/{sub}" if node_path == "/" else f"{node_path}/{sub}"
-            paths.insert(0, tree_path)
+            state.search_paths.insert(0, tree_path)
 
     def _run_setup(self, node: Node, dir_path: Path) -> None:
         mod = self._load_capability(dir_path / ".yak" / "setup")
@@ -145,19 +177,18 @@ class Tree:
     def find(self, path: str) -> Node | None:
         return self._nodes.get(path)
 
-    def resolve(self, parent_path: str, key: str) -> Node | None:
-        full = f"/{key}" if parent_path == "/" else f"{parent_path}/{key}"
+    def resolve(self, parent: Node, key: str) -> Node | None:
+        ppath = str(parent.path)
+        full = f"/{key}" if ppath == "/" else f"{ppath}/{key}"
 
         node = self._nodes.get(full)
         if node:
             return node
 
-        parent = self._nodes.get(parent_path)
-        if parent is not None:
-            for sp in parent.search_paths:
-                node = self._nodes.get(f"{sp}/{key}")
-                if node:
-                    return node
+        for sp in parent.search_paths:
+            node = self._nodes.get(f"{sp}/{key}")
+            if node:
+                return node
 
         for node in self._nodes.values():
             if node.key == key:
@@ -175,7 +206,7 @@ class Tree:
             return
         rel = path.lstrip("/")
         dir_path = self._root_path / rel if rel else self._root_path
-        self._assemble_recursive(node, dir_path)
+        self._assemble_node(node, dir_path, BuildState(search_paths=node.search_paths))
 
 
 # ------------------------------------------------------------------

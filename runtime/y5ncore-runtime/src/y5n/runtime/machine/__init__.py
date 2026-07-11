@@ -1,7 +1,8 @@
+from .effects import EffectExecutor
 from .engine import CommandEngine
 from .host import RuntimeHost
 from .parser import InputParser
-from .resolver import InvocationResolver
+from .resolver import InvocationResolver, OnGetNode
 from .runner import Runner
 from .scheduler import Scheduler
 from .session import SessionBuilder
@@ -16,6 +17,7 @@ __all__ = [
     "InputParser",
     # .resolver
     "InvocationResolver",
+    "OnGetNode",
     # .runner
     "Runner",
     # .scheduler
@@ -24,4 +26,6 @@ __all__ = [
     "SessionBuilder",
     # .task_runner
     "TaskRunner",
+    # .effects
+    "EffectExecutor",
 ]
