@@ -1,0 +1,5 @@
+<heading>Test Bundle (resources path)</heading>
+<rule/>
+{{ greeting }}
+<br count="2"/>
+rendered via OnProject from custom resources path
