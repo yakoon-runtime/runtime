@@ -6,8 +6,12 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from y5n.base.nodes import Node
+from y5n.base.nodes import Invocation, Node, Param
 from y5n.base.nodes.ports import NodePorts
+
+# Resource types that capabilities can declare in yak.yml.
+# Each entry becomes a node.resources[type][variant] → Path mapping.
+RESOURCE_KEYS = frozenset({"projection", "man"})
 
 
 @dataclass
@@ -24,10 +28,13 @@ class BuildState:
 
 @dataclass
 class Capability:
-    """Loaded capability with its module and resource paths."""
+    """Loaded capability with its module, invocations and resource paths."""
 
     module: object | None = None
     """The loaded Python module, or None if load failed."""
+
+    invocations: list[Invocation] = field(default_factory=list)
+    """Parsed invocation definitions from yak.yml."""
 
     resources: dict[str, dict[str, Path]] = field(default_factory=dict)
     """Resource file paths resolved from yak.yml, keyed by type then variant."""
@@ -89,9 +96,10 @@ class Tree:
             anonymous=True,
         )
         cap = self._load_capability(dir_path / ".yak" / "run")
-        if cap and cap.module and hasattr(cap.module, "run"):
-            node.run = cap.module.run  # type: ignore
         if cap:
+            if cap.module and hasattr(cap.module, "run"):
+                node.run = cap.module.run  # type: ignore
+            node.invocations = cap.invocations
             node.resources = cap.resources
         return node
 
@@ -110,8 +118,34 @@ class Tree:
             else None
         )
 
+        # Parse invocation
+        invocations: list[Invocation] = []
+        inv_data = meta.get("invocation")
+        if isinstance(inv_data, dict):
+            params: list[Param] = []
+            for p in inv_data.get("params", []):
+                if isinstance(p, dict):
+                    key = p.get("key", "")
+                    if key:
+                        params.append(
+                            Param(
+                                key=key,
+                                required=p.get("required", False),
+                                positional=p.get("positional", False),
+                                default=p.get("default"),
+                            )
+                        )
+            invocations.append(
+                Invocation(
+                    action=inv_data.get("action"),
+                    params=params,
+                    default=inv_data.get("default", True),
+                )
+            )
+
+        # Parse resources
         resources: dict[str, dict[str, Path]] = {}
-        for res_type in ("projection", "man"):
+        for res_type in RESOURCE_KEYS:
             variants = meta.get(res_type)
             if not isinstance(variants, dict):
                 continue
@@ -123,7 +157,7 @@ class Tree:
             if resolved:
                 resources[res_type] = resolved
 
-        return Capability(module=mod, resources=resources)
+        return Capability(module=mod, invocations=invocations, resources=resources)
 
     # ------------------------------------------------------------------
     # Phase 3 – Link
