@@ -1,5 +1,5 @@
-<heading>Test Bundle (resources path)</heading>
+<heading>Test Bundle</heading>
 <rule/>
 {{ greeting }}
 <br count="2"/>
-rendered via OnProject from custom resources path
+<em>rendered via OnProject from .yak/resources</em>

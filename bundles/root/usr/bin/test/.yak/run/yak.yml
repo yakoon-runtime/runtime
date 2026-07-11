@@ -3,3 +3,4 @@ entry: python.py
 
 projection:
   default: resources/default.yak
+  de: resources/de.yak

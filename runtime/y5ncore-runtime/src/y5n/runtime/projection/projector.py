@@ -54,13 +54,24 @@ class Projector:
         resource: str = "projection",
         state: dict[str, Any] | None = None,
     ) -> Projection:
+        if self.on_render_str is None:
+            raise RuntimeError("OnProject port not configured")
         variants = space.resources.get(resource, {}) if space.resources else {}
-        template_path = variants.get("default") or next(iter(variants.values()), None)
+        template_path = self._resolve_variant(variants, space.session.lang)
         if template_path is None:
-            raise FileNotFoundError("Template not found")
+            raise FileNotFoundError(
+                f"Template not found: resource={resource}, lang={space.session.lang}"
+            )
         template = template_path.read_text()
         html = self.on_render_str(template, state or {})
         return self.on_compile(text=html, context={})
+
+    # ----------------------------------
+    # INTERNALS
+    # ----------------------------------
+
+    def _resolve_variant(self, variants: dict[str, Any], lang: str) -> Any | None:
+        return variants.get(lang) or variants.get("default")
 
 
 # ----------------------------------
