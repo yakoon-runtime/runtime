@@ -1,0 +1,41 @@
+<heading>pwd - Show the current runtime path.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  pwd
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Displays the path of the current runtime context.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+pwd
+  Show the current runtime path.
+</pre>
+
+<paragraph>
+Use pwd whenever you want to verify your current location
+before navigating or executing commands.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+cd, ls
+</paragraph>

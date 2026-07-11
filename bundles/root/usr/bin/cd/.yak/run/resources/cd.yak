@@ -1,0 +1,57 @@
+<heading>cd - Change the current runtime context.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  cd shell
+  cd ..
+  cd /
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Changes the current runtime context.
+</paragraph>
+
+<paragraph>
+Subsequent commands operate relative to the new location.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+cd shell
+  Enter the shell runtime space.
+
+cd ..
+  Move to the parent runtime space.
+
+cd /
+  Return to the runtime root.
+</pre>
+
+<paragraph>
+Use cd when you want to work inside another runtime space.
+</paragraph>
+
+<paragraph>
+Use ls when you only want to inspect another location without
+changing the current context.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+ls, man
+</paragraph>

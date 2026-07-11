@@ -1,0 +1,57 @@
+<heading>man - Show command manuals.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  man
+  man ls
+  man cd
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Displays the manual for a command.
+</paragraph>
+
+<paragraph>
+If no command is specified, the available manuals are listed.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+man man
+  Show this manual.
+
+man ls
+  Show the manual for ls.
+
+man cd
+  Show the manual for cd.
+</pre>
+
+<paragraph>
+Manuals explain the purpose, usage and typical examples of a command.
+</paragraph>
+
+<paragraph>
+They are intended as concise documentation rather than a complete
+reference.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+ls, cd
+</paragraph>
