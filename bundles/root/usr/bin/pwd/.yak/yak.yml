@@ -1,0 +1,5 @@
+name: pwd
+title: Print working directory
+resolvable: true
+navigable: false
+contextual: false
