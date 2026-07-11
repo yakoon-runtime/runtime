@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -25,6 +26,6 @@ class NodeSpace:
     session: Session
     ports: NodePorts
     ports_from: PortsFromHandler
-    resources: dict[str, dict[str, str]] | None = None
+    resources: dict[str, dict[str, Path]] | None = None
     """Resource paths from the originating node, keyed by type then variant.
     Populated during command dispatch from the resolved node."""

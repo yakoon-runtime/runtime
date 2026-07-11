@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Callable
-from pathlib import Path
 from typing import Any, Protocol
 
 from y5n.base.nodes.space import NodeSpace
@@ -59,7 +58,7 @@ class Projector:
         template_path = variants.get("default") or next(iter(variants.values()), None)
         if template_path is None:
             raise FileNotFoundError("Template not found")
-        template = Path(template_path).read_text()
+        template = template_path.read_text()
         html = self.on_render_str(template, state or {})
         return self.on_compile(text=html, context={})
 

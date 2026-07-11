@@ -22,6 +22,17 @@ class BuildState:
     """Search path prefixes inherited from parent levels."""
 
 
+@dataclass
+class Capability:
+    """Loaded capability with its module and resource paths."""
+
+    module: object | None = None
+    """The loaded Python module, or None if load failed."""
+
+    resources: dict[str, dict[str, Path]] = field(default_factory=dict)
+    """Resource file paths resolved from yak.yml, keyed by type then variant."""
+
+
 class Tree:
     """Compiled index of .yak/ directories.
 
@@ -77,23 +88,42 @@ class Tree:
             contextual=meta.get("contextual", False),
             anonymous=True,
         )
-        mod = self._load_capability(dir_path / ".yak" / "run")
-        if mod and hasattr(mod, "run"):
-            node.run = mod.run
+        cap = self._load_capability(dir_path / ".yak" / "run")
+        if cap and cap.module and hasattr(cap.module, "run"):
+            node.run = cap.module.run  # type: ignore
+        if cap:
+            node.resources = cap.resources
         return node
 
-    def _load_capability(self, cap_dir: Path) -> object | None:
+    def _load_capability(self, cap_dir: Path) -> Capability | None:
         meta = _read_yaml(cap_dir / "yak.yml")
         if not meta:
             return None
         executor = meta.get("executor", "python")
         entry = meta.get("entry", f"{executor}.py")
         entry_file = cap_dir / entry
-        if not entry_file.is_file():
-            return None
-        return _load_module(
-            f"_cap_{cap_dir.parent.parent.name}_{cap_dir.name}", entry_file
+        mod = (
+            _load_module(
+                f"_cap_{cap_dir.parent.parent.name}_{cap_dir.name}", entry_file
+            )
+            if entry_file.is_file()
+            else None
         )
+
+        resources: dict[str, dict[str, Path]] = {}
+        for res_type in ("projection", "man"):
+            variants = meta.get(res_type)
+            if not isinstance(variants, dict):
+                continue
+            resolved: dict[str, Path] = {}
+            for variant, filename in variants.items():
+                fpath = (cap_dir / filename).resolve()
+                if fpath.is_file():
+                    resolved[variant] = fpath
+            if resolved:
+                resources[res_type] = resolved
+
+        return Capability(module=mod, resources=resources)
 
     # ------------------------------------------------------------------
     # Phase 3 – Link
@@ -136,7 +166,6 @@ class Tree:
         if dir_path:
             self._merge_search_paths(node, dir_path, current)
             self._run_setup(node, dir_path)
-            self._scan_resources(node, dir_path)
 
         node.search_paths = current.search_paths
 
@@ -160,24 +189,9 @@ class Tree:
             state.search_paths.insert(0, tree_path)
 
     def _run_setup(self, node: Node, dir_path: Path) -> None:
-        mod = self._load_capability(dir_path / ".yak" / "setup")
-        if mod and hasattr(mod, "configure"):
-            mod.configure(node.ports)
-
-    def _scan_resources(self, node: Node, dir_path: Path) -> None:
-        res_dir = dir_path / ".yak" / "resources"
-        if not res_dir.is_dir():
-            return
-        resources: dict[str, dict[str, str]] = {}
-        for res_type_dir in sorted(res_dir.iterdir()):
-            if not res_type_dir.is_dir():
-                continue
-            variants: dict[str, str] = {}
-            for variant_file in sorted(res_type_dir.iterdir()):
-                if variant_file.is_file():
-                    variants[variant_file.stem] = str(variant_file)
-            resources[res_type_dir.name] = variants
-        node.resources = resources
+        cap = self._load_capability(dir_path / ".yak" / "setup")
+        if cap and cap.module and hasattr(cap.module, "configure"):
+            cap.module.configure(node.ports)  # type: ignore
 
     def _fs_path_from_node(self, node: Node) -> Path | None:
         for key, n in self._nodes.items():

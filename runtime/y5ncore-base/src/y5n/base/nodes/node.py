@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, TypeVar
 
 from y5n.base.runtime import Container
@@ -135,10 +136,10 @@ class Node:
     """Pre-computed search paths for command resolution.  Assembled by
     Tree.build() from .yak/path files, inherited and merged top-down."""
 
-    resources: dict[str, dict[str, str]] = field(default_factory=dict)
+    resources: dict[str, dict[str, Path]] = field(default_factory=dict)
     """Resource paths assembled by Tree.build().  Keyed by resource type
     (projection, man, …) then variant (default, de, compact, …).
-    Values are absolute filesystem paths to the resource files."""
+    Values are absolute Paths to the resource files."""
 
     # ----------------------------------
     # RENDERING HINTS
