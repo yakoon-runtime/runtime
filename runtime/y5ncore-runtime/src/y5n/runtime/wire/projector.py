@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from y5n.runtime.projection import Projector
 
 from .compiler import build_compiler
@@ -20,6 +18,7 @@ def build_projector() -> Projector:
 
     projector = Projector(
         on_render=renderer.render,
+        on_render_str=renderer.render_str,
         on_compile=compiler.compile,
     )
     return projector

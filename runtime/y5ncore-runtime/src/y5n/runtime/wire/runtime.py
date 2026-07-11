@@ -9,6 +9,7 @@ from y5n.base.plugins.ports import (
     OnJinjaRender,
     OnNewPermissionSet,
     OnParsePermissionSpec,
+    OnProject,
     OnProjectionResolve,
     OnResourceLoad,
     OnSessionAttach,
@@ -123,7 +124,6 @@ def build_runtime(
 
     platform = Node(
         key="/",
-
     )
 
     # -----------------------
@@ -163,6 +163,7 @@ def build_runtime(
     platform.ports.provide(OnAuthorizeWrite, perm_checker.can_write)
     platform.ports.provide(OnNewPermissionSet, lambda: PermissionSet())
     platform.ports.provide(OnParsePermissionSpec, perm_parser.parse)
+    platform.ports.provide(OnProject, projector.project_from_space)
     platform.ports.provide(OnProjectionResolve, projector.project)
     platform.ports.provide(OnResourceLoad, package_reader.get_text)
     platform.ports.provide(OnJinjaRender, jinja_engine.render_str)

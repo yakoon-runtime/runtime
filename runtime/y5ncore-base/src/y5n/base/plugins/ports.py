@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 from typing import Protocol
 
 from y5n.base.naming import Namespace
-from y5n.base.nodes import NodePath
+from y5n.base.nodes import NodePath, NodeSpace
 from y5n.base.permissions import Permission, PermissionSet
 from y5n.base.plugins.models import AuthResult
 from y5n.base.projection import Projection
@@ -16,6 +18,24 @@ from y5n.base.runtime.sessions import Session
 class OnProjectionResolve(Protocol):
     async def __call__(
         self, *, resource: ResourceRef, state: dict | None = None
+    ) -> Projection: ...
+
+
+class OnProject(Protocol):
+    """Resolve a projection from a node's resources.
+
+    Uses the pre-assembled resource paths on the space to find
+    the template, renders it via Jinja, and compiles it into
+    a Projection.  The optional *resource* parameter selects
+    which resource type to use (defaults to ``"projection"``).
+    """
+
+    async def __call__(
+        self,
+        *,
+        space: NodeSpace,
+        resource: str = "projection",
+        state: dict | None = None,
     ) -> Projection: ...
 
 

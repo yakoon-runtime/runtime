@@ -6,8 +6,7 @@ from typing import Protocol, cast
 
 from y5n.base.flow.primitives import AwaitEvent, Effect, Outcome, Stop
 from y5n.base.nodes import Node, NodePath, NodeSpace, Request
-from y5n.base.runtime import Event
-from y5n.base.runtime.input import InputContext, Interaction
+from y5n.base.runtime import Event, InputContext, Interaction
 from y5n.base.runtime.sessions import Session as BaseSession
 from y5n.runtime.flow import Flow, FlowCursor, FlowKind
 from y5n.runtime.interaction import resolve_interaction
@@ -215,6 +214,7 @@ class CommandEngine:
                 session=cast(BaseSession, session),
                 ports=node.ports,
                 ports_from=node.ports_from,
+                resources=node.resources,
             ),
         )
 

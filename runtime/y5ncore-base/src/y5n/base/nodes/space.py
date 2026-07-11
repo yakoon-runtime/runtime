@@ -16,7 +16,8 @@ from .ports import NodePorts
 class NodeSpace:
     """Execution context passed to a run handler.
 
-    Provides access to the node path, request, session, and handler ports.
+    Provides access to the node path, request, session, ports,
+    and pre-assembled resources from the originating node.
     """
 
     path: NodePath
@@ -24,3 +25,6 @@ class NodeSpace:
     session: Session
     ports: NodePorts
     ports_from: PortsFromHandler
+    resources: dict[str, dict[str, str]] | None = None
+    """Resource paths from the originating node, keyed by type then variant.
+    Populated during command dispatch from the resolved node."""

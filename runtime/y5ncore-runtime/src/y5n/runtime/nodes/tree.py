@@ -125,6 +125,7 @@ class Tree:
     # ------------------------------------------------------------------
 
     def _assemble(self) -> None:
+        assert self._root
         self._assemble_node(self._root, self._root_path, BuildState())
 
     def _assemble_node(
@@ -135,12 +136,13 @@ class Tree:
         if dir_path:
             self._merge_search_paths(node, dir_path, current)
             self._run_setup(node, dir_path)
+            self._scan_resources(node, dir_path)
 
         node.search_paths = current.search_paths
 
-        for child_key, child_node in node.children.items():
-            child_path = (dir_path / child_key) if dir_path else None
-            self._assemble_node(child_node, child_path, current)
+        for child_node in node.children.values():
+            child_dir = self._fs_path_from_node(child_node)
+            self._assemble_node(child_node, child_dir, current)
 
     def _merge_search_paths(
         self, node: Node, dir_path: Path, state: BuildState
@@ -161,6 +163,29 @@ class Tree:
         mod = self._load_capability(dir_path / ".yak" / "setup")
         if mod and hasattr(mod, "configure"):
             mod.configure(node.ports)
+
+    def _scan_resources(self, node: Node, dir_path: Path) -> None:
+        res_dir = dir_path / ".yak" / "resources"
+        if not res_dir.is_dir():
+            return
+        resources: dict[str, dict[str, str]] = {}
+        for res_type_dir in sorted(res_dir.iterdir()):
+            if not res_type_dir.is_dir():
+                continue
+            variants: dict[str, str] = {}
+            for variant_file in sorted(res_type_dir.iterdir()):
+                if variant_file.is_file():
+                    variants[variant_file.stem] = str(variant_file)
+            resources[res_type_dir.name] = variants
+        node.resources = resources
+
+    def _fs_path_from_node(self, node: Node) -> Path | None:
+        for key, n in self._nodes.items():
+            if n is node:
+                if key == "/":
+                    return None
+                return self._root_path / key.lstrip("/")
+        return None
 
     def _tree_path(self, dir_path: Path) -> str:
         if dir_path == self._root_path:
