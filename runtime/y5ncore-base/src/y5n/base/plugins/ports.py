@@ -1,15 +1,22 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
 from y5n.base.naming import Namespace
 from y5n.base.nodes import NodePath, NodeSpace
 from y5n.base.permissions import Permission, PermissionSet
-from y5n.base.plugins.models import AuthResult
 from y5n.base.projection import Projection
 from y5n.base.resources import ResourceRef
 from y5n.base.runtime.sessions import Session
+
+
+@dataclass(frozen=True, slots=True)
+class AuthResult:
+    ok: bool
+    user: dict | None = None
+    reason: str | None = None
 
 # -------------------
 # -- PLUGIN PORTS ---

@@ -1,5 +1,3 @@
-from typing import Literal, TypeAlias
-
 from y5n.base.nodes import Node, NodePath, UnknownOptionsError, UsageError
 from y5n.base.plugins.ports import (
     OnAuthorizeRead,
@@ -45,14 +43,9 @@ from y5n.runtime.sources.data import (
 )
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
-from y5n.runtime.wire.plugins import SpaceLoader
 from y5n.runtime.wire.projector import build_projector
 from y5n.runtime.wire.stream import build_stream
 from y5nstore.event.wire import build_store
-
-CapabilityMode: TypeAlias = Literal["default"]
-CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
-
 
 errors = {
     Exception: "error.yak",
@@ -66,9 +59,6 @@ errors = {
 
 def build_runtime(
     *,
-    spaces: list[str] | None = None,
-    nodes: list[Node] | None = None,
-    capabilities: CapabilitySelection | None = None,
     settings: Settings,
 ) -> RuntimeHost:
 
@@ -101,16 +91,6 @@ def build_runtime(
 
     perm_checker = PermissionChecker()
     perm_parser = PermissionParser()
-
-    # ----------------
-    # --- PLUGINS ---
-    # ----------------
-
-    plugin_nodes: list[Node] = []
-    space_list = spaces if spaces is not None else settings.runtime.spaces
-    for module in SpaceLoader(space_list, capabilities or {}).load():
-        if module.export.node:
-            plugin_nodes.append(module.export.node)
 
     # --------------------
     # --- DATASOURCING ---
@@ -180,16 +160,6 @@ def build_runtime(
     platform.ports.provide(OnJinjaRender, jinja_engine.render_str)
     platform.ports.provide(OnCompile, compiler.compile)
     platform.ports.provide(OnErrorResolve, error_resolve)
-
-    # ----------------- ^
-    # --- ATTACHING ---
-    # -----------------
-
-    for node in plugin_nodes:
-        platform.mount(node)
-
-    for node in nodes or []:
-        platform.mount(node)
 
     # --------------------
     # --- DATASOURCING ---
