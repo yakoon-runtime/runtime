@@ -39,37 +39,6 @@ class InvocationResolver:
         self._global_nodes: dict[str, Node] = {}
         self._root_nodes: dict[str, Node] = {}
 
-        self._build()
-
-    # ---------------------------------------------------------------------
-    # Build
-    # ---------------------------------------------------------------------
-
-    def _build(self):
-
-        def collect(node: Node):
-
-            # GLOBAL
-            if node.scope == NodeScope.GLOBAL:
-
-                if node.key in self._global_nodes:
-                    raise ValueError(f"GLOBAL conflict: {node.key}")
-
-                self._global_nodes[node.key] = node
-
-            # ROOT
-            if node.scope == NodeScope.ROOT:
-
-                if node.key in self._root_nodes:
-                    raise ValueError(f"ROOT conflict: {node.key}")
-
-                self._root_nodes[node.key] = node
-
-        self._root.walk(collect)
-
-    def globals(self) -> set[str]:
-        return set(self._global_nodes.keys())
-
     # ---------------------------------------------------------------------
     # Public API
     # ---------------------------------------------------------------------
@@ -191,47 +160,6 @@ class InvocationResolver:
         )
 
         return node, tokens
-
-        # ---------------------------------
-        # Local runtime scope
-        # ---------------------------------
-
-        for node in parent.find_resolvable():
-
-            if node.scope not in (
-                NodeScope.NODE,
-                NodeScope.ROOT,
-            ):
-                continue
-
-            if node.key == key:
-                return node
-
-        # ---------------------------------
-        # Non-resolvable nodes (containers, namespaces)
-        # Found by direct key lookup for proper error messaging
-        # ---------------------------------
-
-        child = parent.children.get(key)
-        if child is not None and not child.resolvable:
-            return child
-
-        # ---------------------------------
-        # ROOT scope
-        # ---------------------------------
-
-        if parent == self._root:
-
-            node = self._root_nodes.get(key)
-
-            if node:
-                return node
-
-        # ---------------------------------
-        # GLOBAL scope
-        # ---------------------------------
-
-        return self._global_nodes.get(key)
 
     def _raise_not_found(
         self,
