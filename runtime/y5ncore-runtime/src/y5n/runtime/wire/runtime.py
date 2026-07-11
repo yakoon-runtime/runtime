@@ -24,6 +24,7 @@ from y5n.runtime.capabilities.permission import (
     PermissionParser,
     PermissionSet,
 )
+from y5n.runtime.nodes.tree import Tree
 from y5n.runtime.projection.rendering import JinjaRenderEngine
 from y5n.runtime.resources import PackageReader
 from y5n.runtime.runtime import (
@@ -33,7 +34,7 @@ from y5n.runtime.runtime import (
     Session,
     SessionService,
 )
-from y5n.runtime.services import ContextService, GuidanceService
+from y5n.runtime.services import GuidanceService
 from y5n.runtime.settings import Settings
 from y5n.runtime.sources import DataSourceRegistry
 from y5n.runtime.sources.data import (
@@ -86,7 +87,6 @@ def build_runtime(
     compiler = build_compiler()
 
     guidance_service = GuidanceService()
-    ctx = ContextService(root_path=settings.runtime.root_path)
     audit_service = AuditLogService(settings.logging)
 
     session_manager = SessionService(
@@ -208,6 +208,17 @@ def build_runtime(
     async def build_index():
         pass
 
+    # -----------------------
+    # --- YAK TREE BUILD ---
+    # -----------------------
+
+    tree = Tree(
+        root_ports=platform.ports,
+        root_path=settings.runtime.root_path,
+    )
+
+    tree.build()
+
     # ------------------------
     # --- MACHINE HANDLING ---
     # ------------------------
@@ -222,7 +233,7 @@ def build_runtime(
         on_initialize=initialize,
         known_runtimes=settings.runtime.known,
         settings=settings,
-        on_get_path=ctx.path,
+        on_get_node=tree.find,
     )
 
     ds.bind("system:sessions", SessionSource(host))

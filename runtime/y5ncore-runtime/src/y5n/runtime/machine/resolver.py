@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import importlib.util
-from pathlib import Path
 from typing import Protocol
 
-import yaml
 from y5n.base.nodes import Node, NodePath, NodeScope, UsageError
 from y5n.runtime.capabilities.permission import Permission
 from y5n.runtime.runtime import (
@@ -30,19 +27,17 @@ class InvocationResolver:
         on_authorize: OnAuthorize,
         on_suggest: OnSuggest,
         root: Node,
-        on_get_path: OnGetPath | None = None,
+        on_get_node: OnGetNode,
     ):
 
         self._root = root
 
         self.on_authorize = on_authorize
         self.on_suggest = on_suggest
-        self._on_get_path = on_get_path
+        self.on_get_node = on_get_node
 
         self._global_nodes: dict[str, Node] = {}
         self._root_nodes: dict[str, Node] = {}
-
-        self._bundle_cache: dict[str, Node] = {}
 
         self._build()
 
@@ -297,7 +292,8 @@ class InvocationResolver:
 
         Walks the node tree segment by segment. The last segment is
         resolved via _resolve_node (respects scope + resolvable flag).
-        Intermediate segments are resolved by direct child key lookup.
+        Intermediate segments are resolved by direct child key lookup
+        (with fallback to tree index).
         """
         segments = key.split("/")
 
@@ -308,6 +304,8 @@ class InvocationResolver:
             if not seg:
                 continue
             child = walk.children.get(seg)
+            if child is None and self.on_get_node:
+                child = self.on_get_node(self._tree_path(walk, seg))
             if child is None:
                 child = self._global_nodes.get(seg) or self._root_nodes.get(seg)
             if child is None:
@@ -315,6 +313,12 @@ class InvocationResolver:
             walk = child
 
         return self._resolve_node(parent=walk, key=segments[-1])
+
+    def _tree_path(self, parent: Node, key: str) -> str:
+        ppath = str(parent.path)
+        if ppath == "/":
+            return f"/{key}"
+        return f"{ppath}/{key}"
 
     # ---------------------------------------------------------------------
     # Internals
@@ -328,13 +332,12 @@ class InvocationResolver:
     ) -> Node | None:
 
         # ---------------------------------
-        # Bundle check (experiment/fs-namespace)
-        # Bundles in YAKOON_PATH take priority over semantic tree
+        # Yak tree index (takes priority over semantic tree)
         # ---------------------------------
 
-        bundle_node = self._resolve_bundle(key)
-        if bundle_node:
-            return bundle_node
+        node = self.on_get_node(self._tree_path(parent, key))
+        if node:
+            return node
 
         # ---------------------------------
         # Local runtime scope
@@ -376,54 +379,6 @@ class InvocationResolver:
         # ---------------------------------
 
         return self._global_nodes.get(key)
-
-    # ---------------------------------------------------------------------
-    # Bundle resolution
-    # ---------------------------------------------------------------------
-
-    def _resolve_bundle(self, key: str) -> Node | None:
-
-        if not self._on_get_path:
-            return None
-
-        cached = self._bundle_cache.get(key)
-        if cached:
-            return cached
-
-        search_dirs = self._on_get_path()
-        for raw_dir in search_dirs:
-            bundle_dir = Path(raw_dir) / f"{key}.bndl"
-            if not bundle_dir.is_dir():
-                continue
-
-            meta_file = bundle_dir / "bundle.yaml"
-            if not meta_file.exists():
-                continue
-
-            with open(meta_file) as f:
-                meta = yaml.safe_load(f) or {}
-
-            executor = meta.get("executor", "python")
-            run_file = bundle_dir / "run" / f"{executor}.py"
-            if not run_file.exists():
-                continue
-
-            spec = importlib.util.spec_from_file_location(f"_bundle_{key}", run_file)
-            mod = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(mod)
-
-            node = Node(
-                key=key,
-                run=mod.run,
-                resolvable=meta.get("resolvable", True),
-                navigable=meta.get("navigable", False),
-                anonymous=True,
-                scope=NodeScope.GLOBAL,
-            )
-            self._bundle_cache[key] = node
-            return node
-
-        return None
 
     def _raise_usage(
         self,
@@ -492,5 +447,5 @@ class OnSuggest(Protocol):
     ) -> list[str]: ...
 
 
-class OnGetPath(Protocol):
-    def __call__(self, subdir: str | None = None) -> list[str]: ...
+class OnGetNode(Protocol):
+    def __call__(self, path: str) -> Node | None: ...
