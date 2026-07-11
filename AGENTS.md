@@ -8,6 +8,9 @@
 - Keep architecture consistent over local optimizations.
 - Flows are explicit, never magical.
 - Do not add framework abstractions unless explicitly requested.
+- The Runtime never owns code — it only references it (no copy, no bundling).
+- Workspace (where code lives) ≠ Namespace (where it appears in the tree).
+- Mounts compose the tree from multiple sources; there is no single root.
 
 ## Code style
 

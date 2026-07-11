@@ -197,8 +197,9 @@ def build_machine(
         psession = cast(Session, session)
         psession.bind_io(BusOutput(psession._bus))
         if not psession.get_data("fs:root"):
-            psession.set_data("fs:root", settings.runtime.root_path)
-            psession.set_data("fs:cwd", settings.runtime.root_path)
+            root_mount_path = str(settings.runtime.mounts[0].path) if settings.runtime.mounts else ""
+            psession.set_data("fs:root", root_mount_path)
+            psession.set_data("fs:cwd", root_mount_path)
         return psession
 
     session_builder = SessionBuilder(

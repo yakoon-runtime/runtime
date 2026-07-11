@@ -15,6 +15,27 @@ RESOURCE_KEYS = frozenset({"projection", "man"})
 
 
 @dataclass
+class Mount:
+    """A single tree mount point.
+
+    Maps a namespace prefix in the logical tree to a physical
+    filesystem path.  The runtime composes its node tree by
+    iterating all mounts and building a unified namespace.
+    """
+
+    namespace: str
+    """Logical namespace under which this mount appears (e.g. "/", "/luma")."""
+
+    path: Path
+    """Filesystem path to scan for .yak/ directories."""
+
+    def __post_init__(self):
+        self.path = Path(self.path).resolve()
+        if not self.namespace.startswith("/"):
+            self.namespace = "/" + self.namespace
+
+
+@dataclass
 class BuildState:
     """Accumulated inherited context during tree assembly.
 
@@ -47,9 +68,9 @@ class Tree:
     constructs a Node tree with fully assembled Ports and search paths.
     """
 
-    def __init__(self, root_ports: NodePorts, root_path: str | Path):
+    def __init__(self, root_ports: NodePorts, mounts: list[Mount]):
         self._root_ports = root_ports
-        self._root_path = Path(root_path).resolve()
+        self._mounts = mounts
         self._nodes: dict[str, Node] = {}
         self._root: Node | None = None
 
@@ -67,22 +88,29 @@ class Tree:
     # Phase 1 – Scan
     # ------------------------------------------------------------------
 
-    def _scan(self) -> list[Path]:
-        return sorted(
-            p.parent.parent
-            for p in self._root_path.rglob(".yak/yak.yml")
-            if p.parent.parent != self._root_path
-        )
+    def _scan(self) -> list[tuple[str, Path]]:
+        result: list[tuple[str, Path]] = []
+        for mount in self._mounts:
+            for p in mount.path.rglob(".yak/yak.yml"):
+                bundle_dir = p.parent.parent
+                if bundle_dir == mount.path:
+                    continue
+                rel = bundle_dir.relative_to(mount.path)
+                if mount.namespace == "/":
+                    tree_path = "/" + str(rel)
+                else:
+                    tree_path = mount.namespace + "/" + str(rel)
+                result.append((tree_path, bundle_dir))
+        return sorted(result, key=lambda x: x[0])
 
     # ------------------------------------------------------------------
     # Phase 2 – Create
     # ------------------------------------------------------------------
 
-    def _create_nodes(self, dirs: list[Path]) -> dict[str, Node]:
+    def _create_nodes(self, entries: list[tuple[str, Path]]) -> dict[str, Node]:
         nodes: dict[str, Node] = {}
-        for dir_path in dirs:
-            rel = str(dir_path.relative_to(self._root_path))
-            nodes[rel] = self._build_node(dir_path)
+        for tree_path, dir_path in entries:
+            nodes[tree_path] = self._build_node(dir_path)
         return nodes
 
     def _build_node(self, dir_path: Path) -> Node:
@@ -164,9 +192,15 @@ class Tree:
     # ------------------------------------------------------------------
 
     def _link_nodes(self, created: dict[str, Node]) -> None:
-        sorted_rels = sorted(created.keys(), key=lambda r: len(Path(r).parts))
+        sorted_paths = sorted(created.keys(), key=lambda r: len(Path(r).parts))
 
-        root_meta = _read_yaml(self._root_path / ".yak" / "yak.yml")
+        # Read root meta from the "/" namespace mount
+        root_meta: dict[str, Any] = {}
+        for m in self._mounts:
+            if m.namespace == "/":
+                root_meta = _read_yaml(m.path / ".yak" / "yak.yml")
+                break
+
         self._root = Node(
             key="/",
             name=root_meta.get("title", "root"),
@@ -176,13 +210,12 @@ class Tree:
         )
         self._nodes["/"] = self._root
 
-        for rel_str in sorted_rels:
-            node = created[rel_str]
-            parent_rel = str(Path(rel_str).parent)
-            parent_key = f"/{parent_rel}" if parent_rel != "." else "/"
-            parent = self._nodes.get(parent_key) or self._root
-            parent.add(node)
-            self._nodes[f"/{rel_str}"] = node
+        for tree_path in sorted_paths:
+            node = created[tree_path]
+            parent_path = str(Path(tree_path).parent)
+            parent = self._nodes.get(parent_path) or self._root
+            parent.mount(node)
+            self._nodes[tree_path] = node
 
     # ------------------------------------------------------------------
     # Phase 4 – Assemble
@@ -190,22 +223,20 @@ class Tree:
 
     def _assemble(self) -> None:
         assert self._root
-        self._assemble_node(self._root, self._root_path, BuildState())
+        self._assemble_node(self._root, BuildState())
 
-    def _assemble_node(
-        self, node: Node, dir_path: Path | None, state: BuildState
-    ) -> None:
+    def _assemble_node(self, node: Node, state: BuildState) -> None:
         current = BuildState(search_paths=list(state.search_paths))
 
-        if dir_path:
-            self._merge_search_paths(node, dir_path, current)
-            self._run_setup(node, dir_path)
+        fs_path = self._fs_path_from_node(node)
+        if fs_path:
+            self._merge_search_paths(node, fs_path, current)
+            self._run_setup(node, fs_path)
 
         node.search_paths = current.search_paths
 
         for child_node in node.children.values():
-            child_dir = self._fs_path_from_node(child_node)
-            self._assemble_node(child_node, child_dir, current)
+            self._assemble_node(child_node, current)
 
     def _merge_search_paths(
         self, node: Node, dir_path: Path, state: BuildState
@@ -213,7 +244,9 @@ class Tree:
         path_file = dir_path / ".yak" / "path"
         if not path_file.is_file():
             return
-        node_path = self._tree_path(dir_path)
+        node_path = self._tree_path_from_node(node)
+        if node_path is None:
+            return
         for line in path_file.read_text().splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
@@ -227,18 +260,39 @@ class Tree:
         if cap and cap.module and hasattr(cap.module, "configure"):
             cap.module.configure(node.ports)  # type: ignore
 
+    def _resolve_fs_path(self, tree_path: str) -> Path | None:
+        """Map a logical tree path to the physical filesystem path
+        using the longest matching mount namespace."""
+        best: tuple[int, Path] | None = None
+        for mount in self._mounts:
+            ns = mount.namespace
+            if ns == "/":
+                remainder = tree_path.lstrip("/") if tree_path != "/" else ""
+                score = 0
+            elif tree_path == ns:
+                remainder = ""
+                score = len(ns)
+            elif tree_path.startswith(ns + "/"):
+                remainder = tree_path[len(ns) + 1 :]
+                score = len(ns)
+            else:
+                continue
+            fs_path = mount.path / remainder if remainder else mount.path
+            if best is None or score > best[0]:
+                best = (score, fs_path)
+        return best[1] if best else None
+
     def _fs_path_from_node(self, node: Node) -> Path | None:
-        for key, n in self._nodes.items():
+        for tree_path, n in self._nodes.items():
             if n is node:
-                if key == "/":
-                    return None
-                return self._root_path / key.lstrip("/")
+                return self._resolve_fs_path(tree_path)
         return None
 
-    def _tree_path(self, dir_path: Path) -> str:
-        if dir_path == self._root_path:
-            return "/"
-        return "/" + str(dir_path.relative_to(self._root_path))
+    def _tree_path_from_node(self, node: Node) -> str | None:
+        for tree_path, n in self._nodes.items():
+            if n is node:
+                return tree_path
+        return None
 
     # ------------------------------------------------------------------
     # Public API
@@ -283,9 +337,7 @@ class Tree:
         node = self._nodes.get(path)
         if node is None:
             return
-        rel = path.lstrip("/")
-        dir_path = self._root_path / rel if rel else self._root_path
-        self._assemble_node(node, dir_path, BuildState(search_paths=node.search_paths))
+        self._assemble_node(node, BuildState(search_paths=node.search_paths))
 
 
 # ------------------------------------------------------------------
