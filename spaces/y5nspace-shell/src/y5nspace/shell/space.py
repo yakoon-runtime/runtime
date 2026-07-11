@@ -17,7 +17,7 @@ from .runtime.welcome import run as welcome_run
 shell = Node(
     key="shell",
     name="Shell",
-    is_shell=True,
+
     anonymous=True,
     resolvable=False,
     navigable=True,

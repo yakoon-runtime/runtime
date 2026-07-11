@@ -139,9 +139,6 @@ class Node:
     # RENDERING HINTS
     # ----------------------------------
 
-    is_shell: bool = False
-    """Marks the root of a shell/REPL space for display purposes."""
-
     listed: bool = True
     """Show this node in ls / overview listings when True."""
 
