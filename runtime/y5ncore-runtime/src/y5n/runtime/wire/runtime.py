@@ -233,7 +233,7 @@ def build_runtime(
         on_initialize=initialize,
         known_runtimes=settings.runtime.known,
         settings=settings,
-        on_get_node=tree.find,
+        on_get_node=tree.resolve,
     )
 
     ds.bind("system:sessions", SessionSource(host))

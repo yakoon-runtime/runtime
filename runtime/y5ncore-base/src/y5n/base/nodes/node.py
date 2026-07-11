@@ -134,6 +134,10 @@ class Node:
     metadata: dict[str, Any] = field(default_factory=dict)
     """Arbitrary key-value storage for space-specific data."""
 
+    search_paths: list[str] = field(default_factory=list)
+    """Pre-computed search paths for command resolution.  Assembled by
+    Tree.build() from .yak/path files, inherited and merged top-down."""
+
     # ----------------------------------
     # RENDERING HINTS
     # ----------------------------------

@@ -305,7 +305,7 @@ class InvocationResolver:
                 continue
             child = walk.children.get(seg)
             if child is None and self.on_get_node:
-                child = self.on_get_node(self._tree_path(walk, seg))
+                child = self.on_get_node(str(walk.path), seg)
             if child is None:
                 child = self._global_nodes.get(seg) or self._root_nodes.get(seg)
             if child is None:
@@ -313,12 +313,6 @@ class InvocationResolver:
             walk = child
 
         return self._resolve_node(parent=walk, key=segments[-1])
-
-    def _tree_path(self, parent: Node, key: str) -> str:
-        ppath = str(parent.path)
-        if ppath == "/":
-            return f"/{key}"
-        return f"{ppath}/{key}"
 
     # ---------------------------------------------------------------------
     # Internals
@@ -335,7 +329,7 @@ class InvocationResolver:
         # Yak tree index (takes priority over semantic tree)
         # ---------------------------------
 
-        node = self.on_get_node(self._tree_path(parent, key))
+        node = self.on_get_node(str(parent.path), key)
         if node:
             return node
 
@@ -448,4 +442,4 @@ class OnSuggest(Protocol):
 
 
 class OnGetNode(Protocol):
-    def __call__(self, path: str) -> Node | None: ...
+    def __call__(self, parent_path: str, key: str) -> Node | None: ...
