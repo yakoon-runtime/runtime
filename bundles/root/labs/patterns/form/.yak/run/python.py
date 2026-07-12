@@ -4,7 +4,6 @@ from y5n.api.invocations import Param
 
 
 async def run(_):
-
     initial = {}
     initial["first_name"] = "stefan"
 
