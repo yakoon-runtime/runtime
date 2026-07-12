@@ -130,6 +130,7 @@ class Tree:
                 Invocation(
                     action=inv_data.get("action"),
                     params=params,
+                    min_options=inv_data.get("min_options", 0),
                     default=inv_data.get("default", True),
                 )
             )

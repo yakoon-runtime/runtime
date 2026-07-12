@@ -1,0 +1,5 @@
+name: clear
+title: Clear the terminal
+resolvable: true
+navigable: false
+contextual: false

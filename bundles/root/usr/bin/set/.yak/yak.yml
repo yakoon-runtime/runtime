@@ -1,0 +1,5 @@
+name: set
+title: Change session settings
+resolvable: true
+navigable: false
+contextual: false
