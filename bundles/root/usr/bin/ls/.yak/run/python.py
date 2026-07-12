@@ -12,10 +12,18 @@ async def run(space: NodeSpace):
 
     cwd_raw = space.session.get_data("fs:cwd")
     if not cwd_raw:
-        cwd_raw = space.session.get_data("fs:root", str(Path.home() / ".yak"))
-    cwd = Path(cwd_raw).resolve()
+        cwd_raw = space.session.get_data("fs:root", "")
+    cwd = Path(cwd_raw) if cwd_raw else Path.home() / ".yak"
 
-    target = cwd / target_name if target_name else cwd
+    if target_name:
+        if target_name.startswith("/"):
+            raw_root = space.session.get_data("fs:root", "")
+            target = (Path(raw_root) / target_name.lstrip("/")) if raw_root else Path(target_name)
+        else:
+            target = cwd / target_name
+    else:
+        target = cwd
+
     target = target.resolve()
 
     if not target.exists():
