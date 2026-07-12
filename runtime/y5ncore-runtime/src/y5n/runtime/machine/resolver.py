@@ -105,15 +105,11 @@ class InvocationResolver:
         # ---------------------------------
 
         if node.contextual and tokens:
-
             if not node.consumes(tokens):
-
-                return self.resolve(
-                    parent=node.path,
-                    key=tokens[0],
-                    tokens=tokens[1:],
-                    session=session,
-                )
+                child = self.on_get_node(node, tokens[0])
+                if child:
+                    node = child
+                    tokens = tokens[1:]
 
         # ---------------------------------
         # Show usage for resolved node

@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from y5n.base.ports import Port
+from y5n.api.ports import Port
 
 
 class GreetService(Protocol):

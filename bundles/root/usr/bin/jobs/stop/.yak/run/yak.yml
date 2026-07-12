@@ -1,0 +1,13 @@
+executor: python
+entry: python.py
+
+invocation:
+  params:
+    - key: index
+      positional: true
+      required: false
+    - key: current
+      positional: false
+
+man:
+  default: resources/man.yak

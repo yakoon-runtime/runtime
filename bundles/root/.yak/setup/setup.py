@@ -1,9 +1,4 @@
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent))
-
-from ports import GREET
+from .ports import GREET
 from y5n.api.nodes import NodeSpace
 
 

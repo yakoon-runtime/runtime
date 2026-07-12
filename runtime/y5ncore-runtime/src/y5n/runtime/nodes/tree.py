@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import types
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -105,13 +106,16 @@ class Tree:
         executor = meta.get("executor", "python")
         entry = meta.get("entry", f"{executor}.py")
         entry_file = cap_dir / entry
-        mod = (
-            _load_module(
-                f"_cap_{cap_dir.parent.parent.name}_{cap_dir.name}", entry_file
+        mod = None
+        if entry_file.is_file():
+            bundle_dir = cap_dir.parent.parent
+            tree_path = self._tree_path(bundle_dir)
+            mod = _load_module(
+                f"_cap_{cap_dir.parent.parent.name}_{cap_dir.name}",
+                entry_file,
+                tree_path=tree_path,
+                cap_name=cap_dir.name,
             )
-            if entry_file.is_file()
-            else None
-        )
 
         invocations: list[Invocation] = []
         inv_data = meta.get("invocation")
@@ -241,7 +245,7 @@ class Tree:
                     request=None,  # type: ignore
                     session=None,  # type: ignore
                     ports=node.ports,
-                    ports_from=lambda: node.ports,  # type: ignore
+                    ports_from=lambda: node.ports,  # type: ignore  # noqa: B023
                 )
                 await cap.module.run(space)  # type: ignore
 
@@ -309,7 +313,39 @@ def _read_yaml(path: Path) -> dict[str, Any]:
     return {}
 
 
-def _load_module(name: str, path: Path):
+def _load_module(
+    name: str,
+    path: Path,
+    *,
+    tree_path: str = "",
+    cap_name: str = "",
+):
+    import sys
+
+    if tree_path:
+        segments = [s for s in tree_path.strip("/").split("/") if s]
+        entry_name = path.stem
+        full_name = "yak.bundle." + ".".join(segments + [cap_name, entry_name])
+        cap_pkg = "yak.bundle." + ".".join(segments + [cap_name])
+
+        seen = ""
+        for part in full_name.split("."):
+            seen = f"{seen}.{part}" if seen else part
+            if seen not in sys.modules:
+                pkg = types.ModuleType(seen)
+                pkg.__package__ = seen
+                sys.modules[seen] = pkg
+
+        sys.modules[cap_pkg].__path__ = [str(path.parent)]
+
+        spec = importlib.util.spec_from_file_location(full_name, path)
+        if spec is None or spec.loader is None:
+            return None
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[full_name] = mod
+        spec.loader.exec_module(mod)
+        return mod
+
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         return None

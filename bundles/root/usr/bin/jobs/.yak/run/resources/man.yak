@@ -1,0 +1,32 @@
+<heading>jobs - Manage running flows.</heading>
+
+<rule/>
+
+<heading level="2">
+Subcommands
+</heading>
+
+<pre>
+  jobs list               Show active flows
+  jobs fg INDEX           Bring a flow to foreground
+  jobs bg                 Send foreground flow to background
+  jobs stop [INDEX]       Cancel a running flow
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+The <em>jobs</em> command manages running flows in the
+current session.  Invoking <em>jobs</em> without arguments
+is equivalent to <em>jobs list</em>.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+man, list, fg, bg, stop
+</paragraph>
