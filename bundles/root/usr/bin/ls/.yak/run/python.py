@@ -10,21 +10,7 @@ async def run(space: NodeSpace):
     target_name = space.request.arg(0)
     use_list = space.request.has_option("l")
 
-    cwd_raw = space.session.get_data("fs:cwd")
-    if not cwd_raw:
-        cwd_raw = space.session.get_data("fs:root", "")
-    cwd = Path(cwd_raw) if cwd_raw else Path.home() / ".yak"
-
-    if target_name:
-        if target_name.startswith("/"):
-            raw_root = space.session.get_data("fs:root", "")
-            target = (Path(raw_root) / target_name.lstrip("/")) if raw_root else Path(target_name)
-        else:
-            target = cwd / target_name
-    else:
-        target = cwd
-
-    target = target.resolve()
+    target = _resolve(space, target_name)
 
     if not target.exists():
         yield out(to_text(f"Not found: {target}"))
@@ -41,3 +27,33 @@ async def run(space: NodeSpace):
         yield out(to_text("\n".join(items)))
     else:
         yield out(to_text("  ".join(items)))
+
+
+# ----------------------------
+# INTERNALS
+# ----------------------------
+
+
+def _get_root(space: NodeSpace) -> Path:
+    raw = space.session.get_data("fs:root")
+    return Path(raw) if raw else Path.home() / ".yak"
+
+
+def _resolve(space: NodeSpace, target_name: str | None) -> Path:
+    root = _get_root(space)
+    raw = space.session.get_current_path()
+
+    if raw:
+        if raw == "/":
+            current = root.resolve()
+        else:
+            test = root / raw.lstrip("/")
+            current = test.resolve() if test.exists() else Path(raw).resolve()
+    else:
+        current = root.resolve()
+
+    if target_name:
+        if target_name.startswith("/"):
+            return (root / target_name.lstrip("/")).resolve()
+        return (current / target_name).resolve()
+    return current

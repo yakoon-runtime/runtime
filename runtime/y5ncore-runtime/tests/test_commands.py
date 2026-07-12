@@ -72,7 +72,7 @@ async def test_start_cmd_parses_tokens(harness, effect_executor):
         cmd, *rest = event.payload.strip().split()
         return cmd, rest, []
 
-    def resolve_node(*, parent, key, tokens, session, strict=True):
+    def resolve_node(*, key, tokens, session, strict=True):
         if key == "test":
             return sub_node, tokens or []
         return None, tokens or []

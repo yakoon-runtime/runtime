@@ -42,7 +42,6 @@ class InvocationResolver:
 
     def resolve(
         self,
-        parent: NodePath | None,
         key: str,
         tokens: list[str] | None,
         session: Session,
@@ -65,27 +64,12 @@ class InvocationResolver:
             tokens = tokens[:-1]
 
         # ---------------------------------
-        # Resolve parent runtime space
-        # ---------------------------------
-
-        current = self._root
-
-        if parent:
-
-            resolved = self._root.find(parent, absolute=True)
-
-            if not resolved:
-                raise NodeNotFound(command=str(parent))
-
-            current = resolved
-
-        # ---------------------------------
         # Path-style resolution (ident/users/list)
         # ---------------------------------
 
         if "/" in key:
             node = self._resolve_path(
-                current=current,
+                current=self._root,
                 key=key,
             )
             if node:
@@ -104,13 +88,13 @@ class InvocationResolver:
         # ---------------------------------
 
         node = self._resolve_node(
-            parent=current,
+            parent=self._root,
             key=key,
         )
 
         if not node:
             self._raise_not_found(
-                parent=current,
+                parent=self._root,
                 key=key,
             )
 

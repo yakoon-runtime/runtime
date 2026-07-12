@@ -28,7 +28,7 @@ class SessionData:
 
     CURRENT_VERSION = 1
 
-    node_path: str | None = None
+    current_path: str | None = None
     user_key: str | None = None
     user_name: str | None = None
     account_key: str | None = None
@@ -206,14 +206,14 @@ class Session:
         self.data.last_active = datetime.now(UTC)
 
     # ----------------------------
-    # NODE
+    # CURRENT PATH
     # ----------------------------
 
-    def set_current_node(self, path: NodePath) -> None:
-        self.data.node_path = str(path)
+    def set_current_path(self, path: str) -> None:
+        self.data.current_path = path
 
-    def get_current_node(self, default=None) -> NodePath:
-        return NodePath.from_string(self.data.node_path or default)
+    def get_current_path(self, default: str = "") -> str:
+        return self.data.current_path or default
 
     # ----------------------------
     # Identity
@@ -287,7 +287,7 @@ class Session:
             event,
             state=ProjectionState(
                 user=self.data.user_name,
-                node_path=self.data.node_path,
+                node_path=self.data.current_path,
             ),
         )
 

@@ -35,7 +35,7 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
         return cmd, rest, []
 
     # Echter Resolver: matcht "test" auf den sub_node
-    def resolve_node(*, parent, key, tokens, session, strict=True):
+    def resolve_node(*, key, tokens, session, strict=True):
         if key == "test":
             return sub_node, tokens or []
         return None, tokens or []
@@ -98,12 +98,12 @@ async def test_command_unresolvable_sends_none(harness, effect_executor):
         cmd, *rest = event.payload.strip().split()
         return cmd, rest, []
 
-    def resolve_node(*, parent, key, tokens, session, strict=True):
+    def resolve_node2(*, key, tokens, session, strict=True):
         # Kein Node für "unknown" → Auflösung fehlschlagen
         return None, tokens or []
 
     harness.engine.on_parse_input = parse_input
-    harness.engine.on_resolve_command = resolve_node
+    harness.engine.on_resolve_command = resolve_node2
 
     async def on_start_command(*, command, channel, flow, session, remote=None):
         event = Event(payload=command)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Protocol, cast
 
 from y5n.base.flow import Scope
@@ -198,7 +199,7 @@ def build_machine(
         psession.bind_io(BusOutput(psession._bus))
         if not psession.get_data("fs:root"):
             psession.set_data("fs:root", settings.runtime.root_path)
-            psession.set_data("fs:cwd", settings.runtime.root_path)
+            psession.set_current_path("/")
         return psession
 
     session_builder = SessionBuilder(

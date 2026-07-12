@@ -62,7 +62,7 @@ async def test_input_without_foreground_dispatches_new_flow(harness):
         cmd, *rest = event.payload.strip().split()
         return cmd, rest, []
 
-    def resolve_node(*, parent, key, tokens, session, strict=True):
+    def resolve_node(*, key, tokens, session, strict=True):
         if key == "test":
             return node, tokens or []
         return None, tokens or []

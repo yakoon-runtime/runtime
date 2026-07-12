@@ -11,6 +11,7 @@ from y5n.base.capabilities.discovery import (
     Resolved,
 )
 from y5n.base.commands import Request
+from y5n.base.nodes.path import NodePath
 from y5n.runtime.runtime.sessions import Session
 
 
@@ -78,7 +79,8 @@ class LookupAliasTagStrategy(DiscoveryStrategy):
         return head, tail
 
     def _resolve_owner_ids(self, session: Session) -> list[str]:
-        active_id = session.get_current_node()
+        raw = session.get_current_path()
+        active_id = NodePath.from_string(raw) if raw else None
         if not active_id:
             return []
 
