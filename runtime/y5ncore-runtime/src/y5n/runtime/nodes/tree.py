@@ -60,9 +60,7 @@ class Tree:
         product bundles (crm, luma, …) are discovered.
         """
         result: list[Path] = []
-        for dirpath, _dirnames, filenames in os.walk(
-            self._root_path, followlinks=True
-        ):
+        for dirpath, _dirnames, filenames in os.walk(self._root_path, followlinks=True):
             p = Path(dirpath)
             if p.name == ".yak" and "yak.yml" in filenames:
                 bundle_dir = p.parent
@@ -90,7 +88,7 @@ class Tree:
         cap = self._load_capability(dir_path / ".yak" / "run")
         if cap:
             if cap.module and hasattr(cap.module, "run"):
-                node.run = cap.module.run
+                node.run = cap.module.run  # type: ignore
             node.invocations = cap.invocations
             node.resources = cap.resources
         return node
@@ -208,7 +206,7 @@ class Tree:
     def _run_setup(self, node: Node, dir_path: Path) -> None:
         cap = self._load_capability(dir_path / ".yak" / "setup")
         if cap and cap.module and hasattr(cap.module, "configure"):
-            cap.module.configure(node.ports)
+            cap.module.configure(node.ports)  # type: ignore
 
     def _fs_path_from_node(self, node: Node) -> Path | None:
         for key, n in self._nodes.items():
