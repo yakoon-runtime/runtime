@@ -11,6 +11,7 @@ from y5nstore.event.wire import build_store
 
 from .bootstrap import bootstrap
 from .models import User, UserData
+from .ports import PERMISSION_RESOLVE
 from .services import (
     AccountService,
     AllowAllSecretVerifier,
@@ -89,8 +90,6 @@ async def run(space: NodeSpace):
         on_verify_user=verifier.verify,
     )
 
-    space.ports.publish(AUTHENTICATE, auth.authenticate)
-
     await bootstrap(
         users=users,
         groups=groups,
@@ -105,7 +104,20 @@ async def run(space: NodeSpace):
     space.ports.provide(GroupService, groups)
     space.ports.provide(JoinService, join_svc)
     space.ports.provide(PermissionGrantService, permgrant)
-    space.ports.provide(PermissionResolver, perm_resolver)
+
+    # ----------------------------------
+    # PUBLISH
+    # ----------------------------------
+
+    space.ports.publish(
+        AUTHENTICATE,
+        auth.authenticate,
+    )
+
+    space.ports.publish(
+        PERMISSION_RESOLVE,
+        perm_resolver.resolve_user_permissions,
+    )
 
 
 async def _build_index(store):

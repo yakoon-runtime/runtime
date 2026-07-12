@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from typing import Any, TypeVar, overload
 
 from y5n.base.ports import Port
 from y5n.base.runtime import Container
 
 T = TypeVar("T")
-C = TypeVar("C", bound=Callable[..., Any])
 
 # ----------------------------------
 # NODE PORTS
@@ -87,12 +85,12 @@ class NodePorts:
             self._local.bind(port.protocol, capability)
 
     @overload
-    def get(self, port: Port[C]) -> C: ...
+    def get(self, port: Port[T]) -> T: ...
 
     @overload
     def get(self, port: type[T]) -> T: ...
 
-    def get(self, port: Port[C] | type[T]) -> Any:
+    def get(self, port: Port[T] | type[T]) -> Any:
         """Resolves a capability from the local hierarchy.
 
         Resolution follows hierarchical scope lookup:

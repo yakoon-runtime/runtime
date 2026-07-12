@@ -1,12 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Generic, TypeVar
+from typing import Generic, TypeVar
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
-
-T = TypeVar("T", bound="Callable")
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)

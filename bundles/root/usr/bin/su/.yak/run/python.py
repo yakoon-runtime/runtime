@@ -5,12 +5,15 @@ from y5n.api.dsl.patterns import Form
 from y5n.api.invocations import Param
 from y5n.api.naming import Key
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import AUTHENTICATE, OnSessionSave, PROJECT
+from y5n.api.ports import AUTHENTICATE, PROJECT, OnSessionSave
+
+from .namespaces import Namespaces
+from .ports import PERMISSION_RESOLVE
 
 
 async def run(space: NodeSpace):
 
-    namespaces = space.ports.get("namespaces")
+    namespaces = Namespaces()
 
     request = space.request
 
@@ -54,9 +57,9 @@ async def run(space: NodeSpace):
         user_name = user["username"]
 
         space.session.set_identity(user_key, user_name)
-        space.session.set_current_path("/")
+        # space.session.set_current_path("/")
 
-        resolver = space.ports.get("permissions.resolve")
+        resolver = space.ports.get(PERMISSION_RESOLVE)
         permissions = await resolver.resolve_user_permissions(
             grant_namespace=namespaces.permgrant_namespace(),
             join_namespace=namespaces.join_namespace(),

@@ -3,20 +3,10 @@ from typing import Protocol
 from y5n.api.naming import Key, Namespace
 from y5n.api.permissions import PermissionSet
 from y5n.api.ports import Port
-from y5n.api.projections import Projection
-
-
-class OnProject(Protocol):
-    async def __call__(
-        self,
-        *,
-        name: str,
-        lang: str,
-        state: dict | None = None,
-    ) -> Projection: ...
 
 
 class OnPermissionResolve(Protocol):
+
     async def resolve_user_permissions(
         self,
         *,
@@ -26,5 +16,7 @@ class OnPermissionResolve(Protocol):
     ) -> PermissionSet: ...
 
 
-PROJECT_IDENT = Port("projection.ident", protocol=OnProject)
-PERMISSION_RESOLVE = Port("permission.resolve", protocol=OnPermissionResolve)
+PERMISSION_RESOLVE = Port(
+    "permission.resolve",
+    protocol=OnPermissionResolve,
+)
