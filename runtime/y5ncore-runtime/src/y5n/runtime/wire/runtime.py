@@ -176,6 +176,7 @@ def build_runtime(
 
     async def initialize():
         await store.initialize()
+        await tree.setup()
         await build_index()
 
     # -------------------

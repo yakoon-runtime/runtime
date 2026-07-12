@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 from y5n.base.nodes import Invocation, Node, Param
 from y5n.base.nodes.ports import NodePorts
+from y5n.base.nodes.space import NodeSpace
 from y5n.base.runtime import Container
 
 # Resource types that capabilities can declare in yak.yml.
@@ -206,7 +207,6 @@ class Tree:
 
         if dir_path:
             self._merge_search_paths(node, dir_path, current)
-            self._run_setup(node, dir_path)
 
         node.search_paths = current.search_paths
 
@@ -229,10 +229,21 @@ class Tree:
             tree_path = f"/{sub}" if node_path == "/" else f"{node_path}/{sub}"
             state.search_paths.insert(0, tree_path)
 
-    def _run_setup(self, node: Node, dir_path: Path) -> None:
-        cap = self._load_capability(dir_path / ".yak" / "setup")
-        if cap and cap.module and hasattr(cap.module, "configure"):
-            cap.module.configure(node.ports)  # type: ignore
+    async def setup(self) -> None:
+        for node in self._nodes.values():
+            dir_path = self._fs_path_from_node(node)
+            if dir_path is None:
+                dir_path = self._root_path
+            cap = self._load_capability(dir_path / ".yak" / "setup")
+            if cap and cap.module and hasattr(cap.module, "run"):
+                space = NodeSpace(
+                    path=node.path,
+                    request=None,
+                    session=None,
+                    ports=node.ports,
+                    ports_from=lambda: node.ports,
+                )
+                await cap.module.run(space)  # type: ignore
 
     def _fs_path_from_node(self, node: Node) -> Path | None:
         for key, n in self._nodes.items():
