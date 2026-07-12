@@ -6,20 +6,18 @@ from y5n.api.projections import to_text
 
 
 async def run(space: NodeSpace):
-
     on_source = space.ports.get(OnSourceRead)
     result = await on_source(DataRequest("system:sessions --list"))
 
-    if not result.rows:
-        yield out(to_text("No sessions."))
-        return
-
     current_key = str(space.session.key)
-    lines = []
-    for r in result.rows:
-        marker = "* " if r["key"] == current_key else "  "
-        lines.append(
-            f"{marker}{r['key']:<45} clients={r['clients']}  homes={r['homes']}  flows={r['flows']}"
-        )
+    current = next((r for r in result.rows if r["key"] == current_key), None)
 
-    yield out(to_text("Active sessions:\n" + "\n".join(lines)))
+    if current:
+        yield out(to_text(f"Session:  {current_key}"))
+        yield out(
+            to_text(
+                f"clients={current['clients']}  homes={current['homes']}  flows={current['flows']}"
+            ),
+        )
+    else:
+        yield out(to_text(f"Session:  {current_key}"))

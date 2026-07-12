@@ -5,7 +5,6 @@ from y5n.api.projections import to_text
 
 
 async def run(space: NodeSpace):
-
     yield out(to_text("Detached"))
 
     on_detach = space.ports.get(OnSessionDetach)
