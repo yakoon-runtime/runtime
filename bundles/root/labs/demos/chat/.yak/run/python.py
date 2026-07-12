@@ -1,13 +1,10 @@
-from __future__ import annotations
-
-from y5n.api.dsl import foreground, out_text, receive, to_text
+from y5n.api.dsl import foreground, out_text, receive
 from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnCallLLM
 from y5n.base.llm import LLMMessage, LLMRequest
 
 
 async def run(space: NodeSpace):
-
     llm = space.ports.get(OnCallLLM)
     messages: list[LLMMessage] = []
 

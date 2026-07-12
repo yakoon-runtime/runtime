@@ -14,7 +14,6 @@ SCRIPT = os.path.join(
 
 
 async def run(_):
-
     form = Form(
         title="PDF",
         fields=[

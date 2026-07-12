@@ -1,7 +1,6 @@
 from y5n.api.nodes import Node
 
 from .runtime.ident.space import ident
-from .runtime.labs.space import labs
 from .runtime.setup import setup
 
 # ----------------------------------
@@ -22,5 +21,4 @@ shell = Node(
 # MOUNT
 # ----------------------------------
 
-shell.mount(labs)
 shell.mount(ident)

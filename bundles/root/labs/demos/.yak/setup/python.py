@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 
 from y5n.api.nodes import NodeSpace
@@ -7,8 +5,7 @@ from y5n.api.ports import OnCallLLM
 from y5n.llm.providers.openai_compat import OpenAICompatibleProvider
 
 
-async def setup(space: NodeSpace):
-
+async def run(space: NodeSpace):
     space.ports.provide(
         OnCallLLM,
         OpenAICompatibleProvider(
