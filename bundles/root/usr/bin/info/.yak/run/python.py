@@ -4,13 +4,13 @@ from datetime import UTC, datetime
 
 from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
-from y5n.base.plugins.ports import OnProject
+from y5n.api.ports import PROJECT
 
 _start_time = time.time()
 
 
 async def run(space: NodeSpace):
-    projection = await space.ports.get(OnProject)(
+    projection = await space.ports.get(PROJECT)(
         space=space,
         state={
             "time": datetime.now(UTC).isoformat(),
@@ -36,6 +36,7 @@ def _get_platform_version() -> str:
 
 def _get_git_tag() -> str | None:
     import subprocess
+
     try:
         return (
             subprocess.check_output(

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
-from typing import TypeVar, cast
-
-T = TypeVar("T")
+from typing import Any
 
 
 class Container:
@@ -105,7 +103,7 @@ class Container:
             self._parent.contains(port) if self._parent else False
         )
 
-    def has(self, port: type[T]) -> bool:
+    def has(self, port: object) -> bool:
         if port in self._container:
             return True
         if port in self._factories:
@@ -114,14 +112,14 @@ class Container:
             return self._parent.has(port)
         return False
 
-    def get(self, port: type[T]) -> T:
+    def get(self, port: object) -> Any:
         """Retrieves the capability for a given port.
 
         If a static capability exists, it is returned. If a lazy factory is registered,
         it is awaited and cached. Otherwise, a LookupError is raised.
 
         Args:
-            port: The port.
+            port: The port (class or string key).
 
         Returns:
             The capability instance for the given port.
@@ -131,11 +129,11 @@ class Container:
         """
         try:
             if port in self._container:
-                return cast(T, self._container[port])
+                return self._container[port]
             if port in self._factories:
                 registry = self._factories[port]()
                 self._container[port] = registry
-                return cast(T, registry)
+                return registry
             if self._parent:
                 return self._parent.get(port)
             raise KeyError(port)

@@ -1,22 +1,22 @@
 from y5n.base.nodes import NodePath, UnknownOptionsError, UsageError
-from y5n.base.plugins.ports import (
-    OnAuthorizeRead,
-    OnAuthorizeWrite,
-    OnCompile,
-    OnErrorResolve,
-    OnJinjaRender,
-    OnNewPermissionSet,
-    OnParsePermissionSpec,
-    OnProject,
-    OnProjectionResolve,
-    OnResourceLoad,
-    OnSessionAttach,
-    OnSessionDetach,
-    OnSessionSave,
+from y5n.base.ports.system import (
+    AUTHORIZE_READ,
+    AUTHORIZE_WRITE,
+    COMPILE,
+    ERROR_RESOLVE,
+    JINJA_RENDER,
+    NEW_PERMISSION_SET,
+    PARSE_PERMISSION_SPEC,
+    PROJECT,
+    PROJECTION_RESOLVE,
+    RESOURCE_LOAD,
+    SESSION_ATTACH,
+    SESSION_DETACH,
+    SESSION_SAVE,
+    SOURCE_READ,
 )
 from y5n.base.projection import Projection
 from y5n.base.resources import ResourceRef
-from y5n.base.sources import OnSourceRead
 from y5n.runtime.capabilities.audit import AuditLogService
 from y5n.runtime.capabilities.permission import (
     PermissionChecker,
@@ -120,7 +120,7 @@ def build_runtime(
     ) -> Projection:
 
         if isinstance(error, PermissionDenied):
-            audit_service.security(session=session, obj="command", action=root.key)
+            audit_service.security(session=session, obj="command", action=root.key)  # type: ignore
         elif type(error) not in errors:
             audit_service.error(exc=error, session=session)
 
@@ -143,18 +143,18 @@ def build_runtime(
     assert root
     root_ports = root.ports
 
-    root_ports.provide(OnSourceRead, ds.read)
-    root_ports.provide(OnSessionSave, session_manager.save)
-    root_ports.provide(OnAuthorizeRead, perm_checker.can_read)
-    root_ports.provide(OnAuthorizeWrite, perm_checker.can_write)
-    root_ports.provide(OnNewPermissionSet, lambda: PermissionSet())
-    root_ports.provide(OnParsePermissionSpec, perm_parser.parse)
-    root_ports.provide(OnProject, projector.project_from_space)
-    root_ports.provide(OnProjectionResolve, projector.project)
-    root_ports.provide(OnResourceLoad, package_reader.get_text)
-    root_ports.provide(OnJinjaRender, jinja_engine.render_str)
-    root_ports.provide(OnCompile, compiler.compile)
-    root_ports.provide(OnErrorResolve, error_resolve)
+    root_ports.provide(SOURCE_READ, ds.read)
+    root_ports.provide(SESSION_SAVE, session_manager.save)
+    root_ports.provide(AUTHORIZE_READ, perm_checker.can_read)
+    root_ports.provide(AUTHORIZE_WRITE, perm_checker.can_write)
+    root_ports.provide(NEW_PERMISSION_SET, lambda: PermissionSet())
+    root_ports.provide(PARSE_PERMISSION_SPEC, perm_parser.parse)
+    root_ports.provide(PROJECT, projector.project_from_space)
+    root_ports.provide(PROJECTION_RESOLVE, projector.project)
+    root_ports.provide(RESOURCE_LOAD, package_reader.get_text)
+    root_ports.provide(JINJA_RENDER, jinja_engine.render_str)
+    root_ports.provide(COMPILE, compiler.compile)
+    root_ports.provide(ERROR_RESOLVE, error_resolve)
 
     # --------------------
     # --- DATASOURCING ---
@@ -204,7 +204,7 @@ def build_runtime(
     )
 
     ds.bind("system:sessions", SessionSource(host))
-    root_ports.provide(OnSessionAttach, host.attach_session)
-    root_ports.provide(OnSessionDetach, host.detach_session)
+    root_ports.provide(SESSION_ATTACH, host.attach_session)
+    root_ports.provide(SESSION_DETACH, host.detach_session)
 
     return host
