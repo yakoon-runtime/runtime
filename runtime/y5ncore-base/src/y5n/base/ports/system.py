@@ -1,4 +1,5 @@
 from y5n.base.plugins.ports import (
+    OnAuthenticate,
     OnAuthorizeRead,
     OnAuthorizeWrite,
     OnCompile,
@@ -20,6 +21,11 @@ from .port import Port
 # -----------------------
 # --- SYSTEM PORTS ------
 # -----------------------
+
+AUTHENTICATE = Port(
+    "authenticate",
+    protocol=OnAuthenticate,
+)
 
 SOURCE_READ = Port(
     "source.read",

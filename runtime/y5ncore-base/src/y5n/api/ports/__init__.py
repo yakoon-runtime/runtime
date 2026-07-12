@@ -16,6 +16,7 @@ from y5n.base.plugins.ports import (
 )
 from y5n.base.ports import Port
 from y5n.base.ports.system import (
+    AUTHENTICATE,
     COMPILE,
     ERROR_RESOLVE,
     JINJA_RENDER,
@@ -33,6 +34,7 @@ from y5n.base.runtime.input import OnPrepareInput
 from y5n.base.sources import OnSourceRead
 
 __all__ = [
+    "AUTHENTICATE",
     "Port",
     "OnAuthenticate",
     "OnCallLLM",

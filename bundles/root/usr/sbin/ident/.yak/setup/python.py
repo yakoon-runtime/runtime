@@ -3,7 +3,7 @@ from __future__ import annotations
 from y5n.api.naming import Key
 from y5n.api.nodes import NodeSpace
 from y5n.api.ports import (
-    OnAuthenticate,
+    AUTHENTICATE,
     OnNewPermissionSet,
     OnParsePermissionSpec,
 )
@@ -89,7 +89,7 @@ async def run(space: NodeSpace):
         on_verify_user=verifier.verify,
     )
 
-    space.ports.publish(OnAuthenticate, auth.authenticate)
+    space.ports.publish(AUTHENTICATE, auth.authenticate)
 
     await bootstrap(
         users=users,

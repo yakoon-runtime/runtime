@@ -5,7 +5,7 @@ from y5n.api.dsl.patterns import Form
 from y5n.api.invocations import Param
 from y5n.api.naming import Key
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import OnAuthenticate, OnSessionSave
+from y5n.api.ports import AUTHENTICATE, OnSessionSave, PROJECT
 
 
 async def run(space: NodeSpace):
@@ -40,7 +40,7 @@ async def run(space: NodeSpace):
         username = form.data.get("username") or username
         secret = form.data.get("password") or secret
 
-    on_authenticate = space.ports.get(OnAuthenticate)
+    on_authenticate = space.ports.get(AUTHENTICATE)
     result = await on_authenticate(
         namespace=namespaces.user_namespace(),
         username=username,
@@ -71,5 +71,8 @@ async def run(space: NodeSpace):
     else:
         state["reason"] = result.reason
 
-    projection = await space.ports.get("projection.ident")(name="su", lang=request.lang, state=state)
+    projection = await space.ports.get(PROJECT)(
+        space=space,
+        state=state,
+    )
     yield out(projection)
