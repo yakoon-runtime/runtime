@@ -1,4 +1,4 @@
-from y5n.base.nodes import Node, NodePath, UnknownOptionsError, UsageError
+from y5n.base.nodes import NodePath, UnknownOptionsError, UsageError
 from y5n.base.plugins.ports import (
     OnAuthorizeRead,
     OnAuthorizeWrite,
@@ -98,20 +98,11 @@ def build_runtime(
 
     ds = DataSourceRegistry()
 
-    # -----------------
-    # --- ROOT NODE ---
-    # -----------------
-
-    platform = Node(
-        key="/",
-    )
-
     # -----------------------
     # --- YAK TREE BUILD ---
     # -----------------------
 
     tree = Tree(
-        root_ports=platform.ports,
         root_path=settings.runtime.root_path,
     )
 
@@ -129,7 +120,7 @@ def build_runtime(
     ) -> Projection:
 
         if isinstance(error, PermissionDenied):
-            audit_service.security(session=session, obj="command", action=node.key)
+            audit_service.security(session=session, obj="command", action=root.key)
         elif type(error) not in errors:
             audit_service.error(exc=error, session=session)
 
@@ -147,19 +138,23 @@ def build_runtime(
     # ----------------
     # --- BINDINGS ---
     # ----------------
+    root = tree.root()
 
-    platform.ports.provide(OnSourceRead, ds.read)
-    platform.ports.provide(OnSessionSave, session_manager.save)
-    platform.ports.provide(OnAuthorizeRead, perm_checker.can_read)
-    platform.ports.provide(OnAuthorizeWrite, perm_checker.can_write)
-    platform.ports.provide(OnNewPermissionSet, lambda: PermissionSet())
-    platform.ports.provide(OnParsePermissionSpec, perm_parser.parse)
-    platform.ports.provide(OnProject, projector.project_from_space)
-    platform.ports.provide(OnProjectionResolve, projector.project)
-    platform.ports.provide(OnResourceLoad, package_reader.get_text)
-    platform.ports.provide(OnJinjaRender, jinja_engine.render_str)
-    platform.ports.provide(OnCompile, compiler.compile)
-    platform.ports.provide(OnErrorResolve, error_resolve)
+    assert root
+    root_ports = root.ports
+
+    root_ports.provide(OnSourceRead, ds.read)
+    root_ports.provide(OnSessionSave, session_manager.save)
+    root_ports.provide(OnAuthorizeRead, perm_checker.can_read)
+    root_ports.provide(OnAuthorizeWrite, perm_checker.can_write)
+    root_ports.provide(OnNewPermissionSet, lambda: PermissionSet())
+    root_ports.provide(OnParsePermissionSpec, perm_parser.parse)
+    root_ports.provide(OnProject, projector.project_from_space)
+    root_ports.provide(OnProjectionResolve, projector.project)
+    root_ports.provide(OnResourceLoad, package_reader.get_text)
+    root_ports.provide(OnJinjaRender, jinja_engine.render_str)
+    root_ports.provide(OnCompile, compiler.compile)
+    root_ports.provide(OnErrorResolve, error_resolve)
 
     # --------------------
     # --- DATASOURCING ---
@@ -195,7 +190,7 @@ def build_runtime(
     # ------------------------
 
     host = build_machine(
-        platform=platform,
+        platform=root,
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
         on_projection_send=output.send_projection,
@@ -208,7 +203,7 @@ def build_runtime(
     )
 
     ds.bind("system:sessions", SessionSource(host))
-    platform.ports.provide(OnSessionAttach, host.attach_session)
-    platform.ports.provide(OnSessionDetach, host.detach_session)
+    root_ports.provide(OnSessionAttach, host.attach_session)
+    root_ports.provide(OnSessionDetach, host.detach_session)
 
     return host

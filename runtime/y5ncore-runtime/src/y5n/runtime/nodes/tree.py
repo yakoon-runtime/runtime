@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 from y5n.base.nodes import Invocation, Node, Param
 from y5n.base.nodes.ports import NodePorts
+from y5n.base.runtime import Container
 
 # Resource types that capabilities can declare in yak.yml.
 # Each entry becomes a node.resources[type][variant] to Path mapping.
@@ -41,9 +42,12 @@ class Tree:
     so bundles can be linked into the tree from external locations.
     """
 
-    def __init__(self, root_ports: NodePorts, root_path: str | Path):
-        self._root_ports = root_ports
+    def __init__(self, root_path: str | Path, root_ports: NodePorts | None = None):
         self._root_path = Path(root_path).resolve()
+        self._root_ports = root_ports or NodePorts(
+            Container(allow_override=False),
+            Container(allow_override=True),
+        )
         self._nodes: dict[str, Node] = {}
         self._root: Node | None = None
 
@@ -161,6 +165,28 @@ class Tree:
         )
         self._nodes["/"] = self._root
 
+        intermediates: set[str] = set()
+        for rel_str in sorted_rels:
+            tree_path = f"/{rel_str}"
+            parent_path = str(Path(tree_path).parent)
+            while parent_path != "/":
+                if parent_path not in intermediates and parent_path not in self._nodes:
+                    intermediates.add(parent_path)
+                parent_path = str(Path(parent_path).parent)
+
+        for ipath in sorted(intermediates, key=lambda p: len(Path(p).parts)):
+            key = Path(ipath).name
+            implicit = Node(
+                key=key,
+                name=key,
+                resolvable=False,
+                navigable=True,
+            )
+            self._nodes[ipath] = implicit
+            parent_path = str(Path(ipath).parent)
+            parent = self._nodes.get(parent_path) or self._root
+            parent.mount(implicit)
+
         for rel_str in sorted_rels:
             node = created[rel_str]
             tree_path = f"/{rel_str}"
@@ -249,9 +275,6 @@ class Tree:
             if node:
                 return node
 
-        for node in self._nodes.values():
-            if node.key == key:
-                return node
         return None
 
     def refresh(self) -> None:
