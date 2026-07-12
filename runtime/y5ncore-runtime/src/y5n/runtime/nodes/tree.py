@@ -238,10 +238,10 @@ class Tree:
             if cap and cap.module and hasattr(cap.module, "run"):
                 space = NodeSpace(
                     path=node.path,
-                    request=None,
-                    session=None,
+                    request=None,  # type: ignore
+                    session=None,  # type: ignore
                     ports=node.ports,
-                    ports_from=lambda: node.ports,
+                    ports_from=lambda: node.ports,  # type: ignore
                 )
                 await cap.module.run(space)  # type: ignore
 
