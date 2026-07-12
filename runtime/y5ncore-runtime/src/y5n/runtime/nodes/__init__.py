@@ -1,6 +1,5 @@
-from .tree import Mount, Tree
+from .tree import Tree
 
 __all__ = [
     "Tree",
-    "Mount",
 ]

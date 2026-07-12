@@ -112,7 +112,7 @@ def build_runtime(
 
     tree = Tree(
         root_ports=platform.ports,
-        mounts=settings.runtime.mounts,
+        root_path=settings.runtime.root_path,
     )
 
     tree.build()

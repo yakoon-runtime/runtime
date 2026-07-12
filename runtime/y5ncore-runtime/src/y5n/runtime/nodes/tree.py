@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -10,41 +11,17 @@ from y5n.base.nodes import Invocation, Node, Param
 from y5n.base.nodes.ports import NodePorts
 
 # Resource types that capabilities can declare in yak.yml.
-# Each entry becomes a node.resources[type][variant] → Path mapping.
+# Each entry becomes a node.resources[type][variant] to Path mapping.
 RESOURCE_KEYS = frozenset({"projection", "man"})
-
-
-@dataclass
-class Mount:
-    """A single tree mount point.
-
-    Maps a namespace prefix in the logical tree to a physical
-    filesystem path.  The runtime composes its node tree by
-    iterating all mounts and building a unified namespace.
-    """
-
-    namespace: str
-    """Logical namespace under which this mount appears (e.g. "/", "/luma")."""
-
-    path: Path
-    """Filesystem path to scan for .yak/ directories."""
-
-    def __post_init__(self):
-        self.path = Path(self.path).resolve()
-        if not self.namespace.startswith("/"):
-            self.namespace = "/" + self.namespace
 
 
 @dataclass
 class BuildState:
     """Accumulated inherited context during tree assembly.
-
-    Carried top-down through the node hierarchy. Each level may
-    contribute additional entries that are inherited by all children.
+    Carried top-down through the node hierarchy.
     """
 
     search_paths: list[str] = field(default_factory=list)
-    """Search path prefixes inherited from parent levels."""
 
 
 @dataclass
@@ -52,31 +29,23 @@ class Capability:
     """Loaded capability with its module, invocations and resource paths."""
 
     module: object | None = None
-    """The loaded Python module, or None if load failed."""
-
     invocations: list[Invocation] = field(default_factory=list)
-    """Parsed invocation definitions from yak.yml."""
-
     resources: dict[str, dict[str, Path]] = field(default_factory=dict)
-    """Resource file paths resolved from yak.yml, keyed by type then variant."""
 
 
 class Tree:
     """Compiled index of .yak/ directories.
 
-    Scans a filesystem root for .yak/ directories at build time and
-    constructs a Node tree with fully assembled Ports and search paths.
+    Scans root_path recursively for .yak/ directories and constructs
+    a Node tree.  Symlinks in the filesystem are followed during scan,
+    so bundles can be linked into the tree from external locations.
     """
 
-    def __init__(self, root_ports: NodePorts, mounts: list[Mount]):
+    def __init__(self, root_ports: NodePorts, root_path: str | Path):
         self._root_ports = root_ports
-        self._mounts = mounts
+        self._root_path = Path(root_path).resolve()
         self._nodes: dict[str, Node] = {}
         self._root: Node | None = None
-
-    # ------------------------------------------------------------------
-    # Build pipeline
-    # ------------------------------------------------------------------
 
     def build(self) -> None:
         dirs = self._scan()
@@ -84,38 +53,28 @@ class Tree:
         self._link_nodes(nodes)
         self._assemble()
 
-    # ------------------------------------------------------------------
-    # Phase 1 – Scan
-    # ------------------------------------------------------------------
+    def _scan(self) -> list[Path]:
+        """Return list of bundle directories under root_path.
 
-    def _scan(self) -> list[tuple[str, Path]]:
-        result: list[tuple[str, Path]] = []
-        for mount in self._mounts:
-            for p in mount.path.rglob(".yak/yak.yml"):
-                bundle_dir = p.parent.parent
-                # Root mount ("/") has a synthetic node in _link_nodes.
-                # Non-root mounts include their own .yak/ for the mount node.
-                if bundle_dir == mount.path and mount.namespace == "/":
-                    continue
-                rel = bundle_dir.relative_to(mount.path)
-                rel_str = str(rel)
-                if mount.namespace == "/":
-                    tree_path = "/" + rel_str if rel_str != "." else "/"
-                elif rel_str == ".":
-                    tree_path = mount.namespace
-                else:
-                    tree_path = mount.namespace + "/" + rel_str
-                result.append((tree_path, bundle_dir))
-        return sorted(result, key=lambda x: x[0])
+        Uses os.walk with followlinks=True so that symlinked
+        product bundles (crm, luma, …) are discovered.
+        """
+        result: list[Path] = []
+        for dirpath, _dirnames, filenames in os.walk(
+            self._root_path, followlinks=True
+        ):
+            p = Path(dirpath)
+            if p.name == ".yak" and "yak.yml" in filenames:
+                bundle_dir = p.parent
+                if bundle_dir != self._root_path:
+                    result.append(bundle_dir)
+        return sorted(result)
 
-    # ------------------------------------------------------------------
-    # Phase 2 – Create
-    # ------------------------------------------------------------------
-
-    def _create_nodes(self, entries: list[tuple[str, Path]]) -> dict[str, Node]:
+    def _create_nodes(self, dirs: list[Path]) -> dict[str, Node]:
         nodes: dict[str, Node] = {}
-        for tree_path, dir_path in entries:
-            nodes[tree_path] = self._build_node(dir_path)
+        for dir_path in dirs:
+            rel = str(dir_path.relative_to(self._root_path))
+            nodes[rel] = self._build_node(dir_path)
         return nodes
 
     def _build_node(self, dir_path: Path) -> Node:
@@ -131,7 +90,7 @@ class Tree:
         cap = self._load_capability(dir_path / ".yak" / "run")
         if cap:
             if cap.module and hasattr(cap.module, "run"):
-                node.run = cap.module.run  # type: ignore
+                node.run = cap.module.run
             node.invocations = cap.invocations
             node.resources = cap.resources
         return node
@@ -151,7 +110,6 @@ class Tree:
             else None
         )
 
-        # Parse invocation
         invocations: list[Invocation] = []
         inv_data = meta.get("invocation")
         if isinstance(inv_data, dict):
@@ -176,7 +134,6 @@ class Tree:
                 )
             )
 
-        # Parse resources
         resources: dict[str, dict[str, Path]] = {}
         for res_type in RESOURCE_KEYS:
             variants = meta.get(res_type)
@@ -192,20 +149,10 @@ class Tree:
 
         return Capability(module=mod, invocations=invocations, resources=resources)
 
-    # ------------------------------------------------------------------
-    # Phase 3 – Link
-    # ------------------------------------------------------------------
-
     def _link_nodes(self, created: dict[str, Node]) -> None:
-        sorted_paths = sorted(created.keys(), key=lambda r: len(Path(r).parts))
+        sorted_rels = sorted(created.keys(), key=lambda r: len(Path(r).parts))
 
-        # Read root meta from the "/" namespace mount
-        root_meta: dict[str, Any] = {}
-        for m in self._mounts:
-            if m.namespace == "/":
-                root_meta = _read_yaml(m.path / ".yak" / "yak.yml")
-                break
-
+        root_meta = _read_yaml(self._root_path / ".yak" / "yak.yml")
         self._root = Node(
             key="/",
             name=root_meta.get("title", "root"),
@@ -215,33 +162,32 @@ class Tree:
         )
         self._nodes["/"] = self._root
 
-        for tree_path in sorted_paths:
-            node = created[tree_path]
+        for rel_str in sorted_rels:
+            node = created[rel_str]
+            tree_path = f"/{rel_str}"
             parent_path = str(Path(tree_path).parent)
             parent = self._nodes.get(parent_path) or self._root
             parent.mount(node)
             self._nodes[tree_path] = node
 
-    # ------------------------------------------------------------------
-    # Phase 4 – Assemble
-    # ------------------------------------------------------------------
-
     def _assemble(self) -> None:
         assert self._root
-        self._assemble_node(self._root, BuildState())
+        self._assemble_node(self._root, self._root_path, BuildState())
 
-    def _assemble_node(self, node: Node, state: BuildState) -> None:
+    def _assemble_node(
+        self, node: Node, dir_path: Path | None, state: BuildState
+    ) -> None:
         current = BuildState(search_paths=list(state.search_paths))
 
-        fs_path = self._fs_path_from_node(node)
-        if fs_path:
-            self._merge_search_paths(node, fs_path, current)
-            self._run_setup(node, fs_path)
+        if dir_path:
+            self._merge_search_paths(node, dir_path, current)
+            self._run_setup(node, dir_path)
 
         node.search_paths = current.search_paths
 
         for child_node in node.children.values():
-            self._assemble_node(child_node, current)
+            child_dir = self._fs_path_from_node(child_node)
+            self._assemble_node(child_node, child_dir, current)
 
     def _merge_search_paths(
         self, node: Node, dir_path: Path, state: BuildState
@@ -249,9 +195,7 @@ class Tree:
         path_file = dir_path / ".yak" / "path"
         if not path_file.is_file():
             return
-        node_path = self._tree_path_from_node(node)
-        if node_path is None:
-            return
+        node_path = self._tree_path(dir_path)
         for line in path_file.read_text().splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
@@ -263,45 +207,23 @@ class Tree:
     def _run_setup(self, node: Node, dir_path: Path) -> None:
         cap = self._load_capability(dir_path / ".yak" / "setup")
         if cap and cap.module and hasattr(cap.module, "configure"):
-            cap.module.configure(node.ports)  # type: ignore
-
-    def _resolve_fs_path(self, tree_path: str) -> Path | None:
-        """Map a logical tree path to the physical filesystem path
-        using the longest matching mount namespace."""
-        best: tuple[int, Path] | None = None
-        for mount in self._mounts:
-            ns = mount.namespace
-            if ns == "/":
-                remainder = tree_path.lstrip("/") if tree_path != "/" else ""
-                score = 0
-            elif tree_path == ns:
-                remainder = ""
-                score = len(ns)
-            elif tree_path.startswith(ns + "/"):
-                remainder = tree_path[len(ns) + 1 :]
-                score = len(ns)
-            else:
-                continue
-            fs_path = mount.path / remainder if remainder else mount.path
-            if best is None or score > best[0]:
-                best = (score, fs_path)
-        return best[1] if best else None
+            cap.module.configure(node.ports)
 
     def _fs_path_from_node(self, node: Node) -> Path | None:
-        for tree_path, n in self._nodes.items():
+        for key, n in self._nodes.items():
             if n is node:
-                return self._resolve_fs_path(tree_path)
+                if key == "/":
+                    return None
+                return self._root_path / key.lstrip("/")
         return None
 
-    def _tree_path_from_node(self, node: Node) -> str | None:
-        for tree_path, n in self._nodes.items():
-            if n is node:
-                return tree_path
-        return None
-
-    # ------------------------------------------------------------------
-    # Public API
-    # ------------------------------------------------------------------
+    def _tree_path(self, dir_path: Path) -> str:
+        """Map a filesystem path under root_path to its tree path."""
+        if dir_path == self._root_path:
+            return "/"
+        # Use relative_to — works through symlinks because rglob returns
+        # paths under root_path even when following symlinks.
+        return "/" + str(dir_path.relative_to(self._root_path))
 
     def root(self) -> Node | None:
         return self._root
@@ -342,12 +264,9 @@ class Tree:
         node = self._nodes.get(path)
         if node is None:
             return
-        self._assemble_node(node, BuildState(search_paths=node.search_paths))
-
-
-# ------------------------------------------------------------------
-# Helpers
-# ------------------------------------------------------------------
+        rel = path.lstrip("/")
+        dir_path = self._root_path / rel if rel else self._root_path
+        self._assemble_node(node, dir_path, BuildState(search_paths=node.search_paths))
 
 
 def _read_yaml(path: Path) -> dict[str, Any]:
