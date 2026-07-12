@@ -176,6 +176,11 @@ class Mapper:
 
             result.append(mapper(self, node))
 
+        if result and isinstance(result[0], InlineText):
+            result[0] = InlineText(text=result[0].text.lstrip())
+        if result and isinstance(result[-1], InlineText):
+            result[-1] = InlineText(text=result[-1].text.rstrip())
+
         return result
 
 
