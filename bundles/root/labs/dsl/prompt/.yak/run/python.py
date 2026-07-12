@@ -3,7 +3,6 @@ from y5n.api.projections import to_text
 
 
 async def run(_):
-
     yield foreground()
 
     yield prompt(to_text("Vorname:"))

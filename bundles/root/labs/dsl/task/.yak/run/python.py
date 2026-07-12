@@ -5,25 +5,10 @@ from y5n.base.flow.channel import Scope
 
 
 async def run(_):
-    """
-    Labs: Tasks
-
-    Demonstrates:
-
-    - starting real OS processes
-    - receiving results through channels
-    - waiting for task completion
-    - running tasks in parallel
-    """
-
     lines: list[str] = []
 
     def render():
         return out_text("\n".join(lines))
-
-    # ------------------------------------------------------------------
-    # Example 1: Real OS process
-    # ------------------------------------------------------------------
 
     lines.append("Example 1: Execute a real OS process")
     lines.append("")
@@ -50,10 +35,6 @@ async def run(_):
     lines.append("---")
     lines.append("")
     yield render()
-
-    # ------------------------------------------------------------------
-    # Example 2: Parallel tasks
-    # ------------------------------------------------------------------
 
     lines.append("Example 2: Parallel execution")
     lines.append("")

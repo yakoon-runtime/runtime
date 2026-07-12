@@ -3,7 +3,6 @@ from y5n.api.projections import to_text
 
 
 async def run(_):
-
     yield out(to_text("receive suspended in background... see 'jobs'"))
     while True:
         event = yield receive()

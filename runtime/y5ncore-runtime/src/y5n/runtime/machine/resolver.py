@@ -84,13 +84,14 @@ class InvocationResolver:
                 return node, tokens
 
         # ---------------------------------
-        # Resolve current node
+        # Resolve from session context (current path)
         # ---------------------------------
 
-        node = self._resolve_node(
-            parent=self._root,
-            key=key,
-        )
+        ctx = self._resolve_context(session)
+        node = self._resolve_node(parent=ctx, key=key) if ctx else None
+
+        if not node:
+            node = self._resolve_node(parent=self._root, key=key)
 
         if not node:
             self._raise_not_found(
@@ -191,6 +192,19 @@ class InvocationResolver:
     # ---------------------------------------------------------------------
     # Internals
     # ---------------------------------------------------------------------
+
+    def _resolve_context(self, session: Session) -> Node | None:
+        """Walk from root to the session's current path node."""
+        path = session.get_current_path()
+        if not path or path == "/":
+            return None
+        walk = self._root
+        for seg in path.strip("/").split("/"):
+            child = self.on_get_node(walk, seg)
+            if child is None:
+                return None
+            walk = child
+        return walk
 
     def _resolve_node(
         self,

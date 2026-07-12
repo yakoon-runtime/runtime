@@ -4,7 +4,6 @@ from y5n.base.runtime import Event
 
 
 async def run(_):
-
     yield send(
         channel="form.result",
         event=Event(
