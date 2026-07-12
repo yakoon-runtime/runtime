@@ -43,16 +43,15 @@ def _resolve(space: NodeSpace, target_name: str | None) -> Path:
     root = _get_root(space)
     raw = space.session.get_current_path()
 
-    if raw:
-        if raw == "/":
-            current = root.resolve()
-        else:
-            test = root / raw.lstrip("/")
-            current = test.resolve() if test.exists() else Path(raw).resolve()
+    if raw and raw != "/":
+        test = (root / raw.lstrip("/"))
+        current = test.resolve() if test.exists() else Path(raw).resolve()
     else:
         current = root.resolve()
 
     if target_name:
+        if target_name == "~":
+            return Path.home().resolve()
         if target_name.startswith("/"):
             return (root / target_name.lstrip("/")).resolve()
         return (current / target_name).resolve()

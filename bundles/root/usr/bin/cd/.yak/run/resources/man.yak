@@ -1,15 +1,15 @@
-<heading>cd - Change the current runtime context.</heading>
+<heading>cd - Change directory.</heading>
 
 <rule/>
 
 <heading level="2">
 Usage
 </heading>
-
 <pre>
-  cd shell
+  cd path
   cd ..
   cd /
+  cd ~
 </pre>
 
 <heading level="2">
@@ -17,36 +17,46 @@ Description
 </heading>
 
 <paragraph>
-Changes the current runtime context.
+Changes the current working directory.
 </paragraph>
 
 <paragraph>
-Subsequent commands operate relative to the new location.
+Navigates the OS filesystem. Inside the yakoon tree, <em>cd /</em> returns
+to the tree root and the prompt shows tree-relative paths (e.g.
+<em>/var</em>, <em>/crm/customer</em>). Outside the tree, the prompt
+shows the absolute OS path.
 </paragraph>
+
+<heading level="2">
+Special paths
+</heading>
+
+<pre>
+  /      Yakoon root directory
+  ~      User's home directory
+  ..     Parent directory
+</pre>
 
 <heading level="2">
 Examples
 </heading>
 
 <pre>
-cd shell
-  Enter the shell runtime space.
+  cd /var
+    Go to /var inside the yakoon tree.
 
-cd ..
-  Move to the parent runtime space.
+  cd /crm/customer
+    Navigate to a bundle's subdirectory through a symlink.
 
-cd /
-  Return to the runtime root.
+  cd ~
+    Go to the user's home directory.
+
+  cd ../../..
+    Move up multiple levels. Leaves the tree if above root.
+
+  cd /
+    Return to the yakoon tree root from anywhere.
 </pre>
-
-<paragraph>
-Use cd when you want to work inside another runtime space.
-</paragraph>
-
-<paragraph>
-Use ls when you only want to inspect another location without
-changing the current context.
-</paragraph>
 
 <heading level="2">
 See also

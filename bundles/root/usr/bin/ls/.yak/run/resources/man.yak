@@ -7,8 +7,9 @@ Usage
 </heading>
 <pre>
   ls
-  ls &lt;path&gt;
+  ls path
   ls --l
+  ls ~
 </pre>
 
 <heading level="2">
@@ -33,6 +34,16 @@ With <em>--l</em>, each entry is shown on its own line.
 </paragraph>
 
 <heading level="2">
+Special paths
+</heading>
+
+<pre>
+  /      Yakoon root directory
+  ~      User's home directory
+  ..     Parent directory
+</pre>
+
+<heading level="2">
 Examples
 </heading>
 
@@ -40,8 +51,11 @@ Examples
   ls
     List current directory.
 
-  ls crm
-    List contents of the crm directory.
+  ls /var
+    List contents of /var inside the yakoon tree.
+
+  ls ~
+    List home directory.
 
   ls --l
     List current directory, one entry per line.
