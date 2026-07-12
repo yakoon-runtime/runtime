@@ -93,13 +93,18 @@ class Tree:
         for mount in self._mounts:
             for p in mount.path.rglob(".yak/yak.yml"):
                 bundle_dir = p.parent.parent
-                if bundle_dir == mount.path:
+                # Root mount ("/") has a synthetic node in _link_nodes.
+                # Non-root mounts include their own .yak/ for the mount node.
+                if bundle_dir == mount.path and mount.namespace == "/":
                     continue
                 rel = bundle_dir.relative_to(mount.path)
+                rel_str = str(rel)
                 if mount.namespace == "/":
-                    tree_path = "/" + str(rel)
+                    tree_path = "/" + rel_str if rel_str != "." else "/"
+                elif rel_str == ".":
+                    tree_path = mount.namespace
                 else:
-                    tree_path = mount.namespace + "/" + str(rel)
+                    tree_path = mount.namespace + "/" + rel_str
                 result.append((tree_path, bundle_dir))
         return sorted(result, key=lambda x: x[0])
 
