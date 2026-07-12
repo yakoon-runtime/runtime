@@ -37,9 +37,6 @@ async def run(space: NodeSpace):
         return
 
     if target == "..":
-        if current_path == root:
-            yield out_text("")
-            return
         _set_cwd(space, current_path.parent)
         yield out_text("")
         return
