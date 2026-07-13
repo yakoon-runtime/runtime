@@ -1,0 +1,49 @@
+<heading>list - List exits from a box.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  list --world NAME
+  list --world NAME --box NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all exits from a box, or all exits in a world when
+no box is specified.
+</paragraph>
+
+<paragraph>
+Exits are connections between boxes. Each exit has a name,
+a source box, a target box and an optional direction.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+list --world Work --box Office
+  List exits from the Office box.
+
+list --world Work
+  List all exits in the Work world.
+
+exit/list --world Research --box Lab
+  From another space, qualify the path.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+delete, edit, show
+</paragraph>
