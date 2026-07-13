@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import sys
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -9,6 +11,12 @@ from y5n.api.nodes import Node, NodeSpace
 from y5n.base.nodes.request import Request
 from y5n.base.runtime.input import Interaction
 from y5n.runtime.runtime.sessions import SessionData
+
+_yak_path = str(Path(__file__).parent.parent / "src" / ".yak")
+if _yak_path not in sys.path:
+    sys.path.insert(0, _yak_path)
+
+from setup import python as luma_setup  # noqa: E402
 
 
 @dataclass
@@ -77,7 +85,7 @@ async def fresh_space():
         ports=FakePorts(),
         ports_from=None,
     )
-    from y5nspace.luma.runtime.setup import setup
-
-    await setup(space)
+    await luma_setup.run(space)
+    session.set_data("luma.current_world", None)
+    session.set_data("luma.current_box", None)
     return session, space
