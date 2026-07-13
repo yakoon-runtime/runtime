@@ -13,7 +13,6 @@ from y5nstore.event.wire import build_store
 
 from .bootstrap import bootstrap
 from .models import User, UserData
-from .ports import PERMISSION_RESOLVE
 from .services import (
     AccountService,
     AllowAllSecretVerifier,
@@ -103,7 +102,7 @@ async def run(space: NodeSpace):
     auth = AuthenticationService(
         on_get_user=users.get_by_username,
         on_verify_user=verifier.verify,
-        on_after_verify=on_after_verify,
+        on_after_verify=on_after_verify,  # type: ignore
     )
 
     await bootstrap(
@@ -122,19 +121,12 @@ async def run(space: NodeSpace):
     space.ports.provide(PermissionGrantService, permgrant)
 
     # ----------------------------------
-    # PUBLISH
-    # ----------------------------------
-
-    space.ports.publish(
-        PERMISSION_RESOLVE,
-        perm_resolver.resolve_user_permissions,
-    )
-
-    # ----------------------------------
     # PROMOTE — full auth chain
     # ----------------------------------
 
-    async def authenticate(*, space: NodeSpace, username: str, secret: str) -> AuthResult:
+    async def authenticate(
+        *, space: NodeSpace, username: str, secret: str
+    ) -> AuthResult:
 
         user_ns = namespaces.user_namespace()
         result = await auth.authenticate(

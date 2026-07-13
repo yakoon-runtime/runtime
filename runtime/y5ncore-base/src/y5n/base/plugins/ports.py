@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from y5n.base.naming import Namespace
 from y5n.base.nodes import NodePath, NodeSpace
 from y5n.base.permissions import Permission, PermissionSet
 from y5n.base.projection import Projection
@@ -93,9 +92,7 @@ class OnAuthenticate(Protocol):
 
 
 class OnAfterVerify(Protocol):
-    async def __call__(
-        self, *, user: object
-    ) -> dict | None: ...
+    async def __call__(self, *, user: object) -> dict | None: ...
 
 
 class OnBootstrapPermissions(Protocol):

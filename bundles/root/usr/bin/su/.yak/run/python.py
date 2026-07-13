@@ -45,7 +45,7 @@ async def run(space: NodeSpace):
     )
 
     state = {"user": username, "reason": None}
-    if result.ok:
+    if result.ok and result.user:
         state["user"] = result.user.get("username", username)
     else:
         state["reason"] = result.reason

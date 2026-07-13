@@ -15,7 +15,7 @@ class AuthenticationService:
         self,
         on_get_user: OnGetUser,
         on_verify_user: OnVerifyUser,
-        on_after_verify: OnAfterVerify | None = None,
+        on_after_verify: OnAfterVerify,
     ):
         self.on_get_user = on_get_user
         self.on_verify = on_verify_user
@@ -32,10 +32,7 @@ class AuthenticationService:
         if not self.on_verify(user=user, secret=secret):
             return AuthResult(ok=False, reason="invalid-credentials")
 
-        after = None
-        if self.on_after_verify is not None:
-            after = await self.on_after_verify(user=user)
-
+        after = await self.on_after_verify(user=user)
         return AuthResult(ok=True, user=self._to_dict(user), after=after)
 
     def _to_dict(self, user: User) -> dict:

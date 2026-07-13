@@ -1,8 +1,6 @@
 {% if reason %}
 Switch user failed:
-<pre>
-  {{ reason }}
-</pre>
+<pre>{{ reason }}</pre>
 {% else %}
 You are now '{{ user }}'
 {% endif %}
