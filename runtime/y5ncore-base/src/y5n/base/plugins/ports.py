@@ -88,8 +88,14 @@ class OnAuthorizeWrite(Protocol):
 
 class OnAuthenticate(Protocol):
     async def __call__(
-        self, *, namespace: Namespace, username: str, secret: str
+        self, *, space: NodeSpace, username: str, secret: str
     ) -> AuthResult: ...
+
+
+class OnAfterVerify(Protocol):
+    async def __call__(
+        self, *, user: object
+    ) -> dict | None: ...
 
 
 class OnBootstrapPermissions(Protocol):

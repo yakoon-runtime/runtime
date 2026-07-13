@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Protocol
 
 from y5n.api.naming import Namespace
+from y5n.api.ports import OnAfterVerify
 from y5n.api.ports.models import AuthResult
 
 from ..models import User
@@ -14,9 +15,11 @@ class AuthenticationService:
         self,
         on_get_user: OnGetUser,
         on_verify_user: OnVerifyUser,
+        on_after_verify: OnAfterVerify | None = None,
     ):
         self.on_get_user = on_get_user
         self.on_verify = on_verify_user
+        self.on_after_verify = on_after_verify
 
     async def authenticate(
         self, namespace: Namespace, username: str, secret: str
@@ -29,7 +32,11 @@ class AuthenticationService:
         if not self.on_verify(user=user, secret=secret):
             return AuthResult(ok=False, reason="invalid-credentials")
 
-        return AuthResult(ok=True, user=self._to_dict(user))
+        after = None
+        if self.on_after_verify is not None:
+            after = await self.on_after_verify(user=user)
+
+        return AuthResult(ok=True, user=self._to_dict(user), after=after)
 
     def _to_dict(self, user: User) -> dict:
         return {

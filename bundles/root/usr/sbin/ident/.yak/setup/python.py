@@ -6,7 +6,9 @@ from y5n.api.ports import (
     AUTHENTICATE,
     OnNewPermissionSet,
     OnParsePermissionSpec,
+    OnSessionSave,
 )
+from y5n.api.ports.models import AuthResult
 from y5nstore.event.wire import build_store
 
 from .bootstrap import bootstrap
@@ -85,9 +87,23 @@ async def run(space: NodeSpace):
 
     verifier = AllowAllSecretVerifier()
 
+    # --- on_after_verify: resolves permissions after successful auth ---
+
+    async def on_after_verify(*, user: User) -> dict:
+        permissions = await perm_resolver.resolve_user_permissions(
+            grant_namespace=namespaces.permgrant_namespace(),
+            join_namespace=namespaces.join_namespace(),
+            user_key=user.key,
+        )
+        return {
+            "permissions": permissions,
+            "user": {"key": user.key, "username": user.username},
+        }
+
     auth = AuthenticationService(
         on_get_user=users.get_by_username,
         on_verify_user=verifier.verify,
+        on_after_verify=on_after_verify,
     )
 
     await bootstrap(
@@ -115,13 +131,39 @@ async def run(space: NodeSpace):
     )
 
     # ----------------------------------
-    # PROMOTE
+    # PROMOTE — full auth chain
     # ----------------------------------
 
-    space.ports.promote(
-        AUTHENTICATE,
-        auth.authenticate,
-    )
+    async def authenticate(*, space: NodeSpace, username: str, secret: str) -> AuthResult:
+
+        user_ns = namespaces.user_namespace()
+        result = await auth.authenticate(
+            namespace=user_ns,
+            username=username,
+            secret=secret,
+        )
+
+        if not result.ok:
+            return result
+
+        after = result.after or {}
+        user_info = after.get("user", {})
+        permissions = after.get("permissions")
+
+        space.session.set_identity(user_info.get("key"), user_info.get("username"))
+        if permissions is not None:
+            space.session.set_permissions(permissions)
+
+        on_save = space.ports.get(OnSessionSave)
+        await on_save(session=space.session)
+
+        return AuthResult(
+            ok=True,
+            user=result.user,
+            reason=None,
+        )
+
+    space.ports.promote(AUTHENTICATE, authenticate)
 
 
 async def _build_index(store):

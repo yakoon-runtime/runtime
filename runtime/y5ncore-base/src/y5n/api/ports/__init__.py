@@ -1,5 +1,6 @@
 from y5n.base.llm import OnCallLLM
 from y5n.base.plugins.ports import (
+    OnAfterVerify,
     OnAuthenticate,
     OnCompile,
     OnErrorResolve,
@@ -36,6 +37,7 @@ from y5n.base.sources import OnSourceRead
 __all__ = [
     "AUTHENTICATE",
     "Port",
+    "OnAfterVerify",
     "OnAuthenticate",
     "OnCallLLM",
     "OnCompile",
