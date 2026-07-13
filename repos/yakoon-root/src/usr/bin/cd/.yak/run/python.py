@@ -56,18 +56,18 @@ async def run(space: NodeSpace):
 
 def _get_root(space: NodeSpace) -> Path:
     raw = space.session.get_data("fs:root")
-    return Path(raw) if raw else Path.home() / ".yak"
+    return Path(raw).resolve() if raw else Path.home() / ".yak"
 
 
 def _get_cwd(space: NodeSpace) -> Path:
     raw = space.session.get_current_path()
     if not raw or raw == "/":
-        return _get_root(space).resolve()
+        return _get_root(space)
     # Try tree-relative first (e.g. /var → root/var)
     root = _get_root(space)
     tree_test = root / raw.lstrip("/")
     if tree_test.exists():
-        return tree_test.resolve()
+        return tree_test
     # Absolute OS path
     return Path(raw).resolve()
 
