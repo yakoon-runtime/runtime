@@ -9,9 +9,9 @@
     // stores (event)
     "stores/y5nstore-event/src",
     "stores/y5nstore-sequence/src",
-    // spaces
-    "spaces/y5nspace-luma/src",
-    "spaces/y5nspace-ident/src",
+    // repos
+    "repos/yakoon-luma/src",
+    "repos/yakoon-root/src",
     // transports
     "transports/y5ntrans-ws/src",
     // apps
@@ -23,7 +23,7 @@
     "runtime/y5ncore-runtime/tests",
     "stores/y5nstore-event/tests",
     "stores/y5nstore-sequence/tests",
-    "spaces/y5nspace-luma/tests",
+    "repos/yakoon-luma/tests",
   ],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,

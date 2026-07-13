@@ -1,22 +1,15 @@
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
+import _yak.setup.python as luma_setup
 import pytest
 from y5n.api.naming import Key
 from y5n.api.nodes import Node, NodeSpace
 from y5n.base.nodes.request import Request
 from y5n.base.runtime.input import Interaction
 from y5n.runtime.runtime.sessions import SessionData
-
-_yak_path = str(Path(__file__).parent.parent / "src" / "_yak")
-if _yak_path not in sys.path:
-    sys.path.insert(0, _yak_path)
-
-from setup import python as luma_setup  # noqa: E402
 
 
 @dataclass

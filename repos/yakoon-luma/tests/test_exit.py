@@ -1,5 +1,5 @@
 import pytest
-from setup import ports as luma_ports
+from _yak.setup import ports as luma_ports
 
 
 @pytest.mark.asyncio
