@@ -1,0 +1,9 @@
+executor: python
+entry: python.py
+invocations:
+  - params:
+      - key: name
+        required: true
+        positional: true
+      - key: password
+      - key: enabled

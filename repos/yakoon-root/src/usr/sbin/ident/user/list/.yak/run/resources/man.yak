@@ -1,0 +1,36 @@
+<heading>users list - List all users.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  list
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all registered users.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+list
+  Show all users.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, edit, delete, groups, joins
+</paragraph>

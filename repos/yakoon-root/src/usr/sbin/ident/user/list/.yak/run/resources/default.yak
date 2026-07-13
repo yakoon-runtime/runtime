@@ -1,0 +1,8 @@
+{% if not state.users %}
+No users found.
+{% else %}
+Users:
+{% for u in state.users %}
+  {{ u.username }}
+{% endfor %}
+{% endif %}

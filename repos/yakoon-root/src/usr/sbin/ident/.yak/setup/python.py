@@ -13,6 +13,13 @@ from y5nstore.event.wire import build_store
 
 from .bootstrap import bootstrap
 from .models import User, UserData
+from .ports import (
+    GROUP_SERVICE,
+    JOIN_SERVICE,
+    NAMESPACES,
+    PERMGRANT_SERVICE,
+    USER_SERVICE,
+)
 from .services import (
     AccountService,
     AllowAllSecretVerifier,
@@ -114,11 +121,11 @@ async def run(space: NodeSpace):
 
     await _demo_data(users=users)
 
-    space.ports.provide(Namespaces, namespaces)
-    space.ports.provide(UserService, users)
-    space.ports.provide(GroupService, groups)
-    space.ports.provide(JoinService, join_svc)
-    space.ports.provide(PermissionGrantService, permgrant)
+    space.ports.provide(NAMESPACES, namespaces)
+    space.ports.provide(USER_SERVICE, users)
+    space.ports.provide(GROUP_SERVICE, groups)
+    space.ports.provide(JOIN_SERVICE, join_svc)
+    space.ports.provide(PERMGRANT_SERVICE, permgrant)
 
     # ----------------------------------
     # PROMOTE — full auth chain
