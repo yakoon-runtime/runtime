@@ -56,7 +56,7 @@ async def run(space: NodeSpace):
 
 def _get_root(space: NodeSpace) -> Path:
     raw = space.session.get_data("fs:root")
-    return Path(raw).resolve() if raw else Path.home() / ".yak"
+    return Path(raw).resolve() if raw else Path.home() / "_yak"
 
 
 def _get_cwd(space: NodeSpace) -> Path:

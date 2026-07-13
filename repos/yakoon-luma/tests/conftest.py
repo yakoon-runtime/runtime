@@ -12,7 +12,7 @@ from y5n.base.nodes.request import Request
 from y5n.base.runtime.input import Interaction
 from y5n.runtime.runtime.sessions import SessionData
 
-_yak_path = str(Path(__file__).parent.parent / "src" / ".yak")
+_yak_path = str(Path(__file__).parent.parent / "src" / "_yak")
 if _yak_path not in sys.path:
     sys.path.insert(0, _yak_path)
 

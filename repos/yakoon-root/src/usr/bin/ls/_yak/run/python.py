@@ -36,7 +36,7 @@ async def run(space: NodeSpace):
 
 def _get_root(space: NodeSpace) -> Path:
     raw = space.session.get_data("fs:root")
-    return Path(raw) if raw else Path.home() / ".yak"
+    return Path(raw) if raw else Path.home() / "_yak"
 
 
 def _resolve(space: NodeSpace, target_name: str | None) -> Path:
@@ -44,7 +44,7 @@ def _resolve(space: NodeSpace, target_name: str | None) -> Path:
     raw = space.session.get_current_path()
 
     if raw and raw != "/":
-        test = (root / raw.lstrip("/"))
+        test = root / raw.lstrip("/")
         current = test.resolve() if test.exists() else Path(raw).resolve()
     else:
         current = root.resolve()

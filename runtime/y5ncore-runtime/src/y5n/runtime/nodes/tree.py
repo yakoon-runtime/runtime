@@ -37,9 +37,9 @@ class Capability:
 
 
 class Tree:
-    """Compiled index of .yak/ directories.
+    """Compiled index of _yak/ directories.
 
-    Scans root_path recursively for .yak/ directories and constructs
+    Scans root_path recursively for _yak/ directories and constructs
     a Node tree.  Symlinks in the filesystem are followed during scan,
     so bundles can be linked into the tree from external locations.
     """
@@ -68,7 +68,7 @@ class Tree:
         result: list[Path] = []
         for dirpath, _dirnames, filenames in os.walk(self._root_path, followlinks=True):
             p = Path(dirpath)
-            if p.name == ".yak" and "yak.yml" in filenames:
+            if p.name == "_yak" and "yak.yml" in filenames:
                 bundle_dir = p.parent
                 if bundle_dir != self._root_path:
                     result.append(bundle_dir)
@@ -82,7 +82,7 @@ class Tree:
         return nodes
 
     def _build_node(self, dir_path: Path) -> Node:
-        meta = _read_yaml(dir_path / ".yak" / "yak.yml")
+        meta = _read_yaml(dir_path / "_yak" / "yak.yml")
         node = Node(
             key=dir_path.name,
             name=meta.get("title", dir_path.name),
@@ -91,7 +91,7 @@ class Tree:
             contextual=meta.get("contextual", False),
             anonymous=True,
         )
-        cap = self._load_capability(dir_path / ".yak" / "run")
+        cap = self._load_capability(dir_path / "_yak" / "run")
         if cap:
             if cap.module and hasattr(cap.module, "run"):
                 node.run = cap.module.run  # type: ignore
@@ -160,7 +160,7 @@ class Tree:
     def _link_nodes(self, created: dict[str, Node]) -> None:
         sorted_rels = sorted(created.keys(), key=lambda r: len(Path(r).parts))
 
-        root_meta = _read_yaml(self._root_path / ".yak" / "yak.yml")
+        root_meta = _read_yaml(self._root_path / "_yak" / "yak.yml")
         self._root = Node(
             key="/",
             name=root_meta.get("title", "root"),
@@ -221,7 +221,7 @@ class Tree:
     def _merge_search_paths(
         self, node: Node, dir_path: Path, state: BuildState
     ) -> None:
-        path_file = dir_path / ".yak" / "path"
+        path_file = dir_path / "_yak" / "path"
         if not path_file.is_file():
             return
         node_path = self._tree_path(dir_path)
@@ -238,7 +238,7 @@ class Tree:
             dir_path = self._fs_path_from_node(node)
             if dir_path is None:
                 dir_path = self._root_path
-            cap = self._load_capability(dir_path / ".yak" / "setup")
+            cap = self._load_capability(dir_path / "_yak" / "setup")
             if cap and cap.module and hasattr(cap.module, "run"):
                 space = NodeSpace(
                     path=node.path,
