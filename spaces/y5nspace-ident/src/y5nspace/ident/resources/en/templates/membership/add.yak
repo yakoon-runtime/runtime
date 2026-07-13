@@ -1,1 +1,0 @@
-Added '{{ state.membership.user_key.id }}' to group '{{ state.membership.group_key.id }}'.

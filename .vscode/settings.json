@@ -10,7 +10,6 @@
     "stores/y5nstore-event/src",
     "stores/y5nstore-sequence/src",
     // spaces
-    "spaces/y5nspace-runtime/src",
     "spaces/y5nspace-luma/src",
     "spaces/y5nspace-ident/src",
     // transports

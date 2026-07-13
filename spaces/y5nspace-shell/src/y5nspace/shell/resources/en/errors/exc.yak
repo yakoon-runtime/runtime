@@ -1,9 +1,0 @@
-<heading>Error - Internal runtime error.</heading>
-
-<rule/>
-
-<heading level="2">
-Message
-</heading>
-
-{{ state.message }}

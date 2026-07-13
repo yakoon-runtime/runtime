@@ -1,1 +1,0 @@
-Removed permission '{{ state.grant.permission_key }}' from '{{ state.grant.subject_key.id }}'.
