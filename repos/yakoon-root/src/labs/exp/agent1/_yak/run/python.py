@@ -8,6 +8,7 @@ from y5n.api.dsl import out_text
 from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnCallLLM
 from y5n.llm.agents import Agent
+from y5n.llm.providers.openai_compat import OpenAICompatibleProvider
 
 MAX_STEPS = 10
 
@@ -56,22 +57,27 @@ Regeln:
 
 
 async def run(space: NodeSpace):
+    space.ports.provide(
+        OnCallLLM,
+        OpenAICompatibleProvider(
+            base_url="https://api.mistral.ai/v1",
+            model="mistral-large-latest",
+            api_key=stdlib_os.environ.get("MISTRAL_API_KEY"),
+        ),
+    )
+
     request = " ".join(space.request.args())
     if not request:
-        yield out_text("Usage: os <frage>")
+        yield out_text("Usage: agent1 <frage>")
         return
 
-    llm: OnCallLLM = space.ports.get(OnCallLLM)
+    llm = space.ports.get(OnCallLLM)
     user = getpass.getuser()
     home = stdlib_os.path.expanduser("~")
     cwd = stdlib_os.getcwd()
     system = f"{platform.system()} {platform.release()}"
 
-    agent = Agent(
-        llm=llm,
-        prompt=SYSTEM_PROMPT,
-        max_steps=MAX_STEPS,
-    )
+    agent = Agent(llm=llm, prompt=SYSTEM_PROMPT, max_steps=MAX_STEPS)
 
     yield agent.run(
         request=request,

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import platform
 
 from y5n.api.dsl import out_text, receive, start_task
@@ -8,6 +9,7 @@ from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnCallLLM
 from y5n.base.flow.channel import Scope
 from y5n.base.llm import LLMMessage, LLMRequest
+from y5n.llm.providers.openai_compat import OpenAICompatibleProvider
 
 CHANNEL = "os-result"
 
@@ -67,21 +69,30 @@ Regeln:
 - Keine Shell-Syntax — nur Executable + Argumente.
 
 Beispiele:
-  "zeige Prozesse"       → {{"command": "ps", "args": ["aux"]}}
-  "wer bin ich"          → {{"command": "whoami", "args": []}}
-  "Speicher frei"        → {{"command": "free", "args": ["-h"]}}
-  "USB-Geräte"           → {{"command": "lsusb", "args": []}}
-  "Logs in /var/log"     → {{"command": "ls", "args": ["-la", "/var/log"]}}
-  "starte Firefox"       → {{"error": "GUI-Programme sind nicht erlaubt"}}"""
+  "zeige Prozesse"       -> {{"command": "ps", "args": ["aux"]}}
+  "wer bin ich"          -> {{"command": "whoami", "args": []}}
+  "Speicher frei"        -> {{"command": "free", "args": ["-h"]}}
+  "USB-Geräte"           -> {{"command": "lsusb", "args": []}}
+  "Logs in /var/log"     -> {{"command": "ls", "args": ["-la", "/var/log"]}}
+  "starte Firefox"       -> {{"error": "GUI-Programme sind nicht erlaubt"}}"""
 
 
 async def run(space: NodeSpace):
+    space.ports.provide(
+        OnCallLLM,
+        OpenAICompatibleProvider(
+            base_url="https://api.mistral.ai/v1",
+            model="mistral-large-latest",
+            api_key=os.environ.get("MISTRAL_API_KEY"),
+        ),
+    )
+
     request = " ".join(space.request.args())
     if not request:
-        yield out_text("Usage: os <frage>")
+        yield out_text("Usage: agent2 <frage>")
         return
 
-    llm: OnCallLLM = space.ports.get(OnCallLLM)
+    llm = space.ports.get(OnCallLLM)
     system = f"{platform.system()} {platform.release()}"
 
     messages = [
