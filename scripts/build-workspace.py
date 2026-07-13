@@ -1,6 +1,6 @@
 """Build workspace from a workspace definition.
 
-Reads ``workspaces/<name>/workspace.yml`` and creates the tree
+Reads ``workspace/<name>/workspace.yml`` and creates the tree
 inside the same directory.  Shallow mounts (e.g. ``root``) are
 expanded entry-by-entry so that deeper mounts (e.g.
 ``root/opt/crm``) can overlay specific paths.
@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def _workspace_path(name: str) -> Path:
-    return ROOT / "workspaces" / name
+    return ROOT / "workspace" / name
 
 
 def _load_config(name: str) -> tuple[dict[str, str], Path]:
