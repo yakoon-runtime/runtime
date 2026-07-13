@@ -18,5 +18,8 @@ yakoon/loop/runtime
 .coverage
 coverage/
 
+# Built workspace
+/workspace/
+
 # Local evolution log
 evolution.log
