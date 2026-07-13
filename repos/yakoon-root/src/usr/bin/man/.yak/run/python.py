@@ -18,7 +18,18 @@ async def run(space: NodeSpace):
         return
 
     on_source = space.ports.get(SOURCE_READ)
-    result = await on_source(DataRequest(f"system:nodes --by-key {key}"))
+
+    # Try contextual path first (e.g. man add from /grant/group)
+    lookup = key
+    current = space.session.get_current_path()
+    if current and current != "/" and not key.startswith("/"):
+        lookup = f"{current}/{key}"
+
+    result = await on_source(DataRequest(f"system:nodes --by-key {lookup}"))
+    if result.status != "ok" and lookup != key:
+        result = await on_source(DataRequest(f"system:nodes --by-key {key}"))
+    else:
+        key = lookup
 
     if result.status == "ok":
         node_data = result.one()
