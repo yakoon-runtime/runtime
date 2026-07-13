@@ -46,6 +46,9 @@ class Node:
     name: str | None = None
     """Human-readable display name. Falls back to *key* when not set."""
 
+    fs_path: Path | None = None
+    """Filesystem path to the bundle directory (set by Tree on assembly)."""
+
     # ----------------------------------
     # EXECUTION METADATA
     # ----------------------------------

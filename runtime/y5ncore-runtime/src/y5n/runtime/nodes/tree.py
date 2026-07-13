@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import importlib.util
 import os
-import types
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -12,6 +10,7 @@ from y5n.base.nodes import Invocation, Node, Param
 from y5n.base.nodes.ports import NodePorts
 from y5n.base.nodes.space import NodeSpace
 from y5n.base.runtime import Container
+from y5n.runtime.executor import Executor, ExecutorKind, ExecutorRegistry, Phase
 
 # Resource types that capabilities can declare in yak.yml.
 # Each entry becomes a node.resources[type][variant] to Path mapping.
@@ -29,9 +28,9 @@ class BuildState:
 
 @dataclass
 class Capability:
-    """Loaded capability with its module, invocations and resource paths."""
+    """Bundle metadata: invocations and resource paths."""
 
-    module: object | None = None
+    executor_kind: ExecutorKind = ExecutorKind.PYTHON
     invocations: list[Invocation] = field(default_factory=list)
     resources: dict[str, dict[str, Path]] = field(default_factory=dict)
 
@@ -44,12 +43,18 @@ class Tree:
     so bundles can be linked into the tree from external locations.
     """
 
-    def __init__(self, root_path: str | Path, root_ports: NodePorts | None = None):
+    def __init__(
+        self,
+        root_path: str | Path,
+        executors: ExecutorRegistry,
+        root_ports: NodePorts | None = None,
+    ):
         self._root_path = Path(root_path).resolve()
         self._root_ports = root_ports or NodePorts(
             Container(allow_override=False),
             Container(allow_override=True),
         )
+        self._executors = executors
         self._nodes: dict[str, Node] = {}
         self._root: Node | None = None
 
@@ -90,31 +95,21 @@ class Tree:
             navigable=meta.get("navigable", True),
             contextual=meta.get("contextual", False),
             anonymous=True,
+            fs_path=dir_path,
         )
         cap = self._load_capability(dir_path / "_yak" / "run")
         if cap:
-            if cap.module and hasattr(cap.module, "run"):
-                node.run = cap.module.run  # type: ignore
             node.invocations = cap.invocations
             node.resources = cap.resources
+            executor = self._executors.get(cap.executor_kind)
+            node.run = _make_handler(executor, node, Phase.RUN)
         return node
 
     def _load_capability(self, cap_dir: Path) -> Capability | None:
         meta = _read_yaml(cap_dir / "yak.yml")
         if not meta:
             return None
-        executor = meta.get("executor", "python")
-        entry_file = cap_dir / "app.py"
-        mod = None
-        if entry_file.is_file():
-            bundle_dir = cap_dir.parent.parent
-            tree_path = self._tree_path(bundle_dir)
-            mod = _load_module(
-                f"_cap_{cap_dir.parent.parent.name}_{cap_dir.name}",
-                entry_file,
-                tree_path=tree_path,
-                cap_name=cap_dir.name,
-            )
+        executor_kind = ExecutorKind(meta.get("executor", "python"))
 
         invocations: list[Invocation] = []
         inv_data = meta.get("invocation")
@@ -154,7 +149,11 @@ class Tree:
             if resolved:
                 resources[res_type] = resolved
 
-        return Capability(module=mod, invocations=invocations, resources=resources)
+        return Capability(
+            executor_kind=executor_kind,
+            invocations=invocations,
+            resources=resources,
+        )
 
     def _link_nodes(self, created: dict[str, Node]) -> None:
         sorted_rels = sorted(created.keys(), key=lambda r: len(Path(r).parts))
@@ -166,6 +165,7 @@ class Tree:
             resolvable=False,
             navigable=True,
             ports=self._root_ports.fork(),
+            fs_path=self._root_path,
         )
         self._nodes["/"] = self._root
 
@@ -185,6 +185,7 @@ class Tree:
                 name=key,
                 resolvable=False,
                 navigable=True,
+                fs_path=self._root_path / ipath.lstrip("/"),
             )
             self._nodes[ipath] = implicit
             parent_path = str(Path(ipath).parent)
@@ -214,8 +215,7 @@ class Tree:
         node.search_paths = current.search_paths
 
         for child_node in node.children.values():
-            child_dir = self._fs_path_from_node(child_node)
-            self._assemble_node(child_node, child_dir, current)
+            self._assemble_node(child_node, child_node.fs_path, current)
 
     def _merge_search_paths(
         self, node: Node, dir_path: Path, state: BuildState
@@ -234,27 +234,31 @@ class Tree:
 
     async def setup(self) -> None:
         for node in self._nodes.values():
-            dir_path = self._fs_path_from_node(node)
-            if dir_path is None:
-                dir_path = self._root_path
-            cap = self._load_capability(dir_path / "_yak" / "setup")
-            if cap and cap.module and hasattr(cap.module, "run"):
-                space = NodeSpace(
-                    path=node.path,
-                    request=None,  # type: ignore
-                    session=None,  # type: ignore
-                    ports=node.ports,
-                    ports_from=lambda: node.ports,  # type: ignore  # noqa: B023
-                )
-                await cap.module.run(space)  # type: ignore
-
-    def _fs_path_from_node(self, node: Node) -> Path | None:
-        for key, n in self._nodes.items():
-            if n is node:
-                if key == "/":
-                    return None
-                return self._root_path / key.lstrip("/")
-        return None
+            fs_path = node.fs_path or self._root_path
+            meta = _read_yaml(fs_path / "_yak" / "setup" / "yak.yml")
+            if not meta:
+                continue
+            app_file = fs_path / "_yak" / "setup" / "app.py"
+            if not app_file.is_file():
+                continue
+            kind = ExecutorKind(meta.get("executor", "python"))
+            executor = self._executors.get(kind)
+            if executor is None:
+                continue
+            space = NodeSpace(
+                path=node.path,
+                request=None,  # type: ignore
+                session=None,  # type: ignore
+                ports=node.ports,
+                ports_from=lambda: node.ports,  # type: ignore  # noqa: B023
+            )
+            result = executor.run(node, Phase.SETUP, space)
+            if result is not None:
+                if hasattr(result, "__await__"):
+                    await result
+                else:
+                    async for _ in result:
+                        pass
 
     def _tree_path(self, dir_path: Path) -> str:
         """Map a filesystem path under root_path to its tree path."""
@@ -312,42 +316,8 @@ def _read_yaml(path: Path) -> dict[str, Any]:
     return {}
 
 
-def _load_module(
-    name: str,
-    path: Path,
-    *,
-    tree_path: str = "",
-    cap_name: str = "",
-):
-    import sys
+def _make_handler(executor: Executor, node: Node, phase: Phase):
+    def _run(space):
+        return executor.run(node, phase, space)
 
-    if tree_path:
-        segments = [s for s in tree_path.strip("/").split("/") if s]
-        entry_name = path.stem
-        full_name = "yak.bundle." + ".".join(segments + [cap_name, entry_name])
-        cap_pkg = "yak.bundle." + ".".join(segments + [cap_name])
-
-        seen = ""
-        for part in full_name.split("."):
-            seen = f"{seen}.{part}" if seen else part
-            if seen not in sys.modules:
-                pkg = types.ModuleType(seen)
-                pkg.__package__ = seen
-                sys.modules[seen] = pkg
-
-        sys.modules[cap_pkg].__path__ = [str(path.parent)]
-
-        spec = importlib.util.spec_from_file_location(full_name, path)
-        if spec is None or spec.loader is None:
-            return None
-        mod = importlib.util.module_from_spec(spec)
-        sys.modules[full_name] = mod
-        spec.loader.exec_module(mod)
-        return mod
-
-    spec = importlib.util.spec_from_file_location(name, path)
-    if spec is None or spec.loader is None:
-        return None
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    return mod
+    return _run
