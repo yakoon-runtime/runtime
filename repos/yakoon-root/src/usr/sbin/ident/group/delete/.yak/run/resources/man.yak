@@ -1,0 +1,37 @@
+<heading>groups delete - Remove a group.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  delete NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Deletes a group. The group is soft-deleted: it is marked as
+disabled rather than removed permanently.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+delete editors
+  Delete the editors group.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+list, add, edit, users, joins
+</paragraph>
