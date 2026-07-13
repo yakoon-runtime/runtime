@@ -1,0 +1,12 @@
+executor: python
+entry: python.py
+
+invocation:
+  params:
+    - key: world
+      required: true
+      positional: true
+    - key: box
+
+man:
+  default: resources/man.yak

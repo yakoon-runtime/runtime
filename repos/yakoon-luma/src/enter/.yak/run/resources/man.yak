@@ -1,0 +1,15 @@
+<heading>enter - Enter a world.</heading>
+<rule/>
+<heading level="2">Usage</heading>
+<pre>enter NAME
+enter NAME --box NAME</pre>
+<heading level="2">Description</heading>
+<paragraph>Enters a world at its entry box and sets the current context.</paragraph>
+<paragraph>Once inside, navigation commands like look, go and dig become available. Use leave to exit.</paragraph>
+<heading level="2">Examples</heading>
+<pre>enter Work
+  Enter the Work world at its entry box.
+enter Work --box Desk
+  Enter at the Desk box.</pre>
+<heading level="2">See also</heading>
+<paragraph>entry, go, leave, look, world list</paragraph>

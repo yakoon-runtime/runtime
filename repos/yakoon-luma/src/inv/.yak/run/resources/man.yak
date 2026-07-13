@@ -1,0 +1,11 @@
+<heading>inv - Show your inventory.</heading>
+<rule/>
+<heading level="2">Usage</heading>
+<pre>inv</pre>
+<heading level="2">Description</heading>
+<paragraph>Lists all portable boxes you are currently carrying.</paragraph>
+<heading level="2">Examples</heading>
+<pre>inv
+  Show your inventory.</pre>
+<heading level="2">See also</heading>
+<paragraph>drop, look, move, place, take</paragraph>
