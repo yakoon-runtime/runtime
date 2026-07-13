@@ -110,13 +110,17 @@ async def run(space: NodeSpace):
     # ----------------------------------
 
     space.ports.publish(
-        AUTHENTICATE,
-        auth.authenticate,
-    )
-
-    space.ports.publish(
         PERMISSION_RESOLVE,
         perm_resolver.resolve_user_permissions,
+    )
+
+    # ----------------------------------
+    # PROMOTE
+    # ----------------------------------
+
+    space.ports.promote(
+        AUTHENTICATE,
+        auth.authenticate,
     )
 
 

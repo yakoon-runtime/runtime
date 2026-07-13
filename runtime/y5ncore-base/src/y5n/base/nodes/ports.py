@@ -65,6 +65,23 @@ class NodePorts:
         """
         self._publish_to.bind(self._key(port), capability)
 
+    def promote(self, port: object, capability: object) -> None:
+        """Promotes a capability to the root scope.
+
+        The capability is visible from any node in the tree,
+        regardless of branch.  Intended for cross-branch services
+        like authentication that need global reach.
+
+        Args:
+            port:     The capability port (Port object or class).
+            capability:  The bound capability implementation.
+        """
+        key = self._key(port)
+        walk = self._publish_to
+        while walk._parent is not None:
+            walk = walk._parent
+        walk.bind(key, capability)
+
     def provide(self, port: object, capability: object) -> None:
         """Provides a capability inside the local runtime scope.
 
