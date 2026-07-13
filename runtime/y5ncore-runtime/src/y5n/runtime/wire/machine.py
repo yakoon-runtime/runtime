@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Protocol, cast
 
 from y5n.base.flow import Scope
 from y5n.base.naming import Key
 from y5n.base.nodes import Node
-from y5n.base.plugins.ports import OnErrorResolve
+from y5n.base.ports.protocols import OnErrorResolve
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event, InputContext
 from y5n.base.runtime.input import Origin

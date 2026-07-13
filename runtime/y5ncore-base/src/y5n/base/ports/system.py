@@ -1,4 +1,4 @@
-from y5n.base.plugins.ports import (
+from y5n.base.ports.protocols import (
     OnAuthenticate,
     OnAuthorizeRead,
     OnAuthorizeWrite,
@@ -13,8 +13,8 @@ from y5n.base.plugins.ports import (
     OnSessionAttach,
     OnSessionDetach,
     OnSessionSave,
+    OnSourceRead,
 )
-from y5n.base.sources import OnSourceRead
 
 from .port import Port
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Protocol
 
 from y5n.base.nodes import NodePath, NodeSpace
@@ -8,14 +7,10 @@ from y5n.base.permissions import Permission, PermissionSet
 from y5n.base.projection import Projection
 from y5n.base.resources import ResourceRef
 from y5n.base.runtime.sessions import Session
+from y5n.base.sources import DataRequest, DataResult
+from y5n.base.sources.source import DataSource
 
-
-@dataclass(frozen=True, slots=True)
-class AuthResult:
-    ok: bool
-    user: dict | None = None
-    reason: str | None = None
-
+from .models import AuthResult
 
 # -------------------
 # -- PLUGIN PORTS ---
@@ -131,3 +126,11 @@ class OnJinjaRender(Protocol):
 
 class OnCompile(Protocol):
     def __call__(self, *, text: str, context: dict) -> Projection: ...
+
+
+class OnSourceRead(Protocol):
+    async def __call__(self, request: DataRequest) -> DataResult: ...
+
+
+class OnDataBind(Protocol):
+    def __call__(self, source: str, provider: DataSource): ...

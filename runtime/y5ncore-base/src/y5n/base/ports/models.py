@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
 
 
@@ -7,3 +9,8 @@ class AuthResult:
     user: dict | None = None
     reason: str | None = None
     after: dict | None = None
+
+
+__all__ = [
+    "AuthResult",
+]

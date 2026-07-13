@@ -3,11 +3,11 @@ from __future__ import annotations
 from typing import Any
 
 from typing_extensions import Protocol
+from y5n.base.ports.protocols import OnSourceRead
 from y5n.base.sources import (
     DataRequest,
     DataResult,
     DataSource,
-    OnSourceRead,
 )
 from y5n.runtime.runtime.sessions import Session
 
