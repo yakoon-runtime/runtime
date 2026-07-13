@@ -1,13 +1,14 @@
-"""Build workspace/ from config.yml mounts.
+"""Build workspace from a workspace definition.
 
-Reads config.yml and creates a workspace/ directory where each
-mount point is a symlink to its source.  Shallow mounts (e.g.
-``root``) are expanded entry-by-entry so that deeper mounts
-(e.g. ``root/opt/crm``) can overlay specific paths.
+Reads ``workspaces/<name>/workspace.yml`` and creates the tree
+inside the same directory.  Shallow mounts (e.g. ``root``) are
+expanded entry-by-entry so that deeper mounts (e.g.
+``root/opt/crm``) can overlay specific paths.
 """
 
 from __future__ import annotations
 
+import argparse
 import os
 import shutil
 import sys
@@ -16,19 +17,26 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-CONFIG_PATH = ROOT / "config.yml"
-WORKSPACE_PATH = ROOT / "workspace"
 
 
-def _load_config() -> dict[str, str]:
-    with open(CONFIG_PATH) as f:
+def _workspace_path(name: str) -> Path:
+    return ROOT / "workspaces" / name
+
+
+def _load_config(name: str) -> tuple[dict[str, str], Path]:
+    ws_path = _workspace_path(name)
+    config_path = ws_path / "workspace.yml"
+    if not config_path.exists():
+        print(f"Workspace definition not found: {config_path}", file=sys.stderr)
+        sys.exit(1)
+    with open(config_path) as f:
         raw = yaml.safe_load(f)
     mounts: dict[str, str] = {}
     for key, value in raw.get("workspace", {}).items():
         if not isinstance(value, str):
             continue
         mounts[key] = value
-    return mounts
+    return mounts, ws_path
 
 
 def _resolve_source(source: str) -> str:
@@ -73,18 +81,25 @@ def _expand_into(
         os.symlink(src, dst, target_is_directory=os.path.isdir(src))
 
 
-def build() -> None:
-    mounts = _load_config()
+def build(name: str) -> None:
+    mounts, ws_path = _load_config(name)
     if not mounts:
-        print("No mounts found in config.yml", file=sys.stderr)
+        print("No mounts found in workspace.yml", file=sys.stderr)
         sys.exit(1)
 
-    if WORKSPACE_PATH.exists():
-        shutil.rmtree(WORKSPACE_PATH)
-    WORKSPACE_PATH.mkdir(parents=True)
+    if ws_path.exists():
+        # Remove everything except workspace.yml
+        for entry in ws_path.iterdir():
+            if entry.name == "workspace.yml":
+                continue
+            if entry.is_dir() and not entry.is_symlink():
+                shutil.rmtree(entry)
+            else:
+                entry.unlink()
+    else:
+        ws_path.mkdir(parents=True)
 
     # Identify shallow mounts that need entry-level expansion.
-    # These are mounts whose path is a prefix of another mount.
     expanded: set[str] = set()
     for mount_point in mounts:
         if any(
@@ -93,11 +108,10 @@ def build() -> None:
         ):
             expanded.add(mount_point)
 
-    # Build overrides set for each expanded mount
     overrides = _find_overrides(mounts)
 
     for mount_point, source in sorted(mounts.items(), key=lambda x: x[0]):
-        target = WORKSPACE_PATH / mount_point
+        target = ws_path / mount_point
         source_abs = _resolve_source(source)
 
         if mount_point in expanded:
@@ -110,8 +124,15 @@ def build() -> None:
                 target_is_directory=os.path.isdir(source_abs),
             )
 
-    print(f"Workspace built at {WORKSPACE_PATH}")
+    print(f"Workspace '{name}' built at {ws_path}")
 
 
 if __name__ == "__main__":
-    build()
+    parser = argparse.ArgumentParser(description="Build a Yakoon workspace")
+    parser.add_argument(
+        "--workspace", "-w",
+        default="dev",
+        help="Workspace name (default: dev)",
+    )
+    args = parser.parse_args()
+    build(args.workspace)
