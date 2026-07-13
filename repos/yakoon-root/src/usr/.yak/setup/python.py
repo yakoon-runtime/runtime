@@ -121,16 +121,6 @@ async def run(space: NodeSpace):
 
     await _demo_data(users=users)
 
-    space.ports.provide(NAMESPACES, namespaces)
-    space.ports.provide(USER_SERVICE, users)
-    space.ports.provide(GROUP_SERVICE, groups)
-    space.ports.provide(JOIN_SERVICE, join_svc)
-    space.ports.provide(PERMGRANT_SERVICE, permgrant)
-
-    # ----------------------------------
-    # PROMOTE — full auth chain
-    # ----------------------------------
-
     async def authenticate(
         *, space: NodeSpace, username: str, secret: str
     ) -> AuthResult:
@@ -161,6 +151,20 @@ async def run(space: NodeSpace):
             user=result.user,
             reason=None,
         )
+
+    # ----------------------------------
+    # PUBLISH
+    # ----------------------------------
+
+    space.ports.publish(NAMESPACES, namespaces)
+    space.ports.publish(USER_SERVICE, users)
+    space.ports.publish(GROUP_SERVICE, groups)
+    space.ports.publish(JOIN_SERVICE, join_svc)
+    space.ports.publish(PERMGRANT_SERVICE, permgrant)
+
+    # ----------------------------------
+    # PROMOTE
+    # ----------------------------------
 
     space.ports.promote(AUTHENTICATE, authenticate)
 
