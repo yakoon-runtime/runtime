@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-import _yak.setup.python as luma_setup
+import _yak.setup.app as luma_setup
 import pytest
 from y5n.api.naming import Key
 from y5n.api.nodes import Node, NodeSpace

@@ -104,8 +104,7 @@ class Tree:
         if not meta:
             return None
         executor = meta.get("executor", "python")
-        entry = meta.get("entry", f"{executor}.py")
-        entry_file = cap_dir / entry
+        entry_file = cap_dir / "app.py"
         mod = None
         if entry_file.is_file():
             bundle_dir = cap_dir.parent.parent
