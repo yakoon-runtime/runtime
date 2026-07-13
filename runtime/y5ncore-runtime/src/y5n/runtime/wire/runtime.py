@@ -103,7 +103,7 @@ def build_runtime(
     # -----------------------
 
     tree = Tree(
-        root_path=settings.runtime.root_path,
+        root_path=settings.runtime.workspace_path,
     )
 
     tree.build()

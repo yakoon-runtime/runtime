@@ -198,7 +198,7 @@ def build_machine(
         psession = cast(Session, session)
         psession.bind_io(BusOutput(psession._bus))
         if not psession.get_data("fs:root"):
-            psession.set_data("fs:root", settings.runtime.root_path)
+            psession.set_data("fs:root", settings.runtime.workspace_path)
             psession.set_current_path("/")
         return psession
 

@@ -1,9 +1,9 @@
 """Build workspace from a workspace definition.
 
 Reads ``workspace/<name>/workspace.yml`` and creates the tree
-inside the same directory.  Shallow mounts (e.g. ``root``) are
-expanded entry-by-entry so that deeper mounts (e.g.
-``root/opt/crm``) can overlay specific paths.
+inside the same directory.  Mount points use ``/`` as the root
+(e.g. ``/``, ``/opt/crm``) — the leading slash is stripped to
+produce relative paths inside the workspace directory.
 """
 
 from __future__ import annotations
@@ -21,6 +21,11 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def _workspace_path(name: str) -> Path:
     return ROOT / "workspace" / name
+
+
+def _normalise(mount_point: str) -> str:
+    """Strip leading ``/`` from a mount point."""
+    return mount_point.lstrip("/")
 
 
 def _load_config(name: str) -> tuple[dict[str, str], Path]:
@@ -46,22 +51,6 @@ def _resolve_source(source: str) -> str:
     return source
 
 
-def _find_overrides(mounts: dict[str, str]) -> set[str]:
-    """Return entry names that should be skipped when expanding a mount."""
-    expanded = {
-        m for m in mounts
-        if any(o != m and o.startswith(f"{m}/") for o in mounts)
-    }
-    overrides: set[str] = set()
-    for mount_point in mounts:
-        for exp in expanded:
-            if mount_point.startswith(f"{exp}/"):
-                rel = mount_point[len(exp) + 1:]
-                first = rel.split("/")[0]
-                overrides.add(first)
-    return overrides
-
-
 def _expand_into(
     source_dir: str,
     target_dir: str,
@@ -69,7 +58,7 @@ def _expand_into(
 ) -> None:
     """Symlink every entry from *source_dir* into *target_dir*.
 
-    Entries whose name or sub-path appears in *skip* are omitted.
+    Entries whose name appears in *skip* are omitted.
     """
     skip = skip or set()
     os.makedirs(target_dir, exist_ok=True)
@@ -82,10 +71,13 @@ def _expand_into(
 
 
 def build(name: str) -> None:
-    mounts, ws_path = _load_config(name)
-    if not mounts:
+    raw_mounts, ws_path = _load_config(name)
+    if not raw_mounts:
         print("No mounts found in workspace.yml", file=sys.stderr)
         sys.exit(1)
+
+    # Normalise keys: strip leading "/" so "" is root, "opt/crm" is a child.
+    mounts = {_normalise(k): v for k, v in raw_mounts.items()}
 
     if ws_path.exists():
         for entry in ws_path.iterdir():
@@ -98,21 +90,31 @@ def build(name: str) -> None:
     else:
         ws_path.mkdir(parents=True)
 
-    expanded: set[str] = set()
-    for mount_point in mounts:
-        if any(
-            other != mount_point and other.startswith(f"{mount_point}/")
-            for other in mounts
-        ):
-            expanded.add(mount_point)
+    def _has_children(key: str) -> bool:
+        if key == "":
+            return any(k != "" for k in mounts)
+        prefix = f"{key}/"
+        return any(k != key and k.startswith(prefix) for k in mounts)
 
-    overrides = _find_overrides(mounts)
+    expanded = {k for k in mounts if _has_children(k)}
 
-    for mount_point, source in sorted(mounts.items(), key=lambda x: x[0]):
-        target = ws_path / mount_point
+    overrides: set[str] = set()
+    for key in mounts:
+        for exp in expanded:
+            if exp == "":
+                first = key.split("/")[0]
+                if first:
+                    overrides.add(first)
+            elif key.startswith(f"{exp}/"):
+                rel = key[len(exp) + 1:]
+                first = rel.split("/")[0]
+                overrides.add(first)
+
+    for key, source in sorted(mounts.items(), key=lambda x: x[0]):
+        target = ws_path / key if key else ws_path
         source_abs = _resolve_source(source)
 
-        if mount_point in expanded:
+        if key in expanded:
             _expand_into(source_abs, str(target), skip=overrides)
         else:
             target.parent.mkdir(parents=True, exist_ok=True)
