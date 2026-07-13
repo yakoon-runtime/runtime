@@ -1,1 +1,0 @@
-Contact updated: {{ state.contact.data.name }}
