@@ -8,16 +8,16 @@
         {{ usage.key }}
 
         {% if usage.action %}
-           <space/> {{ usage.action }}
+           {{ usage.action }}
         {% endif %}
 
         {% for arg in usage.args %}
-          <space/> <arg>{{ arg }}</arg>
+          <arg>{{ arg }}</arg>
         {% endfor %}
 
         {% for opt in usage.options %}
-           <space/> --{{ opt }} 
-           <space/> <arg>{{ opt }}</arg>
+           --{{ opt }} 
+           <arg>{{ opt }}</arg>
         {% endfor %}
     </cmd>
   </item>
