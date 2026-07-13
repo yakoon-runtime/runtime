@@ -1,0 +1,11 @@
+<heading>show - Show contact details.</heading>
+<rule/>
+<heading level="2">Usage</heading>
+<pre>show NAME</pre>
+<heading level="2">Description</heading>
+<paragraph>Displays all details of a specific contact.</paragraph>
+<heading level="2">Examples</heading>
+<pre>show John
+  Show details for John.</pre>
+<heading level="2">See also</heading>
+<paragraph>add, delete, edit, find, list</paragraph>

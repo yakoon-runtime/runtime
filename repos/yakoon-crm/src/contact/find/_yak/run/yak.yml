@@ -1,0 +1,15 @@
+executor: python
+entry: python.py
+
+invocation:
+  params:
+    - key: name
+    - key: company
+    - key: email
+    - key: phone
+    - key: city
+    - key: country
+  min_options: 1
+
+man:
+  default: resources/man.yak
