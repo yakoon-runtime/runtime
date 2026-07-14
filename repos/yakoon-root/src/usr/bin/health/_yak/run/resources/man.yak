@@ -1,4 +1,4 @@
-<heading>health - Diagnose node health.</heading>
+<heading>health - Validate node structure.</heading>
 
 <rule/>
 
@@ -14,8 +14,8 @@ Description
 </heading>
 
 <paragraph>
-Scans the entire node tree and displays the structural health status
-for every node. Each node is checked for a readable <code>yak.yml</code>,
+Scans the node tree and validates the structural integrity of each node.
+Each node is checked for a readable <code>yak.yml</code>,
 a registered executor, and an existing <code>app.py</code> entry point.
 No Python modules are loaded — validation is purely structural.
 </paragraph>
@@ -25,9 +25,9 @@ Icons
 </heading>
 
 <pre>
-  ✓   healthy
+  ✓   valid
   ⚠   degraded
-  ✗   unhealthy
+  ✗   invalid
 </pre>
 
 <heading level="2">

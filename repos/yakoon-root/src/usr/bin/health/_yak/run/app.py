@@ -20,7 +20,11 @@ async def run(space: NodeSpace):
     if validate is None:
         yield out(
             Projection.create(
-                blocks=[TextBlock.create(text="No VALIDATE port available")]
+                blocks=[
+                    HeadingBlock(
+                        level=1, text=[InlineText("text", "No VALIDATE port available")]
+                    )
+                ]
             )
         )
         return
@@ -28,8 +32,15 @@ async def run(space: NodeSpace):
     result = validate()
 
     total = len(result.children)
+    healthy = sum(1 for c in result.children if c.level == HealthLevel.GREEN)
     errors = sum(1 for c in result.children if c.level == HealthLevel.RED)
     warnings = sum(1 for c in result.children if c.level == HealthLevel.YELLOW)
+
+    kv_items = [
+        KvItemBlock(key="Healthy", value=[InlineText("text", str(healthy))]),
+        KvItemBlock(key="Errors", value=[InlineText("text", str(errors))]),
+        KvItemBlock(key="Warnings", value=[InlineText("text", str(warnings))]),
+    ]
 
     children_blocks = []
     for child in result.children:
@@ -40,30 +51,17 @@ async def run(space: NodeSpace):
         }.get(child.level, "?")
         children_blocks.append(TextBlock.create(text=f"  {icon} {child.message or ''}"))
 
-    kv_items = [
-        KvItemBlock(key="Tree validation", value=[InlineText("text", "\u2713")]),
-        KvItemBlock(key="Nodes", value=[InlineText("text", str(total))]),
-    ]
-    if errors:
-        kv_items.append(
-            KvItemBlock(key="Errors", value=[InlineText("text", str(errors))])
-        )
-    if warnings:
-        kv_items.append(
-            KvItemBlock(key="Warnings", value=[InlineText("text", str(warnings))])
-        )
-
     projection = Projection.create(
         blocks=[
             HeadingBlock(level=1, text=[InlineText("text", "Health")]),
             RuleBlock(),
-            KvBlock(items=kv_items),
-            SpacerBlock(),
             CollapsibleBlock(
                 title=[InlineText("text", f"Tree validation ({total})")],
                 expanded=False,
                 blocks=children_blocks,
             ),
+            SpacerBlock(),
+            KvBlock(items=kv_items),
         ]
     )
     yield out(projection)
