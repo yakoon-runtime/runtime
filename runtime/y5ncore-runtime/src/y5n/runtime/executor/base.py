@@ -17,6 +17,7 @@ RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]
 
 class ExecutorKind(Enum):
     PYTHON = "python"
+    SCRIPT = "script"
     PROCESS = "process"
 
 

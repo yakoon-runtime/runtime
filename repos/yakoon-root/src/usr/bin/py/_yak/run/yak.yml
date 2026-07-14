@@ -1,0 +1,6 @@
+executor: script
+
+invocation:
+  params:
+    - key: script
+      positional: true

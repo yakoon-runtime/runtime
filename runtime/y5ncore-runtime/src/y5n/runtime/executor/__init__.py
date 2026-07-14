@@ -7,6 +7,7 @@ from .base import (
 )
 from .process import ProcessExecutor
 from .python import PythonExecutor
+from .script import ScriptExecutor
 
 __all__ = [
     "DiagnosticExecutor",
@@ -16,4 +17,5 @@ __all__ = [
     "Phase",
     "ProcessExecutor",
     "PythonExecutor",
+    "ScriptExecutor",
 ]

@@ -29,6 +29,7 @@ from y5n.runtime.executor import (
     ExecutorRegistry,
     ProcessExecutor,
     PythonExecutor,
+    ScriptExecutor,
 )
 from y5n.runtime.nodes.tree import Tree
 from y5n.runtime.projection.rendering import JinjaRenderEngine
@@ -111,6 +112,7 @@ def build_runtime(
 
     executors = ExecutorRegistry()
     executors.register(ExecutorKind.PYTHON, PythonExecutor())
+    executors.register(ExecutorKind.SCRIPT, ScriptExecutor())
     executors.register(ExecutorKind.PROCESS, ProcessExecutor())
 
     # -----------------------
