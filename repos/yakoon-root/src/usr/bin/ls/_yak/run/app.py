@@ -88,7 +88,7 @@ def _dir_size(path: Path) -> int:
     return total
 
 
-def _format_size(st_size: int, kind: str) -> str:
+def _format_size(st_size: float, kind: str) -> str:
     if kind == "dir":
         return "dir"
     for unit in ("B", "KiB", "MiB", "GiB"):
