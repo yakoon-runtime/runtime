@@ -1,3 +1,4 @@
 executor: python
 title: Health
 navigable: false
+resolvable: true

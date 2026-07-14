@@ -41,9 +41,15 @@ def map_table(mapper, node):
                 f"<table> only supports <column> and <row>, got <{child.tag}>"
             )
 
+    variant = node.attrs.get("variant")
+    raw_selectable = node.attrs.get("selectable", "true")
+    selectable = raw_selectable.lower() in ("true", "1", "")
+
     return TableBlock(
         columns=columns,
         rows=rows,
+        variant=variant,
+        selectable=selectable,
     )
 
 

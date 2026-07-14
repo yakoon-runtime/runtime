@@ -203,6 +203,9 @@ class TableBlock:
     columns: list[TableColumn] = field(default_factory=list)
     rows: list[list[str]] = field(default_factory=list)
 
+    variant: str | None = None
+    selectable: bool = True
+
     def children(self) -> tuple[Block, ...]:
         return ()
 

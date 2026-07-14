@@ -131,6 +131,13 @@ class NodeSource(DataSource):
     # Internal Helpers
     # ---------------------------------------------------------------------
 
+    def _node_type(self, node: Node) -> str:
+        if node.metadata.get("executor"):
+            return "cmd"
+        if node.children:
+            return "dir"
+        return "file"
+
     def _to_row(self, node: Node) -> dict[str, Any]:
 
         resources: dict[str, dict[str, str]] = {}
@@ -147,5 +154,9 @@ class NodeSource(DataSource):
             "visibility": str(node.visibility),
             "parent": node.parent.key if node.parent else None,
             "path": str(node.path),
+            "type": self._node_type(node),
+            "executor": node.metadata.get("executor"),
+            "version": node.metadata.get("version"),
+            "size": "",
             "resources": resources,
         }

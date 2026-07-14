@@ -1,1 +1,3 @@
 title: Show current session
+resolvable: true
+navigable: false

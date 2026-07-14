@@ -4,7 +4,11 @@ invocation:
   params:
     - key: name
       positional: true
-    - key: l
+    - key: list
+    - key: all
+
+projection:
+  default: resources/default.yak
 
 man:
   default: resources/man.yak

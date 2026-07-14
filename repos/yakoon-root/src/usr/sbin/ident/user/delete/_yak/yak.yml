@@ -1,1 +1,3 @@
 title: Delete User
+resolvable: true
+navigable: false

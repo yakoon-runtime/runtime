@@ -107,6 +107,7 @@ class Tree:
         if cap:
             node.invocations = cap.invocations
             node.resources = cap.resources
+            node.metadata["executor"] = cap.executor_kind.value
             executor = self._executors.get(cap.executor_kind)
             node.run = _make_handler(executor, node, Phase.RUN)
         return node

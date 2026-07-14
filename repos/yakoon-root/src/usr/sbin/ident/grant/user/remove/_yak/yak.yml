@@ -1,1 +1,3 @@
 title: Remove Permission from User
+resolvable: true
+navigable: false
