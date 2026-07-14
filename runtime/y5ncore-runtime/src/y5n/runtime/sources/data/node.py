@@ -132,10 +132,10 @@ class NodeSource(DataSource):
     # ---------------------------------------------------------------------
 
     def _node_type(self, node: Node) -> str:
+        if node.navigable:
+            return "dir"
         if node.metadata.get("executor"):
             return "cmd"
-        if node.children:
-            return "dir"
         return "file"
 
     def _to_row(self, node: Node) -> dict[str, Any]:
