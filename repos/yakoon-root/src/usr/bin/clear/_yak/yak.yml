@@ -1,5 +1,7 @@
+version: 1.0.0
 name: clear
 title: Clear the terminal
 resolvable: true
 navigable: false
 contextual: false
+

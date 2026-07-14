@@ -1,5 +1,7 @@
+version: 1.0.0
 name: welcome
 title: Welcome screen
 resolvable: true
 navigable: false
 contextual: false
+

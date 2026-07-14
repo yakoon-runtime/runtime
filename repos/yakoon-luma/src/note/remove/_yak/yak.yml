@@ -1,3 +1,5 @@
+version: 1.0.0
 title: Remove Note
 resolvable: true
 navigable: false
+

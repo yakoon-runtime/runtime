@@ -1,4 +1,6 @@
+version: 1.0.0
 title: Session
 contextual: true
 navigable: true
 resolvable: true
+

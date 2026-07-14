@@ -1,3 +1,5 @@
+version: 1.0.0
 title: Add Box
 resolvable: true
 navigable: false
+

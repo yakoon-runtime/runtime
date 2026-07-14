@@ -103,6 +103,7 @@ class Tree:
             anonymous=True,
             fs_path=dir_path,
         )
+        node.metadata["version"] = meta.get("version")
         cap = self._load_capability(dir_path / "_yak" / "run")
         if cap:
             node.invocations = cap.invocations

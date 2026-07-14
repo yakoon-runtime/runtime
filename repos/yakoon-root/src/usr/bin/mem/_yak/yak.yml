@@ -1,4 +1,6 @@
+version: 1.0.0
 executor: python
 title: Memory
 navigable: false
 resolvable: true
+

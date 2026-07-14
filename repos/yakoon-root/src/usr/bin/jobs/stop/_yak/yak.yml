@@ -1,3 +1,5 @@
+version: 1.0.0
 title: Stop a running flow
 resolvable: true
 navigable: false
+

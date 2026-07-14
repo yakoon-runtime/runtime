@@ -1,5 +1,7 @@
+version: 1.0.0
 name: cd
 title: Change directory
 resolvable: true
 navigable: false
 contextual: false
+

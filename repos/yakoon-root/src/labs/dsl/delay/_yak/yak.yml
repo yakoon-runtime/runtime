@@ -1,3 +1,5 @@
+version: 1.0.0
 title: delay example
 resolvable: true
 navigable: false
+

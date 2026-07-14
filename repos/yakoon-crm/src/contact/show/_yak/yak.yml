@@ -1,3 +1,5 @@
+version: 1.0.0
 title: Show Contact
 resolvable: true
 navigable: false
+

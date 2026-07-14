@@ -1,3 +1,5 @@
+version: 1.0.0
 title: Show current user
 resolvable: true
 navigable: false
+

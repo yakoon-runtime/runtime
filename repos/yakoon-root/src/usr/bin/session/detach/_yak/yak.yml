@@ -1,3 +1,5 @@
+version: 1.0.0
 title: Detach from session
 resolvable: true
 navigable: false
+

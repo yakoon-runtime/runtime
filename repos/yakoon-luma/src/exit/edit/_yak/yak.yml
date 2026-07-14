@@ -1,3 +1,5 @@
+version: 1.0.0
 title: Edit Exit
 resolvable: true
 navigable: false
+
