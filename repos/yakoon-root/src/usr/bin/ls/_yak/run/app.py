@@ -37,7 +37,8 @@ async def run(space: NodeSpace):
         is_dir = p.is_dir()
         node = node_map.get(p.name)
         kind = node.get("kind") if node else ("dir" if is_dir else "file")
-        size = _format_size((_dir_size(p) if kind == "cmd" else p.stat().st_size), kind)
+        raw_size = _content_size(p) if is_dir else p.stat().st_size
+        size = _format_size(raw_size) if kind != "dir" else ""
         if node:
             row = dict(node)
             row["size"] = size
@@ -80,7 +81,7 @@ def _sort_key(entry: dict) -> tuple:
     return (_KIND_ORDER.get(entry.get("kind", "file"), 99), entry.get("key", "").lower())
 
 
-def _dir_size(path: Path) -> int:
+def _content_size(path: Path) -> int:
     total = 0
     for p in path.rglob("*"):
         if p.is_file():
@@ -88,9 +89,7 @@ def _dir_size(path: Path) -> int:
     return total
 
 
-def _format_size(st_size: float, kind: str) -> str:
-    if kind == "dir":
-        return "dir"
+def _format_size(st_size: float) -> str:
     for unit in ("B", "KiB", "MiB", "GiB"):
         if st_size < 1024:
             return f"{st_size:.0f} {unit}" if unit == "B" else f"{st_size:.1f} {unit}"
