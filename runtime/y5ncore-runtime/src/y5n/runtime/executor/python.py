@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
+import sys
 import types
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -34,7 +35,7 @@ class PythonExecutor(Executor, DiagnosticExecutor):
     kind = ExecutorKind.PYTHON
 
     def __init__(self):
-        self._cache: dict[Path, types.ModuleType] = {}
+        self._loaded_modules: dict[Path, types.ModuleType] = {}
         self._root_ports = None
 
     def run(
@@ -89,8 +90,6 @@ class PythonExecutor(Executor, DiagnosticExecutor):
         full_name = "yak.bundle." + ".".join(segments + ["health", entry_name])
         cap_pkg = "yak.bundle." + ".".join(segments + ["health"])
 
-        import sys
-
         seen = ""
         for part in full_name.split("."):
             seen = f"{seen}.{part}" if seen else part
@@ -112,9 +111,9 @@ class PythonExecutor(Executor, DiagnosticExecutor):
     def _load_module(
         self, path: Path, *, tree_path: str, phase: str
     ) -> types.ModuleType | None:
-        cached = self._cache.get(path)
-        if cached is not None:
-            return cached
+        loaded = self._loaded_modules.get(path)
+        if loaded is not None:
+            return loaded
 
         segments = [s for s in tree_path.strip("/").split("/") if s]
         entry_name = path.stem
@@ -140,5 +139,5 @@ class PythonExecutor(Executor, DiagnosticExecutor):
         mod = importlib.util.module_from_spec(spec)
         sys.modules[full_name] = mod
         spec.loader.exec_module(mod)
-        self._cache[path] = mod
+        self._loaded_modules[path] = mod
         return mod
