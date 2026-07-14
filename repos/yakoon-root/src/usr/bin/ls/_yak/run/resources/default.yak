@@ -1,13 +1,13 @@
 {% if view == "list" %}
 <table selectable="false">
-    <column key="type" title="Type"/>
+    <column key="kind" title="Kind"/>
     <column key="key" title="Name"/>
     <column key="version" title="Version"/>
     <column key="executor" title="Executor"/>
     <column key="size" title="Size"/>
     {% for entry in entries %}
     <row>
-        <cell>{{ entry.type }}</cell>
+        <cell>{{ entry.kind }}</cell>
         <cell>{{ entry.key }}</cell>
         <cell>{{ entry.version or '-' }}</cell>
         <cell>{{ entry.executor or '-' }}</cell>

@@ -5,7 +5,7 @@ from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
 from y5n.api.ports import PROJECT, SOURCE_READ
 
-_TYPE_ORDER = {"dir": 0, "cmd": 1, "file": 2}
+_KIND_ORDER = {"dir": 0, "cmd": 1, "file": 2}
 
 
 async def run(space: NodeSpace):
@@ -41,7 +41,7 @@ async def run(space: NodeSpace):
             merged.append({
                 "key": p.name,
                 "name": p.name,
-                "type": "dir" if p.is_dir() else "file",
+                "kind": "dir" if p.is_dir() else "file",
                 "navigable": p.is_dir(),
                 "listed": True,
                 "executor": None,
@@ -72,7 +72,7 @@ async def run(space: NodeSpace):
 
 
 def _sort_key(entry: dict) -> tuple:
-    return (_TYPE_ORDER.get(entry.get("type", "file"), 99), entry.get("key", "").lower())
+    return (_KIND_ORDER.get(entry.get("kind", "file"), 99), entry.get("key", "").lower())
 
 
 def _root_path(space) -> Path:

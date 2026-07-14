@@ -154,7 +154,7 @@ class NodeSource(DataSource):
             "visibility": str(node.visibility),
             "parent": node.parent.key if node.parent else None,
             "path": str(node.path),
-            "type": self._node_type(node),
+            "kind": self._node_type(node),
             "executor": node.metadata.get("executor"),
             "version": node.metadata.get("version"),
             "size": "",
