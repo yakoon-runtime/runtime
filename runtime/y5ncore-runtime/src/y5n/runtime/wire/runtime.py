@@ -28,7 +28,7 @@ from y5n.runtime.executor import (
     ExecutorKind,
     ExecutorRegistry,
     ProcessExecutor,
-    PythonExecutor,
+    RuntimeExecutor,
     ScriptExecutor,
 )
 from y5n.runtime.nodes.tree import Tree
@@ -111,7 +111,7 @@ def build_runtime(
     # -----------------------
 
     executors = ExecutorRegistry()
-    executors.register(ExecutorKind.PYTHON, PythonExecutor())
+    executors.register(ExecutorKind.RUNTIME, RuntimeExecutor())
     executors.register(ExecutorKind.SCRIPT, ScriptExecutor())
     executors.register(ExecutorKind.PROCESS, ProcessExecutor())
 

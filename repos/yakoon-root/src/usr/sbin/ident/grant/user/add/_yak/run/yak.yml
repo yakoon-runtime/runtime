@@ -1,4 +1,4 @@
-executor: python
+executor: runtime
 
 invocation:
   params:

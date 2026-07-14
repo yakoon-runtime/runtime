@@ -30,9 +30,9 @@ def _empty() -> RunResult:
     return _noop()
 
 
-class PythonExecutor(Executor, DiagnosticExecutor):
+class RuntimeExecutor(Executor, DiagnosticExecutor):
 
-    kind = ExecutorKind.PYTHON
+    kind = ExecutorKind.RUNTIME
 
     def __init__(self):
         self._loaded_modules: dict[Path, types.ModuleType] = {}

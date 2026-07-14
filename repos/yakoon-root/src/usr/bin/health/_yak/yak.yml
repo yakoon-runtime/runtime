@@ -1,5 +1,5 @@
 version: 1.0.0
-executor: python
+executor: runtime
 title: Health
 navigable: false
 resolvable: true

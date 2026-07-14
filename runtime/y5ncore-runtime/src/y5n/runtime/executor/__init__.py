@@ -6,7 +6,7 @@ from .base import (
     Phase,
 )
 from .process import ProcessExecutor
-from .python import PythonExecutor
+from .runtime import RuntimeExecutor
 from .script import ScriptExecutor
 
 __all__ = [
@@ -16,6 +16,6 @@ __all__ = [
     "ExecutorRegistry",
     "Phase",
     "ProcessExecutor",
-    "PythonExecutor",
+    "RuntimeExecutor",
     "ScriptExecutor",
 ]

@@ -36,7 +36,7 @@ class BuildState:
 class Capability:
     """Bundle metadata: invocations and resource paths."""
 
-    executor_kind: ExecutorKind = ExecutorKind.PYTHON
+    executor_kind: ExecutorKind = ExecutorKind.RUNTIME
     invocations: list[Invocation] = field(default_factory=list)
     resources: dict[str, dict[str, Path]] = field(default_factory=dict)
 
@@ -117,7 +117,7 @@ class Tree:
         meta = _read_yaml(cap_dir / "yak.yml")
         if not meta:
             return None
-        executor_kind = ExecutorKind(meta.get("executor", "python"))
+        executor_kind = ExecutorKind(meta.get("executor", "runtime"))
 
         invocations: list[Invocation] = []
         inv_data = meta.get("invocation")
@@ -249,7 +249,7 @@ class Tree:
             app_file = fs_path / "_yak" / "setup" / "app.py"
             if not app_file.is_file():
                 continue
-            kind = ExecutorKind(meta.get("executor", "python"))
+            kind = ExecutorKind(meta.get("executor", "runtime"))
             executor = self._executors.get(kind)
             if executor is None:
                 continue
@@ -328,7 +328,7 @@ class Tree:
                 meta = _read_yaml(phase_dir / "yak.yml")
                 if not meta:
                     continue
-                kind_name = meta.get("executor", "python")
+                kind_name = meta.get("executor", "runtime")
                 try:
                     kind = ExecutorKind(kind_name)
                 except ValueError:

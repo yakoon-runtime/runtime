@@ -1,4 +1,4 @@
-executor: python
+executor: runtime
 
 man:
   default: resources/man.yak

@@ -20,7 +20,7 @@ Runtime
 
 | Level | Executor | ABI | Language | Ports |
 |-------|----------|-----|----------|-------|
-| Full | `python` | `async def run(space)` | Python | ✅ |
+| Full | `runtime` | `async def run(space)` | Python | ✅ |
 | Script | `script` | `print()` → stdout | Python | ❌ |
 | Process | `process` | `_yak/run/app` (shebang) | Any | ❌ |
 
