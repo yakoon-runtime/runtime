@@ -23,11 +23,6 @@ jobs:
           pip install -e stores/y5nstore-sequence
           pip install -e runtime/y5ncore-runtime
           pip install -e runtime/y5ncore-llm
-          pip install -e spaces/y5nspace-shell
-          pip install -e spaces/y5nspace-ident
-          pip install -e spaces/y5nspace-luma
-          pip install -e spaces/y5nspace-crm
-          pip install -e spaces/y5nspace-os
           pip install -r requirements-dev.txt
 
       - name: Run tests
@@ -35,5 +30,5 @@ jobs:
           pytest runtime/y5ncore-runtime/tests \
                 stores/y5nstore-event/tests \
                 stores/y5nstore-sequence/tests \
-                spaces/y5nspace-luma/tests \
+                repos/yakoon-luma/tests \
                 -x --tb=short

@@ -15,11 +15,7 @@ pip install \
   -e stores/y5nstore-event \
   -e stores/y5nstore-sequence \
 
-# spaces
-pip install \
-  -e spaces/y5nspace-runtime \
-  -e spaces/y5nspace-os \
-  -e spaces/y5nspace-crm \
+# repos (bundles) are source trees, referenced via pythonpath in pyproject.toml
 
 # apps
 pip install \
