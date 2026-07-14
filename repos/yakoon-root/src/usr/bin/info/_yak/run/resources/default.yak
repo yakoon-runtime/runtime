@@ -1,9 +1,9 @@
 <heading>System Information</heading>
 <rule/>
-<pre>
-  Time     : {{ time }}
-  Uptime   : {{ uptime }}
-  Version  : {{ version }}
-  Python   : {{ python }}
-  Hostname : {{ hostname }}
-</pre>
+<kv>
+    <item key="Time">{{ time }}</item>
+    <item key="Uptime">{{ uptime }}</item>
+    <item key="Version">{{ version }}</item>
+    <item key="Python">{{ python }}</item>
+    <item key="Hostname">{{ hostname }}</item>
+</kv>

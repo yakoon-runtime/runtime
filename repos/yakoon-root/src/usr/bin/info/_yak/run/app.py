@@ -13,7 +13,7 @@ async def run(space: NodeSpace):
     projection = await space.ports.get(PROJECT)(
         space=space,
         state={
-            "time": datetime.now(UTC).isoformat(),
+            "time": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "uptime": _get_uptime(),
             "version": _get_platform_version(),
             "python": platform.python_version(),
