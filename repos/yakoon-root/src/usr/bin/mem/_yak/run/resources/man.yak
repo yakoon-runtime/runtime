@@ -1,0 +1,31 @@
+<heading>mem - Show runtime memory usage.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+<pre>
+  mem
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Displays the current memory footprint of the runtime process (RSS, Virtual)
+together with overall system memory availability.
+</paragraph>
+<paragraph>
+This is the first stage of a diagnostics command that will be extended
+with per-bundle and per-executor memory tracking.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+<code>health</code> — validate node structure.
+</paragraph>
