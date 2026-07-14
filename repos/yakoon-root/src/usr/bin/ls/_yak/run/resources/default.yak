@@ -1,4 +1,4 @@
-{% if view == "list" %}
+{% if view == "long" %}
 <table selectable="false">
     <column key="kind" title="Kind"/>
     <column key="key" title="Name"/>

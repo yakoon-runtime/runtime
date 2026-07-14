@@ -10,7 +10,7 @@ _KIND_ORDER = {"dir": 0, "cmd": 1, "file": 2}
 
 async def run(space: NodeSpace):
     target_name = space.request.arg(0)
-    use_list = space.request.has_option("list")
+    use_list = space.request.has_option("long") or space.request.has_option("l")
     show_all = space.request.has_option("all")
 
     root = _root_path(space)
@@ -18,7 +18,7 @@ async def run(space: NodeSpace):
     if not fs_path.exists():
         projection = await space.ports.get(PROJECT)(
             space=space,
-            state={"key": target_name or fs_path.name},
+            state={"view": "default", "key": target_name or fs_path.name},
         )
         yield out(projection)
         return
@@ -37,8 +37,10 @@ async def run(space: NodeSpace):
         is_dir = p.is_dir()
         node = node_map.get(p.name)
         kind = node.get("kind") if node else ("dir" if is_dir else "file")
-        raw_size = _content_size(p) if is_dir else p.stat().st_size
-        size = _format_size(raw_size) if kind != "dir" else ""
+        size = ""
+        if use_list and kind != "dir":
+            raw_size = _content_size(p) if is_dir else p.stat().st_size
+            size = _format_size(raw_size)
         if node:
             row = dict(node)
             row["size"] = size
@@ -61,7 +63,7 @@ async def run(space: NodeSpace):
         projection = await space.ports.get(PROJECT)(
             space=space,
             state={
-                "view": "list",
+                "view": "long",
                 "entries": merged,
                 "path": tree_path,
             },
@@ -106,7 +108,14 @@ def _resolve_fs_path(space, root: Path, target: str | None) -> Path:
     if target and target.startswith("/"):
         return root / target.lstrip("/")
     raw = space.session.get_current_path()
-    current = root / raw.lstrip("/") if raw and raw != "/" else root
+    if raw and raw != "/":
+        tree_test = root / raw.lstrip("/")
+        if tree_test.exists():
+            current = tree_test
+        else:
+            current = Path(raw).resolve()
+    else:
+        current = root
     if target:
         current = current / target
     return current

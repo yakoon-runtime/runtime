@@ -8,7 +8,7 @@ Usage
 <pre>
   ls
   ls path
-  ls --l
+  ls --long
   ls ~
 </pre>
 
@@ -17,7 +17,8 @@ Options
 </heading>
 
 <pre>
-  --l    List format (one entry per line)
+  --long, -l   Detail view with Kind, Name, Version, Executor, Size
+  --all, -a    Include hidden entries (_yak/, .dotfiles)
 </pre>
 
 <heading level="2">
@@ -25,12 +26,13 @@ Description
 </heading>
 
 <paragraph>
-Lists the contents of a directory.
+Lists the contents of a directory. Without options, entries are shown
+side by side in a compact horizontal layout.
 </paragraph>
 
 <paragraph>
-Without options, entries are shown side by side.
-With <em>--l</em>, each entry is shown on its own line.
+The <em>--long</em> view shows runtime metadata for each entry:
+Kind (dir/cmd/file), Version, Executor and filesystem size.
 </paragraph>
 
 <heading level="2">
@@ -57,8 +59,11 @@ Examples
   ls ~
     List home directory.
 
-  ls --l
-    List current directory, one entry per line.
+  ls --long
+    Detail view with runtime metadata.
+
+  ls --all
+    Show hidden entries.
 </pre>
 
 <heading level="2">
