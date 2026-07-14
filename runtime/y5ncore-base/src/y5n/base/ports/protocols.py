@@ -10,7 +10,7 @@ from y5n.base.runtime.sessions import Session
 from y5n.base.sources import DataRequest, DataResult
 from y5n.base.sources.source import DataSource
 
-from .models import AuthResult
+from .models import AuthResult, HealthResult
 
 # -------------------
 # -- PLUGIN PORTS ---
@@ -134,3 +134,7 @@ class OnSourceRead(Protocol):
 
 class OnDataBind(Protocol):
     def __call__(self, source: str, provider: DataSource): ...
+
+
+class OnValidate(Protocol):
+    def __call__(self) -> HealthResult: ...

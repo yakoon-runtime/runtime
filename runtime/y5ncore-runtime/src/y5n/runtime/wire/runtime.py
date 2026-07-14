@@ -14,6 +14,7 @@ from y5n.base.ports.system import (
     SESSION_DETACH,
     SESSION_SAVE,
     SOURCE_READ,
+    VALIDATE,
 )
 from y5n.base.projection import Projection
 from y5n.base.resources import ResourceRef
@@ -164,6 +165,7 @@ def build_runtime(
     root_ports.provide(JINJA_RENDER, jinja_engine.render_str)
     root_ports.provide(COMPILE, compiler.compile)
     root_ports.provide(ERROR_RESOLVE, error_resolve)
+    root_ports.provide(VALIDATE, tree.validate)
 
     # --------------------
     # --- DATASOURCING ---

@@ -9,8 +9,14 @@ import yaml
 from y5n.base.nodes import Invocation, Node, Param
 from y5n.base.nodes.ports import NodePorts
 from y5n.base.nodes.space import NodeSpace
+from y5n.base.ports.models import HealthLevel, HealthResult
 from y5n.base.runtime import Container
-from y5n.runtime.executor import Executor, ExecutorKind, ExecutorRegistry, Phase
+from y5n.runtime.executor import (
+    Executor,
+    ExecutorKind,
+    ExecutorRegistry,
+    Phase,
+)
 
 # Resource types that capabilities can declare in yak.yml.
 # Each entry becomes a node.resources[type][variant] to Path mapping.
@@ -294,6 +300,60 @@ class Tree:
                 return node
 
         return None
+
+    def validate(self) -> HealthResult:
+        """Structural validation — 0 module imports.
+
+        Checks every node for:
+          - yak.yml readable
+          - Executor registered
+          - app.py exists for declared phases
+        """
+        root_result = HealthResult.green()
+        root_result.message = "Tree validation"
+
+        for path_key, node in sorted(self._nodes.items()):
+            fs_path = node.fs_path
+            if fs_path is None:
+                child = HealthResult.red("No fs_path set")
+                child.message = f"{path_key}: no filesystem path"
+                root_result.children.append(child)
+                continue
+
+            issues: list[str] = []
+            for phase in ("run", "setup"):
+                phase_dir = fs_path / "_yak" / phase
+                meta = _read_yaml(phase_dir / "yak.yml")
+                if not meta:
+                    continue
+                kind_name = meta.get("executor", "python")
+                try:
+                    kind = ExecutorKind(kind_name)
+                except ValueError:
+                    issues.append(f"{phase}: unknown executor '{kind_name}'")
+                    continue
+                try:
+                    self._executors.get(kind)
+                except KeyError:
+                    issues.append(f"{phase}: executor '{kind_name}' not registered")
+                    continue
+                app_file = phase_dir / "app.py"
+                if not app_file.is_file():
+                    issues.append(f"{phase}: app.py not found")
+
+            if issues:
+                child = HealthResult.yellow("; ".join(issues))
+            else:
+                child = HealthResult.green()
+            child.message = path_key
+            root_result.children.append(child)
+
+        if any(
+            c.level == HealthLevel.YELLOW or c.level == HealthLevel.RED
+            for c in root_result.children
+        ):
+            root_result.level = HealthLevel.YELLOW
+        return root_result
 
     def refresh(self) -> None:
         self._nodes.clear()

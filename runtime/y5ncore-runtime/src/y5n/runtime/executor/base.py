@@ -5,6 +5,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
 from y5n.base.flow.dsl import Outcome
+from y5n.base.ports.models import HealthLevel, HealthResult
 
 if TYPE_CHECKING:
     from y5n.base.nodes.node import Node
@@ -31,6 +32,15 @@ class Executor(Protocol):
         phase: Phase,
         space: NodeSpace,
     ) -> RunResult: ...
+
+
+class DiagnosticExecutor(Protocol):
+    """Optional protocol for executors that support runtime diagnostics.
+
+    Separate from Executor — not every executor needs health checks.
+    """
+
+    async def health(self, node: Node) -> HealthResult: ...
 
 
 class ExecutorRegistry:

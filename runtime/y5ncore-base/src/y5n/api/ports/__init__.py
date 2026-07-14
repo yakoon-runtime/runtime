@@ -17,6 +17,7 @@ from y5n.base.ports.protocols import (
     OnSessionDetach,
     OnSessionSave,
     OnSourceRead,
+    OnValidate,
 )
 from y5n.base.ports.system import (
     AUTHENTICATE,
@@ -32,6 +33,7 @@ from y5n.base.ports.system import (
     SESSION_DETACH,
     SESSION_SAVE,
     SOURCE_READ,
+    VALIDATE,
 )
 from y5n.base.runtime.input import OnPrepareInput
 
@@ -56,6 +58,7 @@ __all__ = [
     "OnSessionDetach",
     "OnSessionSave",
     "OnSourceRead",
+    "OnValidate",
     "COMPILE",
     "ERROR_RESOLVE",
     "JINJA_RENDER",
@@ -68,4 +71,5 @@ __all__ = [
     "SESSION_DETACH",
     "SESSION_SAVE",
     "SOURCE_READ",
+    "VALIDATE",
 ]

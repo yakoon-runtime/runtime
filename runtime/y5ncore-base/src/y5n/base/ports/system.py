@@ -14,6 +14,7 @@ from y5n.base.ports.protocols import (
     OnSessionDetach,
     OnSessionSave,
     OnSourceRead,
+    OnValidate,
 )
 
 from .port import Port
@@ -95,4 +96,9 @@ COMPILE = Port(
 ERROR_RESOLVE = Port(
     "error.resolve",
     protocol=OnErrorResolve,
+)
+
+VALIDATE = Port(
+    "validate",
+    protocol=OnValidate,
 )
