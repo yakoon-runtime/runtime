@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# wc - word count via process executor
+wc "$@"

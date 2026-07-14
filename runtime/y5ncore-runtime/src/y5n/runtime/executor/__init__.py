@@ -5,6 +5,7 @@ from .base import (
     ExecutorRegistry,
     Phase,
 )
+from .process import ProcessExecutor
 from .python import PythonExecutor
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     "ExecutorKind",
     "ExecutorRegistry",
     "Phase",
+    "ProcessExecutor",
     "PythonExecutor",
 ]

@@ -5,7 +5,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
 from y5n.base.flow.dsl import Outcome
-from y5n.base.ports.models import HealthLevel, HealthResult
+from y5n.base.ports.models import HealthResult
 
 if TYPE_CHECKING:
     from y5n.base.nodes.node import Node
@@ -17,6 +17,7 @@ RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]
 
 class ExecutorKind(Enum):
     PYTHON = "python"
+    PROCESS = "process"
 
 
 class Phase(Enum):

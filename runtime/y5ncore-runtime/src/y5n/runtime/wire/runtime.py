@@ -24,7 +24,12 @@ from y5n.runtime.capabilities.permission import (
     PermissionParser,
     PermissionSet,
 )
-from y5n.runtime.executor import ExecutorKind, ExecutorRegistry, PythonExecutor
+from y5n.runtime.executor import (
+    ExecutorKind,
+    ExecutorRegistry,
+    ProcessExecutor,
+    PythonExecutor,
+)
 from y5n.runtime.nodes.tree import Tree
 from y5n.runtime.projection.rendering import JinjaRenderEngine
 from y5n.runtime.resources import PackageReader
@@ -106,6 +111,7 @@ def build_runtime(
 
     executors = ExecutorRegistry()
     executors.register(ExecutorKind.PYTHON, PythonExecutor())
+    executors.register(ExecutorKind.PROCESS, ProcessExecutor())
 
     # -----------------------
     # --- YAK TREE BUILD ---
