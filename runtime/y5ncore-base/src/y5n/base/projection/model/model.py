@@ -52,7 +52,17 @@ class Projection:
             else:
                 block_id = block.id
 
-            result.append(replace(block, id=block_id))  # dataclass replace
+            replaced = replace(block, id=block_id)
+
+            children = list(replaced.children())
+            if children:
+                assigned = Projection._assign_block_ids(block_id, children)
+                if hasattr(replaced, "items"):
+                    replaced = replace(replaced, items=assigned)
+                else:
+                    replaced = replace(replaced, blocks=assigned)
+
+            result.append(replaced)
 
         return result
 

@@ -261,9 +261,9 @@ class Tree:
             result = executor.run(node, Phase.SETUP, space)
             if result is not None:
                 if hasattr(result, "__await__"):
-                    await result
+                    await result  # type: ignore
                 else:
-                    async for _ in result:
+                    async for _ in result:  # type: ignore
                         pass
 
     def _tree_path(self, dir_path: Path) -> str:

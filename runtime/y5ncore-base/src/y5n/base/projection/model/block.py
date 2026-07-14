@@ -103,7 +103,7 @@ class SpacerBlock:
 
 @dataclass(frozen=True, slots=True)
 class ListItemBlock:
-    id: str | None
+    id: str | None = None
     type: Literal["list_item"] = "list_item"
 
     text: list[Inline] = field(default_factory=list)
@@ -131,7 +131,7 @@ class ListBlock:
 
 @dataclass(frozen=True, slots=True)
 class KvItemBlock:
-    id: str | None
+    id: str | None = None
     type: Literal["kv_item"] = "kv_item"
 
     key: str = ""
