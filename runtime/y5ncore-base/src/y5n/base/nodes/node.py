@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, TypeVar
 
 from y5n.base.runtime import Container
@@ -11,7 +12,7 @@ from .handler import RunHandler
 from .invocation import Invocation, InvocationValidator
 from .path import NodePath
 from .ports import NodePorts
-from .types import NodeKind, NodeScope, NodeVisibility
+from .types import NodeKind, NodeVisibility
 
 # ----------------------------------
 # NODE
@@ -45,15 +46,15 @@ class Node:
     name: str | None = None
     """Human-readable display name. Falls back to *key* when not set."""
 
+    fs_path: Path | None = None
+    """Filesystem path to the bundle directory (set by Tree on assembly)."""
+
     # ----------------------------------
     # EXECUTION METADATA
     # ----------------------------------
 
     kind: NodeKind = NodeKind.USER
     """Runtime-level classification (USER, SYSTEM, …)."""
-
-    scope: NodeScope = NodeScope.NODE
-    """Visibility scope for resolution (NODE, ROOT, GLOBAL)."""
 
     visibility: NodeVisibility = NodeVisibility.NORMAL
     """Controls whether the node appears in listings."""
@@ -134,12 +135,18 @@ class Node:
     metadata: dict[str, Any] = field(default_factory=dict)
     """Arbitrary key-value storage for space-specific data."""
 
+    search_paths: list[str] = field(default_factory=list)
+    """Pre-computed search paths for command resolution.  Assembled by
+    Tree.build() from .yak/path files, inherited and merged top-down."""
+
+    resources: dict[str, dict[str, Path]] = field(default_factory=dict)
+    """Resource paths assembled by Tree.build().  Keyed by resource type
+    (projection, man, …) then variant (default, de, compact, …).
+    Values are absolute Paths to the resource files."""
+
     # ----------------------------------
     # RENDERING HINTS
     # ----------------------------------
-
-    is_shell: bool = False
-    """Marks the root of a shell/REPL space for display purposes."""
 
     listed: bool = True
     """Show this node in ls / overview listings when True."""

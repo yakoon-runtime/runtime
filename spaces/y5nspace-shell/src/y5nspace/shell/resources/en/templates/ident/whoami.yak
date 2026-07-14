@@ -1,5 +1,0 @@
-{% if state.user %}
-{{state.user}}
-{% else %}
-use 'su' to login
-{% endif %}

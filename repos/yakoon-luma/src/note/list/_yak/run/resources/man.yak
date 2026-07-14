@@ -1,0 +1,43 @@
+<heading>list - List notes.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  list
+  list --box NAME --world NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all notes, or notes placed on a specific box.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+list
+  List all notes.
+
+list --box Desk --world Work
+  List notes on the Desk box in the Work world.
+
+note/list --box Drawer --world Research
+  From another space, qualify the path.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, delete, edit, inbox, put, remove, show
+</paragraph>

@@ -1,0 +1,47 @@
+<heading>set - Change session settings.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+<pre>
+  set --interaction mode
+</pre>
+
+<heading level="2">
+Options
+</heading>
+
+<pre>
+  --interaction
+    Set the interaction mode. Valid modes: cli, form, inherit.
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Changes session-level settings.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+  set --interaction cli
+    Switch to command-line mode.
+
+  set --interaction form
+    Switch to interactive form mode.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+man
+</paragraph>

@@ -1,0 +1,37 @@
+<heading>joins add - Add a user to a group.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  add USER GROUP
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Adds a user to a group, creating a membership relation.
+The user inherits all permissions granted to the group.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+add bob admins
+  Add bob to the admins group.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+remove, users, groups
+</paragraph>

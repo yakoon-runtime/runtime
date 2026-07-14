@@ -1,29 +1,30 @@
-from typing import Literal, TypeAlias
-
-from y5n.base.nodes import Node, NodePath, NodeScope, UnknownOptionsError, UsageError
-from y5n.base.plugins.ports import (
-    OnAuthorizeRead,
-    OnAuthorizeWrite,
-    OnCompile,
-    OnErrorResolve,
-    OnJinjaRender,
-    OnNewPermissionSet,
-    OnParsePermissionSpec,
-    OnProjectionResolve,
-    OnResourceLoad,
-    OnSessionAttach,
-    OnSessionDetach,
-    OnSessionSave,
+from y5n.base.nodes import NodePath, UnknownOptionsError, UsageError
+from y5n.base.ports.system import (
+    AUTHORIZE_READ,
+    AUTHORIZE_WRITE,
+    COMPILE,
+    ERROR_RESOLVE,
+    JINJA_RENDER,
+    NEW_PERMISSION_SET,
+    PARSE_PERMISSION_SPEC,
+    PROJECT,
+    PROJECTION_RESOLVE,
+    RESOURCE_LOAD,
+    SESSION_ATTACH,
+    SESSION_DETACH,
+    SESSION_SAVE,
+    SOURCE_READ,
 )
 from y5n.base.projection import Projection
 from y5n.base.resources import ResourceRef
-from y5n.base.sources import OnSourceRead
 from y5n.runtime.capabilities.audit import AuditLogService
 from y5n.runtime.capabilities.permission import (
     PermissionChecker,
     PermissionParser,
     PermissionSet,
 )
+from y5n.runtime.executor import ExecutorKind, ExecutorRegistry, PythonExecutor
+from y5n.runtime.nodes.tree import Tree
 from y5n.runtime.projection.rendering import JinjaRenderEngine
 from y5n.runtime.resources import PackageReader
 from y5n.runtime.runtime import (
@@ -43,14 +44,9 @@ from y5n.runtime.sources.data import (
 )
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
-from y5n.runtime.wire.plugins import SpaceLoader
 from y5n.runtime.wire.projector import build_projector
 from y5n.runtime.wire.stream import build_stream
 from y5nstore.event.wire import build_store
-
-CapabilityMode: TypeAlias = Literal["default"]
-CapabilitySelection: TypeAlias = dict[str, CapabilityMode | None]
-
 
 errors = {
     Exception: "error.yak",
@@ -64,9 +60,6 @@ errors = {
 
 def build_runtime(
     *,
-    spaces: list[str] | None = None,
-    nodes: list[Node] | None = None,
-    capabilities: CapabilitySelection | None = None,
     settings: Settings,
 ) -> RuntimeHost:
 
@@ -100,30 +93,29 @@ def build_runtime(
     perm_checker = PermissionChecker()
     perm_parser = PermissionParser()
 
-    # ----------------
-    # --- PLUGINS ---
-    # ----------------
-
-    plugin_nodes: list[Node] = []
-    space_list = spaces if spaces is not None else settings.runtime.spaces
-    for module in SpaceLoader(space_list, capabilities or {}).load():
-        if module.export.node:
-            plugin_nodes.append(module.export.node)
-
     # --------------------
     # --- DATASOURCING ---
     # --------------------
 
     ds = DataSourceRegistry()
 
-    # -----------------
-    # --- ROOT NODE ---
-    # -----------------
+    # -----------------------
+    # --- EXECUTOR SETUP ---
+    # -----------------------
 
-    platform = Node(
-        key="/",
-        scope=NodeScope.NODE,
+    executors = ExecutorRegistry()
+    executors.register(ExecutorKind.PYTHON, PythonExecutor())
+
+    # -----------------------
+    # --- YAK TREE BUILD ---
+    # -----------------------
+
+    tree = Tree(
+        root_path=settings.runtime.workspace_path,
+        executors=executors,
     )
+
+    tree.build()
 
     # -----------------------
     # --- ERROR RESOLVING ---
@@ -137,7 +129,7 @@ def build_runtime(
     ) -> Projection:
 
         if isinstance(error, PermissionDenied):
-            audit_service.security(session=session, obj="command", action=node.key)
+            audit_service.security(session=session, obj="command", action=root.key)  # type: ignore
         elif type(error) not in errors:
             audit_service.error(exc=error, session=session)
 
@@ -155,34 +147,29 @@ def build_runtime(
     # ----------------
     # --- BINDINGS ---
     # ----------------
+    root = tree.root()
 
-    platform.ports.provide(OnSourceRead, ds.read)
-    platform.ports.provide(OnSessionSave, session_manager.save)
-    platform.ports.provide(OnAuthorizeRead, perm_checker.can_read)
-    platform.ports.provide(OnAuthorizeWrite, perm_checker.can_write)
-    platform.ports.provide(OnNewPermissionSet, lambda: PermissionSet())
-    platform.ports.provide(OnParsePermissionSpec, perm_parser.parse)
-    platform.ports.provide(OnProjectionResolve, projector.project)
-    platform.ports.provide(OnResourceLoad, package_reader.get_text)
-    platform.ports.provide(OnJinjaRender, jinja_engine.render_str)
-    platform.ports.provide(OnCompile, compiler.compile)
-    platform.ports.provide(OnErrorResolve, error_resolve)
+    assert root
+    root_ports = root.ports
 
-    # -----------------
-    # --- ATTACHING ---
-    # -----------------
-
-    for node in plugin_nodes:
-        platform.mount(node)
-
-    for node in nodes or []:
-        platform.mount(node)
+    root_ports.provide(SOURCE_READ, ds.read)
+    root_ports.provide(SESSION_SAVE, session_manager.save)
+    root_ports.provide(AUTHORIZE_READ, perm_checker.can_read)
+    root_ports.provide(AUTHORIZE_WRITE, perm_checker.can_write)
+    root_ports.provide(NEW_PERMISSION_SET, lambda: PermissionSet())
+    root_ports.provide(PARSE_PERMISSION_SPEC, perm_parser.parse)
+    root_ports.provide(PROJECT, projector.project_from_space)
+    root_ports.provide(PROJECTION_RESOLVE, projector.project)
+    root_ports.provide(RESOURCE_LOAD, package_reader.get_text)
+    root_ports.provide(JINJA_RENDER, jinja_engine.render_str)
+    root_ports.provide(COMPILE, compiler.compile)
+    root_ports.provide(ERROR_RESOLVE, error_resolve)
 
     # --------------------
     # --- DATASOURCING ---
     # --------------------
 
-    ds.bind("system:nodes", NodeSource(platform))
+    ds.bind("system:nodes", NodeSource(tree))
     ds.bind("system:runtimes", RuntimeSource(settings.runtime.known))
     # ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
 
@@ -198,6 +185,7 @@ def build_runtime(
 
     async def initialize():
         await store.initialize()
+        await tree.setup()
         await build_index()
 
     # -------------------
@@ -212,7 +200,7 @@ def build_runtime(
     # ------------------------
 
     host = build_machine(
-        platform=platform,
+        platform=root,
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
         on_projection_send=output.send_projection,
@@ -220,10 +208,12 @@ def build_runtime(
         on_audit_warning=audit_service.warning,
         on_initialize=initialize,
         known_runtimes=settings.runtime.known,
+        settings=settings,
+        on_get_node=tree.resolve,
     )
 
     ds.bind("system:sessions", SessionSource(host))
-    platform.ports.provide(OnSessionAttach, host.attach_session)
-    platform.ports.provide(OnSessionDetach, host.detach_session)
+    root_ports.provide(SESSION_ATTACH, host.attach_session)
+    root_ports.provide(SESSION_DETACH, host.detach_session)
 
     return host

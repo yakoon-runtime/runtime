@@ -1,1 +1,0 @@
-Removed '{{ state.join.user_key.id }}' from group '{{ state.join.group_key.id }}'.

@@ -9,6 +9,7 @@ authors = [{ name = "Stefan Bergmann" }]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 norecursedirs = ["benchmarks"]
+pythonpath = ["repos/yakoon-luma/src"]
 markers = [
     "benchmark: performance benchmarks (skipped by default)",
 ]

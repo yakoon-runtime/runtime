@@ -1,0 +1,5 @@
+name: cd
+title: Change directory
+resolvable: true
+navigable: false
+contextual: false

@@ -1,0 +1,10 @@
+executor: python
+
+invocation:
+  params:
+    - key: name
+      positional: true
+    - key: l
+
+man:
+  default: resources/man.yak

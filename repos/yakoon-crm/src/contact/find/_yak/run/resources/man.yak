@@ -1,0 +1,14 @@
+<heading>find - Search contacts.</heading>
+<rule/>
+<heading level="2">Usage</heading>
+<pre>find --name John
+find --company Acme --city Berlin</pre>
+<heading level="2">Description</heading>
+<paragraph>Searches contacts by one or more criteria. At least one filter is required.</paragraph>
+<heading level="2">Examples</heading>
+<pre>find --name Jane
+  Find contacts named Jane.
+find --company Acme --city Berlin
+  Find contacts at Acme in Berlin.</pre>
+<heading level="2">See also</heading>
+<paragraph>add, delete, edit, list, show</paragraph>

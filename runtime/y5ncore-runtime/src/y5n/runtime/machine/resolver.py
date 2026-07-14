@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.nodes import Node, NodePath, NodeScope, UsageError
+from y5n.base.nodes import Node, NodePath, UsageError
 from y5n.runtime.capabilities.permission import Permission
 from y5n.runtime.runtime import (
     NodeNotExecutable,
@@ -27,46 +27,14 @@ class InvocationResolver:
         on_authorize: OnAuthorize,
         on_suggest: OnSuggest,
         root: Node,
+        on_get_node: OnGetNode,
     ):
 
         self._root = root
 
         self.on_authorize = on_authorize
         self.on_suggest = on_suggest
-
-        self._global_nodes: dict[str, Node] = {}
-        self._root_nodes: dict[str, Node] = {}
-
-        self._build()
-
-    # ---------------------------------------------------------------------
-    # Build
-    # ---------------------------------------------------------------------
-
-    def _build(self):
-
-        def collect(node: Node):
-
-            # GLOBAL
-            if node.scope == NodeScope.GLOBAL:
-
-                if node.key in self._global_nodes:
-                    raise ValueError(f"GLOBAL conflict: {node.key}")
-
-                self._global_nodes[node.key] = node
-
-            # ROOT
-            if node.scope == NodeScope.ROOT:
-
-                if node.key in self._root_nodes:
-                    raise ValueError(f"ROOT conflict: {node.key}")
-
-                self._root_nodes[node.key] = node
-
-        self._root.walk(collect)
-
-    def globals(self) -> set[str]:
-        return set(self._global_nodes.keys())
+        self.on_get_node = on_get_node
 
     # ---------------------------------------------------------------------
     # Public API
@@ -74,7 +42,6 @@ class InvocationResolver:
 
     def resolve(
         self,
-        parent: NodePath | None,
         key: str,
         tokens: list[str] | None,
         session: Session,
@@ -97,27 +64,12 @@ class InvocationResolver:
             tokens = tokens[:-1]
 
         # ---------------------------------
-        # Resolve parent runtime space
-        # ---------------------------------
-
-        current = self._root
-
-        if parent:
-
-            resolved = self._root.find(parent, absolute=True)
-
-            if not resolved:
-                raise NodeNotFound(command=str(parent))
-
-            current = resolved
-
-        # ---------------------------------
         # Path-style resolution (ident/users/list)
         # ---------------------------------
 
         if "/" in key:
             node = self._resolve_path(
-                current=current,
+                current=self._root,
                 key=key,
             )
             if node:
@@ -132,17 +84,18 @@ class InvocationResolver:
                 return node, tokens
 
         # ---------------------------------
-        # Resolve current node
+        # Resolve from session context (current path)
         # ---------------------------------
 
-        node = self._resolve_node(
-            parent=current,
-            key=key,
-        )
+        ctx = self._resolve_context(session)
+        node = self._resolve_node(parent=ctx, key=key) if ctx else None
+
+        if not node:
+            node = self._resolve_node(parent=self._root, key=key)
 
         if not node:
             self._raise_not_found(
-                parent=current,
+                parent=self._root,
                 key=key,
             )
 
@@ -153,15 +106,11 @@ class InvocationResolver:
         # ---------------------------------
 
         if node.contextual and tokens:
-
             if not node.consumes(tokens):
-
-                return self.resolve(
-                    parent=node.path,
-                    key=tokens[0],
-                    tokens=tokens[1:],
-                    session=session,
-                )
+                child = self.on_get_node(node, tokens[0])
+                if child:
+                    node = child
+                    tokens = tokens[1:]
 
         # ---------------------------------
         # Show usage for resolved node
@@ -190,47 +139,6 @@ class InvocationResolver:
 
         return node, tokens
 
-        # ---------------------------------
-        # Local runtime scope
-        # ---------------------------------
-
-        for node in parent.find_resolvable():
-
-            if node.scope not in (
-                NodeScope.NODE,
-                NodeScope.ROOT,
-            ):
-                continue
-
-            if node.key == key:
-                return node
-
-        # ---------------------------------
-        # Non-resolvable nodes (containers, namespaces)
-        # Found by direct key lookup for proper error messaging
-        # ---------------------------------
-
-        child = parent.children.get(key)
-        if child is not None and not child.resolvable:
-            return child
-
-        # ---------------------------------
-        # ROOT scope
-        # ---------------------------------
-
-        if parent == self._root:
-
-            node = self._root_nodes.get(key)
-
-            if node:
-                return node
-
-        # ---------------------------------
-        # GLOBAL scope
-        # ---------------------------------
-
-        return self._global_nodes.get(key)
-
     def _raise_not_found(
         self,
         *,
@@ -238,36 +146,9 @@ class InvocationResolver:
         key: str,
     ) -> None:
 
-        choices: list[str] = []
-
-        # ---------------------------------
-        # Local runtime scope
-        # ---------------------------------
-
-        for node in parent.find_resolvable():
-
-            if node.scope in (
-                NodeScope.NODE,
-                NodeScope.ROOT,
-            ):
-                choices.append(node.key)
-
-        # ---------------------------------
-        # ROOT scope
-        # ---------------------------------
-
-        if parent == self._root:
-            choices.extend(self._root_nodes.keys())
-
-        # ---------------------------------
-        # GLOBAL scope
-        # ---------------------------------
-
-        choices.extend(self._global_nodes.keys())
-
         suggestions = self.on_suggest(
             value=key,
-            choices=choices,
+            choices=[],
             limit=self.SUGGESTION_LIMIT,
         )
 
@@ -290,7 +171,8 @@ class InvocationResolver:
 
         Walks the node tree segment by segment. The last segment is
         resolved via _resolve_node (respects scope + resolvable flag).
-        Intermediate segments are resolved by direct child key lookup.
+        Intermediate segments are resolved by direct child key lookup
+        (with fallback to tree index).
         """
         segments = key.split("/")
 
@@ -300,9 +182,7 @@ class InvocationResolver:
         for seg in segments[:-1]:
             if not seg:
                 continue
-            child = walk.children.get(seg)
-            if child is None:
-                child = self._global_nodes.get(seg) or self._root_nodes.get(seg)
+            child = self.on_get_node(walk, seg)
             if child is None:
                 return None
             walk = child
@@ -313,6 +193,19 @@ class InvocationResolver:
     # Internals
     # ---------------------------------------------------------------------
 
+    def _resolve_context(self, session: Session) -> Node | None:
+        """Walk from root to the session's current path node."""
+        path = session.get_current_path()
+        if not path or path == "/":
+            return None
+        walk = self._root
+        for seg in path.strip("/").split("/"):
+            child = self.on_get_node(walk, seg)
+            if child is None:
+                return None
+            walk = child
+        return walk
+
     def _resolve_node(
         self,
         *,
@@ -320,46 +213,7 @@ class InvocationResolver:
         key: str,
     ) -> Node | None:
 
-        # ---------------------------------
-        # Local runtime scope
-        # ---------------------------------
-
-        for node in parent.find_resolvable():
-
-            if node.scope not in (
-                NodeScope.NODE,
-                NodeScope.ROOT,
-            ):
-                continue
-
-            if node.key == key:
-                return node
-
-        # ---------------------------------
-        # Non-resolvable nodes (containers, namespaces)
-        # Found by direct key lookup for proper error messaging
-        # ---------------------------------
-
-        child = parent.children.get(key)
-        if child is not None and not child.resolvable:
-            return child
-
-        # ---------------------------------
-        # ROOT scope
-        # ---------------------------------
-
-        if parent == self._root:
-
-            node = self._root_nodes.get(key)
-
-            if node:
-                return node
-
-        # ---------------------------------
-        # GLOBAL scope
-        # ---------------------------------
-
-        return self._global_nodes.get(key)
+        return self.on_get_node(parent, key)
 
     def _raise_usage(
         self,
@@ -426,3 +280,7 @@ class OnSuggest(Protocol):
         limit: int = 3,
         cutoff: float = 0.5,
     ) -> list[str]: ...
+
+
+class OnGetNode(Protocol):
+    def __call__(self, parent: Node, key: str) -> Node | None: ...

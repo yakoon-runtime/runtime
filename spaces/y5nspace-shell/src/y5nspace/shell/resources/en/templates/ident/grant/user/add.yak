@@ -1,6 +1,0 @@
-Granted '{{ state.grant.permission_key }}' to '{{ state.grant.subject_key.id }}' with bits '{{ state.grant.bits }}'.
-{% if state.grant.deny %}
-Mode: deny
-{% else %}
-Mode: allow
-{% endif %}

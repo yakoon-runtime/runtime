@@ -5,7 +5,7 @@ from typing import Protocol, cast
 from y5n.base.flow import Scope
 from y5n.base.naming import Key
 from y5n.base.nodes import Node
-from y5n.base.plugins.ports import OnErrorResolve
+from y5n.base.ports.protocols import OnErrorResolve
 from y5n.base.projection import Projection
 from y5n.base.runtime import Event, InputContext
 from y5n.base.runtime.input import Origin
@@ -17,17 +17,19 @@ from y5n.runtime.flow import Flow
 from y5n.runtime.interaction import Interactor
 from y5n.runtime.machine import (
     CommandEngine,
+    EffectExecutor,
     InputParser,
     InvocationResolver,
+    OnGetNode,
     Runner,
     RuntimeHost,
     Scheduler,
     SessionBuilder,
     TaskRunner,
 )
-from y5n.runtime.machine.effects import EffectExecutor
 from y5n.runtime.runtime import Session
 from y5n.runtime.runtime.bus import BusOutput
+from y5n.runtime.settings import Settings
 from y5n.runtime.settings.version import resolve_runtime_info
 
 # ----------------------------------
@@ -43,7 +45,9 @@ def build_machine(
     on_has_permission: OnHasPermission,
     on_audit_warning: OnAuditWarning,
     on_initialize: Oninitialize,
-    known_runtimes: dict[str, str] | None = None,
+    known_runtimes: dict[str, str],
+    settings: Settings,
+    on_get_node: OnGetNode,
 ) -> RuntimeHost:
 
     # ---------------
@@ -54,6 +58,7 @@ def build_machine(
         root=platform,
         on_authorize=on_has_permission,
         on_suggest=on_suggest,
+        on_get_node=on_get_node,
     )
 
     # ---------------
@@ -191,6 +196,9 @@ def build_machine(
         session, _ = await on_session(key=key)
         psession = cast(Session, session)
         psession.bind_io(BusOutput(psession._bus))
+        if not psession.get_data("fs:root"):
+            psession.set_data("fs:root", settings.runtime.workspace_path)
+            psession.set_current_path("/")
         return psession
 
     session_builder = SessionBuilder(

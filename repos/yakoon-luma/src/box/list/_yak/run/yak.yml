@@ -1,0 +1,10 @@
+executor: python
+
+invocation:
+  params:
+    - key: world
+      required: true
+    - key: parent
+
+man:
+  default: resources/man.yak

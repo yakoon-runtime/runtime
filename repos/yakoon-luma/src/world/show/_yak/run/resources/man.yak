@@ -1,0 +1,37 @@
+<heading>show - Show world details.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  show NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Displays details of a specific world: ID, name, description
+and entry box.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+show Work
+  Show details of the world called Work.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, delete, edit, list
+</paragraph>

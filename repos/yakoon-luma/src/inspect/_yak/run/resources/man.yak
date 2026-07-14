@@ -1,0 +1,11 @@
+<heading>inspect - Inspect a box in detail.</heading>
+<rule/>
+<heading level="2">Usage</heading>
+<pre>inspect NAME</pre>
+<heading level="2">Description</heading>
+<paragraph>Shows details of a named box at the current world level: its description, portable items it contains and notes attached to it.</paragraph>
+<heading level="2">Examples</heading>
+<pre>inspect Desk
+  Inspect the box called Desk.</pre>
+<heading level="2">See also</heading>
+<paragraph>look, go, place, take</paragraph>

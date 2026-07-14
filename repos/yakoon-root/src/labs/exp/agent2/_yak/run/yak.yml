@@ -1,0 +1,7 @@
+executor: python
+
+invocation:
+  params:
+    - key: prompt
+      required: true
+      positional: true

@@ -69,18 +69,3 @@ class DataSource(Protocol[T]):
 
     async def read(self, request: DataRequest) -> DataResult[T]: ...
 
-
-# ----------------------------------
-# PORT
-# ----------------------------------
-
-
-class OnSourceRead(Protocol):
-    async def __call__(
-        self,
-        request: DataRequest,
-    ) -> DataResult: ...
-
-
-class OnDataBind(Protocol):
-    def __call__(self, source: str, provider: DataSource): ...

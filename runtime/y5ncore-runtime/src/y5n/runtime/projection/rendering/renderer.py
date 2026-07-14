@@ -42,6 +42,9 @@ class Renderer:
         )
         return template_string
 
+    def render_str(self, content: str, context: dict) -> str:
+        return self.on_engine_render(content=content, context=context)
+
 
 # ----------------------------------
 # PORTS

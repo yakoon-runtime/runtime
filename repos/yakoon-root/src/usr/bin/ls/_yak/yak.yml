@@ -1,0 +1,5 @@
+name: ls
+title: List directory
+resolvable: true
+navigable: false
+contextual: false

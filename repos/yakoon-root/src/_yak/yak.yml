@@ -1,0 +1,5 @@
+name: root
+title: Yakoon Root
+resolvable: false
+navigable: true
+contextual: true

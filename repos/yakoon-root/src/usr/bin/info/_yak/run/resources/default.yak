@@ -1,0 +1,9 @@
+<heading>System Information</heading>
+<rule/>
+<pre>
+  Time     : {{ time }}
+  Uptime   : {{ uptime }}
+  Version  : {{ version }}
+  Python   : {{ python }}
+  Hostname : {{ hostname }}
+</pre>

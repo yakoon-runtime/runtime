@@ -18,5 +18,9 @@ yakoon/loop/runtime
 .coverage
 coverage/
 
+# Built workspace trees (workspace.yml is versioned)
+/workspace/*/
+!/workspace/*/workspace.yml
+
 # Local evolution log
 evolution.log

@@ -1,7 +1,0 @@
-WHOAMI                              
-
-NAME
-  whoami - print effective user name
-
-DESCRIPTION
-  Print the user name associated with the current effective user ID.  Same as id -un.

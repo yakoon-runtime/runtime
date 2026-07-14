@@ -1,0 +1,5 @@
+name: info
+title: Show system information
+resolvable: true
+navigable: false
+contextual: false

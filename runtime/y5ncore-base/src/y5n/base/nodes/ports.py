@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypeVar, overload
 
+from y5n.base.ports import Port
 from y5n.base.runtime import Container
+
+T = TypeVar("T")
 
 # ----------------------------------
 # NODE PORTS
@@ -50,37 +53,61 @@ class NodePorts:
     # PUBLIC API
     # ----------------------------------
 
-    def publish(self, port, capability):
+    def publish(self, port: object, capability: object) -> None:
         """Publishes a capability into the parent runtime scope.
 
         Published capabilities become visible to the direct
         parent runtime space.
 
         Args:
-            port:
-                The capability port.
-
-            capability:
-                The bound capability implementation.
+            port:     The capability port (Port object or class).
+            capability:  The bound capability implementation.
         """
-        self._publish_to.bind(port, capability)
+        self._publish_to.bind(self._key(port), capability)
 
-    def provide(self, port, capability):
+    def promote(self, port: object, capability: object) -> None:
+        """Promotes a capability to the root scope.
+
+        The capability is visible from any node in the tree,
+        regardless of branch.  Intended for cross-branch services
+        like authentication that need global reach.
+
+        Args:
+            port:     The capability port (Port object or class).
+            capability:  The bound capability implementation.
+        """
+        key = self._key(port)
+        walk = self._publish_to
+        while walk._parent is not None:
+            walk = walk._parent
+        walk.bind(key, capability)
+
+    def provide(self, port: object, capability: object) -> None:
         """Provides a capability inside the local runtime scope.
 
         Provided capabilities remain local to the current
         runtime hierarchy and are inherited by child nodes.
 
+        For Port objects the registry key is the port name (a string);
+        the protocol class is additionally registered as a fallback key
+        for backwards compatibility.
+
         Args:
-            port:
-                The capability port.
-
-            capability:
-                The bound capability implementation.
+            port:     The capability port (Port object or class).
+            capability:  The bound capability implementation.
         """
-        self._local.bind(port, capability)
+        key = self._key(port)
+        self._local.bind(key, capability)
+        if isinstance(port, Port) and port.protocol:
+            self._local.bind(port.protocol, capability)
 
-    def get(self, port) -> Any:
+    @overload
+    def get(self, port: Port[T]) -> T: ...
+
+    @overload
+    def get(self, port: type[T]) -> T: ...
+
+    def get(self, port: Port[T] | type[T]) -> Any:
         """Resolves a capability from the local hierarchy.
 
         Resolution follows hierarchical scope lookup:
@@ -90,16 +117,22 @@ class NodePorts:
             -> root node
 
         Args:
-            port:
-                The capability port.
+            port:  The capability port (Port object or class).
 
         Returns:
             The resolved capability implementation.
         """
-        return self._local.get(port)
+        return self._local.get(self._key(port))
 
-    def has(self, port):
-        return self._local.has(port=port)
+    def has(self, port: object) -> bool:
+        """Returns True if the capability *port* is available in the hierarchy."""
+        return self._local.has(port=self._key(port))
+
+    @staticmethod
+    def _key(port) -> object:
+        if isinstance(port, Port):
+            return port.name
+        return port
 
     # ----------------------------------
     # FORK

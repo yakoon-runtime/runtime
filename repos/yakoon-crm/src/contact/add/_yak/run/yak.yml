@@ -1,0 +1,18 @@
+executor: python
+
+invocation:
+  params:
+    - key: name
+      required: true
+      positional: true
+    - key: company
+    - key: email
+    - key: phone
+    - key: street
+    - key: zip
+    - key: city
+    - key: country
+    - key: notes
+
+man:
+  default: resources/man.yak

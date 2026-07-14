@@ -1,0 +1,9 @@
+{% if not grants %}
+No permissions found for user '{{ user }}'.
+{% else %}
+Permissions for user '{{ user }}': <list>
+{% for g in grants %}
+<item>{{ g.permission_key }} [{{ g.bits }}]{% if g.deny %} (deny){% endif %}</item>
+{% endfor %}
+</list>
+{% endif %}

@@ -1,0 +1,26 @@
+<heading>clear - Clear the terminal.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+<pre>
+  clear
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Clears the terminal output.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+man
+</paragraph>

@@ -1,0 +1,4 @@
+executor: python
+
+projection:
+  default: resources/default.yak

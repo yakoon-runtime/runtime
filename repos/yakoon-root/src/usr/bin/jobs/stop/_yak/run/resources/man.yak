@@ -1,0 +1,41 @@
+<heading>stop - Cancel a running flow.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  stop INDEX
+  stop --current
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Cancels a running flow identified by its job index.
+Use <em>--current</em> to stop the foreground flow.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+jobs stop 3
+  Stop the flow with index 3.
+
+jobs stop --current
+  Stop the foreground flow.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+bg, fg, list, man
+</paragraph>

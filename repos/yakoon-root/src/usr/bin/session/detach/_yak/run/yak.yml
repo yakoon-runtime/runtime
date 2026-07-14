@@ -1,0 +1,4 @@
+executor: python
+
+man:
+  default: resources/man.yak

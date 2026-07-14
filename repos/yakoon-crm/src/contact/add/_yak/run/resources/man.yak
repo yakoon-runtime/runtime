@@ -1,0 +1,14 @@
+<heading>add - Create a contact.</heading>
+<rule/>
+<heading level="2">Usage</heading>
+<pre>add NAME
+add NAME --company Acme --email john@acme.com</pre>
+<heading level="2">Description</heading>
+<paragraph>Creates a new contact with the given name and optional details.</paragraph>
+<heading level="2">Examples</heading>
+<pre>add John
+  Create a contact named John.
+add Jane --company Acme --email jane@acme.com
+  Create with company and email.</pre>
+<heading level="2">See also</heading>
+<paragraph>delete, edit, find, list, show</paragraph>

@@ -1,0 +1,13 @@
+executor: python
+
+invocation:
+  params:
+    - key: user
+      required: true
+      positional: true
+
+projection:
+  default: resources/default.yak
+
+man:
+  default: resources/man.yak

@@ -1,0 +1,70 @@
+<heading>ls - List directory contents.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+<pre>
+  ls
+  ls path
+  ls --l
+  ls ~
+</pre>
+
+<heading level="2">
+Options
+</heading>
+
+<pre>
+  --l    List format (one entry per line)
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists the contents of a directory.
+</paragraph>
+
+<paragraph>
+Without options, entries are shown side by side.
+With <em>--l</em>, each entry is shown on its own line.
+</paragraph>
+
+<heading level="2">
+Special paths
+</heading>
+
+<pre>
+  /      Yakoon root directory
+  ~      User's home directory
+  ..     Parent directory
+</pre>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+  ls
+    List current directory.
+
+  ls /var
+    List contents of /var inside the yakoon tree.
+
+  ls ~
+    List home directory.
+
+  ls --l
+    List current directory, one entry per line.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+cd, man
+</paragraph>

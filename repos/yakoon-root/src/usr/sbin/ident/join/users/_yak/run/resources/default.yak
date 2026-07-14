@@ -1,0 +1,9 @@
+{% if not joins %}
+No users found.
+{% else %}
+Users in '{{ group }}': <list>
+{% for m in joins %}
+  <item>{{ m.user_key.id }}</item>
+{% endfor %}
+</list>
+{% endif %}

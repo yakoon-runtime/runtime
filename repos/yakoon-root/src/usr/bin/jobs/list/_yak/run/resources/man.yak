@@ -1,0 +1,28 @@
+<heading>jobs list - Show active flows.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  jobs list
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all active flows in the current session.
+The current foreground flow is marked with an arrow.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+fg, bg, stop, man
+</paragraph>
