@@ -13,6 +13,7 @@ from y5n.base.flow.primitives import EmitView
 from y5n.base.projection import to_text
 
 from .base import Executor, ExecutorKind, Phase, RunResult
+from .napi import CommandContext, _set_context
 
 if TYPE_CHECKING:
     from y5n.base.nodes.node import Node
@@ -76,13 +77,27 @@ class PythonExecutor(Executor):
             sys.stdout = _StreamCapture(q)
             try:
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-                    fut = pool.submit(lambda: runpy.run_path(str(app_file), run_name="__main__"))
+
+                    def _run():
+                        _set_context(
+                            CommandContext(
+                                request=space.request,
+                                session=space.session,
+                                ports=space.ports,
+                                path=node.path,
+                            )
+                        )
+                        runpy.run_path(str(app_file), run_name="__main__")
+
+                    fut = pool.submit(_run)
 
                     while True:
                         while True:
                             try:
                                 line = q.get_nowait()
-                                yield Outcome(effects=[EmitView(to_text(line))])
+                                yield Outcome(
+                                    effects=[EmitView(to_text(line), mode="append")]
+                                )
                             except queue.Empty:
                                 break
 

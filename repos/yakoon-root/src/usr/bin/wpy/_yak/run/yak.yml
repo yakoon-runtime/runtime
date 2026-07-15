@@ -1,0 +1,6 @@
+executor: python
+
+invocation:
+  params:
+    - key: name
+      positional: true
