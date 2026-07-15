@@ -6,6 +6,7 @@
     // runtime
     "runtime/y5ncore-base/src",
     "runtime/y5ncore-runtime/src",
+    "y5ncore-sdk/src",
     // stores (event)
     "stores/y5nstore-event/src",
     "stores/y5nstore-sequence/src",
