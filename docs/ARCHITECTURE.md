@@ -25,6 +25,21 @@ Runtime
 | Skript | `script` | `print()` → stdout | Python | ❌ | Subprozess |
 | Native | `process` | `_yak/run/app` (shebang) | Any | ❌ | Subprozess |
 
+## What is a Command?
+
+A command is executable code that receives input and produces output.
+Everything else is optional.
+
+|                | `runtime` | `python` | `script` | `process` |
+|----------------|-----------|----------|----------|-----------|
+| **Input**      | `space.request` | `sys.argv` | `sys.argv` | argv |
+| **Output**     | `yield out_*`  | `print()`  | `print()`  | stdout |
+| **Async**      | ✅ native      | ✅ asyncio.run() | ✅ asyncio.run() | ❌ |
+| **Ports**      | ✅             | ❌        | ❌        | ❌ |
+
+The `runtime` ABI is the most powerful. `python`, `script` and `process`
+fulfill the same contract in their own way.
+
 ### When to use what
 
 - **runtime** — commands that control the runtime or access ports

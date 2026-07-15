@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import asyncio
+import concurrent.futures
 import io
+import queue
 import runpy
 import sys
 from typing import TYPE_CHECKING
@@ -21,6 +24,26 @@ def _empty() -> RunResult:
         yield Outcome()
 
     return _noop()
+
+
+class _StreamCapture(io.TextIOBase):
+    """Thread-safe stdout capture. Pushes lines into a queue.Queue."""
+
+    def __init__(self, q: queue.Queue[str]):
+        self._q = q
+        self._buffer = ""
+
+    def write(self, text: str) -> int:
+        self._buffer += text
+        while "\n" in self._buffer:
+            line, self._buffer = self._buffer.split("\n", 1)
+            self._q.put(line)
+        return len(text)
+
+    def flush(self) -> None:
+        if self._buffer:
+            self._q.put(self._buffer)
+            self._buffer = ""
 
 
 class PythonExecutor(Executor):
@@ -46,23 +69,34 @@ class PythonExecutor(Executor):
         if space.request:
             sys.argv.extend(space.request.args())
 
-        buf = io.StringIO()
-        old_out = sys.stdout
-        sys.stdout = buf
-        try:
-            runpy.run_path(str(app_file), run_name="__main__")
-        finally:
-            sys.stdout = old_out
-            sys.argv = old_argv
-            if old_main is not None:
-                sys.modules["__main__"] = old_main
-            else:
-                sys.modules.pop("__main__", None)
+        async def _stream():
+            nonlocal old_argv, old_main
+            q: queue.Queue[str] = queue.Queue()
+            old_out = sys.stdout
+            sys.stdout = _StreamCapture(q)
+            try:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                    fut = pool.submit(lambda: runpy.run_path(str(app_file), run_name="__main__"))
 
-        text = buf.getvalue()
-        if text.strip():
-            async def _stream():
-                for line in text.splitlines():
-                    yield Outcome(effects=[EmitView(to_text(line))])
-            return _stream()
-        return _empty()
+                    while True:
+                        while True:
+                            try:
+                                line = q.get_nowait()
+                                yield Outcome(effects=[EmitView(to_text(line))])
+                            except queue.Empty:
+                                break
+
+                        if fut.done():
+                            break
+
+                        yield Outcome()
+                        await asyncio.sleep(0.02)
+            finally:
+                sys.stdout = old_out
+                sys.argv = old_argv
+                if old_main is not None:
+                    sys.modules["__main__"] = old_main
+                else:
+                    sys.modules.pop("__main__", None)
+
+        return _stream()
