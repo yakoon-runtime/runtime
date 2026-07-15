@@ -28,6 +28,7 @@ from y5n.runtime.executor import (
     ExecutorKind,
     ExecutorRegistry,
     ProcessExecutor,
+    PythonExecutor,
     RuntimeExecutor,
     ScriptExecutor,
 )
@@ -112,6 +113,7 @@ def build_runtime(
 
     executors = ExecutorRegistry()
     executors.register(ExecutorKind.RUNTIME, RuntimeExecutor())
+    executors.register(ExecutorKind.PYTHON, PythonExecutor())
     executors.register(ExecutorKind.SCRIPT, ScriptExecutor())
     executors.register(ExecutorKind.PROCESS, ProcessExecutor())
 

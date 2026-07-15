@@ -7,6 +7,28 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 from y5n.base.flow.dsl import Outcome
 from y5n.base.ports.models import HealthResult
 
+"""
+ABI — Application Binary Interface.
+
+Every Yakoon executable is an application. The Runtime does not know
+how to run applications — it delegates this to an Executor.
+
+The Executor defines the ABI: the contract between the Runtime and
+the application code.
+
+  Runtime → Executor → Application
+
+Each Executor kind implements a different ABI:
+
+  runtime   async def run(space)          in-process, full platform API
+  python    print() → stdout              in-process, no API
+  script    python3 app.py → stdout       subprocess, isolated
+  process   _yak/run/app (shebang)        subprocess, any language
+
+The ABI is the answer to: "How does this application want to be run?"
+"""
+
+
 if TYPE_CHECKING:
     from y5n.base.nodes.node import Node
     from y5n.base.nodes.space import NodeSpace
@@ -17,6 +39,7 @@ RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]
 
 class ExecutorKind(Enum):
     RUNTIME = "runtime"
+    PYTHON = "python"
     SCRIPT = "script"
     PROCESS = "process"
 

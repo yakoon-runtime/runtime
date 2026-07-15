@@ -1,4 +1,4 @@
-executor: script
+executor: python
 
 invocation:
   params:

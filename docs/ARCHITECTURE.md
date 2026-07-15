@@ -16,16 +16,18 @@ Runtime
   └── ProcessExecutor   →  _yak/run/app      →  argv + env + stdout
 ```
 
-### Three Executor Levels
+### Four Executor Levels
 
-| Level | Executor | ABI | Language | Ports |
-|-------|----------|-----|----------|-------|
-| Full | `runtime` | `async def run(space)` | Python | ✅ |
-| Script | `script` | `print()` → stdout | Python | ❌ |
-| Process | `process` | `_yak/run/app` (shebang) | Any | ❌ |
+| Level | Executor | ABI | Language | Ports | Prozess |
+|-------|----------|-----|----------|-------|---------|
+| Kernel | `runtime` | `async def run(space)` | Python | ✅ | in-process |
+| Sprache | `python` | `print()` → stdout | Python | ❌ | in-process |
+| Skript | `script` | `print()` → stdout | Python | ❌ | Subprozess |
+| Native | `process` | `_yak/run/app` (shebang) | Any | ❌ | Subprozess |
 
 ### When to use what
 
-- **python** — commands that control the runtime or access ports
-- **script** — simple Python commands that just produce output
+- **runtime** — commands that control the runtime or access ports
+- **python** — simple Python commands, in-process, no startup delay
+- **script** — Python in subprocess (isolation, custom venv)
 - **process** — any program in any language (bash, go, rust, …)
