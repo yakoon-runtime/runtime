@@ -112,6 +112,11 @@ class PythonExecutor(Executor):
                                     if ses
                                     else None
                                 ),
+                                ports={
+                                    "hello": {
+                                        "greet": lambda name="World": f"Hello, {name}!",
+                                    },
+                                },
                             )
                         )
                         runpy.run_path(str(app_file), run_name="__main__")

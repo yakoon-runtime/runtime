@@ -1,8 +1,13 @@
-"""Example: access runtime context via y5n SDK."""
+"""Example: access runtime context and ports via y5n SDK."""
 
-from y5n.sdk import context
+from y5n.sdk import context, ports
 
-ctx = context.current()
+ctx = context.current()  # type: ignore
 print(f"Path:    {ctx.path}")
 print(f"Args:    {(ctx.request or {}).get('args', [])}")
 print(f"Session: {(ctx.session or {}).get('key', '-')}")
+print()
+
+hello = ports.get("hello")
+print(hello.greet())
+print(hello.greet(name="Yakoon"))

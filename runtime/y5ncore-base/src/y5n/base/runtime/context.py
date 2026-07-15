@@ -19,6 +19,7 @@ class CommandContext:
     path: str | None = None
     request: dict | None = None
     session: dict | None = None
+    ports: dict | None = None
 
     def __getitem__(self, key: str):
         return getattr(self, key)
