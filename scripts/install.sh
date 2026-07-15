@@ -1,19 +1,24 @@
-cd ..
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/.."
 
-# runtime 
+# runtime
 pip install \
   -e runtime/y5ncore-base \
   -e runtime/y5ncore-runtime \
-  -e runtime/y5ncore-llm \
+  -e runtime/y5ncore-llm
+
+# sdk
+pip install \
+  -e sdk
 
 # transport
 pip install \
-  -e transports/y5ntrans-ws \
+  -e transports/y5ntrans-ws
 
 # storage
 pip install \
   -e stores/y5nstore-event \
-  -e stores/y5nstore-sequence \
+  -e stores/y5nstore-sequence
 
 # repos (bundles) are source trees, referenced via pythonpath in pyproject.toml
 
@@ -22,5 +27,5 @@ pip install \
   -e apps/y5napp-console \
   -e apps/y5napp-runtime \
   -e apps/y5napp-textual \
-  -e apps/y5napp-web \
+  -e apps/y5napp-web
 

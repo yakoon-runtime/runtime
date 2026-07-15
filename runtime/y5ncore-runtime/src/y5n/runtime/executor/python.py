@@ -11,9 +11,9 @@ from typing import TYPE_CHECKING
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
 from y5n.base.projection import to_text
+from y5n.base.runtime.context import CommandContext, _set_context
 
 from .base import Executor, ExecutorKind, Phase, RunResult
-from .napi import CommandContext, _set_context
 
 if TYPE_CHECKING:
     from y5n.base.nodes.node import Node
@@ -79,12 +79,39 @@ class PythonExecutor(Executor):
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
 
                     def _run():
+                        req = space.request
+                        ses = space.session
                         _set_context(
                             CommandContext(
-                                request=space.request,
-                                session=space.session,
-                                ports=space.ports,
-                                path=node.path,
+                                path=str(node.path) if node.path else None,
+                                request=(
+                                    {
+                                        "args": list(req.args()) if req else [],
+                                        "raw": (
+                                            req.raw
+                                            if req and hasattr(req, "raw")
+                                            else None
+                                        ),
+                                    }
+                                    if req
+                                    else None
+                                ),
+                                session=(
+                                    {
+                                        "key": (
+                                            str(ses.key)
+                                            if ses and hasattr(ses, "key")
+                                            else None
+                                        ),
+                                        "lang": (
+                                            ses.lang
+                                            if ses and hasattr(ses, "lang")
+                                            else None
+                                        ),
+                                    }
+                                    if ses
+                                    else None
+                                ),
                             )
                         )
                         runpy.run_path(str(app_file), run_name="__main__")
