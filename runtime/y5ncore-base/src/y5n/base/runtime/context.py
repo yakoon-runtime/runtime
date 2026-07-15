@@ -19,13 +19,19 @@ class CommandContext:
     path: str | None = None
     request: dict | None = None
     session: dict | None = None
-    ports: dict | None = None
 
     def __getitem__(self, key: str):
         return getattr(self, key)
 
 
 _context_var: ContextVar[CommandContext] = ContextVar("y5n_command_context")
+
+_port_registry: dict[str, dict] = {}
+"""Global port registry. Lives in the runtime, not in any command.
+
+Commands register services here via y5n.sdk.ports.register().
+Services persist across command invocations within the same process.
+"""
 
 
 def _set_context(ctx: CommandContext) -> None:
