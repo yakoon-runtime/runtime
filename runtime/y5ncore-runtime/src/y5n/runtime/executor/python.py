@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-import asyncio
-import concurrent.futures
+import importlib.util
 import io
-import queue
-import runpy
 import sys
+import types
+from contextlib import redirect_stdout
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from y5n.base.flow.dsl import Outcome
@@ -27,29 +27,21 @@ def _empty() -> RunResult:
     return _noop()
 
 
-class _StreamCapture(io.TextIOBase):
-    """Thread-safe stdout capture. Pushes lines into a queue.Queue."""
-
-    def __init__(self, q: queue.Queue[str]):
-        self._q = q
-        self._buffer = ""
-
-    def write(self, text: str) -> int:
-        self._buffer += text
-        while "\n" in self._buffer:
-            line, self._buffer = self._buffer.split("\n", 1)
-            self._q.put(line)
-        return len(text)
-
-    def flush(self) -> None:
-        if self._buffer:
-            self._q.put(self._buffer)
-            self._buffer = ""
+def _build_session_dict(ses) -> dict | None:
+    if ses is None:
+        return None
+    return {
+        "key": str(ses.key) if hasattr(ses, "key") else None,
+        "lang": ses.lang if hasattr(ses, "lang") else None,
+    }
 
 
 class PythonExecutor(Executor):
 
     kind = ExecutorKind.PYTHON
+
+    def __init__(self):
+        self._loaded_modules: dict[Path, types.ModuleType] = {}
 
     def run(
         self,
@@ -64,81 +56,60 @@ class PythonExecutor(Executor):
         if not app_file.is_file():
             return _empty()
 
-        old_argv = sys.argv
-        old_main = sys.modules.pop("__main__", None)
-        sys.argv = [str(app_file)]
-        if space.request:
-            sys.argv.extend(space.request.args())
+        req = space.request
+        ses = space.session
 
         async def _stream():
-            nonlocal old_argv, old_main
-            q: queue.Queue[str] = queue.Queue()
-            old_out = sys.stdout
-            sys.stdout = _StreamCapture(q)
+            _set_context(
+                CommandContext(
+                    path=str(node.path) if node.path else None,
+                    command=(
+                        str(node.path).rsplit("/", 1)[-1] if node.path else None
+                    ),
+                    tokens=list(req.args()) if req else None,
+                    session=_build_session_dict(ses),
+                )
+            )
+
+            mod = self._load_module(app_file)
+            if mod is None or not hasattr(mod, "main"):
+                return
+
+            old_argv = sys.argv
+            sys.argv = [str(app_file)]
+            if req:
+                sys.argv.extend(req.args())
+
+            buf = io.StringIO()
             try:
-                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-
-                    def _run():
-                        req = space.request
-                        ses = space.session
-                        _set_context(
-                            CommandContext(
-                                path=str(node.path) if node.path else None,
-                                request=(
-                                    {
-                                        "args": list(req.args()) if req else [],
-                                        "raw": (
-                                            req.raw
-                                            if req and hasattr(req, "raw")
-                                            else None
-                                        ),
-                                    }
-                                    if req
-                                    else None
-                                ),
-                                session=(
-                                    {
-                                        "key": (
-                                            str(ses.key)
-                                            if ses and hasattr(ses, "key")
-                                            else None
-                                        ),
-                                        "lang": (
-                                            ses.lang
-                                            if ses and hasattr(ses, "lang")
-                                            else None
-                                        ),
-                                    }
-                                    if ses
-                                    else None
-                                ),
-                            )
-                        )
-                        runpy.run_path(str(app_file), run_name="__main__")
-
-                    fut = pool.submit(_run)
-
-                    while True:
-                        while True:
-                            try:
-                                line = q.get_nowait()
-                                yield Outcome(
-                                    effects=[EmitView(to_text(line), mode="append")]
-                                )
-                            except queue.Empty:
-                                break
-
-                        if fut.done():
-                            break
-
-                        yield Outcome()
-                        await asyncio.sleep(0.02)
+                with redirect_stdout(buf):
+                    mod.main()
             finally:
-                sys.stdout = old_out
                 sys.argv = old_argv
-                if old_main is not None:
-                    sys.modules["__main__"] = old_main
-                else:
-                    sys.modules.pop("__main__", None)
+
+            output = buf.getvalue()
+            if output:
+                for line in output.splitlines():
+                    yield Outcome(
+                        effects=[EmitView(to_text(line), mode="append")]
+                    )
+
+            yield Outcome()
 
         return _stream()
+
+    def _load_module(self, path: Path) -> types.ModuleType | None:
+        loaded = self._loaded_modules.get(path)
+        if loaded is not None:
+            return loaded
+
+        full_name = "yak.bundle.batch." + path.parent.parent.parent.name + "." + path.stem
+
+        spec = importlib.util.spec_from_file_location(full_name, path)
+        if spec is None or spec.loader is None:
+            return None
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[full_name] = mod
+        spec.loader.exec_module(mod)
+        self._loaded_modules[path] = mod
+        return mod

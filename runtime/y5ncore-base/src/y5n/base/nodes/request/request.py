@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Any
 
 
@@ -17,7 +19,7 @@ class Request:
     """
 
     def __init__(
-        self, command: str, tokens: list[str] | None, payload, lang: str
+        self, command: str, tokens: list[str] | None, payload: Any | None = None, lang: str = ""
     ) -> None:
         """Create a Request from normalized input.
 
@@ -32,6 +34,17 @@ class Request:
         self._args: list[str] = tokens or []
         self.payload = payload
         self.lang = lang
+
+    @classmethod
+    def from_tokens(cls, tokens: list[str] | None) -> Request:
+        """Create a Request from raw tokens (command name is first token)."""
+        tokens = tokens or []
+        return cls(
+            command=tokens[0] if tokens else "",
+            tokens=tokens[1:] if len(tokens) > 1 else [],
+            payload=None,
+            lang="",
+        )
 
     @property
     def command(self) -> str:

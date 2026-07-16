@@ -21,11 +21,20 @@ the application code.
 Each Executor kind implements a different ABI:
 
   runtime   async def run(space)          in-process, full platform API
-  python    print() → stdout              in-process, no API
+  python    def main()                    in-process, synchronous (batch)
   script    python3 app.py → stdout       subprocess, isolated
   process   _yak/run/app (shebang)        subprocess, any language
 
 The ABI is the answer to: "How does this application want to be run?"
+
+NOTE: The python executor (batch) is NOT the same as the old PythonExecutor
+with ThreadPool + runpy. It loads the module via importlib, calls main()
+synchronously, and captures stdout via redirect_stdout. No thread pool,
+no 20ms pump — it runs once and yields all output at once.
+
+The runtime executor (async) remains the primary host for Yakoon services.
+It runs async generators in the scheduler, supports millions of concurrent
+flows, foreground/background, and wait-states.
 """
 
 
