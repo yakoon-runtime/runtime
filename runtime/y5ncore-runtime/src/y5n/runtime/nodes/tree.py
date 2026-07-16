@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from y5n.base.nodes import Invocation, Node, Param
+from y5n.base.nodes import Invocation, Node, Param, Request
 from y5n.base.nodes.ports import NodePorts
 from y5n.base.nodes.space import NodeSpace
 from y5n.base.ports.models import HealthLevel, HealthResult
@@ -37,6 +37,7 @@ class Capability:
     """Bundle metadata: invocations and resource paths."""
 
     executor_kind: ExecutorKind = ExecutorKind.RUNTIME
+    host: str | None = None
     invocations: list[Invocation] = field(default_factory=list)
     resources: dict[str, dict[str, Path]] = field(default_factory=dict)
 
@@ -109,8 +110,12 @@ class Tree:
             node.invocations = cap.invocations
             node.resources = cap.resources
             node.metadata["executor"] = cap.executor_kind.value
-            executor = self._executors.get(cap.executor_kind)
-            node.run = _make_handler(executor, node, Phase.RUN)
+            if cap.host:
+                node.metadata["host"] = cap.host
+                node.run = _make_host_handler(self, node.key, cap.host)
+            else:
+                executor = self._executors.get(cap.executor_kind)
+                node.run = _make_handler(executor, node, Phase.RUN)
         return node
 
     def _load_capability(self, cap_dir: Path) -> Capability | None:
@@ -118,6 +123,13 @@ class Tree:
         if not meta:
             return None
         executor_kind = ExecutorKind(meta.get("executor", "runtime"))
+
+        # Host field: maps to /boot/<host>-host
+        # Replaces executor for user commands — the host is a runtime command
+        # that loads and runs the actual program.
+        host = meta.get("host")
+        if host:
+            executor_kind = ExecutorKind.RUNTIME
 
         invocations: list[Invocation] = []
         inv_data = meta.get("invocation")
@@ -159,6 +171,7 @@ class Tree:
 
         return Capability(
             executor_kind=executor_kind,
+            host=host,
             invocations=invocations,
             resources=resources,
         )
@@ -381,5 +394,48 @@ def _read_yaml(path: Path) -> dict[str, Any]:
 def _make_handler(executor: Executor, node: Node, phase: Phase):
     def _run(space):
         return executor.run(node, phase, space)
+
+    return _run
+
+
+def _make_host_handler(tree: Tree, node_key: str, host_path: str):
+    """Replace node.run with a delegating handler that routes to a host.
+
+    The host node receives the original node's full tree path as its
+    first token (e.g. \"/usr/bin/hello-server\"). The path is resolved
+    lazily at call time via the node's parent chain.
+    """
+    from y5n.base.flow.dsl import Outcome
+
+    def _empty():
+        async def _noop():
+            yield Outcome()
+
+        return _noop()
+
+    def _run(space):
+        host_node = tree.find(host_path)
+        if host_node is None or not host_node.has_run():
+            return _empty()
+        # Compute full tree path from node's own parent chain
+        # (node.path walks parents, which only works after linking)
+        target_path = str(space.path)
+        cmd = target_path.rsplit("/", 1)[-1] if target_path else ""
+        modified = Request(
+            command=cmd,
+            tokens=[target_path]
+            + (list(space.request.args()) if space.request else []),
+            payload=None,
+            lang=space.session.lang if space.session else "",
+        )
+        modified_space = NodeSpace(
+            path=space.path,
+            request=modified,
+            session=space.session,
+            ports=space.ports,
+            ports_from=space.ports_from,
+            resources=space.resources,
+        )
+        return host_node.run(modified_space)
 
     return _run

@@ -1,1 +1,5 @@
-executor: python
+host: /boot/python-host
+invocation:
+  params:
+  - key: name
+    positional: true
