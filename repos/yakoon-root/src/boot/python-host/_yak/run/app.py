@@ -12,6 +12,9 @@ import importlib.util
 import inspect
 import os
 import sys
+import uuid
+from contextlib import redirect_stdout
+from io import StringIO
 from pathlib import Path
 
 from y5n.base.flow.dsl import Outcome
@@ -59,20 +62,20 @@ def _find_script(root: Path, tree_path: str) -> Path | None:
 
 
 async def _run_main(mod):
-    """Call main() or async main() and return captured stdout."""
-    from contextlib import redirect_stdout
-    from io import StringIO
+    """Call main() or async main() and return captured stdout.
 
+    Note: stdout at module-level is already captured by the caller.
+    This only covers output produced inside main().
+    """
     if not hasattr(mod, "main"):
         return ""
 
     main_fn = mod.main
     buf = StringIO()
-    if inspect.iscoroutinefunction(main_fn):
-        with redirect_stdout(buf):
+    with redirect_stdout(buf):
+        if inspect.iscoroutinefunction(main_fn):
             await main_fn()
-    else:
-        with redirect_stdout(buf):
+        else:
             main_fn()
     return buf.getvalue()
 
@@ -85,7 +88,9 @@ async def run(space):
 
     root = Path(space.session.get_data("fs:root")) if space.session else Path()
     if not root.is_dir():
-        yield Outcome(effects=[EmitView(to_text(f"error: workspace root not found: {root}"))])
+        yield Outcome(
+            effects=[EmitView(to_text(f"error: workspace root not found: {root}"))]
+        )
         return
 
     # Resolve relative tree paths against session's current path
@@ -96,32 +101,35 @@ async def run(space):
     bundle_dir = _find_command(root, target_path)
     if bundle_dir is not None:
         app_file = bundle_dir / "_yak" / "run" / "app.py"
-        segments = [s for s in target_path.strip("/").split("/") if s]
-        mod_name = "hosted." + ".".join(segments) + ".app"
     else:
         script = _find_script(root, target_path)
         if script is None:
-            yield Outcome(effects=[EmitView(to_text(f"error: no command or script at '{target_path}'"))])
+            yield Outcome(
+                effects=[
+                    EmitView(to_text(f"error: no command or script at '{target_path}'"))
+                ]
+            )
             return
         app_file = script
-        mod_name = "hosted.script." + app_file.stem
+
+    mod_name = f"hosted.{uuid.uuid4().hex}"
 
     spec = importlib.util.spec_from_file_location(mod_name, app_file)
     if spec is None or spec.loader is None:
         yield Outcome(effects=[EmitView(to_text(f"error: cannot load {app_file}"))])
         return
 
-    mod = importlib.util.module_from_spec(spec)
-    sys.modules[mod_name] = mod
-    spec.loader.exec_module(mod)
-
-    # Build context for the hosted program
+    # Set context BEFORE import — so module-level code sees it
     node_name = target_path.rsplit("/", 1)[-1] if target_path else ""
     _set_context(
         CommandContext(
             path=target_path,
             command=node_name,
-            tokens=space.request.args()[1:] if space.request and space.request.args() else [],
+            tokens=(
+                space.request.args()[1:]
+                if space.request and space.request.args()
+                else []
+            ),
             session={
                 "key": str(space.session.key) if space.session else None,
                 "lang": space.session.lang if space.session else None,
@@ -129,7 +137,15 @@ async def run(space):
         )
     )
 
-    output = await _run_main(mod)
+    # Load module with context active and stdout captured
+    mod = importlib.util.module_from_spec(spec)
+    sys.modules[mod_name] = mod
+    buf = StringIO()
+    with redirect_stdout(buf):
+        spec.loader.exec_module(mod)
+
+    output = buf.getvalue()
+    output += await _run_main(mod)
 
     if output:
         for line in output.splitlines():
