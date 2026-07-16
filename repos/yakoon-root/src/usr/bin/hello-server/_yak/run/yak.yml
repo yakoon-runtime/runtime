@@ -1,4 +1,4 @@
-host: /boot/python-host
+host: /boot/python/runtime
 invocation:
   params:
   - key: name

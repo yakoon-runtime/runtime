@@ -1,0 +1,10 @@
+runtime:
+  executor:
+    kind: runtime
+  transport:
+    kind: direct
+invocation:
+  params:
+    - key: command
+      required: true
+      positional: true

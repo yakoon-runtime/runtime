@@ -1,5 +1,4 @@
 version: 1.0.0
-title: Python Host
+title: Python Thread Host
 resolvable: true
 navigable: false
-contextual: false
