@@ -32,6 +32,15 @@ async def run(space: NodeSpace):
     if not show_all:
         fs_entries = [p for p in fs_entries if not p.name.startswith("_yak") and not p.name.startswith(".")]
 
+    # Yak-Package-Regel: innerhalb eines Packages (Verzeichnis mit _yak/)
+    # werden nur Yak-Objekte und Verzeichnisse gezeigt.
+    # Dateien und __*-Verzeichnisse ohne _yak/ sind private Implementierung.
+    if (fs_path / "_yak").is_dir() and not show_all:
+        fs_entries = [
+            p for p in fs_entries
+            if (p / "_yak").is_dir() or (p.is_dir() and not p.name.startswith("__"))
+        ]
+
     merged = []
     for p in fs_entries:
         is_dir = p.is_dir()
