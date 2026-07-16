@@ -10,6 +10,7 @@ Supports two modes:
 
 import importlib.util
 import inspect
+import os
 import sys
 from pathlib import Path
 
@@ -17,6 +18,23 @@ from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
 from y5n.base.projection import to_text
 from y5n.base.runtime.context import CommandContext, _set_context
+
+
+def _resolve_tree_path(tree_path: str, current_path: str | None) -> str:
+    """Resolve a possibly relative tree path against the current path.
+
+    If tree_path starts with \"/\", it is absolute and returned as-is.
+    Otherwise it is resolved relative to the current node's path
+    (e.g. \"hello-client\" from \"/usr/bin\" → \"/usr/bin/hello-client\").
+    """
+    if tree_path.startswith("/"):
+        return tree_path
+    current_path = (current_path or "").strip("/")
+    if current_path:
+        combined = current_path + "/" + tree_path.lstrip("/")
+    else:
+        combined = tree_path.lstrip("/")
+    return "/" + os.path.normpath(combined)
 
 
 def _find_command(root: Path, tree_path: str) -> Path | None:
@@ -69,6 +87,10 @@ async def run(space):
     if not root.is_dir():
         yield Outcome(effects=[EmitView(to_text(f"error: workspace root not found: {root}"))])
         return
+
+    # Resolve relative tree paths against session's current path
+    current = space.session.get_current_path() if space.session else None
+    target_path = _resolve_tree_path(target_path, current)
 
     # Try command mode first, then script mode
     bundle_dir = _find_command(root, target_path)
