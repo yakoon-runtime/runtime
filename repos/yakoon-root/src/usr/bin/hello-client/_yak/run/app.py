@@ -2,6 +2,8 @@
 
 from y5n.sdk import ports
 
-hello = ports.get("hello")
-print(hello.greet())
-print(hello.greet(name="Yakoon"))
+
+async def main():
+    hello = ports.get("hello")
+    print(await hello.greet())
+    print(await hello.greet(name="Yakoon"))

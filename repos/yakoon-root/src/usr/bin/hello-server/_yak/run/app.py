@@ -2,6 +2,7 @@
 
 from y5n.sdk import ports
 
-ports.provide("hello", {"greet": lambda name="World": f"Hello, {name}!"})
 
-print("service 'hello' registered")
+def main():
+    ports.promote("hello", {"greet": lambda name="World": f"Hello, {name}!"})
+    print("service 'hello' registered")
