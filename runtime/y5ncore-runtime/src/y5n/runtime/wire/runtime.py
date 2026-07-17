@@ -18,6 +18,7 @@ from y5n.base.ports.system import (
 )
 from y5n.base.projection import Projection
 from y5n.base.resources import ResourceRef
+from y5n.base.runtime import get_bus
 from y5n.runtime.capabilities.audit import AuditLogService
 from y5n.runtime.capabilities.permission import (
     PermissionChecker,
@@ -50,6 +51,7 @@ from y5n.runtime.sources.data import (
     RuntimeSource,
     SessionSource,
 )
+from y5n.runtime.wire.adapter.projection import ProjectionAdapter
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
 from y5n.runtime.wire.projector import build_projector
@@ -176,6 +178,18 @@ def build_runtime(
     root_ports.provide(COMPILE, compiler.compile)
     root_ports.provide(ERROR_RESOLVE, error_resolve)
     root_ports.provide(VALIDATE, tree.validate)
+
+    # ---------------------------------------
+    # --- SDK ADAPTERS (on the Runtime Bus) ---
+    # ---------------------------------------
+
+    bus = get_bus()
+    bus.resolver.register("system:projection", {"projection": ["render"]}, path="/")
+
+    bus.transport.register_adapter(
+        "projection",
+        ProjectionAdapter(projector=projector, tree=tree),
+    )
 
     # --------------------
     # --- DATASOURCING ---

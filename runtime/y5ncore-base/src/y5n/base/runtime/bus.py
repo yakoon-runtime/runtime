@@ -20,6 +20,8 @@ class RuntimeBus:
 
     def __init__(self) -> None:
         self._handlers: dict[type, Handler] = {}
+        self.transport: DirectTransport
+        self.resolver: Resolver
 
     def register(self, message_type: type, handler: Handler) -> None:
         self._handlers[message_type] = handler
@@ -48,6 +50,9 @@ def _make_default_bus() -> RuntimeBus:
     bus.register(Call, CallHandler(resolver, transport))
     bus.register(RegisterProvider, RegisterProviderHandler(resolver, transport))
     bus.register(UnregisterProvider, UnregisterProviderHandler(resolver, transport))
+
+    bus.resolver = resolver
+    bus.transport = transport
 
     return bus
 
