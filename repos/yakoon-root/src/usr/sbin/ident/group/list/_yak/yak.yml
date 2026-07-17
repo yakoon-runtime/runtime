@@ -1,11 +1,17 @@
 version: 1.0.0
+
 title: List Groups
+
 resolvable: true
 navigable: false
+
 executor: runtime
-projection:
-  default: resources/default.yak
-man:
-  default: resources/man.yak
+
 entry:
   run: app.py
+
+projection:
+  default: resources/default.yak
+
+man:
+  default: resources/man.yak

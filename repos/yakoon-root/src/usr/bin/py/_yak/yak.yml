@@ -1,11 +1,16 @@
 version: 1.0.0
+
 title: Script Executor Demo
+
 resolvable: true
 navigable: false
+
 executor: python
-invocation:
-  params:
-  - key: script
-    positional: true
+
 entry:
   run: app.py
+
+invocation:
+  params:
+    - key: script
+      positional: true

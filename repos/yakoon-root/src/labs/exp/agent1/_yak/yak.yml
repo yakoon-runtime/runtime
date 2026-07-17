@@ -1,12 +1,17 @@
 version: 1.0.0
+
 title: Agent 1
+
 resolvable: true
 navigable: false
+
 executor: runtime
-invocation:
-  params:
-  - key: prompt
-    required: true
-    positional: true
+
 entry:
   run: app.py
+
+invocation:
+  params:
+    - key: prompt
+      positional: true
+      required: true

@@ -1,17 +1,24 @@
 version: 1.0.0
+
 title: Edit Group
+
 resolvable: true
 navigable: false
+
 executor: runtime
-invocation:
-  params:
-  - key: name
-    required: true
-    positional: true
-  - key: enabled
-projection:
-  default: resources/default.yak
-man:
-  default: resources/man.yak
+
 entry:
   run: app.py
+
+invocation:
+  params:
+    - key: name
+      positional: true
+      required: true
+    - key: enabled
+
+projection:
+  default: resources/default.yak
+
+man:
+  default: resources/man.yak

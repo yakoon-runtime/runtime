@@ -1,9 +1,14 @@
 version: 1.0.0
-executor: runtime
+
 title: Health
-navigable: false
+
 resolvable: true
-man:
-  default: resources/man.yak
+navigable: false
+
+executor: runtime
+
 entry:
   run: app.py
+
+man:
+  default: resources/man.yak

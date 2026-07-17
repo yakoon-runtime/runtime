@@ -1,11 +1,16 @@
 version: 1.0.0
+
 title: Workspace Python
+
 resolvable: true
 navigable: false
+
 executor: python
-invocation:
-  params:
-  - key: name
-    positional: true
+
 entry:
   run: app.py
+
+invocation:
+  params:
+    - key: name
+      positional: true

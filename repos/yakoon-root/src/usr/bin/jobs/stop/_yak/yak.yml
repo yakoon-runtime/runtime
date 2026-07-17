@@ -1,16 +1,22 @@
 version: 1.0.0
+
 title: Stop a running flow
+
 resolvable: true
 navigable: false
+
 executor: runtime
-invocation:
-  params:
-  - key: index
-    positional: true
-    required: false
-  - key: current
-    positional: false
-man:
-  default: resources/man.yak
+
 entry:
   run: app.py
+
+invocation:
+  params:
+    - key: index
+      positional: true
+      required: false
+    - key: current
+      positional: false
+
+man:
+  default: resources/man.yak

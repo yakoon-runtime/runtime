@@ -1,11 +1,17 @@
 version: 1.0.0
-executor: runtime
+
 title: Memory
-navigable: false
+
 resolvable: true
-projection:
-  default: resources/default.yak
-man:
-  default: resources/man.yak
+navigable: false
+
+executor: runtime
+
 entry:
   run: app.py
+
+projection:
+  default: resources/default.yak
+
+man:
+  default: resources/man.yak

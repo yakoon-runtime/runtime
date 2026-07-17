@@ -1,10 +1,15 @@
 version: 1.0.0
+
 title: Network
-contextual: true
-navigable: true
+
 resolvable: true
+navigable: true
+contextual: true
+
 executor: runtime
-man:
-  default: resources/man.yak
+
 entry:
   run: app.py
+
+man:
+  default: resources/man.yak

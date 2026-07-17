@@ -1,11 +1,16 @@
 version: 1.0.0
+
 title: Jobs
-contextual: true
-navigable: true
+
 resolvable: true
+navigable: true
+contextual: true
+
 executor: runtime
-man:
-  default: resources/man.yak
+
 entry:
   run: app.py
   setup: setup.py
+
+man:
+  default: resources/man.yak

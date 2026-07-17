@@ -1,15 +1,21 @@
 version: 1.0.0
+
 name: set
 title: Change session settings
+
 resolvable: true
 navigable: false
 contextual: false
+
 executor: runtime
+
+entry:
+  run: app.py
+
 invocation:
   min_options: 1
   params:
-  - key: interaction
+    - key: interaction
+
 man:
   default: resources/man.yak
-entry:
-  run: app.py

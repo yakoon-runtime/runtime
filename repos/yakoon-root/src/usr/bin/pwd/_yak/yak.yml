@@ -1,11 +1,16 @@
 version: 1.0.0
+
 name: pwd
 title: Print working directory
+
 resolvable: true
 navigable: false
 contextual: false
+
 executor: runtime
-man:
-  default: resources/man.yak
+
 entry:
   run: app.py
+
+man:
+  default: resources/man.yak

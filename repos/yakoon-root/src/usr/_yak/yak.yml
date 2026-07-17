@@ -1,4 +1,5 @@
-contextual: true
-navigable: true
-resolvable: false
 title: usr
+
+resolvable: false
+navigable: true
+contextual: true

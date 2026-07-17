@@ -1,14 +1,20 @@
 version: 1.0.0
+
 title: Connect to remote runtime
+
 resolvable: true
 navigable: false
+
 executor: runtime
-man:
-  default: resources/man.yak
-invocation:
-  params:
-  - key: name
-    positional: true
-    required: true
+
 entry:
   run: app.py
+
+invocation:
+  params:
+    - key: name
+      positional: true
+      required: true
+
+man:
+  default: resources/man.yak

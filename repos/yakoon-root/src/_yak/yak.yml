@@ -1,5 +1,6 @@
-contextual: true
 name: root
-navigable: true
-resolvable: false
 title: Yakoon Root
+
+resolvable: false
+navigable: true
+contextual: true

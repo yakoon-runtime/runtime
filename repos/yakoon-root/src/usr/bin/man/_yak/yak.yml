@@ -1,18 +1,25 @@
 version: 1.0.0
+
 name: man
 title: Show manual for a command
+
 resolvable: true
 navigable: false
 contextual: false
+
 executor: runtime
-invocation:
-  params:
-  - key: command
-    positional: true
-    required: true
-projection:
-  default: resources/default.yak
-man:
-  default: resources/man.yak
+
 entry:
   run: app.py
+
+invocation:
+  params:
+    - key: command
+      positional: true
+      required: true
+
+projection:
+  default: resources/default.yak
+
+man:
+  default: resources/man.yak
