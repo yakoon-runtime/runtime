@@ -8,6 +8,7 @@ async def main():
     print(await hello.greet())
     print(await hello.greet(name="Yakoon"))
 
+    # access to the context
     ctx = context.current()
     print(f"\nrunning at: {ctx.node.get('path', '?')}")
     print(f"workspace: {ctx.workspace}")
@@ -15,5 +16,8 @@ async def main():
     print(f"user: {ctx.user.get('name', ctx.user.get('id', '?'))}")
     print(f"session: {ctx.session}")
 
+    # access to request
     req = context.request()
     print(f"request: command={req.command}, args={req.args()}")
+
+    # TODO: access to session
