@@ -5,10 +5,11 @@ Everything else (resolve, load, context, output) lives here.
 """
 
 import importlib.util
+import json
 import os
 import sys
 import uuid
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
@@ -72,12 +73,39 @@ def build_app_file(root: Path, target_path: str) -> Path | None:
     return None
 
 
+def _build_context_dict(space, target_path: str) -> dict:
+    """Build a Context JSON dict from a Runtime space object."""
+    node_name = target_path.rsplit("/", 1)[-1] if target_path else ""
+    workspace = space.session.get_data("fs:root") if space.session else ""
+
+    return {
+        "node": {
+            "path": target_path,
+            "name": node_name,
+        },
+        "cwd": space.session.get_current_path() if space.session else "",
+        "workspace": str(workspace) if workspace else "",
+        "user": {
+            "id": str(space.session.key) if space.session else None,
+        },
+        "session": {
+            "key": str(space.session.key) if space.session else None,
+            "lang": space.session.lang if space.session else None,
+        },
+        "tokens": (
+            list(space.request.args())[1:]
+            if space.request and space.request.args()
+            else []
+        ),
+    }
+
+
 def load_and_capture(
     space,
     target_path: str,
     app_file: Path,
 ) -> tuple[list[str], str]:
-    """Set context, load module, capture stdout from import.
+    """Set context, load module, capture stdout/stderr from import.
 
     Returns (error_messages, captured_stdout) where error_messages
     is empty on success or a list of error lines.
@@ -88,6 +116,12 @@ def load_and_capture(
         return [f"error: cannot load {app_file}"], ""
 
     node_name = target_path.rsplit("/", 1)[-1] if target_path else ""
+
+    # Configure SDK transport and context
+    os.environ["YAK_ENDPOINT"] = "inprocess://"
+    os.environ["YAK_CONTEXT"] = json.dumps(_build_context_dict(space, target_path))
+
+    # Legacy CommandContext for runtime internals
     _set_context(
         CommandContext(
             path=target_path,
@@ -107,7 +141,8 @@ def load_and_capture(
     mod = importlib.util.module_from_spec(spec)
     sys.modules[mod_name] = mod
     buf = StringIO()
-    with redirect_stdout(buf):
+    err_buf = StringIO()
+    with redirect_stdout(buf), redirect_stderr(err_buf):
         spec.loader.exec_module(mod)
 
     return [], buf.getvalue(), mod

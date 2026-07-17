@@ -1,6 +1,6 @@
 import inspect
 import sys
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
 
@@ -18,15 +18,16 @@ from y5n.base.projection import to_text
 
 async def _run_main(mod):
     if not hasattr(mod, "main"):
-        return ""
+        return "", ""
     main_fn = mod.main
     buf = StringIO()
-    with redirect_stdout(buf):
+    err_buf = StringIO()
+    with redirect_stdout(buf), redirect_stderr(err_buf):
         if inspect.iscoroutinefunction(main_fn):
             await main_fn()
         else:
             main_fn()
-    return buf.getvalue()
+    return buf.getvalue(), err_buf.getvalue()
 
 
 async def run(space):
@@ -63,7 +64,10 @@ async def run(space):
     for outcome in emit_output(import_output):
         yield outcome
 
-    main_output = await _run_main(mod)
+    main_output, main_errors = await _run_main(mod)
+    if main_errors:
+        for line in main_errors.splitlines():
+            yield Outcome(effects=[EmitView(to_text(f"error: {line}"), mode="append")])
     for outcome in emit_output(main_output):
         yield outcome
 
