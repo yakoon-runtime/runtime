@@ -59,7 +59,8 @@ class FakeSession:
     def get_identity(self) -> Any:
         return None
 
-    def get_identity_name(self) -> str | None:
+    @property
+    def user_name(self) -> str | None:
         return None
 
 

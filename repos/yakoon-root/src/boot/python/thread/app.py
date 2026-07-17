@@ -46,7 +46,7 @@ async def run(space):
         )
         return
 
-    current = space.session.get_current_path() if space.session else None
+    current = space.session.cwd if space.session else None
     target_path = resolve_tree_path(target_path, current)
 
     app_file = build_app_file(root, target_path)

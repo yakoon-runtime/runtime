@@ -8,16 +8,15 @@ async def main():
     print(await hello.greet())
     print(await hello.greet(name="Yakoon"))
 
-    # access to the context
     ctx = context.current()
-    print(f"\nrunning at: {ctx.node.get('path', '?')}")
-    print(f"workspace: {ctx.workspace}")
-    print(f"cwd: {ctx.cwd}")
-    print(f"user: {ctx.user.get('name', ctx.user.get('id', '?'))}")
-    print(f"session: {ctx.session}")
+    print(f"path:   {ctx.node.get('path', '?')}")
+    print(f"cwd:    {ctx.cwd}")
+    print(f"user:   {ctx.user.get('name', ctx.user.get('id', '?'))}")
 
-    # access to request
+    ses = context.session()
+    print(f"locale: {ses.locale}")
+
     req = context.request()
-    print(f"request: command={req.command}, args={req.args()}")
-
-    # TODO: access to session
+    print(f"args:   {req.args()}")
+    if req.has_option("greet"):
+        print(f"--greet value: {req.option('greet')}")

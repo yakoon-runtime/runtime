@@ -60,7 +60,7 @@ def _get_root(space: NodeSpace) -> Path:
 
 
 def _get_cwd(space: NodeSpace) -> Path:
-    raw = space.session.get_current_path()
+    raw = space.session.cwd
     if not raw or raw == "/":
         return _get_root(space)
     # Try tree-relative first (e.g. /var → root/var)
@@ -85,4 +85,4 @@ def _set_path(space: NodeSpace, path: Path, root: Path) -> None:
             display = "/" + str(rel) if str(rel) != "." else "/"
         except ValueError:
             display = str(resolved)
-    space.session.set_current_path(display)
+    space.session.set_cwd(display)

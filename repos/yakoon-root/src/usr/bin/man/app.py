@@ -21,7 +21,7 @@ async def run(space: NodeSpace):
 
     # Try contextual path first (e.g. man add from /grant/group)
     lookup = key
-    current = space.session.get_current_path()
+    current = space.session.cwd
     if current and current != "/" and not key.startswith("/"):
         lookup = f"{current}/{key}"
 

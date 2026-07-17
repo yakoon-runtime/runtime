@@ -209,11 +209,12 @@ class Session:
     # CURRENT PATH
     # ----------------------------
 
-    def set_current_path(self, path: str) -> None:
+    def set_cwd(self, path: str) -> None:
         self.data.current_path = path
 
-    def get_current_path(self, default: str = "") -> str:
-        return self.data.current_path or default
+    @property
+    def cwd(self) -> str:
+        return self.data.current_path or ""
 
     # ----------------------------
     # Identity
@@ -228,7 +229,8 @@ class Session:
             return Key.from_str(self.data.user_key)
         return None
 
-    def get_identity_name(self) -> str | None:
+    @property
+    def user_name(self) -> str | None:
         return self.data.user_name
 
     def clear_identity(self) -> None:

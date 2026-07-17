@@ -139,7 +139,7 @@ def _root_path(space) -> Path:
 def _resolve_fs_path(space, root: Path, target: str | None) -> Path:
     if target and target.startswith("/"):
         return root / target.lstrip("/")
-    raw = space.session.get_current_path()
+    raw = space.session.cwd
     if raw and raw != "/":
         tree_test = root / raw.lstrip("/")
         if tree_test.exists():
@@ -154,7 +154,7 @@ def _resolve_fs_path(space, root: Path, target: str | None) -> Path:
 
 
 def _tree_path(space, target: str | None) -> str:
-    raw = space.session.get_current_path() or "/"
+    raw = space.session.cwd or "/"
     if target:
         if target.startswith("/"):
             return target

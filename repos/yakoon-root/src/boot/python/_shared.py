@@ -83,15 +83,16 @@ def _build_context_dict(space, target_path: str) -> dict:
             "path": target_path,
             "name": node_name,
         },
-        "cwd": space.session.get_current_path() if space.session else "",
+        "cwd": space.session.cwd if space.session else "",
         "workspace": str(workspace) if workspace else "",
         "user": {
             "id": str(space.session.key) if space.session else None,
-            "name": space.session.get_identity_name() if space.session else None,
+            "name": space.session.user_name if space.session else None,
         },
         "session": {
             "key": str(space.session.key) if space.session else None,
             "lang": space.session.lang if space.session else None,
+            "interaction": space.session.interaction.value if space.session else None,
         },
         "tokens": (
             list(space.request.args())[1:]

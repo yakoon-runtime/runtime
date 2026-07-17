@@ -46,7 +46,7 @@ class ProcessExecutor(Executor):
             return _empty()
 
         ws_root = space.session.get_data("fs:root") if space.session else ""
-        raw_path = space.session.get_current_path() if space.session else ""
+        raw_path = space.session.cwd if space.session else ""
         if raw_path and raw_path != "/":
             root_path = Path(ws_root) if ws_root else Path()
             cwd = root_path / raw_path.lstrip("/")

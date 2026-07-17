@@ -195,7 +195,7 @@ class InvocationResolver:
 
     def _resolve_context(self, session: Session) -> Node | None:
         """Walk from root to the session's current path node."""
-        path = session.get_current_path()
+        path = session.cwd
         if not path or path == "/":
             return None
         walk = self._root

@@ -4,7 +4,7 @@ from y5n.api.projections import to_text
 
 
 async def run(space: NodeSpace):
-    display = space.session.get_current_path()
+    display = space.session.cwd
     if not display:
         display = space.session.get_data("fs:root", "/")
     yield out(to_text(display))

@@ -1,4 +1,4 @@
 resolvable: false
 navigable: true
 
-expose: false
+expose: true
