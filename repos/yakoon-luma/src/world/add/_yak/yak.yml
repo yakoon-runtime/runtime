@@ -1,5 +1,23 @@
 version: 1.0.0
+
 title: Add World
+
 resolvable: true
 navigable: false
 
+expose: false
+
+executor: runtime
+
+entry:
+  run: app.py
+
+invocation:
+  params:
+    - key: name
+      required: true
+      positional: true
+    - key: description
+
+man:
+  default: resources/man.yak

@@ -1,5 +1,26 @@
 version: 1.0.0
+
 title: Show Exit
+
 resolvable: true
 navigable: false
 
+expose: false
+
+executor: runtime
+
+entry:
+  run: app.py
+
+invocation:
+  params:
+    - key: name
+      required: true
+      positional: true
+    - key: world
+      required: true
+    - key: box
+      required: true
+
+man:
+  default: resources/man.yak

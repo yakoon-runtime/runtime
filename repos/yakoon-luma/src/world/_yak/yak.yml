@@ -1,4 +1,7 @@
 title: Worlds
-contextual: true
-navigable: true
+
 resolvable: false
+navigable: true
+contextual: true
+
+expose: false

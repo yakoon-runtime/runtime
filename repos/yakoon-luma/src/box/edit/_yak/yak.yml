@@ -1,5 +1,26 @@
 version: 1.0.0
+
 title: Edit Box
+
 resolvable: true
 navigable: false
 
+expose: false
+
+executor: runtime
+
+entry:
+  run: app.py
+
+invocation:
+  params:
+    - key: name
+      required: true
+      positional: true
+    - key: world
+      required: true
+    - key: new-name
+    - key: description
+
+man:
+  default: resources/man.yak

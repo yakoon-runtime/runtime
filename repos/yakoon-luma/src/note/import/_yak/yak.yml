@@ -1,5 +1,21 @@
 version: 1.0.0
+
 title: Import Notes
+
 resolvable: true
 navigable: false
 
+expose: false
+
+executor: runtime
+
+entry:
+  run: app.py
+
+invocation:
+  params:
+    - key: file
+      required: true
+
+man:
+  default: resources/man.yak

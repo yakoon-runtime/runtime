@@ -1,5 +1,21 @@
 version: 1.0.0
+
 title: List Notes
+
 resolvable: true
 navigable: false
 
+expose: false
+
+executor: runtime
+
+entry:
+  run: app.py
+
+invocation:
+  params:
+    - key: box
+    - key: world
+
+man:
+  default: resources/man.yak

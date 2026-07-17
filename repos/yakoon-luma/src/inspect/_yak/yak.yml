@@ -1,5 +1,22 @@
 version: 1.0.0
+
 title: Inspect
+
 resolvable: true
 navigable: false
 
+expose: false
+
+executor: runtime
+
+entry:
+  run: app.py
+
+invocation:
+  params:
+    - key: name
+      required: true
+      positional: true
+
+man:
+  default: resources/man.yak

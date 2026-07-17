@@ -1,3 +1,11 @@
 title: Luma
-navigable: true
+
 resolvable: false
+navigable: true
+
+expose: false
+
+executor: runtime
+
+entry:
+  setup: libs/setup.py

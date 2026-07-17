@@ -10,4 +10,4 @@ expose: false
 executor: runtime
 
 entry:
-  setup: setup.py
+  setup: libs/setup.py

@@ -1,5 +1,23 @@
 version: 1.0.0
+
 title: Add Note
+
 resolvable: true
 navigable: false
 
+expose: false
+
+executor: runtime
+
+entry:
+  run: app.py
+
+invocation:
+  params:
+    - key: name
+      required: true
+      positional: true
+    - key: content
+
+man:
+  default: resources/man.yak
