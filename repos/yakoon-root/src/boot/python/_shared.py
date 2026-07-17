@@ -87,6 +87,7 @@ def _build_context_dict(space, target_path: str) -> dict:
         "workspace": str(workspace) if workspace else "",
         "user": {
             "id": str(space.session.key) if space.session else None,
+            "name": space.session.get_identity_name() if space.session else None,
         },
         "session": {
             "key": str(space.session.key) if space.session else None,
