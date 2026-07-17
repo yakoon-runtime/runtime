@@ -9,7 +9,7 @@ pip install \
 
 # sdk
 pip install \
-  -e sdk
+  -e sdk/python
 
 # transport
 pip install \
