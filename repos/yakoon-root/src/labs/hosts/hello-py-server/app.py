@@ -3,6 +3,11 @@
 from y5n.sdk import ports
 
 
+class Greeter:
+    def greet(self, name="World"):
+        return f"Hello, {name}!"
+
+
 def main():
-    ports.promote("hello", {"greet": lambda name="World": f"Hello, {name}!"})
+    ports.promote("hello", Greeter())
     print("service 'hello' registered")
