@@ -1,10 +1,11 @@
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.projections import to_text
+from y5n.sdk import context
 
 
-async def run(space: NodeSpace):
-    display = space.session.cwd
+async def main():
+    ctx = context.current()
+
+    display = ctx.cwd
     if not display:
-        display = space.session.get_data("fs:root", "/")
-    yield out(to_text(display))
+        display = ctx.workspace or "/"
+
+    print(display)

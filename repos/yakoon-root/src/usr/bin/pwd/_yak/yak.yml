@@ -9,10 +9,7 @@ contextual: false
 
 expose: false
 
-executor: runtime
+host: /boot/python/runtime
 
 entry:
   run: app.py
-
-man:
-  default: resources/man.yak
