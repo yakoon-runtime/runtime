@@ -5,7 +5,6 @@ Everything else (resolve, load, context, output) lives here.
 """
 
 import importlib.util
-import json
 import os
 import sys
 import uuid
@@ -17,7 +16,8 @@ import yaml
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
 from y5n.base.projection import to_text
-from y5n.base.runtime.context import CommandContext, _set_context
+from y5n.sdk import context as sdk_context
+from y5n.sdk.libs.models import Context as SdkContext
 
 
 def _read_yak_meta(dir_path: Path) -> dict:
@@ -115,28 +115,10 @@ def load_and_capture(
     if spec is None or spec.loader is None:
         return [f"error: cannot load {app_file}"], ""
 
-    node_name = target_path.rsplit("/", 1)[-1] if target_path else ""
-
-    # Configure SDK transport and context
     os.environ["YAK_ENDPOINT"] = "inprocess://"
-    os.environ["YAK_CONTEXT"] = json.dumps(_build_context_dict(space, target_path))
 
-    # Legacy CommandContext for runtime internals
-    _set_context(
-        CommandContext(
-            path=target_path,
-            command=node_name,
-            tokens=(
-                list(space.request.args())[1:]
-                if space.request and space.request.args()
-                else []
-            ),
-            session={
-                "key": str(space.session.key) if space.session else None,
-                "lang": space.session.lang if space.session else None,
-            },
-        )
-    )
+    ctx = SdkContext.from_dict(_build_context_dict(space, target_path))
+    sdk_context._set(ctx)
 
     mod = importlib.util.module_from_spec(spec)
     sys.modules[mod_name] = mod
