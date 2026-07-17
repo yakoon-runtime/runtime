@@ -17,7 +17,9 @@ async def run(space: NodeSpace):
     await sequencer.initialize()
 
     for spec in ContactService.index_specs():
-        await store.objects.ensure_indexes(namespace=namespaces.contact_namespace(), specs=[spec])
+        await store.objects.ensure_indexes(
+            namespace=namespaces.contact_namespace(), specs=[spec]
+        )
 
     contacts = ContactService(
         on_get=store.objects.get,

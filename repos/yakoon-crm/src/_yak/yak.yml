@@ -1,5 +1,11 @@
 name: crm
 title: Customer Relationship Management
+
 resolvable: false
 navigable: true
 contextual: true
+
+executor: runtime
+
+entry:
+  setup: setup.py
