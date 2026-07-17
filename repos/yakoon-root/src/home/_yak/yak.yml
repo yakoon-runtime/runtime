@@ -1,8 +1,6 @@
-name: root
-title: Yakoon Root
+title: Home
 
 resolvable: false
 navigable: true
-contextual: true
 
 expose: true

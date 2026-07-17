@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import yaml
 from y5n.api.data import DataRequest
 from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
@@ -23,20 +24,36 @@ async def run(space: NodeSpace):
         yield out(projection)
         return
 
+    # Check if the current package exposes all children (transparent container)
+    expose = False
+    yak_meta_path = fs_path / "_yak" / "yak.yml"
+    if yak_meta_path.is_file():
+        with open(yak_meta_path) as f:
+            meta = yaml.safe_load(f) or {}
+        expose = meta.get("expose", False)
+
     tree_path = _tree_path(space, target_name)
     on_source = space.ports.get(SOURCE_READ)
     result = await on_source(DataRequest(f"system:nodes --children {tree_path}"))
     node_map = {r["key"]: r for r in result.rows} if result.status == "ok" else {}
 
-    fs_entries = sorted(fs_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+    fs_entries = sorted(
+        fs_path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower())
+    )
     if not show_all:
-        fs_entries = [p for p in fs_entries if not p.name.startswith("_yak") and not p.name.startswith(".")]
+        fs_entries = [
+            p
+            for p in fs_entries
+            if not p.name.startswith("_yak")
+            and not p.name.startswith(".")
+            and not p.name.startswith("__")
+        ]
 
-    # Yak-Package-Rule: inside a package (directory with _yak/)
-    # only show Yak objects known to the tree (via node_map).
-    # Files and plain directories without a tree node are private
-    # implementation. Fallback: only subdirs with their own _yak/.
-    if (fs_path / "_yak").is_dir() and not show_all:
+    # Yak-Package-Rule: inside a strict package (not exposed) only show
+    # Yak objects known to the tree (via node_map).  Files and plain
+    # directories without a tree node are private implementation.
+    # Fallback: only subdirs with their own _yak/.
+    if (fs_path / "_yak").is_dir() and not show_all and not expose:
         if node_map:
             fs_entries = [p for p in fs_entries if p.name in node_map]
         else:
@@ -56,16 +73,18 @@ async def run(space: NodeSpace):
             row["size"] = size
             merged.append(row)
         else:
-            merged.append({
-                "key": p.name,
-                "name": p.name,
-                "kind": "dir" if is_dir else "file",
-                "navigable": is_dir,
-                "listed": True,
-                "executor": None,
-                "version": None,
-                "size": size,
-            })
+            merged.append(
+                {
+                    "key": p.name,
+                    "name": p.name,
+                    "kind": "dir" if is_dir else "file",
+                    "navigable": is_dir,
+                    "listed": True,
+                    "executor": None,
+                    "version": None,
+                    "size": size,
+                }
+            )
 
     merged.sort(key=_sort_key)
 
@@ -90,7 +109,10 @@ async def run(space: NodeSpace):
 
 
 def _sort_key(entry: dict) -> tuple:
-    return (_KIND_ORDER.get(entry.get("kind", "file"), 99), entry.get("key", "").lower())
+    return (
+        _KIND_ORDER.get(entry.get("kind", "file"), 99),
+        entry.get("key", "").lower(),
+    )
 
 
 def _content_size(path: Path) -> int:
