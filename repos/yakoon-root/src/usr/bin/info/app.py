@@ -10,7 +10,7 @@ _start_time = time.time()
 async def main():
     projection = ports.get("projection")
 
-    text = projection.render(
+    text = await projection.render(
         name="default",
         state={
             "time": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
