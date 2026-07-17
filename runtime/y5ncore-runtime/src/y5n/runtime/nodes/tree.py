@@ -38,6 +38,7 @@ class Capability:
 
     executor_kind: ExecutorKind = ExecutorKind.RUNTIME
     host: str | None = None
+    entry: dict[str, str] = field(default_factory=dict)
     invocations: list[Invocation] = field(default_factory=list)
     resources: dict[str, dict[str, Path]] = field(default_factory=dict)
 
@@ -105,32 +106,33 @@ class Tree:
             fs_path=dir_path,
         )
         node.metadata["version"] = meta.get("version")
-        cap = self._load_capability(dir_path / "_yak" / "run")
-        if cap:
-            node.invocations = cap.invocations
-            node.resources = cap.resources
-            node.metadata["executor"] = cap.executor_kind.value
-            if cap.host:
-                node.metadata["host"] = cap.host
-                node.run = _make_host_handler(self, node.key, cap.host)
-            else:
-                executor = self._executors.get(cap.executor_kind)
-                node.run = _make_handler(executor, node, Phase.RUN)
-        return node
 
-    def _load_capability(self, cap_dir: Path) -> Capability | None:
-        meta = _read_yaml(cap_dir / "yak.yml")
-        if not meta:
-            return None
+        # Backward compat: if _yak/yak.yml has no host/executor/entry,
+        # fall back to _yak/run/yak.yml (old structure).
+        run_meta = _read_yaml(dir_path / "_yak" / "run" / "yak.yml")
+        if (
+            run_meta
+            and "host" not in meta
+            and "executor" not in meta
+            and "entry" not in meta
+        ):
+            meta = {**meta, **run_meta}
+
+        # Parse host / executor / entry from the same yak.yml
         executor_kind = ExecutorKind(meta.get("executor", "runtime"))
-
-        # Host field: maps to /boot/<host>-host
-        # Replaces executor for user commands — the host is a runtime command
-        # that loads and runs the actual program.
         host = meta.get("host")
         if host:
             executor_kind = ExecutorKind.RUNTIME
 
+        node.metadata["executor"] = executor_kind.value
+        if host:
+            node.metadata["host"] = host
+
+        entry = meta.get("entry")
+        if isinstance(entry, dict):
+            node.metadata["entry"] = entry
+
+        # Invocations
         invocations: list[Invocation] = []
         inv_data = meta.get("invocation")
         if isinstance(inv_data, dict):
@@ -155,7 +157,9 @@ class Tree:
                     default=inv_data.get("default", True),
                 )
             )
+        node.invocations = invocations
 
+        # Resources (projection, man) — resolved relative to command root
         resources: dict[str, dict[str, Path]] = {}
         for res_type in RESOURCE_KEYS:
             variants = meta.get(res_type)
@@ -163,18 +167,24 @@ class Tree:
                 continue
             resolved: dict[str, Path] = {}
             for variant, filename in variants.items():
-                fpath = (cap_dir / filename).resolve()
+                # Backward compat: fall back to resolving relative to _yak/run/
+                fpath = (dir_path / filename).resolve()
+                if not fpath.is_file():
+                    fpath = (dir_path / "_yak" / "run" / filename).resolve()
                 if fpath.is_file():
                     resolved[variant] = fpath
             if resolved:
                 resources[res_type] = resolved
+        node.resources = resources
 
-        return Capability(
-            executor_kind=executor_kind,
-            host=host,
-            invocations=invocations,
-            resources=resources,
-        )
+        # Run handler
+        if host:
+            node.run = _make_host_handler(self, node.key, host)
+        else:
+            executor = self._executors.get(executor_kind)
+            node.run = _make_handler(executor, node, Phase.RUN)
+
+        return node
 
     def _link_nodes(self, created: dict[str, Node]) -> None:
         sorted_rels = sorted(created.keys(), key=lambda r: len(Path(r).parts))
@@ -256,13 +266,14 @@ class Tree:
     async def setup(self) -> None:
         for node in self._nodes.values():
             fs_path = node.fs_path or self._root_path
-            meta = _read_yaml(fs_path / "_yak" / "setup" / "yak.yml")
-            if not meta:
+            entry = node.metadata.get("entry", {})
+            setup_path = entry.get("setup")
+            if not setup_path:
                 continue
-            app_file = fs_path / "_yak" / "setup" / "app.py"
+            app_file = fs_path / setup_path
             if not app_file.is_file():
                 continue
-            kind = ExecutorKind(meta.get("executor", "runtime"))
+            kind = ExecutorKind(node.metadata.get("executor", "runtime"))
             executor = self._executors.get(kind)
             if executor is None:
                 continue
@@ -322,7 +333,7 @@ class Tree:
         Checks every node for:
           - yak.yml readable
           - Executor registered
-          - app.py exists for declared phases
+          - entry file exists for declared phases
         """
         root_result = HealthResult.green()
         root_result.message = "Tree validation"
@@ -336,25 +347,26 @@ class Tree:
                 continue
 
             issues: list[str] = []
+            meta = _read_yaml(fs_path / "_yak" / "yak.yml")
+            entry = meta.get("entry", {}) if meta else {}
+
             for phase in ("run", "setup"):
-                phase_dir = fs_path / "_yak" / phase
-                meta = _read_yaml(phase_dir / "yak.yml")
-                if not meta:
+                entry_path = entry.get(phase)
+                if not entry_path:
                     continue
-                kind_name = meta.get("executor", "runtime")
-                try:
-                    kind = ExecutorKind(kind_name)
-                except ValueError:
-                    issues.append(f"{phase}: unknown executor '{kind_name}'")
-                    continue
-                try:
-                    self._executors.get(kind)
-                except KeyError:
-                    issues.append(f"{phase}: executor '{kind_name}' not registered")
-                    continue
-                app_file = phase_dir / "app.py"
+                app_file = fs_path / entry_path
                 if not app_file.is_file():
-                    issues.append(f"{phase}: app.py not found")
+                    issues.append(f"{phase}: {entry_path} not found")
+
+            executor_value = (
+                meta.get("host") or meta.get("executor", "") if meta else ""
+            )
+            if executor_value and not meta.get("host"):
+                try:
+                    kind = ExecutorKind(executor_value)
+                    self._executors.get(kind)
+                except (ValueError, KeyError):
+                    issues.append(f"unknown executor '{executor_value}'")
 
             if issues:
                 child = HealthResult.yellow("; ".join(issues))

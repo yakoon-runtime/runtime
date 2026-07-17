@@ -1,7 +1,26 @@
 version: 1.0.0
+
 name: ls
 title: List directory
+
 resolvable: true
 navigable: false
 contextual: false
 
+executor: runtime
+
+entry:
+  run: app.py
+
+invocation:
+  params:
+    - key: name
+      positional: true
+    - key: long
+    - key: all
+
+projection:
+  default: resources/default.yak
+
+man:
+  default: resources/man.yak

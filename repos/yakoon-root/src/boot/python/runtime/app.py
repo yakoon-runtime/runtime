@@ -1,11 +1,10 @@
-import asyncio
 import inspect
 import sys
 from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from python._shared import (
     build_app_file,
     emit_output,
@@ -21,22 +20,19 @@ async def _run_main(mod):
     if not hasattr(mod, "main"):
         return ""
     main_fn = mod.main
-    if inspect.iscoroutinefunction(main_fn):
-        buf = StringIO()
-        with redirect_stdout(buf):
-            await main_fn()
-        return buf.getvalue()
-    loop = asyncio.get_running_loop()
     buf = StringIO()
     with redirect_stdout(buf):
-        await loop.run_in_executor(None, main_fn)
+        if inspect.iscoroutinefunction(main_fn):
+            await main_fn()
+        else:
+            main_fn()
     return buf.getvalue()
 
 
 async def run(space):
     target_path = space.request.arg(0) if space.request else None
     if not target_path:
-        yield Outcome(effects=[EmitView(to_text("Usage: python/thread <tree-path>"))])
+        yield Outcome(effects=[EmitView(to_text("Usage: python/runtime <tree-path>"))])
         return
 
     root = Path(space.session.get_data("fs:root")) if space.session else Path()

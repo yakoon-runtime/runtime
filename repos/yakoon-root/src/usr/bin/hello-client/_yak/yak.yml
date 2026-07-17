@@ -1,4 +1,11 @@
 version: 1.0.0
+
 title: Hello Client
+
 resolvable: true
 navigable: false
+
+host: /boot/python/runtime
+
+entry:
+  run: app.py

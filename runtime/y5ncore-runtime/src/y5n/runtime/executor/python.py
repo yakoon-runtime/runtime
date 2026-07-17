@@ -43,17 +43,31 @@ class PythonExecutor(Executor):
     def __init__(self):
         self._loaded_modules: dict[Path, types.ModuleType] = {}
 
+    def _entry_file(self, node: Node, phase: Phase) -> Path | None:
+        fs_path = node.fs_path
+        if fs_path is None:
+            return None
+
+        entry = node.metadata.get("entry", {})
+        entry_path = entry.get(phase.value) if isinstance(entry, dict) else None
+        if entry_path:
+            candidate = fs_path / entry_path
+            if candidate.is_file():
+                return candidate
+        # Fallback for commands that haven't migrated their structure
+        fallback = fs_path / "_yak" / phase.value / "app.py"
+        if fallback.is_file():
+            return fallback
+        return None
+
     def run(
         self,
         node: Node,
         phase: Phase,
         space: NodeSpace,
     ) -> RunResult:
-        fs_path = node.fs_path
-        if fs_path is None:
-            return _empty()
-        app_file = fs_path / "_yak" / phase.value / "app.py"
-        if not app_file.is_file():
+        app_file = self._entry_file(node, phase)
+        if app_file is None:
             return _empty()
 
         req = space.request
@@ -63,9 +77,7 @@ class PythonExecutor(Executor):
             _set_context(
                 CommandContext(
                     path=str(node.path) if node.path else None,
-                    command=(
-                        str(node.path).rsplit("/", 1)[-1] if node.path else None
-                    ),
+                    command=(str(node.path).rsplit("/", 1)[-1] if node.path else None),
                     tokens=list(req.args()) if req else None,
                     session=_build_session_dict(ses),
                 )
@@ -90,9 +102,7 @@ class PythonExecutor(Executor):
             output = buf.getvalue()
             if output:
                 for line in output.splitlines():
-                    yield Outcome(
-                        effects=[EmitView(to_text(line), mode="append")]
-                    )
+                    yield Outcome(effects=[EmitView(to_text(line), mode="append")])
 
             yield Outcome()
 
@@ -103,7 +113,9 @@ class PythonExecutor(Executor):
         if loaded is not None:
             return loaded
 
-        full_name = "yak.bundle.batch." + path.parent.parent.parent.name + "." + path.stem
+        full_name = (
+            "yak.bundle.batch." + path.parent.parent.parent.name + "." + path.stem
+        )
 
         spec = importlib.util.spec_from_file_location(full_name, path)
         if spec is None or spec.loader is None:

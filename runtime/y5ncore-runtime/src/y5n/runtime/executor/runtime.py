@@ -38,17 +38,31 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
         self._loaded_modules: dict[Path, types.ModuleType] = {}
         self._root_ports = None
 
+    def _entry_file(self, node: Node, phase: Phase) -> Path | None:
+        fs_path = node.fs_path
+        if fs_path is None:
+            return None
+
+        entry = node.metadata.get("entry", {})
+        entry_path = entry.get(phase.value) if isinstance(entry, dict) else None
+        if entry_path:
+            candidate = fs_path / entry_path
+            if candidate.is_file():
+                return candidate
+        # Fallback for host commands that haven't migrated their structure
+        fallback = fs_path / "_yak" / phase.value / "app.py"
+        if fallback.is_file():
+            return fallback
+        return None
+
     def run(
         self,
         node: Node,
         phase: Phase,
         space: NodeSpace,
     ) -> RunResult:
-        fs_path = node.fs_path
-        if fs_path is None:
-            return _empty()
-        app_file = fs_path / "_yak" / phase.value / "app.py"
-        if not app_file.is_file():
+        app_file = self._entry_file(node, phase)
+        if app_file is None:
             return _empty()
         tree_path = str(node.path)
         mod = self._load_module(app_file, tree_path=tree_path, phase=phase.value)

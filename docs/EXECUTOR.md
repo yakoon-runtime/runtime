@@ -3,60 +3,81 @@
 ## Directory Structure
 
 ```
-_yak/
-├── yak.yml
-├── setup/
-│   └── app.py
-├── run/
-│   └── app.py
-└── resources/
+my-command/
+├── app.py
+├── ports.py
+├── resources/
+│   ├── default.yak
+│   └── man.yak
+└── _yak/
+    └── yak.yml
 ```
 
-## Entry Point
+The command author decides where code and resources live.
+The `_yak/yak.yml` declares the entry points.
 
-Every phase module exposes exactly one callable with the same signature:
+## Entry Declaration
+
+```yaml
+# _yak/yak.yml
+entry:
+  run: app.py
+  setup: setup.py        # optional
+```
+
+The host or executor reads `entry.run` from `_yak/yak.yml`,
+resolves it relative to the command root, and loads the file.
+
+## Entry Point Signatures
+
+### `executor: runtime` (runtime commands)
 
 ```python
-async def run(space: NodeSpace) -> None:
+async def run(space: NodeSpace):
     ...
 ```
 
-- `_yak/setup/app.py` → `run(space)` is called when the node is initialized (mounted).
-- `_yak/run/app.py` → `run(space)` is called when the command is executed.
+Used by system commands (e.g. `ls`, `cd`) and host commands
+(e.g. `/boot/python/runtime`). The command receives the full
+`NodeSpace` with ports, session, and request access.
 
-## Architecture Rules
+### `host: /boot/python/...` (user commands through a host)
 
-| Layer | Responsibility |
-|-------|---------------|
-| **Executor** | Defines the ABI (file layout, function signature) |
-| **Directory** | Defines the context / phase (`setup`, `run`, ...) |
-| **Function** | Defines the action (`run`) |
+```python
+def main():          # sync — runs in scheduler or thread
+    ...
 
-No information is duplicated:
+async def main():    # async — runs in scheduler
+    ...
+```
 
-- The path `_yak/setup/` already means "this is setup".
-- The name `run` always means "execute this phase".
-- The signature `async def run(space: NodeSpace)` is the contract.
+The host loads the module, calls `main()`, captures stdout,
+and translates it into scheduler Outcomes.
 
-## What We Deliberately Avoid
+Python hosts also support the `from y5n.sdk import ports`
+SDK for service discovery and RPC.
 
-- **No `entry:` configuration.** The executor knows the layout. The bundle does not declare which file to load.
-- **No phase-named functions.** `async def setup(...)` or `async def shutdown(...)` would repeat information already encoded in the directory name.
-- **No `__init__.py` as entry point.** `__init__.py` remains a standard package initializer — never the location of business logic. `app.py` signals "code lives here."
+## Architecture Rule
+
+| Concept | Responsibility |
+|---------|---------------|
+| **`_yak/`** | Marks the start of a Yak object |
+| **`yak.yml`** | Describes the object completely (metadata, host/executor, entry, invocation, resources) |
+| **`entry.run`** | Tells the executor/host where to find the runnable code |
+| **Host/Executor** | Reads the entry, loads the module, executes it |
+
+No fixed subdirectory layout inside `_yak/`. The developer
+decides the command's internal structure.
 
 ## Future Phases
 
-The same pattern extends to any lifecycle phase:
-
+```yaml
+entry:
+  run: app.py
+  setup: setup.py
+  shutdown: shutdown.py    # future
+  health: health.py        # future
 ```
-_yak/setup/app.py     →  async def run(space)   # initialization
-_yak/run/app.py       →  async def run(space)   # execution
-_yak/shutdown/app.py  →  async def run(space)   # teardown (future)
-_yak/health/app.py    →  async def run(space)   # health check (future)
-```
 
-The executor loads `{phase}/app.py` and calls `run(space)`. The phase is determined by the runtime, not by the function name.
-
-## Rationale
-
-This design follows the same principle applied throughout the platform: **structure over configuration.** Just as mounts, nodes, and permissions are derived from the tree rather than declared in a registry, the entry point is derived from convention rather than configuration. The result is a system that is predictable, self-documenting, and free of redundant declarations.
+The executor reads the phase entry from `yak.yml`.
+If a phase is not declared, it is skipped.

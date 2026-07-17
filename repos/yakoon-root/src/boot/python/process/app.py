@@ -2,7 +2,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[4]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from python._shared import build_app_file, resolve_tree_path
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView

@@ -1,4 +1,11 @@
 version: 1.0.0
+
 title: Python Process Host
+
 resolvable: true
 navigable: false
+
+executor: runtime
+
+entry:
+  run: app.py

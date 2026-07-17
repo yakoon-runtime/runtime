@@ -12,10 +12,19 @@ from contextlib import redirect_stdout
 from io import StringIO
 from pathlib import Path
 
+import yaml
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
 from y5n.base.projection import to_text
 from y5n.base.runtime.context import CommandContext, _set_context
+
+
+def _read_yak_meta(dir_path: Path) -> dict:
+    yak_file = dir_path / "_yak" / "yak.yml"
+    if yak_file.is_file():
+        with open(yak_file) as f:
+            return yaml.safe_load(f) or {}
+    return {}
 
 
 def resolve_tree_path(tree_path: str, current_path: str | None) -> str:
@@ -32,7 +41,9 @@ def resolve_tree_path(tree_path: str, current_path: str | None) -> str:
 def find_command(root: Path, tree_path: str) -> Path | None:
     rel = tree_path.strip("/")
     candidate = root / rel
-    if (candidate / "_yak" / "run" / "app.py").is_file():
+    meta = _read_yak_meta(candidate)
+    entry = meta.get("entry", {}).get("run") if meta else None
+    if entry and (candidate / entry).is_file():
         return candidate
     return None
 
@@ -52,7 +63,9 @@ def build_app_file(root: Path, target_path: str) -> Path | None:
     """Resolve target_path to an app.py or .py file. Returns None on error."""
     bundle_dir = find_command(root, target_path)
     if bundle_dir is not None:
-        return bundle_dir / "_yak" / "run" / "app.py"
+        meta = _read_yak_meta(bundle_dir)
+        entry = meta.get("entry", {}).get("run", "")
+        return bundle_dir / entry if entry else None
     script = find_script(root, target_path)
     if script is not None:
         return script
@@ -60,7 +73,9 @@ def build_app_file(root: Path, target_path: str) -> Path | None:
 
 
 def load_and_capture(
-    space, target_path: str, app_file: Path,
+    space,
+    target_path: str,
+    app_file: Path,
 ) -> tuple[list[str], str]:
     """Set context, load module, capture stdout from import.
 

@@ -32,4 +32,4 @@ Always:
 4. Do not introduce technical debt to satisfy a request.
 5. Never perform Git write operations (commit, amend, rebase, push, tag, reset) unless explicitly requested.
 6. Do not modify project structure or architecture unless the request explicitly requires it.
-7. The Executor ABI (`docs/EXECUTOR.md`) is the authority for all bundle entry points: `_yak/{setup,run}/app.py` with `async def run(space)`. Do not use `python.py`, `main.py`, `entry:`, or phase-named functions like `setup()`.
+7. The Executor ABI (`docs/EXECUTOR.md`) is the authority for all bundle entry points. Entry files are declared via `entry.run`/`entry.setup` in `_yak/yak.yml`. `_yak/` only contains `yak.yml` — no fixed subdirectory layout.

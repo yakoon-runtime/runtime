@@ -1,5 +1,0 @@
-host: /boot/python/runtime
-invocation:
-  params:
-  - key: name
-    positional: true

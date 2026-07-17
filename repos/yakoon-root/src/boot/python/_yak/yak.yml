@@ -1,4 +1,6 @@
 version: 1.0.0
+
 title: Python Host
+
 resolvable: false
 navigable: true
