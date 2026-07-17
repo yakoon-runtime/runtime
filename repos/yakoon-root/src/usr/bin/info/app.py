@@ -2,16 +2,16 @@ import platform
 import time
 from datetime import UTC, datetime
 
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import PROJECT
+from y5n.sdk import ports
 
 _start_time = time.time()
 
 
-async def run(space: NodeSpace):
-    projection = await space.ports.get(PROJECT)(
-        space=space,
+async def main():
+    projection = ports.get("projection")
+
+    text = projection.render(
+        name="default",
         state={
             "time": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
             "uptime": _get_uptime(),
@@ -20,7 +20,7 @@ async def run(space: NodeSpace):
             "hostname": platform.node(),
         },
     )
-    yield out(projection)
+    print(text)
 
 
 def _get_uptime() -> str:
