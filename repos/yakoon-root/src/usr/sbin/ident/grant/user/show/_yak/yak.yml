@@ -2,4 +2,15 @@ version: 1.0.0
 title: Show User Permissions
 resolvable: true
 navigable: false
-
+executor: runtime
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+projection:
+  default: resources/default.yak
+man:
+  default: resources/man.yak
+entry:
+  run: app.py

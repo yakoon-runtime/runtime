@@ -2,4 +2,17 @@ version: 1.0.0
 title: Edit User
 resolvable: true
 navigable: false
-
+executor: runtime
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: password
+  - key: enabled
+projection:
+  default: resources/default.yak
+man:
+  default: resources/man.yak
+entry:
+  run: app.py

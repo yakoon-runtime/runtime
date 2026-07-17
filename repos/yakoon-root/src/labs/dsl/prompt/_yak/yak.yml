@@ -2,4 +2,6 @@ version: 1.0.0
 title: prompt example
 resolvable: true
 navigable: false
-
+executor: runtime
+entry:
+  run: app.py

@@ -3,4 +3,7 @@ executor: runtime
 title: Health
 navigable: false
 resolvable: true
-
+man:
+  default: resources/man.yak
+entry:
+  run: app.py

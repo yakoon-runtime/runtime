@@ -2,4 +2,13 @@ version: 1.0.0
 title: Bring flow to foreground
 resolvable: true
 navigable: false
-
+executor: runtime
+invocation:
+  params:
+  - key: index
+    positional: true
+    required: true
+man:
+  default: resources/man.yak
+entry:
+  run: app.py

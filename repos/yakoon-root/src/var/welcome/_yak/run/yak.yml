@@ -1,4 +1,0 @@
-executor: runtime
-
-projection:
-  default: resources/default.yak

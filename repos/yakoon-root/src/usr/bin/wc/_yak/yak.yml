@@ -2,3 +2,10 @@ version: 1.0.0
 title: Word Count
 resolvable: true
 navigable: false
+executor: process
+invocation:
+  params:
+  - key: name
+    positional: true
+entry:
+  run: app

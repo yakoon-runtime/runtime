@@ -4,4 +4,8 @@ title: Welcome screen
 resolvable: true
 navigable: false
 contextual: false
-
+executor: runtime
+projection:
+  default: resources/default.yak
+entry:
+  run: app.py

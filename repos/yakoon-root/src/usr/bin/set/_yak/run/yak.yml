@@ -1,9 +1,0 @@
-executor: runtime
-
-invocation:
-  min_options: 1
-  params:
-    - key: interaction
-
-man:
-  default: resources/man.yak

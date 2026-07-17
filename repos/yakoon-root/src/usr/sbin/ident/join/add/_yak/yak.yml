@@ -2,4 +2,18 @@ version: 1.0.0
 title: Add Join
 resolvable: true
 navigable: false
-
+executor: runtime
+invocation:
+  params:
+  - key: user
+    required: true
+    positional: true
+  - key: group
+    required: true
+    positional: true
+projection:
+  default: resources/default.yak
+man:
+  default: resources/man.yak
+entry:
+  run: app.py

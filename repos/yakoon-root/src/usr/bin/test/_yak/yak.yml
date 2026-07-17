@@ -4,4 +4,16 @@ title: Test port resolution from context
 resolvable: true
 navigable: false
 contextual: false
-
+executor: runtime
+invocation:
+  params:
+  - key: name
+    positional: true
+    required: false
+projection:
+  default: resources/default.yak
+  de: resources/de.yak
+man:
+  default: resources/man_default.yak
+entry:
+  run: app.py

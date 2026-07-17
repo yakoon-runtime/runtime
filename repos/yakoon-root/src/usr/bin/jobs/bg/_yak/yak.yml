@@ -2,4 +2,8 @@ version: 1.0.0
 title: Send flow to background
 resolvable: true
 navigable: false
-
+executor: runtime
+man:
+  default: resources/man.yak
+entry:
+  run: app.py

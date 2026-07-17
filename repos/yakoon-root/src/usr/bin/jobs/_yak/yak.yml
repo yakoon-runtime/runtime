@@ -3,4 +3,9 @@ title: Jobs
 contextual: true
 navigable: true
 resolvable: true
-
+executor: runtime
+man:
+  default: resources/man.yak
+entry:
+  run: app.py
+  setup: setup.py
