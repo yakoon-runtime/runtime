@@ -5,6 +5,8 @@ title: List remote runtimes
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

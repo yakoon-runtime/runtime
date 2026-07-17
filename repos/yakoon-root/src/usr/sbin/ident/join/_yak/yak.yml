@@ -3,3 +3,5 @@ title: Joins
 resolvable: false
 navigable: true
 contextual: true
+
+expose: false

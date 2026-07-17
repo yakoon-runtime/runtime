@@ -5,6 +5,8 @@ title: out example
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

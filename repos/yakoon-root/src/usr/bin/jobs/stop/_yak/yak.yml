@@ -5,6 +5,8 @@ title: Stop a running flow
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

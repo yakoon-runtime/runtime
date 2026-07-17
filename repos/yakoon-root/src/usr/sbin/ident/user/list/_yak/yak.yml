@@ -5,6 +5,8 @@ title: List Users
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

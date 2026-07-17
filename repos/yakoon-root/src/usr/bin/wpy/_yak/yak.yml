@@ -5,6 +5,8 @@ title: Workspace Python
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: python
 
 entry:

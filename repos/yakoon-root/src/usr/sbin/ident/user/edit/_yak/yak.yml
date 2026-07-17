@@ -5,6 +5,8 @@ title: Edit User
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

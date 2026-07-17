@@ -5,6 +5,8 @@ title: Script Executor Demo
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: python
 
 entry:

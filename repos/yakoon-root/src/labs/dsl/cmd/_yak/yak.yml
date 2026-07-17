@@ -5,6 +5,8 @@ title: start_cmd example
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

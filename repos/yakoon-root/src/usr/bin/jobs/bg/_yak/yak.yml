@@ -5,6 +5,8 @@ title: Send flow to background
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

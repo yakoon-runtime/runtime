@@ -5,6 +5,8 @@ title: Agent 2
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

@@ -5,6 +5,8 @@ title: Find Contacts
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

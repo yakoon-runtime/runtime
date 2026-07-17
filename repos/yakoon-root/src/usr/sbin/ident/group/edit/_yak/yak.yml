@@ -5,6 +5,8 @@ title: Edit Group
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

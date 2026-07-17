@@ -5,6 +5,8 @@ resolvable: false
 navigable: true
 contextual: true
 
+expose: false
+
 executor: runtime
 
 entry:

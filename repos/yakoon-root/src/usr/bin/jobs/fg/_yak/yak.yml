@@ -5,6 +5,8 @@ title: Bring flow to foreground
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

@@ -5,6 +5,8 @@ title: Show Contact
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

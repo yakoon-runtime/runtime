@@ -5,6 +5,8 @@ title: Edit Contact
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

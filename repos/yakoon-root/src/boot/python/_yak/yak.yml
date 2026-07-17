@@ -4,3 +4,5 @@ title: Python Host
 
 resolvable: false
 navigable: true
+
+expose: false

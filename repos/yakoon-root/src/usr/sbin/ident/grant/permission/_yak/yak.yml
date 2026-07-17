@@ -3,3 +3,5 @@ title: Permission Grants
 resolvable: false
 navigable: true
 contextual: true
+
+expose: false

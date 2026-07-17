@@ -5,6 +5,8 @@ title: Show current user
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

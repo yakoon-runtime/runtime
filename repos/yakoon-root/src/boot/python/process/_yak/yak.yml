@@ -5,6 +5,8 @@ title: Python Process Host
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

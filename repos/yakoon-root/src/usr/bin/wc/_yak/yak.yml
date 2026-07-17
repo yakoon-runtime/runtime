@@ -5,6 +5,8 @@ title: Word Count
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: process
 
 entry:

@@ -3,3 +3,5 @@ title: Groups
 resolvable: false
 navigable: true
 contextual: true
+
+expose: false

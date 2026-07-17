@@ -5,6 +5,8 @@ title: Connect to remote runtime
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:

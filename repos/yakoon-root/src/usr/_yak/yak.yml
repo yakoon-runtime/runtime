@@ -3,3 +3,5 @@ title: usr
 resolvable: false
 navigable: true
 contextual: true
+
+expose: false

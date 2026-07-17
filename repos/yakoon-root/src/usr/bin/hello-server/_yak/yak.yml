@@ -5,6 +5,8 @@ title: Hello Server
 resolvable: true
 navigable: false
 
+expose: false
+
 host: /boot/python/runtime
 
 entry:

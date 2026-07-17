@@ -5,6 +5,8 @@ title: Memory
 resolvable: true
 navigable: false
 
+expose: false
+
 executor: runtime
 
 entry:
