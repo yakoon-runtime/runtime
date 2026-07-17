@@ -1,0 +1,13 @@
+version: 1.0.0
+
+title: Hello .NET
+
+resolvable: true
+navigable: false
+
+expose: false
+
+host: /boot/dotnet/process
+
+entry:
+  run: bin/Debug/net9.0/Hello.dll

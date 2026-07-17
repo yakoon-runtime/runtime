@@ -1,0 +1,19 @@
+version: 1.0.0
+
+title: .NET Process Host
+
+resolvable: true
+navigable: false
+
+expose: false
+
+executor: runtime
+
+entry:
+  run: app.py
+
+invocation:
+  params:
+    - key: command
+      required: true
+      positional: true

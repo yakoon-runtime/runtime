@@ -14,6 +14,10 @@ logs/
 # ignore the symlink
 yakoon/loop/runtime
 
+# .NET build artifacts
+**/bin/
+**/obj/
+
 # Coverage
 .coverage
 coverage/

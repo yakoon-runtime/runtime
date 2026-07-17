@@ -1,6 +1,6 @@
 version: 1.0.0
 
-title: Hello Client
+title: Hello Python Server
 
 resolvable: true
 navigable: false
@@ -11,3 +11,8 @@ host: /boot/python/runtime
 
 entry:
   run: app.py
+
+invocation:
+  params:
+    - key: name
+      positional: true

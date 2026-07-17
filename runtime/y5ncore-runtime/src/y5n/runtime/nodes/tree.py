@@ -414,7 +414,7 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
     """Replace node.run with a delegating handler that routes to a host.
 
     The host node receives the original node's full tree path as its
-    first token (e.g. \"/usr/bin/hello-server\"). The path is resolved
+    first token (e.g. \"/labs/hosts/hello-py-server\"). The path is resolved
     lazily at call time via the node's parent chain.
     """
     from y5n.base.flow.dsl import Outcome
