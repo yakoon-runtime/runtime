@@ -5,4 +5,4 @@ resolvable: false
 navigable: true
 contextual: true
 
-expose: true
+expose: false
