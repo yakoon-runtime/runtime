@@ -8,17 +8,20 @@ async def main():
     print(await hello.greet())
     print(await hello.greet(name="Yakoon"))
 
+    # -- context --
     ctx = context.current()
     print(f"path:     {ctx.node.get('path', '?')}")
     print(f"cwd:      {ctx.cwd}")
     print(f"user:     {ctx.user.get('name', ctx.user.get('id', '?'))}")
 
+    # -- session --
     ses = context.session()
     print(f"key:      {ses.key}")
     print(f"locale:   {ses.locale}")
     print(f"user_id:  {ses.user_id}")
     print(f"interaction: {ses.interaction}")
 
+    # -- request --
     req = context.request()
     print(f"args:     {req.args()}")
     if req.has_option("greet"):
