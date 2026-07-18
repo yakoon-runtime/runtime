@@ -94,5 +94,3 @@ def serialize_op(op):
             "op": "finish_node",
             "block_id": op.block_id,
         }
-
-

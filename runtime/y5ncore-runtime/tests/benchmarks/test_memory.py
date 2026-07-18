@@ -102,11 +102,18 @@ def run():
     )
     measure(
         "Outcome(effects=[EmitView(...)])",
-        Outcome(effects=[EmitView({"kind": "document", "header": {"role": "info"}, "blocks": []})]),
+        Outcome(
+            effects=[
+                EmitView({"kind": "document", "header": {"role": "info"}, "blocks": []})
+            ]
+        ),
     )
 
     # Effects
-    measure("EmitView(projection)", EmitView({"kind": "document", "header": {"role": "info"}, "blocks": []}))
+    measure(
+        "EmitView(projection)",
+        EmitView({"kind": "document", "header": {"role": "info"}, "blocks": []}),
+    )
     measure("Foreground()", Foreground())
     measure("Background()", Background())
     measure(
