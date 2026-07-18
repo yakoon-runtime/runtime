@@ -8,7 +8,6 @@ import importlib.util
 import json as _json
 import os
 import sys
-import types
 import uuid
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
@@ -105,31 +104,18 @@ def _build_context_dict(space, target_path: str) -> dict:
     }
 
 
-_module_cache: dict[Path, types.ModuleType] = {}
-
-
 def load_and_capture(
     space,
     target_path: str,
     app_file: Path,
 ) -> tuple[list[str], str, Any, str]:
-    """Set context, load/cache module, capture stdout/stderr from import.
+    """Set context, load module, capture stdout/stderr from import.
 
     Returns (error_messages, captured_stdout, module, module_name)
     where error_messages is empty on success or a list of error lines.
     The caller should call unload_module(module_name) after use.
-    Modules are cached by app_file to avoid per-invocation overhead
-    (no re-import, no sys.modules growth).
     """
     mod_name = f"hosted.{uuid.uuid4().hex}"
-
-    cached = _module_cache.get(app_file)
-    if cached is not None:
-        os.environ["YAK_ENDPOINT"] = "inprocess://"
-        ctx = SdkContext.from_dict(_build_context_dict(space, target_path))
-        sdk_context._set(ctx)
-        return [], "", cached, mod_name
-
     spec = importlib.util.spec_from_file_location(mod_name, app_file)
     if spec is None or spec.loader is None:
         return [f"error: cannot load {app_file}"], "", None, ""
@@ -146,7 +132,6 @@ def load_and_capture(
     with redirect_stdout(buf), redirect_stderr(err_buf):
         spec.loader.exec_module(mod)
 
-    _module_cache[app_file] = mod
     return [], buf.getvalue(), mod, mod_name
 
 
