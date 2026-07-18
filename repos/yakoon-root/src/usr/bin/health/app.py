@@ -1,22 +1,10 @@
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.base.ports.models import HealthLevel
-from y5n.base.ports.system import VALIDATE
+from y5n.base.ports.models import HealthLevel, HealthResult
+from y5n.sdk import ports
 
 
-async def run(space: NodeSpace):
-    validate = space.ports.get(VALIDATE)
-    if validate is None:
-        yield out({
-            "kind": "document",
-            "header": {"role": "info"},
-            "blocks": [
-                {"type": "heading", "level": 1, "text": [{"type": "text", "text": "No VALIDATE port available"}]}
-            ],
-        })
-        return
-
-    result = validate()
+async def main():
+    validate = ports.get("validate")
+    result: HealthResult = await validate()
 
     total = len(result.children)
     healthy = sum(1 for c in result.children if c.level == HealthLevel.GREEN)
@@ -56,4 +44,4 @@ async def run(space: NodeSpace):
             {"type": "kv", "items": kv_items},
         ],
     }
-    yield out(doc)
+    print(doc)

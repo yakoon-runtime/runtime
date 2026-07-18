@@ -1,14 +1,12 @@
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import DOCUMENT
+from y5n.sdk import context, ports
 
 
-async def run(space: NodeSpace):
-    identity = space.session.get_identity()
+async def main():
+    doc = ports.get("document")
+    user = context.session().user or ""
 
-    projection = await space.ports.get(DOCUMENT)(
-        space=space,
-        state={"user": str(identity) if identity else None},
+    result = await doc.render(
+        name="default",
+        state={"user": user},
     )
-
-    yield out(projection)
+    print(result)
