@@ -9,7 +9,6 @@ from collections.abc import Awaitable, Callable
 from typing import Protocol
 from uuid import uuid4
 
-from y5n.base.document import Document
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import (
     AwaitEvent,
@@ -371,7 +370,7 @@ class OnShowDocument(Protocol):
         self,
         *,
         session: Session,
-        document: Document,
+        document: dict,
         ctx: InputContext | None,
         job_id: str = "system",
     ) -> None: ...
@@ -384,7 +383,7 @@ class OnErrorResolve(Protocol):
         node: Node,
         session: Session,
         error: Exception,
-    ) -> Document: ...
+    ) -> dict: ...
 
 
 class OnFlowComplete(Protocol):

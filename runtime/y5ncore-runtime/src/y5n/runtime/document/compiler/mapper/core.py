@@ -1,15 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import replace
 
-from y5n.base.document import DocumentHeader
 from y5n.base.document.model import (
     Block,
-    Document,
     Inline,
     InlineText,
-    TextBlock,
 )
 
 from ..nodes import ElementNode, Node, TextNode
@@ -40,9 +36,8 @@ class Mapper:
     # ENTRY
     # -----------------
 
-    def map_document(self, root: ElementNode) -> Document:
+    def map_document(self, root: ElementNode) -> dict:
         header = None
-        projection_id = Document.create_id()
 
         content_nodes: list[Node] = []
 
@@ -64,29 +59,19 @@ class Mapper:
             header = self._default_header()
 
         blocks = self._map_nodes(content_nodes)
-        blocks = assign_ids(projection_id, blocks)
 
-        return Document(
-            kind="document",
-            id=projection_id,
-            header=header,
-            blocks=blocks,
-        )
+        return _blocks_to_dict(header, blocks)
 
     # -----------------
     # HEADER
     # -----------------
 
-    def _default_header(self) -> DocumentHeader:
-        return DocumentHeader(
-            role="info",
-            title=None,
-            subtitle=None,
-            error_kind=None,
-            meta=None,
-        )
+    def _default_header(self) -> dict:
+        return {
+            "role": "info",
+        }
 
-    def _map_header(self, node: ElementNode) -> DocumentHeader:
+    def _map_header(self, node: ElementNode) -> dict:
         role = node.attrs.get("role", "info")
 
         if role not in ("info", "success", "warning", "error", "help"):
@@ -96,20 +81,19 @@ class Mapper:
         if error_kind not in (None, "validation", "system"):
             raise ValueError(f"Invalid error_kind: {error_kind}")
 
-        return DocumentHeader(
-            role=role,
-            title=node.attrs.get("title"),
-            subtitle=node.attrs.get("subtitle"),
-            error_kind=error_kind,
-            meta=None,
-        )
+        return {
+            "role": role,
+            "title": node.attrs.get("title"),
+            "subtitle": node.attrs.get("subtitle"),
+            "error_kind": error_kind,
+        }
 
     # -----------------
     # NODES
     # -----------------
 
-    def _map_nodes(self, nodes: list[Node]) -> list[Block]:
-        blocks: list[Block] = []
+    def _map_nodes(self, nodes: list[Node]) -> list[dict]:
+        blocks: list[dict] = []
         buffer: list[Node] = []
 
         for node in nodes:
@@ -142,16 +126,16 @@ class Mapper:
                 if resolver:
                     block = resolver.resolve(block)
 
-            blocks.append(block)
+            blocks.append(_block_to_dict(block))
 
         if buffer:
             blocks.append(self._flush_text(buffer))
 
         return blocks
 
-    def _flush_text(self, nodes: list[Node]) -> TextBlock:
+    def _flush_text(self, nodes: list[Node]) -> dict:
         inline = self._map_inline(nodes)
-        return TextBlock(type="text", id=None, text=inline)
+        return {"type": "text", "text": inline}
 
     # -----------------
     # INLINE
@@ -185,6 +169,45 @@ class Mapper:
 
 
 # -----------------
+# BLOCK → DICT
+# -----------------
+
+
+def _block_to_dict(block: Block) -> dict:
+    from dataclasses import fields
+
+    data = {}
+    for f in fields(block):
+        if f.name in ("id", "type"):
+            if f.name == "type":
+                data[f.name] = getattr(block, f.name)
+            continue
+        val = getattr(block, f.name)
+        if isinstance(val, (list, tuple)):
+            data[f.name] = [_to_json_safe(v) for v in val]
+        else:
+            data[f.name] = _to_json_safe(val)
+    data["id"] = None
+    return data
+
+
+def _to_json_safe(val):
+    from dataclasses import asdict
+
+    if hasattr(val, "__dataclass_fields__"):
+        return asdict(val)
+    return val
+
+
+def _blocks_to_dict(header: dict, blocks: list[dict]) -> dict:
+    return {
+        "kind": "document",
+        "header": header,
+        "blocks": blocks,
+    }
+
+
+# -----------------
 # UTILITIES
 # -----------------
 
@@ -198,7 +221,7 @@ def is_whitespace(node: Node) -> bool:
 
 
 def normalize_text(text: str) -> str:
-    return text  # .replace("\n", "")  # .lstrip("\n").rstrip()
+    return text
 
 
 def extract_text(node: Node) -> str:
@@ -207,26 +230,3 @@ def extract_text(node: Node) -> str:
     if isinstance(node, ElementNode):
         return "".join(extract_text(c) for c in node.children)
     return ""
-
-
-def assign_ids(projection_id: str, blocks: list[Block]) -> list[Block]:
-
-    def assign(block: Block, path: str) -> Block:
-        bid = block.id or path
-        block = replace(block, id=bid)
-
-        children = block.children()
-        if not children:
-            return block
-
-        new_children = [assign(child, f"{bid}.{i}") for i, child in enumerate(children)]
-
-        if hasattr(block, "blocks"):
-            block = replace(block, blocks=new_children)
-
-        elif hasattr(block, "items"):
-            block = replace(block, items=new_children)
-
-        return block
-
-    return [assign(b, f"{projection_id}.{i}") for i, b in enumerate(blocks)]

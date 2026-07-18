@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.document import Document
-
 from .ast import ElementNode
 from .tokens import Token
 
@@ -23,7 +21,7 @@ class Compiler:
         self.on_normalize_ast = on_normalize_ast
         self.on_build_projection = on_build_projection
 
-    def compile(self, text: str, context: dict) -> Document:
+    def compile(self, text: str, context: dict) -> dict:
 
         tokens = self.on_tokenize(text=text)
         ast = self.on_build_ast(tokens=tokens)
@@ -50,4 +48,4 @@ class OnNormalizeAst(Protocol):
 
 
 class OnBuildProjection(Protocol):
-    def __call__(self, context: dict, root: ElementNode) -> Document: ...
+    def __call__(self, context: dict, root: ElementNode) -> dict: ...

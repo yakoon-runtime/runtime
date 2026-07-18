@@ -329,6 +329,7 @@ Block = (
     | RuleBlock
     | SpacerBlock
     | ListItemBlock
+    | DataBlock
     | ListBlock
     | KvItemBlock
     | KvBlock

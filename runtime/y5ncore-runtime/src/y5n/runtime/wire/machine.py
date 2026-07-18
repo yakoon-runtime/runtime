@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
-from y5n.base.document import Document
 from y5n.base.flow import Scope
 from y5n.base.naming import Key
 from y5n.base.nodes import Node
@@ -76,7 +75,7 @@ def build_machine(
         node: Node,
         session,
         error: Exception,
-    ) -> Document:
+    ) -> dict:
         try:
             on_error = node.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
@@ -277,7 +276,7 @@ class OnDocumentSend(Protocol):
         self,
         *,
         session: Session,
-        document: Document,
+        document: dict,
         ctx: InputContext | None,
         job_id: str = "system",
         mode: str = "replace",

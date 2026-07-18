@@ -36,7 +36,7 @@ Patterns = Behavior
 Commands = Orchestration
 """
 
-from y5n.base.document import Document, to_text
+from y5n.base.document import to_text
 from y5n.base.flow.channel import Scope
 from y5n.base.runtime import Event
 
@@ -57,7 +57,7 @@ from .primitives import (
 
 
 def out(
-    projection: Document,
+    projection: dict,
     *,
     mode: Mode = "replace",
     space: str | None = None,
@@ -132,7 +132,7 @@ def background() -> Outcome:
     )
 
 
-def prompt(projection: Document) -> Outcome:
+def prompt(projection: dict) -> Outcome:
     """
     Persist and emit an interactive flow projection.
 
@@ -227,7 +227,7 @@ def view(**view_params) -> Outcome:
     return Outcome(
         effects=[
             EmitView(
-                Document.create(blocks=[]),
+                {"kind": "document", "header": {"role": "info"}, "blocks": []},
                 view_params=view_params or None,
             )
         ]

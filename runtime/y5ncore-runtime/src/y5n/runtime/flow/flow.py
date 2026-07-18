@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from y5n.base.flow.primitives import (
     Background,
@@ -15,7 +15,6 @@ from y5n.base.flow.primitives import (
 from y5n.base.runtime import Event
 
 if TYPE_CHECKING:
-    from y5n.base.document import Document
     from y5n.base.nodes import Node, Request
 
 from .cursor import FlowCursor
@@ -37,7 +36,7 @@ class Flow:
     cursor: FlowCursor
     tokens: list[str] | None = None
     control: Control | None = None
-    view: Document | None = None
+    view: Any = None
 
     scheduled: bool = False
     wake_at: float | None = None

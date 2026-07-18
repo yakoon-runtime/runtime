@@ -1,18 +1,19 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from typing import TYPE_CHECKING
 
 from typing_extensions import Protocol
+from y5n.base.document.normalize import normalize as _normalize
 from y5n.base.runtime import InputContext
 
 if TYPE_CHECKING:
-    from y5n.base.document import Document
     from y5n.runtime.runtime import Session
 
 
 class EventStreamOutput:
     """
-    High-level projection streaming.
+    High-level document streaming.
 
     Responsibilities:
     - lifecycle (begin / abort / finish)
@@ -22,28 +23,29 @@ class EventStreamOutput:
 
     def __init__(
         self,
-        on_begin: OnBeginProjection,
-        on_emit: OnEmitProjection,
-        on_abort: OnAbortProjection,
-        on_finish: OnFinishProjection,
+        on_begin: OnBeginDocument,
+        on_emit: OnEmitDocument,
+        on_abort: OnAbortDocument,
+        on_finish: OnFinishDocument,
     ):
         self.on_begin = on_begin
         self.on_emit = on_emit
         self.on_abort = on_abort
         self.on_finish = on_finish
 
-    async def send_projection(
+    async def send_document(
         self,
         session: Session,
-        document: Document,
+        document: dict,
         *,
         ctx: InputContext | None,
         job_id: str = "system",
         mode: str = "replace",
         view_params: dict | None = None,
     ):
-        if not document.id:
-            raise RuntimeError("Document without id.")
+        if not isinstance(document, dict):
+            document = asdict(document)
+        document = _normalize(document)
 
         await self.on_begin(
             session=session,
@@ -63,7 +65,7 @@ class EventStreamOutput:
         except Exception:
             await self.on_abort(
                 session=session,
-                projection_id=document.id,
+                projection_id=document["id"],
             )
 
         else:
@@ -78,12 +80,12 @@ class EventStreamOutput:
 # -------------
 
 
-class OnBeginProjection(Protocol):
+class OnBeginDocument(Protocol):
     async def __call__(
         self,
         *,
         session: Session,
-        document: Document,
+        document: dict,
         ctx: InputContext | None,
         job_id: str,
         reset: bool = True,
@@ -91,16 +93,16 @@ class OnBeginProjection(Protocol):
     ) -> None: ...
 
 
-class OnEmitProjection(Protocol):
+class OnEmitDocument(Protocol):
     async def __call__(
         self,
         *,
         session: Session,
-        document: Document,
+        document: dict,
     ) -> None: ...
 
 
-class OnAbortProjection(Protocol):
+class OnAbortDocument(Protocol):
     async def __call__(
         self,
         *,
@@ -109,11 +111,11 @@ class OnAbortProjection(Protocol):
     ) -> None: ...
 
 
-class OnFinishProjection(Protocol):
+class OnFinishDocument(Protocol):
 
     async def __call__(
         self,
         *,
         session: Session,
-        document: Document,
+        document: dict,
     ) -> None: ...

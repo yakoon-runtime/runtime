@@ -4,7 +4,6 @@ import time
 from dataclasses import dataclass
 from typing import Protocol
 
-from y5n.base.document.model import Block, Document, DocumentHeader
 from y5n.base.document.transfer import (
     DocumentEvent,
     Node,
@@ -19,7 +18,7 @@ from y5n.runtime.runtime import Session
 class EventDispatcher:
 
     BATCH_SIZE = 128
-    MAX_BUFFER_DELAY = 0.05  # technical flush
+    MAX_BUFFER_DELAY = 0.05
 
     def __init__(
         self,
@@ -47,7 +46,7 @@ class EventDispatcher:
     async def begin_projection(
         self,
         session: Session,
-        document: Document,
+        document: dict,
         *,
         ctx: InputContext | None,
         job_id: str,
@@ -55,10 +54,12 @@ class EventDispatcher:
         view_params: dict | None = None,
     ) -> None:
 
-        vid = document.id
-        assert vid is not None
+        vid = document.get("id")
+        if not vid:
+            raise RuntimeError("Document without id")
 
-        if document.header is None:
+        header = document.get("header")
+        if header is None:
             raise RuntimeError("document.header cannot be None")
 
         stream = _ViewStream(
@@ -85,7 +86,7 @@ class EventDispatcher:
         if reset:
             await session.emit(
                 self.on_create_begin_event(
-                    header=document.header,
+                    header=header,
                     ctx=ctx,
                     vid=vid,
                     job_id=stream.job_id,
@@ -98,11 +99,12 @@ class EventDispatcher:
     async def finish_projection(
         self,
         session: Session,
-        document: Document,
+        document: dict,
     ) -> None:
 
-        vid = document.id
-        assert vid is not None
+        vid = document.get("id")
+        if not vid:
+            raise RuntimeError("Document without id")
 
         stream = self._streams.get(vid)
         if stream is None:
@@ -151,16 +153,14 @@ class EventDispatcher:
     async def emit_projection(
         self,
         session: Session,
-        document: Document,
+        document: dict,
     ) -> None:
-        """
-        Emit full projection (block-aware).
-        """
 
-        vid = document.id
-        assert vid is not None
+        vid = document.get("id")
+        if not vid:
+            raise RuntimeError("Document without id")
 
-        for block in document.blocks:
+        for block in document.get("blocks", []):
             await self.emit_block(
                 session,
                 document=document,
@@ -175,19 +175,21 @@ class EventDispatcher:
         self,
         session: Session,
         *,
-        document: Document,
-        block: Block,
+        document: dict,
+        block: dict,
         parent_id: str | None = None,
     ) -> None:
 
-        vid = document.id
-        assert vid is not None
+        vid = document.get("id")
+        if not vid:
+            raise RuntimeError("Document without id")
 
         stream = self._streams.get(vid)
         if stream is None:
             return
 
-        if block.id is None:
+        block_id = block.get("id")
+        if block_id is None:
             raise RuntimeError("Block without id passed to dispatcher")
 
         parent = self.on_get_traversal_parent(projection_id=vid, parent_id=parent_id)
@@ -323,7 +325,7 @@ class OnCreateBeginEvent(Protocol):
     def __call__(
         self,
         *,
-        header: DocumentHeader,
+        header: dict,
         vid: str,
         ctx: InputContext | None,
         job_id: str,
@@ -362,5 +364,5 @@ class OnGetTraversalParent(Protocol):
 
 class OnGetTraversalPrepareBlock(Protocol):
     def __call__(
-        self, *, block: Block, parent: str, depth: int
-    ) -> tuple[Node, list[Block]]: ...
+        self, *, block: dict, parent: str, depth: int
+    ) -> tuple[Node, list[dict]]: ...

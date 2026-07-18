@@ -4,7 +4,7 @@ import uuid
 from dataclasses import dataclass, field, replace
 from typing import Literal
 
-from .block import Block, TextBlock
+from .block import Block
 from .header import DocumentHeader
 
 
@@ -92,13 +92,16 @@ class Document:
 # ----------------------------------
 
 
-def to_text(text: str) -> Document:
-    return Document.create(
-        blocks=(
-            [
-                TextBlock.create(text=text),
-            ]
-            if text
-            else []
-        )
-    )
+def to_text(text: str) -> dict:
+    if not text:
+        return {"kind": "document", "header": {"role": "info"}, "blocks": []}
+    return {
+        "kind": "document",
+        "header": {"role": "info"},
+        "blocks": [
+            {
+                "type": "text",
+                "text": [{"type": "text", "text": text}],
+            }
+        ],
+    }

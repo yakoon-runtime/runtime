@@ -3,7 +3,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Protocol
 
-from y5n.base.document import Document
 from y5n.base.nodes.space import NodeSpace
 from y5n.base.resources import ResourceRef
 
@@ -32,7 +31,7 @@ class Projector:
         *,
         resource: ResourceRef,
         state: dict[str, Any] | None = None,
-    ) -> Document:
+    ) -> dict:
 
         if state is None:
             state = {}
@@ -40,7 +39,7 @@ class Projector:
         text = self.on_render(resource=resource, context=state)
 
         document = self.on_compile(text=text, context={})
-        if document.id is None:
+        if document.get("id") is None:
             raise RuntimeError(
                 "Renderer returned a Document without id (parser invariant violated)"
             )
@@ -53,7 +52,7 @@ class Projector:
         space: NodeSpace,
         resource: str = "document",
         state: dict[str, Any] | None = None,
-    ) -> Document:
+    ) -> dict:
         if self.on_render_str is None:
             raise RuntimeError("OnProject port not configured")
         variants = space.resources.get(resource, {}) if space.resources else {}
@@ -84,4 +83,4 @@ class OnRender(Protocol):
 
 
 class OnCompile(Protocol):
-    def __call__(self, *, text: str, context: dict) -> Document: ...
+    def __call__(self, *, text: str, context: dict) -> dict: ...

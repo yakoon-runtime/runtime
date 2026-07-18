@@ -1,6 +1,3 @@
-from typing import cast
-
-from y5n.base.document import Document
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import Effect, EmitView
 from y5n.base.runtime import Event
@@ -9,9 +6,9 @@ from y5n.runtime.runtime import Session
 
 
 class EmitViewHandler:
-    """Handles EmitView: sends a projection to the output layer.
+    """Handles EmitView: sends a document to the output layer.
 
-    If the flow has an out_channel the projection is routed as a
+    If the flow has an out_channel the document is routed as a
     session event.  Otherwise it is sent directly to the registered
     projection callback with the appropriate context and job id.
     Supports persisting the view on the flow and explicit context/job
@@ -22,7 +19,9 @@ class EmitViewHandler:
         self._on_projection = on_projection
 
     async def execute(self, effect: Effect, session: Session, flow: Flow) -> None:
-        e = cast(EmitView, effect)
+        if not isinstance(effect, EmitView):
+            return
+        e = effect
 
         if flow.out_channel:
             session.push_event(
@@ -33,7 +32,7 @@ class EmitViewHandler:
             return
 
         ctx = e.ctx or flow.event.context
-        view = cast(Document, e.view)
+        view = e.view
 
         if e.persist:
             flow.view = view

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.document import Document
 from y5n.base.nodes import NodePath, NodeSpace
 from y5n.base.permissions import Permission, PermissionSet
 from y5n.base.resources import ResourceRef
@@ -20,7 +19,7 @@ from .models import AuthResult, HealthResult
 class OnDocumentResolve(Protocol):
     async def __call__(
         self, *, resource: ResourceRef, state: dict | None = None
-    ) -> Document: ...
+    ) -> dict: ...
 
 
 class OnProject(Protocol):
@@ -38,7 +37,7 @@ class OnProject(Protocol):
         space: NodeSpace,
         resource: str = "document",
         state: dict | None = None,
-    ) -> Document: ...
+    ) -> dict: ...
 
 
 class OnManualResolve(Protocol):
@@ -47,7 +46,7 @@ class OnManualResolve(Protocol):
         *,
         key: NodePath,
         lang: str,
-    ) -> Document | None: ...
+    ) -> dict | None: ...
 
 
 class OnErrorResolve(Protocol):
@@ -57,7 +56,7 @@ class OnErrorResolve(Protocol):
         key: NodePath,
         session: Session,
         error: Exception,
-    ) -> Document: ...
+    ) -> dict: ...
 
 
 class OnSessionSave(Protocol):
@@ -125,7 +124,7 @@ class OnJinjaRender(Protocol):
 
 
 class OnCompile(Protocol):
-    def __call__(self, *, text: str, context: dict) -> Document: ...
+    def __call__(self, *, text: str, context: dict) -> dict: ...
 
 
 class OnSourceRead(Protocol):

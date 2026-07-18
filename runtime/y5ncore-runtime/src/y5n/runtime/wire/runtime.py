@@ -1,4 +1,3 @@
-from y5n.base.document import Document
 from y5n.base.nodes import NodePath, UnknownOptionsError, UsageError
 from y5n.base.ports.system import (
     AUTHORIZE_READ,
@@ -139,7 +138,7 @@ def build_runtime(
         key: NodePath,
         session: Session,
         error: Exception,
-    ) -> Document:
+    ) -> dict:
 
         if isinstance(error, PermissionDenied):
             audit_service.security(session=session, obj="command", action=root.key)  # type: ignore
@@ -229,7 +228,7 @@ def build_runtime(
         platform=root,
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
-        on_projection_send=output.send_projection,
+        on_projection_send=output.send_document,
         on_has_permission=perm_checker.can_execute,
         on_audit_warning=audit_service.warning,
         on_initialize=initialize,

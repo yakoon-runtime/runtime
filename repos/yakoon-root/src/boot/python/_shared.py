@@ -5,12 +5,14 @@ Everything else (resolve, load, context, output) lives here.
 """
 
 import importlib.util
+import json as _json
 import os
 import sys
 import uuid
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
+from typing import Any
 
 import yaml
 from y5n.base.document import to_text
@@ -106,7 +108,7 @@ def load_and_capture(
     space,
     target_path: str,
     app_file: Path,
-) -> tuple[list[str], str]:
+) -> tuple[list[str], str, Any]:
     """Set context, load module, capture stdout/stderr from import.
 
     Returns (error_messages, captured_stdout) where error_messages
@@ -115,7 +117,7 @@ def load_and_capture(
     mod_name = f"hosted.{uuid.uuid4().hex}"
     spec = importlib.util.spec_from_file_location(mod_name, app_file)
     if spec is None or spec.loader is None:
-        return [f"error: cannot load {app_file}"], ""
+        return [f"error: cannot load {app_file}"], "", None
 
     os.environ["YAK_ENDPOINT"] = "inprocess://"
 
@@ -136,7 +138,16 @@ def emit_output(output: str) -> list:
     """Return Outcome list from captured stdout."""
     if not output:
         return []
-    return [
-        Outcome(effects=[EmitView(to_text(line), mode="append")])
-        for line in output.splitlines()
-    ]
+    outcomes = []
+    for line in output.splitlines():
+        line = line.strip()
+        if line.startswith("{"):
+            try:
+                data = _json.loads(line)
+                if isinstance(data, dict) and data.get("kind") == "document":
+                    outcomes.append(Outcome(effects=[EmitView(data, mode="append")]))
+                    continue
+            except Exception:
+                pass
+        outcomes.append(Outcome(effects=[EmitView(to_text(line), mode="append")]))
+    return outcomes
