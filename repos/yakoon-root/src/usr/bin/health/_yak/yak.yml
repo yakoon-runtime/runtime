@@ -7,7 +7,7 @@ navigable: false
 
 expose: false
 
-host: /boot/python/runtime
+executor: runtime
 
 entry:
   run: app.py
