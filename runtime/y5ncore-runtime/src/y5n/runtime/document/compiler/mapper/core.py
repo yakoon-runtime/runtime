@@ -55,6 +55,8 @@ class Mapper:
 
         blocks = self._map_nodes(content_nodes)
         result = _blocks_to_dict(header, blocks)
+        # Drop temporary AST references early.
+        # The returned document only needs `result`.
         # free temp references so CPython can reclaim AST nodes earlier
         del blocks, header, content_nodes
         return result
