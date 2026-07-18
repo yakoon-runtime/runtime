@@ -1,11 +1,8 @@
-from y5n.base.document.model import FieldsBlock
-from y5n.base.document.model.field import Field
-
 from ..core import is_element, is_whitespace
 
 
 def map_fields(mapper, node):
-    fields: list[Field] = []
+    fields = []
 
     for child in node.children:
         if is_whitespace(child):
@@ -18,12 +15,7 @@ def map_fields(mapper, node):
 
     name = node.attrs.get("name")
 
-    return FieldsBlock(
-        type="fields",
-        name=name,
-        id=None,
-        fields=fields,
-    )
+    return {"type": "fields", "name": name, "fields": fields}
 
 
 def map_field(mapper, node):
@@ -38,12 +30,13 @@ def map_field(mapper, node):
     hint = node.attrs.get("hint")
     default = node.attrs.get("default")
 
-    return Field(
-        policy=policy,
-        name=name,
-        required=required,
-        title=title,
-        lookup=lookup,
-        hint=hint,
-        default=default,
-    )
+    return {
+        "type": "field",
+        "policy": policy,
+        "name": name,
+        "required": required,
+        "title": title,
+        "lookup": lookup,
+        "hint": hint,
+        "default": default,
+    }

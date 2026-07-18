@@ -1,6 +1,3 @@
-from y5n.base.document.model import InlineLink
-
-
 def map_link(mapper, node):
     href = node.attrs.get("href")
     if not href:
@@ -8,7 +5,4 @@ def map_link(mapper, node):
 
     children = mapper._map_inline(node.children)
 
-    return InlineLink(
-        href=href,
-        children=children,
-    )
+    return {"type": "link", "href": href, "children": children}

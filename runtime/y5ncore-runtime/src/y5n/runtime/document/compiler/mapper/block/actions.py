@@ -1,10 +1,8 @@
-from y5n.base.document.model import Action, ActionBlock
-
 from ..core import extract_text, is_element, is_whitespace
 
 
 def map_actions(mapper, node):
-    actions: list[Action] = []
+    actions = []
 
     for child in node.children:
         if is_whitespace(child):
@@ -15,11 +13,7 @@ def map_actions(mapper, node):
 
         actions.append(map_action(mapper, child))
 
-    return ActionBlock(
-        type="actions",
-        id=None,
-        actions=actions,
-    )
+    return {"type": "actions", "actions": actions}
 
 
 def map_action(mapper, node):
@@ -33,8 +27,4 @@ def map_action(mapper, node):
 
     scope = node.attrs.get("scope")
 
-    return Action(
-        label=label,
-        scope=scope,
-        command=command,
-    )
+    return {"type": "action", "label": label, "scope": scope, "command": command}

@@ -1,5 +1,3 @@
-from y5n.base.document.model import ImageBlock
-
 from .block import (
     map_actions,
     map_collapsible,
@@ -37,7 +35,7 @@ from .resolver import ImageResolver
 def create_mapper(context: dict) -> Mapper:
 
     resolvers = {
-        ImageBlock: ImageResolver(context.get("assets", "")),
+        "image": ImageResolver(context.get("assets", "")),
     }
 
     mapper = Mapper(resolvers)

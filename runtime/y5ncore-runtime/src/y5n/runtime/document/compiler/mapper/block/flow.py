@@ -1,10 +1,4 @@
-from y5n.base.document.model import FlowBlock
-
-
 def map_flow(mapper, node):
     blocks = mapper._map_nodes(node.children)
 
-    return FlowBlock(
-        id=None,
-        blocks=blocks,
-    )
+    return {"type": "flow", "blocks": blocks}

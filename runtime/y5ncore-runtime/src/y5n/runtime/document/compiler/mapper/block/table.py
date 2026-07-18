@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from y5n.base.document.model import TableBlock, TableColumn
 from y5n.runtime.document.compiler.nodes import ElementNode, TextNode
 
 
 def map_table(mapper, node):
-    columns: list[TableColumn] = []
+    columns = []
     rows: list[list[str]] = []
 
     for child in node.children:
@@ -23,7 +22,7 @@ def map_table(mapper, node):
             if not key:
                 raise ValueError("<column> requires key attribute")
             title = child.attrs.get("title", key)
-            columns.append(TableColumn(key=key, title=title))
+            columns.append({"key": key, "title": title})
 
         elif child.tag == "row":
             row: list[str] = []
@@ -49,12 +48,13 @@ def map_table(mapper, node):
     raw_selectable = node.attrs.get("selectable", "true")
     selectable = raw_selectable.lower() in ("true", "1", "")
 
-    return TableBlock(
-        columns=columns,
-        rows=rows,
-        variant=variant,
-        selectable=selectable,
-    )
+    return {
+        "type": "table",
+        "columns": columns,
+        "rows": rows,
+        "variant": variant,
+        "selectable": selectable,
+    }
 
 
 def _extract_text(node: ElementNode) -> str:

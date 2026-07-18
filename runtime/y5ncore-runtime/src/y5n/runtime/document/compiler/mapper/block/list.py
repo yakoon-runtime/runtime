@@ -1,10 +1,8 @@
-from y5n.base.document.model import ListBlock, ListItemBlock
-
 from ..core import is_element, is_whitespace
 
 
 def map_list(mapper, node):
-    items: list[ListItemBlock] = []
+    items = []
 
     for child in node.children:
         if is_whitespace(child):
@@ -15,18 +13,10 @@ def map_list(mapper, node):
 
         items.append(map_list_item(mapper, child))
 
-    return ListBlock(
-        type="list",
-        id=None,
-        items=items,
-    )
+    return {"type": "list", "items": items}
 
 
 def map_list_item(mapper, node):
     inline = mapper._map_inline(node.children)
 
-    return ListItemBlock(
-        type="list_item",
-        id=None,
-        text=inline,
-    )
+    return {"type": "list_item", "text": inline}

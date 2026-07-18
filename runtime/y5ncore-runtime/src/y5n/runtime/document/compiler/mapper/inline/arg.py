@@ -1,6 +1,3 @@
-from y5n.base.document.model import InlineArg
-
-
 def map_arg(mapper, node):
     children = mapper._map_inline(node.children)
-    return InlineArg(children=children)
+    return {"type": "arg", "children": children}

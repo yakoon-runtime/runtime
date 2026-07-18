@@ -1,6 +1,3 @@
-from y5n.base.document.model import SpacerBlock
-
-
 def map_spacer(mapper, node):
     raw = node.attrs.get("size", "1")
 
@@ -12,8 +9,4 @@ def map_spacer(mapper, node):
     if size < 0:
         raise ValueError("Spacer size must be >= 0")
 
-    return SpacerBlock(
-        type="spacer",
-        id=None,
-        size=size,
-    )
+    return {"type": "spacer", "size": size}

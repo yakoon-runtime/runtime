@@ -2,22 +2,16 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 
-from y5n.base.document.model import (
-    Block,
-    Inline,
-    InlineText,
-)
-
 from ..nodes import ElementNode, Node, TextNode
 from .resolver import BlockResolver
 
-BlockMapper = Callable[["Mapper", ElementNode], Block]
-InlineMapper = Callable[["Mapper", ElementNode], Inline]
+BlockMapper = Callable[["Mapper", ElementNode], dict]
+InlineMapper = Callable[["Mapper", ElementNode], dict]
 
 
 class Mapper:
 
-    def __init__(self, resolvers: Mapping[type, BlockResolver]):
+    def __init__(self, resolvers: Mapping[str, BlockResolver]):
         self._block_mappers: dict[str, BlockMapper] = {}
         self._inline_mappers: dict[str, InlineMapper] = {}
         self._resolvers = resolvers
@@ -122,11 +116,12 @@ class Mapper:
             block = handler(self, node)
 
             if self._resolvers:
-                resolver = self._resolvers.get(type(block))
+                block_type = block.get("type", "")
+                resolver = self._resolvers.get(block_type)
                 if resolver:
                     block = resolver.resolve(block)
 
-            blocks.append(_block_to_dict(block))
+            blocks.append(block)
 
         if buffer:
             blocks.append(self._flush_text(buffer))
@@ -135,21 +130,21 @@ class Mapper:
 
     def _flush_text(self, nodes: list[Node]) -> dict:
         inline = self._map_inline(nodes)
-        return {"type": "text", "text": [_inline_to_dict(v) for v in inline]}
+        return {"type": "text", "text": inline}
 
     # -----------------
     # INLINE
     # -----------------
 
-    def _map_inline(self, nodes: list[Node]) -> list[Inline]:
-        result: list[Inline] = []
+    def _map_inline(self, nodes: list[Node]) -> list[dict]:
+        result: list[dict] = []
 
         for node in nodes:
 
             if isinstance(node, TextNode):
                 text = normalize_text(node.text)
                 if text:
-                    result.append(InlineText(text=text))
+                    result.append({"type": "text", "text": text})
                 continue
 
             assert isinstance(node, ElementNode)
@@ -160,54 +155,17 @@ class Mapper:
 
             result.append(mapper(self, node))
 
-        if result and isinstance(result[0], InlineText):
-            result[0] = InlineText(text=result[0].text.lstrip())
-        if result and isinstance(result[-1], InlineText):
-            result[-1] = InlineText(text=result[-1].text.rstrip())
+        if result and result[0].get("type") == "text":
+            result[0] = {"type": "text", "text": result[0]["text"].lstrip()}
+        if result and result[-1].get("type") == "text":
+            result[-1] = {"type": "text", "text": result[-1]["text"].rstrip()}
 
         return result
 
 
 # -----------------
-# INLINE → DICT
+# UTILITIES
 # -----------------
-
-
-def _inline_to_dict(inline: Inline) -> dict:
-    from dataclasses import asdict
-
-    return asdict(inline)
-
-
-# -----------------
-# BLOCK → DICT
-# -----------------
-
-
-def _block_to_dict(block: Block) -> dict:
-    from dataclasses import fields
-
-    data = {}
-    for f in fields(block):
-        if f.name in ("id", "type"):
-            if f.name == "type":
-                data[f.name] = getattr(block, f.name)
-            continue
-        val = getattr(block, f.name)
-        if isinstance(val, (list, tuple)):
-            data[f.name] = [_to_json_safe(v) for v in val]
-        else:
-            data[f.name] = _to_json_safe(val)
-    data["id"] = None
-    return data
-
-
-def _to_json_safe(val):
-    from dataclasses import asdict
-
-    if hasattr(val, "__dataclass_fields__"):
-        return asdict(val)
-    return val
 
 
 def _blocks_to_dict(header: dict, blocks: list[dict]) -> dict:
@@ -216,11 +174,6 @@ def _blocks_to_dict(header: dict, blocks: list[dict]) -> dict:
         "header": header,
         "blocks": blocks,
     }
-
-
-# -----------------
-# UTILITIES
-# -----------------
 
 
 def is_element(node: Node, tag: str) -> bool:

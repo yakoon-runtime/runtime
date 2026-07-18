@@ -1,10 +1,8 @@
-from y5n.base.document.model import KvBlock, KvItemBlock
-
 from ..core import is_element, is_whitespace
 
 
 def map_kv(mapper, node):
-    items: list[KvItemBlock] = []
+    items = []
 
     for child in node.children:
         if is_whitespace(child):
@@ -19,16 +17,6 @@ def map_kv(mapper, node):
 
         value = mapper._map_inline(child.children)
 
-        items.append(
-            KvItemBlock(
-                id=None,
-                key=key,
-                value=value,
-            )
-        )
+        items.append({"type": "kv_item", "key": key, "value": value})
 
-    return KvBlock(
-        type="kv",
-        id=None,
-        items=items,
-    )
+    return {"type": "kv", "items": items}

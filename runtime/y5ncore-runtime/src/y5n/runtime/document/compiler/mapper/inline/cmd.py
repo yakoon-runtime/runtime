@@ -1,6 +1,3 @@
-from y5n.base.document.model import InlineCmd
-
-
 def _bool(value: str | None) -> bool | None:
     if value is None:
         return None
@@ -17,11 +14,12 @@ def map_cmd(mapper, node):
     if not children:
         raise ValueError("<cmd> requires label")
 
-    return InlineCmd(
-        command=command,
-        variant=node.attrs.get("variant"),
-        navigable=_bool(node.attrs.get("navigable")),
-        resolvable=_bool(node.attrs.get("resolvable")),
-        contextual=_bool(node.attrs.get("contextual")),
-        children=children,
-    )
+    return {
+        "type": "cmd",
+        "command": command,
+        "variant": node.attrs.get("variant"),
+        "navigable": _bool(node.attrs.get("navigable")),
+        "resolvable": _bool(node.attrs.get("resolvable")),
+        "contextual": _bool(node.attrs.get("contextual")),
+        "children": children,
+    }
