@@ -50,6 +50,7 @@ from y5n.runtime.sources.data import (
     RuntimeSource,
     SessionSource,
 )
+from y5n.runtime.wire.adapter.callable import CallableAdapter
 from y5n.runtime.wire.adapter.document import DocumentAdapter
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
@@ -188,6 +189,14 @@ def build_runtime(
     bus.transport.register_adapter(
         "document",
         DocumentAdapter(projector=projector, tree=tree),
+    )
+
+    # --- system ports for SDK commands ---
+
+    bus.resolver.register("system:projection", {"validate": ["__call__"]}, path="/")
+    bus.transport.register_adapter(
+        "validate",
+        CallableAdapter(tree.validate),
     )
 
     # --------------------

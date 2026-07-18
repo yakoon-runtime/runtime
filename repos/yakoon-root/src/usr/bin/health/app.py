@@ -1,27 +1,14 @@
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.base.ports.models import HealthLevel
-from y5n.base.ports.system import VALIDATE
+from y5n.sdk import ports
 
 
-async def run(space: NodeSpace):
-    validate = space.ports.get(VALIDATE)
-    if validate is None:
-        yield out({
-            "kind": "document",
-            "header": {"role": "info"},
-            "blocks": [
-                {"type": "heading", "level": 1, "text": [{"type": "text", "text": "No VALIDATE port available"}]}
-            ],
-        })
-        return
-
-    result = validate()
+async def main():
+    validate = ports.get("validate")
+    result = await validate()
 
     total = len(result.children)
-    healthy = sum(1 for c in result.children if c.level == HealthLevel.GREEN)
-    errors_count = sum(1 for c in result.children if c.level == HealthLevel.RED)
-    warnings = sum(1 for c in result.children if c.level == HealthLevel.YELLOW)
+    healthy = sum(1 for c in result.children if c.level.value == "green")
+    errors_count = sum(1 for c in result.children if c.level.value == "red")
+    warnings = sum(1 for c in result.children if c.level.value == "yellow")
 
     kv_items = [
         {"type": "kv_item", "key": "Healthy", "value": [{"type": "text", "text": str(healthy)}]},
@@ -30,12 +17,9 @@ async def run(space: NodeSpace):
     ]
 
     children_blocks = []
+    icons = {"green": "\u2713", "yellow": "\u26a0", "red": "\u2717"}
     for child in result.children:
-        icon = {
-            HealthLevel.GREEN: "\u2713",
-            HealthLevel.YELLOW: "\u26a0",
-            HealthLevel.RED: "\u2717",
-        }.get(child.level, "?")
+        icon = icons.get(child.level.value, "?")
         children_blocks.append(
             {"type": "text", "text": [{"type": "text", "text": f"  {icon} {child.message or ''}"}]}
         )
@@ -56,4 +40,4 @@ async def run(space: NodeSpace):
             {"type": "kv", "items": kv_items},
         ],
     }
-    yield out(doc)
+    print(doc)
