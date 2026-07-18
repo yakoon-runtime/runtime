@@ -3,6 +3,13 @@
 # Every Document is a tree of typed blocks.
 # The wire format is JSON, described here in YAML.
 
+schema:
+  name: Yakoon Document Schema
+  version: 1
+  wire_format: json
+  file_format: ydf
+  runtime: yakoon-runtime
+
 version: 1
 
 # ── Document Root ──────────────────────────────────────────────────
@@ -474,3 +481,50 @@ children_fields:
   stack: blocks
   flow: blocks
   collapsible: blocks
+
+# ── Runtime ─────────────────────────────────────────────────────────
+# Rules implemented by the Yakoon Runtime (not part of the wire format
+# but required for correct processing of every document).
+
+runtime:
+
+  stream_protocol:
+    description: >
+      Commands communicate with the Runtime via standard streams.
+      stdout carries YDS documents as single-line JSON.  stderr
+      carries error information (tracebacks, diagnostics).
+    stdout:
+      description: YDS document encoded as compact JSON, one per line.
+      encoding: utf-8
+      content_type: application/json
+    stderr:
+      description: Free-form error text (tracebacks, warnings, logs).
+      encoding: utf-8
+
+  normalizer:
+    description: >
+      The Normalizer runs before dispatch.  It accepts a document
+      that may be missing ids, header defaults, or structural
+      guarantees, and produces a canonical YDS document.
+    generates:
+      - field: id
+        scope: every block
+        algorithm: >
+          Hierarchical path based on the document id and block
+          position.  Format: "{doc_id}.{parent_index}.{child_index}".
+      - field: header.role
+        scope: document
+        default: info
+    validates:
+      - every block has a unique id
+      - document has a header
+      - block types are known
+
+  traversal:
+    description: >
+      The Traversal layer walks the block tree to produce a
+      stream of Patch operations for the client.  It uses the
+      children_fields map to find child blocks.
+    children_field_map: children_fields
+    patch_batch_size: 128
+    flush_interval_ms: 50
