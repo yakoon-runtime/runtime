@@ -184,14 +184,12 @@ def build_runtime(
     # ---------------------------------------
 
     bus = get_bus()
-    bus.resolver.register("system:projection", {"document": ["render"]}, path="/")
 
+    bus.resolver.register("system:projection", {"document": ["render"]}, path="/")
     bus.transport.register_adapter(
         "document",
         DocumentAdapter(projector=projector, tree=tree),
     )
-
-    # --- system ports for SDK commands ---
 
     bus.resolver.register("system:projection", {"validate": ["__call__"]}, path="/")
     bus.transport.register_adapter(

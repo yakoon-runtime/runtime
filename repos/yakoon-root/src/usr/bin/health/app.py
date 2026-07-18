@@ -1,3 +1,5 @@
+import json
+
 from y5n.sdk import ports
 
 
@@ -40,4 +42,4 @@ async def main():
             {"type": "kv", "items": kv_items},
         ],
     }
-    print(doc)
+    print(json.dumps(doc, default=str))
