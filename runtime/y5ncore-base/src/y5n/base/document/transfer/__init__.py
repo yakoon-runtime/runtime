@@ -1,5 +1,5 @@
 from .event import DocumentEvent, DocumentState
-from .node import Node
+from .node import NodeData
 from .patch import (
     Patch,
     PatchAppendStructure,
@@ -13,7 +13,7 @@ __all__ = [
     # .stream
     "Output",
     # .node
-    "Node",
+    "NodeData",
     # .patch
     "PatchReset",
     "PatchAppendStructure",

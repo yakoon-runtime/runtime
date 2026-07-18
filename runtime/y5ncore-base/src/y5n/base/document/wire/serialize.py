@@ -87,13 +87,13 @@ def serialize_op(op):
         }
 
 
-def serialize_node(n):
+def serialize_node(n: dict) -> dict:
     return {
-        "id": n.id,
-        "type": n.type,
-        "parent": n.parent,
-        "depth": n.depth,
-        "props": serialize_props(n.props),
+        "id": n["id"],
+        "type": n["type"],
+        "parent": n.get("parent"),
+        "depth": n.get("depth", 0),
+        "props": serialize_props(n.get("props", {})),
     }
 
 

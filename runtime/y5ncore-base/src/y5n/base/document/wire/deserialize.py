@@ -24,7 +24,6 @@ from y5n.base.document.transfer import (
     PatchFinishNode,
     PatchReset,
 )
-from y5n.base.document.transfer.node import Node
 from y5n.base.runtime.input import InputContext, Origin
 
 
@@ -120,15 +119,15 @@ def _deserialize_op(data: dict):
 # ------------------------
 
 
-def _deserialize_node(data: dict) -> Node:
+def _deserialize_node(data: dict) -> dict:
     props = _reconstruct_inlines(data.get("props", {}))
-    return Node(
-        id=data["id"],
-        type=data["type"],
-        parent=data.get("parent"),
-        depth=data.get("depth", 0),
-        props=props,
-    )
+    return {
+        "id": data["id"],
+        "type": data["type"],
+        "parent": data.get("parent"),
+        "depth": data.get("depth", 0),
+        "props": props,
+    }
 
 
 INLINE_TYPES = {

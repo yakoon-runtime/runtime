@@ -6,7 +6,6 @@ from typing import Protocol
 
 from y5n.base.document.transfer import (
     DocumentEvent,
-    Node,
     PatchAppendStructure,
     PatchFinishNode,
     PatchOp,
@@ -365,4 +364,4 @@ class OnGetTraversalParent(Protocol):
 class OnGetTraversalPrepareBlock(Protocol):
     def __call__(
         self, *, block: dict, parent: str, depth: int
-    ) -> tuple[Node, list[dict]]: ...
+    ) -> tuple[dict, list[dict]]: ...

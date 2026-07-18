@@ -1,7 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Literal
-
-from .node import Node
+from typing import Any, Literal
 
 
 @dataclass(frozen=True, slots=True)
@@ -12,7 +10,7 @@ class PatchReset:
 @dataclass(frozen=True, slots=True)
 class PatchAppendStructure:
     op: Literal["append_structure"] = "append_structure"
-    nodes: list[Node] = field(default_factory=list)
+    nodes: list[dict[str, Any]] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)

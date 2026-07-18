@@ -1,5 +1,4 @@
 from y5n.base.document.schema import CHILDREN_FIELDS
-from y5n.base.document.transfer import Node
 
 
 def _extract_children(block: dict) -> list[dict]:
@@ -7,20 +6,20 @@ def _extract_children(block: dict) -> list[dict]:
     return block.get(field, []) if field else []
 
 
-def _build_node(block: dict, parent: str, depth: int) -> Node:
+def _build_node(block: dict, parent: str, depth: int) -> dict:
     block_id = block.get("id")
     if block_id is None:
         raise RuntimeError("Block without id")
 
     props = {k: v for k, v in block.items() if k not in ("id", "type")}
 
-    return Node(
-        id=block_id,
-        type=block.get("type", ""),
-        parent=parent,
-        depth=depth,
-        props=props,
-    )
+    return {
+        "id": block_id,
+        "type": block.get("type", ""),
+        "parent": parent,
+        "depth": depth,
+        "props": props,
+    }
 
 
 class EventTraversal:
@@ -42,7 +41,7 @@ class EventTraversal:
 
     def prepare_block(
         self, block: dict, *, parent: str, depth: int
-    ) -> tuple[Node, list[dict]]:
+    ) -> tuple[dict, list[dict]]:
         node = _build_node(block, parent, depth)
         children = _extract_children(block)
         return node, children
