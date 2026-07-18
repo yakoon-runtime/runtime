@@ -7,13 +7,13 @@ from datetime import UTC, datetime
 from typing import Any
 
 from y5n.base.clients import ClientConnection
+from y5n.base.document import (
+    DocumentEvent,
+    DocumentState,
+)
 from y5n.base.flow.channel import Scope, resolve
 from y5n.base.naming import Key
 from y5n.base.nodes.path import NodePath
-from y5n.base.projection import (
-    ProjectionEvent,
-    ProjectionState,
-)
 from y5n.base.runtime import Event
 from y5n.base.runtime.input import Interaction
 from y5n.base.transport import IO
@@ -272,11 +272,11 @@ class Session:
 
     async def emit(
         self,
-        event: ProjectionEvent,
+        event: DocumentEvent,
     ) -> None:
 
         assert (
-            type(event) is ProjectionEvent
+            type(event) is DocumentEvent
         ), f"event must be a type of {type(event).__name__}"
         assert self._runtime.io is not None, "runtime.io must not be None"
         assert event.job_id, "event.job_id must be set"
@@ -284,10 +284,10 @@ class Session:
         event = self._attach_state(event)
         await self._runtime.io.view(event)
 
-    def _attach_state(self, event: ProjectionEvent) -> ProjectionEvent:
+    def _attach_state(self, event: DocumentEvent) -> DocumentEvent:
         return replace(
             event,
-            state=ProjectionState(
+            state=DocumentState(
                 user=self.data.user_name,
                 node_path=self.data.current_path,
             ),

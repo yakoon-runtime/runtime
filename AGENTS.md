@@ -21,6 +21,8 @@
 - Preserve backwards compatibility unless instructed otherwise.
 - All comments and Git commit messages must be written in English.
 - Git commit messages follow conventional commits: feat(scope), fix(scope), docs(scope), refactor(scope), chore(scope), etc. No commits without explicit user request.
+- Format all Python code with `black` before finishing.
+- Organize imports with `ruff check --fix --select I` before finishing.
 
 ## Before finishing
 

@@ -1,6 +1,6 @@
 from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import PROJECT
+from y5n.api.ports import DOCUMENT
 
 
 def _read_proc(path: str) -> dict[str, int]:
@@ -36,7 +36,7 @@ async def run(space: NodeSpace):
     available = meminfo.get("MemAvailable", 0)
     system_percent = round((total - available) / total * 100, 1) if total else 0.0
 
-    projection = await space.ports.get(PROJECT)(
+    projection = await space.ports.get(DOCUMENT)(
         space=space,
         state={
             "rss": _format_bytes(rss),

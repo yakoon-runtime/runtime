@@ -1,8 +1,8 @@
 import json
 
 from y5n.base.clients import ClientConnection
+from y5n.base.document.wire import serialize_event
 from y5n.base.flow.patterns.public import FormAction
-from y5n.base.projection.wire import serialize_event
 from y5n.base.runtime import Event, Routing
 from y5n.base.runtime.input.context import InputContext, Origin
 
@@ -17,7 +17,7 @@ class WebSocketServerTransport:
         # Runtime → Client
         async def send(event):
             payload = {
-                "type": "projection",
+                "type": "document",
                 "payload": serialize_event(event),
             }
             await websocket.send(json.dumps(payload))

@@ -7,7 +7,9 @@ from typing import Any
 import yaml
 
 
-def resolve_space_config(space_id: str, config_dir: Path | None = None) -> dict[str, Any]:
+def resolve_space_config(
+    space_id: str, config_dir: Path | None = None
+) -> dict[str, Any]:
     search_dirs: list[Path] = []
 
     if config_dir:

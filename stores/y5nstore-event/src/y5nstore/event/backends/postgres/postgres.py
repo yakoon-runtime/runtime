@@ -432,7 +432,9 @@ class _PostgresExec:
             FROM index_specs
             WHERE domain=$1 AND kind=$2 AND space=$3
             """,
-            str(domain_id), str(kind_id), str(space_id),
+            str(domain_id),
+            str(kind_id),
+            str(space_id),
         )
         specs = {r["key"]: ValueType(r["value_type"]) for r in rows}
 
@@ -454,12 +456,16 @@ class _PostgresExec:
                 idx += 2
 
             elif term.op == "prefix":
-                conditions.append(f"(index_key = ${idx} AND value ILIKE ${idx + 1} || '%')")
+                conditions.append(
+                    f"(index_key = ${idx} AND value ILIKE ${idx + 1} || '%')"
+                )
                 params.extend([sk, norm])
                 idx += 2
 
             elif term.op == "contains":
-                conditions.append(f"(index_key = ${idx} AND value ILIKE '%' || ${idx + 1} || '%')")
+                conditions.append(
+                    f"(index_key = ${idx} AND value ILIKE '%' || ${idx + 1} || '%')"
+                )
                 params.extend([sk, norm])
                 idx += 2
 
@@ -490,7 +496,9 @@ class _PostgresExec:
 
         params.append(limit)
 
-        rows = await self.conn.fetch(query, str(domain_id), str(kind_id), str(space_id), *params)
+        rows = await self.conn.fetch(
+            query, str(domain_id), str(kind_id), str(space_id), *params
+        )
         return [EntityId(r["entity_id"]) for r in rows]
 
     # ----------------------------

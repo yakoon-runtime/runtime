@@ -1,14 +1,15 @@
+from y5n.base.document import Document
 from y5n.base.nodes import NodePath, UnknownOptionsError, UsageError
 from y5n.base.ports.system import (
     AUTHORIZE_READ,
     AUTHORIZE_WRITE,
     COMPILE,
+    DOCUMENT,
+    DOCUMENT_RESOLVE,
     ERROR_RESOLVE,
     JINJA_RENDER,
     NEW_PERMISSION_SET,
     PARSE_PERMISSION_SPEC,
-    PROJECT,
-    PROJECTION_RESOLVE,
     RESOURCE_LOAD,
     SESSION_ATTACH,
     SESSION_DETACH,
@@ -16,7 +17,6 @@ from y5n.base.ports.system import (
     SOURCE_READ,
     VALIDATE,
 )
-from y5n.base.projection import Projection
 from y5n.base.resources import ResourceRef
 from y5n.base.runtime import get_bus
 from y5n.runtime.capabilities.audit import AuditLogService
@@ -25,6 +25,7 @@ from y5n.runtime.capabilities.permission import (
     PermissionParser,
     PermissionSet,
 )
+from y5n.runtime.document.rendering import JinjaRenderEngine
 from y5n.runtime.executor import (
     ExecutorKind,
     ExecutorRegistry,
@@ -34,7 +35,6 @@ from y5n.runtime.executor import (
     ScriptExecutor,
 )
 from y5n.runtime.nodes.tree import Tree
-from y5n.runtime.projection.rendering import JinjaRenderEngine
 from y5n.runtime.resources import PackageReader
 from y5n.runtime.runtime import (
     NodeNotExecutable,
@@ -51,7 +51,7 @@ from y5n.runtime.sources.data import (
     RuntimeSource,
     SessionSource,
 )
-from y5n.runtime.wire.adapter.projection import ProjectionAdapter
+from y5n.runtime.wire.adapter.document import DocumentAdapter
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
 from y5n.runtime.wire.projector import build_projector
@@ -139,7 +139,7 @@ def build_runtime(
         key: NodePath,
         session: Session,
         error: Exception,
-    ) -> Projection:
+    ) -> Document:
 
         if isinstance(error, PermissionDenied):
             audit_service.security(session=session, obj="command", action=root.key)  # type: ignore
@@ -171,8 +171,8 @@ def build_runtime(
     root_ports.provide(AUTHORIZE_WRITE, perm_checker.can_write)
     root_ports.provide(NEW_PERMISSION_SET, lambda: PermissionSet())
     root_ports.provide(PARSE_PERMISSION_SPEC, perm_parser.parse)
-    root_ports.provide(PROJECT, projector.project_from_space)
-    root_ports.provide(PROJECTION_RESOLVE, projector.project)
+    root_ports.provide(DOCUMENT, projector.project_from_space)
+    root_ports.provide(DOCUMENT_RESOLVE, projector.project)
     root_ports.provide(RESOURCE_LOAD, package_reader.get_text)
     root_ports.provide(JINJA_RENDER, jinja_engine.render_str)
     root_ports.provide(COMPILE, compiler.compile)
@@ -184,11 +184,11 @@ def build_runtime(
     # ---------------------------------------
 
     bus = get_bus()
-    bus.resolver.register("system:projection", {"projection": ["render"]}, path="/")
+    bus.resolver.register("system:projection", {"document": ["render"]}, path="/")
 
     bus.transport.register_adapter(
-        "projection",
-        ProjectionAdapter(projector=projector, tree=tree),
+        "document",
+        DocumentAdapter(projector=projector, tree=tree),
     )
 
     # --------------------

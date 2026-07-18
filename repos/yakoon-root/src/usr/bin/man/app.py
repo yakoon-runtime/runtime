@@ -10,7 +10,7 @@ async def run(space: NodeSpace):
     key = space.request.arg(0)
 
     if not key:
-        projection = await space.ports.get(PROJECT)(
+        projection = await space.ports.get(DOCUMENT)(
             space=space,
             state={},
         )
@@ -48,7 +48,7 @@ async def run(space: NodeSpace):
             yield out(projection)
             return
 
-    projection = await space.ports.get(PROJECT)(
+    projection = await space.ports.get(DOCUMENT)(
         space=space,
         state={"key": key},
     )

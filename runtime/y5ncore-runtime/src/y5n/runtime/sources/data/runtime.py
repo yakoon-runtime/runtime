@@ -46,10 +46,7 @@ class RuntimeSource(DataSource):
         return matches[0]
 
     def _resolve_list(self, request: DataRequest) -> DataResult:
-        rows = [
-            {"name": name, "url": url}
-            for name, url in self._runtimes.items()
-        ]
+        rows = [{"name": name, "url": url} for name, url in self._runtimes.items()]
         return DataResult.ok(rows=rows)
 
     def _resolve_by_name(self, request: DataRequest) -> DataResult:

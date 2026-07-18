@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 
 import httpx
-
 from y5n.base.llm import LLMRequest, LLMResponse
 
 
@@ -38,13 +37,11 @@ class OpenAICompatibleProvider:
                 )
 
                 if resp.status_code == 429 and attempt < self._max_retries:
-                    await asyncio.sleep(2 ** attempt)
+                    await asyncio.sleep(2**attempt)
                     continue
 
                 resp.raise_for_status()
-                return LLMResponse(
-                    text=resp.json()["choices"][0]["message"]["content"]
-                )
+                return LLMResponse(text=resp.json()["choices"][0]["message"]["content"])
 
         raise RuntimeError("LLM request failed after max retries")
 

@@ -1,5 +1,5 @@
+from y5n.api.documents import to_text
 from y5n.api.dsl import out, receive, send
-from y5n.api.projections import to_text
 from y5n.base.runtime import Event
 
 

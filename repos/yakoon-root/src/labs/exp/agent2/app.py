@@ -14,10 +14,28 @@ from y5n.llm.providers.openai_compat import OpenAICompatibleProvider
 CHANNEL = "os-result"
 
 BLACKLIST = {
-    "rm", "sudo", "su", "passwd", "shutdown", "reboot",
-    "systemctl", "curl", "wget", "scp", "ssh",
-    "mkfs", "dd", "fdisk", "chmod", "chown", "kill",
-    "apt", "dnf", "yum", "pip", "npm",
+    "rm",
+    "sudo",
+    "su",
+    "passwd",
+    "shutdown",
+    "reboot",
+    "systemctl",
+    "curl",
+    "wget",
+    "scp",
+    "ssh",
+    "mkfs",
+    "dd",
+    "fdisk",
+    "chmod",
+    "chown",
+    "kill",
+    "apt",
+    "dnf",
+    "yum",
+    "pip",
+    "npm",
 }
 
 SYSTEM_PROMPT = """Du bist ein OS-Assistent für {system}.

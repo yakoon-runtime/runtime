@@ -25,4 +25,3 @@ class NodeVisibility(StrEnum):
     NORMAL = "normal"
     DEVELOPER = "dev"
     INTERNAL = "internal"
-

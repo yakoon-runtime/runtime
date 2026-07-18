@@ -68,4 +68,3 @@ class DataResult(Generic[T]):
 class DataSource(Protocol[T]):
 
     async def read(self, request: DataRequest) -> DataResult[T]: ...
-

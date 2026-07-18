@@ -21,7 +21,7 @@ invocation:
     - key: long
     - key: all
 
-projection:
+document:
   default: resources/default.yak
 
 man:

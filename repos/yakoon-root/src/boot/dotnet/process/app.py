@@ -4,9 +4,9 @@ import asyncio
 from pathlib import Path
 
 import yaml
+from y5n.base.document import to_text
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
-from y5n.base.projection import to_text
 
 
 async def run(space):

@@ -25,7 +25,9 @@ PATCH = JsonPatchStrategy(max_ops=50)
 @pytest.mark.asyncio
 async def test_append_creates_revision(store: EntityStore) -> None:
     key = NS.get_key("a")
-    result = await store.append(key=key, patch=[{"op": "add", "path": "/x", "value": 1}])
+    result = await store.append(
+        key=key, patch=[{"op": "add", "path": "/x", "value": 1}]
+    )
     assert result.rev == 1
 
     loaded = await store.get(key=key)

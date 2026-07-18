@@ -16,9 +16,7 @@ class StartCommandHandler:
     def __init__(self, on_start_command):
         self._on_start_command = on_start_command
 
-    async def execute(
-        self, effect: Effect, session: Session, flow: Flow
-    ) -> None:
+    async def execute(self, effect: Effect, session: Session, flow: Flow) -> None:
         e = cast(StartCommand, effect)
         await self._on_start_command(
             command=e.command,

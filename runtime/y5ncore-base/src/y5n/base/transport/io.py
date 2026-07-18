@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from y5n.base.projection import ProjectionEvent
+    from y5n.base.document import DocumentEvent
 
 
 class IO(Protocol):
 
     async def view(
         self,
-        event: ProjectionEvent,
+        event: DocumentEvent,
     ) -> None: ...

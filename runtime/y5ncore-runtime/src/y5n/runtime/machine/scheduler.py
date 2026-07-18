@@ -9,6 +9,7 @@ from collections.abc import Awaitable, Callable
 from typing import Protocol
 from uuid import uuid4
 
+from y5n.base.document import Document
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import (
     AwaitEvent,
@@ -18,7 +19,6 @@ from y5n.base.flow.primitives import (
     YieldToScheduler,
 )
 from y5n.base.nodes import Node
-from y5n.base.projection import Projection
 from y5n.base.runtime import Event, InputContext
 from y5n.runtime.flow import Flow, FlowKind
 from y5n.runtime.runtime import Session
@@ -48,7 +48,7 @@ class Scheduler:
         on_setup: OnSetup,
         on_dispatch: OnDispatch,
         on_step_flow: OnStepFlow,
-        on_show_projection: OnShowProjection,
+        on_show_projection: OnShowDocument,
         on_audit_warning: OnAuditWarning,
         on_error_resolve: OnErrorResolve,
         on_flow_complete: OnFlowComplete,
@@ -295,7 +295,7 @@ class Scheduler:
             await control.on_enter(flow, self, session)
 
             # ----------------------------------
-            # 3. Parent wecken (Projection liegt
+            # 3. Parent wecken (Document liegt
             #    bereits im Channel)
             # ----------------------------------
             if isinstance(control, Stop):
@@ -328,7 +328,7 @@ class Scheduler:
 
             await self.on_show_projection(
                 session=session,
-                projection=projection,
+                document=projection,
                 ctx=ctx,
                 job_id=uuid4().hex,
             )
@@ -366,12 +366,12 @@ class OnAuditWarning(Protocol):
     def __call__(self, *, message: str, session: Session) -> None: ...
 
 
-class OnShowProjection(Protocol):
+class OnShowDocument(Protocol):
     async def __call__(
         self,
         *,
         session: Session,
-        projection: Projection,
+        document: Document,
         ctx: InputContext | None,
         job_id: str = "system",
     ) -> None: ...
@@ -384,7 +384,7 @@ class OnErrorResolve(Protocol):
         node: Node,
         session: Session,
         error: Exception,
-    ) -> Projection: ...
+    ) -> Document: ...
 
 
 class OnFlowComplete(Protocol):

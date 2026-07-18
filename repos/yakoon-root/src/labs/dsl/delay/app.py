@@ -1,5 +1,5 @@
+from y5n.api.documents import to_text
 from y5n.api.dsl import delay, out
-from y5n.api.projections import to_text
 
 
 async def run(_):

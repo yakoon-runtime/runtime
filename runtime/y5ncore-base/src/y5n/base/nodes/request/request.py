@@ -19,7 +19,11 @@ class Request:
     """
 
     def __init__(
-        self, command: str, tokens: list[str] | None, payload: Any | None = None, lang: str = ""
+        self,
+        command: str,
+        tokens: list[str] | None,
+        payload: Any | None = None,
+        lang: str = "",
     ) -> None:
         """Create a Request from normalized input.
 

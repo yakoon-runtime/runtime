@@ -9,9 +9,7 @@ class MemoryShardRepository:
         self._shards: dict[tuple[str, int], Shard] = {}
 
     async def list_shards(self, prefix: str) -> list[Shard]:
-        return [
-            s for (p, _), s in self._shards.items() if p == prefix
-        ]
+        return [s for (p, _), s in self._shards.items() if p == prefix]
 
     async def delete_shard(self, prefix: str, shard_id: int) -> None:
         self._shards.pop((prefix, shard_id), None)
@@ -28,7 +26,5 @@ class MemoryShardRepository:
         return True
 
     async def get_max_shard_id(self, prefix: str) -> int | None:
-        ids = [
-            sid for (p, sid) in self._shards if p == prefix
-        ]
+        ids = [sid for (p, sid) in self._shards if p == prefix]
         return max(ids) if ids else None

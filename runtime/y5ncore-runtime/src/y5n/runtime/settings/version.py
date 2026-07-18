@@ -21,12 +21,7 @@ def resolve_runtime_info() -> RuntimeInfo:
 
 
 def _resolve_version() -> str:
-    return (
-        _from_metadata()
-        or _get_git_tag()
-        or _read_version_file()
-        or "unknown"
-    )
+    return _from_metadata() or _get_git_tag() or _read_version_file() or "unknown"
 
 
 def _resolve_build() -> str | None:

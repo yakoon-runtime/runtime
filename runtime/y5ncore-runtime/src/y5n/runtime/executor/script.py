@@ -22,8 +22,8 @@ def _empty() -> RunResult:
 
 
 def _emit_text(text: str):
+    from y5n.base.document import to_text
     from y5n.base.flow.primitives import EmitView
-    from y5n.base.projection import to_text
 
     return EmitView(to_text(text))
 

@@ -1,4 +1,4 @@
-from y5n.runtime.projection import Projector
+from y5n.runtime.document import Projector
 
 from .compiler import build_compiler
 from .renderer import build_renderer

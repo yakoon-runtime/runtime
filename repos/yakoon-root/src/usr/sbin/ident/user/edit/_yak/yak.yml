@@ -20,7 +20,7 @@ invocation:
     - key: password
     - key: enabled
 
-projection:
+document:
   default: resources/default.yak
 
 man:

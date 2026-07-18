@@ -15,8 +15,8 @@ from y5n.base.flow.primitives import (
 from y5n.base.runtime import Event
 
 if TYPE_CHECKING:
+    from y5n.base.document import Document
     from y5n.base.nodes import Node, Request
-    from y5n.base.projection import Projection
 
 from .cursor import FlowCursor
 from .types import FlowKind
@@ -37,7 +37,7 @@ class Flow:
     cursor: FlowCursor
     tokens: list[str] | None = None
     control: Control | None = None
-    view: Projection | None = None
+    view: Document | None = None
 
     scheduled: bool = False
     wake_at: float | None = None

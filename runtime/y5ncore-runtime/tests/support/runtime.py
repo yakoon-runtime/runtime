@@ -3,11 +3,12 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from support.flow import make_flow
-from support.events import push_event
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import Outcome, Stop
 from y5n.runtime.flow import Flow
+
+from support.events import push_event
+from support.flow import make_flow
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator

@@ -14,5 +14,5 @@ executor: runtime
 entry:
   run: app.py
 
-projection:
+document:
   default: resources/default.yak

@@ -6,7 +6,7 @@ from y5n.base.clients import ClientConnection
 from y5n.base.runtime import Event
 from y5ntrans.websocket.client import WebSocketClientTransport
 
-OnProjection = Callable[[object], Awaitable[None]]
+OnDocument = Callable[[object], Awaitable[None]]
 
 
 class RuntimeConnection:
@@ -24,7 +24,7 @@ class RuntimeConnection:
         self._transport: WebSocketClientTransport | None = None
         self._connection: ClientConnection | None = None
 
-    async def open(self, on_projection: OnProjection) -> None:
+    async def open(self, on_projection: OnDocument) -> None:
         self._transport = WebSocketClientTransport(self._url, exit_on_done=True)
         self._transport.set_on_done(self.close)
         self._connection = await self._transport.connect(on_projection)

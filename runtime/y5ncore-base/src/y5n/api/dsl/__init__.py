@@ -1,3 +1,4 @@
+from y5n.base.document import to_text
 from y5n.base.flow import (
     background,
     delay,
@@ -12,7 +13,6 @@ from y5n.base.flow import (
     suspend,
     view,
 )
-from y5n.base.projection import to_text
 
 __all__ = [
     "out",

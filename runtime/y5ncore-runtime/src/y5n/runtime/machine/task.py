@@ -21,10 +21,27 @@ class TaskRunner:
     def on_error(self, on_error: OnTaskError):
         self._on_error = on_error
 
-    async def start(self, *, command: str, channel: str, scope: Scope, kwargs: Mapping, flow: Flow, session: Session) -> None:
+    async def start(
+        self,
+        *,
+        command: str,
+        channel: str,
+        scope: Scope,
+        kwargs: Mapping,
+        flow: Flow,
+        session: Session,
+    ) -> None:
         asyncio.create_task(self._run(command, channel, scope, kwargs, flow, session))
 
-    async def _run(self, command: str, channel: str, scope: Scope, kwargs: Mapping, flow: Flow, session: Session) -> None:
+    async def _run(
+        self,
+        command: str,
+        channel: str,
+        scope: Scope,
+        kwargs: Mapping,
+        flow: Flow,
+        session: Session,
+    ) -> None:
         try:
             try:
                 args = kwargs.get("args", [])

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import PROJECT
+from y5n.api.ports import DOCUMENT
 
 from .ports import NAMESPACES, USER_SERVICE
 
@@ -19,7 +19,7 @@ async def run(space: NodeSpace):
         username=username,
     )
 
-    projection = await space.ports.get(PROJECT)(
+    projection = await space.ports.get(DOCUMENT)(
         space=space,
         state={"name": username},
     )

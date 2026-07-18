@@ -1,4 +1,4 @@
-from y5n.runtime.projection.rendering import JinjaRenderEngine, Renderer
+from y5n.runtime.document.rendering import JinjaRenderEngine, Renderer
 from y5n.runtime.resources import PackageReader
 
 

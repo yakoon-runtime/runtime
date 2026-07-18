@@ -50,7 +50,7 @@ async def run(space: NodeSpace):
     else:
         state["reason"] = result.reason
 
-    projection = await space.ports.get(PROJECT)(
+    projection = await space.ports.get(DOCUMENT)(
         space=space,
         state=state,
     )

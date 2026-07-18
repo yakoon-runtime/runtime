@@ -1,4 +1,4 @@
-from y5n.runtime.projection.transport import (
+from y5n.runtime.document.transport import (
     EventDispatcher,
     EventFactory,
     EventStreamOutput,

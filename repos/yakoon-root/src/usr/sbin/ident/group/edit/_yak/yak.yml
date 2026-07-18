@@ -19,7 +19,7 @@ invocation:
       required: true
     - key: enabled
 
-projection:
+document:
   default: resources/default.yak
 
 man:

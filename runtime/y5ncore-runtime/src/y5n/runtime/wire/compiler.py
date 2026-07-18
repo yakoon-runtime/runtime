@@ -1,5 +1,5 @@
-from y5n.base.projection import Projection
-from y5n.runtime.projection.compiler import (
+from y5n.base.document import Document
+from y5n.runtime.document.compiler import (
     Compiler,
     ElementNode,
     build_ast,
@@ -13,10 +13,10 @@ def build_compiler() -> Compiler:
 
     # --- MAPPING ---
 
-    def mapper(context: dict, root: ElementNode) -> Projection:
+    def mapper(context: dict, root: ElementNode) -> Document:
         mapper = create_mapper(context)
-        projection = mapper.map_projection(root)
-        return projection
+        document = mapper.map_document(root)
+        return document
 
     # --- COMPILING ---
 

@@ -44,7 +44,11 @@ async def run(_):
     ch_b = uuid4().hex
 
     yield start_task("python3", channel=ch_a, args=["-c", "print('hello from task A')"])
-    yield start_task("python3", channel=ch_b, args=["-c", "import time; time.sleep(1); print('hello from task B')"])
+    yield start_task(
+        "python3",
+        channel=ch_b,
+        args=["-c", "import time; time.sleep(1); print('hello from task B')"],
+    )
 
     lines.append("→ both tasks are now running in parallel")
     yield render()

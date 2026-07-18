@@ -20,7 +20,7 @@ from y5n.runtime.executor import (
 
 # Resource types that capabilities can declare in yak.yml.
 # Each entry becomes a node.resources[type][variant] to Path mapping.
-RESOURCE_KEYS = frozenset({"projection", "man"})
+RESOURCE_KEYS = frozenset({"document", "man"})
 
 
 @dataclass

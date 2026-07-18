@@ -34,7 +34,9 @@ class TestMemorySequencer:
         assert a == "1"
         assert b == "1"
 
-    async def test_shard_wraps_after_range(self, repository: MemoryShardRepository) -> None:
+    async def test_shard_wraps_after_range(
+        self, repository: MemoryShardRepository
+    ) -> None:
         allocator = ShardAllocator(repository, range_size=5)
         seq = Sequencer(allocator)
 

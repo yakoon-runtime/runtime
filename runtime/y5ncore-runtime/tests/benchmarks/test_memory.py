@@ -3,6 +3,7 @@
 import sys
 from uuid import uuid4
 
+from y5n.base.document import Document
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import (
     AwaitEvent,
@@ -17,7 +18,6 @@ from y5n.base.flow.primitives import (
     Suspend,
 )
 from y5n.base.nodes import Node
-from y5n.base.projection import Projection
 from y5n.base.runtime import Event
 from y5n.runtime.flow import Flow, FlowCursor
 
@@ -103,11 +103,11 @@ def run():
     )
     measure(
         "Outcome(effects=[EmitView(...)])",
-        Outcome(effects=[EmitView(Projection.create(blocks=[]))]),
+        Outcome(effects=[EmitView(Document.create(blocks=[]))]),
     )
 
     # Effects
-    measure("EmitView(projection)", EmitView(Projection.create(blocks=[])))
+    measure("EmitView(projection)", EmitView(Document.create(blocks=[])))
     measure("Foreground()", Foreground())
     measure("Background()", Background())
     measure(

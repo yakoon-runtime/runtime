@@ -4,7 +4,7 @@ import yaml
 from y5n.api.data import DataRequest
 from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import PROJECT, SOURCE_READ
+from y5n.api.ports import DOCUMENT, SOURCE_READ
 
 _KIND_ORDER = {"dir": 0, "cmd": 1, "file": 2}
 
@@ -17,7 +17,7 @@ async def run(space: NodeSpace):
     root = _root_path(space)
     fs_path = _resolve_fs_path(space, root, target_name)
     if not fs_path.exists():
-        projection = await space.ports.get(PROJECT)(
+        projection = await space.ports.get(DOCUMENT)(
             space=space,
             state={"view": "default", "key": target_name or fs_path.name},
         )
@@ -89,7 +89,7 @@ async def run(space: NodeSpace):
     merged.sort(key=_sort_key)
 
     if use_list:
-        projection = await space.ports.get(PROJECT)(
+        projection = await space.ports.get(DOCUMENT)(
             space=space,
             state={
                 "view": "long",
@@ -101,7 +101,7 @@ async def run(space: NodeSpace):
         return
 
     items = [f"{e['key']}/" if e.get("navigable") else e["key"] for e in merged]
-    projection = await space.ports.get(PROJECT)(
+    projection = await space.ports.get(DOCUMENT)(
         space=space,
         state={"view": "default", "items": items},
     )

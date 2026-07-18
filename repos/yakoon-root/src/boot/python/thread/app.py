@@ -12,9 +12,9 @@ from python._shared import (
     load_and_capture,
     resolve_tree_path,
 )
+from y5n.base.document import to_text
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
-from y5n.base.projection import to_text
 
 
 async def _run_main(mod):

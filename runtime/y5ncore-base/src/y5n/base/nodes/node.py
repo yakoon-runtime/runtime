@@ -212,9 +212,7 @@ class Node:
         current = self
         while current is not None:
             if current is node:
-                raise ValueError(
-                    "Cannot mount an ancestor into its own subtree."
-                )
+                raise ValueError("Cannot mount an ancestor into its own subtree.")
             current = current.parent
 
         node.parent = self

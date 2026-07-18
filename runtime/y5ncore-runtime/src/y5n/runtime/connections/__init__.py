@@ -1,7 +1,7 @@
 from .connection import RuntimeConnection
-from .router import SessionProjectionRouter
+from .router import SessionDocumentRouter
 
 __all__ = [
     "RuntimeConnection",
-    "SessionProjectionRouter",
+    "SessionDocumentRouter",
 ]

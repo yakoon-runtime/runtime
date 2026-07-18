@@ -114,19 +114,17 @@ class RuntimeHost:
     def list_sessions(self) -> list[dict]:
         rows = []
         for key, runner in self._sessions.items():
-            clients = sum(
-                1 for subs in self._subscriptions.values() if runner in subs
-            )
-            homes = sum(
-                1 for home in self._connection_home.values() if home is runner
-            )
+            clients = sum(1 for subs in self._subscriptions.values() if runner in subs)
+            homes = sum(1 for home in self._connection_home.values() if home is runner)
             flows = len(list(runner.session.flows()))
-            rows.append({
-                "key": str(key),
-                "clients": clients,
-                "homes": homes,
-                "flows": flows,
-            })
+            rows.append(
+                {
+                    "key": str(key),
+                    "clients": clients,
+                    "homes": homes,
+                    "flows": flows,
+                }
+            )
         return rows
 
     async def attach_session(self, session: Session, target_key: str):

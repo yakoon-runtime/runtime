@@ -39,7 +39,9 @@ class Resolver:
 
     def __init__(self) -> None:
         self._providers: dict[str, dict[str, Sequence[str]]] = {}
-        self._routes: dict[str, dict[str, str]] = {}  # "port:method" → {path → provider_id}
+        self._routes: dict[str, dict[str, str]] = (
+            {}
+        )  # "port:method" → {path → provider_id}
 
     def register(
         self,

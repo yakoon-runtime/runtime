@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import httpx
-
 from y5n.base.llm import LLMRequest, LLMResponse
 
 
@@ -18,8 +17,7 @@ class OllamaProvider:
                 json={
                     "model": self._model,
                     "messages": [
-                        {"role": m.role, "content": m.content}
-                        for m in request.messages
+                        {"role": m.role, "content": m.content} for m in request.messages
                     ],
                     "stream": False,
                 },

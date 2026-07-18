@@ -2,7 +2,7 @@ from y5n.api.dsl import out
 from y5n.api.nodes import NodeSpace
 from y5n.base.ports.models import HealthLevel
 from y5n.base.ports.system import VALIDATE
-from y5n.base.projection.model.block import (
+from y5n.base.document.model.block import (
     CollapsibleBlock,
     HeadingBlock,
     InlineText,
@@ -12,14 +12,14 @@ from y5n.base.projection.model.block import (
     SpacerBlock,
     TextBlock,
 )
-from y5n.base.projection.model.model import Projection
+from y5n.base.document.model.model import Document
 
 
 async def run(space: NodeSpace):
     validate = space.ports.get(VALIDATE)
     if validate is None:
         yield out(
-            Projection.create(
+            Document.create(
                 blocks=[
                     HeadingBlock(
                         level=1, text=[InlineText("text", "No VALIDATE port available")]
@@ -51,7 +51,7 @@ async def run(space: NodeSpace):
         }.get(child.level, "?")
         children_blocks.append(TextBlock.create(text=f"  {icon} {child.message or ''}"))
 
-    projection = Projection.create(
+    document = Document.create(
         blocks=[
             HeadingBlock(level=1, text=[InlineText("text", "Health")]),
             RuleBlock(),
@@ -64,4 +64,4 @@ async def run(space: NodeSpace):
             KvBlock(items=kv_items),
         ]
     )
-    yield out(projection)
+    yield out(document)

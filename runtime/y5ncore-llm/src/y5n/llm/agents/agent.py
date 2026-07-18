@@ -168,7 +168,9 @@ class Agent:
                 self._loop_warning_given = True
                 repeat_count = 0
                 last_fingerprint = None
-                yield out_text("! Wiederhole dieselbe Aktion — versuche anderen Ansatz.")
+                yield out_text(
+                    "! Wiederhole dieselbe Aktion — versuche anderen Ansatz."
+                )
                 messages.append(
                     LLMMessage(
                         role="user",

@@ -125,8 +125,6 @@ class NodeSource(DataSource):
             rows=[self._to_row(child) for child in node.children.values()]
         )
 
-
-
     # ---------------------------------------------------------------------
     # Internal Helpers
     # ---------------------------------------------------------------------

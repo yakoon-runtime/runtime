@@ -71,7 +71,9 @@ class StartTask(Effect):
     stdout, stderr) to *channel* on the given scope.
     """
 
-    def __init__(self, command: str, channel: str, *, scope: Scope = Scope.SESSION, **kwargs):
+    def __init__(
+        self, command: str, channel: str, *, scope: Scope = Scope.SESSION, **kwargs
+    ):
         if not channel:
             raise ValueError("channel must be a non-empty string")
         self.command = command

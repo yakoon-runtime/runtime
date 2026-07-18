@@ -3,12 +3,12 @@ from y5n.base.ports.protocols import (
     OnAuthorizeRead,
     OnAuthorizeWrite,
     OnCompile,
+    OnDocumentResolve,
     OnErrorResolve,
     OnJinjaRender,
     OnNewPermissionSet,
     OnParsePermissionSpec,
     OnProject,
-    OnProjectionResolve,
     OnResourceLoad,
     OnSessionAttach,
     OnSessionDetach,
@@ -68,14 +68,14 @@ PARSE_PERMISSION_SPEC = Port(
     protocol=OnParsePermissionSpec,
 )
 
-PROJECT = Port(
-    "projection.project",
+DOCUMENT = Port(
+    "document.project",
     protocol=OnProject,
 )
 
-PROJECTION_RESOLVE = Port(
-    "projection.resolve",
-    protocol=OnProjectionResolve,
+DOCUMENT_RESOLVE = Port(
+    "document.resolve",
+    protocol=OnDocumentResolve,
 )
 
 RESOURCE_LOAD = Port(

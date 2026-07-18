@@ -4,12 +4,12 @@ import uuid
 from collections.abc import AsyncGenerator, Mapping
 from typing import Any
 
+from y5n.base.document import Document, DocumentHeader
+from y5n.base.document.model.block import FieldsBlock, SectionBlock
+from y5n.base.document.model.field import Field, FieldsState
 from y5n.base.flow.dsl import Outcome, out, prompt, receive
 from y5n.base.flow.policies import BasePolicy, ValidationError
 from y5n.base.nodes import Param
-from y5n.base.projection import Projection, ProjectionHeader
-from y5n.base.projection.model.block import FieldsBlock, SectionBlock
-from y5n.base.projection.model.field import Field, FieldsState
 
 from .dialog import Dialog
 from .form_action import FormAction
@@ -163,10 +163,10 @@ class Form:
     # Rendering
     # --------------------------------------------------------
 
-    def _render(self, active_key: str = "") -> Projection:
+    def _render(self, active_key: str = "") -> Document:
         return self._render_structured(active_key)
 
-    def _render_structured(self, active_key: str) -> Projection:
+    def _render_structured(self, active_key: str) -> Document:
         fb_fields: list[Field] = []
 
         for param in self._fields:
@@ -198,8 +198,8 @@ class Form:
             intro=self._intro or None,
             state="active",
         )
-        header = ProjectionHeader(title=self._title, role="info")
-        return Projection.create(
+        header = DocumentHeader(title=self._title, role="info")
+        return Document.create(
             header=header,
             blocks=[SectionBlock(blocks=[fields_block])],
         )

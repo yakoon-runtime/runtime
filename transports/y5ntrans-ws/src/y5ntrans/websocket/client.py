@@ -3,8 +3,8 @@ import json
 
 import websockets
 from y5n.base.clients import ClientConnection
+from y5n.base.document.wire import deserialize_event
 from y5n.base.flow.patterns.public import FormAction
-from y5n.base.projection.wire import deserialize_event
 from y5n.base.runtime import Event, Routing
 
 
@@ -30,7 +30,7 @@ class WebSocketClientTransport:
                 async for msg in self._websocket:
                     data = json.loads(msg)
 
-                    if data.get("type") == "projection":
+                    if data.get("type") == "document":
                         event = deserialize_event(data["payload"])
                         await on_emit(event)
 

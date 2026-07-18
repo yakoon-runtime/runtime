@@ -3,11 +3,11 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
+from y5n.base.document import Document
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.dsl import out, receive, start_cmd
 from y5n.base.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
 from y5n.base.nodes import Node
-from y5n.base.projection import Projection
 from y5n.base.runtime import Event
 from y5n.runtime.machine.effects import StartCommandHandler
 
@@ -20,7 +20,7 @@ async def test_command_channel_contract(harness):
     received: list[object] = []
 
     async def sub_flow(ctx):
-        yield out(Projection.create(blocks=[]))
+        yield out(Document.create(blocks=[]))
         yield Outcome()
 
     async def caller(ctx):
@@ -63,7 +63,7 @@ async def test_start_cmd_parses_tokens(harness, effect_executor):
 
     async def sub_handler(ctx):
         received_tokens.append(ctx.request.args())
-        yield out(Projection.create(blocks=[]))
+        yield out(Document.create(blocks=[]))
         yield Outcome()
 
     sub_node = Node(key="test", run=sub_handler)

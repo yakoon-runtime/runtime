@@ -20,7 +20,7 @@ invocation:
       positional: true
       required: true
 
-projection:
+document:
   default: resources/default.yak
 
 man:

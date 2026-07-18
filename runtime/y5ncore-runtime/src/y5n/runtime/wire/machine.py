@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
+from y5n.base.document import Document
 from y5n.base.flow import Scope
 from y5n.base.naming import Key
 from y5n.base.nodes import Node
 from y5n.base.ports.protocols import OnErrorResolve
-from y5n.base.projection import Projection
 from y5n.base.runtime import Event, InputContext
 from y5n.base.runtime.input import Origin
 from y5n.runtime.connections import (
     RuntimeConnection,
-    SessionProjectionRouter,
+    SessionDocumentRouter,
 )
 from y5n.runtime.flow import Flow
 from y5n.runtime.interaction import Interactor
@@ -40,7 +40,7 @@ from y5n.runtime.settings.version import resolve_runtime_info
 def build_machine(
     platform: Node,
     on_suggest: OnSuggest,
-    on_projection_send: OnProjectionSend,
+    on_projection_send: OnDocumentSend,
     on_session: OnGetOrCreateSession,
     on_has_permission: OnHasPermission,
     on_audit_warning: OnAuditWarning,
@@ -76,7 +76,7 @@ def build_machine(
         node: Node,
         session,
         error: Exception,
-    ) -> Projection:
+    ) -> Document:
         try:
             on_error = node.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
@@ -117,7 +117,7 @@ def build_machine(
                 # We do NOT call conn.close() here because we are inside the
                 # transport's own receive-loop task.
 
-            await conn.open(on_projection=SessionProjectionRouter(session))
+            await conn.open(on_projection=SessionDocumentRouter(session))
             conn.set_on_done(on_remote_done)
             await conn.dispatch(Event(payload=command))
             return
@@ -272,12 +272,12 @@ class OnGetOrCreateSession(Protocol):
     async def __call__(self, key: Key, **kwargs) -> tuple[Session, bool]: ...
 
 
-class OnProjectionSend(Protocol):
+class OnDocumentSend(Protocol):
     async def __call__(
         self,
         *,
         session: Session,
-        projection: Projection,
+        document: Document,
         ctx: InputContext | None,
         job_id: str = "system",
         mode: str = "replace",

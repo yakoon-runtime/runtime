@@ -297,7 +297,7 @@ class InvocationValidator:
         matching: list[Invocation],
     ) -> None:
         unknown: list[str] = []
-        for token in (tokens or []):
+        for token in tokens or []:
             if not token.startswith("--"):
                 continue
             key = token.split("=")[0]

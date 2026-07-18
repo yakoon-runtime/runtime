@@ -1,8 +1,8 @@
 from typing import cast
 
+from y5n.base.document import Document
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import Effect, EmitView
-from y5n.base.projection import Projection
 from y5n.base.runtime import Event
 from y5n.runtime.flow import Flow
 from y5n.runtime.runtime import Session
@@ -33,18 +33,16 @@ class EmitViewHandler:
             return
 
         ctx = e.ctx or flow.event.context
-        view = cast(Projection, e.view)
+        view = cast(Document, e.view)
 
         if e.persist:
             flow.view = view
 
-        job_id = e.job_id or (
-            f"{flow.id}:{e.space}" if e.space else flow.id
-        )
+        job_id = e.job_id or (f"{flow.id}:{e.space}" if e.space else flow.id)
 
         await self._on_projection(
             session=session,
-            projection=view,
+            document=view,
             ctx=ctx,
             job_id=job_id,
             mode=e.mode,

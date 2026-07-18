@@ -4,11 +4,11 @@ import time
 from uuid import uuid4
 
 import pytest
+from y5n.base.document import Document
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.dsl import out, receive, send, start_cmd
 from y5n.base.flow.primitives import Outcome, StartCommand, Stop
 from y5n.base.nodes import Node
-from y5n.base.projection import Projection
 from y5n.base.runtime import Event
 from y5n.runtime.flow import Flow
 from y5n.runtime.machine.effects import StartCommandHandler
@@ -167,7 +167,7 @@ async def test_runtime_mix(harness):
     sub_ch = uuid4().hex
 
     async def sub_handler(ctx):
-        yield out(Projection.create(blocks=[]))
+        yield out(Document.create(blocks=[]))
         yield Outcome()
 
     sub_node = Node(key="sub", run=sub_handler)

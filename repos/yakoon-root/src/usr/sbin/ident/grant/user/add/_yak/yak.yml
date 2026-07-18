@@ -23,7 +23,7 @@ invocation:
     - key: bits
     - key: deny
 
-projection:
+document:
   default: resources/default.yak
 
 man:

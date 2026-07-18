@@ -13,9 +13,9 @@ from io import StringIO
 from pathlib import Path
 
 import yaml
+from y5n.base.document import to_text
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
-from y5n.base.projection import to_text
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
 
