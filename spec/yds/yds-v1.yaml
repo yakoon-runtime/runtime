@@ -3,6 +3,8 @@
 # Every Document is a tree of typed blocks.
 # The wire format is JSON, described here in YAML.
 
+status: canonical
+
 schema:
   name: Yakoon Document Schema
   version: 1
