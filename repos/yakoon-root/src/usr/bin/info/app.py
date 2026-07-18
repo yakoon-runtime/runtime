@@ -8,9 +8,9 @@ _start_time = time.time()
 
 
 async def main():
-    projection = ports.get("projection")
+    doc = ports.get("document")
 
-    text = await projection.render(
+    result = await doc.render(
         name="default",
         state={
             "time": datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC"),
@@ -20,7 +20,7 @@ async def main():
             "hostname": platform.node(),
         },
     )
-    print(text)
+    print(result)
 
 
 def _get_uptime() -> str:
