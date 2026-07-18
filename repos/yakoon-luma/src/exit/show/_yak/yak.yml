@@ -23,4 +23,4 @@ invocation:
       required: true
 
 man:
-  default: resources/man.yak
+  default: resources/man.ydf

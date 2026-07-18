@@ -26,4 +26,4 @@ invocation:
     - key: direction
 
 man:
-  default: resources/man.yak
+  default: resources/man.ydf

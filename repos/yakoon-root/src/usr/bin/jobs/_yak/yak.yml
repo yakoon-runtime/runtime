@@ -15,4 +15,4 @@ entry:
   setup: setup.py
 
 man:
-  default: resources/man.yak
+  default: resources/man.ydf

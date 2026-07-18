@@ -11,7 +11,7 @@ class ResourceRef:
     package: str
     path: str  # relative inside package, posix style
     encoding: str = "utf-8"
-    exts: tuple[str, ...] = (".yak",)
+    exts: tuple[str, ...] = (".ydf",)
 
     def clone(self, **kwargs) -> ResourceRef:
         return replace(self, **kwargs)

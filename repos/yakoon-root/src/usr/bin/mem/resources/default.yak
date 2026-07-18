@@ -1,8 +1,0 @@
-<heading>Memory</heading>
-<rule/>
-<kv>
-    <item key="RSS">{{ rss }}</item>
-    <item key="Virtual">{{ vms }}</item>
-    <item key="System">{{ system_percent }}%</item>
-    <item key="Available">{{ available }}</item>
-</kv>

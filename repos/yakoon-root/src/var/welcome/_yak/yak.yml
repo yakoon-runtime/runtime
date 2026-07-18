@@ -15,4 +15,4 @@ entry:
   run: app.py
 
 document:
-  default: resources/default.yak
+  default: resources/default.ydf

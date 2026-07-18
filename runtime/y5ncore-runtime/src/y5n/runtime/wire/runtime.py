@@ -58,12 +58,12 @@ from y5n.runtime.wire.stream import build_stream
 from y5nstore.event.wire import build_store
 
 errors = {
-    Exception: "error.yak",
-    NodeNotFound: "command/not_found.yak",
-    NodeNotExecutable: "command/not_executable.yak",
-    UsageError: "command/usage.yak",
-    UnknownOptionsError: "command/unknown_options.yak",
-    PermissionDenied: "permissions/denied.yak",
+    Exception: "error",
+    NodeNotFound: "command/not_found",
+    NodeNotExecutable: "command/not_executable",
+    UsageError: "command/usage",
+    UnknownOptionsError: "command/unknown_options",
+    PermissionDenied: "permissions/denied",
 }
 
 

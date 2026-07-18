@@ -15,4 +15,4 @@ entry:
   run: app.py
 
 man:
-  default: resources/man.yak
+  default: resources/man.ydf

@@ -20,4 +20,4 @@ invocation:
     - key: description
 
 man:
-  default: resources/man.yak
+  default: resources/man.ydf
