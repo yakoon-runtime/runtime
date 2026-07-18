@@ -1,12 +1,12 @@
-from y5n.api.dsl import out, view
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import DOCUMENT
+from y5n.sdk import context, ports
 
 
-async def run(space: NodeSpace):
-    projection = await space.ports.get(DOCUMENT)(
-        space=space,
-        state={"name": space.request.payload},
+async def main():
+    doc = ports.get("document")
+    name = context.request().arg(0) or ""
+
+    result = await doc.render(
+        name="default",
+        state={"name": name},
     )
-    yield view(clear=True)
-    yield out(projection)
+    print(result)

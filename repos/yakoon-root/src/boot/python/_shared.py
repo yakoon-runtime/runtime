@@ -139,15 +139,16 @@ def emit_output(output: str) -> list:
     if not output:
         return []
     outcomes = []
-    for line in output.splitlines():
+    for i, line in enumerate(output.splitlines()):
         line = line.strip()
+        mode = "replace" if i == 0 else "append"
         if line.startswith("{"):
             try:
                 data = _json.loads(line)
                 if isinstance(data, dict) and data.get("kind") == "document":
-                    outcomes.append(Outcome(effects=[EmitView(data, mode="append")]))
+                    outcomes.append(Outcome(effects=[EmitView(data, mode=mode)]))
                     continue
             except Exception:
                 pass
-        outcomes.append(Outcome(effects=[EmitView(to_text(line), mode="append")]))
+        outcomes.append(Outcome(effects=[EmitView(to_text(line), mode=mode)]))
     return outcomes
