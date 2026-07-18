@@ -135,7 +135,7 @@ class Mapper:
 
     def _flush_text(self, nodes: list[Node]) -> dict:
         inline = self._map_inline(nodes)
-        return {"type": "text", "text": inline}
+        return {"type": "text", "text": [_inline_to_dict(v) for v in inline]}
 
     # -----------------
     # INLINE
@@ -166,6 +166,17 @@ class Mapper:
             result[-1] = InlineText(text=result[-1].text.rstrip())
 
         return result
+
+
+# -----------------
+# INLINE → DICT
+# -----------------
+
+
+def _inline_to_dict(inline: Inline) -> dict:
+    from dataclasses import asdict
+
+    return asdict(inline)
 
 
 # -----------------

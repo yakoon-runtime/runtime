@@ -6,12 +6,15 @@ def _extract_children(block: dict) -> list[dict]:
     return block.get(field, []) if field else []
 
 
+_SKIP_PROPS = frozenset({"id", "type", "block", "blocks", "items"})
+
+
 def _build_node(block: dict, parent: str, depth: int) -> dict:
     block_id = block.get("id")
     if block_id is None:
         raise RuntimeError("Block without id")
 
-    props = {k: v for k, v in block.items() if k not in ("id", "type")}
+    props = {k: v for k, v in block.items() if k not in _SKIP_PROPS}
 
     return {
         "id": block_id,

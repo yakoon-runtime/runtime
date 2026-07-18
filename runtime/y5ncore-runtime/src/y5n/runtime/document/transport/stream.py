@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import asdict
+import logging
 from typing import TYPE_CHECKING
 
 from typing_extensions import Protocol
 from y5n.base.document.normalize import normalize as _normalize
 from y5n.base.runtime import InputContext
+
+_log = logging.getLogger(__name__)
+
 
 if TYPE_CHECKING:
     from y5n.runtime.runtime import Session
@@ -43,8 +46,6 @@ class EventStreamOutput:
         mode: str = "replace",
         view_params: dict | None = None,
     ):
-        if not isinstance(document, dict):
-            document = asdict(document)
         document = _normalize(document)
 
         await self.on_begin(
@@ -62,11 +63,15 @@ class EventStreamOutput:
                 document=document,
             )
 
-        except Exception:
-            await self.on_abort(
-                session=session,
-                projection_id=document["id"],
-            )
+        except Exception as exc:
+            _log.exception("emit failed: %s", exc)
+            try:
+                await self.on_abort(
+                    session=session,
+                    projection_id=document["id"],
+                )
+            except Exception as abort_exc:
+                _log.exception("abort also failed: %s", abort_exc)
 
         else:
             await self.on_finish(

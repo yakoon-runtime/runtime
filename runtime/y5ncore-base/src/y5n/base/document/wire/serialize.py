@@ -54,6 +54,15 @@ def _serialize_header(header):
     if not header:
         return None
 
+    if isinstance(header, dict):
+        return {
+            "role": header.get("role"),
+            "title": header.get("title"),
+            "subtitle": header.get("subtitle"),
+            "error_kind": header.get("error_kind"),
+            "error_code": header.get("error_code"),
+        }
+
     return {
         "role": header.role,
         "title": header.title,
@@ -78,7 +87,7 @@ def serialize_op(op):
     if isinstance(op, PatchAppendStructure):
         return {
             "op": "append_structure",
-            "nodes": [serialize_node(n) for n in op.nodes],
+            "nodes": op.nodes,
         }
     if isinstance(op, PatchFinishNode):
         return {
@@ -87,52 +96,3 @@ def serialize_op(op):
         }
 
 
-def serialize_node(n: dict) -> dict:
-    return {
-        "id": n["id"],
-        "type": n["type"],
-        "parent": n.get("parent"),
-        "depth": n.get("depth", 0),
-        "props": serialize_props(n.get("props", {})),
-    }
-
-
-def serialize_props(props):
-    result = {}
-
-    for k, v in props.items():
-        # recursive explosions!
-        if k in ("block", "blocks", "items"):
-            continue
-
-        result[k] = to_json_safe(v)
-
-    return result
-
-
-def to_json_safe(value):
-    # primitive
-    if isinstance(value, (str, int, float, bool)) or value is None:
-        return value
-
-    # list
-    if isinstance(value, list):
-        return [to_json_safe(v) for v in value]
-
-    # dict
-    if isinstance(value, dict):
-        return {k: to_json_safe(v) for k, v in value.items()}
-
-    # Inline (dataclass!)
-    if hasattr(value, "__dataclass_fields__"):
-        result = {}
-
-        result["type"] = value.__class__.__name__.replace("Inline", "").lower()
-
-        for field in value.__dataclass_fields__:
-            result[field] = to_json_safe(getattr(value, field))
-
-        return result
-
-    # fallback (nur noch echte edge cases)
-    return str(value)

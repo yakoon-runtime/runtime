@@ -201,7 +201,7 @@ class EventDispatcher:
             depth=depth,
         )
 
-        stream.node_depth[node.id] = depth
+        stream.node_depth[node["id"]] = depth
 
         # -------------------------------------------------
         # STRUCTURE
@@ -219,13 +219,13 @@ class EventDispatcher:
                 session,
                 document=document,
                 block=child,
-                parent_id=node.id,
+                parent_id=node["id"],
             )
 
         # -------------------------------------------------
         # FINISH
         # -------------------------------------------------
-        stream.event_queue.append(PatchFinishNode(block_id=node.id))
+        stream.event_queue.append(PatchFinishNode(block_id=node["id"]))
 
         await self._maybe_flush(stream)
 
@@ -262,11 +262,11 @@ class EventDispatcher:
             if isinstance(op, PatchAppendStructure):
                 node = op.nodes[0]
 
-                if node.parent not in stream.published_nodes:
+                if node["parent"] not in stream.published_nodes:
                     remaining.append(op)
                     continue
 
-                stream.published_nodes.add(node.id)
+                stream.published_nodes.add(node["id"])
                 ops.append(op)
                 continue
 
