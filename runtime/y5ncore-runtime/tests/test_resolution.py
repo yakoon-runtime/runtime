@@ -21,10 +21,9 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
     created_flow = None
 
     async def sub_handler(ctx):
-        from y5n.base.document import Document
         from y5n.base.flow.dsl import out
 
-        yield out(Document.create(blocks=[]))
+        yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
         yield Outcome()
 
     sub_node = Node(key="test", run=sub_handler)

@@ -3,7 +3,6 @@
 import sys
 from uuid import uuid4
 
-from y5n.base.document import Document
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.primitives import (
     AwaitEvent,
@@ -103,11 +102,11 @@ def run():
     )
     measure(
         "Outcome(effects=[EmitView(...)])",
-        Outcome(effects=[EmitView(Document.create(blocks=[]))]),
+        Outcome(effects=[EmitView({"kind": "document", "header": {"role": "info"}, "blocks": []})]),
     )
 
     # Effects
-    measure("EmitView(projection)", EmitView(Document.create(blocks=[])))
+    measure("EmitView(projection)", EmitView({"kind": "document", "header": {"role": "info"}, "blocks": []}))
     measure("Foreground()", Foreground())
     measure("Background()", Background())
     measure(

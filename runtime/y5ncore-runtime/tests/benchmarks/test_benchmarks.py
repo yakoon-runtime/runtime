@@ -4,7 +4,6 @@ import time
 from uuid import uuid4
 
 import pytest
-from y5n.base.document import Document
 from y5n.base.flow.channel import Scope
 from y5n.base.flow.dsl import out, receive, send, start_cmd
 from y5n.base.flow.primitives import Outcome, StartCommand, Stop
@@ -167,7 +166,7 @@ async def test_runtime_mix(harness):
     sub_ch = uuid4().hex
 
     async def sub_handler(ctx):
-        yield out(Document.create(blocks=[]))
+        yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
         yield Outcome()
 
     sub_node = Node(key="sub", run=sub_handler)

@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-import uuid
 from collections.abc import AsyncGenerator, Mapping
 from typing import Any
 
-from y5n.base.document import Document, DocumentHeader
-from y5n.base.document.model.block import FieldsBlock, SectionBlock
-from y5n.base.document.model.field import Field, FieldsState
 from y5n.base.flow.dsl import Outcome, out, prompt, receive
 from y5n.base.flow.policies import BasePolicy, ValidationError
 from y5n.base.nodes import Param
@@ -163,46 +159,51 @@ class Form:
     # Rendering
     # --------------------------------------------------------
 
-    def _render(self, active_key: str = "") -> Document:
+    def _render(self, active_key: str = "") -> dict:
         return self._render_structured(active_key)
 
-    def _render_structured(self, active_key: str) -> Document:
-        fb_fields: list[Field] = []
+    def _render_structured(self, active_key: str) -> dict:
+        fb_fields: list[dict] = []
 
         for param in self._fields:
             if param.key == active_key:
-                state: FieldsState = "active"
+                state = "active"
             elif self._is_filled(param.key):
                 state = "done"
             else:
                 state = "idle"
 
-            fb_fields.append(
-                Field(
-                    policy=str(param.policy) if param.policy else "string",
-                    title=param.title or param.key.title(),
-                    required=param.required,
-                    name=param.key,
-                    value=self.data.get(param.key),
-                    state=state,
-                    error=(
-                        self._error if param.key == active_key and self._error else None
-                    ),
-                )
-            )
+            field: dict = {
+                "type": "field",
+                "policy": str(param.policy) if param.policy else "string",
+                "title": param.title or param.key.title(),
+                "required": param.required,
+                "name": param.key,
+                "value": self.data.get(param.key),
+                "state": state,
+            }
+            if param.key == active_key and self._error:
+                field["error"] = self._error
+            fb_fields.append(field)
 
-        fields_block = FieldsBlock(
-            id=f"fld.{uuid.uuid4().hex[:8]}",
-            name=self._title,
-            fields=fb_fields,
-            intro=self._intro or None,
-            state="active",
-        )
-        header = DocumentHeader(title=self._title, role="info")
-        return Document.create(
-            header=header,
-            blocks=[SectionBlock(blocks=[fields_block])],
-        )
+        return {
+            "kind": "document",
+            "header": {"role": "info", "title": self._title},
+            "blocks": [
+                {
+                    "type": "section",
+                    "blocks": [
+                        {
+                            "type": "fields",
+                            "name": self._title,
+                            "fields": fb_fields,
+                            "intro": self._intro or None,
+                            "state": "active",
+                        }
+                    ],
+                }
+            ],
+        }
 
     # --------------------------------------------------------
     # Field lifecycle (used by both run() and standalone ask())

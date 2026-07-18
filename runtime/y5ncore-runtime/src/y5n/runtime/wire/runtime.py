@@ -58,12 +58,12 @@ from y5n.runtime.wire.stream import build_stream
 from y5nstore.event.wire import build_store
 
 errors = {
-    Exception: "error",
-    NodeNotFound: "command/not_found",
-    NodeNotExecutable: "command/not_executable",
-    UsageError: "command/usage",
-    UnknownOptionsError: "command/unknown_options",
-    PermissionDenied: "permissions/denied",
+    Exception: "error.ydf",
+    NodeNotFound: "command/not_found.ydf",
+    NodeNotExecutable: "command/not_executable.ydf",
+    UsageError: "command/usage.ydf",
+    UnknownOptionsError: "command/unknown_options.ydf",
+    PermissionDenied: "permissions/denied.ydf",
 }
 
 
@@ -145,7 +145,7 @@ def build_runtime(
         elif type(error) not in errors:
             audit_service.error(exc=error, session=session)
 
-        parts = errors.get(type(error), "error.yak")
+        parts = errors.get(type(error), "error")
         resource = ResourceRef(
             package="y5n.runtime",
             path=f"templates/{session.lang}/{parts}",
