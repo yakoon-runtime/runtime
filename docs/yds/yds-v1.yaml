@@ -1,0 +1,476 @@
+# Yakoon Document Schema v1
+# ==========================
+# Every Document is a tree of typed blocks.
+# The wire format is JSON, described here in YAML.
+
+version: 1
+
+# ── Document Root ──────────────────────────────────────────────────
+
+document:
+  description: >
+    Root of every YDS document.  Produced by the Compiler and
+    normalised by the Runtime before dispatch.
+  required: [kind, blocks]
+  properties:
+    kind:
+      type: string
+      const: "document"
+    header:
+      type: header
+    blocks:
+      type: array
+      items: block
+
+# ── Header ─────────────────────────────────────────────────────────
+
+header:
+  description: Document-level presentation metadata.
+  properties:
+    role:
+      type: string
+      enum: [info, success, warning, error, help]
+      default: info
+    title:
+      type: string
+      nullable: true
+    subtitle:
+      type: string
+      nullable: true
+    error_kind:
+      type: string
+      enum: [validation, domain, system, fatal]
+      nullable: true
+    error_code:
+      type: string
+      nullable: true
+
+# ── Block ──────────────────────────────────────────────────────────
+
+block:
+  description: >
+    Union of all block types.  Every block has an optional `id`
+    (assigned by the Normalizer) and a `type` discriminator.
+  required: [type]
+  properties:
+    id:
+      type: string
+      generated: normalize
+      description: >
+        Unique within the document.  Omitted in source YDF, added
+        by the Runtime Normalizer.
+    type:
+      type: string
+
+# ── Content Blocks ─────────────────────────────────────────────────
+
+text:
+  extends: block
+  type: text
+  description: A run of rich inline text.
+  properties:
+    text:
+      type: array
+      items: inline
+    style:
+      type: string
+      nullable: true
+
+paragraph:
+  extends: block
+  type: paragraph
+  description: A paragraph of inline text.
+  properties:
+    text:
+      type: array
+      items: inline
+
+heading:
+  extends: block
+  type: heading
+  description: A section heading.
+  properties:
+    level:
+      type: integer
+      default: 1
+    text:
+      type: array
+      items: inline
+
+pre:
+  extends: block
+  type: pre
+  description: Preformatted / code block.
+  properties:
+    code:
+      type: string
+    language:
+      type: string
+      nullable: true
+
+rule:
+  extends: block
+  type: rule
+  description: A horizontal rule.
+  properties:
+    style:
+      type: string
+      enum: [subtle, normal, strong]
+      default: normal
+
+spacer:
+  extends: block
+  type: spacer
+  description: Vertical spacing.
+  properties:
+    size:
+      type: integer
+      default: 1
+
+# ── List Blocks ────────────────────────────────────────────────────
+
+list:
+  extends: block
+  type: list
+  description: An ordered or unordered list.
+  properties:
+    items:
+      type: array
+      items: list_item
+
+list_item:
+  extends: block
+  type: list_item
+  description: A single list item.
+  children_field: blocks
+  properties:
+    text:
+      type: array
+      items: inline
+    blocks:
+      type: array
+      items: block
+      description: Nested child blocks (for indentation).
+
+# ── Key-Value Blocks ───────────────────────────────────────────────
+
+kv:
+  extends: block
+  type: kv
+  description: A key-value listing (property sheet).
+  children_field: items
+  properties:
+    items:
+      type: array
+      items: kv_item
+
+kv_item:
+  extends: block
+  type: kv_item
+  description: A single key-value pair.
+  properties:
+    key:
+      type: string
+    value:
+      type: array
+      items: inline
+
+# ── Table Block ────────────────────────────────────────────────────
+
+table:
+  extends: block
+  type: table
+  description: A data table.
+  properties:
+    columns:
+      type: array
+      items: table_column
+    rows:
+      type: array
+      items:
+        type: array
+        items: string
+    variant:
+      type: string
+      nullable: true
+    selectable:
+      type: boolean
+      default: true
+
+table_column:
+  description: A single column definition.
+  properties:
+    key:
+      type: string
+    title:
+      type: string
+
+# ── Form / Interaction Blocks ──────────────────────────────────────
+
+fields:
+  extends: block
+  type: fields
+  description: A group of input fields (form).
+  children_field: fields
+  properties:
+    name:
+      type: string
+      nullable: true
+    fields:
+      type: array
+      items: field
+
+field:
+  description: A single input field definition.
+  properties:
+    policy:
+      type: string
+    name:
+      type: string
+      nullable: true
+    required:
+      type: boolean
+      default: false
+    title:
+      type: string
+      nullable: true
+    hint:
+      type: string
+      nullable: true
+    default:
+      type: string
+      nullable: true
+    lookup:
+      type: string
+      nullable: true
+
+actions:
+  extends: block
+  type: actions
+  description: A group of action buttons.
+  children_field: actions
+  properties:
+    actions:
+      type: array
+      items: action
+
+action:
+  description: A single action / command button.
+  properties:
+    label:
+      type: string
+    command:
+      type: string
+    scope:
+      type: string
+      nullable: true
+
+# ── Container Blocks ───────────────────────────────────────────────
+
+section:
+  extends: block
+  type: section
+  description: A generic section container.
+  children_field: blocks
+  properties:
+    blocks:
+      type: array
+      items: block
+
+stack:
+  extends: block
+  type: stack
+  description: A vertical stack container.
+  children_field: blocks
+  properties:
+    blocks:
+      type: array
+      items: block
+
+flow:
+  extends: block
+  type: flow
+  description: A horizontal flow container.
+  children_field: blocks
+  properties:
+    blocks:
+      type: array
+      items: block
+
+collapsible:
+  extends: block
+  type: collapsible
+  description: A collapsible section.
+  children_field: blocks
+  properties:
+    title:
+      type: array
+      items: inline
+    expanded:
+      type: boolean
+      default: false
+    blocks:
+      type: array
+      items: block
+
+# ── Media Blocks ───────────────────────────────────────────────────
+
+image:
+  extends: block
+  type: image
+  description: An embedded image.
+  properties:
+    ref:
+      type: string
+      description: Source path relative to the bundle.
+    src:
+      type: string
+      nullable: true
+      description: Resolved asset URL (set by the resolver).
+    alt:
+      type: string
+      nullable: true
+
+# ── Inline ─────────────────────────────────────────────────────────
+
+inline:
+  description: >
+    Union of all inline types.  Inline nodes form rich text
+    (bold, links, commands) within block fields like `text`.
+  required: [type]
+  properties:
+    type:
+      type: string
+
+inline_text:
+  extends: inline
+  type: text
+  properties:
+    text:
+      type: string
+
+inline_strong:
+  extends: inline
+  type: strong
+  properties:
+    children:
+      type: array
+      items: inline
+
+inline_em:
+  extends: inline
+  type: em
+  properties:
+    children:
+      type: array
+      items: inline
+
+inline_underline:
+  extends: inline
+  type: underline
+  properties:
+    children:
+      type: array
+      items: inline
+
+inline_code:
+  extends: inline
+  type: code
+  properties:
+    children:
+      type: array
+      items: inline
+
+inline_link:
+  extends: inline
+  type: link
+  properties:
+    href:
+      type: string
+    children:
+      type: array
+      items: inline
+
+inline_cmd:
+  extends: inline
+  type: cmd
+  description: A clickable command reference.
+  properties:
+    command:
+      type: string
+    variant:
+      type: string
+      nullable: true
+    navigable:
+      type: boolean
+      nullable: true
+    resolvable:
+      type: boolean
+      nullable: true
+    contextual:
+      type: boolean
+      nullable: true
+    children:
+      type: array
+      items: inline
+
+inline_arg:
+  extends: inline
+  type: arg
+  description: A command argument placeholder.
+  properties:
+    children:
+      type: array
+      items: inline
+
+inline_mark:
+  extends: inline
+  type: mark
+  description: A highlighted / marked span.
+  properties:
+    variant:
+      type: string
+      nullable: true
+    children:
+      type: array
+      items: inline
+
+inline_select:
+  extends: inline
+  type: select
+  description: A selected / active value label.
+  properties:
+    value:
+      type: string
+    children:
+      type: array
+      items: inline
+
+inline_space:
+  extends: inline
+  type: space
+  properties:
+    count:
+      type: integer
+      default: 1
+
+inline_break:
+  extends: inline
+  type: break
+  properties:
+    count:
+      type: integer
+      default: 1
+
+# ── Children Field Map ─────────────────────────────────────────────
+# Block types that contain child blocks and the field name used
+# for those children.  Used by the Traversal layer to walk the tree.
+
+children_fields:
+  kv: items
+  list: items
+  list_item: blocks
+  section: blocks
+  stack: blocks
+  flow: blocks
+  collapsible: blocks
