@@ -201,7 +201,7 @@ def build_runtime(
     bus.resolver.register("system:projection", {"source": ["read"]}, path="/")
     bus.transport.register_adapter(
         "source",
-        SourceReadAdapter(ds=ds),
+        SourceReadAdapter(ds),
     )
 
     # --------------------
