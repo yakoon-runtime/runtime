@@ -1,6 +1,4 @@
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import DOCUMENT
+from y5n.sdk import ports
 
 
 def _read_proc(path: str) -> dict[str, int]:
@@ -12,7 +10,11 @@ def _read_proc(path: str) -> dict[str, int]:
                 key = parts[0].strip()
                 raw = parts[1].strip().split()
                 try:
-                    result[key] = int(raw[0]) * 1024 if len(raw) > 1 and raw[1] == "kB" else int(raw[0])
+                    result[key] = (
+                        int(raw[0]) * 1024
+                        if len(raw) > 1 and raw[1] == "kB"
+                        else int(raw[0])
+                    )
                 except (ValueError, IndexError):
                     pass
     return result
@@ -26,7 +28,7 @@ def _format_bytes(b: float) -> str:
     return f"{b:.1f} PiB"
 
 
-async def run(space: NodeSpace):
+async def main():
     proc_status = _read_proc("/proc/self/status")
     meminfo = _read_proc("/proc/meminfo")
 
@@ -36,8 +38,8 @@ async def run(space: NodeSpace):
     available = meminfo.get("MemAvailable", 0)
     system_percent = round((total - available) / total * 100, 1) if total else 0.0
 
-    projection = await space.ports.get(DOCUMENT)(
-        space=space,
+    doc = ports.get("document")
+    result = await doc.render(
         state={
             "rss": _format_bytes(rss),
             "vms": _format_bytes(vms),
@@ -45,4 +47,4 @@ async def run(space: NodeSpace):
             "available": _format_bytes(available),
         },
     )
-    yield out(projection)
+    print(result)

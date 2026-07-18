@@ -10,6 +10,7 @@ from python._shared import (
     emit_output,
     load_and_capture,
     resolve_tree_path,
+    unload_module,
 )
 from y5n.base.document import to_text
 from y5n.base.flow.dsl import Outcome
@@ -55,7 +56,9 @@ async def run(space):
         )
         return
 
-    errors, import_output, mod = load_and_capture(space, target_path, app_file)
+    errors, import_output, mod, mod_name = load_and_capture(
+        space, target_path, app_file
+    )
     if errors:
         for err in errors:
             yield Outcome(effects=[EmitView(to_text(err))])
@@ -70,5 +73,7 @@ async def run(space):
             yield Outcome(effects=[EmitView(to_text(f"error: {line}"), mode="append")])
     for outcome in emit_output(main_output):
         yield outcome
+
+    unload_module(mod_name)
 
     yield Outcome()

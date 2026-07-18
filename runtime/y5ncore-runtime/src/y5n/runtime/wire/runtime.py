@@ -204,6 +204,18 @@ def build_runtime(
         SourceReadAdapter(ds),
     )
 
+    bus.resolver.register("system:projection", {"jinja": ["__call__"]}, path="/")
+    bus.transport.register_adapter(
+        "jinja",
+        CallableAdapter(jinja_engine.render_str),
+    )
+
+    bus.resolver.register("system:projection", {"compile": ["__call__"]}, path="/")
+    bus.transport.register_adapter(
+        "compile",
+        CallableAdapter(compiler.compile),
+    )
+
     # --------------------
     # --- DATASOURCING ---
     # --------------------

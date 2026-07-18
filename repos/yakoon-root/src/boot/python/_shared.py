@@ -97,7 +97,7 @@ def _build_context_dict(space, target_path: str) -> dict:
             "interaction": space.session.interaction.value if space.session else None,
         },
         "tokens": (
-            list(space.request.args())[1:]
+            list(space.request.args())
             if space.request and space.request.args()
             else []
         ),
@@ -108,16 +108,17 @@ def load_and_capture(
     space,
     target_path: str,
     app_file: Path,
-) -> tuple[list[str], str, Any]:
+) -> tuple[list[str], str, Any, str]:
     """Set context, load module, capture stdout/stderr from import.
 
-    Returns (error_messages, captured_stdout) where error_messages
-    is empty on success or a list of error lines.
+    Returns (error_messages, captured_stdout, module, module_name)
+    where error_messages is empty on success or a list of error lines.
+    The caller must call unload_module(module_name) after use.
     """
     mod_name = f"hosted.{uuid.uuid4().hex}"
     spec = importlib.util.spec_from_file_location(mod_name, app_file)
     if spec is None or spec.loader is None:
-        return [f"error: cannot load {app_file}"], "", None
+        return [f"error: cannot load {app_file}"], "", None, ""
 
     os.environ["YAK_ENDPOINT"] = "inprocess://"
 
@@ -131,7 +132,13 @@ def load_and_capture(
     with redirect_stdout(buf), redirect_stderr(err_buf):
         spec.loader.exec_module(mod)
 
-    return [], buf.getvalue(), mod
+    return [], buf.getvalue(), mod, mod_name
+
+
+def unload_module(mod_name: str) -> None:
+    """Remove a dynamically loaded module from sys.modules."""
+    if mod_name in sys.modules:
+        del sys.modules[mod_name]
 
 
 def emit_output(output: str) -> list:

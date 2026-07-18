@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from collections.abc import Callable, Mapping
 
 from ..nodes import ElementNode, Node, TextNode
@@ -171,6 +172,7 @@ class Mapper:
 def _blocks_to_dict(header: dict, blocks: list[dict]) -> dict:
     return {
         "kind": "document",
+        "id": f"doc.{uuid.uuid4().hex}",
         "header": header,
         "blocks": blocks,
     }

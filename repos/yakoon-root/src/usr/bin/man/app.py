@@ -1,33 +1,28 @@
 from pathlib import Path
 
-from y5n.api.data import DataRequest
-from y5n.api.dsl import out, view
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import COMPILE, JINJA_RENDER, PROJECT, SOURCE_READ
+from y5n.sdk import context, ports
 
 
-async def run(space: NodeSpace):
-    key = space.request.arg(0)
+async def main():
+    req = context.request()
+    key = req.arg(0)
 
     if not key:
-        projection = await space.ports.get(DOCUMENT)(
-            space=space,
-            state={},
-        )
-        yield out(projection)
+        doc = ports.get("document")
+        result = await doc.render(state={})
+        print(result)
         return
 
-    on_source = space.ports.get(SOURCE_READ)
-
-    # Try contextual path first (e.g. man add from /grant/group)
+    src = ports.get("source")
+    ctx = context.current()
     lookup = key
-    current = space.session.cwd
+    current = ctx.cwd
     if current and current != "/" and not key.startswith("/"):
         lookup = f"{current}/{key}"
 
-    result = await on_source(DataRequest(f"system:nodes --by-key {lookup}"))
+    result = await src.read(query=f"system:nodes --by-key {lookup}")
     if result.status != "ok" and lookup != key:
-        result = await on_source(DataRequest(f"system:nodes --by-key {key}"))
+        result = await src.read(query=f"system:nodes --by-key {key}")
     else:
         key = lookup
 
@@ -38,19 +33,16 @@ async def run(space: NodeSpace):
         template_path = man_res.get("default")
 
         if template_path:
+            import json
+
             template = Path(template_path).read_text()
-            html = space.ports.get(JINJA_RENDER)(
-                template,
-                context={"key": key},
-            )
-            projection = space.ports.get(COMPILE)(text=html, context={})
-            yield view(clear=True)
-            yield out(projection)
+            jinja = ports.get("jinja")
+            html = await jinja(content=template, context={"key": key})
+            compile_port = ports.get("compile")
+            projection = await compile_port(text=html, context={})
+            print(json.dumps(projection, default=str))
             return
 
-    projection = await space.ports.get(DOCUMENT)(
-        space=space,
-        state={"key": key},
-    )
-
-    yield out(projection)
+    doc = ports.get("document")
+    result = await doc.render(state={"key": key})
+    print(result)

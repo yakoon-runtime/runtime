@@ -79,7 +79,8 @@ def build_machine(
         try:
             on_error = node.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
-        except Exception:  # fallback
+        except Exception as exc:  # fallback
+            print(exc)
             on_error = node.root.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
 
