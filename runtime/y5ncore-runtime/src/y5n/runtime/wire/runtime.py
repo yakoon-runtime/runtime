@@ -52,6 +52,7 @@ from y5n.runtime.sources.data import (
 )
 from y5n.runtime.wire.adapter.callable import CallableAdapter
 from y5n.runtime.wire.adapter.document import DocumentAdapter
+from y5n.runtime.wire.adapter.source import SourceReadAdapter
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
 from y5n.runtime.wire.projector import build_projector
@@ -195,6 +196,12 @@ def build_runtime(
     bus.transport.register_adapter(
         "validate",
         CallableAdapter(tree.validate),
+    )
+
+    bus.resolver.register("system:projection", {"source": ["read"]}, path="/")
+    bus.transport.register_adapter(
+        "source",
+        SourceReadAdapter(ds=ds),
     )
 
     # --------------------

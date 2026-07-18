@@ -1,30 +1,29 @@
 from pathlib import Path
 
 import yaml
-from y5n.api.data import DataRequest
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import DOCUMENT, SOURCE_READ
+from y5n.sdk import context, ports
 
 _KIND_ORDER = {"dir": 0, "cmd": 1, "file": 2}
 
 
-async def run(space: NodeSpace):
-    target_name = space.request.arg(0)
-    use_list = space.request.has_option("long") or space.request.has_option("l")
-    show_all = space.request.has_option("all")
+async def main():
+    req = context.request()
+    target_name = req.arg(0)
+    use_list = req.has_option("long") or req.has_option("l")
+    show_all = req.has_option("all")
 
-    root = _root_path(space)
-    fs_path = _resolve_fs_path(space, root, target_name)
+    ctx = context.current()
+    root = Path(ctx.workspace) if ctx.workspace else Path.home() / "_yak"
+    fs_path = _resolve_fs_path(ctx, root, target_name)
     if not fs_path.exists():
-        projection = await space.ports.get(DOCUMENT)(
-            space=space,
+        doc = ports.get("document")
+        result = await doc.render(
+            name="default",
             state={"view": "default", "key": target_name or fs_path.name},
         )
-        yield out(projection)
+        print(result)
         return
 
-    # Check if the current package exposes all children (transparent container)
     expose = False
     yak_meta_path = fs_path / "_yak" / "yak.yml"
     if yak_meta_path.is_file():
@@ -32,9 +31,9 @@ async def run(space: NodeSpace):
             meta = yaml.safe_load(f) or {}
         expose = meta.get("expose", False)
 
-    tree_path = _tree_path(space, target_name)
-    on_source = space.ports.get(SOURCE_READ)
-    result = await on_source(DataRequest(f"system:nodes --children {tree_path}"))
+    tree_path = _tree_path(ctx, target_name)
+    src = ports.get("source")
+    result = await src.read(query=f"system:nodes --children {tree_path}")
     node_map = {r["key"]: r for r in result.rows} if result.status == "ok" else {}
 
     fs_entries = sorted(
@@ -49,10 +48,6 @@ async def run(space: NodeSpace):
             and not p.name.startswith("__")
         ]
 
-    # Yak-Package-Rule: inside a strict package (not exposed) only show
-    # Yak objects known to the tree (via node_map).  Files and plain
-    # directories without a tree node are private implementation.
-    # Fallback: only subdirs with their own _yak/.
     if (fs_path / "_yak").is_dir() and not show_all and not expose:
         if node_map:
             fs_entries = [p for p in fs_entries if p.name in node_map]
@@ -89,23 +84,25 @@ async def run(space: NodeSpace):
     merged.sort(key=_sort_key)
 
     if use_list:
-        projection = await space.ports.get(DOCUMENT)(
-            space=space,
+        doc = ports.get("document")
+        result = await doc.render(
+            name="long",
             state={
                 "view": "long",
                 "entries": merged,
                 "path": tree_path,
             },
         )
-        yield out(projection)
+        print(result)
         return
 
     items = [f"{e['key']}/" if e.get("navigable") else e["key"] for e in merged]
-    projection = await space.ports.get(DOCUMENT)(
-        space=space,
+    doc = ports.get("document")
+    result = await doc.render(
+        name="default",
         state={"view": "default", "items": items},
     )
-    yield out(projection)
+    print(result)
 
 
 def _sort_key(entry: dict) -> tuple:
@@ -131,15 +128,10 @@ def _format_size(st_size: float) -> str:
     return f"{st_size:.1f} TiB"
 
 
-def _root_path(space) -> Path:
-    raw = space.session.get_data("fs:root")
-    return Path(raw) if raw else Path.home() / "_yak"
-
-
-def _resolve_fs_path(space, root: Path, target: str | None) -> Path:
+def _resolve_fs_path(ctx, root: Path, target: str | None) -> Path:
     if target and target.startswith("/"):
         return root / target.lstrip("/")
-    raw = space.session.cwd
+    raw = ctx.cwd
     if raw and raw != "/":
         tree_test = root / raw.lstrip("/")
         if tree_test.exists():
@@ -153,8 +145,8 @@ def _resolve_fs_path(space, root: Path, target: str | None) -> Path:
     return current
 
 
-def _tree_path(space, target: str | None) -> str:
-    raw = space.session.cwd or "/"
+def _tree_path(ctx, target: str | None) -> str:
+    raw = ctx.cwd or "/"
     if target:
         if target.startswith("/"):
             return target
