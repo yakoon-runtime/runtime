@@ -1,3 +1,5 @@
+import gc
+
 from y5n.sdk import ports
 
 
@@ -29,6 +31,7 @@ def _format_bytes(b: float) -> str:
 
 
 async def main():
+    gc.collect()
     proc_status = _read_proc("/proc/self/status")
     meminfo = _read_proc("/proc/meminfo")
 

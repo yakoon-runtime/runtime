@@ -54,8 +54,10 @@ class Mapper:
             header = self._default_header()
 
         blocks = self._map_nodes(content_nodes)
-
-        return _blocks_to_dict(header, blocks)
+        result = _blocks_to_dict(header, blocks)
+        # free temp references so CPython can reclaim AST nodes earlier
+        del blocks, header, content_nodes
+        return result
 
     # -----------------
     # HEADER
