@@ -72,10 +72,13 @@ class DirectTransport:
                     loop = asyncio.get_running_loop()
                     result = loop.run_until_complete(result)
                 except RuntimeError:
-                    if _main_loop is None:
-                        return Response(error="no event loop available")
-                    future = asyncio.run_coroutine_threadsafe(result, _main_loop)
-                    result = future.result()
+                    if _main_loop is not None:
+                        future = asyncio.run_coroutine_threadsafe(result, _main_loop)
+                        result = future.result()
+                    else:
+                        # Inside a running loop — return the coroutine
+                        # and let the SDK's async caller await it.
+                        return Response(result=result)
             return Response(result=result)
         except Exception as e:
             return Response(error=str(e))
