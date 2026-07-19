@@ -19,9 +19,7 @@ from python._shared import (
 from y5n.base.document import to_text
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
-from y5n.base.host.driver import drive
-from y5n.base.host.handlers import HANDLERS
-from y5n.base.host.protocol import MarkerKind
+from y5n.base.host import HANDLERS, MarkerKind, drive
 
 
 async def run(space):
