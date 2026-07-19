@@ -8,7 +8,7 @@ import importlib.util
 import json as _json
 import os
 import sys
-import uuid
+import types
 from contextlib import redirect_stderr, redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -117,8 +117,22 @@ def load_and_capture(
     where error_messages is empty on success or a list of error lines.
     The caller should call unload_module(module_name) after use.
     """
-    mod_name = f"hosted.{uuid.uuid4().hex}"
-    spec = importlib.util.spec_from_file_location(mod_name, app_file)
+    segments = [s for s in target_path.strip("/").split("/") if s]
+    entry_name = app_file.stem
+    full_name = "yak.bundle." + ".".join(segments + ["run", entry_name])
+    cap_pkg = "yak.bundle." + ".".join(segments + ["run"])
+
+    seen = ""
+    for part in full_name.split("."):
+        seen = f"{seen}.{part}" if seen else part
+        if seen not in sys.modules:
+            pkg = types.ModuleType(seen)
+            pkg.__package__ = seen
+            sys.modules[seen] = pkg
+
+    sys.modules[cap_pkg].__path__ = [str(app_file.parent)]
+
+    spec = importlib.util.spec_from_file_location(full_name, app_file)
     if spec is None or spec.loader is None:
         return [f"error: cannot load {app_file}"], "", None, ""
 
@@ -128,19 +142,21 @@ def load_and_capture(
     sdk_context._set(ctx)
 
     mod = importlib.util.module_from_spec(spec)
-    sys.modules[mod_name] = mod
+    sys.modules[full_name] = mod
     buf = StringIO()
     err_buf = StringIO()
     with redirect_stdout(buf), redirect_stderr(err_buf):
         spec.loader.exec_module(mod)
 
-    return [], buf.getvalue(), mod, mod_name
+    return [], buf.getvalue(), mod, full_name
 
 
 def unload_module(mod_name: str) -> None:
-    """Remove a dynamically loaded module from sys.modules."""
-    if mod_name in sys.modules:
-        del sys.modules[mod_name]
+    """Remove a dynamically loaded module and its parent packages from sys.modules."""
+    parts = mod_name.split(".")
+    for i in range(len(parts), 0, -1):
+        key = ".".join(parts[:i])
+        sys.modules.pop(key, None)
 
 
 def emit_output(output: str) -> list:

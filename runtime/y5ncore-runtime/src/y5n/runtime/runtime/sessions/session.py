@@ -13,7 +13,6 @@ from y5n.base.document import (
 )
 from y5n.base.flow.channel import Scope, resolve
 from y5n.base.naming import Key
-from y5n.base.nodes.path import NodePath
 from y5n.base.runtime import Event
 from y5n.base.runtime.input import Interaction
 from y5n.base.transport import IO

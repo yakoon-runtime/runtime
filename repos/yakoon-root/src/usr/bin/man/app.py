@@ -33,7 +33,6 @@ async def main():
         template_path = man_res.get("default")
 
         if template_path:
-            import json
 
             template = Path(template_path).read_text()
             jinja = ports.get("jinja")
