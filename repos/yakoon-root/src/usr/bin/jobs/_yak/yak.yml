@@ -14,4 +14,4 @@ entry:
   run: list/app.py
 
 man:
-  default: main/resources/man.ydf
+  default: main/man.ydf
