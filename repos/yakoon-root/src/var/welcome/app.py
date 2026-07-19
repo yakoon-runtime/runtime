@@ -1,4 +1,4 @@
-from y5n.sdk import context, ports
+from y5n.sdk import context, ports, runtime
 
 
 async def main():
@@ -9,4 +9,4 @@ async def main():
         name="default",
         state={"name": name},
     )
-    print(result)
+    await runtime.write(result)
