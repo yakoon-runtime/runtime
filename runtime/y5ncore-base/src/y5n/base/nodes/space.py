@@ -29,3 +29,5 @@ class NodeSpace:
     resources: dict[str, dict[str, Path]] | None = None
     """Resource paths from the originating node, keyed by type then variant.
     Populated during command dispatch from the resolved node."""
+    flow_id: str = ""
+    """ID of the flow executing this command, set by the engine."""

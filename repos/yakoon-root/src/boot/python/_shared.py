@@ -96,10 +96,12 @@ def _build_context_dict(space, target_path: str) -> dict:
             "lang": space.session.lang if space.session else None,
             "interaction": space.session.interaction.value if space.session else None,
         },
+        "flow": {
+            "id": space.flow_id or "",
+            "key": node_name,
+        },
         "tokens": (
-            list(space.request.args())
-            if space.request and space.request.args()
-            else []
+            list(space.request.args()) if space.request and space.request.args() else []
         ),
     }
 

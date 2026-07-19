@@ -41,7 +41,7 @@ class Control:
         """
         return self
 
-    def label(self, flow) -> str:
+    def label(self) -> str:
         return self.__class__.__name__
 
 
@@ -136,7 +136,7 @@ class AwaitEvent(Control):
                 f"USER_INPUT scope requires channel='__user__', got {self.channel!r}"
             )
 
-    def label(self, flow):
+    def label(self):
         return "wait"
 
     def is_runnable(self, flow: Flow, session) -> bool:
@@ -173,7 +173,7 @@ class Sleep(Control):
         flow.control = YieldToScheduler()
         scheduler.schedule_flow(flow, session)
 
-    def label(self, flow) -> str:
+    def label(self) -> str:
         remaining = max(0, int(self.wake_at - time.time()))
         return f"sleep ({remaining}s)"
 
@@ -206,7 +206,7 @@ class SleepUntil(Control):
         flow.control = YieldToScheduler()
         scheduler.schedule_flow(flow, session)
 
-    def label(self, flow) -> str:
+    def label(self) -> str:
         return "sleep"
 
     @classmethod

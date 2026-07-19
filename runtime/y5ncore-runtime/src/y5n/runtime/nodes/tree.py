@@ -429,6 +429,9 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
         host_node = tree.find(host_path)
         if host_node is None or not host_node.has_run():
             return _empty()
+        host_run = host_node.run
+        if host_run is None:
+            return _empty()
         # Compute full tree path from node's own parent chain
         # (node.path walks parents, which only works after linking)
         target_path = str(space.path)
@@ -447,7 +450,8 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
             ports=space.ports,
             ports_from=space.ports_from,
             resources=space.resources,
+            flow_id=space.flow_id,
         )
-        return host_node.run(modified_space)
+        return host_run(modified_space)
 
     return _run

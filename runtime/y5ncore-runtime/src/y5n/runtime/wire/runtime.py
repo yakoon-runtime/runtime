@@ -52,6 +52,7 @@ from y5n.runtime.sources.data import (
 )
 from y5n.runtime.wire.adapter.callable import CallableAdapter
 from y5n.runtime.wire.adapter.document import DocumentAdapter
+from y5n.runtime.wire.adapter.flows import FlowsAdapter
 from y5n.runtime.wire.adapter.source import SourceReadAdapter
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
@@ -180,42 +181,6 @@ def build_runtime(
     root_ports.provide(ERROR_RESOLVE, error_resolve)
     root_ports.provide(VALIDATE, tree.validate)
 
-    # ---------------------------------------
-    # --- SDK ADAPTERS (on the Runtime Bus) ---
-    # ---------------------------------------
-
-    bus = get_bus()
-
-    bus.resolver.register("system:projection", {"document": ["render"]}, path="/")
-    bus.transport.register_adapter(
-        "document",
-        DocumentAdapter(projector=projector, tree=tree),
-    )
-
-    bus.resolver.register("system:projection", {"validate": ["__call__"]}, path="/")
-    bus.transport.register_adapter(
-        "validate",
-        CallableAdapter(tree.validate),
-    )
-
-    bus.resolver.register("system:projection", {"source": ["read"]}, path="/")
-    bus.transport.register_adapter(
-        "source",
-        SourceReadAdapter(ds),
-    )
-
-    bus.resolver.register("system:projection", {"jinja": ["__call__"]}, path="/")
-    bus.transport.register_adapter(
-        "jinja",
-        CallableAdapter(jinja_engine.render_str),
-    )
-
-    bus.resolver.register("system:projection", {"compile": ["__call__"]}, path="/")
-    bus.transport.register_adapter(
-        "compile",
-        CallableAdapter(compiler.compile),
-    )
-
     # --------------------
     # --- DATASOURCING ---
     # --------------------
@@ -266,5 +231,49 @@ def build_runtime(
     ds.bind("system:sessions", SessionSource(host))
     root_ports.provide(SESSION_ATTACH, host.attach_session)
     root_ports.provide(SESSION_DETACH, host.detach_session)
+
+    # ---------------------------------------
+    # --- SDK ADAPTERS (on the Runtime Bus) ---
+    # ---------------------------------------
+
+    bus = get_bus()
+
+    bus.resolver.register("system:projection", {"document": ["render"]}, path="/")
+    bus.transport.register_adapter(
+        "document",
+        DocumentAdapter(projector=projector, tree=tree),
+    )
+
+    bus.resolver.register("system:projection", {"validate": ["__call__"]}, path="/")
+    bus.transport.register_adapter(
+        "validate",
+        CallableAdapter(tree.validate),
+    )
+
+    bus.resolver.register("system:projection", {"source": ["read"]}, path="/")
+    bus.transport.register_adapter(
+        "source",
+        SourceReadAdapter(ds),
+    )
+
+    bus.resolver.register("system:projection", {"jinja": ["__call__"]}, path="/")
+    bus.transport.register_adapter(
+        "jinja",
+        CallableAdapter(jinja_engine.render_str),
+    )
+
+    bus.resolver.register("system:projection", {"compile": ["__call__"]}, path="/")
+    bus.transport.register_adapter(
+        "compile",
+        CallableAdapter(compiler.compile),
+    )
+
+    flows_adapter = FlowsAdapter(host)
+    bus.resolver.register(
+        "system:projection",
+        {"jobs.list": ["get"]},
+        path="/",
+    )
+    bus.transport.register_adapter("jobs.list", flows_adapter)
 
     return host

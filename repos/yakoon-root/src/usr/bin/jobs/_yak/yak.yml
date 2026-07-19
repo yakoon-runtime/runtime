@@ -8,11 +8,10 @@ contextual: true
 
 expose: false
 
-executor: runtime
+host: /boot/python/runtime
 
 entry:
-  run: app.py
-  setup: setup.py
+  run: list/app.py
 
 man:
   default: resources/man.ydf
