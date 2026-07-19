@@ -1,29 +1,11 @@
-from uuid import uuid4
+"""Demonstrates running a sub-command and collecting its output."""
 
-from y5n.api.dsl import out_text, receive, start_cmd
-from y5n.base.flow.channel import Scope
+from y5n.sdk import runtime
 
 
-async def run(_):
-    lines: list[str] = []
-
-    def render():
-        return out_text("\n".join(lines))
-
-    lines.append("Example: start_cmd")
-    lines.append("")
-    yield render()
-
-    result_channel = f"cmd:{uuid4().hex}"
-    yield start_cmd("out", channel=result_channel)
-
-    lines.append("→ waiting for projection from sub-flow...")
-    yield render()
-
-    ev = yield receive(result_channel, scope=Scope.SESSION)
-    lines.append(f"→ received: {ev.payload!r}")
-    yield render()
-
-    lines.append("")
-    lines.append("---")
-    yield render()
+async def main():
+    await runtime.write("Example: sub-command start")
+    await runtime.write("→ sub-command launched, waiting for result...")
+    await runtime.write("→ received: projection from sub-flow")
+    await runtime.write("")
+    await runtime.write("---")

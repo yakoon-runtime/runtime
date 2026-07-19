@@ -1,13 +1,13 @@
 version: 1.0.0
 
-title: start_cmd example
+title: sub-command example
 
 resolvable: true
 navigable: false
 
 expose: false
 
-executor: runtime
+host: /boot/python/runtime
 
 entry:
   run: app.py
