@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import yaml
-from y5n.sdk import context, ports
+from y5n.sdk import context, ports, runtime
 
 _KIND_ORDER = {"dir": 0, "cmd": 1, "file": 2}
 
@@ -21,7 +21,7 @@ async def main():
             name="default",
             state={"view": "default", "key": target_name or fs_path.name},
         )
-        print(result)
+        await runtime.write(result)
         return
 
     expose = False
@@ -93,7 +93,7 @@ async def main():
                 "path": tree_path,
             },
         )
-        print(result)
+        await runtime.write(result)
         return
 
     items = [f"{e['key']}/" if e.get("navigable") else e["key"] for e in merged]
@@ -102,7 +102,7 @@ async def main():
         name="default",
         state={"view": "default", "items": items},
     )
-    print(result)
+    await runtime.write(result)
 
 
 def _sort_key(entry: dict) -> tuple:
