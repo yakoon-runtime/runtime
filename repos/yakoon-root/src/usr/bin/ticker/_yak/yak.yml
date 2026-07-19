@@ -1,0 +1,13 @@
+version: 1.0.0
+
+title: Ticker — loop every 2 seconds
+
+resolvable: true
+navigable: false
+
+expose: false
+
+host: /boot/python/runtime
+
+entry:
+  run: app.py

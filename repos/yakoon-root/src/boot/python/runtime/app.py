@@ -1,34 +1,44 @@
+"""
+Runtime Host — drives a command coroutine directly via send(None).
+
+Marker protocol (from y5n.sdk.runtime):
+
+    ('write', view)           → out(view, mode=...)
+    ('error', text)           → out({"kind": "error", "text": text})
+    ('delay', seconds)         → delay(seconds)
+    ('delay_until', ts)        → delay_until(ts)
+    ('view', params)           → view(**params)
+"""
+
 import inspect
+import json
 import sys
-from contextlib import redirect_stderr, redirect_stdout
-from io import StringIO
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from python._shared import (
     build_app_file,
-    emit_output,
     load_and_capture,
     resolve_tree_path,
     unload_module,
 )
 from y5n.base.document import to_text
-from y5n.base.flow.dsl import Outcome
+from y5n.base.flow.dsl import Outcome, delay, delay_until, out
+from y5n.base.flow.dsl import view as dsl_view
 from y5n.base.flow.primitives import EmitView
 
 
-async def _run_main(mod):
-    if not hasattr(mod, "main"):
-        return "", ""
-    main_fn = mod.main
-    buf = StringIO()
-    err_buf = StringIO()
-    with redirect_stdout(buf), redirect_stderr(err_buf):
-        if inspect.iscoroutinefunction(main_fn):
-            await main_fn()
-        else:
-            main_fn()
-    return buf.getvalue(), err_buf.getvalue()
+def _resolve_view(view: dict | str) -> dict:
+    if isinstance(view, dict):
+        return view
+    if view.startswith("{"):
+        try:
+            data = json.loads(view)
+            if isinstance(data, dict) and data.get("kind") == "document":
+                return data
+        except Exception:
+            pass
+    return to_text(view)
 
 
 async def run(space):
@@ -56,24 +66,68 @@ async def run(space):
         )
         return
 
-    errors, import_output, mod, mod_name = load_and_capture(
-        space, target_path, app_file
-    )
+    errors, _, mod, mod_name = load_and_capture(space, target_path, app_file)
     if errors:
         for err in errors:
             yield Outcome(effects=[EmitView(to_text(err))])
         return
 
-    for outcome in emit_output(import_output):
-        yield outcome
+    main_fn = getattr(mod, "main", None)
+    if main_fn is None:
+        yield Outcome(effects=[EmitView(to_text("error: command has no main()"))])
+        return
 
-    main_output, main_errors = await _run_main(mod)
-    if main_errors:
-        for line in main_errors.splitlines():
-            yield Outcome(effects=[EmitView(to_text(f"error: {line}"), mode="append")])
-    for outcome in emit_output(main_output):
-        yield outcome
+    coro = main_fn()
+
+    if not inspect.iscoroutine(coro):
+        yield Outcome(
+            effects=[
+                EmitView(
+                    to_text(
+                        "error: main() must be an async function"
+                        " — use `async def main()`"
+                    )
+                )
+            ]
+        )
+        return
+
+    first_output = True
+    try:
+        marker = coro.send(None)
+        while True:
+            kind, value = marker
+
+            if kind == "write":
+                view = _resolve_view(value)
+                mode = "replace" if first_output else "append"
+                first_output = False
+                yield out(view, mode=mode)
+                marker = coro.send(None)
+
+            elif kind == "error":
+                yield out({"kind": "error", "text": value})
+                marker = coro.send(None)
+
+            elif kind == "delay":
+                yield delay(value)
+                marker = coro.send(None)
+
+            elif kind == "delay_until":
+                yield delay_until(value)
+                marker = coro.send(None)
+
+            elif kind == "view":
+                yield dsl_view(**value)
+                marker = coro.send(None)
+
+            else:
+                marker = coro.send(None)
+
+    except StopIteration:
+        pass
+    except Exception as e:
+        yield Outcome(effects=[EmitView(to_text(f"error: {e}"))])
 
     unload_module(mod_name)
-
     yield Outcome()
