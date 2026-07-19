@@ -1,4 +1,4 @@
-from y5n.sdk import context
+from y5n.sdk import context, runtime
 
 
 async def main():
@@ -8,4 +8,4 @@ async def main():
     if not display:
         display = ctx.workspace or "/"
 
-    print(display)
+    await runtime.write(display)

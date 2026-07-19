@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from y5n.sdk import context, ports
+from y5n.sdk import context, ports, runtime
 
 
 async def main():
@@ -10,7 +10,7 @@ async def main():
     if not key:
         doc = ports.get("document")
         result = await doc.render(state={})
-        print(result)
+        await runtime.write(result)
         return
 
     src = ports.get("source")
@@ -40,9 +40,9 @@ async def main():
             html = await jinja(content=template, context={"key": key})
             compile_port = ports.get("compile")
             projection = await compile_port(text=html, context={})
-            print(json.dumps(projection, default=str))
+            await runtime.write(projection)
             return
 
     doc = ports.get("document")
     result = await doc.render(state={"key": key})
-    print(result)
+    await runtime.write(result)
