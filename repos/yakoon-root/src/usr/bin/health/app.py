@@ -1,6 +1,16 @@
-import json
-
-from y5n.sdk import ports
+from y5n.sdk import ports, runtime
+from y5n.sdk.models import (
+    Collapsible,
+    Document,
+    Header,
+    Heading,
+    InlineText,
+    Kv,
+    KvItem,
+    Rule,
+    Spacer,
+    Text,
+)
 
 
 async def main():
@@ -12,34 +22,36 @@ async def main():
     errors_count = sum(1 for c in result.children if c.level.value == "red")
     warnings = sum(1 for c in result.children if c.level.value == "yellow")
 
-    kv_items = [
-        {"type": "kv_item", "key": "Healthy", "value": [{"type": "text", "text": str(healthy)}]},
-        {"type": "kv_item", "key": "Errors", "value": [{"type": "text", "text": str(errors_count)}]},
-        {"type": "kv_item", "key": "Warnings", "value": [{"type": "text", "text": str(warnings)}]},
+    icons = {"green": "\u2713", "yellow": "\u26a0", "red": "\u2717"}
+    children_blocks = [
+        Text(
+            text=[
+                InlineText(
+                    text=f"  {icons.get(child.level.value, '?')} {child.message or ''}"
+                )
+            ]
+        )
+        for child in result.children
     ]
 
-    children_blocks = []
-    icons = {"green": "\u2713", "yellow": "\u26a0", "red": "\u2717"}
-    for child in result.children:
-        icon = icons.get(child.level.value, "?")
-        children_blocks.append(
-            {"type": "text", "text": [{"type": "text", "text": f"  {icon} {child.message or ''}"}]}
-        )
-
-    doc = {
-        "kind": "document",
-        "header": {"role": "info"},
-        "blocks": [
-            {"type": "heading", "level": 1, "text": [{"type": "text", "text": "Health"}]},
-            {"type": "rule"},
-            {
-                "type": "collapsible",
-                "title": [{"type": "text", "text": f"Tree validation ({total})"}],
-                "expanded": False,
-                "blocks": children_blocks,
-            },
-            {"type": "spacer", "size": 1},
-            {"type": "kv", "items": kv_items},
+    doc = Document(
+        header=Header(role="info"),
+        blocks=[
+            Heading(level=1, text=[InlineText(text="Health")]),
+            Rule(),
+            Collapsible(
+                title=[InlineText(text=f"Tree validation ({total})")],
+                expanded=False,
+                blocks=children_blocks,
+            ),
+            Spacer(size=1),
+            Kv(
+                items=[
+                    KvItem(key="Healthy", value=[InlineText(text=str(healthy))]),
+                    KvItem(key="Errors", value=[InlineText(text=str(errors_count))]),
+                    KvItem(key="Warnings", value=[InlineText(text=str(warnings))]),
+                ]
+            ),
         ],
-    }
-    print(json.dumps(doc, default=str))
+    )
+    await runtime.write(doc)
