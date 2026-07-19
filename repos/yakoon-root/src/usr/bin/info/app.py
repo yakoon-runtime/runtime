@@ -2,7 +2,7 @@ import platform
 import time
 from datetime import UTC, datetime
 
-from y5n.sdk import ports
+from y5n.sdk import ports, runtime
 
 _start_time = time.time()
 
@@ -20,7 +20,7 @@ async def main():
             "hostname": platform.node(),
         },
     )
-    print(result)
+    await runtime.write(result)
 
 
 def _get_uptime() -> str:
