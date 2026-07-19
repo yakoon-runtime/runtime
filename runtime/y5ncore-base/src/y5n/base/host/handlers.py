@@ -32,7 +32,12 @@ def resolve_view(view: dict | str) -> dict:
 
 HANDLERS = {
     MarkerKind.WRITE: lambda m, first: out(
-        resolve_view(m.value), mode="replace" if first else "append"
+        resolve_view(m.value[0] if isinstance(m.value, tuple) else m.value),
+        mode=(
+            m.value[1]
+            if isinstance(m.value, tuple) and m.value[1]
+            else "replace" if first else "append"
+        ),
     ),
     MarkerKind.ERROR: lambda m, _: out({"kind": "error", "text": m.value}),
     MarkerKind.DELAY: lambda m, _: delay(m.value),
