@@ -1,6 +1,6 @@
 """Registers a port service in the runtime."""
 
-from y5n.sdk import ports
+from y5n.sdk import ports, runtime
 
 
 class Greeter:
@@ -8,6 +8,6 @@ class Greeter:
         return f"Hello, {name}!"
 
 
-def main():
+async def main():
     ports.promote("hello", Greeter())
-    print("service 'hello' registered")
+    await runtime.write("service 'hello' registered")
