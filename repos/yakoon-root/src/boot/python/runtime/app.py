@@ -1,17 +1,11 @@
 """
-Runtime Host — drives a command coroutine directly via send(None).
+Runtime Host — drives a command coroutine via the shared driver.
 
-Marker protocol (from y5n.sdk.runtime):
-
-    ('write', view)           → out(view, mode=...)
-    ('error', text)           → out({"kind": "error", "text": text})
-    ('delay', seconds)         → delay(seconds)
-    ('delay_until', ts)        → delay_until(ts)
-    ('view', params)           → view(**params)
+Only Python-specific code lives here: module loading and coroutine
+validation.  The handler map and drive loop live in ``y5n.base.host``.
 """
 
 import inspect
-import json
 import sys
 from pathlib import Path
 
@@ -23,22 +17,10 @@ from python._shared import (
     unload_module,
 )
 from y5n.base.document import to_text
-from y5n.base.flow.dsl import Outcome, delay, delay_until, out
-from y5n.base.flow.dsl import view as dsl_view
+from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
-
-
-def _resolve_view(view: dict | str) -> dict:
-    if isinstance(view, dict):
-        return view
-    if view.startswith("{"):
-        try:
-            data = json.loads(view)
-            if isinstance(data, dict) and data.get("kind") == "document":
-                return data
-        except Exception:
-            pass
-    return to_text(view)
+from y5n.base.host.driver import drive
+from y5n.base.host.handlers import HANDLERS
 
 
 async def run(space):
@@ -92,40 +74,9 @@ async def run(space):
         )
         return
 
-    first_output = True
     try:
-        marker = coro.send(None)
-        while True:
-            kind, value = marker
-
-            if kind == "write":
-                view = _resolve_view(value)
-                mode = "replace" if first_output else "append"
-                first_output = False
-                yield out(view, mode=mode)
-                marker = coro.send(None)
-
-            elif kind == "error":
-                yield out({"kind": "error", "text": value})
-                marker = coro.send(None)
-
-            elif kind == "delay":
-                yield delay(value)
-                marker = coro.send(None)
-
-            elif kind == "delay_until":
-                yield delay_until(value)
-                marker = coro.send(None)
-
-            elif kind == "view":
-                yield dsl_view(**value)
-                marker = coro.send(None)
-
-            else:
-                marker = coro.send(None)
-
-    except StopIteration:
-        pass
+        async for outcome in drive(coro, HANDLERS):
+            yield outcome
     except Exception as e:
         yield Outcome(effects=[EmitView(to_text(f"error: {e}"))])
 
