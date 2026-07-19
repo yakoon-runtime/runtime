@@ -1,6 +1,6 @@
 import gc
 
-from y5n.sdk import ports
+from y5n.sdk import ports, runtime
 
 
 def _read_proc(path: str) -> dict[str, int]:
@@ -50,4 +50,4 @@ async def main():
             "available": _format_bytes(available),
         },
     )
-    print(result)
+    await runtime.write(result)
