@@ -21,6 +21,7 @@ from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
 from y5n.base.host.driver import drive
 from y5n.base.host.handlers import HANDLERS
+from y5n.base.host.protocol import MarkerKind
 
 
 async def run(space):
@@ -75,7 +76,13 @@ async def run(space):
         return
 
     try:
-        async for outcome in drive(coro, HANDLERS):
+        async for outcome in drive(
+            coro,
+            HANDLERS,
+            side_effects={
+                MarkerKind.CWD: lambda path: space.session.set_cwd(path),
+            },
+        ):
             yield outcome
     except Exception as e:
         yield Outcome(effects=[EmitView(to_text(f"error: {e}"))])

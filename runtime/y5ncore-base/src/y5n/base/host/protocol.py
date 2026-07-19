@@ -22,6 +22,7 @@ class MarkerKind(StrEnum):
     DELAY = "delay"
     DELAY_UNTIL = "delay_until"
     VIEW = "view"
+    CWD = "cwd"
 
 
 @dataclass(frozen=True)

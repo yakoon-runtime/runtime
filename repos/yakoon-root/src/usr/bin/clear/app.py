@@ -1,6 +1,5 @@
-from y5n.api.dsl import view
-from y5n.api.nodes import NodeSpace
+from y5n.sdk import runtime
 
 
-async def run(space: NodeSpace):
-    yield view(clear=True)
+async def main():
+    await runtime.view(clear=True)

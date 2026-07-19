@@ -1,33 +1,36 @@
 import os
 from pathlib import Path
 
-from y5n.api.dsl import out_text
-from y5n.api.nodes import NodeSpace
+from y5n.sdk import context, runtime
 
 
-async def run(space: NodeSpace):
+async def main():
+    req = context.request()
+    target = req.arg(0)
 
-    target = space.request.arg(0)
     if not target:
-        yield out_text("")
+        await runtime.write("")
         return
 
-    current_path = _get_cwd(space)
-    root = _get_root(space)
+    ctx = context.current()
+    current_path = _get_cwd(ctx)
+    root = _get_root(ctx)
 
     if target == "/":
-        _set_path(space, root, root)
-        yield out_text("")
+        await runtime.cwd("/")
+        await runtime.write("")
         return
 
     if target == "..":
-        _set_path(space, current_path.parent, root)
-        yield out_text("")
+        await runtime.cwd(_to_display(current_path.parent, root))
+        await runtime.write("")
         return
 
     if target == "~":
-        _set_path(space, Path.home(), root)
-        yield out_text("")
+        home = Path.home()
+        display = ("/" + home.name) if home.name else str(home)
+        await runtime.cwd(display)
+        await runtime.write("")
         return
 
     raw = (
@@ -38,51 +41,44 @@ async def run(space: NodeSpace):
     resolved = raw.resolve()
 
     if not resolved.exists():
-        yield out_text(f"Not found: {resolved}")
+        await runtime.write(f"Not found: {resolved}")
         return
 
     if not resolved.is_dir():
-        yield out_text(f"Not a directory: {resolved}")
+        await runtime.write(f"Not a directory: {resolved}")
         return
 
-    _set_path(space, raw, root)
-    yield out_text("")
+    display = _to_display(raw, root)
+    await runtime.cwd(display)
+    await runtime.write("")
 
 
-# ----------------------------
-# INTERNALS
-# ----------------------------
-
-
-def _get_root(space: NodeSpace) -> Path:
-    raw = space.session.get_data("fs:root")
+def _get_root(ctx) -> Path:
+    raw = ctx.workspace
     return Path(raw).resolve() if raw else Path.home() / "_yak"
 
 
-def _get_cwd(space: NodeSpace) -> Path:
-    raw = space.session.cwd
+def _get_cwd(ctx) -> Path:
+    raw = ctx.cwd
     if not raw or raw == "/":
-        return _get_root(space)
-    # Try tree-relative first (e.g. /var → root/var)
-    root = _get_root(space)
+        return _get_root(ctx)
+    root = _get_root(ctx)
     tree_test = root / raw.lstrip("/")
     if tree_test.exists():
         return tree_test
-    # Absolute OS path
     return Path(raw).resolve()
 
 
-def _set_path(space: NodeSpace, path: Path, root: Path) -> None:
+def _to_display(path: Path, root: Path) -> str:
     resolved = path.resolve()
     root_abs = root.resolve()
     normal = Path(os.path.normpath(str(path)))
     try:
         rel = normal.relative_to(root_abs)
-        display = "/" + str(rel) if str(rel) != "." else "/"
+        return "/" + str(rel) if str(rel) != "." else "/"
     except ValueError:
         try:
             rel = resolved.relative_to(root_abs)
-            display = "/" + str(rel) if str(rel) != "." else "/"
+            return "/" + str(rel) if str(rel) != "." else "/"
         except ValueError:
-            display = str(resolved)
-    space.session.set_cwd(display)
+            return str(resolved)
