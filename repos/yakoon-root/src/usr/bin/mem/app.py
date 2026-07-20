@@ -3,6 +3,30 @@ import gc
 from y5n.sdk import ports, runtime
 
 
+async def main():
+
+    gc.collect()
+    proc_status = _read_proc("/proc/self/status")
+    meminfo = _read_proc("/proc/meminfo")
+
+    rss = proc_status.get("VmRSS", 0)
+    vms = proc_status.get("VmSize", 0)
+    total = meminfo.get("MemTotal", 0)
+    available = meminfo.get("MemAvailable", 0)
+    system_percent = round((total - available) / total * 100, 1) if total else 0.0
+
+    doc = ports.get("document")
+    result = await doc.render(
+        state={
+            "rss": _format_bytes(rss),
+            "vms": _format_bytes(vms),
+            "system_percent": system_percent,
+            "available": _format_bytes(available),
+        },
+    )
+    await runtime.io.write(result)
+
+
 def _read_proc(path: str) -> dict[str, int]:
     result: dict[str, int] = {}
     with open(path) as f:
@@ -28,26 +52,3 @@ def _format_bytes(b: float) -> str:
             return f"{b:.1f} {unit}"
         b /= 1024
     return f"{b:.1f} PiB"
-
-
-async def main():
-    gc.collect()
-    proc_status = _read_proc("/proc/self/status")
-    meminfo = _read_proc("/proc/meminfo")
-
-    rss = proc_status.get("VmRSS", 0)
-    vms = proc_status.get("VmSize", 0)
-    total = meminfo.get("MemTotal", 0)
-    available = meminfo.get("MemAvailable", 0)
-    system_percent = round((total - available) / total * 100, 1) if total else 0.0
-
-    doc = ports.get("document")
-    result = await doc.render(
-        state={
-            "rss": _format_bytes(rss),
-            "vms": _format_bytes(vms),
-            "system_percent": system_percent,
-            "available": _format_bytes(available),
-        },
-    )
-    await runtime.io.write(result)
