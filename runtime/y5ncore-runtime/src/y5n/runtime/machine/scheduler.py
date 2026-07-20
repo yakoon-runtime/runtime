@@ -156,6 +156,11 @@ class Scheduler:
 
                 flow.scheduled = False
 
+                # The flow may have been removed asynchronously
+                # (e.g. by "jobs stop") while waiting in the sleep
+                # heap or ready queue.  Deleted flows must never
+                # be stepped again — invariants: flow ∈ session.flows()
+                # before every step(flow).
                 if not session.get_flow(flow.id):
                     continue
 
