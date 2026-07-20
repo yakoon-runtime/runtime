@@ -1,17 +1,13 @@
-from y5n.api.data import DataRequest
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import SOURCE_READ
-from y5n.api.documents import to_text
+from y5n.sdk import ports, runtime
 
 
-async def run(space: NodeSpace):
-    on_source = space.ports.get(SOURCE_READ)
-    result = await on_source(DataRequest("system:runtimes --list"))
+async def main():
+    src = ports.get("source")
+    result = await src.read(query="system:runtimes --list")
 
     if not result.rows:
-        yield out(to_text("No known remote runtimes."))
+        await runtime.io.write("No known remote runtimes.")
         return
 
     lines = [f"  {r['name']:<20} {r['url']}" for r in result.rows]
-    yield out(to_text("Known remote runtimes:\n" + "\n".join(lines)))
+    await runtime.io.write("Known remote runtimes:\n" + "\n".join(lines))
