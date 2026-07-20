@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from y5n.sdk import context, runtime
+from y5n.sdk import context, fs, io
 
 
 async def main():
@@ -9,7 +9,7 @@ async def main():
     target = req.arg(0)
 
     if not target:
-        await runtime.io.write("")
+        await io.write("")
         return
 
     ctx = context.current()
@@ -17,20 +17,20 @@ async def main():
     root = _get_root(ctx)
 
     if target == "/":
-        await runtime.cwd("/")
-        await runtime.io.write("")
+        await fs.chdir("/")
+        await io.write("")
         return
 
     if target == "..":
-        await runtime.cwd(_to_display(current_path.parent, root))
-        await runtime.io.write("")
+        await fs.chdir(_to_display(current_path.parent, root))
+        await io.write("")
         return
 
     if target == "~":
         home = Path.home()
         display = ("/" + home.name) if home.name else str(home)
-        await runtime.cwd(display)
-        await runtime.io.write("")
+        await fs.chdir(display)
+        await io.write("")
         return
 
     raw = (
@@ -41,16 +41,16 @@ async def main():
     resolved = raw.resolve()
 
     if not resolved.exists():
-        await runtime.io.write(f"Not found: {resolved}")
+        await io.write(f"Not found: {resolved}")
         return
 
     if not resolved.is_dir():
-        await runtime.io.write(f"Not a directory: {resolved}")
+        await io.write(f"Not a directory: {resolved}")
         return
 
     display = _to_display(raw, root)
-    await runtime.cwd(display)
-    await runtime.io.write("")
+    await fs.chdir(display)
+    await io.write("")
 
 
 def _get_root(ctx) -> Path:
