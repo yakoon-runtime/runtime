@@ -1,9 +1,9 @@
-from y5n.sdk import runtime
+from y5n.sdk import io, timer
 
 
 async def main():
-    await runtime.io.write("Wait for 3 seconds\n...")
-    await runtime.timer.delay(3)
-    await runtime.io.write("One moment...")
-    await runtime.timer.delay(2)
-    await runtime.io.write("Done!", mode="replace")
+    await io.write("Wait for 3 seconds\n...")
+    await timer.delay(3)
+    await io.write("One moment...")
+    await timer.delay(2)
+    await io.write("Done!", mode="replace")

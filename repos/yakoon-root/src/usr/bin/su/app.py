@@ -4,7 +4,7 @@ from y5n.api.dsl import out
 from y5n.api.dsl.patterns import Form
 from y5n.api.invocations import Param
 from y5n.api.nodes import NodeSpace
-from y5n.api.ports import AUTHENTICATE, PROJECT
+from y5n.api.ports import AUTHENTICATE
 
 
 async def run(space: NodeSpace):

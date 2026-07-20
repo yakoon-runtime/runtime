@@ -1,11 +1,11 @@
-from y5n.sdk import runtime
+from y5n.sdk import io, scheduler
 
 
 async def main():
-    result = await runtime.scheduler.background()
+    result = await scheduler.background()
 
     if result is None:
-        await runtime.io.write("No job in foreground.")
+        await io.write("No job in foreground.")
         return
 
-    await runtime.io.write("Job moved to background.")
+    await io.write("Job moved to background.")

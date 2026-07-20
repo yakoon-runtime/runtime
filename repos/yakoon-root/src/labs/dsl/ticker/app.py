@@ -1,7 +1,7 @@
-from y5n.sdk import runtime
+from y5n.sdk import io, timer
 
 
 async def main():
     for i in range(15):
-        await runtime.io.write(f"tick-{i}")
-        await runtime.timer.delay(2)
+        await io.write(f"tick-{i}")
+        await timer.delay(2)

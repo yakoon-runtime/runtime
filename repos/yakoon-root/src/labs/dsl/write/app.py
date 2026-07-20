@@ -1,5 +1,5 @@
-from y5n.sdk import runtime
+from y5n.sdk import io
 
 
 async def main():
-    await runtime.io.write("Hello write!")
+    await io.write("Hello write!")
