@@ -65,7 +65,6 @@ class SessionData:
 @dataclass
 class SessionRuntime:
     permissions: PermissionSet = field(default_factory=PermissionSet)
-    meta: dict[str, Any] = field(default_factory=dict)
     interaction: Interaction = Interaction.CLI
 
 
