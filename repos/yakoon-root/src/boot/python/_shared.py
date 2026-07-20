@@ -68,11 +68,20 @@ def build_app_file(root: Path, target_path: str) -> Path | None:
     if bundle_dir is not None:
         meta = _read_yak_meta(bundle_dir)
         entry = meta.get("entry", {}).get("run", "")
-        return bundle_dir / entry if entry else None
+        if entry and ":" not in entry:
+            return bundle_dir / entry if entry else None
     script = find_script(root, target_path)
     if script is not None:
         return script
     return None
+
+
+def read_entry(root: Path, target_path: str) -> str | None:
+    """Read the entry.run value from a node's _yak/yak.yml."""
+    rel = target_path.strip("/")
+    candidate = root / rel
+    meta = _read_yak_meta(candidate)
+    return meta.get("entry", {}).get("run") if meta else None
 
 
 def _build_context_dict(space, target_path: str) -> dict:

@@ -5,7 +5,9 @@ Only Python-specific code lives here: module loading and coroutine
 validation.  The handler map and drive loop live in ``y5n.base.host``.
 """
 
+import importlib
 import inspect
+import os
 import sys
 from pathlib import Path
 
@@ -13,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from python._shared import (
     build_app_file,
     load_and_capture,
+    read_entry,
     resolve_tree_path,
     unload_module,
 )
@@ -39,25 +42,58 @@ async def run(space: NodeSpace):
     current = space.session.cwd if space.session else None
     target_path = resolve_tree_path(target_path, current)
 
-    app_file = build_app_file(root, target_path)
-    if app_file is None:
+    entry = read_entry(root, target_path)
+    if not entry:
         yield Outcome(
             effects=[
-                EmitView(to_text(f"error: no command or script at '{target_path}'"))
+                EmitView(to_text(f"error: no entry for '{target_path}'"))
             ]
         )
         return
 
-    errors, _, mod, mod_name = load_and_capture(space, target_path, app_file)
-    if errors:
-        for err in errors:
-            yield Outcome(effects=[EmitView(to_text(err))])
-        return
+    if ":" in entry:
+        os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
+        mod_name, _, func_name = entry.partition(":")
+        try:
+            mod = importlib.import_module(mod_name)
+        except ImportError as e:
+            yield Outcome(
+                effects=[EmitView(to_text(f"error: cannot import {mod_name}: {e}"))]
+            )
+            return
+        main_fn = getattr(mod, func_name, None)
+        if main_fn is None:
+            yield Outcome(
+                effects=[
+                    EmitView(
+                        to_text(f"error: {mod_name} has no '{func_name}'")
+                    )
+                ]
+            )
+            return
+        mod_name_for_cleanup = mod_name
+    else:
+        app_file = build_app_file(root, target_path)
+        if app_file is None:
+            yield Outcome(
+                effects=[
+                    EmitView(to_text(f"error: no command or script at '{target_path}'"))
+                ]
+            )
+            return
 
-    main_fn = getattr(mod, "main", None)
-    if main_fn is None:
-        yield Outcome(effects=[EmitView(to_text("error: command has no main()"))])
-        return
+        errors, _, mod, mod_name_for_cleanup = load_and_capture(
+            space, target_path, app_file
+        )
+        if errors:
+            for err in errors:
+                yield Outcome(effects=[EmitView(to_text(err))])
+            return
+
+        main_fn = getattr(mod, "main", None)
+        if main_fn is None:
+            yield Outcome(effects=[EmitView(to_text("error: command has no main()"))])
+            return
 
     coro = main_fn()
 
@@ -126,5 +162,6 @@ async def run(space: NodeSpace):
     except Exception as e:
         yield Outcome(effects=[EmitView(to_text(f"error: {e}"))])
 
-    unload_module(mod_name)
+    if mod_name_for_cleanup and mod_name_for_cleanup.startswith("yak.bundle"):
+        unload_module(mod_name_for_cleanup)
     yield Outcome()

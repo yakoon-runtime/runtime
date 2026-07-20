@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import inspect
+import os
 import sys
 import types
 from pathlib import Path
@@ -38,14 +39,44 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
         self._loaded_modules: dict[Path, types.ModuleType] = {}
         self._root_ports = None
 
+    def _entry_value(self, node: Node, phase: Phase) -> str | None:
+        entry = node.metadata.get("entry", {})
+        if not isinstance(entry, dict):
+            return None
+        return entry.get(phase.value)
+
+    def _handle_module_entry(
+        self, entry: str, space: NodeSpace
+    ) -> RunResult | None:
+        if ":" not in entry:
+            return None
+        mod_name, _, func_name = entry.partition(":")
+        if not mod_name or not func_name:
+            return None
+        os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
+        import importlib
+
+        try:
+            mod = importlib.import_module(mod_name)
+        except ImportError:
+            return None
+        func = getattr(mod, func_name, None)
+        if func is None:
+            return None
+        result = func()
+        if inspect.iscoroutine(result):
+            return result
+        if hasattr(result, "__aiter__"):
+            return result
+        return None
+
     def _entry_file(self, node: Node, phase: Phase) -> Path | None:
         fs_path = node.fs_path
         if fs_path is None:
             return None
 
-        entry = node.metadata.get("entry", {})
-        entry_path = entry.get(phase.value) if isinstance(entry, dict) else None
-        if entry_path:
+        entry_path = self._entry_value(node, phase)
+        if entry_path and ":" not in entry_path:
             candidate = fs_path / entry_path
             if candidate.is_file():
                 return candidate
@@ -61,13 +92,22 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
         phase: Phase,
         space: NodeSpace,
     ) -> RunResult:
+        entry = self._entry_value(node, phase)
+        if entry and ":" in entry:
+            result = self._handle_module_entry(entry, space)
+            if result is not None:
+                return result
         app_file = self._entry_file(node, phase)
         if app_file is None:
             return _empty()
+        os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
         tree_path = str(node.path)
         mod = self._load_module(app_file, tree_path=tree_path, phase=phase.value)
-        if mod is not None and hasattr(mod, "run"):
-            return mod.run(space)
+        if mod is not None:
+            if hasattr(mod, "run"):
+                return mod.run(space)
+            if hasattr(mod, "main"):
+                return mod.main()
         return _empty()
 
     async def health(self, node: Node) -> HealthResult:
@@ -129,13 +169,13 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
         if loaded is not None:
             return loaded
 
+        os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
+
         segments = [s for s in tree_path.strip("/").split("/") if s]
         entry_name = path.stem
 
         full_name = "yak.bundle." + ".".join(segments + [phase, entry_name])
         cap_pkg = "yak.bundle." + ".".join(segments + [phase])
-
-        import sys
 
         seen = ""
         for part in full_name.split("."):

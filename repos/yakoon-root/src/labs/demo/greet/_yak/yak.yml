@@ -1,0 +1,6 @@
+title: Demo Greet
+
+host: /boot/python/runtime
+
+entry:
+  run: demo.greet:main

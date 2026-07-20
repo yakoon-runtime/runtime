@@ -354,6 +354,8 @@ class Tree:
                 entry_path = entry.get(phase)
                 if not entry_path:
                     continue
+                if ":" in entry_path:
+                    continue
                 app_file = fs_path / entry_path
                 if not app_file.is_file():
                     issues.append(f"{phase}: {entry_path} not found")
