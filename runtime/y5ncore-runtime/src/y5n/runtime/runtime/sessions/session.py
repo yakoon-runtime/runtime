@@ -65,7 +65,6 @@ class SessionData:
 @dataclass
 class SessionRuntime:
     permissions: PermissionSet = field(default_factory=PermissionSet)
-    marks: set[str] = field(default_factory=set)
     meta: dict[str, Any] = field(default_factory=dict)
     interaction: Interaction = Interaction.CLI
 
@@ -253,19 +252,6 @@ class Session:
 
     def has_active_account(self) -> bool:
         return self.data.account_key is not None
-
-    # ----------------------------
-    # Mark
-    # ----------------------------
-
-    def mark(self, name: str) -> None:
-        self._runtime.marks.add(name)
-
-    def has_mark(self, name: str) -> bool:
-        return name in self._runtime.marks
-
-    def clear_marks(self) -> None:
-        self._runtime.marks.clear()
 
     # ----------------------------
     # emit
