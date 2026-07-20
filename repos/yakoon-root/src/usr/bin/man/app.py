@@ -10,7 +10,7 @@ async def main():
     if not key:
         doc = ports.get("document")
         result = await doc.render(state={})
-        await runtime.write(result)
+        await runtime.io.write(result)
         return
 
     src = ports.get("source")
@@ -39,9 +39,9 @@ async def main():
             html = await jinja(content=template, context={"key": key})
             compile_port = ports.get("compile")
             projection = await compile_port(text=html, context={})
-            await runtime.write(projection)
+            await runtime.io.write(projection)
             return
 
     doc = ports.get("document")
     result = await doc.render(state={"key": key})
-    await runtime.write(result)
+    await runtime.io.write(result)

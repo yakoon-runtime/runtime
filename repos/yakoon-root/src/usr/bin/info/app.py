@@ -20,7 +20,7 @@ async def main():
             "hostname": platform.node(),
         },
     )
-    await runtime.write(result)
+    await runtime.io.write(result)
 
 
 def _get_uptime() -> str:

@@ -6,4 +6,4 @@ async def main():
     user = context.session().user or ""
 
     result = await doc.render(name="default", state={"user": user})
-    await runtime.write(result)
+    await runtime.io.write(result)

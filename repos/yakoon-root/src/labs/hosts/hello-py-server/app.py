@@ -10,4 +10,4 @@ class Greeter:
 
 async def main():
     ports.promote("hello", Greeter())
-    await runtime.write("service 'hello' registered")
+    await runtime.io.write("service 'hello' registered")

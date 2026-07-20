@@ -54,4 +54,4 @@ async def main():
             ),
         ],
     )
-    await runtime.write(doc)
+    await runtime.io.write(doc)

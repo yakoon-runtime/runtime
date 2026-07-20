@@ -50,4 +50,4 @@ async def main():
             "available": _format_bytes(available),
         },
     )
-    await runtime.write(result)
+    await runtime.io.write(result)

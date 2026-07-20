@@ -21,7 +21,7 @@ async def main():
             name="default",
             state={"view": "default", "key": target_name or fs_path.name},
         )
-        await runtime.write(result)
+        await runtime.io.write(result)
         return
 
     expose = False
@@ -93,7 +93,7 @@ async def main():
                 "path": tree_path,
             },
         )
-        await runtime.write(result)
+        await runtime.io.write(result)
         return
 
     items = [f"{e['key']}/" if e.get("navigable") else e["key"] for e in merged]
@@ -102,7 +102,7 @@ async def main():
         name="default",
         state={"view": "default", "items": items},
     )
-    await runtime.write(result)
+    await runtime.io.write(result)
 
 
 def _sort_key(entry: dict) -> tuple:

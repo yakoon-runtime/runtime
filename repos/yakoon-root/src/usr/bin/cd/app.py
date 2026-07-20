@@ -9,7 +9,7 @@ async def main():
     target = req.arg(0)
 
     if not target:
-        await runtime.write("")
+        await runtime.io.write("")
         return
 
     ctx = context.current()
@@ -18,19 +18,19 @@ async def main():
 
     if target == "/":
         await runtime.cwd("/")
-        await runtime.write("")
+        await runtime.io.write("")
         return
 
     if target == "..":
         await runtime.cwd(_to_display(current_path.parent, root))
-        await runtime.write("")
+        await runtime.io.write("")
         return
 
     if target == "~":
         home = Path.home()
         display = ("/" + home.name) if home.name else str(home)
         await runtime.cwd(display)
-        await runtime.write("")
+        await runtime.io.write("")
         return
 
     raw = (
@@ -41,16 +41,16 @@ async def main():
     resolved = raw.resolve()
 
     if not resolved.exists():
-        await runtime.write(f"Not found: {resolved}")
+        await runtime.io.write(f"Not found: {resolved}")
         return
 
     if not resolved.is_dir():
-        await runtime.write(f"Not a directory: {resolved}")
+        await runtime.io.write(f"Not a directory: {resolved}")
         return
 
     display = _to_display(raw, root)
     await runtime.cwd(display)
-    await runtime.write("")
+    await runtime.io.write("")
 
 
 def _get_root(ctx) -> Path:

@@ -9,4 +9,4 @@ async def main():
         name="default",
         state={"name": name},
     )
-    await runtime.write(result)
+    await runtime.io.write(result)

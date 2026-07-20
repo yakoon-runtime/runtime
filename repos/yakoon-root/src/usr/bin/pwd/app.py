@@ -8,4 +8,4 @@ async def main():
     if not display:
         display = ctx.workspace or "/"
 
-    await runtime.write(display)
+    await runtime.io.write(display)
