@@ -1,20 +1,21 @@
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.documents import to_text
-
-from .ports import JOB_FLOW_GET
+from y5n.sdk import context, runtime
 
 
-async def run(space: NodeSpace):
-    get_flow_by_index = space.ports.get(JOB_FLOW_GET)
+async def main():
+    req = context.request()
+    index = req.arg(0)
 
-    flow, index = get_flow_by_index(
-        session=space.session,
-        request=space.request,
-    )
-    if not flow:
-        yield out(to_text(f"Job {index} not found."))
+    flows = await runtime.scheduler.flows()
+    try:
+        idx = int(index)
+    except (ValueError, TypeError):
+        await runtime.io.write(f"Invalid index: {index}")
         return
 
-    yield out(to_text(f"Job {index} moved to foreground."))
-    yield flow.activate()  # type: ignore
+    target = next((f for f in flows if f["index"] == idx), None)
+    if not target:
+        await runtime.io.write(f"Job {index} not found.")
+        return
+
+    await runtime.scheduler.foreground(target["id"])
+    await runtime.io.write(f"Job {index} moved to foreground.")

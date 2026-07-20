@@ -180,8 +180,10 @@ class Session:
         if flow.id == self._foreground_flow_id:
             self.set_foreground_flow(None)
 
-    def flows(self) -> Sequence[Flow]:
-        return list(self._flows.values())
+    def flows(self, exclude: str | None = None) -> Sequence[Flow]:
+        if exclude is None:
+            return list(self._flows.values())
+        return [f for f in self._flows.values() if f.id != exclude]
 
     def has_foreground_flow(self) -> bool:
         return bool(self.foreground_flow)

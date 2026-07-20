@@ -1,13 +1,11 @@
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.documents import to_text
+from y5n.sdk import runtime
 
 
-async def run(space: NodeSpace):
-    fg = space.session.foreground_flow  # type: ignore
-    if not fg:
-        yield out(to_text("No active dialog."))
+async def main():
+    result = await runtime.scheduler.background()
+
+    if result is None:
+        await runtime.io.write("No job in foreground.")
         return
 
-    yield out(to_text("Job moved to background."))
-    yield fg.deactivate()
+    await runtime.io.write("Job moved to background.")

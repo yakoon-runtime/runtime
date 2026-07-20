@@ -20,9 +20,10 @@ from y5n.base.document import to_text
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
 from y5n.base.host import HANDLERS, MarkerKind, drive
+from y5n.base.nodes import NodeSpace
 
 
-async def run(space):
+async def run(space: NodeSpace):
     target_path = space.request.arg(0) if space.request else None
     if not target_path:
         yield Outcome(effects=[EmitView(to_text("Usage: python/runtime <tree-path>"))])
@@ -73,12 +74,52 @@ async def run(space):
         )
         return
 
+    session = space.session
+    flow_id = space.flow_id
+
+    def _flows_list(exclude_id: str) -> list[dict]:
+        result = []
+        fg = session.foreground_flow
+        exclude = exclude_id or flow_id or None
+        for idx, flow in enumerate(session.flows(exclude=exclude), start=1):
+            result.append(
+                {
+                    "index": idx,
+                    "id": flow.id,
+                    "label": flow.node.name or flow.node.key,
+                    "state": flow.control.label() if flow.control else "run",
+                    "foreground": bool(fg) and fg.id == flow.id,
+                }
+            )
+        return result
+
+    def _flow_stop(flow_id: str) -> None:
+        flow = session.get_flow(flow_id)
+        if flow:
+            session.del_flow(flow)
+
+    def _flow_fg(flow_id: str) -> None:
+        session.set_foreground_flow(flow_id)
+
+    def _flow_bg(_: None) -> dict | None:
+        fg = session.foreground_flow
+        if not fg:
+            return None
+        session.set_foreground_flow(None)
+        return {"id": fg.id, "label": fg.node.name or fg.node.key}
+
     try:
         async for outcome in drive(
             coro,
             HANDLERS,
             side_effects={
-                MarkerKind.CWD: lambda path: space.session.set_cwd(path),
+                MarkerKind.CWD: lambda path: session.set_cwd(path),
+                MarkerKind.FLOW_STOP: _flow_stop,
+                MarkerKind.FLOW_FG: _flow_fg,
+            },
+            responses={
+                MarkerKind.FLOWS_LIST: _flows_list,
+                MarkerKind.FLOW_BG: _flow_bg,
             },
         ):
             yield outcome

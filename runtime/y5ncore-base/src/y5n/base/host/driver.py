@@ -2,22 +2,11 @@
 Generic host driver — drives a command coroutine via send(None).
 
 The command yields ``Marker`` instances (see ``protocol.py``).  The
-driver dispatches each marker to a registered handler and yields
-the resulting Outcomes.
+driver dispatches each marker according to its kind:
 
-Markers that modify host state (e.g. ``CWD``) are handled as
-*side effects* — they are executed without yielding an Outcome.
-
-Usage:
-
-    from y5n.base.host.driver import drive
-    from y5n.base.host.protocol import MarkerKind
-
-    async for outcome in drive(coro, {
-        MarkerKind.WRITE: lambda m, first: out(resolve(m.value), mode=...),
-        MarkerKind.DELAY: lambda m, _: delay(m.value),
-    }):
-        yield outcome
+* **handlers** — produce a DSL ``Outcome`` (yielded to the caller).
+* **side_effects** — mutate host state, no Outcome.
+* **responses** — return data to the command via ``coro.send(result)``.
 """
 
 from __future__ import annotations
@@ -29,10 +18,12 @@ from y5n.base.flow.dsl import Outcome
 
 from .protocol import Marker, MarkerKind
 
-# A handler receives (marker, first_output) and returns an Outcome.
+# handler(marker, first) → Outcome (yielded to the drive consumer)
 _Handler = Callable[[Marker, bool], Outcome]
-# A side effect receives (marker.value) and returns None.
+# side_effect(value) → None (mutates host state)
 _SideEffect = Callable[[Any], None]
+# responder(value) → Any (sent back to the coroutine)
+_Responder = Callable[[Any], Any]
 
 
 __all__ = ["drive"]
@@ -42,6 +33,7 @@ async def drive(
     coro: Coroutine[Any, None, None],
     handlers: Mapping[MarkerKind, _Handler],
     side_effects: Mapping[MarkerKind, _SideEffect] | None = None,
+    responses: Mapping[MarkerKind, _Responder] | None = None,
     visual_kinds: frozenset[MarkerKind] = frozenset(
         {MarkerKind.WRITE, MarkerKind.ERROR}
     ),
@@ -55,10 +47,15 @@ async def drive(
         yield ``Marker`` instances.
     handlers:
         Mapping from ``MarkerKind`` to ``handler(marker, first) -> Outcome``.
-        Unhandled kinds are silently skipped (unless in *side_effects*).
+        Yielded to the consumer of ``drive()``.
     side_effects:
         Mapping from ``MarkerKind`` to ``fn(value) -> None``.
-        These markers are executed without yielding an Outcome.
+        Executed without yielding an Outcome.
+    responses:
+        Mapping from ``MarkerKind`` to ``fn(value) -> Any``.
+        The return value is sent back to the coroutine via
+        ``coro.send(result)``, enabling request/response patterns
+        like ``flows = await runtime.scheduler.flows()``.
     visual_kinds:
         Kinds whose first occurrence switches the output mode
         from ``"replace"`` to ``"append"``.
@@ -69,12 +66,16 @@ async def drive(
         while True:
             if side_effects and marker.kind in side_effects:
                 side_effects[marker.kind](marker.value)
+                marker = coro.send(None)
+            elif responses and marker.kind in responses:
+                result = responses[marker.kind](marker.value)
+                marker = coro.send(result)
             else:
                 handler = handlers.get(marker.kind)
                 if handler is not None:
                     yield handler(marker, first)
                     if marker.kind in visual_kinds:
                         first = False
-            marker = coro.send(None)
+                marker = coro.send(None)
     except StopIteration:
         pass

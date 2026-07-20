@@ -52,7 +52,6 @@ from y5n.runtime.sources.data import (
 )
 from y5n.runtime.wire.adapter.callable import CallableAdapter
 from y5n.runtime.wire.adapter.document import DocumentAdapter
-from y5n.runtime.wire.adapter.flows import FlowsAdapter
 from y5n.runtime.wire.adapter.source import SourceReadAdapter
 from y5n.runtime.wire.compiler import build_compiler
 from y5n.runtime.wire.machine import RuntimeHost, build_machine
@@ -267,13 +266,5 @@ def build_runtime(
         "compile",
         CallableAdapter(compiler.compile),
     )
-
-    flows_adapter = FlowsAdapter(host)
-    bus.resolver.register(
-        "system:projection",
-        {"jobs.list": ["get"]},
-        path="/",
-    )
-    bus.transport.register_adapter("jobs.list", flows_adapter)
 
     return host

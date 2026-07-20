@@ -17,12 +17,23 @@ from typing import Any
 
 
 class MarkerKind(StrEnum):
+    # Output
     WRITE = "write"
     ERROR = "error"
+    VIEW = "view"
+
+    # Side effects
+    CWD = "cwd"
+
+    # Timer
     DELAY = "delay"
     DELAY_UNTIL = "delay_until"
-    VIEW = "view"
-    CWD = "cwd"
+
+    # Scheduler / Flow control
+    FLOWS_LIST = "flows.list"
+    FLOW_STOP = "flow.stop"
+    FLOW_FG = "flow.fg"
+    FLOW_BG = "flow.bg"
 
 
 @dataclass(frozen=True)

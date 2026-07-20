@@ -1,23 +1,19 @@
-from y5n.sdk import context, ports, runtime
+from y5n.sdk import context, runtime
 
 
 async def main():
-    flows_service = ports.get("jobs.list")
-    flows = await flows_service.get(
-        session_key=context.session().key,
-        exclude_id=context.flow().id,
-    )
+    flows = await runtime.scheduler.flows()
 
     if not flows:
-        await runtime.write("No jobs active.")
+        await runtime.io.write("No jobs active.")
         return
 
-    await runtime.write("Active jobs:", mode="append")
+    await runtime.io.write("Active jobs:", mode="append")
 
     focused = context.current().node.get("path", "")
     for entry in flows:
         marker = "  ←" if entry.get("id", "") == focused else ""
-        await runtime.write(
+        await runtime.io.write(
             f"  [{entry['index']}] {entry['label']} - {entry['state']}{marker}",
             mode="append",
         )
