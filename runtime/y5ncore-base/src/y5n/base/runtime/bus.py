@@ -1,5 +1,8 @@
+"""Generic message bus."""
+
 from __future__ import annotations
 
+import inspect
 from collections.abc import Callable
 from typing import Any
 
@@ -12,11 +15,7 @@ Handler = Callable[[Any], Any]
 
 
 class RuntimeBus:
-    """Generic message bus.
-
-    Knows only one thing: message type → handler.
-    No resolver, no transport, no registry — just routing.
-    """
+    """Generic message bus."""
 
     def __init__(self) -> None:
         self._handlers: dict[type, Handler] = {}
@@ -30,7 +29,22 @@ class RuntimeBus:
         handler = self._handlers.get(type(message))
         if handler is None:
             raise KeyError(f"no handler for {type(message).__name__}")
-        return handler(message)
+        result = handler(message)
+        if inspect.iscoroutine(result):
+            raise RuntimeError(
+                f"handler for {type(message).__name__} returned a coroutine — "
+                f"use bus.async_dispatch() instead"
+            )
+        return result
+
+    async def async_dispatch(self, message: Any) -> Any:
+        handler = self._handlers.get(type(message))
+        if handler is None:
+            raise KeyError(f"no handler for {type(message).__name__}")
+        result = handler(message)
+        if inspect.iscoroutine(result) or inspect.isawaitable(result):
+            return await result
+        return result
 
 
 _default_bus: RuntimeBus | None = None

@@ -1,3 +1,13 @@
+"""Runtime context — command context and protocol-level invocation.
+
+Four types form the protocol between the host and the SDK:
+
+* ``CommandContext`` — frozen snapshot of the invocation.
+* ``Call`` — a port invocation request.
+* ``Response`` — the result of a Call.
+* ``invoke()`` — async dispatch of a Call through the Runtime Bus.
+"""
+
 from __future__ import annotations
 
 from contextvars import ContextVar
@@ -47,7 +57,7 @@ class Response:
     error: str | None = None
 
 
-def invoke(call: Call) -> Response:
+async def invoke(call: Call) -> Response:
     """Execute a Call through the Runtime Bus.
 
     The bus routes to CallHandler, which resolves the provider
@@ -55,7 +65,7 @@ def invoke(call: Call) -> Response:
     """
     from y5n.base.runtime.bus import get_bus
 
-    return get_bus().dispatch(call)
+    return await get_bus().async_dispatch(call)
 
 
 def _set_context(ctx: CommandContext) -> None:
@@ -71,11 +81,6 @@ class _Context:
             return CommandContext()
 
     def request(self) -> Any:
-        """Return a Request object built from the current context.
-
-        The Request class lives in y5n.base.nodes.request and provides
-        arg(), option(), has_option() etc.
-        """
         from y5n.base.nodes.request import Request
 
         ctx = self.current()

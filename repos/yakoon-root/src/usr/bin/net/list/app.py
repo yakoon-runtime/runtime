@@ -1,13 +1,12 @@
-from y5n.sdk import ports, runtime
+from y5n.sdk import runtime
 
 
 async def main():
-    src = ports.get("source")
-    result = await src.read(query="system:runtimes --list")
+    runtimes = await runtime.network.list()
 
-    if not result.rows:
+    if not runtimes:
         await runtime.io.write("No known remote runtimes.")
         return
 
-    lines = [f"  {r['name']:<20} {r['url']}" for r in result.rows]
+    lines = [f"  {r['name']:<20} {r['url']}" for r in runtimes]
     await runtime.io.write("Known remote runtimes:\n" + "\n".join(lines))

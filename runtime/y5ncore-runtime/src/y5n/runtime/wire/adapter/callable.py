@@ -22,5 +22,5 @@ class CallableAdapter:
     def __init__(self, fn: Callable[..., Any]) -> None:
         self._fn = fn
 
-    def __call__(self, call: Call, **kwargs: Any) -> Any:
+    async def __call__(self, call: Call, **kwargs: Any) -> Any:
         return self._fn(**kwargs)

@@ -20,13 +20,13 @@ class CallHandler:
         self._resolver = resolver
         self._transport = transport
 
-    def __call__(self, call: Call) -> Response:
+    async def __call__(self, call: Call) -> Response:
         provider_id = self._resolver.resolve(
             call.port, call.method, caller_path=call.caller_path
         )
         if provider_id is None:
             return Response(error=f"no provider for '{call.port}:{call.method}'")
-        return self._transport.send(provider_id, call)
+        return await self._transport.send(provider_id, call)
 
 
 class RegisterProviderHandler:

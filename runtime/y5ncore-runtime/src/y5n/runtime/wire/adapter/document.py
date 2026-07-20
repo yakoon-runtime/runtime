@@ -21,7 +21,7 @@ class DocumentAdapter:
         self._projector = projector
         self._tree = tree
 
-    def render(
+    async def render(
         self,
         call: Call,
         *,

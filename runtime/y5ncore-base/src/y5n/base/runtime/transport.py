@@ -40,45 +40,32 @@ class DirectTransport:
         """Register a system adapter that receives the full Call."""
         self._adapters[port] = adapter
 
-    def send(self, provider_id: str, call: Call) -> Response:
-        # System adapters receive the full Call as first argument
+    async def send(self, provider_id: str, call: Call) -> Response:
         adapter = self._adapters.get(call.port)
         if adapter is not None:
-            return self._send_adapter(adapter, call)
-
-        # User services receive only their business args
+            return await self._send_adapter(adapter, call)
         service = self._providers.get(provider_id)
         if service is None:
             return Response(error=f"provider '{provider_id}' not found")
         fn = service.get(call.method)
         if fn is None:
             return Response(error=f"method '{call.method}' not found")
-        return self._exec(fn, call.args or {})
+        return await self._exec(fn, call.args or {})
 
-    def _send_adapter(self, adapter: object, call: Call) -> Response:
+    async def _send_adapter(self, adapter: object, call: Call) -> Response:
         fn = getattr(adapter, call.method, None)
         if fn is None:
             return Response(error=f"method '{call.method}' not found")
-        return self._exec(fn, call.args or {}, call)
+        return await self._exec(fn, call.args or {}, call)
 
-    def _exec(self, fn, args: dict, call: Call | None = None) -> Response:
+    async def _exec(self, fn, args: dict, call: Call | None = None) -> Response:
         try:
             if call is not None:
                 result = fn(call, **args)
             else:
                 result = fn(**args)
-            if inspect.iscoroutine(result):
-                try:
-                    loop = asyncio.get_running_loop()
-                    result = loop.run_until_complete(result)
-                except RuntimeError:
-                    if _main_loop is not None:
-                        future = asyncio.run_coroutine_threadsafe(result, _main_loop)
-                        result = future.result()
-                    else:
-                        # Inside a running loop — return the coroutine
-                        # and let the SDK's async caller await it.
-                        return Response(result=result)
+            if inspect.iscoroutine(result) or inspect.isawaitable(result):
+                result = await result
             return Response(result=result)
         except Exception as e:
             return Response(error=str(e))
