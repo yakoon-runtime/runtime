@@ -156,6 +156,9 @@ class Scheduler:
 
                 flow.scheduled = False
 
+                if not session.get_flow(flow.id):
+                    continue
+
                 iterations += 1
                 if iterations > self.MAX_ITERATIONS:
                     self.on_audit_warning(
