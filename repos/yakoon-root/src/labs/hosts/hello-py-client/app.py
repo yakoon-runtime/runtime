@@ -19,7 +19,6 @@ async def main():
     await runtime.io.write(f"key:      {ses.key}")
     await runtime.io.write(f"locale:   {ses.locale}")
     await runtime.io.write(f"user_id:  {ses.user_id}")
-    await runtime.io.write(f"interaction: {ses.interaction}")
 
     # -- request --
     req = context.request()
