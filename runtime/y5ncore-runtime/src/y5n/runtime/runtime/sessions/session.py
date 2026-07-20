@@ -66,7 +66,6 @@ class SessionData:
 class SessionRuntime:
     permissions: PermissionSet = field(default_factory=PermissionSet)
     marks: set[str] = field(default_factory=set)
-    io: IO | None = None
     meta: dict[str, Any] = field(default_factory=dict)
     interaction: Interaction = Interaction.CLI
 
@@ -88,6 +87,7 @@ class Session:
         self._flows: dict[str, Flow] = {}
         self._foreground_flow_id: str | None = None
         self._channels: dict[str, deque[Event]] = {}  # resolved channel key → queue
+        self._io: IO | None = None
 
     # ========================================================
     # PUBLIC API
@@ -142,7 +142,7 @@ class Session:
     # ----------------------------
 
     def bind_io(self, io: IO):
-        self._runtime.io = io
+        self._io = io
 
     # ----------------------------
     # client lifecycle
@@ -279,11 +279,11 @@ class Session:
         assert (
             type(event) is DocumentEvent
         ), f"event must be a type of {type(event).__name__}"
-        assert self._runtime.io is not None, "runtime.io must not be None"
+        assert self._io is not None, "runtime.io must not be None"
         assert event.job_id, "event.job_id must be set"
 
         event = self._attach_state(event)
-        await self._runtime.io.view(event)
+        await self._io.view(event)
 
     def _attach_state(self, event: DocumentEvent) -> DocumentEvent:
         return replace(
