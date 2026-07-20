@@ -1,16 +1,11 @@
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import SESSION_ATTACH
-from y5n.api.documents import to_text
+from y5n.sdk import context, io, session
 
 
-async def run(space: NodeSpace):
-    target = space.request.arg(0)
+async def main():
+    target = context.request().arg(0)
     if not target:
-        yield out(to_text("Usage: session attach <key>"))
+        await io.write("Usage: session attach <key>")
         return
 
-    on_attach = space.ports.get(SESSION_ATTACH)
-    await on_attach(session=space.session, target_key=target)
-
-    yield out(to_text(f"Attached to session {target}"))
+    await session.attach(target)
+    await io.write(f"Attached to session {target}")

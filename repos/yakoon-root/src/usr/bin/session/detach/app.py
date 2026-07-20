@@ -1,11 +1,6 @@
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import SESSION_DETACH
-from y5n.api.documents import to_text
+from y5n.sdk import io, session
 
 
-async def run(space: NodeSpace):
-    yield out(to_text("Detached"))
-
-    on_detach = space.ports.get(SESSION_DETACH)
-    await on_detach(session=space.session)
+async def main():
+    await session.detach()
+    await io.write("Detached")
