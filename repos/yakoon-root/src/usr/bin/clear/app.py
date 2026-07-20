@@ -1,5 +1,5 @@
-from y5n.sdk import runtime
+from y5n.sdk import viewport
 
 
 async def main():
-    await runtime.view(clear=True)
+    await viewport.clear()

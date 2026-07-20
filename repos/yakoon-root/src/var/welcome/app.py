@@ -1,4 +1,4 @@
-from y5n.sdk import context, ports, runtime
+from y5n.sdk import context, ports, runtime, viewport
 
 
 async def main():
@@ -9,4 +9,5 @@ async def main():
         name="default",
         state={"name": name},
     )
+    await viewport.clear()
     await runtime.io.write(result)
