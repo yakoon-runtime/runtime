@@ -30,7 +30,6 @@ class SessionData:
     current_path: str | None = None
     user_key: str | None = None
     user_name: str | None = None
-    account_key: str | None = None
     last_active: datetime | None = None
     lang: str = "en"
     debug: bool = True
@@ -62,12 +61,6 @@ class SessionData:
         return state
 
 
-@dataclass
-class SessionRuntime:
-    permissions: PermissionSet = field(default_factory=PermissionSet)
-    interaction: Interaction = Interaction.CLI
-
-
 class Session:
     """
     Session output contract is strict:
@@ -76,16 +69,18 @@ class Session:
     """
 
     def __init__(self, key: Key, data: SessionData):
+
         self.key = key
         self.data = data
+        self.interaction: Interaction = Interaction.CLI
 
-        self._runtime = SessionRuntime()
+        self._permissions: PermissionSet = PermissionSet()
+        self._io: IO | None = None
         self._bus = SessionBus()
         self._flow_id_counter = 0
         self._flows: dict[str, Flow] = {}
         self._foreground_flow_id: str | None = None
-        self._channels: dict[str, deque[Event]] = {}  # resolved channel key → queue
-        self._io: IO | None = None
+        self._channels: dict[str, deque[Event]] = {}
 
     # ========================================================
     # PUBLIC API
@@ -105,23 +100,11 @@ class Session:
         return self.data.pop(key, default)
 
     @property
-    def interaction(self) -> Interaction:
-        return self._runtime.interaction
-
-    @interaction.setter
-    def interaction(self, value: Interaction) -> None:
-        self._runtime.interaction = value
-
-    @property
-    def debug(self) -> bool:
-        return self.data.debug
-
-    @property
     def permissions(self) -> PermissionSet:
-        return self._runtime.permissions
+        return self._permissions
 
     def set_permissions(self, permset: PermissionSet) -> None:
-        self._runtime.permissions = permset
+        self._permissions = permset
 
     @classmethod
     def from_row(cls, row: GetResult) -> Session:
@@ -231,26 +214,6 @@ class Session:
     @property
     def user_name(self) -> str | None:
         return self.data.user_name
-
-    def clear_identity(self) -> None:
-        self.data.user_key = None
-        self.data.user_name = None
-
-    def has_identity(self) -> bool:
-        return self.data.user_key is not None
-
-    # ----------------------------
-    # Account
-    # ----------------------------
-
-    def set_active_account(self, account_key) -> None:
-        self.data.account_key = str(account_key)
-
-    def clear_active_account(self) -> None:
-        self.data.account_key = None
-
-    def has_active_account(self) -> bool:
-        return self.data.account_key is not None
 
     # ----------------------------
     # emit
