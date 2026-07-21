@@ -20,5 +20,8 @@ async def main():
         state["reason"] = result.get("reason")
 
     doc = ports.get("document")
-    projection = await doc.render(name="default", state=state)
+    projection = await doc.render(
+        name="default",
+        state=state,
+    )
     await io.write(projection)

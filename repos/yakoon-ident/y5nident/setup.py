@@ -98,20 +98,20 @@ async def main():
         return {"ok": True, "user": {"username": user.username}}
 
     # ---------------
-    # --- PROVIDE ---
-    # ---------------
-
-    ports.provide("ident.users", users)
-    ports.provide("ident.namespaces", service_ns)
-    ports.provide("ident.groups", groups)
-    ports.provide("ident.joins", join_svc)
-    ports.provide("ident.permgrant", permgrant)
-
-    # ---------------
     # --- PUBLISH ---
     # ---------------
 
-    ports.publish("ident.auth", authenticate)
+    ports.publish("ident.users", users)
+    ports.publish("ident.namespaces", service_ns)
+    ports.publish("ident.groups", groups)
+    ports.publish("ident.joins", join_svc)
+    ports.publish("ident.permgrant", permgrant)
+
+    # ---------------
+    # --- PROMOTE ---
+    # ---------------
+
+    ports.promote("ident.auth", authenticate)
 
 
 async def _build_index(store):
