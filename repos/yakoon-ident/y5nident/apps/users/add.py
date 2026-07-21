@@ -1,29 +1,24 @@
-from __future__ import annotations
-
-from y5n.api.dsl import out
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import DOCUMENT
-
-from .ports import NAMESPACES, USER_SERVICE
+from y5n.sdk import context, io, ports
 
 
-async def run(space: NodeSpace):
-    request = space.request
+async def main():
+    req = context.request()
+    username = req.arg(0)
+    password = req.option("password")
 
-    username = request.arg(0)
-    password = request.option("password")
+    ns_svc = ports.get("ident.namespaces")
+    namespace = await ns_svc.user_namespace()
 
-    namespaces = space.ports.get(NAMESPACES)
-    users_svc = space.ports.get(USER_SERVICE)
-
+    users_svc = ports.get("ident.users")
     user = await users_svc.add_user(
-        namespace=namespaces.user_namespace(),
+        namespace=namespace,
         username=username,
         password=password,
     )
 
-    projection = await space.ports.get(DOCUMENT)(
-        space=space,
+    doc = ports.get("document")
+    result = await doc.render(
+        name="default",
         state={"user": user},
     )
-    yield out(projection)
+    await io.write(result)
