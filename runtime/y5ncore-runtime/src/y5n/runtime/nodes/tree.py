@@ -275,18 +275,16 @@ class Tree:
 
     async def setup(self) -> None:
         for node in self._nodes.values():
-            fs_path = node.fs_path or self._root_path
             entry = node.metadata.get("entry", {})
             setup_path = entry.get("setup")
             if not setup_path:
                 continue
-            app_file = fs_path / setup_path
-            if not app_file.is_file():
-                continue
+
             kind = ExecutorKind(node.metadata.get("executor", "runtime"))
             executor = self._executors.get(kind)
             if executor is None:
                 continue
+
             space = NodeSpace(
                 path=node.path,
                 request=None,  # type: ignore
