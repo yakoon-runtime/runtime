@@ -1,0 +1,48 @@
+<heading>su - Substitute user / login.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  su USER
+  su USER --password SECRET
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Logs in as the specified user. If the password is not provided
+and the system requires one, an interactive form is displayed
+to enter it.
+</paragraph>
+
+<paragraph>
+On success, the session identity is set to the new user and
+all permission checks use that identity from that point on.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+su root
+  Log in as root. If a password is required,
+  an interactive form will appear.
+
+su stefan --password 123
+  Log in as stefan with the given password.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+whoami
+</paragraph>

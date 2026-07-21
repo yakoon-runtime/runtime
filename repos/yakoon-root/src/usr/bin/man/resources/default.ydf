@@ -1,0 +1,29 @@
+{% if key is defined %}
+No manual entry for '{{ key }}'
+{% else %}
+<heading>man - Show command manuals.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  man
+  man ls
+  man cd
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Displays the manual for a command.
+</paragraph>
+
+<paragraph>
+If no command is specified, the available manuals are listed.
+</paragraph>
+{% endif %}

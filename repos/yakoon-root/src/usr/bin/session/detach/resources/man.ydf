@@ -1,0 +1,33 @@
+<heading>detach - Detach from current session.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  detach
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Detaches the current client from the attached session
+and returns control to the original session.
+</paragraph>
+
+<paragraph>
+Has no effect if the client is not currently attached
+to another session.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+attach, list, current, man
+</paragraph>

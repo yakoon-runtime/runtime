@@ -1,0 +1,28 @@
+<heading>session current - Show current session.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  session current
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Displays the active session key and its client, home,
+and flow counts.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+list, attach, detach, man
+</paragraph>

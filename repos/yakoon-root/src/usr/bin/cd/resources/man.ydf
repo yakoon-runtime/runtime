@@ -1,0 +1,67 @@
+<heading>cd - Change directory.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+<pre>
+  cd path
+  cd ..
+  cd /
+  cd ~
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Changes the current working directory.
+</paragraph>
+
+<paragraph>
+Navigates the OS filesystem. Inside the yakoon tree, <em>cd /</em> returns
+to the tree root and the prompt shows tree-relative paths (e.g.
+<em>/var</em>, <em>/crm/customer</em>). Outside the tree, the prompt
+shows the absolute OS path.
+</paragraph>
+
+<heading level="2">
+Special paths
+</heading>
+
+<pre>
+  /      Yakoon root directory
+  ~      User's home directory
+  ..     Parent directory
+</pre>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+  cd /var
+    Go to /var inside the yakoon tree.
+
+  cd /crm/customer
+    Navigate to a bundle's subdirectory through a symlink.
+
+  cd ~
+    Go to the user's home directory.
+
+  cd ../../..
+    Move up multiple levels. Leaves the tree if above root.
+
+  cd /
+    Return to the yakoon tree root from anywhere.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+ls, man
+</paragraph>

@@ -1,0 +1,30 @@
+<heading>net - Manage remote runtime connections.</heading>
+
+<rule/>
+
+<heading level="2">
+Subcommands
+</heading>
+
+<pre>
+  net list               Show known remote runtimes
+  net connect NAME       Connect to a remote runtime
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+The <em>net</em> command manages connections to remote Yakoon
+runtimes.  Invoking <em>net</em> without arguments is equivalent
+to <em>net list</em>.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+man, list, connect
+</paragraph>
