@@ -9,5 +9,9 @@ async def main():
     namespace = Namespace("ident", "user", "global")
     users = await users_svc.list_users(namespace=namespace)
 
-    lines = "\n".join(f"  {u.username}" for u in users)
-    await io.write(f"Users:\n{lines}" if lines else "No users found")
+    doc = ports.get("document")
+    result = await doc.render(
+        name="default",
+        state={"users": users},
+    )
+    await io.write(result)
