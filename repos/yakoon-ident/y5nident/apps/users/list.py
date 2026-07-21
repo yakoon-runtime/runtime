@@ -1,12 +1,10 @@
-from __future__ import annotations
-
-from y5n.api.naming import Namespace
 from y5n.sdk import io, ports
 
 
 async def main():
     users_svc = ports.get("ident.users")
-    namespace = Namespace("ident", "user", "global")
+    ns_svc = ports.get("ident.namespaces")
+    namespace = ns_svc.user_namespace()
     users = await users_svc.list_users(namespace=namespace)
 
     doc = ports.get("document")

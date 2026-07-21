@@ -87,6 +87,7 @@ async def main():
     await _demo_data(users=users)
 
     ports.promote("ident.users", users)
+    ports.promote("ident.namespaces", service_ns)
 
 
 async def _build_index(store):
