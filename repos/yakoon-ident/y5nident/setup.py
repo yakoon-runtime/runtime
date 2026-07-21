@@ -88,6 +88,7 @@ async def main():
 
     ports.promote("ident.users", users)
     ports.promote("ident.namespaces", service_ns)
+    ports.promote("ident.groups", groups)
 
 
 async def _build_index(store):

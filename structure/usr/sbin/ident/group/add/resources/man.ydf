@@ -1,0 +1,36 @@
+<heading>groups add - Create a group.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  add NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Creates a new group with the given name.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+add admins
+  Create a group called admins.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+list, edit, delete, users, joins
+</paragraph>
