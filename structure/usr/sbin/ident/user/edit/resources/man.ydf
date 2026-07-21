@@ -1,0 +1,41 @@
+<heading>users edit - Update a user.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  edit NAME --password NEW_SECRET
+  edit NAME --enabled yes
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Updates an existing user. At least one option must be provided.
+Use --enabled to activate or deactivate a user account.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+edit bob --password newpass
+  Change bob's password.
+
+edit alice --enabled no
+  Disable alice's account.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+list, add, delete, groups, joins
+</paragraph>

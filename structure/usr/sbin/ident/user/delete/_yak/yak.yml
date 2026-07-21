@@ -4,3 +4,15 @@ host: /boot/python/runtime
 
 entry:
   run: pack:y5nident.apps.users.delete:main
+
+invocation:
+  params:
+    - key: name
+      positional: true
+      required: true
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

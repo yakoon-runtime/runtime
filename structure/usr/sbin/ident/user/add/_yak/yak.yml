@@ -4,3 +4,16 @@ host: /boot/python/runtime
 
 entry:
   run: pack:y5nident.apps.users.add:main
+
+invocation:
+  params:
+    - key: name
+      positional: true
+      required: true
+    - key: password
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf
