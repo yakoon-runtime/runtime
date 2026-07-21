@@ -97,12 +97,21 @@ async def main():
             return {"ok": False, "reason": "invalid-credentials"}
         return {"ok": True, "user": {"username": user.username}}
 
-    ports.promote("ident.users", users)
-    ports.promote("ident.namespaces", service_ns)
-    ports.promote("ident.groups", groups)
-    ports.promote("ident.joins", join_svc)
-    ports.promote("ident.permgrant", permgrant)
-    ports.promote("ident.auth", authenticate)
+    # ---------------
+    # --- PROVIDE ---
+    # ---------------
+
+    ports.provide("ident.users", users)
+    ports.provide("ident.namespaces", service_ns)
+    ports.provide("ident.groups", groups)
+    ports.provide("ident.joins", join_svc)
+    ports.provide("ident.permgrant", permgrant)
+
+    # ---------------
+    # --- PUBLISH ---
+    # ---------------
+
+    ports.publish("ident.auth", authenticate)
 
 
 async def _build_index(store):
