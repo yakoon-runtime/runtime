@@ -1,0 +1,9 @@
+title: User Grants
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5nident.apps.grants.user_show:main
+
+document: { default: file:resources/default.ydf }
+man: { default: file:resources/man.ydf }

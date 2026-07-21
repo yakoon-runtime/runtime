@@ -1,0 +1,13 @@
+title: Show Permission Grants
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5nident.apps.grants.perm_show:main
+
+invocation:
+  params:
+    - key: permission; positional: true; required: true
+
+document: { default: file:resources/default.ydf }
+man: { default: file:resources/man.ydf }

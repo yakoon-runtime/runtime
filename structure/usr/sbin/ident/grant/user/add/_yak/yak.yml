@@ -1,0 +1,15 @@
+title: Grant to User
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5nident.apps.grants.user_add:main
+
+invocation:
+  params:
+    - key: name; positional: true; required: true
+    - key: permission; positional: true; required: true
+    - key: bits; key: deny
+
+document: { default: file:resources/default.ydf }
+man: { default: file:resources/man.ydf }

@@ -1,0 +1,38 @@
+<heading>grants permission show - Show who has a permission.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  show PERMISSION
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all subjects (users and groups) that have been granted
+a specific permission, either directly or through group
+memberships.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+show note:app
+  Show who has the note:app permission.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+user/show, group/show
+</paragraph>
