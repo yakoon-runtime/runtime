@@ -1,0 +1,4 @@
+title: Ident
+
+entry:
+  setup: pack:y5nident.setup:main

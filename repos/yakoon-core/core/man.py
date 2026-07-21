@@ -42,6 +42,4 @@ async def main():
             await runtime.io.write(projection)
             return
 
-    doc = ports.get("document")
-    result = await doc.render(state={"key": key})
-    await runtime.io.write(result)
+    await runtime.io.write(f"No man page for '{key}'")
