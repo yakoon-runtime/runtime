@@ -17,6 +17,7 @@ yakoon/loop/runtime
 # .NET build artifacts
 **/bin/
 **/obj/
+!/structure/usr/bin/
 
 # Coverage
 .coverage

@@ -1,0 +1,6 @@
+title: Session Attach
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.session.attach:main

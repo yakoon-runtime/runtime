@@ -1,0 +1,9 @@
+title: Clear
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.clear:main
+
+man:
+  default: file:resources/man.ydf

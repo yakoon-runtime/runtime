@@ -1,0 +1,6 @@
+title: Jobs List
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.jobs.list:main

@@ -24,6 +24,16 @@ if TYPE_CHECKING:
     from y5n.base.nodes.node import Node
 
 
+def _parse_entry(entry: str) -> tuple[str, str]:
+    if ":" in entry:
+        scheme, _, rest = entry.partition(":")
+        if scheme in ("pack", "file"):
+            return (scheme, rest)
+    raise ValueError(
+        f"invalid entry '{entry}' — expected 'pack:<module>:<func>' or 'file:<path>'"
+    )
+
+
 def _empty() -> RunResult:
     async def _noop():
         yield Outcome()
@@ -46,11 +56,11 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
         return entry.get(phase.value)
 
     def _handle_module_entry(
-        self, entry: str, space: NodeSpace
+        self, value: str, space: NodeSpace
     ) -> RunResult | None:
-        if ":" not in entry:
+        if ":" not in value:
             return None
-        mod_name, _, func_name = entry.partition(":")
+        mod_name, _, func_name = value.rpartition(":")
         if not mod_name or not func_name:
             return None
         os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
@@ -63,27 +73,33 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
         func = getattr(mod, func_name, None)
         if func is None:
             return None
-        result = func()
+        try:
+            result = func(space)
+        except TypeError:
+            result = func()
         if inspect.iscoroutine(result):
             return result
         if hasattr(result, "__aiter__"):
             return result
         return None
 
-    def _entry_file(self, node: Node, phase: Phase) -> Path | None:
+    def _entry_file(
+        self, node: Node, phase: Phase, file_path: str | None = None
+    ) -> Path | None:
         fs_path = node.fs_path
         if fs_path is None:
             return None
 
+        if file_path:
+            candidate = fs_path / file_path
+            if candidate.is_file():
+                return candidate
+            return None
         entry_path = self._entry_value(node, phase)
-        if entry_path and ":" not in entry_path:
+        if entry_path:
             candidate = fs_path / entry_path
             if candidate.is_file():
                 return candidate
-        # Fallback for host commands that haven't migrated their structure
-        fallback = fs_path / "_yak" / phase.value / "app.py"
-        if fallback.is_file():
-            return fallback
         return None
 
     def run(
@@ -93,21 +109,30 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
         space: NodeSpace,
     ) -> RunResult:
         entry = self._entry_value(node, phase)
-        if entry and ":" in entry:
-            result = self._handle_module_entry(entry, space)
-            if result is not None:
-                return result
-        app_file = self._entry_file(node, phase)
-        if app_file is None:
+        if not entry:
             return _empty()
-        os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
-        tree_path = str(node.path)
-        mod = self._load_module(app_file, tree_path=tree_path, phase=phase.value)
-        if mod is not None:
-            if hasattr(mod, "run"):
-                return mod.run(space)
-            if hasattr(mod, "main"):
-                return mod.main()
+
+        scheme, value = _parse_entry(entry)
+
+        if scheme == "pack":
+            return self._handle_module_entry(value, space)
+
+        if scheme == "file":
+            app_file = self._entry_file(node, phase, value)
+            if app_file is None:
+                return _empty()
+            os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
+            tree_path = str(node.path)
+            mod = self._load_module(
+                app_file, tree_path=tree_path, phase=phase.value
+            )
+            if mod is not None:
+                if hasattr(mod, "run"):
+                    return mod.run(space)
+                if hasattr(mod, "main"):
+                    return mod.main()
+            return _empty()
+
         return _empty()
 
     async def health(self, node: Node) -> HealthResult:

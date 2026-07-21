@@ -1,0 +1,75 @@
+<heading>ls - List directory contents.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+<pre>
+  ls
+  ls path
+  ls --long
+  ls ~
+</pre>
+
+<heading level="2">
+Options
+</heading>
+
+<pre>
+  --long, -l   Detail view with Kind, Name, Version, Executor, Size
+  --all, -a    Include hidden entries (_yak/, .dotfiles)
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists the contents of a directory. Without options, entries are shown
+side by side in a compact horizontal layout.
+</paragraph>
+
+<paragraph>
+The <em>--long</em> view shows runtime metadata for each entry:
+Kind (dir/cmd/file), Version, Executor and filesystem size.
+</paragraph>
+
+<heading level="2">
+Special paths
+</heading>
+
+<pre>
+  /      Yakoon root directory
+  ~      User's home directory
+  ..     Parent directory
+</pre>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+  ls
+    List current directory.
+
+  ls /var
+    List contents of /var inside the yakoon tree.
+
+  ls ~
+    List home directory.
+
+  ls --long
+    Detail view with runtime metadata.
+
+  ls --all
+    Show hidden entries.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+cd, man
+</paragraph>

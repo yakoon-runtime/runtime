@@ -1,0 +1,10 @@
+title: Su
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.su:main
+document:
+  default: file:resources/default.ydf
+man:
+  default: file:resources/man.ydf

@@ -1,0 +1,9 @@
+title: Mem
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.mem:main
+
+man:
+  default: file:resources/man.ydf

@@ -1,0 +1,6 @@
+title: Net
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.net.list:main

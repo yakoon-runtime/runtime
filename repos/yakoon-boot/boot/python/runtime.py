@@ -1,26 +1,8 @@
-"""
-Runtime Host — drives a command coroutine via the shared driver.
-
-Only Python-specific code lives here: module loading and coroutine
-validation.  The handler map and drive loop live in ``y5n.base.host``.
-"""
-
 import importlib
 import inspect
 import os
-import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from python._shared import (
-    _build_context_dict,
-    build_app_file,
-    load_and_capture,
-    parse_entry,
-    read_entry,
-    resolve_tree_path,
-    unload_module,
-)
 from y5n.base.document import to_text
 from y5n.base.flow.dsl import Outcome
 from y5n.base.flow.primitives import EmitView
@@ -28,6 +10,15 @@ from y5n.base.host import HANDLERS, MarkerKind, drive
 from y5n.base.nodes import NodeSpace
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
+
+from ._shared import (
+    _build_context_dict,
+    build_app_file,
+    load_and_capture,
+    read_entry,
+    resolve_tree_path,
+    unload_module,
+)
 
 
 async def run(space: NodeSpace):
@@ -48,12 +39,10 @@ async def run(space: NodeSpace):
 
     entry = read_entry(root, target_path)
     if not entry:
-        yield Outcome(
-            effects=[
-                EmitView(to_text(f"error: no entry for '{target_path}'"))
-            ]
-        )
+        yield Outcome(effects=[EmitView(to_text(f"error: no entry for '{target_path}'"))])
         return
+
+    from ._shared import parse_entry
 
     try:
         scheme, value = parse_entry(entry)
@@ -79,11 +68,7 @@ async def run(space: NodeSpace):
         main_fn = getattr(mod, func_name, None)
         if main_fn is None:
             yield Outcome(
-                effects=[
-                    EmitView(
-                        to_text(f"error: {mod_name} has no '{func_name}'")
-                    )
-                ]
+                effects=[EmitView(to_text(f"error: {mod_name} has no '{func_name}'"))]
             )
             return
         ctx = SdkContext.from_dict(_build_context_dict(space, target_path))
@@ -96,6 +81,7 @@ async def run(space: NodeSpace):
                 effects=[EmitView(to_text(f"error: file not found: '{app_file}'"))]
             )
             return
+
         errors, _, mod, mod_name_for_cleanup = load_and_capture(
             space, target_path, app_file
         )
@@ -103,6 +89,7 @@ async def run(space: NodeSpace):
             for err in errors:
                 yield Outcome(effects=[EmitView(to_text(err))])
             return
+
         main_fn = getattr(mod, "main", None)
         if main_fn is None:
             yield Outcome(effects=[EmitView(to_text("error: command has no main()"))])

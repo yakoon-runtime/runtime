@@ -1,0 +1,6 @@
+title: Net Connect
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.net.connect:main

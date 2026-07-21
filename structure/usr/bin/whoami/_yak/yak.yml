@@ -1,0 +1,12 @@
+title: Whoami
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.whoami:main
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

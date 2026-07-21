@@ -1,0 +1,8 @@
+title: Wc
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.wc:main
+man:
+  default: file:resources/man.ydf

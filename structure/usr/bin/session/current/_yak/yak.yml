@@ -1,0 +1,6 @@
+title: Session Current
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.session.current:main

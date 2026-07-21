@@ -1,0 +1,9 @@
+title: Cd
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.cd:main
+
+man:
+  default: file:resources/man.ydf

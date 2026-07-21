@@ -159,19 +159,29 @@ class Tree:
             )
         node.invocations = invocations
 
-        # Resources (projection, man) — resolved relative to command root
         resources: dict[str, dict[str, Path]] = {}
         for res_type in RESOURCE_KEYS:
             variants = meta.get(res_type)
             if not isinstance(variants, dict):
                 continue
             resolved: dict[str, Path] = {}
-            for variant, filename in variants.items():
-                # Backward compat: fall back to resolving relative to _yak/run/
-                fpath = (dir_path / filename).resolve()
-                if not fpath.is_file():
-                    fpath = (dir_path / "_yak" / "run" / filename).resolve()
-                if fpath.is_file():
+            for variant, resource_ref in variants.items():
+                if not isinstance(resource_ref, str):
+                    continue
+                if ":" in resource_ref:
+                    scheme, _, rest = resource_ref.partition(":")
+                    if scheme not in ("pack", "file"):
+                        continue
+                    if scheme == "pack":
+                        mod_name = ".".join(rest.split(":")[0].rsplit(":", 1)[0])
+                        fpath = _resolve_pack_path(resource_ref)
+                    else:
+                        fpath = (dir_path / rest).resolve()
+                else:
+                    fpath = (dir_path / resource_ref).resolve()
+                    if not fpath.is_file():
+                        fpath = (dir_path / "_yak" / "run" / resource_ref).resolve()
+                if fpath and fpath.is_file():
                     resolved[variant] = fpath
             if resolved:
                 resources[res_type] = resolved
@@ -354,11 +364,14 @@ class Tree:
                 entry_path = entry.get(phase)
                 if not entry_path:
                     continue
-                if ":" in entry_path:
+                if not isinstance(entry_path, str):
                     continue
-                app_file = fs_path / entry_path
-                if not app_file.is_file():
-                    issues.append(f"{phase}: {entry_path} not found")
+                if entry_path.startswith("pack:") or entry_path.startswith("file:"):
+                    continue
+                issues.append(
+                    f"{phase}: invalid entry '{entry_path}'"
+                    f" — expected 'pack:...' or 'file:...'"
+                )
 
             executor_value = (
                 meta.get("host") or meta.get("executor", "") if meta else ""
@@ -457,3 +470,27 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
         return host_run(modified_space)
 
     return _run
+
+
+def _resolve_pack_path(ref: str) -> Path | None:
+    """Resolve a 'pack:<module>:<path>' reference to an absolute path.
+
+    e.g. 'pack:core.cd:resources/man.ydf' → import core.cd,
+    get its directory, resolve resources/man.ydf relative to it.
+    """
+    import importlib
+
+    rest = ref[len("pack:"):]
+    mod_name, _, rel_path = rest.rpartition(":")
+    if not mod_name or not rel_path:
+        return None
+    try:
+        mod = importlib.import_module(mod_name)
+    except ImportError:
+        return None
+    mod_file = getattr(mod, "__file__", None)
+    if not mod_file:
+        return None
+    mod_dir = Path(mod_file).parent
+    resolved = (mod_dir / rel_path).resolve()
+    return resolved if resolved.is_file() else None

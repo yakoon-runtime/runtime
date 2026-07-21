@@ -1,0 +1,9 @@
+title: Pwd
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.pwd:main
+
+man:
+  default: file:resources/man.ydf

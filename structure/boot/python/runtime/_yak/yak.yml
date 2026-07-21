@@ -1,0 +1,7 @@
+title: Python Runtime Host
+
+expose: false
+navigable: false
+
+entry:
+  run: pack:boot.python.runtime:run

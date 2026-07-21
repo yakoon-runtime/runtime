@@ -1,0 +1,12 @@
+title: Ls
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.ls:main
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

@@ -1,0 +1,27 @@
+<heading>info - Show system information.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+<pre>
+  info
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Displays system information including current time, runtime uptime,
+platform version, Python version, and hostname.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+man
+</paragraph>

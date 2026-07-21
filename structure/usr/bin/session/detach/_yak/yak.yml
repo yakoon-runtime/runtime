@@ -1,0 +1,6 @@
+title: Session Detach
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.session.detach:main

@@ -1,0 +1,6 @@
+title: Jobs Stop
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.jobs.stop:main

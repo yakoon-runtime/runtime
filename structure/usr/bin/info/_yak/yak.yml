@@ -1,0 +1,12 @@
+title: Info
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.info:main
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

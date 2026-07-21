@@ -1,0 +1,9 @@
+title: Health
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:core.health:main
+
+man:
+  default: file:resources/man.ydf
