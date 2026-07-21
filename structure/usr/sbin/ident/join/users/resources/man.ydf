@@ -1,0 +1,36 @@
+<heading>joins users - List users in a group.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  users GROUP
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Lists all users that are members of the specified group.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+users admins
+  List all members of the admins group.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, remove, groups
+</paragraph>

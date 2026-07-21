@@ -1,0 +1,18 @@
+title: Join Users (in Group)
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5nident.apps.joins.users:main
+
+invocation:
+  params:
+    - key: group
+      positional: true
+      required: true
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf
