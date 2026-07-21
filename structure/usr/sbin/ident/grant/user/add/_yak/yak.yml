@@ -7,9 +7,17 @@ entry:
 
 invocation:
   params:
-    - key: name; positional: true; required: true
-    - key: permission; positional: true; required: true
-    - key: bits; key: deny
+    - key: name
+      positional: true
+      required: true
+    - key: permission
+      positional: true
+      required: true
+    - key: bits
+    - key: deny
 
-document: { default: file:resources/default.ydf }
-man: { default: file:resources/man.ydf }
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

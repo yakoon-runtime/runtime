@@ -1,4 +1,4 @@
-title: Show Group Grants
+title: show
 
 host: /boot/python/runtime
 
@@ -7,7 +7,15 @@ entry:
 
 invocation:
   params:
-    - key: name; positional: true; required: true
+    - key: name
+      positional: true
+      required: true
+    - key: permission
+      positional: true
+      required: true
 
-document: { default: file:resources/default.ydf }
-man: { default: file:resources/man.ydf }
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf
