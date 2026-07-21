@@ -14,10 +14,10 @@ async def main():
     result = await auth(username=username, secret=secret)
 
     state = {"user": username, "reason": None}
-    if result.ok and result.user:
-        state["user"] = result.user.get("username", username)
+    if result.get("ok") and result.get("user"):
+        state["user"] = result["user"].get("username", username)
     else:
-        state["reason"] = result.reason
+        state["reason"] = result.get("reason")
 
     doc = ports.get("document")
     projection = await doc.render(name="default", state=state)

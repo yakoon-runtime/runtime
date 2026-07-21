@@ -86,11 +86,23 @@ async def main():
 
     await _demo_data(users=users)
 
+    async def authenticate(*, username: str, secret: str) -> dict:
+        user = await users.get_by_username(
+            namespace=service_ns.user_namespace(),
+            username=username,
+        )
+        if not user:
+            return {"ok": False, "reason": "unknown-user"}
+        if not verifier.verify(user=user, secret=secret):
+            return {"ok": False, "reason": "invalid-credentials"}
+        return {"ok": True, "user": {"username": user.username}}
+
     ports.promote("ident.users", users)
     ports.promote("ident.namespaces", service_ns)
     ports.promote("ident.groups", groups)
     ports.promote("ident.joins", join_svc)
     ports.promote("ident.permgrant", permgrant)
+    ports.promote("authenticate", authenticate)
 
 
 async def _build_index(store):
