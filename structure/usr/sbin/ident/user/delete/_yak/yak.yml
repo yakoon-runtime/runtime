@@ -3,4 +3,4 @@ title: User Delete
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.commands.users.delete:main
+  run: pack:y5nident.apps.users.delete:main

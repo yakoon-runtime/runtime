@@ -1,25 +1,11 @@
 from __future__ import annotations
 
 from y5n.api.naming import Key
-from y5n.api.nodes import NodeSpace
-from y5n.api.ports import (
-    AUTHENTICATE,
-    OnNewPermissionSet,
-    OnParsePermissionSpec,
-    OnSessionSave,
-)
-from y5n.api.ports.models import AuthResult
+from y5n.sdk import ports
 from y5nstore.event.wire import build_store
 
 from .bootstrap import bootstrap
 from .models import User, UserData
-from .ports import (
-    GROUP_SERVICE,
-    JOIN_SERVICE,
-    NAMESPACES,
-    PERMGRANT_SERVICE,
-    USER_SERVICE,
-)
 from .services import (
     AccountService,
     AllowAllSecretVerifier,
@@ -28,20 +14,18 @@ from .services import (
     JoinService,
     Namespaces,
     PermissionGrantService,
-    PermissionResolver,
     UserService,
 )
 from .settings import Settings
 
 
-async def run(space: NodeSpace):
+async def main():
 
     settings = Settings()
-
-    namespaces = Namespaces()
-
     store = build_store(settings.storage)
     await _build_index(store)
+
+    service_ns = Namespaces()
 
     users = UserService(
         on_get=store.objects.get,
@@ -82,34 +66,15 @@ async def run(space: NodeSpace):
         on_scan=store.objects.scan,
     )
 
-    on_new_permset = space.ports.get(OnNewPermissionSet)
-    on_parse_spec = space.ports.get(OnParsePermissionSpec)
-    perm_resolver = PermissionResolver(
-        on_new_permissionset=on_new_permset,
-        on_list_subject_grants=permgrant.list_subject_grants,
-        on_list_user_joins=join_svc.list_user_joins,
-        on_parse_spec=on_parse_spec,
-    )
-
     verifier = AllowAllSecretVerifier()
 
-    # --- on_after_verify: resolves permissions after successful auth ---
-
-    async def on_after_verify(*, user: User) -> dict:
-        permissions = await perm_resolver.resolve_user_permissions(
-            grant_namespace=namespaces.permgrant_namespace(),
-            join_namespace=namespaces.join_namespace(),
-            user_key=user.key,
-        )
-        return {
-            "permissions": permissions,
-            "user": {"key": user.key, "username": user.username},
-        }
+    async def on_after_verify(*, user) -> dict:
+        return {}
 
     auth = AuthenticationService(
         on_get_user=users.get_by_username,
         on_verify_user=verifier.verify,
-        on_after_verify=on_after_verify,  # type: ignore
+        on_after_verify=on_after_verify,
     )
 
     await bootstrap(
@@ -121,58 +86,11 @@ async def run(space: NodeSpace):
 
     await _demo_data(users=users)
 
-    async def authenticate(
-        *, space: NodeSpace, username: str, secret: str
-    ) -> AuthResult:
-
-        user_ns = namespaces.user_namespace()
-        result = await auth.authenticate(
-            namespace=user_ns,
-            username=username,
-            secret=secret,
-        )
-
-        if not result.ok:
-            return result
-
-        after = result.after or {}
-        user_info = after.get("user", {})
-        permissions = after.get("permissions")
-
-        space.session.set_identity(user_info.get("key"), user_info.get("username"))
-        if permissions is not None:
-            space.session.set_permissions(permissions)
-
-        on_save = space.ports.get(OnSessionSave)
-        await on_save(session=space.session)
-
-        return AuthResult(
-            ok=True,
-            user=result.user,
-            reason=None,
-        )
-
-    # ----------------------------------
-    # PUBLISH
-    # ----------------------------------
-
-    space.ports.publish(NAMESPACES, namespaces)
-    space.ports.publish(USER_SERVICE, users)
-    space.ports.publish(GROUP_SERVICE, groups)
-    space.ports.publish(JOIN_SERVICE, join_svc)
-    space.ports.publish(PERMGRANT_SERVICE, permgrant)
-
-    # ----------------------------------
-    # PROMOTE
-    # ----------------------------------
-
-    space.ports.promote(AUTHENTICATE, authenticate)
+    ports.promote("ident.users", users)
 
 
 async def _build_index(store):
-
     namespaces = Namespaces()
-
     await store.objects.ensure_indexes(
         namespace=namespaces.user_namespace(),
         specs=UserService.index_specs(),
@@ -192,24 +110,17 @@ async def _build_index(store):
 
 
 async def _demo_data(users) -> None:
-
     namespaces = Namespaces()
     user_ns = namespaces.user_namespace()
 
     u1 = User(
         key=Key(namespace=user_ns, id="stefan"),
-        data=UserData(
-            username="stefan",
-            password_hash="123",
-        ),
+        data=UserData(username="stefan", password_hash="123"),
     )
     await users.save(u1)
 
     u2 = User(
         key=Key(namespace=user_ns, id="lara"),
-        data=UserData(
-            username="lara",
-            password_hash="456",
-        ),
+        data=UserData(username="lara", password_hash="456"),
     )
     await users.save(u2)

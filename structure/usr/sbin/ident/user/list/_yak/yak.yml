@@ -3,4 +3,4 @@ title: User List
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.commands.users.list:main
+  run: pack:y5nident.apps.users.list:main
