@@ -102,7 +102,7 @@ async def main():
     ports.promote("ident.groups", groups)
     ports.promote("ident.joins", join_svc)
     ports.promote("ident.permgrant", permgrant)
-    ports.promote("authenticate", authenticate)
+    ports.promote("ident.auth", authenticate)
 
 
 async def _build_index(store):

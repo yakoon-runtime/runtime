@@ -10,7 +10,7 @@ async def main():
         await io.write("Usage: su <user> --password=<password>")
         return
 
-    auth = ports.get("authenticate")
+    auth = ports.get("ident.auth")
     result = await auth(username=username, secret=secret)
 
     state = {"user": username, "reason": None}
