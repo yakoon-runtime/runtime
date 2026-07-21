@@ -2,6 +2,7 @@ from y5n.sdk import io, ports
 
 
 async def main():
+
     ns_svc = ports.get("ident.namespaces")
     namespace = await ns_svc.group_namespace()
 

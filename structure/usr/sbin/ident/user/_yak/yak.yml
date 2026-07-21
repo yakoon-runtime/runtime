@@ -1,1 +1,6 @@
 title: User
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5nident.apps.users.list:main

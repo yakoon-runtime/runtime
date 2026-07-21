@@ -1,1 +1,6 @@
 title: Group
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5nident.apps.groups.list:main

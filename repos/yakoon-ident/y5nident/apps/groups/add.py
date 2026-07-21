@@ -2,6 +2,7 @@ from y5n.sdk import context, io, ports
 
 
 async def main():
+
     req = context.request()
     name = req.arg(0)
 
@@ -19,4 +20,5 @@ async def main():
         name="default",
         state={"group": group},
     )
+
     await io.write(result)
