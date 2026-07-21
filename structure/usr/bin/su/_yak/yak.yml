@@ -3,8 +3,16 @@ title: Su
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.su:main
+  run: pack:y5nident.apps.su:main
+
+invocation:
+  params:
+    - key: user
+      positional: true
+    - key: password
+
 document:
   default: file:resources/default.ydf
+
 man:
   default: file:resources/man.ydf
