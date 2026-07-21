@@ -15,7 +15,7 @@ logs/
 yakoon/loop/runtime
 
 # .NET build artifacts
-**/bin/
+#**/bin/
 **/obj/
 !/structure/usr/bin/
 
