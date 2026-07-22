@@ -14,10 +14,9 @@
     // repos
     "repos/y5napp-system/src",
     "repos/y5napp-ident/src",
-    "repos/yakoon-luma/src",
+    "repos/y5napp-crm/src",
+    "repos/y5napp-luma/src",
     "repos/yakoon-root/src",
-    // transports
-    "transports/y5ntrans-ws/src",
     // apps
     "apps/y5napp-web/src",
     "apps/y5napp-console/src",
@@ -27,7 +26,7 @@
     "runtime/engine/tests",
     "runtime/store/tests/event",
     "runtime/store/tests/sequence",
-    "repos/yakoon-luma/tests",
+    "repos/y5napp-luma/tests",
   ],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
