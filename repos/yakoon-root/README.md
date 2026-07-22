@@ -1,4 +1,4 @@
-# Yakoon System
+# Yakoon Root
 
 *The base system tree for Yakoon.*
 
