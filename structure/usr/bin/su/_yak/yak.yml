@@ -9,7 +9,9 @@ invocation:
   params:
     - key: user
       positional: true
+      required: true
     - key: password
+      required: true
 
 document:
   default: file:resources/default.ydf

@@ -75,6 +75,7 @@ async def main():
         on_get_user=users.get_by_username,
         on_verify_user=verifier.verify,
         on_after_verify=on_after_verify,
+        namespace=service_ns.user_namespace(),
     )
 
     await bootstrap(
@@ -85,17 +86,6 @@ async def main():
     )
 
     await _demo_data(users=users)
-
-    async def authenticate(*, username: str, secret: str) -> dict:
-        user = await users.get_by_username(
-            namespace=service_ns.user_namespace(),
-            username=username,
-        )
-        if not user:
-            return {"ok": False, "reason": "unknown-user"}
-        if not verifier.verify(user=user, secret=secret):
-            return {"ok": False, "reason": "invalid-credentials"}
-        return {"ok": True, "user": {"username": user.username}}
 
     # ---------------
     # --- PUBLISH ---
@@ -111,7 +101,7 @@ async def main():
     # --- PROMOTE ---
     # ---------------
 
-    ports.promote("ident.auth", authenticate)
+    ports.promote("ident.auth", auth)
 
 
 async def _build_index(store):
