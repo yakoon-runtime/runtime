@@ -2,24 +2,17 @@
 
 *The base system tree for Yakoon.*
 
-Root is the default workspace bundle. It provides the core commands,
-services and labs that make up a Yakoon runtime environment.
+Root is the default workspace bundle. It provides the system commands
+and services that make up a Yakoon runtime environment.
 
 ## Structure
 
 ```
 src/
 ├── usr/
-│   ├── bin/
-│   │   ├── su            — User authentication and session
-│   │   ├── whoami        — Current user identity
-│   │   └── cd            — Workspace navigation
+│   ├── bin/              — System commands (cd, ls, su, …)
 │   └── sbin/
 │       └── ident         — Identity & permission setup
-├── labs/
-│   ├── dsl/              — Flow language primitives
-│   ├── patterns/         — Interaction patterns (form, dialog)
-│   └── demos/            — Demo spaces (chat, llm, pdf)
 ├── var/
 │   └── welcome/          — Landing node
 └── home/                 — User home mount point
