@@ -47,6 +47,7 @@ class Call:
     method: str
     args: dict | None = None
     caller_path: str | None = None
+    caller_session_key: str | None = None
 
 
 @dataclass

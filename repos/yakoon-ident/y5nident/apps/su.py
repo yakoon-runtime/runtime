@@ -7,11 +7,7 @@ async def main():
     secret = req.option("password")
 
     auth = ports.get("ident.auth")
-    result = await auth.authenticate(
-        username=username,
-        secret=secret,
-        session_key=context.session().key,
-    )
+    result = await auth.authenticate(username=username, secret=secret)
 
     state = {"user": username, "reason": None}
     if result.get("ok") and result.get("user"):
