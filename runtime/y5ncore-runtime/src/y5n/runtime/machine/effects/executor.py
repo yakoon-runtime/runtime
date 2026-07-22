@@ -1,6 +1,6 @@
 from collections.abc import Sequence
 
-from y5n.base.flow.primitives import (
+from y5n.runtime.engine.flow.primitives import (
     Background,
     Effect,
     EmitEvent,

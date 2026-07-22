@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Protocol
 
-from y5n.base.nodes.space import NodeSpace
-from y5n.base.resources import ResourceRef
+from y5n.runtime.engine.nodes.space import NodeSpace
+from y5n.runtime.engine.resources import ResourceRef
 
 
 class Projector:

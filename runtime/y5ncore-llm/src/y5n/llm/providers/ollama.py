@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import httpx
-from y5n.base.llm import LLMRequest, LLMResponse
+from y5n.runtime.engine.llm import LLMRequest, LLMResponse
 
 
 class OllamaProvider:

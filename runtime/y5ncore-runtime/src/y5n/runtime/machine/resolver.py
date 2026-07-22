@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.nodes import Node, NodePath, UsageError
+from y5n.runtime.engine.nodes import Node, NodePath, UsageError
 from y5n.runtime.capabilities.permission import Permission
 from y5n.runtime.runtime import (
     NodeNotExecutable,

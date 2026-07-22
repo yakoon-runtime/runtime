@@ -1,4 +1,4 @@
-from y5n.base.document.schema import CHILDREN_FIELDS
+from y5n.runtime.engine.document.schema import CHILDREN_FIELDS
 
 
 def _extract_children(block: dict) -> list[dict]:

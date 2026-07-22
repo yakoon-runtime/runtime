@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import shlex
 
-from y5n.base.nodes import Request
-from y5n.base.runtime import Event
+from y5n.runtime.engine.nodes import Request
+from y5n.runtime.engine.runtime import Event
 
 
 class InputParser:

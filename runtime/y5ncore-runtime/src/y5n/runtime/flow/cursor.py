@@ -4,11 +4,11 @@ import inspect
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Literal
 
-from y5n.base.flow.primitives import Outcome
-from y5n.base.nodes.handler import RunHandler
+from y5n.runtime.engine.flow.primitives import Outcome
+from y5n.runtime.engine.nodes.handler import RunHandler
 
 if TYPE_CHECKING:
-    from y5n.base.nodes import Node, NodeSpace
+    from y5n.runtime.engine.nodes import Node, NodeSpace
 
 HandlerName = Literal[
     "run",

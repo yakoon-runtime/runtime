@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from y5n.base.runtime.context import Call
+from y5n.runtime.engine.runtime.context import Call
 
 
 class CallableAdapter:

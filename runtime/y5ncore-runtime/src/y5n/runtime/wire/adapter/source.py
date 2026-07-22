@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from y5n.base.runtime.context import Call
-from y5n.base.sources import DataRequest
+from y5n.runtime.engine.runtime.context import Call
+from y5n.runtime.engine.sources import DataRequest
 
 
 class SourceReadAdapter:

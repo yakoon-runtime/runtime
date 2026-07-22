@@ -3,11 +3,11 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from y5n.base.flow.channel import Scope
-from y5n.base.flow.dsl import out, receive, start_cmd
-from y5n.base.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
-from y5n.base.nodes import Node
-from y5n.base.runtime import Event
+from y5n.runtime.engine.flow.channel import Scope
+from y5n.runtime.engine.flow.dsl import out, receive, start_cmd
+from y5n.runtime.engine.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
+from y5n.runtime.engine.nodes import Node
+from y5n.runtime.engine.runtime import Event
 from y5n.runtime.machine.effects import StartCommandHandler
 
 

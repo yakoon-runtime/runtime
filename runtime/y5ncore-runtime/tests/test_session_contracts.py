@@ -3,9 +3,9 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from y5n.base.clients import ClientConnection
-from y5n.base.naming import Key
-from y5n.base.runtime import RuntimeInfo
+from y5n.runtime.engine.clients import ClientConnection
+from y5n.runtime.engine.naming import Key
+from y5n.runtime.engine.runtime import RuntimeInfo
 from y5n.runtime.machine.host import RuntimeHost
 from y5n.runtime.machine.runner import Runner
 from y5n.runtime.runtime.sessions.session import Session, SessionData

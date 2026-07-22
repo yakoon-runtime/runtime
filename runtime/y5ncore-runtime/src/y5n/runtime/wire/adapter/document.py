@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from y5n.base.runtime.context import Call
+from y5n.runtime.engine.runtime.context import Call
 
 
 class DocumentAdapter:

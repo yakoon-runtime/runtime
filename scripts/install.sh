@@ -3,6 +3,7 @@ cd "$SCRIPT_DIR/.."
 
 # runtime
 pip install \
+  -e runtime/engine \
   -e runtime/y5ncore-base \
   -e runtime/y5ncore-runtime \
   -e runtime/y5ncore-llm

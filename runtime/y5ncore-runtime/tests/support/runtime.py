@@ -3,8 +3,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
-from y5n.base.flow.channel import Scope
-from y5n.base.flow.primitives import Outcome, Stop
+from y5n.runtime.engine.flow.channel import Scope
+from y5n.runtime.engine.flow.primitives import Outcome, Stop
 from y5n.runtime.flow import Flow
 
 from support.events import push_event

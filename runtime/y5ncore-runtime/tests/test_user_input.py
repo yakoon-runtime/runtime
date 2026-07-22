@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import pytest
-from y5n.base.flow.dsl import receive
-from y5n.base.flow.primitives import AwaitEvent, Outcome, Stop
-from y5n.base.nodes import Node
-from y5n.base.runtime import Event
+from y5n.runtime.engine.flow.dsl import receive
+from y5n.runtime.engine.flow.primitives import AwaitEvent, Outcome, Stop
+from y5n.runtime.engine.nodes import Node
+from y5n.runtime.engine.runtime import Event
 from y5n.runtime.machine.runner import Runner
 
 

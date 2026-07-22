@@ -1,4 +1,4 @@
-from y5n.base.permissions import PermBit, PermBits, Permission
+from y5n.runtime.engine.permissions import PermBit, PermBits, Permission
 
 from .set import PermissionSet
 

@@ -3,8 +3,8 @@
 import sys
 from uuid import uuid4
 
-from y5n.base.flow.channel import Scope
-from y5n.base.flow.primitives import (
+from y5n.runtime.engine.flow.channel import Scope
+from y5n.runtime.engine.flow.primitives import (
     AwaitEvent,
     Background,
     EmitEvent,
@@ -16,8 +16,8 @@ from y5n.base.flow.primitives import (
     Stop,
     Suspend,
 )
-from y5n.base.nodes import Node
-from y5n.base.runtime import Event
+from y5n.runtime.engine.nodes import Node
+from y5n.runtime.engine.runtime import Event
 from y5n.runtime.flow import Flow, FlowCursor
 
 # ----------------------------------------------------------------

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from collections.abc import Awaitable, Callable
 
-from y5n.base.clients import ClientConnection
-from y5n.base.runtime import Event
+from y5n.runtime.engine.clients import ClientConnection
+from y5n.runtime.engine.runtime import Event
 from y5ntrans.websocket.client import WebSocketClientTransport
 
 OnDocument = Callable[[object], Awaitable[None]]

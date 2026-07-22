@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.base.flow.channel import Scope
-from y5n.base.runtime import Event, Routing
+from y5n.runtime.engine.flow.channel import Scope
+from y5n.runtime.engine.runtime import Event, Routing
 from y5n.runtime.runtime import Session
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 from itertools import count
 from typing import Protocol
 
-from y5n.base.naming import Key
+from y5n.runtime.engine.naming import Key
 from y5n.runtime.runtime import Session
 
 

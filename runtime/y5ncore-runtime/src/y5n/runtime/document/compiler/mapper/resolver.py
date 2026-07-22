@@ -1,6 +1,6 @@
 from pathlib import PurePosixPath
 
-from y5n.base.resources import ResourceRef
+from y5n.runtime.engine.resources import ResourceRef
 
 
 class BlockResolver:

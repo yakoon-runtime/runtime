@@ -1,6 +1,6 @@
-from y5n.base.document import DocumentEvent, DocumentHeader
-from y5n.base.document.transfer import Patch, PatchOp, PatchReset
-from y5n.base.runtime import InputContext
+from y5n.runtime.engine.document import DocumentEvent, DocumentHeader
+from y5n.runtime.engine.document.transfer import Patch, PatchOp, PatchReset
+from y5n.runtime.engine.runtime import InputContext
 
 
 class EventFactory:

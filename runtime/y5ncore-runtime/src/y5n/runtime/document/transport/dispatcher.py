@@ -4,13 +4,13 @@ import time
 from dataclasses import dataclass
 from typing import Protocol
 
-from y5n.base.document.transfer import (
+from y5n.runtime.engine.document.transfer import (
     DocumentEvent,
     PatchAppendStructure,
     PatchFinishNode,
     PatchOp,
 )
-from y5n.base.runtime import InputContext
+from y5n.runtime.engine.runtime import InputContext
 from y5n.runtime.runtime import Session
 
 

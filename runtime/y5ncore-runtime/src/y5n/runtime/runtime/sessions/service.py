@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from datetime import datetime
 from typing import Protocol
 
-from y5n.base.naming import Key
+from y5n.runtime.engine.naming import Key
 from y5nstore.event import (
     GetResult,
     JsonValue,

@@ -8,8 +8,8 @@ import types
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from y5n.base.flow.dsl import Outcome
-from y5n.base.nodes.space import NodeSpace
+from y5n.runtime.engine.flow.dsl import Outcome
+from y5n.runtime.engine.nodes.space import NodeSpace
 
 from .base import (
     DiagnosticExecutor,
@@ -21,7 +21,7 @@ from .base import (
 )
 
 if TYPE_CHECKING:
-    from y5n.base.nodes.node import Node
+    from y5n.runtime.engine.nodes.node import Node
 
 
 def _parse_entry(entry: str) -> tuple[str, str]:

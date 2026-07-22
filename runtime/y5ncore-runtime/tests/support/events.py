@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from y5n.base.flow.channel import Scope
-from y5n.base.runtime import Event
+from y5n.runtime.engine.flow.channel import Scope
+from y5n.runtime.engine.runtime import Event
 
 if TYPE_CHECKING:
     from y5n.runtime.flow import Flow

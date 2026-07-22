@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from y5n.base.flow.primitives import (
+from y5n.runtime.engine.flow.primitives import (
     Background,
     Control,
     Effect,
@@ -12,10 +12,10 @@ from y5n.base.flow.primitives import (
     Foreground,
     Outcome,
 )
-from y5n.base.runtime import Event
+from y5n.runtime.engine.runtime import Event
 
 if TYPE_CHECKING:
-    from y5n.base.nodes import Node, Request
+    from y5n.runtime.engine.nodes import Node, Request
 
 from .cursor import FlowCursor
 from .types import FlowKind

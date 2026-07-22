@@ -4,8 +4,8 @@ import logging
 from typing import TYPE_CHECKING
 
 from typing_extensions import Protocol
-from y5n.base.document.normalize import normalize as _normalize
-from y5n.base.runtime import InputContext
+from y5n.runtime.engine.document.normalize import normalize as _normalize
+from y5n.runtime.engine.runtime import InputContext
 
 _log = logging.getLogger(__name__)
 

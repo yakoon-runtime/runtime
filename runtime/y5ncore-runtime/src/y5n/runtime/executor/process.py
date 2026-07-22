@@ -5,13 +5,13 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from y5n.base.flow.dsl import Outcome
+from y5n.runtime.engine.flow.dsl import Outcome
 
 from .base import Executor, ExecutorKind, Phase, RunResult
 
 if TYPE_CHECKING:
-    from y5n.base.nodes.node import Node
-    from y5n.base.nodes.space import NodeSpace
+    from y5n.runtime.engine.nodes.node import Node
+    from y5n.runtime.engine.nodes.space import NodeSpace
 
 
 def _empty() -> RunResult:
@@ -22,8 +22,8 @@ def _empty() -> RunResult:
 
 
 def _emit_text(text: str):
-    from y5n.base.document import to_text
-    from y5n.base.flow.primitives import EmitView
+    from y5n.runtime.engine.document import to_text
+    from y5n.runtime.engine.flow.primitives import EmitView
 
     return EmitView(to_text(text))
 

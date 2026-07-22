@@ -9,16 +9,16 @@ from collections.abc import Awaitable, Callable
 from typing import Protocol
 from uuid import uuid4
 
-from y5n.base.flow.channel import Scope
-from y5n.base.flow.primitives import (
+from y5n.runtime.engine.flow.channel import Scope
+from y5n.runtime.engine.flow.primitives import (
     AwaitEvent,
     Control,
     Outcome,
     Stop,
     YieldToScheduler,
 )
-from y5n.base.nodes import Node
-from y5n.base.runtime import Event, InputContext
+from y5n.runtime.engine.nodes import Node
+from y5n.runtime.engine.runtime import Event, InputContext
 from y5n.runtime.flow import Flow, FlowKind
 from y5n.runtime.runtime import Session
 

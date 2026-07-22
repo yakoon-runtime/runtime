@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from y5n.base.naming import Key
+from y5n.runtime.engine.naming import Key
 
 from .session import Session
 

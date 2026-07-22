@@ -3,7 +3,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
-from y5n.base.resources import ResourceRef
+from y5n.runtime.engine.resources import ResourceRef
 
 
 @dataclass(slots=True)

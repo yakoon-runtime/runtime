@@ -2,18 +2,18 @@ from __future__ import annotations
 
 from typing import cast
 
-from y5n.base.flow.dsl import Outcome
-from y5n.base.flow.patterns.public.form import Form
-from y5n.base.flow.primitives import Continue
-from y5n.base.nodes import (
+from y5n.runtime.engine.flow.dsl import Outcome
+from y5n.runtime.engine.flow.patterns.public.form import Form
+from y5n.runtime.engine.flow.primitives import Continue
+from y5n.runtime.engine.nodes import (
     Invocation,
     InvocationInput,
     Node,
     UsageError,
 )
-from y5n.base.nodes.request.builder import RequestBuilder
-from y5n.base.runtime.input import InputContext, Interaction, OnPrepareInput, Origin
-from y5n.base.runtime.sessions import Session as BaseSession
+from y5n.runtime.engine.nodes.request.builder import RequestBuilder
+from y5n.runtime.engine.runtime.input import InputContext, Interaction, OnPrepareInput, Origin
+from y5n.runtime.engine.runtime.sessions import Session as BaseSession
 from y5n.runtime.runtime import Session
 
 

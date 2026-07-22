@@ -4,7 +4,7 @@ import subprocess
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as pkg_version
 
-from y5n.base.runtime.info import RuntimeInfo
+from y5n.runtime.engine.runtime.info import RuntimeInfo
 
 PACKAGE_NAME = "y5ncore-runtime"
 

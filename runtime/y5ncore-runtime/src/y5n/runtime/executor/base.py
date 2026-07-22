@@ -4,8 +4,8 @@ from collections.abc import AsyncGenerator, Awaitable
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
-from y5n.base.flow.dsl import Outcome
-from y5n.base.ports.models import HealthResult
+from y5n.runtime.engine.flow.dsl import Outcome
+from y5n.runtime.engine.ports.models import HealthResult
 
 """
 ABI — Application Binary Interface.
@@ -39,8 +39,8 @@ flows, foreground/background, and wait-states.
 
 
 if TYPE_CHECKING:
-    from y5n.base.nodes.node import Node
-    from y5n.base.nodes.space import NodeSpace
+    from y5n.runtime.engine.nodes.node import Node
+    from y5n.runtime.engine.nodes.space import NodeSpace
 
 FlowYield: TypeAlias = Outcome | AsyncGenerator | None
 RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]

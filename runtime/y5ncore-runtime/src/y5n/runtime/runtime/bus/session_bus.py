@@ -1,4 +1,4 @@
-from y5n.base.clients import ClientConnection
+from y5n.runtime.engine.clients import ClientConnection
 
 
 class SessionBus:
