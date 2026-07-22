@@ -16,7 +16,7 @@ pip install \
 
 # transport
 pip install \
-  -e transports/y5ntrans-ws
+  -e runtime/transport
 
 # storage
 pip install \

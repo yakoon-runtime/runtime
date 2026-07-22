@@ -4,7 +4,7 @@ from collections.abc import Awaitable, Callable
 
 from y5n.runtime.api.clients import ClientConnection
 from y5n.runtime.api.runtime import Event
-from y5ntrans.websocket.client import WebSocketClientTransport
+from y5n.runtime.transport.client import WebSocketClientTransport
 
 OnDocument = Callable[[object], Awaitable[None]]
 

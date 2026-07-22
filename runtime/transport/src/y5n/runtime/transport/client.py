@@ -2,10 +2,10 @@ import asyncio
 import json
 
 import websockets
-from y5n.base.clients import ClientConnection
-from y5n.base.document.wire import deserialize_event
-from y5n.base.flow.patterns.public import FormAction
-from y5n.base.runtime import Event, Routing
+from y5n.runtime.api.clients import ClientConnection
+from y5n.runtime.api.document.wire import deserialize_event
+from y5n.runtime.api.flow.patterns.public import FormAction
+from y5n.runtime.api.runtime import Event, Routing
 
 
 class WebSocketClientTransport:

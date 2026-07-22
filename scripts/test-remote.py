@@ -22,7 +22,7 @@ from y5n.runtime.api.flow.primitives import Outcome
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.engine.settings import RuntimeSettings, Settings
 from y5n.runtime.engine.wire.runtime import build_runtime
-from y5ntrans.websocket.server import WebSocketServerTransport
+from y5n.runtime.transport.server import WebSocketServerTransport
 
 
 async def main():

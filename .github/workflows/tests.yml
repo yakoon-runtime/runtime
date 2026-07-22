@@ -18,7 +18,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e runtime/y5ncore-base
-          pip install -e transports/y5ntrans-ws
+          pip install -e runtime/transport
           pip install -e stores/y5nstore-event
           pip install -e stores/y5nstore-sequence
           pip install -e runtime/y5ncore-runtime
