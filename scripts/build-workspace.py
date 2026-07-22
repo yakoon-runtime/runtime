@@ -106,7 +106,7 @@ def build(name: str) -> None:
                 if first:
                     overrides.add(first)
             elif key.startswith(f"{exp}/"):
-                rel = key[len(exp) + 1:]
+                rel = key[len(exp) + 1 :]
                 first = rel.split("/")[0]
                 overrides.add(first)
 
@@ -130,7 +130,8 @@ def build(name: str) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build a Yakoon workspace")
     parser.add_argument(
-        "--workspace", "-w",
+        "--workspace",
+        "-w",
         default="dev",
         help="Workspace name (default: dev)",
     )

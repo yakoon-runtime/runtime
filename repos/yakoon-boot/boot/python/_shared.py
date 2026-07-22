@@ -24,7 +24,7 @@ from y5n.sdk.libs.models import Context as SdkContext
 
 def parse_entry(entry: str) -> tuple[str, str]:
     """Parse an entry string into (scheme, value).
-    
+
     Schemes:
       pack:<module>:<function>  — Python package entry point
       file:<path>               — File-based entry point
@@ -33,9 +33,7 @@ def parse_entry(entry: str) -> tuple[str, str]:
         scheme, _, rest = entry.partition(":")
         if scheme in ("pack", "file"):
             return (scheme, rest)
-    msg = (
-        f"invalid entry '{entry}' — expected 'pack:<module>:<func>' or 'file:<path>'"
-    )
+    msg = f"invalid entry '{entry}' — expected 'pack:<module>:<func>' or 'file:<path>'"
     raise ValueError(msg)
 
 

@@ -23,5 +23,7 @@ async def main():
     )
 
     doc = ports.get("document")
-    result = await doc.render(name="default", state={"joins": joins, "group": groupname})
+    result = await doc.render(
+        name="default", state={"joins": joins, "group": groupname}
+    )
     await io.write(result)

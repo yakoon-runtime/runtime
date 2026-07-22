@@ -3,17 +3,16 @@ import inspect
 import os
 from pathlib import Path
 
-from y5n.runtime.api.host import HANDLERS, MarkerKind, drive
 from y5n.runtime.api.document import to_text
 from y5n.runtime.api.flow.dsl import Outcome
 from y5n.runtime.api.flow.primitives import EmitView
+from y5n.runtime.api.host import HANDLERS, MarkerKind, drive
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
 
 from ._shared import (
     _build_context_dict,
-    build_app_file,
     load_and_capture,
     read_entry,
     resolve_tree_path,
@@ -39,7 +38,9 @@ async def run(space: NodeSpace):
 
     entry = read_entry(root, target_path)
     if not entry:
-        yield Outcome(effects=[EmitView(to_text(f"error: no entry for '{target_path}'"))])
+        yield Outcome(
+            effects=[EmitView(to_text(f"error: no entry for '{target_path}'"))]
+        )
         return
 
     from ._shared import parse_entry

@@ -55,9 +55,7 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
             return None
         return entry.get(phase.value)
 
-    def _handle_module_entry(
-        self, value: str, space: NodeSpace
-    ) -> RunResult | None:
+    def _handle_module_entry(self, value: str, space: NodeSpace) -> RunResult | None:
         if ":" not in value:
             return None
         mod_name, _, func_name = value.rpartition(":")
@@ -123,9 +121,7 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
                 return _empty()
             os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
             tree_path = str(node.path)
-            mod = self._load_module(
-                app_file, tree_path=tree_path, phase=phase.value
-            )
+            mod = self._load_module(app_file, tree_path=tree_path, phase=phase.value)
             if mod is not None:
                 if hasattr(mod, "run"):
                     return mod.run(space)

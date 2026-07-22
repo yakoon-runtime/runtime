@@ -478,7 +478,7 @@ def _resolve_pack_path(ref: str) -> Path | None:
     """
     import importlib
 
-    rest = ref[len("pack:"):]
+    rest = ref[len("pack:") :]
     mod_name, _, rel_path = rest.rpartition(":")
     if not mod_name or not rel_path:
         return None

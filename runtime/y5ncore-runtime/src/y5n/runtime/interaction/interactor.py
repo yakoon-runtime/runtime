@@ -12,7 +12,12 @@ from y5n.runtime.api.nodes import (
     UsageError,
 )
 from y5n.runtime.api.nodes.request.builder import RequestBuilder
-from y5n.runtime.api.runtime.input import InputContext, Interaction, OnPrepareInput, Origin
+from y5n.runtime.api.runtime.input import (
+    InputContext,
+    Interaction,
+    OnPrepareInput,
+    Origin,
+)
 from y5n.runtime.api.runtime.sessions import Session as BaseSession
 from y5n.runtime.runtime import Session
 

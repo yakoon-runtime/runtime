@@ -9,8 +9,11 @@ async def main():
     permgrant_svc = ports.get("ident.permgrant")
 
     grants = await permgrant_svc.list_permission_grants(
-        namespace=await ns_svc.permgrant_namespace(), permission_key=permission_key,
+        namespace=await ns_svc.permgrant_namespace(),
+        permission_key=permission_key,
     )
     doc = ports.get("document")
-    result = await doc.render(name="default", state={"grants": grants, "permission": permission_key})
+    result = await doc.render(
+        name="default", state={"grants": grants, "permission": permission_key}
+    )
     await io.write(result)

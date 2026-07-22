@@ -28,10 +28,12 @@
 
 Always:
 
-1. Run pytest.
-2. Explain architectural consequences.
-3. Keep changes minimal.
-4. Do not introduce technical debt to satisfy a request.
-5. Never perform Git write operations (commit, amend, rebase, push, tag, reset) unless explicitly requested.
-6. Do not modify project structure or architecture unless the request explicitly requires it.
-7. The Executor ABI (`docs/EXECUTOR.md`) is the authority for all bundle entry points. Entry files are declared via `entry.run`/`entry.setup` in `_yak/yak.yml`. `_yak/` only contains `yak.yml` — no fixed subdirectory layout.
+1. Run `black` on all changed files.
+2. Run `ruff check --fix --select I` on all changed files.
+3. Run pytest.
+4. Explain architectural consequences.
+5. Keep changes minimal.
+6. Do not introduce technical debt to satisfy a request.
+7. Never perform Git write operations (commit, amend, rebase, push, tag, reset) unless explicitly requested.
+8. Do not modify project structure or architecture unless the request explicitly requires it.
+9. The Executor ABI (`docs/EXECUTOR.md`) is the authority for all bundle entry points. Entry files are declared via `entry.run`/`entry.setup` in `_yak/yak.yml`. `_yak/` only contains `yak.yml` — no fixed subdirectory layout.

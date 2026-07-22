@@ -10,14 +10,17 @@ async def main():
     groups_svc = ports.get("ident.groups")
     permgrant_svc = ports.get("ident.permgrant")
 
-    group = await groups_svc.get_by_name(namespace=await ns_svc.group_namespace(), name=groupname)
+    group = await groups_svc.get_by_name(
+        namespace=await ns_svc.group_namespace(), name=groupname
+    )
     if not group:
         await io.write(f"Group '{groupname}' does not exist.")
         return
 
     grant = await permgrant_svc.remove_grant(
         namespace=await ns_svc.permgrant_namespace(),
-        subject_key=group.key, permission_key=permission_key,
+        subject_key=group.key,
+        permission_key=permission_key,
     )
     doc = ports.get("document")
     result = await doc.render(name="default", state={"grant": grant})
