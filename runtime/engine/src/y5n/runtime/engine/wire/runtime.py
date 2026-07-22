@@ -150,7 +150,7 @@ def build_runtime(
 
         parts = errors.get(type(error), "error")
         resource = ResourceRef(
-            package="y5n.runtime",
+            package="y5n.runtime.engine",
             path=f"templates/{session.lang}/{parts}",
         )
 
