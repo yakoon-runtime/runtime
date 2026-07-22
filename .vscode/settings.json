@@ -4,8 +4,7 @@
   "python.analysis.useLibraryCodeForTypes": true,
   "python.analysis.extraPaths": [
     // runtime
-    "runtime/y5ncore-base/src",
-    "runtime/y5ncore-runtime/src",
+    "y5n.runtime",
     "y5ncore-sdk/src",
     // stores (event)
     "stores/y5nstore-event/src",

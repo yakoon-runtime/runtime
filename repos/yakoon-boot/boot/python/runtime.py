@@ -3,11 +3,9 @@ import inspect
 import os
 from pathlib import Path
 
-from y5n.runtime.engine.document import to_text
-from y5n.runtime.engine.flow.dsl import Outcome
-from y5n.runtime.engine.flow.primitives import EmitView
-from y5n.runtime.engine.host import HANDLERS, MarkerKind, drive
-from y5n.runtime.engine.nodes import NodeSpace
+from y5n.runtime.api import Outcome, to_text
+from y5n.runtime.api.host import HANDLERS, MarkerKind, drive
+from y5n.runtime.api import EmitView, NodeSpace
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
 
