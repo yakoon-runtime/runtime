@@ -9,7 +9,7 @@ from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnCallLLM
 from y5n.base.flow.channel import Scope
 from y5n.base.llm import LLMMessage, LLMRequest
-from y5n.llm.providers.openai_compat import OpenAICompatibleProvider
+from y5n.runtime.llm.providers.openai_compat import OpenAICompatibleProvider
 
 CHANNEL = "os-result"
 

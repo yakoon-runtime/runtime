@@ -7,8 +7,8 @@ import platform
 from y5n.api.dsl import out_text
 from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnCallLLM
-from y5n.llm.agents import Agent
-from y5n.llm.providers.openai_compat import OpenAICompatibleProvider
+from y5n.runtime.llm.agents import Agent
+from y5n.runtime.llm.providers.openai_compat import OpenAICompatibleProvider
 
 MAX_STEPS = 10
 

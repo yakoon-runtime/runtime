@@ -3,9 +3,8 @@ from __future__ import annotations
 import json
 from collections.abc import AsyncGenerator, Iterable
 
-from y5n.api.dsl import out_text, receive, start_task
 from y5n.runtime.api.flow.channel import Scope
-from y5n.runtime.api.flow.dsl import Outcome
+from y5n.runtime.api.flow.dsl import Outcome, out_text, receive, start_task
 from y5n.runtime.api.llm import LLMMessage, LLMRequest, OnCallLLM
 
 

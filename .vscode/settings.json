@@ -9,6 +9,7 @@
     "runtime/boot/src",
     "runtime/store/src",
     "runtime/transport/src",
+    "runtime/llm/src",
     "sdk/python/src",
     // repos
     "repos/y5napp-system/src",

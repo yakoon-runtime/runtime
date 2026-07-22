@@ -8,9 +8,9 @@ pip install \
   -e runtime/boot \
   -e runtime/store \
   -e runtime/transport \
+  -e runtime/llm \
   -e runtime/y5ncore-base \
-  -e runtime/y5ncore-runtime \
-  -e runtime/y5ncore-llm
+  -e runtime/y5ncore-runtime
 
 # sdk
 pip install \

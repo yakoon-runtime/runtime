@@ -2,7 +2,7 @@ import os
 
 from y5n.api.nodes import NodeSpace
 from y5n.api.ports import OnCallLLM
-from y5n.llm.providers.openai_compat import OpenAICompatibleProvider
+from y5n.runtime.llm.providers.openai_compat import OpenAICompatibleProvider
 
 
 async def run(space: NodeSpace):
