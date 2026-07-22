@@ -5,7 +5,7 @@ from y5n.runtime.api.flow.dsl import receive
 from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, Stop
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
-from y5n.runtime.machine.runner import Runner
+from y5n.runtime.engine.machine.runner import Runner
 
 
 @pytest.mark.asyncio

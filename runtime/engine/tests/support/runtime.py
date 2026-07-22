@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any
 
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.primitives import Outcome, Stop
-from y5n.runtime.flow import Flow
+from y5n.runtime.engine.flow import Flow
 
 from support.events import push_event
 from support.flow import make_flow
@@ -13,9 +13,9 @@ from support.flow import make_flow
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from y5n.runtime.machine.engine import CommandEngine
-    from y5n.runtime.machine.scheduler import Scheduler
-    from y5n.runtime.runtime.sessions.session import Session
+    from y5n.runtime.engine.machine.engine import CommandEngine
+    from y5n.runtime.engine.machine.scheduler import Scheduler
+    from y5n.runtime.engine.runtime.sessions.session import Session
 
     _Handler = Callable[..., AsyncGenerator[Outcome | None, Any]]
 

@@ -18,7 +18,7 @@ from y5n.runtime.api.flow.primitives import (
 )
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
-from y5n.runtime.flow import Flow, FlowCursor
+from y5n.runtime.engine.flow import Flow, FlowCursor
 
 # ----------------------------------------------------------------
 #  Size helpers

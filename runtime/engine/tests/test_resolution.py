@@ -8,7 +8,7 @@ from y5n.runtime.api.flow.dsl import receive, start_cmd
 from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
-from y5n.runtime.machine.effects import StartCommandHandler
+from y5n.runtime.engine.machine.effects import StartCommandHandler
 
 
 @pytest.mark.asyncio

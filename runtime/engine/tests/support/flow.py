@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING, Any
 
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
-from y5n.runtime.flow import Flow, FlowCursor
+from y5n.runtime.engine.flow import Flow, FlowCursor
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
     from y5n.runtime.api.flow.primitives import Outcome
-    from y5n.runtime.runtime.sessions.session import Session
+    from y5n.runtime.engine.runtime.sessions.session import Session
 
     _Handler = Callable[..., AsyncGenerator[Outcome | None, Any]]
 

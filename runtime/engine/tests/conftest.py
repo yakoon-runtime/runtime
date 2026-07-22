@@ -6,10 +6,10 @@ import pytest
 from support.runtime import RuntimeHarness
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.nodes import Node
-from y5n.runtime.machine.effects import EffectExecutor
-from y5n.runtime.machine.engine import CommandEngine
-from y5n.runtime.machine.scheduler import Scheduler
-from y5n.runtime.runtime.sessions.session import Session, SessionData
+from y5n.runtime.engine.machine.effects import EffectExecutor
+from y5n.runtime.engine.machine.engine import CommandEngine
+from y5n.runtime.engine.machine.scheduler import Scheduler
+from y5n.runtime.engine.runtime.sessions.session import Session, SessionData
 
 
 async def _passthrough_intercept(*, node, tokens, session, context):

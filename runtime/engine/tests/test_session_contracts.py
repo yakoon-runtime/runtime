@@ -6,9 +6,9 @@ import pytest
 from y5n.runtime.api.clients import ClientConnection
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.runtime import RuntimeInfo
-from y5n.runtime.machine.host import RuntimeHost
-from y5n.runtime.machine.runner import Runner
-from y5n.runtime.runtime.sessions.session import Session, SessionData
+from y5n.runtime.engine.machine.host import RuntimeHost
+from y5n.runtime.engine.machine.runner import Runner
+from y5n.runtime.engine.runtime.sessions.session import Session, SessionData
 
 _COUNTER = 0
 
