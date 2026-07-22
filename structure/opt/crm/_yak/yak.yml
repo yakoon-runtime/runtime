@@ -1,0 +1,6 @@
+title: CRM
+
+host: /boot/python/runtime
+
+entry:
+  setup: pack:y5n.apps.crm.setup:main

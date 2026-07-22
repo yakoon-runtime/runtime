@@ -12,6 +12,7 @@ pip install \
   -e sdk/python \
   -e repos/y5napp-system \
   -e repos/y5napp-ident \
+  -e repos/y5napp-crm \
   -e apps/y5napp-console \
   -e apps/y5napp-runtime \
   -e apps/y5napp-textual \

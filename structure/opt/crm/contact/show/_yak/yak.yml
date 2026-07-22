@@ -1,0 +1,12 @@
+title: Contact Show
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.apps.crm.apps.contact.show:main
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

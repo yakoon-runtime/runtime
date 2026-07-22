@@ -1,0 +1,12 @@
+title: Contact List
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.apps.crm.apps.contact.list:main
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf
