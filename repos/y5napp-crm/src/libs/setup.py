@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from y5n.runtime.api.nodes import NodeSpace
-from y5n.runtime.store.event.wire import build_store
-from y5n.runtime.store.sequence.wire import build_store as build_sequencer
+from y5n.api.nodes import NodeSpace
+from y5nstore.event.wire import build_store
+from y5nstore.sequence.wire import build_store as build_sequencer
 
 from .ports import CONTACT_SERVICE, NAMESPACES
 from .services import ContactService, Namespaces

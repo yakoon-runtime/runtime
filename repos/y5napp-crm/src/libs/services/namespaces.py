@@ -1,4 +1,4 @@
-from y5n.runtime.api.naming import Namespace
+from y5n.api.naming import Namespace
 
 
 class Namespaces:
