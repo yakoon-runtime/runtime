@@ -12,6 +12,7 @@ driver dispatches each marker according to its kind:
 from __future__ import annotations
 
 import asyncio
+import inspect
 from collections.abc import Callable, Coroutine, Mapping
 from typing import Any
 
@@ -65,12 +66,12 @@ async def drive(
     try:
         val: Any = coro.send(None)
         while True:
-            # SDK port calls yield Tasks (see _RemoteCall in ports.py)
-            # rather than awaiting directly, to prevent Futures from
-            # third-party libraries (asyncpg, httpx, …) leaking through
-            # the send() mechanism.
-            if isinstance(val, asyncio.Task):
-                result = await val
+            # SDK port calls yield coroutines rather than awaiting
+            # directly, so the executor can wrap them in Tasks.
+            # This prevents Futures from third-party libraries
+            # (asyncpg, httpx, …) leaking through send().
+            if inspect.iscoroutine(val):
+                result = await asyncio.ensure_future(val)
                 val = coro.send(result)
                 continue
 
