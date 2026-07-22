@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
-from y5nstore.event.backends import PostgresBackend
-from y5nstore.event.settings import StorageSettings
+from y5n.runtime.store.event.backends import PostgresBackend
+from y5n.runtime.store.event.settings import StorageSettings
 
 from ..batches.json_patch import JsonPatchStrategy
 from ..runtime import StoreRuntime

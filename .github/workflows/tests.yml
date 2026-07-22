@@ -17,18 +17,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e runtime/y5ncore-base
+          pip install -e runtime/api
+          pip install -e runtime/engine
           pip install -e runtime/transport
-          pip install -e stores/y5nstore-event
-          pip install -e stores/y5nstore-sequence
-          pip install -e runtime/y5ncore-runtime
-          pip install -e runtime/y5ncore-llm
+          pip install -e runtime/store
+          pip install -e repos/y5napp-system
+          pip install -e repos/y5napp-ident
+          pip install -e sdk/python
           pip install -r requirements-dev.txt
 
       - name: Run tests
         run: |
-          pytest runtime/y5ncore-runtime/tests \
-                stores/y5nstore-event/tests \
-                stores/y5nstore-sequence/tests \
-                repos/yakoon-luma/tests \
+          pytest runtime/engine/tests \
+                runtime/store/event/tests \
+                runtime/store/sequence/tests \
                 -x --tb=short

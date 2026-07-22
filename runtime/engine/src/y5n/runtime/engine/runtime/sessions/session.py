@@ -19,7 +19,7 @@ from y5n.runtime.api.transport import IO
 from y5n.runtime.engine.capabilities.permission import PermissionSet
 from y5n.runtime.engine.flow import Flow
 from y5n.runtime.engine.runtime.bus import SessionBus
-from y5nstore.event import GetResult
+from y5n.runtime.store.event import GetResult
 
 
 @dataclass

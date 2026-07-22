@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Any
 
 from y5n.base.config import resolve_space_config
-from y5nstore.event.settings import Backend, StorageSettings
-from y5nstore.sequence.settings import SequenceSettings
+from y5n.runtime.store.event.settings import Backend, StorageSettings
+from y5n.runtime.store.sequence.settings import SequenceSettings
 
 
 def _backend(value: str | Any | None, default: Backend) -> Backend:

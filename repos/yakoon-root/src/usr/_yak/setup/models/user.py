@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from y5n.api.naming import Key
-from y5nstore.event import GetResult
+from y5n.runtime.store.event import GetResult
 
 
 @dataclass

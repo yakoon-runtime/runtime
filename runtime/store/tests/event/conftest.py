@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import pytest
-from y5n.base.naming import Namespace
-from y5nstore.event.backends.memory import MemoryBackend
-from y5nstore.event.batches.json_patch import JsonPatchStrategy
-from y5nstore.event.store import EntityStore
+from y5n.runtime.api.naming import Namespace
+from y5n.runtime.store.event.backends.memory import MemoryBackend
+from y5n.runtime.store.event.batches.json_patch import JsonPatchStrategy
+from y5n.runtime.store.event.store import EntityStore
 
 NS = Namespace("test", "widget")
 PATCH = JsonPatchStrategy(max_ops=50)

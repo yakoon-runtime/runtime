@@ -7,10 +7,9 @@
     "runtime/api/src",
     "runtime/engine/src",
     "runtime/boot/src",
+    "runtime/store/src",
+    "runtime/transport/src",
     "sdk/python/src",
-    // stores (event)
-    "stores/y5nstore-event/src",
-    "stores/y5nstore-sequence/src",
     // repos
     "repos/y5napp-system/src",
     "repos/y5napp-ident/src",
@@ -25,8 +24,8 @@
   ],
   "python.testing.pytestArgs": [
     "runtime/engine/tests",
-    "stores/y5nstore-event/tests",
-    "stores/y5nstore-sequence/tests",
+    "runtime/store/tests/event",
+    "runtime/store/tests/sequence",
     "repos/yakoon-luma/tests",
   ],
   "python.testing.pytestEnabled": true,

@@ -9,7 +9,7 @@ from y5n.api.ports import (
     OnSessionSave,
 )
 from y5n.api.ports.models import AuthResult
-from y5nstore.event.wire import build_store
+from y5n.runtime.store.event.wire import build_store
 
 from .bootstrap import bootstrap
 from .models import User, UserData

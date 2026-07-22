@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from y5n.runtime.api.naming import Key
 from y5n.sdk import ports
-from y5nstore.event.wire import build_store
+from y5n.runtime.store.event.wire import build_store
 
 from .bootstrap import bootstrap
 from .models import User, UserData

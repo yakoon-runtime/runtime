@@ -5,7 +5,7 @@ from datetime import datetime
 from typing import Protocol
 
 from y5n.runtime.api.naming import Key
-from y5nstore.event import (
+from y5n.runtime.store.event import (
     GetResult,
     JsonValue,
     PutResult,

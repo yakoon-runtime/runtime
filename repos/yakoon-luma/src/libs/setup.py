@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from y5n.api.nodes import NodeSpace
-from y5nstore.event.models import IndexKey, IndexSpec, IndexTerm, ValueType
-from y5nstore.event.wire import build_store as build_event_store
-from y5nstore.sequence.wire import build_store as build_sequencer
+from y5n.runtime.store.event.models import IndexKey, IndexSpec, IndexTerm, ValueType
+from y5n.runtime.store.event.wire import build_store as build_event_store
+from y5n.runtime.store.sequence.wire import build_store as build_sequencer
 
 from .ports import BOX_SERVICE, EXIT_SERVICE, NOTE_SERVICE, WORLD_SERVICE
 from .services import (

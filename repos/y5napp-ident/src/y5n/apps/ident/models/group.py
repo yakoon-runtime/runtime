@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from y5n.runtime.api.naming import Key
-from y5nstore.event import GetResult
+from y5n.runtime.store.event import GetResult
 
 
 @dataclass

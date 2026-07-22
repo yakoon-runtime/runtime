@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from y5n.base.naming import Key, Namespace
-from y5nstore.event.batches.json_patch import JsonPatchStrategy
-from y5nstore.event.models import (
+from y5n.runtime.api.naming import Key, Namespace
+from y5n.runtime.store.event.batches.json_patch import JsonPatchStrategy
+from y5n.runtime.store.event.models import (
     IndexKey,
     IndexQueryTerm,
     IndexSpec,
@@ -13,7 +13,7 @@ from y5nstore.event.models import (
     SnapshotHint,
     ValueType,
 )
-from y5nstore.event.store import EntityStore
+from y5n.runtime.store.event.store import EntityStore
 
 NS = Namespace("test", "widget")
 PATCH = JsonPatchStrategy(max_ops=50)

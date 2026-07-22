@@ -10,7 +10,7 @@ from typing import (
     cast,
 )
 
-from y5n.base.naming import Key
+from y5n.runtime.api.naming import Key
 
 
 class PatchFormat(StrEnum):

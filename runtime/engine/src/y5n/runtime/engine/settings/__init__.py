@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 
-from y5nstore.event.settings import StorageSettings
+from y5n.runtime.store.event.settings import StorageSettings
 
 from .ai import AISettings
 from .base import BaseSettings

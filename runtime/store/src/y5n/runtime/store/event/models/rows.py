@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-from y5nstore.event.models.entity import (
+from y5n.runtime.store.event.models.entity import (
     EntityId,
     JsonValue,
     PatchFormat,

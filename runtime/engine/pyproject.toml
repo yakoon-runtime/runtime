@@ -8,7 +8,7 @@ version = "0.8.0"
 requires-python = ">=3.13"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Stefan Bergmann" }]
-dependencies = ["y5n-runtime-api", "y5nstore-event", "jinja2"]
+dependencies = ["y5n-runtime-api", "y5n-runtime-store", "jinja2"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}

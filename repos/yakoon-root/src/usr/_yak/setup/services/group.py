@@ -1,14 +1,14 @@
 from __future__ import annotations
 
 from y5n.api.naming import Key, Namespace
-from y5nstore.event.models import (
+from y5n.runtime.store.event.models import (
     IndexKey,
     IndexSpec,
     IndexTerm,
     SnapshotHint,
     ValueType,
 )
-from y5nstore.event.ports import (
+from y5n.runtime.store.event.ports import (
     OnAppend,
     OnGet,
     OnGetMany,

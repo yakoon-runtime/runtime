@@ -1,4 +1,4 @@
-from y5nstore.event.settings import StorageSettings
+from y5n.runtime.store.event.settings import StorageSettings
 
 from .runtime import StoreRuntime
 from .wires import wire_memory, wire_postgres

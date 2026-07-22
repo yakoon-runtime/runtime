@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5nstore.event.ports import OnDelete, OnGet, OnReplace
+from y5n.runtime.store.event.ports import OnDelete, OnGet, OnReplace
 
 from ..data import BoxData
 from ..models import Box

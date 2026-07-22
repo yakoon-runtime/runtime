@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from y5nstore.event.settings import StorageSettings
+from y5n.runtime.store.event.settings import StorageSettings
 
 from ..backends.memory import MemoryBackend
 from ..batches.json_patch import JsonPatchStrategy

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from y5n.runtime.api.naming import Key
-from y5nstore.event import GetResult
+from y5n.runtime.store.event import GetResult
 
 
 @dataclass

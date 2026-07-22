@@ -58,7 +58,7 @@ from y5n.runtime.engine.wire.compiler import build_compiler
 from y5n.runtime.engine.wire.machine import RuntimeHost, build_machine
 from y5n.runtime.engine.wire.projector import build_projector
 from y5n.runtime.engine.wire.stream import build_stream
-from y5nstore.event.wire import build_store
+from y5n.runtime.store.event.wire import build_store
 
 errors = {
     Exception: "error.ydf",

@@ -7,7 +7,7 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Literal, Protocol
 
-from y5n.base.naming import Key, Namespace
+from y5n.runtime.api.naming import Key, Namespace
 
 from .models import (
     CurrentRow,

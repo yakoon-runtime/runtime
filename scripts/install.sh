@@ -6,6 +6,8 @@ pip install \
   -e runtime/api \
   -e runtime/engine \
   -e runtime/boot \
+  -e runtime/store \
+  -e runtime/transport \
   -e runtime/y5ncore-base \
   -e runtime/y5ncore-runtime \
   -e runtime/y5ncore-llm
@@ -14,16 +16,10 @@ pip install \
 pip install \
   -e sdk/python
 
-# transport
+# repos
 pip install \
-  -e runtime/transport
-
-# storage
-pip install \
-  -e stores/y5nstore-event \
-  -e stores/y5nstore-sequence
-
-# repos (bundles) are source trees, referenced via pythonpath in pyproject.toml
+  -e repos/y5napp-system \
+  -e repos/y5napp-ident
 
 # apps
 pip install \
@@ -31,4 +27,3 @@ pip install \
   -e apps/y5napp-runtime \
   -e apps/y5napp-textual \
   -e apps/y5napp-web
-

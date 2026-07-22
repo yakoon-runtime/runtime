@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from y5n.api.naming import Key
-from y5nstore.event.models import (
+from y5n.runtime.store.event.models import (
     IndexKey,
     IndexSpec,
     IndexTerm,
@@ -9,7 +9,7 @@ from y5nstore.event.models import (
     SnapshotHint,
     ValueType,
 )
-from y5nstore.event.ports import (
+from y5n.runtime.store.event.ports import (
     OnAppend,
     OnGet,
     OnReplace,
