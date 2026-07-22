@@ -5,5 +5,8 @@ host: /boot/python/runtime
 entry:
   run: pack:y5n.apps.system.mem:main
 
+document:
+  default: file:resources/default.ydf
+
 man:
   default: file:resources/man.ydf
