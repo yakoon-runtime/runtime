@@ -5,6 +5,12 @@ host: /boot/python/runtime
 entry:
   run: pack:y5n.apps.crm.apps.contact.add:main
 
+invocation:
+  params:
+    - key: name
+      positional: true
+      required: true
+
 document:
   default: file:resources/default.ydf
 
