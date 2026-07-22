@@ -11,6 +11,7 @@ driver dispatches each marker according to its kind:
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable, Coroutine, Mapping
 from typing import Any
 
@@ -62,20 +63,30 @@ async def drive(
     """
     first = True
     try:
-        marker: Marker = coro.send(None)
+        val: Any = coro.send(None)
         while True:
+            # SDK port calls yield Tasks (see _RemoteCall in ports.py)
+            # rather than awaiting directly, to prevent Futures from
+            # third-party libraries (asyncpg, httpx, …) leaking through
+            # the send() mechanism.
+            if isinstance(val, asyncio.Task):
+                result = await val
+                val = coro.send(result)
+                continue
+
+            marker: Marker = val
             if side_effects and marker.kind in side_effects:
                 side_effects[marker.kind](marker.value)
-                marker = coro.send(None)
+                val = coro.send(None)
             elif responses and marker.kind in responses:
                 result = responses[marker.kind](marker.value)
-                marker = coro.send(result)
+                val = coro.send(result)
             else:
                 handler = handlers.get(marker.kind)
                 if handler is not None:
                     yield handler(marker, first)
                     if marker.kind in visual_kinds:
                         first = False
-                marker = coro.send(None)
+                val = coro.send(None)
     except StopIteration:
         pass
