@@ -9,9 +9,11 @@ from .settings import Settings
 
 
 async def main():
+
     settings = Settings.load()
     namespaces = Namespaces()
     store = build_store(settings.storage)
+
     sequencer = build_sequencer(settings.sequencer)
     await sequencer.initialize()
 
