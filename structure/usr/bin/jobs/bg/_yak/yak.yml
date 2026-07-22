@@ -3,4 +3,4 @@ title: Jobs Bg
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.jobs.bg:main
+  run: pack:y5n.apps.system.jobs.bg:main

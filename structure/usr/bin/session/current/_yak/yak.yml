@@ -3,4 +3,4 @@ title: Session Current
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.session.current:main
+  run: pack:y5n.apps.system.session.current:main

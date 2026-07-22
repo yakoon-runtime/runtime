@@ -3,7 +3,7 @@ title: Welcome
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.welcome:main
+  run: pack:y5n.apps.system.welcome:main
 
 document:
   default: file:resources/default.ydf

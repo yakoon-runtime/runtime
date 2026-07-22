@@ -3,7 +3,7 @@ title: Ls
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.ls:main
+  run: pack:y5n.apps.system.ls:main
 
 document:
   default: file:resources/default.ydf

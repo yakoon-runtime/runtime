@@ -3,4 +3,4 @@ title: Net List
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.net.list:main
+  run: pack:y5n.apps.system.net.list:main

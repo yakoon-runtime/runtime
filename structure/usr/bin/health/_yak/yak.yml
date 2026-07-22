@@ -3,7 +3,7 @@ title: Health
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.health:main
+  run: pack:y5n.apps.system.health:main
 
 man:
   default: file:resources/man.ydf

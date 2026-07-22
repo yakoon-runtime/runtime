@@ -3,7 +3,7 @@ title: Man
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.man:main
+  run: pack:y5n.apps.system.man:main
 
 man:
   default: file:resources/man.ydf

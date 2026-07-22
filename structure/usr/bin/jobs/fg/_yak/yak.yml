@@ -3,4 +3,4 @@ title: Jobs Fg
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.jobs.fg:main
+  run: pack:y5n.apps.system.jobs.fg:main

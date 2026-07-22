@@ -3,7 +3,7 @@ title: Cd
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.cd:main
+  run: pack:y5n.apps.system.cd:main
 
 man:
   default: file:resources/man.ydf

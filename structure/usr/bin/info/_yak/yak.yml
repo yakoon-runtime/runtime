@@ -3,7 +3,7 @@ title: Info
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.info:main
+  run: pack:y5n.apps.system.info:main
 
 document:
   default: file:resources/default.ydf

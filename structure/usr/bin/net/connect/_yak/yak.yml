@@ -3,4 +3,4 @@ title: Net Connect
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.net.connect:main
+  run: pack:y5n.apps.system.net.connect:main

@@ -3,4 +3,4 @@ title: Session Detach
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.session.detach:main
+  run: pack:y5n.apps.system.session.detach:main

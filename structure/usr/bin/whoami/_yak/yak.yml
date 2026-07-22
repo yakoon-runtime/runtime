@@ -3,7 +3,7 @@ title: Whoami
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.whoami:main
+  run: pack:y5n.apps.system.whoami:main
 
 document:
   default: file:resources/default.ydf

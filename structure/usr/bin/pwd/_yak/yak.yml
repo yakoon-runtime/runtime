@@ -3,7 +3,7 @@ title: Pwd
 host: /boot/python/runtime
 
 entry:
-  run: pack:core.pwd:main
+  run: pack:y5n.apps.system.pwd:main
 
 man:
   default: file:resources/man.ydf
