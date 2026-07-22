@@ -4,12 +4,16 @@
   "python.analysis.useLibraryCodeForTypes": true,
   "python.analysis.extraPaths": [
     // runtime
-    "y5n.runtime",
-    "y5ncore-sdk/src",
+    "runtime/api/src",
+    "runtime/engine/src",
+    "runtime/boot/src",
+    "sdk/python/src",
     // stores (event)
     "stores/y5nstore-event/src",
     "stores/y5nstore-sequence/src",
     // repos
+    "repos/y5napp-system/src",
+    "repos/yakoon-ident",
     "repos/yakoon-luma/src",
     "repos/yakoon-root/src",
     // transports
@@ -20,7 +24,7 @@
     "apps/y5napp-textual/src",
   ],
   "python.testing.pytestArgs": [
-    "runtime/y5ncore-runtime/tests",
+    "runtime/engine/tests",
     "stores/y5nstore-event/tests",
     "stores/y5nstore-sequence/tests",
     "repos/yakoon-luma/tests",
