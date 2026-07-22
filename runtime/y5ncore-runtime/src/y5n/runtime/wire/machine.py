@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import Protocol, cast
 
-from y5n.runtime.engine.flow import Scope
-from y5n.runtime.engine.naming import Key
-from y5n.runtime.engine.nodes import Node
-from y5n.runtime.engine.ports.protocols import OnErrorResolve
-from y5n.runtime.engine.runtime import Event, InputContext
-from y5n.runtime.engine.runtime.input import Origin
+from y5n.runtime.api.flow import Scope
+from y5n.runtime.api.naming import Key
+from y5n.runtime.api.nodes import Node
+from y5n.runtime.api.ports.protocols import OnErrorResolve
+from y5n.runtime.api.runtime import Event, InputContext
+from y5n.runtime.api.runtime.input import Origin
 from y5n.runtime.connections import (
     RuntimeConnection,
     SessionDocumentRouter,

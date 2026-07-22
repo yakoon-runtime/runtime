@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 import google.generativeai as genai
-from y5n.runtime.engine.llm import LLMRequest, LLMResponse
+from y5n.runtime.api.llm import LLMRequest, LLMResponse
 
 
 class GeminiProvider:

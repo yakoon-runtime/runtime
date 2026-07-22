@@ -6,16 +6,16 @@ from dataclasses import asdict, dataclass, field, replace
 from datetime import UTC, datetime
 from typing import Any
 
-from y5n.runtime.engine.clients import ClientConnection
-from y5n.runtime.engine.document import (
+from y5n.runtime.api.clients import ClientConnection
+from y5n.runtime.api.document import (
     DocumentEvent,
     DocumentState,
 )
-from y5n.runtime.engine.flow.channel import Scope, resolve
-from y5n.runtime.engine.naming import Key
-from y5n.runtime.engine.runtime import Event
-from y5n.runtime.engine.runtime.input import Interaction
-from y5n.runtime.engine.transport import IO
+from y5n.runtime.api.flow.channel import Scope, resolve
+from y5n.runtime.api.naming import Key
+from y5n.runtime.api.runtime import Event
+from y5n.runtime.api.runtime.input import Interaction
+from y5n.runtime.api.transport import IO
 from y5n.runtime.capabilities.permission import PermissionSet
 from y5n.runtime.flow import Flow
 from y5n.runtime.runtime.bus import SessionBus

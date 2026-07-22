@@ -1,5 +1,5 @@
-from .resource import ResourceRef
+from .reader import PackageReader
 
 __all__ = [
-    "ResourceRef",
+    "PackageReader",
 ]

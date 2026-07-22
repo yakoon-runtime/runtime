@@ -3,11 +3,11 @@ from __future__ import annotations
 from uuid import uuid4
 
 import pytest
-from y5n.runtime.engine.flow.channel import Scope
-from y5n.runtime.engine.flow.dsl import receive, start_cmd
-from y5n.runtime.engine.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
-from y5n.runtime.engine.nodes import Node
-from y5n.runtime.engine.runtime import Event
+from y5n.runtime.api.flow.channel import Scope
+from y5n.runtime.api.flow.dsl import receive, start_cmd
+from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
+from y5n.runtime.api.nodes import Node
+from y5n.runtime.api.runtime import Event
 from y5n.runtime.machine.effects import StartCommandHandler
 
 
@@ -21,7 +21,7 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
     created_flow = None
 
     async def sub_handler(ctx):
-        from y5n.runtime.engine.flow.dsl import out
+        from y5n.runtime.api.flow.dsl import out
 
         yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
         yield Outcome()

@@ -4,10 +4,10 @@ import inspect
 from collections.abc import Sequence
 from typing import Protocol, cast
 
-from y5n.runtime.engine.flow.primitives import AwaitEvent, Effect, Outcome, Stop
-from y5n.runtime.engine.nodes import Node, NodeSpace, Request
-from y5n.runtime.engine.runtime import Event, InputContext, Interaction
-from y5n.runtime.engine.runtime.sessions import Session as BaseSession
+from y5n.runtime.api.flow.primitives import AwaitEvent, Effect, Outcome, Stop
+from y5n.runtime.api.nodes import Node, NodeSpace, Request
+from y5n.runtime.api.runtime import Event, InputContext, Interaction
+from y5n.runtime.api.runtime.sessions import Session as BaseSession
 from y5n.runtime.flow import Flow, FlowCursor, FlowKind
 from y5n.runtime.interaction import resolve_interaction
 from y5n.runtime.runtime import (

@@ -1,12 +1,8 @@
-from .model import DocumentHeader, DocumentMeta, to_text
-from .transfer import DocumentEvent, DocumentState
+from __future__ import annotations
+
+from .projector import Projector
 
 __all__ = [
-    # .model
-    "DocumentMeta",
-    "DocumentHeader",
-    "to_text",
-    # .event
-    "DocumentEvent",
-    "DocumentState",
+    # .projector
+    "Projector",
 ]

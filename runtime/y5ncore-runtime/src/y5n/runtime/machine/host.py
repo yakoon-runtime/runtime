@@ -4,9 +4,9 @@ import asyncio
 from collections.abc import Awaitable, Callable
 from typing import Protocol
 
-from y5n.runtime.engine.clients.connection import ClientConnection
-from y5n.runtime.engine.naming.key import Key
-from y5n.runtime.engine.runtime import RuntimeInfo
+from y5n.runtime.api.clients.connection import ClientConnection
+from y5n.runtime.api.naming.key import Key
+from y5n.runtime.api.runtime import RuntimeInfo
 from y5n.runtime.runtime import Session
 
 from .runner import Runner

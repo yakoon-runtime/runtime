@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from y5n.runtime.engine.flow.dsl import background, foreground, receive
-from y5n.runtime.engine.flow.primitives import AwaitEvent, Outcome, Stop, Suspend
+from y5n.runtime.api.flow.dsl import background, foreground, receive
+from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, Stop, Suspend
 
 
 @pytest.mark.asyncio

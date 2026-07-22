@@ -4,9 +4,9 @@ import json
 from collections.abc import AsyncGenerator, Iterable
 
 from y5n.api.dsl import out_text, receive, start_task
-from y5n.runtime.engine.flow.channel import Scope
-from y5n.runtime.engine.flow.dsl import Outcome
-from y5n.runtime.engine.llm import LLMMessage, LLMRequest, OnCallLLM
+from y5n.runtime.api.flow.channel import Scope
+from y5n.runtime.api.flow.dsl import Outcome
+from y5n.runtime.api.llm import LLMMessage, LLMRequest, OnCallLLM
 
 
 class AgentDone(Exception):

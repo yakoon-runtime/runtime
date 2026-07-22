@@ -6,11 +6,11 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from y5n.runtime.engine.nodes import Invocation, Node, Param, Request
-from y5n.runtime.engine.nodes.ports import NodePorts
-from y5n.runtime.engine.nodes.space import NodeSpace
-from y5n.runtime.engine.ports.models import HealthLevel, HealthResult
-from y5n.runtime.engine.runtime import Container
+from y5n.runtime.api.nodes import Invocation, Node, Param, Request
+from y5n.runtime.api.nodes.ports import NodePorts
+from y5n.runtime.api.nodes.space import NodeSpace
+from y5n.runtime.api.ports.models import HealthLevel, HealthResult
+from y5n.runtime.api.runtime import Container
 from y5n.runtime.executor import (
     Executor,
     ExecutorKind,
@@ -430,7 +430,7 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
     first token (e.g. \"/labs/hosts/hello-py-server\"). The path is resolved
     lazily at call time via the node's parent chain.
     """
-    from y5n.runtime.engine.flow.dsl import Outcome
+    from y5n.runtime.api.flow.dsl import Outcome
 
     def _empty():
         async def _noop():

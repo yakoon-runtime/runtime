@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from y5n.runtime.engine.document.transfer import DocumentEvent
+from y5n.runtime.api.document.transfer import DocumentEvent
 from y5n.runtime.runtime import Session
 
 

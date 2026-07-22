@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import pytest
-from y5n.runtime.engine.flow.channel import Scope
-from y5n.runtime.engine.flow.dsl import receive
-from y5n.runtime.engine.flow.primitives import AwaitEvent, Outcome, Stop
+from y5n.runtime.api.flow.channel import Scope
+from y5n.runtime.api.flow.dsl import receive
+from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, Stop
 
 
 @pytest.mark.asyncio
@@ -53,8 +53,8 @@ async def test_session_channel_cross_flow(harness):
     results: list[str] = []
 
     async def sender(ctx):
-        from y5n.runtime.engine.flow.dsl import send
-        from y5n.runtime.engine.runtime import Event
+        from y5n.runtime.api.flow.dsl import send
+        from y5n.runtime.api.runtime import Event
 
         yield send("shared", Event(payload="cross-flow!"), scope=Scope.SESSION)
         yield Outcome()

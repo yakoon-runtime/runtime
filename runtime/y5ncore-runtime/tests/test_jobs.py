@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import pytest
-from y5n.runtime.engine.flow.primitives import Outcome, Stop, Suspend, YieldToScheduler
+from y5n.runtime.api.flow.primitives import Outcome, Stop, Suspend, YieldToScheduler
 
 
 @pytest.mark.asyncio

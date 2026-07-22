@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import pytest
-from y5n.runtime.engine.flow.channel import Scope
-from y5n.runtime.engine.flow.dsl import receive, start_task
-from y5n.runtime.engine.flow.primitives import AwaitEvent, Outcome, Stop
+from y5n.runtime.api.flow.channel import Scope
+from y5n.runtime.api.flow.dsl import receive, start_task
+from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, Stop
 
 
 @pytest.mark.asyncio
