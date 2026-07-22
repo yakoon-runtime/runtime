@@ -268,10 +268,12 @@ def build_runtime(
         CallableAdapter(compiler.compile),
     )
 
-    bus.resolver.register("system:projection", {"session": ["attach", "detach"]}, path="/")
+    bus.resolver.register(
+        "system:projection", {"session": ["attach", "detach", "update"]}, path="/"
+    )
     bus.transport.register_adapter(
         "session",
-        SessionAdapter(host),
+        SessionAdapter(host, on_save=session_manager.save),
     )
 
     return host

@@ -22,7 +22,9 @@ class AuthenticationService:
         self.on_after_verify = on_after_verify
         self._namespace = namespace
 
-    async def authenticate(self, *, username: str, secret: str) -> dict:
+    async def authenticate(
+        self, *, username: str, secret: str, session_key: str | None = None
+    ) -> dict:
 
         user = await self.on_get_user(namespace=self._namespace, username=username)
         if not user:
@@ -32,6 +34,16 @@ class AuthenticationService:
             return {"ok": False, "reason": "invalid-credentials"}
 
         after = await self.on_after_verify(user=user)
+
+        if session_key:
+            from y5n.sdk import ports
+
+            patch = {
+                "user_key": str(user.key),
+                "user_name": user.username,
+            }
+            await ports.get("session").update(session_key=session_key, patch=patch)
+
         return {
             "ok": True,
             "user": self._to_dict(user),
