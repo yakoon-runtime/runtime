@@ -1,4 +1,4 @@
-from y5n.api.naming import Key, Namespace
+from y5n.runtime.api.naming import Key, Namespace
 
 
 def world_key(world_id: str) -> Key:

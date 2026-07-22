@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from y5n.api.naming import Key, Namespace
+from y5n.runtime.api.naming import Key, Namespace
 from y5n.runtime.store.event.models import IndexKey, IndexQueryTerm, IndexSpec, IndexTerm, SnapshotHint, ValueType
 from y5n.runtime.store.event.ports import OnDelete, OnGet, OnGetMany, OnQueryIndex, OnReplace, OnScan
 from y5n.runtime.store.sequence import OnNextId

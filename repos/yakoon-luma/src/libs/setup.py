@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from y5n.api.nodes import NodeSpace
+from y5n.runtime.api.nodes import NodeSpace
 from y5n.runtime.store.event.models import IndexKey, IndexSpec, IndexTerm, ValueType
 from y5n.runtime.store.event.wire import build_store as build_event_store
 from y5n.runtime.store.sequence.wire import build_store as build_sequencer

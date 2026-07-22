@@ -12,11 +12,11 @@ _src_parent = str(Path(__file__).resolve().parents[1])
 if _src_parent not in sys.path:
     sys.path.insert(0, _src_parent)
 from src.libs import setup as luma_setup  # noqa: E402
-from y5n.api.naming import Key
-from y5n.api.nodes import Node, NodeSpace
-from y5n.base.nodes.request import Request
-from y5n.base.runtime.input import Interaction
-from y5n.runtime.runtime.sessions import SessionData
+from y5n.runtime.api.naming import Key
+from y5n.runtime.api.nodes import Node, NodeSpace
+from y5n.runtime.api.nodes.request import Request
+from y5n.runtime.api.runtime.input import Interaction
+from y5n.runtime.engine.runtime.sessions import SessionData
 
 
 @dataclass

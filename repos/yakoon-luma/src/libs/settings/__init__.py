@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from y5n.base.config import resolve_space_config
+from y5n.runtime.api.config import resolve_space_config
 from y5n.runtime.store.event.settings import Backend, StorageSettings
 from y5n.runtime.store.sequence.settings import SequenceSettings
 
