@@ -3,7 +3,7 @@ title: Permission Grants
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.grants.perm_show:main
+  run: pack:y5n.apps.ident.apps.grants.perm_show:main
 
 document: { default: file:resources/default.ydf }
 man: { default: file:resources/man.ydf }

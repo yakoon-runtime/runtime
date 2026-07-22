@@ -3,7 +3,7 @@ title: Join Remove
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.joins.remove:main
+  run: pack:y5n.apps.ident.apps.joins.remove:main
 
 invocation:
   params:

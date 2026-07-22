@@ -3,7 +3,7 @@ title: Join Add
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.joins.add:main
+  run: pack:y5n.apps.ident.apps.joins.add:main
 
 invocation:
   params:

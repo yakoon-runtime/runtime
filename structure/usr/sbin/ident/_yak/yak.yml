@@ -1,4 +1,4 @@
 title: Ident
 
 entry:
-  setup: pack:y5nident.setup:main
+  setup: pack:y5n.apps.ident.setup:main

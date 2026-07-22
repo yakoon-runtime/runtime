@@ -3,7 +3,7 @@ title: Grant to User
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.grants.user_add:main
+  run: pack:y5n.apps.ident.apps.grants.user_add:main
 
 invocation:
   params:

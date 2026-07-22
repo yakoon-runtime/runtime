@@ -3,7 +3,7 @@ title: Su
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.su:main
+  run: pack:y5n.apps.ident.apps.su:main
 
 invocation:
   params:

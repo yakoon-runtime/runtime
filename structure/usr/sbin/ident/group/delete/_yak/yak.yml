@@ -3,7 +3,7 @@ title: Group Delete
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.groups.delete:main
+  run: pack:y5n.apps.ident.apps.groups.delete:main
 
 invocation:
   params:

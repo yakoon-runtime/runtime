@@ -3,7 +3,7 @@ title: remove
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.grants.group_remove:main
+  run: pack:y5n.apps.ident.apps.grants.group_remove:main
 
 invocation:
   params:

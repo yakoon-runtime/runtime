@@ -3,7 +3,7 @@ title: User Delete
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.users.delete:main
+  run: pack:y5n.apps.ident.apps.users.delete:main
 
 invocation:
   params:

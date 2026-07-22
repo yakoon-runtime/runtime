@@ -3,7 +3,7 @@ title: show
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.grants.group_show:main
+  run: pack:y5n.apps.ident.apps.grants.group_show:main
 
 invocation:
   params:

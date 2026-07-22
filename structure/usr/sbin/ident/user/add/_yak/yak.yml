@@ -3,7 +3,7 @@ title: User Add
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.users.add:main
+  run: pack:y5n.apps.ident.apps.users.add:main
 
 invocation:
   params:

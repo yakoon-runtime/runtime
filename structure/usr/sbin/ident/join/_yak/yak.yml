@@ -3,7 +3,7 @@ title: Join
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.joins.add:main
+  run: pack:y5n.apps.ident.apps.joins.add:main
 
 document:
   default: file:resources/default.ydf

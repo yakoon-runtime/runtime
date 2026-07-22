@@ -13,7 +13,7 @@
     "stores/y5nstore-sequence/src",
     // repos
     "repos/y5napp-system/src",
-    "repos/yakoon-ident",
+    "repos/y5napp-ident/src",
     "repos/yakoon-luma/src",
     "repos/yakoon-root/src",
     // transports

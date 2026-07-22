@@ -3,7 +3,7 @@ title: Join Users (in Group)
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.joins.users:main
+  run: pack:y5n.apps.ident.apps.joins.users:main
 
 invocation:
   params:

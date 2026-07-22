@@ -3,7 +3,7 @@ title: User Edit
 host: /boot/python/runtime
 
 entry:
-  run: pack:y5nident.apps.users.edit:main
+  run: pack:y5n.apps.ident.apps.users.edit:main
 
 invocation:
   params:
