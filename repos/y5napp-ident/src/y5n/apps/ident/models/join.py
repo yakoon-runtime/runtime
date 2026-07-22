@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from y5n.api.naming import Key, Namespace
+from y5n.runtime.api.naming import Key, Namespace
 from y5nstore.event import GetResult
 
 

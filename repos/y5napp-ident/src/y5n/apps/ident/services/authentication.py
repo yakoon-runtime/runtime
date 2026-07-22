@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.api.naming import Namespace
-from y5n.api.ports import OnAfterVerify
+from y5n.runtime.api.naming import Namespace
+from y5n.runtime.api.ports.protocols import OnAfterVerify
 
 from ..models import User
 

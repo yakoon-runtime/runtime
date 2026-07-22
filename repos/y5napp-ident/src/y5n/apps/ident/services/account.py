@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from y5n.api.naming import Key
+from y5n.runtime.api.naming import Key
 from y5nstore.event.models import (
     IndexKey,
     IndexSpec,

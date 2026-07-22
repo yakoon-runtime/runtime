@@ -1,4 +1,4 @@
-from y5n.api.ports import Port
+from y5n.runtime.api.ports import Port
 
 NAMESPACES = Port("ident.namespaces")
 USER_SERVICE = Port("ident.user.service")
