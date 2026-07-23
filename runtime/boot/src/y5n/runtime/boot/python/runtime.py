@@ -5,7 +5,7 @@ from pathlib import Path
 
 from y5n.runtime.api.document import to_text
 from y5n.runtime.api.flow.dsl import Outcome
-from y5n.runtime.api.flow.primitives import EmitView
+from y5n.runtime.api.flow.primitives import EmitView, Suspend, YieldToScheduler
 from y5n.runtime.api.host import HANDLERS, MarkerKind, drive
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.sdk import context as sdk_context
@@ -139,6 +139,9 @@ async def run(space: NodeSpace):
             session.del_flow(flow)
 
     def _flow_fg(flow_id: str) -> None:
+        flow = session.get_flow(flow_id)
+        if flow and isinstance(flow.control, Suspend):
+            flow.control = YieldToScheduler()
         session.set_foreground_flow(flow_id)
 
     def _flow_bg(_: None) -> dict | None:

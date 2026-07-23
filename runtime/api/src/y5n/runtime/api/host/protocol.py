@@ -42,6 +42,9 @@ class MarkerKind(StrEnum):
     # Event channel — emit event
     SEND = "send"
 
+    # Flow control — self-suspend
+    SUSPEND = "suspend"
+
 
 @dataclass(frozen=True)
 class Marker:

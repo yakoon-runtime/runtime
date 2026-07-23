@@ -7,10 +7,6 @@ driver dispatches each marker according to its kind:
 * **handlers** — produce a DSL ``Outcome`` (yielded to the caller).
 * **side_effects** — mutate host state, no Outcome.
 * **responses** — return data to the command via ``coro.send(result)``.
-
-PROMPT and RECEIVE are special: they yield an Outcome with an
-``AwaitEvent`` control, then receive the event back via the
-async generator ``yield`` expression when the flow resumes.
 """
 
 from __future__ import annotations
@@ -23,7 +19,10 @@ from typing import Any
 from y5n.runtime.api.document import to_text
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.dsl import Outcome
-from y5n.runtime.api.flow.primitives import AwaitEvent, EmitEvent, EmitView, Foreground
+from y5n.runtime.api.flow.dsl import prompt as dsl_prompt
+from y5n.runtime.api.flow.dsl import receive as dsl_receive
+from y5n.runtime.api.flow.dsl import send as dsl_send
+from y5n.runtime.api.flow.dsl import suspend as dsl_suspend
 from y5n.runtime.api.runtime import Event as _Event
 
 from .protocol import Marker, MarkerKind
@@ -92,10 +91,8 @@ async def drive(
                     if isinstance(marker.value, dict)
                     else to_text(marker.value)
                 )
-                event = yield Outcome(
-                    effects=[Foreground(), EmitView(view, persist=True)],
-                    control=AwaitEvent("__user__", scope=Scope.USER_INPUT),
-                )
+                yield dsl_prompt(view)
+                event = yield dsl_receive()
                 val = coro.send(event.payload if event else None)
                 continue
 
@@ -104,15 +101,8 @@ async def drive(
                 params = marker.value or {}
                 ch = params.get("channel")
                 scope_val = params.get("scope")
-                if scope_val is None:
-                    scope = Scope.USER_INPUT if ch is None else Scope.FLOW
-                elif isinstance(scope_val, str):
-                    scope = Scope(scope_val)
-                else:
-                    scope = scope_val
-                if ch is None:
-                    ch = "__user__" if scope == Scope.USER_INPUT else "default"
-                event = yield Outcome(control=AwaitEvent(ch, scope=scope))
+                scope = Scope(scope_val) if isinstance(scope_val, str) else scope_val
+                event = yield dsl_receive(ch, scope)
                 val = coro.send(event)
                 continue
 
@@ -123,9 +113,15 @@ async def drive(
                 payload = params.get("payload")
                 scope_val = params.get("scope", "flow")
                 scope = Scope(scope_val) if isinstance(scope_val, str) else scope_val
-                event = _Event(payload=payload)
-                yield Outcome(effects=[EmitEvent(ch, event, scope=scope)])
+                ev = _Event(payload=payload)
+                yield dsl_send(ch, ev, scope=scope)
                 val = coro.send(None)
+                continue
+
+            # SUSPEND — suspend the current flow
+            if marker.kind == MarkerKind.SUSPEND:
+                event = yield dsl_suspend()
+                val = coro.send(event)
                 continue
 
             if side_effects and marker.kind in side_effects:
