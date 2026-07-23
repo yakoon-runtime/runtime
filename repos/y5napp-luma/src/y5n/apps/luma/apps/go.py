@@ -1,9 +1,9 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import context, io, ports
 
 
 async def main():
-    current_box = session.get("luma.current_box")
-    current_world = session.get("luma.current_world")
+    current_box = context.session().data.get("luma.current_box")
+    current_world = context.session().data.get("luma.current_world")
     if not current_box:
         await io.write("You are not inside any box.")
         return
@@ -21,14 +21,14 @@ async def main():
             await io.write("Cannot go up from here.")
             return
         parent = await boxes.get_box(box_id=box.parent_id)
-        session.set("luma.current_box", box.parent_id)
+        await ports.get("session").update(patch={"data": {"luma.current_box": box.parent_id}})
         await io.write(f"{parent.name if parent else '..'}")
         return
 
     children = await boxes.list_boxes(world_id=current_world, parent_id=current_box)
     child = next((c for c in children if c.name.lower() == ref.lower()), None)
     if child is not None:
-        session.set("luma.current_box", child.id)
+        await ports.get("session").update(patch={"data": {"luma.current_box": child.id}})
         await io.write(f"{child.name}")
         return
 
@@ -57,5 +57,5 @@ async def main():
         await io.write(f"Exit leads nowhere (box #{e.target_box_id} missing).")
         return
 
-    session.set("luma.current_box", target.id)
+    await ports.get("session").update(patch={"data": {"luma.current_box": target.id}})
     await io.write(f"{target.name}")

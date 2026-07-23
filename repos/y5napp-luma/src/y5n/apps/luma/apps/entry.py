@@ -1,4 +1,4 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import context, io, ports
 
 
 async def _resolve_box(world_id: str, box_ref: str) -> str | None:

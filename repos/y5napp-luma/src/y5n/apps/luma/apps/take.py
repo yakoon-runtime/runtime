@@ -1,9 +1,9 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import context, io, ports
 
 
 async def main():
-    current_box = session.get("luma.current_box")
-    current_world = session.get("luma.current_world")
+    current_box = context.session().data.get("luma.current_box")
+    current_world = context.session().data.get("luma.current_world")
     if not current_box or not current_world:
         await io.write("You are not inside any box.")
         return
@@ -23,7 +23,7 @@ async def main():
         await io.write(f"'{name}' is not portable.")
         return
 
-    inv_id = session.get("luma.inventory_id")
+    inv_id = context.session().data.get("luma.inventory_id")
     if not inv_id:
         inv = await boxes.add_box(
             world_id=current_world,
@@ -32,7 +32,7 @@ async def main():
             description="",
             portable=False,
         )
-        session.set("luma.inventory_id", inv.id)
+        await ports.get("session").update(patch={"data": {"luma.inventory_id": inv.id}})
         inv_id = inv.id
 
     await boxes.move_box(box_id=item.id, new_parent_id=inv_id)

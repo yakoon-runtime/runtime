@@ -21,21 +21,26 @@ async def main():
                 return
             world_id = w.id
         boxes = ports.get("luma.box.service")
+
         box = (
             await boxes.find_box(world_id=world_id, name=box_ref)
             if not box_ref.isdigit()
             else await boxes.get_box(box_id=box_ref)
         )
+
         if box is None:
             await io.write("Box not found.")
             return
+
         linked = await notes.notes_for_box(box_id=box.id)
         if not linked:
             await io.write(f"No notes on '{box.name}'.")
             return
+
         lines = [f"Notes on '{box.name}':"]
         for n in linked:
             lines.append(f"  {n.name}")
+
         await io.write("\n".join(lines))
         return
 
@@ -43,7 +48,9 @@ async def main():
     if not all_notes:
         await io.write("No notes.")
         return
+
     lines = ["Notes:"]
     for n in all_notes:
         lines.append(f"  #{n.id} {n.name}")
+
     await io.write("\n".join(lines))

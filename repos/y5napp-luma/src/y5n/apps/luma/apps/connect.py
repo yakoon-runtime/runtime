@@ -1,4 +1,4 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import context, io, ports
 
 _OPPOSITE = {
     "north": "south",
@@ -13,8 +13,8 @@ _OPPOSITE = {
 
 
 async def main():
-    current_box = session.get("luma.current_box")
-    current_world = session.get("luma.current_world")
+    current_box = context.session().data.get("luma.current_box")
+    current_world = context.session().data.get("luma.current_world")
     if not current_box or not current_world:
         await io.write("You are not inside any box. Use 'enter' first.")
         return

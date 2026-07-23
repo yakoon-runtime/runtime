@@ -1,9 +1,8 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import context, io, ports
 
 
 async def main():
     name = context.request().arg(0)
-
     if not name:
         await io.write("Show which note?")
         return

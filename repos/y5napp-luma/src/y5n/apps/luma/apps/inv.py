@@ -1,9 +1,9 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import context, io, ports
 
 
 async def main():
-    current_world = session.get("luma.current_world")
-    inv_id = session.get("luma.inventory_id")
+    current_world = context.session().data.get("luma.current_world")
+    inv_id = context.session().data.get("luma.inventory_id")
 
     if not inv_id or not current_world:
         await io.write("Nothing in inventory.")
