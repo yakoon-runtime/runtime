@@ -1,10 +1,10 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import io, ports
 
 
 async def main():
     worlds = ports.get("luma.world.service")
-    all_worlds = await worlds.list_worlds()
 
+    all_worlds = await worlds.list_worlds()
     if not all_worlds:
         await io.write("No worlds yet.")
         return
