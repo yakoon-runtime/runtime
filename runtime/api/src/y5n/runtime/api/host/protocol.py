@@ -45,6 +45,9 @@ class MarkerKind(StrEnum):
     # Flow control — self-suspend
     SUSPEND = "suspend"
 
+    # Form — multi-field interactive input
+    FORM = "form"
+
 
 @dataclass(frozen=True)
 class Marker:

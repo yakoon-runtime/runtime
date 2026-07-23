@@ -19,10 +19,12 @@ from typing import Any
 from y5n.runtime.api.document import to_text
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.dsl import Outcome
-from y5n.runtime.api.flow.dsl import prompt as dsl_prompt
 from y5n.runtime.api.flow.dsl import receive as dsl_receive
 from y5n.runtime.api.flow.dsl import send as dsl_send
 from y5n.runtime.api.flow.dsl import suspend as dsl_suspend
+from y5n.runtime.api.flow.patterns.public import Form as _Form
+from y5n.runtime.api.flow.primitives import AwaitEvent, EmitView, Foreground
+from y5n.runtime.api.nodes import Param
 from y5n.runtime.api.runtime import Event as _Event
 
 from .protocol import Marker, MarkerKind
@@ -91,8 +93,10 @@ async def drive(
                     if isinstance(marker.value, dict)
                     else to_text(marker.value)
                 )
-                yield dsl_prompt(view)
-                event = yield dsl_receive()
+                event = yield Outcome(
+                    effects=[Foreground(), EmitView(view, persist=True)],
+                    control=AwaitEvent("__user__", scope=Scope.USER_INPUT),
+                )
                 val = coro.send(event.payload if event else None)
                 continue
 
@@ -122,6 +126,28 @@ async def drive(
             if marker.kind == MarkerKind.SUSPEND:
                 event = yield dsl_suspend()
                 val = coro.send(event)
+                continue
+
+            # FORM — multi-field interactive input
+            if marker.kind == MarkerKind.FORM:
+                params = marker.value or {}
+                form = _Form(
+                    fields=[
+                        Param(
+                            key=f.get("key", ""),
+                            title=f.get("title", ""),
+                            required=f.get("required", False),
+                        )
+                        for f in params.get("fields", [])
+                    ],
+                    title=params.get("title", ""),
+                    intro=params.get("intro", ""),
+                    initial=params.get("initial"),
+                    focus=params.get("focus"),
+                )
+                async for step in form.run():
+                    yield step
+                val = coro.send(dict(form.data))
                 continue
 
             if side_effects and marker.kind in side_effects:

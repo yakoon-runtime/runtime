@@ -232,8 +232,12 @@ fields:
 field:
   description: A single input field definition.
   properties:
+    key:
+      type: string
+      description: Stable identifier for the field (used in form results).
     policy:
       type: string
+      nullable: true
     name:
       type: string
       nullable: true
