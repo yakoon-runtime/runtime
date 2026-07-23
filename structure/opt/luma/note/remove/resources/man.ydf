@@ -1,0 +1,49 @@
+<heading>remove - Remove a note from a box.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  remove NAME
+  remove NAME --box NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Removes a note from a box. Without --box, the note is
+removed from the current box context.
+</paragraph>
+
+<paragraph>
+The note itself is not deleted. It returns to the inbox
+and can be placed elsewhere.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+remove Ideas
+  Remove a note from the current box.
+
+remove Todo --box Desk --world Work
+  Remove a note from a specific box.
+
+note/remove Meeting --box Board --world Research
+  From another space, qualify the path.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, delete, edit, inbox, list, put, show
+</paragraph>

@@ -1,0 +1,44 @@
+<heading>delete - Delete a box.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  delete NAME --world NAME
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Permanently removes a box and all its contents — child
+boxes and notes.
+</paragraph>
+
+<paragraph>
+This action cannot be undone.
+</paragraph>
+
+<heading level="2">
+Examples
+</heading>
+
+<pre>
+delete Desk --world Work
+  Delete the box Desk from the Work world.
+
+box/delete Drawer --world Research
+  From another space, qualify the path.
+</pre>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+add, edit, find, list, show
+</paragraph>

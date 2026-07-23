@@ -1,0 +1,15 @@
+title: Edit Note
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.apps.luma.apps.note.edit:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: new-name
+  - key: content
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

@@ -8,11 +8,11 @@ pip install \
   -e runtime/transport \
   -e runtime/llm \
   -e runtime/boot \
-  -e runtime/y5ncore-base \
   -e sdk/python \
   -e repos/y5napp-system \
   -e repos/y5napp-ident \
   -e repos/y5napp-crm \
+  -e repos/y5napp-luma \
   -e repos/y5napp-labs \
   -e apps/y5napp-console \
   -e apps/y5napp-runtime \

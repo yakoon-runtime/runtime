@@ -1,0 +1,18 @@
+<heading>go - Move to another box.</heading>
+<rule/>
+<heading level="2">Usage</heading>
+<pre>go DIRECTION
+go NAME
+go ..</pre>
+<heading level="2">Description</heading>
+<paragraph>Moves to a connected box via an exit or to a child box.</paragraph>
+<paragraph>Use go .. to move back to the parent box.</paragraph>
+<heading level="2">Examples</heading>
+<pre>go north
+  Follow an exit leading north.
+go Kitchen
+  Move to a box or exit called Kitchen.
+go ..
+  Move back to the parent box.</pre>
+<heading level="2">See also</heading>
+<paragraph>dig, enter, leave, look</paragraph>

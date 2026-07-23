@@ -1,0 +1,8 @@
+title: Inbox
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.apps.luma.apps.note.inbox:main
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

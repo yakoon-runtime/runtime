@@ -1,0 +1,13 @@
+title: List Boxes
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.apps.luma.apps.box.list:main
+invocation:
+  params:
+  - key: world
+    required: true
+  - key: parent
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

@@ -1,0 +1,15 @@
+title: Remove Note
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.apps.luma.apps.note.remove:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: box
+  - key: world
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

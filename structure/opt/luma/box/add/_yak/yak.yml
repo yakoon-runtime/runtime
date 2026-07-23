@@ -1,0 +1,17 @@
+title: Add Box
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.apps.luma.apps.box.add:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: world
+    required: true
+  - key: parent
+  - key: description
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

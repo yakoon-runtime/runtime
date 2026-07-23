@@ -1,0 +1,17 @@
+title: Delete Exit
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.apps.luma.apps.exit.delete:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: world
+    required: true
+  - key: box
+    required: true
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

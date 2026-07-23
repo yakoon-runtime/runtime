@@ -1,0 +1,4 @@
+title: Luma
+host: /boot/python/runtime
+entry:
+  setup: pack:y5n.apps.luma.setup:main
