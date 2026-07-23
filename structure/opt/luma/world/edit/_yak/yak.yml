@@ -1,5 +1,8 @@
 title: Edit World
 host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
 entry:
   run: pack:y5n.apps.luma.apps.world.edit:main
 invocation:

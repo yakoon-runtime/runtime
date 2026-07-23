@@ -1,1 +1,5 @@
 title: Root
+
+resolvable: true
+navigable: false
+contextual: false

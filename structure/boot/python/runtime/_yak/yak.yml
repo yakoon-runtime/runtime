@@ -1,5 +1,7 @@
 title: Python Runtime Host
 
+resolvable: true
+contextual: false
 expose: false
 navigable: false
 

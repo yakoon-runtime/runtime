@@ -1,5 +1,8 @@
 title: Jobs Stop
 
+resolvable: true
+navigable: false
+contextual: false
 host: /boot/python/runtime
 
 entry:

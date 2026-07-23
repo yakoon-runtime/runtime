@@ -1,5 +1,8 @@
 title: Jobs Bg
 
+resolvable: true
+navigable: false
+contextual: false
 host: /boot/python/runtime
 
 entry:

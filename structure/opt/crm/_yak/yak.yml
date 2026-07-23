@@ -1,5 +1,8 @@
 title: CRM
 
+resolvable: false
+navigable: true
+contextual: false
 host: /boot/python/runtime
 
 entry:

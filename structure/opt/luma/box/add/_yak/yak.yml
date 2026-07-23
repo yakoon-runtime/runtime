@@ -1,5 +1,8 @@
 title: Add Box
 host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
 entry:
   run: pack:y5n.apps.luma.apps.box.add:main
 invocation:

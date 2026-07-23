@@ -1,4 +1,6 @@
 title: Process Host
 
+resolvable: true
+contextual: false
 expose: false
 navigable: false

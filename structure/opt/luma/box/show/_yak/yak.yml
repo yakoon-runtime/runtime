@@ -1,5 +1,8 @@
 title: Show Box
 host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
 entry:
   run: pack:y5n.apps.luma.apps.box.show:main
 invocation:

@@ -1,5 +1,8 @@
 title: Entry
 host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
 entry:
   run: pack:y5n.apps.luma.apps.entry:main
 invocation:

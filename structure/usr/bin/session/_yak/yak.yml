@@ -1,5 +1,8 @@
 title: Session
 
+resolvable: true
+navigable: true
+contextual: false
 host: /boot/python/runtime
 
 entry:

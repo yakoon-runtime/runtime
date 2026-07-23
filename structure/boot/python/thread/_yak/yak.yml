@@ -1,4 +1,6 @@
 title: Python Thread Host
 
+resolvable: true
+contextual: false
 expose: false
 navigable: false

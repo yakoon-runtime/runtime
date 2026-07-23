@@ -1,4 +1,7 @@
 title: Ident
 
+resolvable: false
+navigable: true
+contextual: false
 entry:
   setup: pack:y5n.apps.ident.setup:main
