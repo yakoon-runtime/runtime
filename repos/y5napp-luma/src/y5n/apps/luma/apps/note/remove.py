@@ -1,7 +1,7 @@
 from y5n.sdk import context, io, ports
 
 
-async def _resolve_box_id(space, box_ref: str, world_ref: str | None) -> str | None:
+async def _resolve_box_id(box_ref: str, world_ref: str | None) -> str | None:
     if box_ref == "." or box_ref is None:
         return context.session().data.get("luma.current_box")
     if box_ref.isdigit():
@@ -35,7 +35,7 @@ async def main():
         await io.write(f"Note '{name}' not found.")
         return
 
-    box_id = await _resolve_box_id(space, box_ref, world_ref)
+    box_id = await _resolve_box_id(box_ref, world_ref)
     if box_id is None:
         await io.write("Box not found.")
         return
