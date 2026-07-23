@@ -1,92 +1,51 @@
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 import pytest
 
-# Setup module moved from _yak/setup/app.py → setup.py at source root
-_src_parent = str(Path(__file__).resolve().parents[1])
-if _src_parent not in sys.path:
-    sys.path.insert(0, _src_parent)
-from src.libs import setup as luma_setup  # noqa: E402
 from y5n.runtime.api.naming import Key
-from y5n.runtime.api.nodes import Node, NodeSpace
-from y5n.runtime.api.nodes.request import Request
-from y5n.runtime.api.runtime.input import Interaction
-from y5n.runtime.engine.runtime.sessions import SessionData
+
+_services: dict[str, Any] = {}
 
 
-@dataclass
-class FakeSession:
-    data: SessionData = field(default_factory=SessionData)
-    lang: str = "de"
-    key: Key = field(
-        default_factory=lambda: Key.from_parts("test", "session", "luma", "1")
-    )
-    _interaction: Interaction = Interaction.CLI
-    _permissions: set[Any] = field(default_factory=set)
-
-    def get_data(self, key: str, default: Any = None) -> Any:
-        return self.data.get(key, default)
-
-    def set_data(self, key: str, value: Any) -> None:
-        self.data.set(key, value)
-
-    def del_data(self, key: str, default: Any = None) -> Any:
-        return self.data.pop(key, default)
-
-    @property
-    def permissions(self) -> set[Any]:
-        return self._permissions
-
-    @property
-    def interaction(self) -> Interaction:
-        return self._interaction
-
-    @interaction.setter
-    def interaction(self, value: Interaction) -> None:
-        self._interaction = value
-
-    def set_permissions(self, permset: Any) -> None:
-        self._permissions = permset
-
-    def set_identity(self, user_key: Any, user_name: str | None = None) -> None:
-        pass
-
-    def get_identity(self) -> Any:
-        return None
-
-    @property
-    def user_name(self) -> str | None:
-        return None
+def _publish(name: str, service: Any) -> None:
+    _services[name] = service
 
 
-@dataclass
-class FakePorts:
-    _store: dict = field(default_factory=dict)
+def _get(name: str) -> Any:
+    return _services.get(name)
 
-    def provide(self, port: Any, impl: Any) -> None:
-        self._store[port] = impl
 
-    def get(self, port: Any) -> Any:
-        return self._store.get(port)
+@pytest.fixture(autouse=True)
+def _patch_ports(monkeypatch):
+    _services.clear()
+    import y5n.apps.luma.setup as luma_setup
+    import y5n.sdk.ports as sdk_ports
+
+    monkeypatch.setattr(sdk_ports, "publish", _publish)
+    monkeypatch.setattr(sdk_ports, "get", _get)
+    import asyncio
+    asyncio.run(luma_setup.main())
+    yield
 
 
 @pytest.fixture
-async def fresh_space():
-    session = FakeSession()
-    root = Node(key="luma")
-    space = NodeSpace(
-        path=root.path,
-        request=Request(command="test", tokens=[], payload=None, lang="de"),
-        session=session,
-        ports=FakePorts(),
-        ports_from=None,
-    )
-    await luma_setup.run(space)
-    session.set_data("luma.current_world", None)
-    session.set_data("luma.current_box", None)
-    return session, space
+def worlds():
+    return _get("luma.world.service")
+
+
+@pytest.fixture
+def boxes():
+    return _get("luma.box.service")
+
+
+@pytest.fixture
+def exits():
+    return _get("luma.exit.service")
+
+
+@pytest.fixture
+def notes():
+    return _get("luma.note.service")
