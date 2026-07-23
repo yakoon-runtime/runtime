@@ -149,7 +149,7 @@ async def run(space: NodeSpace):
         return {"id": fg.id, "label": fg.node.name or fg.node.key}
 
     try:
-        async for outcome in drive(
+        drive_gen = drive(
             coro,
             HANDLERS,
             side_effects={
@@ -161,8 +161,16 @@ async def run(space: NodeSpace):
                 MarkerKind.FLOWS_LIST: _flows_list,
                 MarkerKind.FLOW_BG: _flow_bg,
             },
-        ):
-            yield outcome
+        )
+        outcome = await drive_gen.__anext__()
+        while True:
+            event_or_none = yield outcome
+            if event_or_none is not None:
+                outcome = await drive_gen.asend(event_or_none)
+            else:
+                outcome = await drive_gen.__anext__()
+    except StopAsyncIteration:
+        pass
     except Exception as e:
         yield Outcome(effects=[EmitView(to_text(f"error: {e}"))])
 

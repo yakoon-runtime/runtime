@@ -35,6 +35,13 @@ class MarkerKind(StrEnum):
     FLOW_FG = "flow.fg"
     FLOW_BG = "flow.bg"
 
+    # Interactive flow — suspend and wait for event
+    PROMPT = "prompt"
+    RECEIVE = "receive"
+
+    # Event channel — emit event
+    SEND = "send"
+
 
 @dataclass(frozen=True)
 class Marker:

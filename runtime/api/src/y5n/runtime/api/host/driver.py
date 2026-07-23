@@ -7,6 +7,10 @@ driver dispatches each marker according to its kind:
 * **handlers** — produce a DSL ``Outcome`` (yielded to the caller).
 * **side_effects** — mutate host state, no Outcome.
 * **responses** — return data to the command via ``coro.send(result)``.
+
+PROMPT and RECEIVE are special: they yield an Outcome with an
+``AwaitEvent`` control, then receive the event back via the
+async generator ``yield`` expression when the flow resumes.
 """
 
 from __future__ import annotations
@@ -16,7 +20,11 @@ import inspect
 from collections.abc import Callable, Coroutine, Mapping
 from typing import Any
 
+from y5n.runtime.api.document import to_text
+from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.dsl import Outcome
+from y5n.runtime.api.flow.primitives import AwaitEvent, EmitEvent, EmitView, Foreground
+from y5n.runtime.api.runtime import Event as _Event
 
 from .protocol import Marker, MarkerKind
 
@@ -76,6 +84,50 @@ async def drive(
                 continue
 
             marker: Marker = val
+
+            # PROMPT — show projection, wait for user input
+            if marker.kind == MarkerKind.PROMPT:
+                view = (
+                    marker.value
+                    if isinstance(marker.value, dict)
+                    else to_text(marker.value)
+                )
+                event = yield Outcome(
+                    effects=[Foreground(), EmitView(view, persist=True)],
+                    control=AwaitEvent("__user__", scope=Scope.USER_INPUT),
+                )
+                val = coro.send(event.payload if event else None)
+                continue
+
+            # RECEIVE — wait for event on a channel
+            if marker.kind == MarkerKind.RECEIVE:
+                params = marker.value or {}
+                ch = params.get("channel")
+                scope_val = params.get("scope")
+                if scope_val is None:
+                    scope = Scope.USER_INPUT if ch is None else Scope.FLOW
+                elif isinstance(scope_val, str):
+                    scope = Scope(scope_val)
+                else:
+                    scope = scope_val
+                if ch is None:
+                    ch = "__user__" if scope == Scope.USER_INPUT else "default"
+                event = yield Outcome(control=AwaitEvent(ch, scope=scope))
+                val = coro.send(event)
+                continue
+
+            # SEND — emit event to a channel
+            if marker.kind == MarkerKind.SEND:
+                params = marker.value or {}
+                ch = params.get("channel")
+                payload = params.get("payload")
+                scope_val = params.get("scope", "flow")
+                scope = Scope(scope_val) if isinstance(scope_val, str) else scope_val
+                event = _Event(payload=payload)
+                yield Outcome(effects=[EmitEvent(ch, event, scope=scope)])
+                val = coro.send(None)
+                continue
+
             if side_effects and marker.kind in side_effects:
                 side_effects[marker.kind](marker.value)
                 val = coro.send(None)
