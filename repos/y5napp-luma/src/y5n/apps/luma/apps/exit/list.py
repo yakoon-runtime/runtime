@@ -12,7 +12,7 @@ async def main():
     worlds = ports.get("luma.world.service")
     world_id = world_ref
     if not world_id.isdigit():
-        w = await worlds.get_world_by_name(world_id)
+        w = await worlds.get_world_by_name(name=world_id)
         if w is None:
             await io.write("World not found.")
             return
@@ -29,7 +29,7 @@ async def main():
         if box_id is None:
             await io.write(f"Box '{box_ref}' not found.")
             return
-        exits_list = await exits.find_from(box_id)
+        exits_list = await exits.find_from(box_id=box_id)
     else:
         exits_list = await exits.list_exits(world_id=world_id)
 
@@ -39,8 +39,8 @@ async def main():
 
     lines = ["Exits:"]
     for e in exits_list:
-        source = await boxes.get_box(e.source_box_id)
-        target = await boxes.get_box(e.target_box_id)
+        source = await boxes.get_box(box_id=e.source_box_id)
+        target = await boxes.get_box(box_id=e.target_box_id)
         src_name = source.name if source else f"#{e.source_box_id}"
         tgt_name = target.name if target else f"#{e.target_box_id}"
         line = f"  #{e.id} {e.name or '?'}: {src_name} -> {tgt_name}"

@@ -35,5 +35,5 @@ async def main():
         session.set("luma.inventory_id", inv.id)
         inv_id = inv.id
 
-    await boxes.move_box(item.id, inv_id)
+    await boxes.move_box(box_id=item.id, new_parent_id=inv_id)
     await io.write(f"Taken '{name}'.")

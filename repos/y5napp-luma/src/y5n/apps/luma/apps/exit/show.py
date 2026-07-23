@@ -19,7 +19,7 @@ async def main():
     worlds = ports.get("luma.world.service")
     world_id = world_ref
     if not world_id.isdigit():
-        w = await worlds.get_world_by_name(world_id)
+        w = await worlds.get_world_by_name(name=world_id)
         if w is None:
             await io.write("World not found.")
             return
@@ -33,13 +33,13 @@ async def main():
         return
 
     exits = ports.get("luma.exit.service")
-    from_src = await exits.find_from(src.id)
+    from_src = await exits.find_from(box_id=src.id)
     e = next((ex for ex in from_src if ex.name.lower() == exit_name.lower()), None)
     if e is None:
         await io.write(f"Exit '{exit_name}' not found in '{box_ref}'.")
         return
 
-    target = await boxes.get_box(e.target_box_id)
+    target = await boxes.get_box(box_id=e.target_box_id)
     tgt_name = target.name if target else f"#{e.target_box_id}"
 
     lines = [

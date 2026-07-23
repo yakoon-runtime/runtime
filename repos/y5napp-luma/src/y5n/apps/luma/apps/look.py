@@ -10,26 +10,26 @@ async def main():
         return
 
     boxes = ports.get("luma.box.service")
-    box = await boxes.get_box(current_box)
+    box = await boxes.get_box(box_id=current_box)
     if box is None:
         await io.write("Current box not found.")
         return
 
     worlds = ports.get("luma.world.service")
-    world = await worlds.get_world(current_world)
+    world = await worlds.get_world(world_id=current_world)
 
     lines = [f"[{box.name}]"]
     if box.description:
         lines.append(f"  {box.description}")
 
     exits = ports.get("luma.exit.service")
-    from_here = await exits.find_from(box.id)
+    from_here = await exits.find_from(box_id=box.id)
 
     if from_here:
         lines.append("")
         lines.append("Exits:")
         for e in from_here:
-            target = await boxes.get_box(e.target_box_id)
+            target = await boxes.get_box(box_id=e.target_box_id)
             target_name = target.name if target else f"#{e.target_box_id}"
             label = e.name or e.direction or "?"
             if e.direction and e.name:

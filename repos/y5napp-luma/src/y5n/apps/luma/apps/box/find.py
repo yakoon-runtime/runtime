@@ -5,7 +5,7 @@ async def _resolve_path(boxes, box_id) -> list[str]:
     names = []
     current = box_id
     while current is not None:
-        b = await boxes.get_box(current)
+        b = await boxes.get_box(box_id=current)
         if b is None:
             break
         names.append(b.name)
@@ -28,7 +28,7 @@ async def main():
     worlds = ports.get("luma.world.service")
     world_id = world_ref
     if not world_id.isdigit():
-        w = await worlds.get_world_by_name(world_ref)
+        w = await worlds.get_world_by_name(name=world_ref)
         if w is None:
             await io.write("World not found.")
             return

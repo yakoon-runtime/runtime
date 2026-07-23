@@ -9,7 +9,7 @@ async def main():
         return
 
     notes = ports.get("luma.note.service")
-    note = await notes.find_note_by_name(name)
+    note = await notes.find_note_by_name(name=name)
     if note is None:
         await io.write(f"Note '{name}' not found.")
         return

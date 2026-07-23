@@ -28,7 +28,7 @@ async def main():
         if not name:
             continue
 
-        existing = await notes.find_note_by_name(name)
+        existing = await notes.find_note_by_name(name=name)
         if existing:
             await notes.update_note(
                 note_id=existing.id, name=existing.name, content=content

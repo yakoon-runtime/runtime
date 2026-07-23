@@ -16,11 +16,11 @@ async def main():
     boxes = ports.get("luma.box.service")
 
     if ref == "..":
-        box = await boxes.get_box(current_box)
+        box = await boxes.get_box(box_id=current_box)
         if box is None or box.parent_id is None:
             await io.write("Cannot go up from here.")
             return
-        parent = await boxes.get_box(box.parent_id)
+        parent = await boxes.get_box(box_id=box.parent_id)
         session.set("luma.current_box", box.parent_id)
         await io.write(f"{parent.name if parent else '..'}")
         return
@@ -33,7 +33,7 @@ async def main():
         return
 
     exits = ports.get("luma.exit.service")
-    from_here = await exits.find_from(current_box)
+    from_here = await exits.find_from(box_id=current_box)
 
     by_name = [e for e in from_here if e.name.lower() == ref.lower()]
     if len(by_name) == 1:
@@ -52,7 +52,7 @@ async def main():
             return
         e = by_dir[0]
 
-    target = await boxes.get_box(e.target_box_id)
+    target = await boxes.get_box(box_id=e.target_box_id)
     if target is None:
         await io.write(f"Exit leads nowhere (box #{e.target_box_id} missing).")
         return

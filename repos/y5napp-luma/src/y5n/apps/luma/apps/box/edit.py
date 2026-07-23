@@ -17,7 +17,7 @@ async def main():
     worlds = ports.get("luma.world.service")
     world_id = world_ref
     if not world_id.isdigit():
-        w = await worlds.get_world_by_name(world_id)
+        w = await worlds.get_world_by_name(name=world_id)
         if w is None:
             await io.write("World not found.")
             return

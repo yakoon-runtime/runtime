@@ -2,9 +2,9 @@ from y5n.sdk import context, io, ports
 
 
 async def main():
+    name = context.request().arg(0)
     world_ref = context.request().option("world")
     parent_id = context.request().option("parent")
-    name = context.request().arg(0)
     description = context.request().option("description") or ""
 
     if not world_ref:
@@ -14,7 +14,7 @@ async def main():
     worlds = ports.get("luma.world.service")
     world_id = world_ref
     if not world_id.isdigit():
-        w = await worlds.get_world_by_name(world_id)
+        w = await worlds.get_world_by_name(name=world_id)
         if w is None:
             await io.write(f"Not found: {world_ref}")
             return

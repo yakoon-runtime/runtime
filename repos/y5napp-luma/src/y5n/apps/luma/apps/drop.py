@@ -25,5 +25,5 @@ async def main():
         await io.write(f"Nothing named '{name}' in inventory.")
         return
 
-    await boxes.move_box(item.id, current_box)
+    await boxes.move_box(box_id=item.id, new_parent_id=current_box)
     await io.write(f"Dropped '{name}'.")

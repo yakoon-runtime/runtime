@@ -28,7 +28,7 @@ async def main():
         if box is None:
             await io.write("Box not found.")
             return
-        linked = await notes.notes_for_box(box.id)
+        linked = await notes.notes_for_box(box_id=box.id)
         if not linked:
             await io.write(f"No notes on '{box.name}'.")
             return

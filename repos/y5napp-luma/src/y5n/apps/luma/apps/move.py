@@ -33,5 +33,5 @@ async def main():
         await io.write(f"Box '{target_ref}' not found here.")
         return
 
-    await boxes.move_box(item.id, target.id)
+    await boxes.move_box(box_id=item.id, new_parent_id=target.id)
     await io.write(f"Moved '{name}' into '{target.name}'.")

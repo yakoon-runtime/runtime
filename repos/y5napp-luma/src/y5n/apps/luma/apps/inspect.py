@@ -34,7 +34,7 @@ async def main():
             lines.append("".join(parts))
 
     notes = ports.get("luma.note.service")
-    linked = await notes.notes_for_box(box.id)
+    linked = await notes.notes_for_box(box_id=box.id)
     if linked:
         lines.append("")
         lines.append("Notes:")
