@@ -5,6 +5,7 @@ from .base import (
     ExecutorRegistry,
     Phase,
 )
+from .dotnet import DotnetExecutor
 from .process import ProcessExecutor
 from .python import PythonExecutor
 from .runtime import RuntimeExecutor
@@ -12,6 +13,7 @@ from .script import ScriptExecutor
 
 __all__ = [
     "DiagnosticExecutor",
+    "DotnetExecutor",
     "Executor",
     "ExecutorKind",
     "ExecutorRegistry",

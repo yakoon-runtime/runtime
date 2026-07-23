@@ -26,6 +26,7 @@ from y5n.runtime.engine.capabilities.permission import (
 )
 from y5n.runtime.engine.document.rendering import JinjaRenderEngine
 from y5n.runtime.engine.executor import (
+    DotnetExecutor,
     ExecutorKind,
     ExecutorRegistry,
     ProcessExecutor,
@@ -120,6 +121,7 @@ def build_runtime(
     executors.register(ExecutorKind.PYTHON, PythonExecutor())
     executors.register(ExecutorKind.SCRIPT, ScriptExecutor())
     executors.register(ExecutorKind.PROCESS, ProcessExecutor())
+    executors.register(ExecutorKind.DOTNET, DotnetExecutor())
 
     # -----------------------
     # --- YAK TREE BUILD ---

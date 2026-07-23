@@ -1,8 +1,0 @@
-version: 1.0.0
-
-title: .NET Host
-
-resolvable: false
-navigable: true
-
-expose: false

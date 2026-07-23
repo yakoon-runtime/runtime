@@ -51,6 +51,7 @@ class ExecutorKind(Enum):
     PYTHON = "python"
     SCRIPT = "script"
     PROCESS = "process"
+    DOTNET = "dotnet"
 
 
 class Phase(Enum):

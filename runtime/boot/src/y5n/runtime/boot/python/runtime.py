@@ -3,9 +3,8 @@ import inspect
 import os
 from pathlib import Path
 
-from y5n.runtime.api.document import to_text
-from y5n.runtime.api.flow.dsl import Outcome
-from y5n.runtime.api.flow.primitives import EmitView, Suspend, YieldToScheduler
+from y5n.runtime.api.flow.dsl import Outcome, out_text
+from y5n.runtime.api.flow.primitives import Suspend, YieldToScheduler
 from y5n.runtime.api.host import HANDLERS, MarkerKind, drive
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.sdk import context as sdk_context
@@ -23,14 +22,12 @@ from ._shared import (
 async def run(space: NodeSpace):
     target_path = space.request.arg(0) if space.request else None
     if not target_path:
-        yield Outcome(effects=[EmitView(to_text("Usage: python/runtime <tree-path>"))])
+        yield out_text("Usage: python/runtime <tree-path>")
         return
 
     root = Path(space.session.get_data("fs:root")) if space.session else Path()
     if not root.is_dir():
-        yield Outcome(
-            effects=[EmitView(to_text(f"error: workspace root not found: {root}"))]
-        )
+        yield out_text(f"error: workspace root not found: {root}")
         return
 
     current = space.session.cwd if space.session else None
@@ -38,9 +35,7 @@ async def run(space: NodeSpace):
 
     entry = read_entry(root, target_path)
     if not entry:
-        yield Outcome(
-            effects=[EmitView(to_text(f"error: no entry for '{target_path}'"))]
-        )
+        yield out_text(f"error: no entry for '{target_path}'")
         return
 
     from ._shared import parse_entry
@@ -48,29 +43,23 @@ async def run(space: NodeSpace):
     try:
         scheme, value = parse_entry(entry)
     except ValueError as e:
-        yield Outcome(effects=[EmitView(to_text(str(e)))])
+        yield out_text(str(e))
         return
 
     if scheme == "pack":
         os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
         mod_name, _, func_name = value.rpartition(":")
         if not mod_name or not func_name:
-            yield Outcome(
-                effects=[EmitView(to_text(f"error: invalid pack entry '{value}'"))]
-            )
+            yield out_text(f"error: invalid pack entry '{value}'")
             return
         try:
             mod = importlib.import_module(mod_name)
         except ImportError as e:
-            yield Outcome(
-                effects=[EmitView(to_text(f"error: cannot import {mod_name}: {e}"))]
-            )
+            yield out_text(f"error: cannot import {mod_name}: {e}")
             return
         main_fn = getattr(mod, func_name, None)
         if main_fn is None:
-            yield Outcome(
-                effects=[EmitView(to_text(f"error: {mod_name} has no '{func_name}'"))]
-            )
+            yield out_text(f"error: {mod_name} has no '{func_name}'")
             return
         ctx = SdkContext.from_dict(_build_context_dict(space, target_path))
         sdk_context._set(ctx)
@@ -78,9 +67,7 @@ async def run(space: NodeSpace):
     elif scheme == "file":
         app_file = root / value
         if not app_file.is_file():
-            yield Outcome(
-                effects=[EmitView(to_text(f"error: file not found: '{app_file}'"))]
-            )
+            yield out_text(f"error: file not found: '{app_file}'")
             return
 
         errors, _, mod, mod_name_for_cleanup = load_and_capture(
@@ -88,29 +75,22 @@ async def run(space: NodeSpace):
         )
         if errors:
             for err in errors:
-                yield Outcome(effects=[EmitView(to_text(err))])
+                yield out_text(err)
             return
 
         main_fn = getattr(mod, "main", None)
         if main_fn is None:
-            yield Outcome(effects=[EmitView(to_text("error: command has no main()"))])
+            yield out_text("error: command has no main()")
             return
     else:
-        yield Outcome(effects=[EmitView(to_text(f"error: unknown scheme '{scheme}'"))])
+        yield out_text(f"error: unknown scheme '{scheme}'")
         return
 
     coro = main_fn()
 
     if not inspect.iscoroutine(coro):
-        yield Outcome(
-            effects=[
-                EmitView(
-                    to_text(
-                        "error: main() must be an async function"
-                        " — use `async def main()`"
-                    )
-                )
-            ]
+        yield out_text(
+            "error: main() must be an async function — use `async def main()`"
         )
         return
 
@@ -175,7 +155,7 @@ async def run(space: NodeSpace):
     except StopAsyncIteration:
         pass
     except Exception as e:
-        yield Outcome(effects=[EmitView(to_text(f"error: {e}"))])
+        yield out_text(f"error: {e}")
 
     if mod_name_for_cleanup and mod_name_for_cleanup.startswith("yak.bundle"):
         unload_module(mod_name_for_cleanup)
