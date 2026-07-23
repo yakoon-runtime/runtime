@@ -1,34 +1,12 @@
-# Yakoon Root
+# Yakoon Root — *archived*
 
-*The base system tree for Yakoon.*
+All functionality has been migrated to individual app packages:
 
-Root is the default workspace bundle. It provides the system commands
-and services that make up a Yakoon runtime environment.
+| Package | Repository |
+|---------|------------|
+| System commands (cd, ls, jobs, …) | `repos/y5napp-system/` |
+| Identity & permissions (su, users, …) | `repos/y5napp-ident/` |
+| CRM (contact add, list, …) | `repos/y5napp-crm/` |
+| Labs & demos | `repos/y5napp-labs/` |
 
-## Structure
-
-```
-src/
-├── usr/
-│   ├── bin/              — System commands (cd, ls, su, …)
-│   └── sbin/
-│       └── ident         — Identity & permission setup
-├── var/
-│   └── welcome/          — Landing node
-└── home/                 — User home mount point
-```
-
-## How it works
-
-Root is not a shell. It is a **node tree** rooted at `/`. Every
-subdirectory with a `.yak/` folder becomes a node in the runtime.
-
-Commands are defined as flows in `.yak/run/`. Services are initialized
-in `.yak/setup/`. Ports connect nodes across the tree.
-
-## Built on Yakoon
-
-Root is implemented entirely as a Yakoon bundle. It demonstrates
-that a complete interactive environment can be built from the same
-primitives — nodes, flows, ports and projections — that power every
-other Yakoon space.
+See each package's README for details.
