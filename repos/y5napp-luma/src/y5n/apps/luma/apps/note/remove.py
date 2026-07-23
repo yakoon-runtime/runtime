@@ -11,7 +11,7 @@ async def _resolve_box_id(space, box_ref: str, world_ref: str | None) -> str | N
     worlds = ports.get("luma.world.service")
     world_id = world_ref
     if not world_id.isdigit():
-        w = await worlds.get_world_by_name(world_id)
+        w = await worlds.get_world_by_name(name=world_id)
         if w is None:
             return None
         world_id = w.id
@@ -41,7 +41,7 @@ async def main():
         return
 
     try:
-        await notes.unlink(note.id, box_id)
+        await notes.unlink(note_id=note.id, box_id=box_id)
     except ValueError:
         await io.write(f"Note '{name}' is not linked here.")
         return

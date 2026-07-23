@@ -1,13 +1,9 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import context, io, ports
 
 
 async def main():
     name = context.request().arg(0)
     content = context.request().option("content") or ""
-
-    if not name:
-        await io.write("Error: note name is required.")
-        return
 
     notes = ports.get("luma.note.service")
     try:

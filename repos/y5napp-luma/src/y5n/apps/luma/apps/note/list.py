@@ -1,4 +1,4 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import context, io, ports
 
 
 async def main():
@@ -11,10 +11,11 @@ async def main():
         if not world_ref:
             await io.write("Error: --world required with --box.")
             return
+
         worlds = ports.get("luma.world.service")
         world_id = world_ref
         if not world_id.isdigit():
-            w = await worlds.get_world_by_name(world_id)
+            w = await worlds.get_world_by_name(name=world_id)
             if w is None:
                 await io.write("World not found.")
                 return
@@ -23,7 +24,7 @@ async def main():
         box = (
             await boxes.find_box(world_id=world_id, name=box_ref)
             if not box_ref.isdigit()
-            else await boxes.get_box(box_ref)
+            else await boxes.get_box(box_id=box_ref)
         )
         if box is None:
             await io.write("Box not found.")

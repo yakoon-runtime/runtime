@@ -1,6 +1,6 @@
-from y5n.sdk import context, io, ports, session
-
 import json
+
+from y5n.sdk import context, io, ports
 
 
 async def main():
@@ -43,4 +43,4 @@ async def main():
         await io.write("Import completed.\n\n  nothing to import")
         return
 
-    yield out_text(f"Import completed.\n\n  {created} created\n  {updated} updated")
+    yield io.write(f"Import completed.\n\n  {created} created\n  {updated} updated")

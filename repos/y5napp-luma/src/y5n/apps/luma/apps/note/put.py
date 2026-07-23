@@ -6,10 +6,6 @@ async def main():
     box_ref = context.request().option("box")
     world_ref = context.request().option("world")
 
-    if not name:
-        await io.write("Note name is required.")
-        return
-
     notes = ports.get("luma.note.service")
     note = await notes.find_note_by_name(name=name)
     if note is None:
@@ -23,7 +19,7 @@ async def main():
         worlds = ports.get("luma.world.service")
         world_id = world_ref
         if not world_id.isdigit():
-            w = await worlds.get_world_by_name(world_id)
+            w = await worlds.get_world_by_name(name=world_id)
             if w is None:
                 await io.write("World not found.")
                 return
