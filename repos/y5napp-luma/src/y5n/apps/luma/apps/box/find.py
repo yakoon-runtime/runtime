@@ -8,9 +8,6 @@ async def main():
     if not name:
         await io.write("Find what?")
         return
-    if not world_ref:
-        await io.write("Error: --world is required.")
-        return
 
     worlds = ports.get("luma.world.service")
     world_id = world_ref

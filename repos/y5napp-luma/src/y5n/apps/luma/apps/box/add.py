@@ -7,10 +7,6 @@ async def main():
     parent_id = context.request().option("parent")
     description = context.request().option("description") or ""
 
-    if not world_ref:
-        await io.write("Error: --world is required.")
-        return
-
     worlds = ports.get("luma.world.service")
     world_id = world_ref
     if not world_id.isdigit():

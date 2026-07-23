@@ -1,4 +1,4 @@
-from y5n.sdk import context, io, ports, session
+from y5n.sdk import context, io, ports
 
 
 async def main():
@@ -6,13 +6,6 @@ async def main():
     world_ref = context.request().option("world")
     new_name = context.request().option("new-name")
     description = context.request().option("description")
-
-    if not name_ref:
-        await io.write("Error: box name is required.")
-        return
-    if not world_ref:
-        await io.write("Error: --world is required.")
-        return
 
     worlds = ports.get("luma.world.service")
     world_id = world_ref
