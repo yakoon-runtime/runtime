@@ -1,6 +1,0 @@
-title: Ticker
-
-host: /boot/python/runtime
-
-entry:
-  run: pack:y5n.apps.labs.apps.ticker:main

@@ -1,6 +1,0 @@
-title: Delay
-
-host: /boot/python/runtime
-
-entry:
-  run: pack:y5n.apps.labs.apps.delay:main

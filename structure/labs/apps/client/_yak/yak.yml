@@ -1,6 +1,0 @@
-title: Client
-
-host: /boot/python/runtime
-
-entry:
-  run: pack:y5n.apps.labs.apps.client:main

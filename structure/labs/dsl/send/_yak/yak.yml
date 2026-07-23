@@ -1,0 +1,6 @@
+title: Send
+
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.apps.labs.dsl.send:main
