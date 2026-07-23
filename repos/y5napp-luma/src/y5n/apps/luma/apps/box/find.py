@@ -1,19 +1,6 @@
 from y5n.sdk import context, io, ports
 
 
-async def _resolve_path(boxes, box_id) -> list[str]:
-    names = []
-    current = box_id
-    while current is not None:
-        b = await boxes.get_box(box_id=current)
-        if b is None:
-            break
-        names.append(b.name)
-        current = b.parent_id
-    names.reverse()
-    return names
-
-
 async def main():
     name = context.request().arg(0)
     world_ref = context.request().option("world")
@@ -42,3 +29,16 @@ async def main():
 
     path = await _resolve_path(boxes, box.id)
     await io.write(f"Found: {'/'.join(path)}")
+
+
+async def _resolve_path(boxes, box_id) -> list[str]:
+    names = []
+    current = box_id
+    while current is not None:
+        b = await boxes.get_box(box_id=current)
+        if b is None:
+            break
+        names.append(b.name)
+        current = b.parent_id
+    names.reverse()
+    return names

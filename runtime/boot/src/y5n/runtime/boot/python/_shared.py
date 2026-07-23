@@ -119,6 +119,7 @@ def _build_context_dict(space, target_path: str) -> dict:
             "key": str(space.session.key) if space.session else None,
             "lang": space.session.lang if space.session else None,
             "interaction": space.session.interaction.value if space.session else None,
+            "data": dict(space.session.data.data) if space.session else {},
         },
         "flow": {
             "id": space.flow_id or "",

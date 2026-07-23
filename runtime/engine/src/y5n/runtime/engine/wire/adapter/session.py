@@ -62,11 +62,15 @@ class SessionAdapter:
 
         for key, value in patch.items():
             internal = _PATCH_MAP.get(key)
-            if internal is None:
+            if internal is not None:
+                setattr(session.data, internal, value)
+                applied[key] = value
+            elif key == "data" and isinstance(value, dict):
+                for dk, dv in value.items():
+                    session.data.set(dk, dv)
+                applied[key] = value
+            else:
                 ignored[key] = value
-                continue
-            setattr(session.data, internal, value)
-            applied[key] = value
 
         if self._on_save and applied:
             await self._on_save(session=session)
