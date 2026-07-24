@@ -15,6 +15,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="yak",
         description="Yakoon Platform Manager",
+        usage="yak <command> [options]",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "  Lifecycle\n"
