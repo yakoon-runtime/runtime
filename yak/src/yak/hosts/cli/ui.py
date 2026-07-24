@@ -6,6 +6,7 @@ from typing import TextIO
 GREEN = "\033[32m"
 RED = "\033[31m"
 RESET = "\033[0m"
+CLEAR = "\033[K"
 
 
 class TerminalUI:
@@ -33,6 +34,17 @@ class TerminalUI:
         indent = "    " * self._indent
         self._stream.write(f"{indent}{RED}✖{RESET} {label}\n")
 
+    def _begin_step(self, label: str) -> None:
+        if not self._verbose:
+            self._stream.write(f"  ● {label}...\n")
+            self._stream.flush()
+
+    def _end_step(self, label: str, success: bool) -> None:
+        if not self._verbose:
+            mark = f"{GREEN}✓{RESET}" if success else f"{RED}✖{RESET}"
+            self._stream.write(f"\r{CLEAR}  {mark} {label}\n")
+            self._stream.flush()
+
     def _push_indent(self) -> None:
         self._indent += 1
 
@@ -46,16 +58,14 @@ class StepContext:
         self._label = label
 
     def __enter__(self) -> "StepContext":
+        self._ui._begin_step(self._label)
         self._ui._push_indent()
         return self
 
     def __exit__(self, *args) -> None:
         self._ui._pop_indent()
         success = args[0] is None
-        if success:
-            self._ui.ok(self._label)
-        else:
-            self._ui.fail(self._label)
+        self._ui._end_step(self._label, success)
 
     def detail(self, text: str) -> None:
         self._ui.detail(text)
