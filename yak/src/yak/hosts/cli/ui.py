@@ -15,7 +15,7 @@ class TerminalUI:
     def title(self, text: str) -> None:
         _console.print(f"\n  {text}\n")
 
-    def step(self, label: str) -> "StepContext":
+    def step(self, label: str) -> StepContext:
         return StepContext(self, label)
 
     def detail(self, text: str) -> None:
@@ -36,7 +36,7 @@ class StepContext:
         self._label = label
         self._live: Live | None = None
 
-    def __enter__(self) -> "StepContext":
+    def __enter__(self) -> StepContext:
         if not self._ui._verbose:
             spinner = Spinner("dots", style="orange3")
             text = f"  [orange3]{self._label}[/orange3]"

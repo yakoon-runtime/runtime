@@ -15,5 +15,9 @@ def run(args, mgr) -> None:
 
     path = Path(path).resolve()
     python = path / ".venv" / "bin" / "python"
-    subprocess.Popen([str(python), "-m", "y5n.runtime.boot.python.runtime"], cwd=path)
-    print(f"Started: {path}")
+    proc = subprocess.Popen(
+        [str(python), "-m", "y5n.runtime.boot.python.runtime"],
+        cwd=path,
+    )
+    path.joinpath(".yak", "runtime.pid").write_text(str(proc.pid))
+    print(f"Started: {path} (pid {proc.pid})")
