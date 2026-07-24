@@ -1,71 +1,56 @@
 from __future__ import annotations
 
-import sys
-from typing import TextIO
+from rich.console import Console
+from rich.status import Status
 
-GREEN = "\033[32m"
-RED = "\033[31m"
-RESET = "\033[0m"
-CLEAR = "\033[K"
+_console = Console(stderr=True)
 
 
 class TerminalUI:
-    def __init__(self, stream: TextIO = sys.stderr, verbose: bool = False) -> None:
-        self._stream = stream
+    def __init__(self, verbose: bool = False) -> None:
         self._verbose = verbose
         self._indent = 0
 
     def title(self, text: str) -> None:
-        self._stream.write(f"\n  {text}\n\n")
+        _console.print(f"\n  {text}\n")
 
     def step(self, label: str) -> "StepContext":
         return StepContext(self, label)
 
     def detail(self, text: str) -> None:
         if self._verbose:
-            indent = "    " * (self._indent + 1)
-            self._stream.write(f"{indent}{text}\n")
+            indent = "    " * self._indent
+            _console.print(f"{indent}  {text}")
 
     def ok(self, label: str) -> None:
-        indent = "    " * self._indent
-        self._stream.write(f"{indent}{GREEN}✓{RESET} {label}\n")
+        _console.print(f"  [green]✔[/green] {label}")
 
     def fail(self, label: str) -> None:
-        indent = "    " * self._indent
-        self._stream.write(f"{indent}{RED}✖{RESET} {label}\n")
-
-    def _begin_step(self, label: str) -> None:
-        if not self._verbose:
-            self._stream.write(f"  ● {label}...\n")
-            self._stream.flush()
-
-    def _end_step(self, label: str, success: bool) -> None:
-        if not self._verbose:
-            mark = f"{GREEN}✓{RESET}" if success else f"{RED}✖{RESET}"
-            self._stream.write(f"\r{CLEAR}  {mark} {label}\n")
-            self._stream.flush()
-
-    def _push_indent(self) -> None:
-        self._indent += 1
-
-    def _pop_indent(self) -> None:
-        self._indent -= 1
+        _console.print(f"  [red]✘[/red] {label}")
 
 
 class StepContext:
     def __init__(self, ui: TerminalUI, label: str) -> None:
         self._ui = ui
         self._label = label
+        self._status: Status | None = None
 
     def __enter__(self) -> "StepContext":
-        self._ui._begin_step(self._label)
-        self._ui._push_indent()
+        if not self._ui._verbose:
+            self._status = _console.status(f"[dim]{self._label}...[/dim]", spinner="dots")
+            self._status.start()
+        self._ui._indent += 1
         return self
 
     def __exit__(self, *args) -> None:
-        self._ui._pop_indent()
+        self._ui._indent -= 1
         success = args[0] is None
-        self._ui._end_step(self._label, success)
+        if self._status is not None:
+            self._status.stop()
+        if success:
+            self._ui.ok(self._label)
+        else:
+            self._ui.fail(self._label)
 
     def detail(self, text: str) -> None:
         self._ui.detail(text)
