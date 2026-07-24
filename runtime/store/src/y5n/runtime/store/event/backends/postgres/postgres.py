@@ -6,8 +6,6 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Literal
 
-import asyncpg
-
 from ...models import (
     CurrentRow,
     EntityId,
@@ -52,6 +50,8 @@ class PostgresBackend:
     # ----------------------------
 
     async def initialize(self):
+        import asyncpg
+
         self.pool = await asyncpg.create_pool(self.dsn)
 
     # ----------------------------
