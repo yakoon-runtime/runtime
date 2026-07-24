@@ -11,6 +11,10 @@ class Materializer:
     def __init__(self, packs_root: Path) -> None:
         self._packs_root = packs_root
 
+    @property
+    def packs_root(self) -> Path:
+        return self._packs_root
+
     def materialize(
         self,
         workspace_root: Path,

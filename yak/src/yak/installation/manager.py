@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -22,6 +25,8 @@ class InstallationManager:
         self._materializer = Materializer(packs_root)
         self._installations_root = installations_root
 
+    # ── Install ──
+
     def install(self, target: str) -> Installation:
         dist = self._target.resolve(target)
         if dist is None:
@@ -30,7 +35,7 @@ class InstallationManager:
         packs = self._resolver.resolve(dist)
         now = datetime.now(UTC)
         root = self._installations_root / target
-        ws = self._materializer.materialize(root, dist.name, packs)
+        self._materializer.materialize(root, dist.name, packs)
 
         inst = Installation(
             name=target,
@@ -44,21 +49,124 @@ class InstallationManager:
         self._write_state(inst)
         return inst
 
+    # ── Update ──
+
+    def update(self, name: str) -> Installation:
+        inst = self._load(name)
+        if inst is None:
+            raise ValueError(f"Installation not found: {name}")
+
+        if inst.status == InstallationStatus.RUNNING:
+            raise RuntimeError(f"Cannot update running installation: {name}")
+
+        dist = self._target.resolve(inst.distribution)
+        if dist is None:
+            raise ValueError(f"Distribution not found: {inst.distribution}")
+
+        packs = self._resolver.resolve(dist)
+        now = datetime.now(UTC)
+        self._materializer.materialize(inst.root, dist.name, packs)
+
+        inst.packs = packs
+        inst.updated = now
+        self._write_state(inst)
+        return inst
+
+    # ── Doctor ──
+
+    def doctor(self, name: str) -> list[str]:
+        issues: list[str] = []
+        inst = self._load(name)
+        if inst is None:
+            return ["Installation not found"]
+
+        root = inst.root
+        if not root.exists():
+            issues.append("Installation root missing")
+
+        workspace = root / "workspace.toml"
+        if not workspace.exists():
+            issues.append("workspace.toml missing")
+
+        state = root / ".yak" / "state.toml"
+        if not state.exists():
+            issues.append("state.toml missing")
+
+        for pack in inst.packs:
+            path = self._packs_root() / pack
+            if not path.is_dir():
+                issues.append(f"Pack '{pack}' not found in repository")
+
+        return issues
+
+    # ── Run ──
+
+    def run(self, name: str) -> None:
+        inst = self._load(name)
+        if inst is None:
+            raise ValueError(f"Installation not found: {name}")
+
+        runtime = self._packs_root() / "runtime" / "src" / "y5n" / "runtime" / "boot"
+        main = runtime / "python" / "__main__.py"
+        if not main.exists():
+            raise RuntimeError(f"Runtime entry not found: {main}")
+
+        subprocess.Popen(
+            [sys.executable, str(main)],
+            cwd=inst.root,
+        )
+
+        inst.status = InstallationStatus.RUNNING
+        inst.updated = datetime.now(UTC)
+        self._write_state(inst)
+
+    # ── Stop ──
+
+    def stop(self, name: str) -> None:
+        inst = self._load(name)
+        if inst is None:
+            raise ValueError(f"Installation not found: {name}")
+
+        import signal
+
+        pid_file = inst.root / ".yak" / "runtime.pid"
+        if pid_file.exists():
+            pid = int(pid_file.read_text().strip())
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+            pid_file.unlink(missing_ok=True)
+
+        inst.status = InstallationStatus.STOPPED
+        inst.updated = datetime.now(UTC)
+        self._write_state(inst)
+
+    # ── Status ──
+
     def status(self, name: str) -> Installation | None:
-        state_file = self._installations_root / name / ".yak.toml"
-        if not state_file.exists():
-            return None
-        return self._read_state(state_file)
+        return self._load(name)
 
     def statuses(self) -> list[Installation]:
         if not self._installations_root.exists():
             return []
         result = []
         for entry in sorted(self._installations_root.iterdir()):
-            state = self.status(entry.name)
-            if state is not None:
-                result.append(state)
+            inst = self._load(entry.name)
+            if inst is not None:
+                result.append(inst)
         return result
+
+    # ── Internals ──
+
+    def _load(self, name: str) -> Installation | None:
+        state_file = self._installations_root / name / ".yak" / "state.toml"
+        if not state_file.exists():
+            return None
+        return self._read_state(state_file)
+
+    def _packs_root(self) -> Path:
+        return self._materializer.packs_root
 
     def _write_state(self, inst: Installation) -> None:
         state_dir = inst.root / ".yak"
