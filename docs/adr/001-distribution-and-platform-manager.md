@@ -1,6 +1,6 @@
 # ADR 001: Distribution and Platform Manager
 
-**Status:** Accepted  
+**Status:** Implemented  
 **Date:** 2026-07-25
 
 ## Context
