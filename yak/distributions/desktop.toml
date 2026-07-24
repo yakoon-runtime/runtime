@@ -1,0 +1,12 @@
+name = "desktop"
+version = "0.1.0"
+description = "Yakoon Desktop — runtime with system tools and interactive world"
+
+[[packs]]
+name = "runtime"
+
+[[packs]]
+name = "system"
+
+[[packs]]
+name = "luma"

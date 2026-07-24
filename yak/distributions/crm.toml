@@ -1,0 +1,12 @@
+name = "crm"
+version = "0.1.0"
+description = "Yakoon CRM — contact management with identity"
+
+[[distribution]]
+name = "desktop"
+
+[[packs]]
+name = "ident"
+
+[[packs]]
+name = "crm"

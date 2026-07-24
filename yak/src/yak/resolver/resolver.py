@@ -1,31 +1,33 @@
 from __future__ import annotations
 
-from yak.distribution.models import PackName
-from yak.repository.interface import Repository
+from collections.abc import Callable
+
+from yak.distribution.models import Distribution, PackName
 
 
 class Resolver:
-    def __init__(self, repository: Repository) -> None:
-        self._repository = repository
+    def __init__(
+        self,
+        resolve_distribution: Callable[[str], Distribution | None],
+    ) -> None:
+        self._resolve_distribution = resolve_distribution
 
-    def resolve(self, distribution_name: str) -> list[PackName]:
+    def resolve(self, distribution: Distribution) -> list[PackName]:
         seen: set[PackName] = set()
         order: list[PackName] = []
-        self._resolve_tree(distribution_name, seen, order)
+        self._resolve_tree(distribution, seen, order)
         return order
 
     def _resolve_tree(
         self,
-        name: str,
+        dist: Distribution,
         seen: set[PackName],
         order: list[PackName],
     ) -> None:
-        dist = self._repository.resolve_distribution(name)
-        if dist is None:
-            return
-
         for sub_ref in dist.distributions:
-            self._resolve_tree(sub_ref.name, seen, order)
+            sub = self._resolve_distribution(sub_ref.name)
+            if sub is not None:
+                self._resolve_tree(sub, seen, order)
 
         for pack_ref in dist.packs:
             if pack_ref.name not in seen:

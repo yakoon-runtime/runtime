@@ -10,7 +10,7 @@ class LocalRepository:
         self._root = packs_root
 
     def resolve_distribution(self, name: str) -> Distribution | None:
-        dist_path = self._root / f"y5napp-{name}" / "distribution.toml"
+        dist_path = self._root / f"y5napp-{name}" / "pack.toml"
         if not dist_path.exists():
             return None
         return self._parse(dist_path)
@@ -26,8 +26,8 @@ class LocalRepository:
         return Distribution(
             name=data["name"],
             version=data.get("version", "0.1"),
-            packs=[self._pack_ref(p) for p in data.get("pack", [])],
-            distributions=[self._pack_ref(p) for p in data.get("distribution", [])],
+            packs=[self._pack_ref(p) for p in data.get("packs", data.get("pack", []))],
+            distributions=[self._pack_ref(p) for p in data.get("distributions", data.get("distribution", []))],
         )
 
     @staticmethod
