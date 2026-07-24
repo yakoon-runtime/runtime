@@ -29,7 +29,7 @@ def build_parser() -> argparse.ArgumentParser:
             "    resolve    Show resolved pack list for a target\n"
         ),
     )
-    sub = parser.add_subparsers(dest="command", required=True, metavar="")
+    sub = parser.add_subparsers(dest="command", required=True, metavar="<command>")
 
     p = sub.add_parser("resolve", help="")
     p.add_argument("target")
