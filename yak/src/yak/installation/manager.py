@@ -28,6 +28,7 @@ class InstallationManager:
         self._materializer = Materializer(artifact_store)
         self._installer = Installer(artifact_store)
         self._installations_root = installations_root
+        self._sdk_path = None
 
     # ── Install ──
 
@@ -53,7 +54,7 @@ class InstallationManager:
         )
         self._write_state(inst)
 
-        self._installer.install(inst)
+        self._installer.install(inst, sdk_path=self._sdk_path)
         inst.status = InstallationStatus.CREATED
         inst.updated = datetime.now(UTC)
         self._write_state(inst)
@@ -82,7 +83,7 @@ class InstallationManager:
         inst.updated = now
         self._write_state(inst)
 
-        self._installer.install(inst)
+        self._installer.install(inst, sdk_path=self._sdk_path)
         inst.status = InstallationStatus.CREATED
         inst.updated = datetime.now(UTC)
         self._write_state(inst)
