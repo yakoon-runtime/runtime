@@ -51,7 +51,6 @@ class FileRepository:
         return Distribution(
             name=data["name"],
             version=data.get("version", "0.1"),
-            packs=[self._pack_ref(p) for p in data.get("packs", data.get("pack", []))],
             distributions=[
                 self._pack_ref(p)
                 for p in data.get("distributions", data.get("distribution", []))

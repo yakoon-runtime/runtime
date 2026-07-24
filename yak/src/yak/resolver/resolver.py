@@ -36,7 +36,7 @@ class Resolver:
 
         mounts.extend(dist.mounts)
 
-        for pack_ref in dist.packs:
-            if pack_ref.name not in seen:
-                seen.add(pack_ref.name)
-                order.append(pack_ref.name)
+        for mount in dist.mounts:
+            if mount.pack not in seen:
+                seen.add(mount.pack)
+                order.append(mount.pack)

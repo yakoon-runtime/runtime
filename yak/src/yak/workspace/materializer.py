@@ -3,16 +3,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from pathlib import Path
 
+from datetime import datetime, timezone
+from pathlib import Path
+
 from yak.distribution.models import Mount, PackName
 from yak.repository.artifact import ArtifactStore
 from yak.workspace.models import Workspace
-
-
-def _target_for(mounts: list[Mount], pack: PackName) -> str | None:
-    for m in mounts:
-        if m.pack == pack:
-            return m.target
-    return None
 
 
 class Materializer:
@@ -32,23 +28,21 @@ class Materializer:
         structure.mkdir(exist_ok=True)
 
         mounts = mounts or []
-        for pack in packs:
-            artifact = self._artifacts.get_artifact(pack)
+        for mount in mounts:
+            artifact = self._artifacts.get_artifact(mount.pack)
             if artifact is None:
                 continue
             pack_struct = artifact / "structure"
             if not pack_struct.is_dir():
                 continue
 
-            target_rel = _target_for(mounts, pack) or pack
-            if target_rel == "/":
-                # Mount at root: symlink individual entries
+            if mount.target == "/":
                 for child in sorted(pack_struct.iterdir()):
                     dst = structure / child.name
                     if not dst.exists():
                         dst.symlink_to(child.resolve(), target_is_directory=child.is_dir())
             else:
-                target = structure / target_rel.strip("/")
+                target = structure / mount.target.strip("/")
                 target.parent.mkdir(parents=True, exist_ok=True)
                 if not target.exists():
                     target.symlink_to(pack_struct, target_is_directory=True)

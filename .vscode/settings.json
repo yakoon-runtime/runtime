@@ -4,7 +4,7 @@
   "python.analysis.useLibraryCodeForTypes": true,
   "python.analysis.extraPaths": [
     // yak
-    "yak",
+    "yak/src",
     // runtime
     "runtime/api/src",
     "runtime/engine/src",
@@ -14,14 +14,13 @@
     "runtime/llm/src",
     "sdk/python/src",
     // repos
+    "repos/y5napp-root/src",
     "repos/y5napp-system/src",
     "repos/y5napp-ident/src",
     "repos/y5napp-crm/src",
     "repos/y5napp-luma/src",
-    "repos/yakoon-root/src",
     // apps
     "apps/y5napp-web/src",
-    "apps/y5napp-console/src",
     "apps/y5napp-textual/src",
   ],
   "python.testing.pytestArgs": [
@@ -29,6 +28,7 @@
     "runtime/store/tests/event",
     "runtime/store/tests/sequence",
     "repos/y5napp-luma/tests",
+    "yak/tests",
   ],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,

@@ -30,26 +30,29 @@ def test_materialize_with_mounts():
         assert manifest.exists()
         assert "test-pack" in manifest.read_text()
 
-        # Structure appears at /opt/app (the mount target), not at root level
+        # Structure appears at /opt/app (the mount target)
         link = ws_root / "structure" / "opt" / "app"
         assert link.is_symlink()
         assert (link / "hello.txt").exists()
 
 
-def test_materialize_legacy_fallback():
+def test_materialize_at_root():
     with tempfile.TemporaryDirectory() as tmp:
         packs_root = Path(tmp) / "packs"
         ws_root = Path(tmp) / "workspace"
 
         pack_dir = packs_root / "test-pack" / "structure"
         pack_dir.mkdir(parents=True)
+        (pack_dir / "_yak").mkdir()
         (pack_dir / "hello.txt").write_text("hi")
 
         store = DirectoryArtifactStore(packs_root)
         mat = Materializer(store)
-        # No mounts → legacy: link at pack name
-        ws = mat.materialize(ws_root, "test", [PackName("test-pack")])
+        mounts = [Mount(pack=PackName("test-pack"), target="/")]
+        ws = mat.materialize(ws_root, "test", [PackName("test-pack")], mounts=mounts)
 
-        link = ws_root / "structure" / "test-pack"
+        link = ws_root / "structure" / "_yak"
         assert link.is_symlink()
-        assert (link / "hello.txt").exists()
+
+        link2 = ws_root / "structure" / "hello.txt"
+        assert link2.is_symlink()
