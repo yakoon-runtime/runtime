@@ -8,6 +8,7 @@ from pathlib import Path
 
 from yak.distribution.models import PackName
 from yak.installation.models import Installation, InstallationStatus
+from yak.installer.installer import Installer
 from yak.repository.artifact import ArtifactStore
 from yak.repository.interface import Repository
 from yak.resolver.resolver import Resolver
@@ -25,6 +26,7 @@ class InstallationManager:
         self._artifacts = artifact_store
         self._resolver = Resolver(lambda name: repository.resolve_distribution(name))
         self._materializer = Materializer(artifact_store)
+        self._installer = Installer(artifact_store)
         self._installations_root = installations_root
 
     # ── Install ──
@@ -50,6 +52,11 @@ class InstallationManager:
             updated=now,
         )
         self._write_state(inst)
+
+        self._installer.install(inst)
+        inst.status = InstallationStatus.CREATED
+        inst.updated = datetime.now(UTC)
+        self._write_state(inst)
         return inst
 
     # ── Update ──
@@ -71,7 +78,13 @@ class InstallationManager:
         self._materializer.materialize(inst.root, dist.name, packs, mounts=mounts)
 
         inst.packs = packs
+        inst.status = InstallationStatus.MATERIALIZED
         inst.updated = now
+        self._write_state(inst)
+
+        self._installer.install(inst)
+        inst.status = InstallationStatus.CREATED
+        inst.updated = datetime.now(UTC)
         self._write_state(inst)
         return inst
 
