@@ -38,7 +38,7 @@ class InstallationManager:
         now = datetime.now(UTC)
         root = path.resolve() if path else (self._installations_root / target)
         root.mkdir(parents=True, exist_ok=True)
-        self._materializer.materialize(root, dist.name, packs)
+        self._materializer.materialize(root, dist.name, packs, mounts=dist.mounts)
 
         inst = Installation(
             name=target,

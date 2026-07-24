@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
-from yak.distribution.models import PackName
+from yak.distribution.models import Mount, PackName
 from yak.repository.artifact import ArtifactStore
 from yak.workspace.models import Workspace
+
+
+def _target_for(mounts: list[Mount], pack: PackName) -> str | None:
+    for m in mounts:
+        if m.pack == pack:
+            return m.target
+    return None
 
 
 class Materializer:
@@ -17,22 +24,30 @@ class Materializer:
         workspace_root: Path,
         distribution: str,
         packs: list[PackName],
+        mounts: list[Mount] | None = None,
     ) -> Workspace:
         workspace_root.mkdir(parents=True, exist_ok=True)
 
         structure = workspace_root / "structure"
         structure.mkdir(exist_ok=True)
 
+        mounts = mounts or []
         for pack in packs:
             artifact = self._artifacts.get_artifact(pack)
             if artifact is None:
                 continue
             pack_struct = artifact / "structure"
-            link = structure / pack
-            if pack_struct.is_dir() and not link.exists():
-                link.symlink_to(pack_struct, target_is_directory=True)
+            if not pack_struct.is_dir():
+                continue
 
-        now = datetime.now(UTC)
+            # Find explicit mount target for this pack, otherwise mount at pack name
+            target_rel = _target_for(mounts, pack) or pack
+            target = structure / target_rel.strip("/")
+            target.parent.mkdir(parents=True, exist_ok=True)
+            if not target.exists():
+                target.symlink_to(pack_struct, target_is_directory=True)
+
+        now = datetime.now(timezone.utc)
         self._write_manifest(workspace_root, distribution, packs, now)
 
         return Workspace(

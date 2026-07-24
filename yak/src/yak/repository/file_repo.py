@@ -4,6 +4,7 @@ from pathlib import Path
 
 from yak.distribution.models import (
     Distribution,
+    Mount,
     PackName,
     PackReference,
     VersionConstraint,
@@ -55,6 +56,14 @@ class FileRepository:
                 self._pack_ref(p)
                 for p in data.get("distributions", data.get("distribution", []))
             ],
+            mounts=[self._mount(m) for m in data.get("mounts", data.get("mount", []))],
+        )
+
+    @staticmethod
+    def _mount(raw: dict) -> Mount:
+        return Mount(
+            pack=PackName(raw.get("pack", "")),
+            target=raw.get("target", ""),
         )
 
     @staticmethod

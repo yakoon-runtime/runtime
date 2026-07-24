@@ -10,3 +10,11 @@ name = "ident"
 
 [[packs]]
 name = "crm"
+
+[[mount]]
+pack = "ident"
+target = "/usr/sbin/ident"
+
+[[mount]]
+pack = "crm"
+target = "/opt/crm"

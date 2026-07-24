@@ -10,3 +10,15 @@ name = "system"
 
 [[packs]]
 name = "luma"
+
+[[mount]]
+pack = "runtime"
+target = "/boot"
+
+[[mount]]
+pack = "system"
+target = "/usr/bin"
+
+[[mount]]
+pack = "luma"
+target = "/opt/luma"
