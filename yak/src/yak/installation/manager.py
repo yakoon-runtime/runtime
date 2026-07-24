@@ -34,11 +34,11 @@ class InstallationManager:
         if dist is None:
             raise ValueError(f"Unknown target: {target}")
 
-        packs = self._resolver.resolve(dist)
+        packs, mounts = self._resolver.resolve(dist)
         now = datetime.now(UTC)
         root = path.resolve() if path else (self._installations_root / target)
         root.mkdir(parents=True, exist_ok=True)
-        self._materializer.materialize(root, dist.name, packs, mounts=dist.mounts)
+        self._materializer.materialize(root, dist.name, packs, mounts=mounts)
 
         inst = Installation(
             name=target,
@@ -66,9 +66,9 @@ class InstallationManager:
         if dist is None:
             raise ValueError(f"Distribution not found: {inst.distribution}")
 
-        packs = self._resolver.resolve(dist)
+        packs, mounts = self._resolver.resolve(dist)
         now = datetime.now(UTC)
-        self._materializer.materialize(inst.root, dist.name, packs)
+        self._materializer.materialize(inst.root, dist.name, packs, mounts=mounts)
 
         inst.packs = packs
         inst.updated = now

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from yak.distribution.models import Distribution, PackName
+from yak.distribution.models import Distribution, Mount, PackName
 
 
 class Resolver:
@@ -12,22 +12,29 @@ class Resolver:
     ) -> None:
         self._resolve_distribution = resolve_distribution
 
-    def resolve(self, distribution: Distribution) -> list[PackName]:
+    def resolve(
+        self,
+        distribution: Distribution,
+    ) -> tuple[list[PackName], list[Mount]]:
         seen: set[PackName] = set()
         order: list[PackName] = []
-        self._resolve_tree(distribution, seen, order)
-        return order
+        mounts: list[Mount] = []
+        self._resolve_tree(distribution, seen, order, mounts)
+        return order, mounts
 
     def _resolve_tree(
         self,
         dist: Distribution,
         seen: set[PackName],
         order: list[PackName],
+        mounts: list[Mount],
     ) -> None:
         for sub_ref in dist.distributions:
             sub = self._resolve_distribution(sub_ref.name)
             if sub is not None:
-                self._resolve_tree(sub, seen, order)
+                self._resolve_tree(sub, seen, order, mounts)
+
+        mounts.extend(dist.mounts)
 
         for pack_ref in dist.packs:
             if pack_ref.name not in seen:
