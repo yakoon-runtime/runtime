@@ -17,7 +17,7 @@ class FileRepository:
         self._builtin = builtin_dists
 
     def resolve_distribution(self, name: str) -> Distribution | None:
-        # 1. Builtin distributions (e.g. "desktop" → yak/distributions/desktop.toml)
+        # 1. Builtin distributions (e.g. "desktop" → yak/dists/desktop.toml)
         if self._builtin is not None:
             builtin = self._builtin / f"{name}.toml"
             if builtin.exists():
