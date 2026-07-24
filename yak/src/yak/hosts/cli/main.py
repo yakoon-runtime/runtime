@@ -20,6 +20,8 @@ def _build_manager() -> InstallationManager:
     artifacts = DirectoryArtifactStore(repos, runtime, apps, sdk)
     mgr = InstallationManager(repo, artifacts)
     mgr._sdk_path = sdk
+    mgr._installer._apps_root = apps
+    mgr._sdk_path = sdk
     return mgr
 
 

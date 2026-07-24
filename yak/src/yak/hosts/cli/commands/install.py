@@ -41,7 +41,7 @@ def run(args, mgr) -> None:
                 updated=now,
             )
             mgr._write_state(inst)
-            mgr._installer.install(inst, sdk_path=mgr._sdk_path)
+            mgr._installer.install(inst, tools=tools, sdk_path=mgr._sdk_path)
             inst.status = InstallationStatus.CREATED
             inst.updated = datetime.now(UTC)
             mgr._write_state(inst)
