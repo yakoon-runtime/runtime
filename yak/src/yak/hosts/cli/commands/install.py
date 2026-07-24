@@ -19,6 +19,8 @@ def run(args, mgr) -> None:
 
         with ui.step("Workspace"):
             root = Path(args.path).resolve()
+            if (root / ".yak" / "state.toml").exists():
+                raise RuntimeError(f"Already a Yak installation: {root}")
             root.mkdir(parents=True, exist_ok=True)
             mgr._materializer.materialize(root, dist.name, packs, mounts=mounts)
 
