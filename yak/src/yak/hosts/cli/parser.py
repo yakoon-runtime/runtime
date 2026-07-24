@@ -31,6 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("update", help="Update an installation")
     p.add_argument("--path", "-p", help="Path to installation")
+    p.add_argument("--verbose", "-v", action="store_true", help="Show detailed progress")
     p.set_defaults(func=_update.run)
 
     p = sub.add_parser("doctor", help="Check installation health")
