@@ -14,4 +14,13 @@ def run(args, mgr) -> None:
         return
 
     python = path / ".venv" / "bin" / "python"
+    result = subprocess.run(
+        [str(python), "-c", "import y5napp.web; print('ok')"],
+        capture_output=True, text=True,
+    )
+    if result.returncode != 0:
+        print("Web interface not installed.")
+        print("Update the installation: yak update --path", path)
+        return
+
     subprocess.run([str(python), "-m", "y5napp.web"], cwd=path)

@@ -24,3 +24,7 @@ name = "runtime"
 [[tool]]
 name = "shell"
 optional = true
+
+[[tool]]
+name = "web"
+optional = true
