@@ -38,7 +38,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("install", help="")
     p.add_argument("target")
-    p.add_argument("--path", "-p", required=True, help="Installation path")
+    p.add_argument("--path", "-p", help="Installation path (default: ./<target>)")
     p.add_argument("--verbose", "-v", action="store_true", help="Show detailed progress")
     p.set_defaults(func=_install.run)
 
