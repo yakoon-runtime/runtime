@@ -2,19 +2,22 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from yak.distribution.target import TargetResolver
 from yak.hosts.cli.parser import build_parser
 from yak.installation.manager import InstallationManager
+from yak.repository.artifact import DirectoryArtifactStore
+from yak.repository.file_repo import FileRepository
 
 
 def _build_manager() -> InstallationManager:
     repo_root = Path(__file__).resolve().parents[5]
-    dists_root = repo_root / "yak" / "distributions"
+    repos = repo_root / "repos"
+    runtime = repo_root / "runtime"
+    dists = repo_root / "yak" / "distributions"
     inst_root = repo_root / "workspace"
-    target = TargetResolver(dists_root, repo_root / "repos", repo_root / "runtime")
-    return InstallationManager(
-        target, inst_root, repo_root / "repos", repo_root / "runtime"
-    )
+
+    repo = FileRepository(repos, runtime, builtin_dists=dists)
+    artifacts = DirectoryArtifactStore(repos, runtime)
+    return InstallationManager(repo, artifacts, inst_root)
 
 
 def main() -> None:

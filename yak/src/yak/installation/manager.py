@@ -7,8 +7,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from yak.distribution.models import PackName
-from yak.distribution.target import TargetResolver
 from yak.installation.models import Installation, InstallationStatus
+from yak.repository.artifact import ArtifactStore
+from yak.repository.interface import Repository
 from yak.resolver.resolver import Resolver
 from yak.workspace.materializer import Materializer
 
@@ -16,20 +17,20 @@ from yak.workspace.materializer import Materializer
 class InstallationManager:
     def __init__(
         self,
-        target_resolver: TargetResolver,
+        repository: Repository,
+        artifact_store: ArtifactStore,
         installations_root: Path,
-        *pack_roots: Path,
     ) -> None:
-        self._target = target_resolver
-        self._resolver = Resolver(lambda name: self._target.resolve(name))
-        self._materializer = Materializer(*pack_roots)
+        self._repo = repository
+        self._artifacts = artifact_store
+        self._resolver = Resolver(lambda name: repository.resolve_distribution(name))
+        self._materializer = Materializer(artifact_store)
         self._installations_root = installations_root
-        self._pack_roots = list(pack_roots)
 
     # ── Install ──
 
     def install(self, target: str) -> Installation:
-        dist = self._target.resolve(target)
+        dist = self._repo.resolve_distribution(target)
         if dist is None:
             raise ValueError(f"Unknown target: {target}")
 
@@ -60,7 +61,7 @@ class InstallationManager:
         if inst.status == InstallationStatus.RUNNING:
             raise RuntimeError(f"Cannot update running installation: {name}")
 
-        dist = self._target.resolve(inst.distribution)
+        dist = self._repo.resolve_distribution(inst.distribution)
         if dist is None:
             raise ValueError(f"Distribution not found: {inst.distribution}")
 
@@ -85,35 +86,30 @@ class InstallationManager:
         if not root.exists():
             issues.append("Installation root missing")
 
-        workspace = root / "workspace.toml"
-        if not workspace.exists():
+        if not (root / "workspace.toml").exists():
             issues.append("workspace.toml missing")
 
-        state = root / ".yak" / "state.toml"
-        if not state.exists():
+        if not (root / ".yak" / "state.toml").exists():
             issues.append("state.toml missing")
 
         for pack in inst.packs:
-            found = any(
-                (root.name == pack and root.is_dir())
-                or (root / pack).is_dir()
-                or (root / f"y5napp-{pack}").is_dir()
-                for root in self._pack_roots
-            )
-            if not found:
+            if not self._artifacts.has_artifact(pack):
                 issues.append(f"Pack '{pack}' not found")
 
         return issues
 
-    # ── Run ──
+    # ── Run / Stop ──
 
     def run(self, name: str) -> None:
         inst = self._load(name)
         if inst is None:
             raise ValueError(f"Installation not found: {name}")
 
-        runtime = self._packs_root() / "runtime" / "src" / "y5n" / "runtime" / "boot"
-        main = runtime / "python" / "__main__.py"
+        runtime_dir = self._artifacts.get_artifact(PackName("runtime"))
+        if runtime_dir is None:
+            raise RuntimeError("Runtime artifact not found")
+
+        main = runtime_dir / "boot" / "python" / "__main__.py"
         if not main.exists():
             raise RuntimeError(f"Runtime entry not found: {main}")
 
@@ -125,8 +121,6 @@ class InstallationManager:
         inst.status = InstallationStatus.RUNNING
         inst.updated = datetime.now(UTC)
         self._write_state(inst)
-
-    # ── Stop ──
 
     def stop(self, name: str) -> None:
         inst = self._load(name)
@@ -170,9 +164,6 @@ class InstallationManager:
         if not state_file.exists():
             return None
         return self._read_state(state_file)
-
-    def _pack_roots(self) -> list[Path]:
-        return self._materializer.pack_roots
 
     def _write_state(self, inst: Installation) -> None:
         state_dir = inst.root / ".yak"

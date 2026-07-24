@@ -1,8 +1,9 @@
 import tempfile
 from pathlib import Path
 
-from yak.distribution.target import TargetResolver
 from yak.installation.manager import InstallationManager
+from yak.repository.artifact import DirectoryArtifactStore
+from yak.repository.file_repo import FileRepository
 
 
 def _make_env(root, pack_name="test-pack"):
@@ -20,8 +21,9 @@ def _make_env(root, pack_name="test-pack"):
 
 
 def _mgr(repos, dists, installations):
-    target = TargetResolver(dists, repos)
-    return InstallationManager(target, installations, repos)
+    repo = FileRepository(repos, builtin_dists=dists)
+    artifacts = DirectoryArtifactStore(repos)
+    return InstallationManager(repo, artifacts, installations)
 
 
 def test_install_creates_installation():
@@ -43,8 +45,9 @@ def test_install_creates_installation():
 def test_install_unknown_target_raises():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        target = TargetResolver(root / "dists", root / "repos")
-        mgr = InstallationManager(target, root / "inst", root / "repos")
+        repo = FileRepository(root / "repos", builtin_dists=root / "dists")
+        artifacts = DirectoryArtifactStore(root / "repos")
+        mgr = InstallationManager(repo, artifacts, root / "inst")
 
         import pytest
 
@@ -55,8 +58,9 @@ def test_install_unknown_target_raises():
 def test_status_returns_none_for_unknown():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        target = TargetResolver(root / "dists", root / "repos")
-        mgr = InstallationManager(target, root / "inst", root / "repos")
+        repo = FileRepository(root / "repos", builtin_dists=root / "dists")
+        artifacts = DirectoryArtifactStore(root / "repos")
+        mgr = InstallationManager(repo, artifacts, root / "inst")
 
         assert mgr.status("unknown") is None
 
@@ -64,8 +68,9 @@ def test_status_returns_none_for_unknown():
 def test_statuses_returns_empty_when_no_installations():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
-        target = TargetResolver(root / "dists", root / "repos")
-        mgr = InstallationManager(target, root / "inst", root / "repos")
+        repo = FileRepository(root / "repos", builtin_dists=root / "dists")
+        artifacts = DirectoryArtifactStore(root / "repos")
+        mgr = InstallationManager(repo, artifacts, root / "inst")
 
         assert mgr.statuses() == []
 
