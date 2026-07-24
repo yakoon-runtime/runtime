@@ -1,4 +1,0 @@
-workspace:
-  /: ../../structure
-  /opt/crm: ../../structure/opt/crm
-  /opt/luma: ../../structure/opt/luma
