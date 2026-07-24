@@ -28,6 +28,5 @@ class Mount:
 class Distribution:
     name: str
     version: str
-    packs: list[PackReference] = field(default_factory=list)
-    distributions: list[PackReference] = field(default_factory=list)
     mounts: list[Mount] = field(default_factory=list)
+    distributions: list[PackReference] = field(default_factory=list)

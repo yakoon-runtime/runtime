@@ -15,7 +15,7 @@ def _make_env(root, pack_name="test-pack"):
     )
     dists.mkdir()
     (dists / "myapp.toml").write_text(
-        f'name = "myapp"\nversion = "0.1"\n\n[[packs]]\nname = "{pack_name}"\n'
+        f'name = "myapp"\nversion = "0.1"\n\n[[mount]]\npack = "{pack_name}"\ntarget = "/"\n'
     )
     return repos, dists
 

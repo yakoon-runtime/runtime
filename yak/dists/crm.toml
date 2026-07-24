@@ -5,12 +5,6 @@ description = "Yakoon CRM — contact management with identity"
 [[distribution]]
 name = "desktop"
 
-[[packs]]
-name = "ident"
-
-[[packs]]
-name = "crm"
-
 [[mount]]
 pack = "ident"
 target = "/usr/sbin/ident"

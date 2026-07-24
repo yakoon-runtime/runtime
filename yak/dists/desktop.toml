@@ -2,18 +2,6 @@ name = "desktop"
 version = "0.1.0"
 description = "Yakoon Desktop — runtime with system tools and interactive world"
 
-[[packs]]
-name = "root"
-
-[[packs]]
-name = "runtime"
-
-[[packs]]
-name = "system"
-
-[[packs]]
-name = "luma"
-
 [[mount]]
 pack = "root"
 target = "/"
