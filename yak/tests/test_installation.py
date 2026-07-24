@@ -20,24 +20,25 @@ def _make_env(root, pack_name="test-pack"):
     return repos, dists
 
 
-def _mgr(repos, dists, installations):
+def _mgr(repos, dists):
     repo = FileRepository(repos, builtin_dists=dists)
     artifacts = DirectoryArtifactStore(repos)
-    return InstallationManager(repo, artifacts, installations)
+    return InstallationManager(repo, artifacts)
 
 
 def test_install_creates_installation():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         repos, dists = _make_env(root)
-        mgr = _mgr(repos, dists, root / "inst")
+        mgr = _mgr(repos, dists)
 
-        inst = mgr.install("myapp")
+        inst_path = root / "inst" / "myapp"
+        inst = mgr.install("myapp", inst_path)
 
         assert inst.name == "myapp"
         assert inst.distribution == "myapp"
         assert inst.packs == ["test-pack"]
-        assert inst.root == root / "inst" / "myapp"
+        assert inst.root == inst_path
         assert (inst.root / "workspace.toml").exists()
         assert (inst.root / ".yak" / "state.toml").exists()
 
@@ -47,58 +48,67 @@ def test_install_unknown_target_raises():
         root = Path(tmp)
         repo = FileRepository(root / "repos", builtin_dists=root / "dists")
         artifacts = DirectoryArtifactStore(root / "repos")
-        mgr = InstallationManager(repo, artifacts, root / "inst")
+        mgr = InstallationManager(repo, artifacts)
 
         import pytest
 
         with pytest.raises(ValueError, match="Unknown target"):
-            mgr.install("nonexistent")
+            mgr.install("nonexistent", root / "inst" / "nope")
 
 
-def test_status_returns_none_for_unknown():
+def test_load_from_path():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        repos, dists = _make_env(root)
+        mgr = _mgr(repos, dists)
+
+        inst_path = root / "inst" / "myapp"
+        mgr.install("myapp", inst_path)
+
+        loaded = mgr.load(inst_path)
+        assert loaded is not None
+        assert loaded.name == "myapp"
+        assert loaded.root == inst_path
+
+
+def test_load_returns_none_for_invalid_path():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         repo = FileRepository(root / "repos", builtin_dists=root / "dists")
         artifacts = DirectoryArtifactStore(root / "repos")
-        mgr = InstallationManager(repo, artifacts, root / "inst")
+        mgr = InstallationManager(repo, artifacts)
 
-        assert mgr.status("unknown") is None
-
-
-def test_statuses_returns_empty_when_no_installations():
-    with tempfile.TemporaryDirectory() as tmp:
-        root = Path(tmp)
-        repo = FileRepository(root / "repos", builtin_dists=root / "dists")
-        artifacts = DirectoryArtifactStore(root / "repos")
-        mgr = InstallationManager(repo, artifacts, root / "inst")
-
-        assert mgr.statuses() == []
+        assert mgr.load(root / "nonexistent") is None
 
 
 def test_update_rematerializes():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         repos, dists = _make_env(root)
-        mgr = _mgr(repos, dists, root / "inst")
-        mgr.install("myapp")
-        mgr.update("myapp")
-        inst = mgr.status("myapp")
-        assert inst is not None
-        assert inst.status.value == "created"
+        mgr = _mgr(repos, dists)
+
+        inst_path = root / "inst" / "myapp"
+        mgr.install("myapp", inst_path)
+        mgr.update(inst_path)
+        loaded = mgr.load(inst_path)
+        assert loaded is not None
+        assert loaded.status.value == "created"
 
 
 def test_doctor_reports_missing_pack():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         repos, dists = _make_env(root)
-        mgr = _mgr(repos, dists, root / "inst")
-        mgr.install("myapp")
+        mgr = _mgr(repos, dists)
+
+        inst_path = root / "inst" / "myapp"
+        mgr.install("myapp", inst_path)
 
         import shutil
 
         shutil.rmtree(repos / "test-pack")
 
-        issues = mgr.doctor("myapp")
+        issues = mgr.doctor(inst_path)
         assert any("test-pack" in i for i in issues)
 
 
@@ -106,8 +116,8 @@ def test_doctor_reports_missing_installation():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         repos, dists = _make_env(root)
-        mgr = _mgr(repos, dists, root / "inst")
-        issues = mgr.doctor("nonexistent")
+        mgr = _mgr(repos, dists)
+        issues = mgr.doctor(root / "nonexistent")
         assert "not found" in issues[0]
 
 
@@ -115,8 +125,8 @@ def test_update_unknown_raises():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
         repos, dists = _make_env(root)
-        mgr = _mgr(repos, dists, root / "inst")
+        mgr = _mgr(repos, dists)
         import pytest
 
         with pytest.raises(ValueError, match="not found"):
-            mgr.update("nonexistent")
+            mgr.update(root / "nonexistent")

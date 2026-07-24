@@ -20,26 +20,24 @@ class InstallationManager:
         self,
         repository: Repository,
         artifact_store: ArtifactStore,
-        installations_root: Path,
     ) -> None:
         self._repo = repository
         self._artifacts = artifact_store
         self._resolver = Resolver(lambda name: repository.resolve_distribution(name))
         self._materializer = Materializer(artifact_store)
         self._installer = Installer(artifact_store)
-        self._installations_root = installations_root
         self._sdk_path = None
 
     # ── Install ──
 
-    def install(self, target: str, path: Path | None = None) -> Installation:
+    def install(self, target: str, path: Path) -> Installation:
         dist = self._repo.resolve_distribution(target)
         if dist is None:
             raise ValueError(f"Unknown target: {target}")
 
         packs, mounts = self._resolver.resolve(dist)
         now = datetime.now(UTC)
-        root = path.resolve() if path else (self._installations_root / target)
+        root = path.resolve()
         root.mkdir(parents=True, exist_ok=True)
         self._materializer.materialize(root, dist.name, packs, mounts=mounts)
 
@@ -62,10 +60,10 @@ class InstallationManager:
 
     # ── Update ──
 
-    def update(self, name: str) -> Installation:
-        inst = self._load(name)
+    def update(self, path: Path) -> Installation:
+        inst = self.load(path)
         if inst is None:
-            raise ValueError(f"Installation not found: {name}")
+            raise ValueError(f"Installation not found: {path}")
 
         if inst.status == InstallationStatus.RUNNING:
             raise RuntimeError(f"Cannot update running installation: {name}")
@@ -91,12 +89,12 @@ class InstallationManager:
 
     # ── Doctor ──
 
-    def doctor(self, name: str) -> list[str]:
+    def doctor(self, path: Path) -> list[str]:
         issues: list[str] = []
-        inst = self._load(name)
+        inst = self.load(path)
         if inst is None:
             return ["Installation not found"]
-
+        
         root = inst.root
         if not root.exists():
             issues.append("Installation root missing")
@@ -115,10 +113,10 @@ class InstallationManager:
 
     # ── Run / Stop ──
 
-    def run(self, name: str) -> None:
-        inst = self._load(name)
+    def run(self, path: Path) -> None:
+        inst = self.load(path)
         if inst is None:
-            raise ValueError(f"Installation not found: {name}")
+            raise ValueError(f"Installation not found: {path}")
 
         runtime_dir = self._artifacts.get_artifact(PackName("runtime"))
         if runtime_dir is None:
@@ -137,10 +135,10 @@ class InstallationManager:
         inst.updated = datetime.now(UTC)
         self._write_state(inst)
 
-    def stop(self, name: str) -> None:
-        inst = self._load(name)
+    def stop(self, path: Path) -> None:
+        inst = self.load(path)
         if inst is None:
-            raise ValueError(f"Installation not found: {name}")
+            raise ValueError(f"Installation not found: {path}")
 
         import signal
 
@@ -157,11 +155,6 @@ class InstallationManager:
         inst.updated = datetime.now(UTC)
         self._write_state(inst)
 
-    # ── Status ──
-
-    def status(self, name: str) -> Installation | None:
-        return self._load(name)
-
     def load(self, path: Path) -> Installation | None:
         """Load an installation from an arbitrary path."""
         state_file = path / ".yak" / "state.toml"
@@ -169,23 +162,7 @@ class InstallationManager:
             return None
         return self._read_state(state_file)
 
-    def statuses(self) -> list[Installation]:
-        if not self._installations_root.exists():
-            return []
-        result = []
-        for entry in sorted(self._installations_root.iterdir()):
-            inst = self._load(entry.name)
-            if inst is not None:
-                result.append(inst)
-        return result
-
     # ── Internals ──
-
-    def _load(self, name: str) -> Installation | None:
-        state_file = self._installations_root / name / ".yak" / "state.toml"
-        if not state_file.exists():
-            return None
-        return self._read_state(state_file)
 
     def _write_state(self, inst: Installation) -> None:
         state_dir = inst.root / ".yak"

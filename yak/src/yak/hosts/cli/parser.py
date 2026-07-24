@@ -6,7 +6,6 @@ import argparse
 def build_parser() -> argparse.ArgumentParser:
     from yak.hosts.cli.commands import doctor as _doctor
     from yak.hosts.cli.commands import install as _install
-    from yak.hosts.cli.commands import ls as _ls
     from yak.hosts.cli.commands import resolve as _resolve
     from yak.hosts.cli.commands import start as _start
     from yak.hosts.cli.commands import status as _status
@@ -22,30 +21,27 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("install", help="Install a distribution")
     p.add_argument("target")
-    p.add_argument("--path", "-p", help="Installation path (default: workspace/<name>)")
+    p.add_argument("--path", "-p", required=True, help="Installation path")
     p.set_defaults(func=_install.run)
 
-    p = sub.add_parser("list", aliases=["ls"], help="List installations")
-    p.set_defaults(func=_ls.run)
-
     p = sub.add_parser("status", help="Show installation status")
-    p.add_argument("name", nargs="?")
+    p.add_argument("--path", "-p", help="Path to installation (default: current directory)")
     p.set_defaults(func=_status.run)
 
     p = sub.add_parser("update", help="Update an installation")
-    p.add_argument("name")
+    p.add_argument("--path", "-p", help="Path to installation")
     p.set_defaults(func=_update.run)
 
     p = sub.add_parser("doctor", help="Check installation health")
-    p.add_argument("name")
+    p.add_argument("--path", "-p", help="Path to installation")
     p.set_defaults(func=_doctor.run)
 
     p = sub.add_parser("start", help="Start runtime of an installation")
-    p.add_argument("name")
+    p.add_argument("--path", "-p", help="Path to installation")
     p.set_defaults(func=_start.run)
 
     p = sub.add_parser("stop", help="Stop runtime of an installation")
-    p.add_argument("name")
+    p.add_argument("--path", "-p", help="Path to installation")
     p.set_defaults(func=_stop.run)
 
     return parser

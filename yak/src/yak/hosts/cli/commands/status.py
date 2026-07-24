@@ -1,33 +1,29 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from yak.hosts.cli.cwd import find_installation_path
 
 
 def run(args, mgr) -> None:
-    name = args.name
-    if not name:
-        # Try CWD auto-detection
-        path = find_installation_path()
-        if path is not None:
-            inst = mgr.load(path)
-            if inst is not None:
-                _show(inst)
-                return
-        # List all
-        all_inst = mgr.statuses()
-        if not all_inst:
-            print("No installations")
-            return
-        for inst in all_inst:
-            _show(inst)
-            print()
+    path = _resolve_path(args)
+    if path is None:
+        print("Not inside a Yak installation.")
+        print("Use --path <dir> or cd into an installation directory.")
         return
 
-    inst = mgr.status(name)
+    inst = mgr.load(path)
     if inst is None:
-        print(f"Installation not found: {name}")
+        print("Not a valid Yak installation.")
         return
+
     _show(inst)
+
+
+def _resolve_path(args) -> Path | None:
+    if hasattr(args, "path") and args.path:
+        return Path(args.path).resolve()
+    return find_installation_path()
 
 
 def _show(inst) -> None:

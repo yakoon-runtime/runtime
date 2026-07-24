@@ -18,7 +18,7 @@ def run(args, mgr) -> None:
             ui.detail(", ".join(packs))
 
         with ui.step("Workspace"):
-            root = Path(args.path).resolve() if args.path else mgr._installations_root / args.target
+            root = Path(args.path).resolve()
             root.mkdir(parents=True, exist_ok=True)
             mgr._materializer.materialize(root, dist.name, packs, mounts=mounts)
 
