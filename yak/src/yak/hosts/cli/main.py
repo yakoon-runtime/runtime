@@ -9,11 +9,12 @@ from yak.installation.manager import InstallationManager
 
 def _build_manager() -> InstallationManager:
     repo_root = Path(__file__).resolve().parents[5]
-    packs_root = repo_root / "repos"
     dists_root = repo_root / "yak" / "distributions"
     inst_root = repo_root / "workspace"
-    target = TargetResolver(packs_root, dists_root)
-    return InstallationManager(target, packs_root, inst_root)
+    target = TargetResolver(dists_root, repo_root / "repos", repo_root / "runtime")
+    return InstallationManager(
+        target, inst_root, repo_root / "repos", repo_root / "runtime"
+    )
 
 
 def main() -> None:

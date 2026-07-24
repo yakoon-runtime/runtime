@@ -2,21 +2,40 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from yak.distribution.models import Distribution, PackName, PackReference, VersionConstraint
+from yak.distribution.models import (
+    Distribution,
+    PackName,
+    PackReference,
+    VersionConstraint,
+)
 
 
 class LocalRepository:
-    def __init__(self, packs_root: Path) -> None:
-        self._root = packs_root
+    def __init__(self, *roots: Path) -> None:
+        self._roots = list(roots)
 
     def resolve_distribution(self, name: str) -> Distribution | None:
-        dist_path = self._root / f"y5napp-{name}" / "pack.toml"
-        if not dist_path.exists():
-            return None
-        return self._parse(dist_path)
+        for root in self._roots:
+            dist_path = root / f"y5napp-{name}" / "pack.toml"
+            if dist_path.exists():
+                return self._parse(dist_path)
+        return None
 
     def resolve_pack(self, name: PackName) -> bool:
-        return (self._root / name).is_dir()
+        for root in self._roots:
+            if (root / name).is_dir():
+                return True
+            if (root / f"y5napp-{name}").is_dir():
+                return True
+        return False
+
+    def pack_path(self, name: PackName) -> Path | None:
+        for root in self._roots:
+            if (root / name).is_dir():
+                return root / name
+            if (root / f"y5napp-{name}").is_dir():
+                return root / f"y5napp-{name}"
+        return None
 
     def _parse(self, path: Path) -> Distribution:
         import tomllib
@@ -27,7 +46,10 @@ class LocalRepository:
             name=data["name"],
             version=data.get("version", "0.1"),
             packs=[self._pack_ref(p) for p in data.get("packs", data.get("pack", []))],
-            distributions=[self._pack_ref(p) for p in data.get("distributions", data.get("distribution", []))],
+            distributions=[
+                self._pack_ref(p)
+                for p in data.get("distributions", data.get("distribution", []))
+            ],
         )
 
     @staticmethod

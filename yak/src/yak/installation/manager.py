@@ -17,13 +17,14 @@ class InstallationManager:
     def __init__(
         self,
         target_resolver: TargetResolver,
-        packs_root: Path,
         installations_root: Path,
+        *pack_roots: Path,
     ) -> None:
         self._target = target_resolver
         self._resolver = Resolver(lambda name: self._target.resolve(name))
-        self._materializer = Materializer(packs_root)
+        self._materializer = Materializer(*pack_roots)
         self._installations_root = installations_root
+        self._pack_roots = list(pack_roots)
 
     # ── Install ──
 
@@ -93,9 +94,14 @@ class InstallationManager:
             issues.append("state.toml missing")
 
         for pack in inst.packs:
-            path = self._packs_root() / pack
-            if not path.is_dir():
-                issues.append(f"Pack '{pack}' not found in repository")
+            found = any(
+                (root.name == pack and root.is_dir())
+                or (root / pack).is_dir()
+                or (root / f"y5napp-{pack}").is_dir()
+                for root in self._pack_roots
+            )
+            if not found:
+                issues.append(f"Pack '{pack}' not found")
 
         return issues
 
@@ -165,8 +171,8 @@ class InstallationManager:
             return None
         return self._read_state(state_file)
 
-    def _packs_root(self) -> Path:
-        return self._materializer.packs_root
+    def _pack_roots(self) -> list[Path]:
+        return self._materializer.pack_roots
 
     def _write_state(self, inst: Installation) -> None:
         state_dir = inst.root / ".yak"

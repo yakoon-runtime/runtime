@@ -8,11 +8,11 @@ from yak.distribution.models import Distribution, PackName
 class TargetResolver:
     def __init__(
         self,
-        local_repos: Path,
         builtin_distributions: Path,
+        *pack_roots: Path,
     ) -> None:
-        self._local_repos = local_repos
         self._builtin = builtin_distributions
+        self._pack_roots = list(pack_roots)
 
     def resolve(self, target: str) -> Distribution | None:
         # 1. Exact path to a .toml file
@@ -25,10 +25,11 @@ class TargetResolver:
         if builtin.exists():
             return self._load(builtin)
 
-        # 3. Pack manifest (e.g. "crm" → repos/y5napp-crm/pack.toml)
-        pack = self._local_repos / f"y5napp-{target}" / "pack.toml"
-        if pack.exists():
-            return self._load(pack)
+        # 3. Pack manifest across all roots
+        for root in self._pack_roots:
+            pack = root / f"y5napp-{target}" / "pack.toml"
+            if pack.exists():
+                return self._load(pack)
 
         return None
 
@@ -52,7 +53,7 @@ class TargetResolver:
         )
 
     @staticmethod
-    def _pack_ref(raw: str | dict) -> "PackReference":
+    def _pack_ref(raw: str | dict) -> PackReference:
         from yak.distribution.models import PackReference, VersionConstraint
 
         if isinstance(raw, str):
