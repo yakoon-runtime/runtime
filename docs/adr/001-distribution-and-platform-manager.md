@@ -70,6 +70,28 @@ Runtime              — executes the instance; knows nothing above it
 | **Materializer** | Pack layout, structure mounting, setup scripts | "How does the instance look on disk?" |
 | **Runtime** | The materialized instance only | "Run it." |
 
+### Scope: Platform Orchestrator, not just Installer
+
+`yak` is more than an installer — it is the **Platform Orchestrator**.
+Its responsibilities span the full lifecycle:
+
+| Command | Responsibility |
+|---|---|
+| `yak resolve` | Show the resolved pack graph |
+| `yak materialize` | Build the workspace on disk |
+| `yak install` | Resolve + materialize + run setup hooks |
+| `yak update` | Update packs to new versions |
+| `yak run` | Start runtime (and optional companion services) |
+| `yak stop` | Gracefully shut down |
+| `yak status` | Health of all components |
+| `yak doctor` | Diagnose configuration and connectivity |
+| `yak deploy` | Push to a target environment |
+
+Think of it as `docker compose` for Yakoon — but instead of containers, it
+manages Runtime, Viewer, WebServer, and any other component that forms the
+platform.  The Runtime itself knows nothing about this; it only receives a
+materialized workspace.
+
 ### The Platform Manager: `yak`
 
 `yak` is an **engine with multiple hosts**, mirroring the runtime's own
