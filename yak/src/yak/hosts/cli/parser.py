@@ -12,37 +12,53 @@ def build_parser() -> argparse.ArgumentParser:
     from yak.hosts.cli.commands import stop as _stop
     from yak.hosts.cli.commands import update as _update
 
-    parser = argparse.ArgumentParser(prog="yak", description="Yakoon Platform Manager")
-    sub = parser.add_subparsers(dest="command", required=True)
+    parser = argparse.ArgumentParser(
+        prog="yak",
+        description="Yakoon Platform Manager",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "  Lifecycle\n"
+            "    install    Install a distribution\n"
+            "    update     Update an installation\n"
+            "    status     Show installation status\n"
+            "    doctor     Check installation health\n"
+            "    start      Start runtime of an installation\n"
+            "    stop       Stop runtime of an installation\n"
+            "\n"
+            "  Developer\n"
+            "    resolve    Show resolved pack list for a target\n"
+        ),
+    )
+    sub = parser.add_subparsers(dest="command", required=True, metavar="")
 
-    p = sub.add_parser("resolve", help="Show resolved pack list for a target")
+    p = sub.add_parser("resolve", help="")
     p.add_argument("target")
     p.set_defaults(func=_resolve.run)
 
-    p = sub.add_parser("install", help="Install a distribution")
+    p = sub.add_parser("install", help="")
     p.add_argument("target")
     p.add_argument("--path", "-p", required=True, help="Installation path")
     p.add_argument("--verbose", "-v", action="store_true", help="Show detailed progress")
     p.set_defaults(func=_install.run)
 
-    p = sub.add_parser("status", help="Show installation status")
+    p = sub.add_parser("status", help="")
     p.add_argument("--path", "-p", help="Path to installation (default: current directory)")
     p.set_defaults(func=_status.run)
 
-    p = sub.add_parser("update", help="Update an installation")
+    p = sub.add_parser("update", help="")
     p.add_argument("--path", "-p", help="Path to installation")
     p.add_argument("--verbose", "-v", action="store_true", help="Show detailed progress")
     p.set_defaults(func=_update.run)
 
-    p = sub.add_parser("doctor", help="Check installation health")
+    p = sub.add_parser("doctor", help="")
     p.add_argument("--path", "-p", help="Path to installation")
     p.set_defaults(func=_doctor.run)
 
-    p = sub.add_parser("start", help="Start runtime of an installation")
+    p = sub.add_parser("start", help="")
     p.add_argument("--path", "-p", help="Path to installation")
     p.set_defaults(func=_start.run)
 
-    p = sub.add_parser("stop", help="Stop runtime of an installation")
+    p = sub.add_parser("stop", help="")
     p.add_argument("--path", "-p", help="Path to installation")
     p.set_defaults(func=_stop.run)
 
