@@ -28,9 +28,20 @@ def run(args, mgr) -> None:
             pid_file.unlink(missing_ok=True)
 
     python = path / ".venv" / "bin" / "python"
-    proc = subprocess.Popen(
-        [str(python), "-m", "y5napp.runtime"],
-        cwd=path,
-    )
+    # Create a wrapper script so the process shows as 'yakoon-runtime'
+    wrapper = path / ".venv" / "bin" / "yakoon-runtime"
+    if not wrapper.exists():
+        wrapper.write_text(
+            "#!/usr/bin/env python3\n"
+            "import ctypes, ctypes.util, sys\n"
+            "libc = ctypes.CDLL(ctypes.util.find_library('c'))\n"
+            "libc.prctl(15, b'yakoon-runtime', 0, 0, 0)  # PR_SET_NAME\n"
+            "sys.argv[0] = 'yakoon-runtime'\n"
+            "from y5napp.runtime.__main__ import main\n"
+            "main()\n"
+        )
+        wrapper.chmod(0o755)
+
+    proc = subprocess.Popen([str(wrapper)], cwd=path)
     pid_file.write_text(str(proc.pid))
     print(f"Started: {path} (pid {proc.pid})")
