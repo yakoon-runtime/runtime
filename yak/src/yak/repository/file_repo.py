@@ -7,6 +7,7 @@ from yak.distribution.models import (
     Mount,
     PackName,
     PackReference,
+    ToolReference,
     VersionConstraint,
 )
 
@@ -56,7 +57,14 @@ class FileRepository:
                 for p in data.get("distributions", data.get("distribution", []))
             ],
             mounts=[self._mount(m) for m in data.get("mounts", data.get("mount", []))],
+            tools=[self._tool(t) for t in data.get("tools", data.get("tool", []))],
         )
+
+    @staticmethod
+    def _tool(raw: dict | str) -> ToolReference:
+        if isinstance(raw, str):
+            return ToolReference(name=raw)
+        return ToolReference(name=raw.get("name", ""))
 
     @staticmethod
     def _mount(raw: dict) -> Mount:

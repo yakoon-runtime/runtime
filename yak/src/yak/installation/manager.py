@@ -35,7 +35,7 @@ class InstallationManager:
         if dist is None:
             raise ValueError(f"Unknown target: {target}")
 
-        packs, mounts = self._resolver.resolve(dist)
+        packs, mounts, tools = self._resolver.resolve(dist)
         now = datetime.now(UTC)
         root = path.resolve()
         root.mkdir(parents=True, exist_ok=True)
@@ -52,7 +52,7 @@ class InstallationManager:
         )
         self._write_state(inst)
 
-        self._installer.install(inst, sdk_path=self._sdk_path)
+        self._installer.install(inst, tools=tools, sdk_path=self._sdk_path)
         inst.status = InstallationStatus.CREATED
         inst.updated = datetime.now(UTC)
         self._write_state(inst)
@@ -72,7 +72,7 @@ class InstallationManager:
         if dist is None:
             raise ValueError(f"Distribution not found: {inst.distribution}")
 
-        packs, mounts = self._resolver.resolve(dist)
+        packs, mounts, tools = self._resolver.resolve(dist)
         now = datetime.now(UTC)
         self._materializer.materialize(inst.root, dist.name, packs, mounts=mounts)
 
@@ -81,7 +81,7 @@ class InstallationManager:
         inst.updated = now
         self._write_state(inst)
 
-        self._installer.install(inst, sdk_path=self._sdk_path)
+        self._installer.install(inst, tools=tools, sdk_path=self._sdk_path)
         inst.status = InstallationStatus.CREATED
         inst.updated = datetime.now(UTC)
         self._write_state(inst)

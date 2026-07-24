@@ -14,9 +14,10 @@ def _build_manager() -> InstallationManager:
     runtime = repo_root / "runtime"
     dists = repo_root / "yak" / "dists"
 
+    apps = repo_root / "apps"
     sdk = repo_root / "sdk" / "python"
     repo = FileRepository(repos, runtime, sdk, builtin_dists=dists)
-    artifacts = DirectoryArtifactStore(repos, runtime, sdk)
+    artifacts = DirectoryArtifactStore(repos, runtime, apps, sdk)
     mgr = InstallationManager(repo, artifacts)
     mgr._sdk_path = sdk
     return mgr

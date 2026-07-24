@@ -17,3 +17,10 @@ target = "/usr/bin"
 [[mount]]
 pack = "luma"
 target = "/opt/luma"
+
+[[tool]]
+name = "runtime"
+
+[[tool]]
+name = "viewer"
+optional = true

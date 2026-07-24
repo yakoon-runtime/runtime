@@ -3,8 +3,12 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import NewType
 
-
 PackName = NewType("PackName", str)
+
+
+@dataclass(frozen=True)
+class ToolReference:
+    name: str
 
 
 @dataclass(frozen=True)
@@ -30,3 +34,4 @@ class Distribution:
     version: str
     mounts: list[Mount] = field(default_factory=list)
     distributions: list[PackReference] = field(default_factory=list)
+    tools: list[ToolReference] = field(default_factory=list)
