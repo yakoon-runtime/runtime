@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from yak.hosts.cli.cwd import find_installation_from_cwd
+from pathlib import Path
+
+from yak.hosts.cli.cwd import find_installation_path
 
 
 def run(args, mgr) -> None:
-    name = args.name or find_installation_from_cwd()
-    if not name:
-        print("Error: no installation specified and not in an installation directory")
+    path = args.path or find_installation_path()
+    if path is None:
+        print("No installation specified. Use --path <dir> or cd into one.")
         return
     try:
-        inst = mgr.update(name)
-        print(f"Updated: {inst.name}")
-        print(f"  packs: {', '.join(inst.packs)}")
+        mgr.update(Path(path).resolve())
+        print(f"Updated: {path}")
     except (ValueError, RuntimeError) as e:
         print(f"Error: {e}")

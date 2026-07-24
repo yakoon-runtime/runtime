@@ -20,9 +20,9 @@ def test_sharp_install():
 
         repo = FileRepository(repos, runtime, builtin_dists=dists)
         artifacts = DirectoryArtifactStore(repos, runtime)
-        mgr = InstallationManager(repo, artifacts, root / "installations")
+        mgr = InstallationManager(repo, artifacts)
 
-        inst = mgr.install("crm")
+        inst = mgr.install("crm", root / "installations" / "crm")
 
         print(f"Name:         {inst.name}")
         print(f"Distribution: {inst.distribution}")

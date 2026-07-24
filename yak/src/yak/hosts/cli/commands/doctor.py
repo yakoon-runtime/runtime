@@ -1,11 +1,21 @@
 from __future__ import annotations
 
+from pathlib import Path
+
+from yak.hosts.cli.cwd import find_installation_path
+
 
 def run(args, mgr) -> None:
-    issues = mgr.doctor(args.name)
-    if not issues:
-        print(f"{args.name}: healthy")
+    path = args.path or find_installation_path()
+    if path is None:
+        print("No installation specified. Use --path <dir> or cd into one.")
         return
-    print(f"{args.name}: {len(issues)} issue(s)")
+
+    issues = mgr.doctor(path)
+    name = path.name
+    if not issues:
+        print(f"{name}: healthy")
+        return
+    print(f"{name}: {len(issues)} issue(s)")
     for issue in issues:
         print(f"  - {issue}")
