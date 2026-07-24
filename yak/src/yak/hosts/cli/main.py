@@ -12,7 +12,7 @@ def _build_manager() -> InstallationManager:
     repo_root = Path(__file__).resolve().parents[5]
     repos = repo_root / "repos"
     runtime = repo_root / "runtime"
-    dists = repo_root / "yak" / "distributions"
+    dists = repo_root / "yak" / "dists"
     inst_root = repo_root / "workspace"
 
     sdk = repo_root / "sdk" / "python"

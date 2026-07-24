@@ -16,7 +16,7 @@ def test_sharp_install():
         repo_root = Path(__file__).resolve().parents[2]
         repos = repo_root / "repos"
         runtime = repo_root / "runtime"
-        dists = repo_root / "yak" / "distributions"
+        dists = repo_root / "yak" / "dists"
 
         repo = FileRepository(repos, runtime, builtin_dists=dists)
         artifacts = DirectoryArtifactStore(repos, runtime)
