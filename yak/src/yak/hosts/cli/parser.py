@@ -7,10 +7,12 @@ def build_parser() -> argparse.ArgumentParser:
     from yak.hosts.cli.commands import doctor as _doctor
     from yak.hosts.cli.commands import install as _install
     from yak.hosts.cli.commands import resolve as _resolve
+    from yak.hosts.cli.commands import shell as _shell
     from yak.hosts.cli.commands import start as _start
     from yak.hosts.cli.commands import status as _status
     from yak.hosts.cli.commands import stop as _stop
     from yak.hosts.cli.commands import update as _update
+    from yak.hosts.cli.commands import web as _web
 
     parser = argparse.ArgumentParser(
         prog="yak",
@@ -25,6 +27,10 @@ def build_parser() -> argparse.ArgumentParser:
             "    doctor     Check installation health\n"
             "    start      Start runtime of an installation\n"
             "    stop       Stop runtime of an installation\n"
+            "\n"
+            "  Interfaces\n"
+            "    shell      Open the Yakoon shell\n"
+            "    web        Open the Yakoon web interface\n"
             "\n"
             "  Developer\n"
             "    resolve    Show resolved pack list for a target\n"
@@ -62,5 +68,13 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("stop", help="")
     p.add_argument("--path", "-p", help="Path to installation")
     p.set_defaults(func=_stop.run)
+
+    p = sub.add_parser("shell", help="")
+    p.add_argument("--path", "-p", help="Path to installation")
+    p.set_defaults(func=_shell.run)
+
+    p = sub.add_parser("web", help="")
+    p.add_argument("--path", "-p", help="Path to installation")
+    p.set_defaults(func=_web.run)
 
     return parser
