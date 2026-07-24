@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 
 def run(args, mgr) -> None:
     try:
-        inst = mgr.install(args.target)
+        path = Path(args.path).resolve() if args.path else None
+        inst = mgr.install(args.target, path=path)
         print(f"Installed: {inst.name}")
         print(f"  distribution: {inst.distribution}")
         print(f"  packs: {', '.join(inst.packs)}")

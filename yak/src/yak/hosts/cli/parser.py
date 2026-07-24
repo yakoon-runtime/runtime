@@ -22,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("install", help="Install a distribution")
     p.add_argument("target")
+    p.add_argument("--path", "-p", help="Installation path (default: workspace/<name>)")
     p.set_defaults(func=_install.run)
 
     p = sub.add_parser("list", aliases=["ls"], help="List installations")
