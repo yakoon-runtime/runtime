@@ -29,14 +29,15 @@ class InstallationManager:
 
     # ── Install ──
 
-    def install(self, target: str) -> Installation:
+    def install(self, target: str, path: Path | None = None) -> Installation:
         dist = self._repo.resolve_distribution(target)
         if dist is None:
             raise ValueError(f"Unknown target: {target}")
 
         packs = self._resolver.resolve(dist)
         now = datetime.now(UTC)
-        root = self._installations_root / target
+        root = path.resolve() if path else (self._installations_root / target)
+        root.mkdir(parents=True, exist_ok=True)
         self._materializer.materialize(root, dist.name, packs)
 
         inst = Installation(
