@@ -1,0 +1,8 @@
+[project]
+name = "yak"
+version = "0.1.0"
+description = "Yakoon Platform Manager"
+requires-python = ">=3.13"
+
+[tool.setuptools.packages.find]
+where = ["src"]
