@@ -6,7 +6,7 @@ from yak.hosts.cli.ui import TerminalUI
 
 
 def run(args, mgr) -> None:
-    ui = TerminalUI()
+    ui = TerminalUI(verbose=getattr(args, "verbose", False))
     ui.title(f'Installing "{args.target}"')
 
     try:
