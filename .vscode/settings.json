@@ -23,6 +23,7 @@
     "apps/y5napp-web/src",
     "apps/y5napp-textual/src",
   ],
+  "python.testing.cwd": "${workspaceFolder}",
   "python.testing.pytestArgs": [
     "runtime/engine/tests",
     "runtime/store/tests/event",
