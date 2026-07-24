@@ -59,18 +59,15 @@ def _start(path: Path) -> None:
     wrapper = path / ".venv" / "bin" / "yakoon-web"
     wrapper.write_text(
         "#!/usr/bin/env python3\n"
-        "import ctypes, ctypes.util, sys\n"
+        "import ctypes, ctypes.util\n"
         "libc = ctypes.CDLL(ctypes.util.find_library('c'))\n"
-        "name = f'yakoon-web:{sys.argv[1]}'\n"
-        "libc.prctl(15, name.encode(), 0, 0, 0)\n"
-        "sys.argv[0] = name\n"
-        "sys.argv.pop(1)\n"
+        "libc.prctl(15, b'yakoon-web', 0, 0, 0)\n"
         "from y5napp.web.__main__ import main\n"
         "main()\n"
     )
     wrapper.chmod(0o755)
 
-    proc = subprocess.Popen([str(wrapper), str(port)], cwd=path)
+    proc = subprocess.Popen([str(wrapper)], cwd=path)
     pid_file.write_text(str(proc.pid))
     print(f"Web server started (pid {proc.pid})")
 
