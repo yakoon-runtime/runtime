@@ -4,14 +4,24 @@ import subprocess
 import sys
 from pathlib import Path
 
-from yak.distribution.models import PackName, ToolReference
+from yak.distribution.models import ToolReference
 from yak.installation.models import Installation
 from yak.repository.artifact import ArtifactStore
 
+# Map tool names to app directories (package = directory under apps/)
+_TOOL_PACKAGES: dict[str, str] = {
+    "runtime": "y5napp-runtime",
+    "viewer": "y5napp-textual",
+    "web": "y5napp-web",
+}
+
 
 class Installer:
-    def __init__(self, artifact_store: ArtifactStore) -> None:
+    def __init__(
+        self, artifact_store: ArtifactStore, apps_root: Path | None = None
+    ) -> None:
         self._artifacts = artifact_store
+        self._apps_root = apps_root
 
     def install(
         self,
@@ -34,10 +44,19 @@ class Installer:
 
         if tools:
             for tool in tools:
-                artifact = self._artifacts.get_artifact(PackName(tool.name))
-                if artifact is None:
-                    continue
-                projects.extend(self._find_projects(artifact))
+                pkg = self._find_tool(tool.name)
+                if pkg is not None:
+                    projects.extend(self._find_projects(pkg))
+
+        if projects:
+            self._pip_install_all(python, projects)
+
+    def _find_tool(self, name: str) -> Path | None:
+        pkg = _TOOL_PACKAGES.get(name)
+        if pkg is None or self._apps_root is None:
+            return None
+        tool_dir = self._apps_root / pkg
+        return tool_dir if tool_dir.is_dir() else None
 
         if projects:
             self._pip_install_all(python, projects)
@@ -46,12 +65,14 @@ class Installer:
         if not (path / "bin" / "python").exists():
             subprocess.run(
                 [sys.executable, "-m", "venv", str(path)],
-                check=True, capture_output=True,
+                check=True,
+                capture_output=True,
             )
         python = path / "bin" / "python"
         subprocess.run(
             [str(python), "-m", "pip", "install", "--upgrade", "pip"],
-            check=True, capture_output=True,
+            check=True,
+            capture_output=True,
         )
         return python
 
@@ -80,6 +101,4 @@ class Installer:
         if result.returncode != 0:
             import warnings
 
-            warnings.warn(
-                f"pip install failed:\n{result.stderr.strip()}"
-            )
+            warnings.warn(f"pip install failed:\n{result.stderr.strip()}")

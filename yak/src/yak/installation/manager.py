@@ -25,7 +25,7 @@ class InstallationManager:
         self._artifacts = artifact_store
         self._resolver = Resolver(lambda name: repository.resolve_distribution(name))
         self._materializer = Materializer(artifact_store)
-        self._installer = Installer(artifact_store)
+        self._installer = Installer(artifact_store, apps_root=None)
         self._sdk_path = None
 
     # ── Install ──
