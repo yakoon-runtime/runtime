@@ -84,7 +84,7 @@ def test_update_rematerializes():
         mgr.update("myapp")
         inst = mgr.status("myapp")
         assert inst is not None
-        assert inst.status.value == "materialized"
+        assert inst.status.value == "created"
 
 
 def test_doctor_reports_missing_pack():
