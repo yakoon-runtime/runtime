@@ -1,0 +1,9 @@
+[project]
+name = "y5napp-root"
+version = "0.1.0"
+description = "Root namespace pack"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]

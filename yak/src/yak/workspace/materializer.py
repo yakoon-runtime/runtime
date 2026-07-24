@@ -40,12 +40,18 @@ class Materializer:
             if not pack_struct.is_dir():
                 continue
 
-            # Find explicit mount target for this pack, otherwise mount at pack name
             target_rel = _target_for(mounts, pack) or pack
-            target = structure / target_rel.strip("/")
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if not target.exists():
-                target.symlink_to(pack_struct, target_is_directory=True)
+            if target_rel == "/":
+                # Mount at root: symlink individual entries
+                for child in sorted(pack_struct.iterdir()):
+                    dst = structure / child.name
+                    if not dst.exists():
+                        dst.symlink_to(child.resolve(), target_is_directory=child.is_dir())
+            else:
+                target = structure / target_rel.strip("/")
+                target.parent.mkdir(parents=True, exist_ok=True)
+                if not target.exists():
+                    target.symlink_to(pack_struct, target_is_directory=True)
 
         now = datetime.now(timezone.utc)
         self._write_manifest(workspace_root, distribution, packs, now)
