@@ -6,7 +6,7 @@ def run(args, mgr) -> None:
     if dist is None:
         print(f"Target not found: {args.target}")
         return
-    packs, mounts = mgr._resolver.resolve(dist)
+    packs, mounts, tools = mgr._resolver.resolve(dist)
     for p in packs:
         print(p)
     if mounts:
@@ -14,3 +14,8 @@ def run(args, mgr) -> None:
         print("Mounts:")
         for m in mounts:
             print(f"  {m.pack} → {m.target}")
+    if tools:
+        print()
+        print("Tools:")
+        for t in tools:
+            print(f"  {t.name}")

@@ -14,7 +14,7 @@ def run(args, mgr) -> None:
             dist = mgr._repo.resolve_distribution(args.target)
 
         with ui.step("Packs"):
-            packs, mounts = mgr._resolver.resolve(dist)
+            packs, mounts, tools = mgr._resolver.resolve(dist)
             ui.detail(", ".join(packs))
 
         with ui.step("Workspace"):

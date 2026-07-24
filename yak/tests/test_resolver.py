@@ -21,7 +21,7 @@ def test_resolve_single_distribution():
                 Mount(pack=PackName("crm"), target="/")],
     )
     resolver = Resolver(lookup({"crm": dist}))
-    packs, mounts = resolver.resolve(dist)
+    packs, mounts, tools = resolver.resolve(dist)
 
     assert packs == [PackName("runtime"),
                      PackName("system"),
@@ -44,7 +44,7 @@ def test_resolve_nested_distributions():
                 Mount(pack=PackName("crm"), target="/")],
     )
     resolver = Resolver(lookup({"base": base, "crm": crm}))
-    packs, mounts = resolver.resolve(crm)
+    packs, mounts, tools = resolver.resolve(crm)
 
     assert packs == [PackName("runtime"),
                      PackName("system"),
@@ -72,7 +72,7 @@ def test_resolve_deduplicates():
                        PackReference(name=PackName("b"))],
     )
     resolver = Resolver(lookup({"a": a, "b": b, "combined": combined}))
-    packs, mounts = resolver.resolve(combined)
+    packs, mounts, tools = resolver.resolve(combined)
 
     assert packs == [PackName("shared"),
                      PackName("a-only"),
@@ -92,7 +92,7 @@ def test_resolve_collects_mounts():
         mounts=[Mount(pack=PackName("crm"), target="/opt/crm")],
     )
     resolver = Resolver(lookup({"base": base, "crm": crm}))
-    packs, mounts = resolver.resolve(crm)
+    packs, mounts, tools = resolver.resolve(crm)
 
     assert packs == [PackName("system"), PackName("crm")]
     assert len(mounts) == 2

@@ -16,7 +16,7 @@ def run(args, mgr) -> None:
     path = Path(path).resolve()
     python = path / ".venv" / "bin" / "python"
     proc = subprocess.Popen(
-        [str(python), "-m", "y5n.runtime.boot.python.runtime"],
+        [str(python), "-m", "y5napp.runtime"],
         cwd=path,
     )
     path.joinpath(".yak", "runtime.pid").write_text(str(proc.pid))
