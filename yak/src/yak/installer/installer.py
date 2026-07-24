@@ -11,7 +11,7 @@ from yak.repository.artifact import ArtifactStore
 # Map tool names to app directories (package = directory under apps/)
 _TOOL_PACKAGES: dict[str, str] = {
     "runtime": "y5napp-runtime",
-    "viewer": "y5napp-textual",
+    "shell": "y5napp-textual",
     "web": "y5napp-web",
 }
 

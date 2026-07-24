@@ -22,5 +22,5 @@ target = "/opt/luma"
 name = "runtime"
 
 [[tool]]
-name = "viewer"
+name = "shell"
 optional = true
