@@ -1,4 +1,4 @@
-from yak.distribution.models import Distribution, PackName, PackReference
+from yak.distribution.models import Distribution, Mount, PackName, PackReference
 from yak.resolver.resolver import Resolver
 
 
@@ -20,12 +20,12 @@ def test_resolve_single_distribution():
                PackReference(name=PackName("crm"))],
     )
     resolver = Resolver(lookup({"crm": dist}))
-    result = resolver.resolve(dist)
+    packs, mounts = resolver.resolve(dist)
 
-    assert result == [PackName("runtime"),
-                      PackName("system"),
-                      PackName("ident"),
-                      PackName("crm")]
+    assert packs == [PackName("runtime"),
+                     PackName("system"),
+                     PackName("ident"),
+                     PackName("crm")]
 
 
 def test_resolve_nested_distributions():
@@ -43,12 +43,12 @@ def test_resolve_nested_distributions():
                PackReference(name=PackName("crm"))],
     )
     resolver = Resolver(lookup({"base": base, "crm": crm}))
-    result = resolver.resolve(crm)
+    packs, mounts = resolver.resolve(crm)
 
-    assert result == [PackName("runtime"),
-                      PackName("system"),
-                      PackName("ident"),
-                      PackName("crm")]
+    assert packs == [PackName("runtime"),
+                     PackName("system"),
+                     PackName("ident"),
+                     PackName("crm")]
 
 
 def test_resolve_deduplicates():
@@ -71,8 +71,32 @@ def test_resolve_deduplicates():
                        PackReference(name=PackName("b"))],
     )
     resolver = Resolver(lookup({"a": a, "b": b, "combined": combined}))
-    result = resolver.resolve(combined)
+    packs, mounts = resolver.resolve(combined)
 
-    assert result == [PackName("shared"),
-                      PackName("a-only"),
-                      PackName("b-only")]
+    assert packs == [PackName("shared"),
+                     PackName("a-only"),
+                     PackName("b-only")]
+
+
+def test_resolve_collects_mounts():
+    base = Distribution(
+        name="base",
+        version="1.0",
+        packs=[PackReference(name=PackName("system"))],
+        mounts=[Mount(pack=PackName("system"), target="/usr/bin")],
+    )
+    crm = Distribution(
+        name="crm",
+        version="1.0",
+        distributions=[PackReference(name=PackName("base"))],
+        packs=[PackReference(name=PackName("crm"))],
+        mounts=[Mount(pack=PackName("crm"), target="/opt/crm")],
+    )
+    resolver = Resolver(lookup({"base": base, "crm": crm}))
+    packs, mounts = resolver.resolve(crm)
+
+    assert packs == [PackName("system"), PackName("crm")]
+    # Mounts from both base and crm are collected
+    assert len(mounts) == 2
+    assert Mount(pack=PackName("system"), target="/usr/bin") in mounts
+    assert Mount(pack=PackName("crm"), target="/opt/crm") in mounts
