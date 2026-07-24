@@ -37,7 +37,11 @@ class StepContext:
 
     def __enter__(self) -> "StepContext":
         if not self._ui._verbose:
-            self._status = _console.status(f"[dim]{self._label}...[/dim]", spinner="dots")
+            self._status = _console.status(
+                f"  [orange3]{self._label}...[/orange3]",
+                spinner="dots",
+                spinner_style="orange3",
+            )
             self._status.start()
         self._ui._indent += 1
         return self
