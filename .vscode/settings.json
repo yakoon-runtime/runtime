@@ -24,7 +24,6 @@
     "apps/y5napp-textual/src",
   ],
   "python.testing.pytestArgs": [
-    "--override-ini=pythonpath=yak/src",
     "runtime/engine/tests",
     "runtime/store/tests/event",
     "runtime/store/tests/sequence",
