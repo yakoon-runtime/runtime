@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from yak.distribution.models import PackName
@@ -30,7 +30,7 @@ class Materializer:
                 link.symlink_to(pack_struct, target_is_directory=True)
 
         # workspace.toml — identity
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         self._write_manifest(workspace_root, distribution, packs, now)
 
         return Workspace(
