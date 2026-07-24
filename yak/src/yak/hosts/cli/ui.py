@@ -17,15 +17,15 @@ class TerminalUI:
 
     def detail(self, text: str) -> None:
         indent = "    " * (self._indent + 1)
-        self._stream.write(f"{indent}  {text}\n")
+        self._stream.write(f"{indent}{text}\n")
 
     def ok(self, label: str) -> None:
         indent = "    " * self._indent
-        self._stream.write(f"{indent}  ✓ {label}\n")
+        self._stream.write(f"{indent}✓ {label}\n")
 
     def fail(self, label: str) -> None:
         indent = "    " * self._indent
-        self._stream.write(f"{indent}  ✖ {label}\n")
+        self._stream.write(f"{indent}✖ {label}\n")
 
     def _flush(self) -> None:
         self._stream.flush()
@@ -38,7 +38,7 @@ class StepContext:
 
     def __enter__(self) -> "StepContext":
         indent = "    " * self._ui._indent
-        self._ui._stream.write(f"{indent}  {self._label}...\n")
+        self._ui._stream.write(f"{indent}  {self._label}\n")
         self._ui._indent += 1
         self._ui._flush()
         return self
@@ -48,6 +48,3 @@ class StepContext:
 
     def detail(self, text: str) -> None:
         self._ui.detail(text)
-
-    def ok(self) -> None:
-        pass

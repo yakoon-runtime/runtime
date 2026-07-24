@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from yak.hosts.cli.cwd import find_installation_from_cwd, find_installation_path
+from yak.hosts.cli.cwd import find_installation_path
 
 
 def run(args, mgr) -> None:
