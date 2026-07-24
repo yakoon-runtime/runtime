@@ -58,19 +58,18 @@ def _start(path: Path) -> None:
             pass
 
     wrapper = path / ".venv" / "bin" / "yakoon-runtime"
-    if not wrapper.exists():
-        wrapper.write_text(
-            "#!/usr/bin/env python3\n"
-            "import ctypes, ctypes.util, sys\n"
-            "libc = ctypes.CDLL(ctypes.util.find_library('c'))\n"
-            "name = f'yakoon:{sys.argv[1]}'\n"
-            "libc.prctl(15, name.encode(), 0, 0, 0)\n"
-            "sys.argv[0] = name\n"
-            "sys.argv.pop(1)\n"
-            "from y5napp.runtime.__main__ import main\n"
-            "main()\n"
-        )
-        wrapper.chmod(0o755)
+    wrapper.write_text(
+        "#!/usr/bin/env python3\n"
+        "import ctypes, ctypes.util, sys\n"
+        "libc = ctypes.CDLL(ctypes.util.find_library('c'))\n"
+        "name = f'yakoon:{sys.argv[1]}'\n"
+        "libc.prctl(15, name.encode(), 0, 0, 0)\n"
+        "sys.argv[0] = name\n"
+        "sys.argv.pop(1)\n"
+        "from y5napp.runtime.__main__ import main\n"
+        "main()\n"
+    )
+    wrapper.chmod(0o755)
 
     python = path / ".venv" / "bin" / "python"
     proc = subprocess.Popen([str(wrapper), str(port)], cwd=path)
