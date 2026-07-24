@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from yak.hosts.cli.cwd import find_installation_from_cwd
+
 
 def run(args, mgr) -> None:
+    name = args.name or find_installation_from_cwd()
+    if not name:
+        print("Error: no installation specified and not in an installation directory")
+        return
     try:
-        inst = mgr.update(args.name)
+        inst = mgr.update(name)
         print(f"Updated: {inst.name}")
         print(f"  packs: {', '.join(inst.packs)}")
     except (ValueError, RuntimeError) as e:

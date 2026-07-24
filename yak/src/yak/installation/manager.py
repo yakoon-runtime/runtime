@@ -162,6 +162,13 @@ class InstallationManager:
     def status(self, name: str) -> Installation | None:
         return self._load(name)
 
+    def load(self, path: Path) -> Installation | None:
+        """Load an installation from an arbitrary path."""
+        state_file = path / ".yak" / "state.toml"
+        if not state_file.exists():
+            return None
+        return self._read_state(state_file)
+
     def statuses(self) -> list[Installation]:
         if not self._installations_root.exists():
             return []
