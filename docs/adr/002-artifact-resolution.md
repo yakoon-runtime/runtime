@@ -19,32 +19,117 @@ development‑time bridge, not a long‑term solution.
 
 ## Decision
 
-### 1. `yak build` — materialize installable artifacts
+### Architecture
 
-`yak build` produces installable artifacts from the projects in a Yakoon
-repository. The first implementation produces Python wheels.
+Three independent layers:
 
-The build output goes to a configurable artifact store. The default location
-is `~/.yak/wheels/`.
+```
+yak install <artifact>
+         │
+         ▼
+  Artifact Resolver     — resolves a name to a concrete artifact descriptor
+         │
+         ▼
+       Source           — provides bytes (filesystem, HTTP, Git, S3, …)
+         │
+         ▼
+  Artifact Provider     — understands the format (wheel, gem, zip, nuget, …)
+         │
+         ▼
+     Installer          — places the artifact in the target environment
+```
 
-### 2. Artifact Resolver — resolve packages across configured sources
+| Layer | Responsibility | Does not know |
+|-------|---------------|---------------|
+| Artifact Resolver | maps name → artifact descriptor | sources, formats |
+| Source | delivers bytes | formats, installation |
+| Artifact Provider | interprets bytes (format) | sources, installation targets |
+| Installer | places artifact | sources, formats |
 
-The resolver finds packages by querying a chain of sources. The first match
-wins. Sources are ordered by priority.
+This mirrors the Runtime architecture:
+
+```
+Runtime:      Resolver → Transport → Executor
+Packaging:    Resolver → Source → Provider → Installer
+```
+
+### 1. `yak build` — materialize artifacts
+
+`yak build` produces artifacts from projects in a Yakoon repository. The
+build delegates to a **build backend** selected by the project's metadata.
+
+The first implementation produces Python wheels. Future backends may produce
+other formats (tarballs, gems, dotnet DLLs).
+
+Build output goes to a configurable artifact store (default `~/.yak/artifacts/`).
+
+### 2. Sources — where bytes come from
+
+Sources deliver raw bytes. They do not interpret the format.
+
+| Source kind | Bytes come from |
+|-------------|-----------------|
+| `directory` | A local folder |
+| `pypi` | PyPI simple API |
+| `http` | A plain web server |
+| `git` | A Git repository tag |
+| `s3` | Cloud storage |
+| `registry` | A Yakoon-specific registry |
+
+### 3. Artifact Providers — what the bytes mean
+
+Providers interpret the byte stream and expose a standard installation
+interface. The first provider handles Python wheels.
+
+| Provider | Interprets |
+|----------|------------|
+| `wheel` | `.whl` files (Python) |
+| `gem` | `.gem` files (Ruby) |
+| `nuget` | `.nupkg` files (.NET) |
+| `zip` | `.zip` archives (any language) |
+
+### 4. `yak install` — no special cases
+
+All installations use the same resolver chain:
+
+```bash
+yak install dev       # Developer distribution (runtime + shell + sdk)
+yak install runtime   # Runtime only
+yak install crm       # CRM pack
+```
+
+The command never knows where a package came from or what format it is.
+
+### 5. `pip install yakoon` — CLI only
+
+Installs only:
+- the `yak` CLI
+- default configuration
+- default resolver chain
+
+Not: Runtime, SDK, Shell, or Web. These are regular artifacts resolved at
+install time.
+
+---
+
+## Configuration
+
+Sources are configured in `~/.yak/config.toml`. The Artifact Provider is
+derived from the artifact metadata (e.g. a wheel's `METADATA` declares its
+format).
 
 ```toml
-# ~/.yak/config.toml
 [sources]
 order = ["local", "enterprise", "public"]
 
 [[source]]
 name = "local"
 kind = "directory"
-path = "~/.yak/wheels"
+path = "~/.yak/artifacts"
 
 [[source]]
 name = "enterprise"
-kind = "registry"
+kind = "http"
 url = "https://packages.acme.local"
 
 [[source]]
@@ -53,117 +138,54 @@ kind = "pypi"
 url = "https://pypi.org/simple"
 ```
 
-### 3. `yak install` — no special cases
-
-All installations use the same resolver:
-
-```bash
-yak install dev       # Developer distribution (runtime + shell + sdk)
-yak install runtime   # Runtime only
-yak install crm       # CRM pack
-```
-
-The command never knows where a package came from.
-
-### 4. `pip install yakoon` — CLI only
-
-Installs only:
-- the `yak` CLI
-- default configuration
-- default resolver
-
-Not: Runtime, SDK, Shell, or Web. These are regular packages resolved at
-install time.
-
----
-
-## Principles
-
-### The resolver knows sources, not environments
-
-There is no logic like `if developer:` or `if local:`. Only:
-
-```
-resolve("runtime")
-  → Source 1 (local wheels)
-  → Source 2 (enterprise registry)
-  → Source 3 (PyPI)
-```
-
-This mirrors the existing Runtime Resolver architecture.
-
-### The resolver knows artifacts, not languages
-
-The resolver resolves opaque blobs with metadata. It does not know whether
-an artifact is a Python wheel, a dotnet assembly, a Ruby gem, or a tarball
-of shell scripts. Language‑specific handling is the responsibility of
-**installers**, not the resolver.
-
-### Source kinds are extensible
-
-The initial implementation supports `directory` and `pypi` sources. Future
-source kinds may include:
-
-- `git` — resolve from a Git repository tag
-- `http` — resolve from a plain web server (air‑gapped environments)
-- `s3` — resolve from cloud storage
-- `registry` — a Yakoon-specific registry protocol
-
-Enterprises with strict policies (e.g. nuclear power plants) can:
-
-- Host their own Git repository
-- Configure `yak` to only use internal sources
-- Add custom source kinds for internal tooling (e.g. Ruby scripts, dotnet
-  assemblies, Perl modules)
-- Remove the public source entirely
-
-Example configuration for an air‑gapped enterprise using only Ruby packs:
+Enterprise with air‑gapped policies, using only Ruby gems from internal Git:
 
 ```toml
 [sources]
-order = ["internal", "site-wheels"]
+order = ["internal"]
 
 [[source]]
 name = "internal"
 kind = "git"
 url = "https://git.internal.corp/yakoon-packs"
-
-[[source]]
-name = "site-wheels"
-kind = "directory"
-path = "/opt/yak/wheels"
 ```
 
 ---
 
-## Open Questions
+## Principles
 
-### Build output location
+### The resolver knows names, not sources or formats
 
-Two viable options:
+```
+resolve("runtime")
+  → Source 1 (local)
+  → Source 2 (enterprise)
+  → Source 3 (PyPI)
+  → first match wins
+```
 
-| Option | Path | Pros |
-|--------|------|------|
-| A: Project‑local | `repo/dist/` | Python convention, build artifacts stay in project |
-| B: User‑global | `~/.yak/wheels/` | Immediately installable, shared cache across projects |
+No logic like `if developer:` or `if python:` or `if local:`.
 
-Both may coexist: `dist/` as project artifact, plus an optional step that
-copies or symlinks finished wheels into the resolver store.
+### Source and Provider are independent
 
----
+A Source delivers bytes. A Provider interprets them. An HTTP server can
+serve wheels, gems, zips, or NuGet packages — the Source doesn't care.
 
-### `yak build` is extensible
+### Language neutrality
 
-The first implementation produces Python wheels. Future build backends may
-produce other artifact formats (dotnet DLLs, Ruby gems, tarballs). The
-build command delegates to a backend selected by the project's metadata.
+The word "wheel" appears nowhere in the architecture. Wheels are merely
+the first concrete implementation of an Artifact Provider.
 
 ---
 
 ## Consequences
 
-- `install dev` becomes a meta‑package resolved through the standard resolver.
+- `install dev` becomes a meta‑package resolved through the standard chain.
 - `yak build` decouples development from publication.
 - No special cases in the install command.
+- Enterprise air‑gapped environments: configure only internal sources,
+  remove public sources entirely.
 - The resolver pattern extends naturally to `yak publish`, dependency
   resolution, and enterprise registries.
+- New artifact formats can be added without changing the resolver or
+  the install command — only a new Provider.
