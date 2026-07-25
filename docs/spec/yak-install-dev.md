@@ -39,21 +39,14 @@ The target directory is ready for `yak create`, `yak shell`, and pack developmen
 
 ## Definition
 
-`dev` is a meta-package. It installs exactly three components:
+`dev` is a meta-package. It installs the Developer Distribution:
 
 ```
 Developer Distribution (dev)
 ├── runtime    — Runtime engine, API, boot, store, transport, LLM
 ├── shell      — Interactive Yakoon shell (Textual TUI)
-└── sdk        — Python SDK for pack development (incl. code generator)
-```
-
-Each component can also be installed individually:
-
-```bash
-yak install runtime
-yak install shell
-yak install sdk
+├── sdk        — Python SDK for pack development (incl. code generator)
+└── web        — Web interface
 ```
 
 ---
@@ -64,17 +57,19 @@ yak install sdk
 InstallDevWorkflow
 ├── 1. CreateVenvTask
 │     → Create a Python virtual environment at <target>/.venv/
-├── 2. InstallRuntimeTask
-│     → Install all y5n-runtime-* projects
-├── 3. InstallShellTask
-│     → Install y5n-apps-shell
-├── 4. InstallSDKTask
-│     → Install y5n-sdk-python
-├── 5. MaterializeWorkspaceTask
+├── 2. MaterializeWorkspaceTask
 │     → Materialize the developer workspace (root + boot + system mounts)
-├── 6. VerifyTask
-│     → Verify that runtime, SDK, and shell are importable
-└── 7. SummaryTask
+├── 3. InstallRuntimeTask
+│     → Install all y5n-runtime-* projects
+├── 4. InstallShellTask
+│     → Install y5n-apps-shell
+├── 5. InstallWebTask
+│     → Install y5n-apps-web
+├── 6. InstallSDKTask
+│     → Install y5n-sdk-python
+├── 7. VerifyTask
+│     → Verify that runtime, SDK, shell, and web are importable
+└── 8. SummaryTask
       → Print paths, versions, next steps
 ```
 
@@ -128,6 +123,29 @@ Same as `bootstrap`. Create `.venv/` if not present, upgrade pip.
 
 ---
 
+## Source Resolution
+
+`install dev` does not decide where artifacts come from. It delegates to a
+**Package Resolver** — the same resolver used by all `yak install` commands:
+
+```
+yak install <artifact> [--path <source>]
+
+         Package Resolver
+                │
+         Source Resolver
+                │
+   PyPI | Path | Registry | Git
+```
+
+- Without `--path`: the resolver uses the default source (e.g., PyPI or local
+  development registry).
+- With `--path <dir>`: the resolver looks in the given directory first.
+  Semantics are identical for all artifacts — `dev`, `crm`, `runtime`, etc.
+
+The install command never knows where a package came from. It receives a
+ready-to-install project and installs it.
+
 ## Relationship to `yak bootstrap`
 
 Both workflows share `CreateVenvTask`, `MaterializeWorkspaceTask`, `VerifyTask`, and `SummaryTask`.
@@ -135,19 +153,8 @@ Both workflows share `CreateVenvTask`, `MaterializeWorkspaceTask`, `VerifyTask`,
 | Aspect | `bootstrap` | `install dev` |
 |--------|-------------|---------------|
 | Location | Inside a clone of the Yakoon repo | Any directory |
-| Source | Editable installs from the monorepo | From registry or local path |
-| Scope | All `y5n-*` projects | runtime + shell + sdk only |
+| Source | Editable installs from the monorepo | Package Resolver (PyPI / path / registry) |
+| Scope | All `y5n-*` projects | Developer Distribution (runtime + shell + web + sdk) |
 | User | Platform developer | Pack developer |
 
 Neither delegates to the other — they compose the same building blocks.
-
----
-
-## Open Questions
-
-1. Should `install dev` accept a `--path` flag (like `install crm`)?
-2. Where does the Developer Distribution find its artifacts when run outside the monorepo?
-   - Option A: From a local `.yak/` registry
-   - Option B: From PyPI (after publishing all `y5n-*` packages)
-   - Option C: From a local path (user points to a clone)
-3. Should `install runtime` / `install shell` / `install sdk` be separate subcommands or hidden behind `install dev` only?
