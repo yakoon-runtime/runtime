@@ -16,19 +16,31 @@ infrastructure.
 ## The Lifecycle
 
 ```
-Developer                    Runtime
-   │                            │
-   ├─ yak build ────────────────┤  (1) materialize
-   │                            │
-   ├─ yak publish ──────────────┤  (2) distribute
-   │                            │
-   │        Artifact Source     │
-   │              │             │
-   ├─ yak install ──────────────┤  (3) resolve + install
-   │              │             │
-   ├─ yak update ───────────────┤  (4) resolve + upgrade
-   │                            │
-   └─ yak doctor ───────────────┘  (5) verify
+Workspace
+    │
+    ▼
+  yak build
+    │
+    ▼
+  Artifact
+    │
+    ▼
+  yak publish
+    │
+    ▼
+  Artifact Source
+    │
+    ▼
+  Artifact Resolver
+    │
+    ▼
+  yak install / yak update
+    │
+    ▼
+  Host
+    │
+    ▼
+  Runtime
 ```
 
 ---
@@ -37,42 +49,34 @@ Developer                    Runtime
 
 ### Builder
 
-Materializes source code into an installable artifact.
+Materializes source code into an installable artifact. Language-specific.
 
 ```
-yak build
-
-    Build Provider
-    ├── PythonBuildProvider   (pyproject.toml → wheel)
-    ├── DotnetBuildProvider   (.csproj → dll)
-    ├── RubyBuildProvider     (gemspec → gem)
-    └── GenericBuildProvider  (Makefile → tarball)
+Build Provider
+├── PythonBuildProvider   (pyproject.toml → wheel)
+├── DotnetBuildProvider   (.csproj → dll)
+├── RubyBuildProvider     (gemspec → gem)
+└── GenericBuildProvider  (Makefile → tarball)
 ```
-
-Output: an **Artifact** — an opaque blob with metadata.
 
 ### Artifact
 
-A versioned, self-describing deployable unit.
+A versioned, self-describing deployable unit. Language-neutral.
 
 ```yaml
-# embedded in the artifact
 name: crm
 version: 2.4.0
-language: python
-builder: python
-entry: crm.app
+host: python              # which Runtime Host can execute this artifact
 dependencies:
   - runtime >= 1.2
-artefact: <blob>
 ```
 
-The artifact format is the only thing `yak` and the Runtime agree on.
+The artifact format is the contract between Builder and Host.
 It is not Python-specific. It is not wheel-specific.
 
 ### Source
 
-A place that stores and serves artifacts.
+Stores and serves artifacts. Does not interpret formats.
 
 ```
 Source
@@ -90,9 +94,9 @@ Finds the best version of an artifact across configured sources.
 
 ```
 resolve("crm", ">=2.0")
-  → Source 1 (local):     crm-2.4.0.artifact
-  → Source 2 (enterprise): crm-2.3.1.artifact
-  → Source 3 (public):    crm-2.4.0.artifact
+  → Source 1 (local):     crm-2.4.0
+  → Source 2 (enterprise): crm-2.3.1
+  → Source 3 (public):    crm-2.4.0
   → first match wins:     crm-2.4.0
 ```
 
@@ -100,7 +104,7 @@ Identical architecture to the Runtime Resolver.
 
 ### Installer
 
-Places a resolved artifact into the target environment.
+Places a resolved artifact and ensures its Host is available.
 
 ```
 Installer
@@ -108,6 +112,37 @@ Installer
 ├── BinaryInstaller     (copy binary to path)
 ├── GemInstaller        (gem install)
 └── ScriptInstaller     (deploy scripts)
+```
+
+### Host
+
+A Runtime component that can execute artifacts of a specific language.
+
+```
+Host
+├── PythonHost           (runs .whl / Python packs)
+├── DotnetHost           (runs .dll / .NET packs)
+├── RubyHost             (runs .gem / Ruby packs)
+└── ProcessHost          (runs any executable / script packs)
+```
+
+A Runtime can declare which Hosts it supports:
+
+```yaml
+hosts:
+  - python >= 3.13
+  - dotnet >= 8.0
+```
+
+Installing a pack with `host: dotnet` triggers automatic Host installation
+if not already present:
+
+```
+yak install crm
+  → resolve crm → crm-2.4.0 (host: dotnet)
+  → check: dotnet host installed? → no
+  → install dotnet-host
+  → install crm
 ```
 
 ---
@@ -118,9 +153,9 @@ Installer
 |---------|------|--------|
 | `yak build` | Builder | Produce artifact from source |
 | `yak publish` | Source | Upload artifact to a source |
-| `yak install <name>` | Resolver + Installer | Resolve and install |
-| `yak update` | Resolver + Installer | Resolve latest and upgrade |
-| `yak doctor` | Verifier | Check installed artifacts |
+| `yak install <name>` | Resolver → Installer → Host | Resolve, install, ensure Host |
+| `yak update` | Resolver → Installer → Host | Resolve latest, upgrade, ensure Host |
+| `yak doctor` | Verifier | Check installed artifacts and Hosts |
 
 ---
 
@@ -131,33 +166,28 @@ A nuclear power plant develops all packs in Ruby.
 ```toml
 # ~/.yak/config.toml
 [sources]
-order = ["internal-git", "internal-files"]
+order = ["internal-git"]
 
 [[source]]
 name = "internal-git"
 kind = "git"
 url = "https://git.internal.corp/yakoon-packs"
-
-[[source]]
-name = "internal-files"
-kind = "directory"
-path = "/opt/yak/artifacts"
 ```
 
 Workflow:
 
 ```bash
-git clone https://git.internal.corp/yakoon-packs  # clone the internal repo
+git clone https://git.internal.corp/yakoon-packs
 cd my-pack
 # edit Ruby source
-yak build                                           # RubyBuildProvider → .artifact
-yak publish                                         # uploads to internal source
+yak build                               # RubyBuildProvider → .artifact
+yak publish                             # uploads to internal Git
 ```
 
 300 Runtimes run nightly:
 
 ```bash
-yak update                                          # resolve + install
+yak update                              # resolve → install → ensure Ruby Host
 ```
 
 No Python involved. No PyPI. No external network.
@@ -170,7 +200,7 @@ No Python involved. No PyPI. No external network.
    `yak install`, `yak update` work identically for Python, Ruby, .NET,
    or shell scripts.
 
-2. **The artifact format is the contract.** Builder and Runtime agree on
+2. **The artifact format is the contract.** Builder and Host agree on
    it. Everything else is pluggable.
 
 3. **Source and Installer are independent.** An HTTP server can serve
@@ -179,14 +209,14 @@ No Python involved. No PyPI. No external network.
 4. **The Resolver knows names and versions, not formats.** It returns
    an artifact descriptor. The Installer interprets it.
 
+5. **A Host is a Runtime plugin.** Installing a pack for an absent Host
+   triggers automatic Host installation. The Runtime never changes.
+
 ---
 
 ## Relationship to Runtime Architecture
 
 ```
 Runtime:     Resolver → Transport → Executor
-Deployment:  Resolver → Source    → Installer
+Deployment:  Resolver → Source    → Installer → Host
 ```
-
-Both share the same Resolver pattern. The Deployment Resolver may
-eventually be the same component as the Runtime Resolver.
