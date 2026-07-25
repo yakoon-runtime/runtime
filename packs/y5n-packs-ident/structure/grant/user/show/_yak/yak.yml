@@ -1,0 +1,24 @@
+title: Grant to User
+
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.packs.ident.apps.grants.user_show:main
+
+invocation:
+  params:
+    - key: name
+      positional: true
+      required: true
+    - key: permission
+      positional: true
+      required: true
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

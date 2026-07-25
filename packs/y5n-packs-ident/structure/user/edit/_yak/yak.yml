@@ -1,0 +1,23 @@
+title: User Edit
+
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.packs.ident.apps.users.edit:main
+
+invocation:
+  params:
+    - key: name
+      positional: true
+      required: true
+    - key: password
+    - key: enabled
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

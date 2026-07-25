@@ -1,6 +1,0 @@
-executor: python
-
-invocation:
-  params:
-    - key: script
-      positional: true

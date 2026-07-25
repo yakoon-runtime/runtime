@@ -1,6 +1,0 @@
-executor: process
-
-invocation:
-  params:
-    - key: name
-      positional: true

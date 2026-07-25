@@ -1,5 +1,0 @@
-<heading>Test Bundle</heading>
-<rule/>
-{{ greeting }}
-<br count="2"/>
-<em>rendered via OnProject from .yak/resources</em>

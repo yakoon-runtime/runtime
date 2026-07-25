@@ -1,0 +1,17 @@
+title: Add World
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.world.add:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: description
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

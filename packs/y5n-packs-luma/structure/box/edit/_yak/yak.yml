@@ -1,0 +1,20 @@
+title: Edit Box
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.box.edit:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: world
+    required: true
+  - key: new-name
+  - key: description
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

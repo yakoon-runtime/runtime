@@ -1,0 +1,9 @@
+{% if not grants %}
+No grants found for permission '{{ permission }}'.
+{% else %}
+Subjects with permission '{{ permission }}': <list>
+{% for g in grants %}
+<item>{{ g.subject_key.id }} [{{ g.bits }}]{% if g.deny %} (deny){% endif %}</item>
+{% endfor %}
+</list>
+{% endif %}

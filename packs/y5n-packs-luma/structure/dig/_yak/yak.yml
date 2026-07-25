@@ -1,0 +1,19 @@
+title: Dig
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.dig:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: direction
+  - key: via
+  - key: twoway
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

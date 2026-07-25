@@ -5,7 +5,7 @@
             "name": "Yakoon: App Console",
             "type": "debugpy",
             "request": "launch",
-            "module": "y5napp.console",
+            "module": "y5n.apps.console",
             "console": "integratedTerminal",
             "env": {
                 "DEV_MODE": "true"
@@ -15,17 +15,17 @@
             "name": "Yakoon: App Web",
             "type": "debugpy",
             "request": "launch",
-            "module": "y5napp.web",
+            "module": "y5n.apps.web",
             "console": "integratedTerminal",
             "env": {
                 "DEV_MODE": "true"
             },
         },
         {
-            "name": "Yakoon: App Textual",
+            "name": "Yakoon: App Shell",
             "type": "debugpy",
             "request": "launch",
-            "module": "y5napp.textual",
+            "module": "y5n.apps.shell",
             "console": "integratedTerminal",
             "env": {
                 "DEV_MODE": "true"
@@ -35,8 +35,10 @@
             "name": "Yakoon: Runtime",
             "type": "debugpy",
             "request": "launch",
-            "module": "y5napp.runtime",
-            "args": ["9100"],
+            "module": "y5n.apps.runtime",
+            "args": [
+                "9100"
+            ],
             "console": "integratedTerminal",
             "env": {
                 "DEV_MODE": "true"
