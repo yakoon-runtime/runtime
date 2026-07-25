@@ -1,9 +1,0 @@
-{% if not users %}
-No users found.
-{% else %}
-Users: <list>
-  {% for u in users %}
-  <item>{{ u.username }}</item>
-  {% endfor %}
-</list>
-{% endif %}

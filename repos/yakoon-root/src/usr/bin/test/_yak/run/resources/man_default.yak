@@ -1,8 +1,0 @@
-<heading>test - Test port resolution</heading>
-<br/>
-Usage: test
-<br count="2"/>
-Calls the <em>greet</em> port from root context and renders
-the result through the projection system.
-<br count="2"/>
-Example: test

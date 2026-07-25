@@ -1,9 +1,0 @@
-{% if not groups %}
-No groups found.
-{% else %}
-Groups: <list>
-  {% for g in groups %}
-  <item>{{ g.name }}</item>
-  {% endfor %}
-</list>
-{% endif %}

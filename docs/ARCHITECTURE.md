@@ -6,14 +6,26 @@ Yakoon started as a Python framework and evolved into a
 language-neutral runtime platform.
 
 ```
-UI (Textual / Web / ...)
-  │
-  ▼
-Runtime
-  │
-  ├── PythonExecutor    →  _yak/run/app.py   →  async def run(space)
-  ├── ScriptExecutor    →  _yak/run/app.py   →  print() → stdout
-  └── ProcessExecutor   →  _yak/run/app      →  argv + env + stdout
+                    Scheduler
+                        │
+                        ▼
+                    Flow Engine
+                        │
+                        ▼
+                    Tree / Nodes
+                        │
+                        ▼
+                     Host-Node
+                        │
+              ┌─────────┴─────────┐
+              │                   │
+          Runtime Bus        Language Runtime
+              │             (Python, Ruby, ...)
+              ▼                   │
+          Resolver                ▼
+              │               User Program
+              ▼
+          Transport
 ```
 
 ### Four Executor Levels

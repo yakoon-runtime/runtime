@@ -1,1 +1,0 @@
-SHELL_NAME = "yakoon"

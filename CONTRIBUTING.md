@@ -7,8 +7,8 @@ git clone <repo>
 cd yakoon
 python -m venv .venv
 source .venv/bin/activate
-pip install -e apps/y5napp-runtime
-pip install -e apps/y5napp-textual
+pip install -e apps/y5n-apps-runtime
+pip install -e apps/y5n-apps-shell
 pip install -r requirements-dev.txt
 ```
 
