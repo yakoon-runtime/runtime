@@ -1,9 +1,0 @@
-{% if not grants %}
-No permissions found for group '{{ group }}'.
-{% else %}
-Permissions for group '{{ group }}': <list>
-{% for g in grants %}
-<item>{{ g.permission_key }} [{{ g.bits }}]{% if g.deny %} (deny){% endif %}</item>
-{% endfor %}
-</list>
-{% endif %}

@@ -17,18 +17,18 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e runtime/api
-          pip install -e runtime/engine
-          pip install -e runtime/transport
-          pip install -e runtime/store
-          pip install -e repos/y5napp-system
-          pip install -e repos/y5napp-ident
-          pip install -e sdk/python
+          pip install -e runtime/y5n-runtime-api
+          pip install -e runtime/y5n-runtime-engine
+          pip install -e runtime/y5n-runtime-transport
+          pip install -e runtime/y5n-runtime-store
+          pip install -e packs/y5n-packs-system
+          pip install -e packs/y5n-packs-ident
+          pip install -e sdk/y5n-sdk-python
           pip install -r requirements-dev.txt
 
       - name: Run tests
         run: |
-          pytest runtime/engine/tests \
-                runtime/store/event/tests \
-                runtime/store/sequence/tests \
+          pytest runtime/y5n-runtime-engine/tests \
+                runtime/y5n-runtime-store/tests/event \
+                runtime/y5n-runtime-store/tests/sequence \
                 -x --tb=short

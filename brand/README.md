@@ -11,6 +11,6 @@ brand/
 
 ## Verwendung
 
-- **Web-Client**: `apps/y5napp-web/src/y5napp/web/static/`
+- **Web-Client**: `apps/y5n-apps-web/src/y5n/apps/web/static/`
 - **Textual-Client**: Als Text-Logo oder ASCII-Kunst
 - **Dokumentation**: `docs/`
