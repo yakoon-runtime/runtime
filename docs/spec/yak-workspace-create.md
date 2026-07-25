@@ -9,7 +9,7 @@
 ## Purpose
 
 `yak workspace create` materializes a new Yakoon Workspace — the development
-boundary for one or more packs.
+boundary for related packs.
 
 ---
 
@@ -17,6 +17,7 @@ boundary for one or more packs.
 
 - `yak` is installed
 - The target directory does not exist yet (or is empty)
+- The target must not already be a Yakoon Workspace
 
 ---
 
@@ -50,12 +51,14 @@ WorkspaceCreateWorkflow
 
 ## Workspace Manifest (`workspace.toml`)
 
+The manifest describes the workspace. It does not list packs — the filesystem
+(`packs/` directory) is the authority for that.
+
 ```toml
 [workspace]
 name = "acme"
-version = "1"
+manifest = "1"
 created = "2026-07-25T12:00:00+00:00"
-packs = []
 ```
 
 ---
@@ -75,7 +78,8 @@ A workspace is the counterpart to a repository:
 
 | | Repository | Workspace |
 |---|---|---|
+| Purpose | Develop Yakoon | Develop Packs |
 | Contains | Platform source code | Pack projects |
 | Created by | `git clone` | `yak workspace create` |
 | Managed by | Git | Yak |
-| Boundary | One platform | Multiple packs |
+| Boundary | One platform | Multiple related packs |
