@@ -92,6 +92,48 @@ resolve("runtime")
 
 This mirrors the existing Runtime Resolver architecture.
 
+### The resolver knows artifacts, not languages
+
+The resolver resolves opaque blobs with metadata. It does not know whether
+an artifact is a Python wheel, a dotnet assembly, a Ruby gem, or a tarball
+of shell scripts. Language‑specific handling is the responsibility of
+**installers**, not the resolver.
+
+### Source kinds are extensible
+
+The initial implementation supports `directory` and `pypi` sources. Future
+source kinds may include:
+
+- `git` — resolve from a Git repository tag
+- `http` — resolve from a plain web server (air‑gapped environments)
+- `s3` — resolve from cloud storage
+- `registry` — a Yakoon-specific registry protocol
+
+Enterprises with strict policies (e.g. nuclear power plants) can:
+
+- Host their own Git repository
+- Configure `yak` to only use internal sources
+- Add custom source kinds for internal tooling (e.g. Ruby scripts, dotnet
+  assemblies, Perl modules)
+- Remove the public source entirely
+
+Example configuration for an air‑gapped enterprise using only Ruby packs:
+
+```toml
+[sources]
+order = ["internal", "site-wheels"]
+
+[[source]]
+name = "internal"
+kind = "git"
+url = "https://git.internal.corp/yakoon-packs"
+
+[[source]]
+name = "site-wheels"
+kind = "directory"
+path = "/opt/yak/wheels"
+```
+
 ---
 
 ## Open Questions
@@ -107,6 +149,14 @@ Two viable options:
 
 Both may coexist: `dist/` as project artifact, plus an optional step that
 copies or symlinks finished wheels into the resolver store.
+
+---
+
+### `yak build` is extensible
+
+The first implementation produces Python wheels. Future build backends may
+produce other artifact formats (dotnet DLLs, Ruby gems, tarballs). The
+build command delegates to a backend selected by the project's metadata.
 
 ---
 
