@@ -168,7 +168,7 @@ pythonpath = ["src"]
 asyncio_mode = "auto"
 
 [tool.coverage.run]
-source = ["y5n", "y5nspace", "y5nstore", "y5ntrans", "y5napp"]
+source = ["y5n", "y5nspace", "y5nstore", "y5ntrans"]
 omit = ["*/tests/*", "*/__old__/*"]
 ```
 

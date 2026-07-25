@@ -1,0 +1,15 @@
+title: Info
+
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.packs.system.info:main
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

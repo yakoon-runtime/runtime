@@ -1,0 +1,9 @@
+title: Jobs
+
+resolvable: true
+navigable: true
+contextual: false
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.packs.system.jobs.list:main

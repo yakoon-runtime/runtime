@@ -78,28 +78,28 @@ The Texture client connected to a runtime — showing spaces, commands, and live
 ## Quick Start
 
 ```bash
-pip install -e apps/y5napp-runtime
-pip install -e apps/y5napp-textual
+pip install -e apps/y5n-apps-runtime
+pip install -e apps/y5n-apps-shell
 
 # Terminal 1: Runtime
 yakoon-runtime
 
 # Terminal 2: TUI client
-yakoon-texture
+yakoon-shell
 ```
 
 ### Package vs Module vs Executable
 
 | Package (pip) | Python Module | Command |
 |---|---|---|
-| `y5napp-runtime` | `y5napp.runtime` | `yakoon-runtime` |
-| `y5napp-textual` | `y5napp.textual` | `yakoon-texture` |
+| `y5n-apps-runtime` | `y5n.packs.runtime` | `yakoon-runtime` |
+| `y5n-apps-shell` | `y5n.packs.shell` | `yakoon-shell` |
 
 For development or debugging:
 
 ```bash
-python -m y5napp.runtime
-python -m y5napp.textual
+python -m y5n.packs.runtime
+python -m y5n.packs.shell
 ```
 
 See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for full setup details.

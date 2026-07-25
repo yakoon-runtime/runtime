@@ -4,16 +4,16 @@
 
 | App | Install | Start |
 |-----|---------|-------|
-| `y5napp-runtime` | `pip install -e apps/y5napp-runtime` | `yakoon-runtime 9100` or `python -m y5napp.runtime` |
-| `y5napp-textual` | `pip install -e apps/y5napp-textual` | `yakoon-texture` or `python -m y5napp.textual` |
-| `y5napp-web` | `pip install -e apps/y5napp-web` | `yakoon-web 8000` or `python -m y5napp.web` |
+| `y5n-apps-runtime` | `pip install -e apps/y5n-apps-runtime` | `yakoon-runtime 9100` or `python -m y5n.packs.runtime` |
+| `y5n-apps-shell` | `pip install -e apps/y5n-apps-shell` | `yakoon-shell` or `python -m y5n.packs.shell` |
+| `y5n-apps-web` | `pip install -e apps/y5n-apps-web` | `yakoon-web 8000` or `python -m y5n.packs.web` |
 
 ## Dev Setup (one-time)
 
 ```bash
-pip install -e apps/y5napp-runtime
-pip install -e apps/y5napp-textual
-pip install -e apps/y5napp-web
+pip install -e apps/y5n-apps-runtime
+pip install -e apps/y5n-apps-shell
+pip install -e apps/y5n-apps-web
 ```
 
 Or via `scripts/install.sh`.
@@ -25,7 +25,7 @@ Or via `scripts/install.sh`.
 yakoon-runtime 9100
 
 # Terminal 2: Texture
-yakoon-texture
+yakoon-shell
 
 # Terminal 3 (optional): Web client
 yakoon-web 8000
@@ -35,9 +35,9 @@ yakoon-web 8000
 
 | PyPI Name | Module Name |
 |-----------|-------------|
-| `y5napp-runtime` | `y5napp.runtime` |
-| `y5napp-textual` | `y5napp.textual` |
-| `y5napp-web` | `y5napp.web` |
+| `y5n-apps-runtime` | `y5n.packs.runtime` |
+| `y5n-apps-shell` | `y5n.packs.shell` |
+| `y5n-apps-web` | `y5n.packs.web` |
 
-The PyPI name (`y5napp-web`, with hyphen) is used for `pip install`.
-The module name (`y5napp.web`, with dot) is used for `python -m`.
+The PyPI name (`y5n-apps-web`, with hyphen) is used for `pip install`.
+The module name (`y5n.packs.web`, with dot) is used for `python -m`.

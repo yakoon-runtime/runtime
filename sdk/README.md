@@ -18,7 +18,7 @@ from y5n.sdk import context, fs, io, models, ports, scheduler, session, viewport
 | `viewport` | `from y5n.sdk import viewport` | Client viewport commands (clear, connect) |
 | `session` | `from y5n.sdk import session` | Session management (list, attach, detach) |
 | `fs` | `from y5n.sdk import fs` | Filesystem operations (chdir) |
-| `models` | `from y5n.sdk.models import Document, ...` | Typed YDS document builder (generated from `spec/yds/yds-v1.yaml`) |
+| `models` | `from y5n.sdk.models import Document, ...` | Typed YDS document builder (generated from `sdk/spec/yds/yds-v1.yaml`) |
 | `ports` | `from y5n.sdk import ports` | Service / port access (provide + consume) |
 
 A backward-compatible `runtime` facade is available for code that prefers a single
@@ -128,7 +128,7 @@ path = context.session().cwd
 
 ## Models — Typed YDS Documents
 
-Generated from `spec/yds/yds-v1.yaml` via `sdk/python/generate.sh`.
+Generated from `spec/yds/yds-v1.yaml` via `sdk/y5n-sdk-python/generate.sh`.
 
 ```python
 from y5n.sdk.models import Document, Header, Paragraph, InlineText
@@ -185,12 +185,12 @@ side effect (e.g. `CWD`).
 ## Generator
 
 ```bash
-cd sdk/python
+cd sdk/y5n-sdk-python
 ./generate.sh
 ```
 
-This reads `spec/yds/yds-v1.yaml` and writes `sdk/python/src/y5n/sdk/models.py`.
-The generator lives in `sdk/gen/` and supports multiple language targets.
+This reads `sdk/spec/yds/yds-v1.yaml` and writes `sdk/y5n-sdk-python/src/y5n/sdk/models.py`.
+The generator lives in `sdk/y5n-sdk-gen/` and supports multiple language targets.
 
 ## Rules
 

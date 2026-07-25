@@ -1,0 +1,23 @@
+title: Su
+
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.packs.ident.apps.su:main
+
+invocation:
+  params:
+    - key: user
+      positional: true
+      required: true
+    - key: password
+      required: true
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

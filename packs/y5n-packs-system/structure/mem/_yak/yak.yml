@@ -1,0 +1,15 @@
+title: Mem
+
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.packs.system.mem:main
+
+document:
+  default: file:resources/default.ydf
+
+man:
+  default: file:resources/man.ydf

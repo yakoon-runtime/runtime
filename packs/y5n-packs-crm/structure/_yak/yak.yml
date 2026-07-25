@@ -1,0 +1,9 @@
+title: CRM
+
+resolvable: false
+navigable: true
+contextual: false
+host: /boot/python/runtime
+
+entry:
+  setup: pack:y5n.packs.crm.setup:main

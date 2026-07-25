@@ -1,0 +1,9 @@
+title: Net Connect
+
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+
+entry:
+  run: pack:y5n.packs.system.net.connect:main
