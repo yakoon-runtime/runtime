@@ -61,6 +61,8 @@ def file_logger(name, filename, level=logging.INFO):
     return logger
 
 
+settings = Settings()
+
 if settings.logging.log_audits:
     file_logger("audit", "y5n.audit.log")
 if settings.logging.log_security:
