@@ -12,32 +12,47 @@
 - `publish --repository github:owner/repo` (draft + --release)
 - Cache by fingerprint under `~/.yak/cache/`
 
-## Phase C 🚧 — Self-hosting (Vision)
+## Phase C 🚧 — Launcher (Self-hosting)
+
+**Prerequisite:** `y5n-apps-yak` exists as a published artifact on GitHub
+Releases. Until then, the Launcher has nothing to launch.
+
+### Timeline
+
+```
+Today (source world):
+  Git → apps/y5n-apps-yak → development
+
+First release:
+  yak build y5n-apps-yak → artifact → yak publish → GitHub Release
+
+Launcher world (after first release):
+  pip install yakoon → Launcher → install artifact → launch y5n-apps-yak
+```
 
 ### Goal
-Yak bootstraps Yak. The `yakoon` package on PyPI becomes a minimal
-bootloader (≈50 lines) whose only job is:
-
-> Ensure y5n-apps-yak is available, then launch it.
+The `yakoon` package on PyPI becomes a minimal **Launcher** — the only
+unchangeable entry point of the platform. Its entire job:
 
 ```
-pip install yakoon      → bootsrapper (minimal)
-    │
-    ▼
-yak install y5n-apps-yak → artifact from repository
-    │
-    ▼
-yak shell                → runs y5n-apps-yak
+yak              ← Launcher
+  │
+  ├─ ensure y5n-apps-yak is installed
+  ├─ sync if needed
+  └─ launch y5n-apps-yak
 ```
+
+The Launcher is only viable **after** the first official build and release
+of `y5n-apps-yak`. Before that, the PyPI placeholder stays as-is.
+
+### Design constraint
+The Launcher must not duplicate code from y5n-apps-yak. It either:
+- Bundles a minimal resolver/installer (maintenance cost), or
+- Uses pip install for PyPI-hosted bootstrap release (pragmatic start)
 
 ### Why
-- The CLI evolves in one place: `y5n-apps-yak` as a versioned artifact
-- The bootloader never needs updating
-- New CLI versions ship via `yak publish`, not PyPI
-- Language-neutral: the same bootloader can eventually launch
-  non-Python versions of the CLI
-
-### Criteria
-- `yak install y5n-apps-yak --repository github:yakoon-runtime/apps` works
-- `yak build y5n-apps-yak && yak publish y5n-apps-yak` — Yak builds itself
-- Bootloader has no commands, no parser, no runtime knowledge
+- `y5n-apps-yak` evolves freely — new commands, new UI, new runtime
+- The Launcher never changes — it always launches the current version
+- Version 5.0 ships via `yak publish`, not via PyPI
+- The CLI is just the first app — `y5n-apps-admin`, `y5n-apps-studio`
+  follow the same pattern
