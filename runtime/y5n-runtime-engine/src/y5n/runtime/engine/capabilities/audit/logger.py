@@ -4,10 +4,22 @@ from pathlib import Path
 
 from y5n.runtime.engine.settings import Settings
 
-settings = Settings()
 
-logdir = Path(settings.logging.log_dir).expanduser()
-logdir.mkdir(parents=True, exist_ok=True)
+def _resolve_logdir() -> Path:
+    """Use .yak/logs/ if a context is detected, otherwise fall back to settings."""
+    cwd = Path.cwd()
+    for parent in [cwd, *cwd.parents]:
+        if (parent / ".yak" / "context.toml").exists() or (parent / ".yak" / "state.toml").exists():
+            log = parent / ".yak" / "logs"
+            log.mkdir(parents=True, exist_ok=True)
+            return log
+    settings = Settings()
+    d = Path(settings.logging.log_dir).expanduser()
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+logdir = _resolve_logdir()
 
 
 class _SafeFormatter(logging.Formatter):
