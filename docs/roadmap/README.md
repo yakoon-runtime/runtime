@@ -45,6 +45,30 @@ yak              ← Launcher
 The Launcher is only viable **after** the first official build and release
 of `y5n-apps-yak`. Before that, the PyPI placeholder stays as-is.
 
+### Security – Release pipeline
+
+```
+Developer
+    ↓
+yak build
+    ↓
+yak publish --repository github:user/testing
+    ↓
+Testing (Draft Release, private)
+    ↓
+Review / CI
+    ↓
+Promote (manual)
+    ↓
+Official Repository (github:yakoon-runtime/apps)
+    ↓
+Launcher (reads only official, never testing)
+```
+
+The Launcher never installs Draft Releases – only published, reviewed
+artifacts from the official repository. This is enforced by GitHub:
+write access is limited to maintainers; the Launcher reads publicly.
+
 ### Design constraint
 The Launcher must not duplicate code from y5n-apps-yak. It either:
 - Bundles a minimal resolver/installer (maintenance cost), or
