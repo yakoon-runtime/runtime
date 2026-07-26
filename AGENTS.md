@@ -55,3 +55,34 @@ Rules:
 - Always `y5n.packs.*` for packs, never `y5n.apps.*`.
 - Always `y5n.apps.*` for apps, never `y5n.packs.*`.
 - The venv must be installed using `.venv/bin/pip`, not system pip.
+
+## YakContext architecture
+
+`yak` commands follow a Git‑like context model. Every command operates within a
+**YakContext** — a directory containing `.yak/` (context.toml or state.toml).
+
+```
+yak init → YakContext
+               │
+    ┌──────────┼──────────┐
+    │          │          │
+    ▼          ▼          ▼
+ Sources   Artifacts   Installations
+    │          │          │
+    ▼          ▼          ▼
+  build     publish    runtime / shell
+    │          │
+    ▼          ▼
+          install
+```
+
+| Layer | Location | Created by |
+|-------|----------|------------|
+| **YakContext** | `<root>/.yak/` | `yak init` |
+| **Context marker** | `.yak/context.toml` | `yak init` |
+| **Installation state** | `.yak/state.toml` | `yak install` |
+| **Build artifacts** | `.yak/artifacts/` | `yak build` |
+| **Global fallback artifacts** | `~/.yak/artifacts/` | (auto) |
+
+All commands find the context via `find_context_root()` (walks up from CWD).
+Only `init` and `install` create new context markers. Everything else reads.
