@@ -1,0 +1,4 @@
+workspace_path: workspace
+listen:
+  host: 127.0.0.1
+  port: 9100
