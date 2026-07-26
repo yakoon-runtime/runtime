@@ -30,6 +30,13 @@ Positive:
 - `install` and `sync` remain unchanged — they iterate Repositories
 - Adding S3, HTTP, or a private registry is another Repository implementation
 - GitHub Releases require no server-side infrastructure
+- Repositories are composable — multiple sources can be combined:
+  ```yaml
+  sources:
+    - local
+    - github:yakoon-runtime/packs
+    - github:company/internal-packs
+  ```
 
 Negative:
 - Requires GitHub API access (rate limits apply to unauthenticated requests)
