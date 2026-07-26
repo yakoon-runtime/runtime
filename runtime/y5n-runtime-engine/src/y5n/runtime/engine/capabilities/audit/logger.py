@@ -6,13 +6,24 @@ from y5n.runtime.engine.settings import Settings
 
 
 def _resolve_logdir() -> Path:
-    """Use .yak/logs/ if a context is detected, otherwise fall back to settings."""
+    """Use context .yak/logs/ if configured, otherwise fall back to settings."""
+    import tomllib
+
     cwd = Path.cwd()
     for parent in [cwd, *cwd.parents]:
-        if (parent / ".yak" / "context.toml").exists() or (parent / ".yak" / "state.toml").exists():
-            log = parent / ".yak" / "logs"
+        ctx = parent / ".yak" / "context.toml"
+        if not ctx.exists():
+            continue
+        try:
+            with open(ctx, "rb") as f:
+                data = tomllib.load(f)
+            rel = data.get("logs", {}).get("path", ".yak/logs")
+            log = (parent / rel).resolve()
             log.mkdir(parents=True, exist_ok=True)
             return log
+        except Exception:
+            break
+
     settings = Settings()
     d = Path(settings.logging.log_dir).expanduser()
     d.mkdir(parents=True, exist_ok=True)
