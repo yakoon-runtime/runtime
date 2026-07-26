@@ -2,7 +2,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from y5n.runtime.engine.settings import Settings
+from ...settings import Settings
 
 
 def _resolve_logdir() -> Path:
