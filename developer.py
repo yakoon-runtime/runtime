@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """Yakoon developer helper — start runtime and shell.
 
-Reads yak.yml to determine which environment to use.
-
 Usage:
     python developer.py              # Start both
     python developer.py runtime      # Runtime only
@@ -17,21 +15,33 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent
-PROJECT = ROOT / "yak.yml"
 
 
-def _load_project():
-    if PROJECT.exists():
-        return yaml.safe_load(PROJECT.read_text()) or {}
-    return {}
+def _find_yak_yml():
+    """Find yak.yml: repo root takes precedence over bundled."""
+    repo_yml = ROOT / "yak.yml"
+    if repo_yml.exists():
+        return repo_yml
+    bundled = ROOT / "apps" / "y5n-apps-yak" / "yak.yml"
+    if bundled.exists():
+        return bundled
+    return None
 
 
 def _resolve_env_file():
-    cfg = _load_project()
+    yml = _find_yak_yml()
+    if yml is None:
+        print("Error: no yak.yml found")
+        sys.exit(1)
+
+    cfg = yaml.safe_load(yml.read_text())
     bs = cfg.get("bootstrap", {})
     env = bs.get("environment", "dev")
+
+    yml_dir = yml.parent
     art_rel = bs.get("artifacts", "apps/y5n-apps-yak/artifacts")
-    return (ROOT / art_rel).resolve() / f"{env}.yml"
+    artifacts_dir = (yml_dir / art_rel).resolve()
+    return artifacts_dir / f"{env}.yml"
 
 
 def main():
@@ -40,11 +50,10 @@ def main():
     want_runtime = len(sys.argv) <= 1 or "runtime" in sys.argv
     want_shell = len(sys.argv) <= 1 or "shell" in sys.argv
 
-    # Copy environment → runtime config so the runtime finds its workspace
     runtime_config = ROOT / "yakoon-runtime.yml"
     if env_file.exists() and not runtime_config.exists():
         shutil.copy2(env_file, runtime_config)
-        print(f"  Config: {env_file.name} → {runtime_config.name}")
+        print(f"  Config: {env_file.name}")
 
     runtime_proc = None
     if want_runtime:
