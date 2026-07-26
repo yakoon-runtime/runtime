@@ -22,22 +22,29 @@ works within a team that shares a filesystem, but not across the internet.
 
 5. **Cache is content-addressed by fingerprint.** `~/.yak/cache/github/<repo>/<fingerprint>/`
 
-6. **Sources can be declared in environment.yml** for persistent configuration.
+6. **Repositories can be declared in environment.yml** for persistent configuration.
 
 ## Consequences
 
-Positive:
+### Benefits
+
 - `install` and `sync` remain unchanged — they iterate Repositories
 - Adding S3, HTTP, or a private registry is another Repository implementation
 - GitHub Releases require no server-side infrastructure
 - Repositories are composable — multiple sources can be combined:
   ```yaml
-  sources:
+  repositories:
     - local
     - github:yakoon-runtime/packs
     - github:company/internal-packs
   ```
+- Cache by fingerprint reduces network requests to one per version
+- No operational costs — hosting is provided by the repository platform
+- Works with existing infrastructure (GitHub organisations, permissions, CDN)
 
-Negative:
-- Requires GitHub API access (rate limits apply to unauthenticated requests)
-- Large artifacts benefit from GitHub's CDN, but initial download is unbuffered
+### Trade-offs
+
+- Availability depends on the selected repository provider. Yakoon distributes
+  artifacts — it does not operate an ecosystem.
+- Repository discovery (search, metadata) is delegated to the hosting platform.
+- Private repositories require authentication managed by the provider.
