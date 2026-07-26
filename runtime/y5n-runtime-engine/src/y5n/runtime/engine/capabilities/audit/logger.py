@@ -10,6 +10,14 @@ logdir = Path(settings.logging.log_dir).expanduser()
 logdir.mkdir(parents=True, exist_ok=True)
 
 
+class _SafeFormatter(logging.Formatter):
+    """Formatter that substitutes missing keys with empty string."""
+
+    def format(self, record):
+        record.__dict__.setdefault("session", "")
+        return super().format(record)
+
+
 def file_logger(name, filename, level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
@@ -20,7 +28,7 @@ def file_logger(name, filename, level=logging.INFO):
         backupCount=5,
     )
 
-    formatter = logging.Formatter(
+    formatter = _SafeFormatter(
         "%(asctime)s | %(name)s | %(levelname)s | session=%(session)s | %(message)s"
     )
 
