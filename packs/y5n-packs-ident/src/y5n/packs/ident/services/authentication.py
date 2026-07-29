@@ -35,7 +35,8 @@ class AuthenticationService:
 
         from y5n.sdk import ports
 
-        await ports.get("session").update(
+        ses = ports.get("session")
+        await ses.update(
             patch={
                 "user_key": str(user.key),
                 "user_name": user.username,
