@@ -1,9 +1,0 @@
-title: Session Detach
-
-resolvable: true
-navigable: false
-contextual: false
-host: /boot/python/runtime
-
-entry:
-  run: pack:y5n.packs.system.session.detach:main

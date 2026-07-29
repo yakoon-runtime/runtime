@@ -9,23 +9,23 @@ my-command/
 ├── resources/
 │   ├── default.yak
 │   └── man.yak
-└── _yak/
-    └── yak.yml
+    └── .yak/
+        └── yak.yml
 ```
 
 The command author decides where code and resources live.
-The `_yak/yak.yml` declares the entry points.
+The `.yak/yak.yml` declares the entry points.
 
 ## Entry Declaration
 
 ```yaml
-# _yak/yak.yml
+# .yak/yak.yml
 entry:
   run: app.py
   setup: setup.py        # optional
 ```
 
-The host or executor reads `entry.run` from `_yak/yak.yml`,
+The host or executor reads `entry.run` from `.yak/yak.yml`,
 resolves it relative to the command root, and loads the file.
 
 ## Entry Point Signatures
@@ -61,12 +61,12 @@ SDK for service discovery and RPC.
 
 | Concept | Responsibility |
 |---------|---------------|
-| **`_yak/`** | Marks the start of a Yak object |
+| **`.yak/`** | Marks the start of a Yak object |
 | **`yak.yml`** | Describes the object completely (metadata, host/executor, entry, invocation, resources) |
 | **`entry.run`** | Tells the executor/host where to find the runnable code |
 | **Host/Executor** | Reads the entry, loads the module, executes it |
 
-No fixed subdirectory layout inside `_yak/`. The developer
+No fixed subdirectory layout inside `.yak/`. The developer
 decides the command's internal structure.
 
 ## Future Phases

@@ -1,10 +1,5 @@
 [workspace]
 distribution = "dev"
 version = "1"
-created = "2026-07-26T13:52:25.063479+00:00"
-updated = "2026-07-26T13:52:25.063479+00:00"
-packs = [
-  "root",
-  "boot",
-  "system",
-]
+created = "2026-07-29T18:19:03.841111+00:00"
+updated = "2026-07-29T18:19:03.841111+00:00"

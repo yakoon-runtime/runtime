@@ -1,7 +1,0 @@
-title: Luma
-host: /boot/python/runtime
-resolvable: false
-navigable: true
-contextual: false
-entry:
-  setup: pack:y5n.packs.luma.setup:main

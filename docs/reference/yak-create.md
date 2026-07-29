@@ -39,7 +39,7 @@ yak create pack <name> [--dir <path>]
         <name>/
           __init__.py
   structure/
-    _yak/
+    .yak/
       yak.yml
 ```
 
@@ -77,7 +77,7 @@ namespaces = true
 
 Empty.
 
-### `structure/_yak/yak.yml`
+### `structure/.yak/yak.yml`
 
 ```yaml
 title: <Title>        # Auto-capitalised
@@ -110,7 +110,7 @@ yak create command <name> [--pack <name>]
 ```
 structure/
   <name>/
-    _yak/
+    .yak/
       yak.yml
     resources/
       default.ydf
@@ -123,7 +123,7 @@ src/
         <name>.py
 ```
 
-### `structure/<name>/_yak/yak.yml`
+### `structure/<name>/.yak/yak.yml`
 
 ```yaml
 title: <Title>

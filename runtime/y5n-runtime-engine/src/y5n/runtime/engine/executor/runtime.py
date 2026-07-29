@@ -135,7 +135,7 @@ class RuntimeExecutor(Executor, DiagnosticExecutor):
         fs_path = node.fs_path
         if fs_path is None:
             return HealthResult.green()
-        health_file = fs_path / "_yak" / "health" / "app.py"
+        health_file = fs_path / ".yak" / "health" / "app.py"
         if not health_file.is_file():
             return HealthResult.green()
         tree_path = str(node.path)

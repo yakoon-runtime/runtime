@@ -18,7 +18,7 @@ Options
 
 <pre>
   --long, -l   Detail view with Kind, Name, Version, Executor, Size
-  --all, -a    Include hidden entries (_yak/, .dotfiles)
+  --all, -a    Include hidden entries (.yak/, .dotfiles)
 </pre>
 
 <heading level="2">
