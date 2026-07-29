@@ -38,7 +38,7 @@ def parse_entry(entry: str) -> tuple[str, str]:
 
 
 def _read_yak_meta(dir_path: Path) -> dict:
-    yak_file = dir_path / "_yak" / "yak.yml"
+    yak_file = dir_path / ".yak" / "yak.yml"
     if yak_file.is_file():
         with open(yak_file) as f:
             return yaml.safe_load(f) or {}
@@ -92,7 +92,7 @@ def build_app_file(root: Path, target_path: str) -> Path | None:
 
 
 def read_entry(root: Path, target_path: str) -> str | None:
-    """Read the entry.run value from a node's _yak/yak.yml."""
+    """Read the entry.run value from a node's .yak/yak.yml."""
     rel = target_path.strip("/")
     candidate = root / rel
     meta = _read_yak_meta(candidate)

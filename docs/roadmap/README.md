@@ -21,6 +21,17 @@
 - FileRepository + GitHubReleaseRepository exist
 - GitLab, S3, OCI follow the same interface
 
+### TODO: Integration tests for the full lifecycle
+
+Add tests that cover the complete flow end-to-end (not just isolated components):
+
+- `bootstrap` → workspace materialization → runtime tree scan finds `.yak/` dirs
+- `yak mount add` → environment.yml updated → workspace re-materialized
+- `install` → pip + workspace → materialize → scan
+- Sync consistency: environment ↔ workspace ↔ scanner agreement on paths
+
+Key invariant for every test: **the Tree scanner must find all mounted commands**.
+
 ## Phase E 🌱 — Ecosystem validation
 
 ### TODO: First external product
