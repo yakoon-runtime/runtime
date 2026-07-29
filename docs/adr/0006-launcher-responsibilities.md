@@ -1,22 +1,50 @@
 # ADR 6: Launcher Responsibilities
 
-**Status:** Draft for discussion
+**Status:** Accepted
 
 ## Context
 
 Yakoon has a working distribution pipeline. `y5n-apps-yak` exists as a
 published artifact on GitHub Releases, installable via `install --repository`.
 
-The `yakoon` package on PyPI is currently a stub (placeholder). It should
-become a minimal **Launcher** — the only permanently installed piece of
-Yakoon on a developer's machine.
+The `yakoon` package on PyPI is currently a stub. It should become the
+**Launcher** — the only component permanently delivered via an external
+package manager. Everything else distributes through Yakoon itself.
+
+## Architecture
+
+```
+PyPI (external)
+    │
+    ▼
+y5n-launcher (Stage 0)
+    │
+    ├─ 1. Is y5n-apps-yak installed?
+    ├─ 2. If not: install from repository
+    └─ 3. Forward all arguments
+    │
+    ▼
+Repository (GitHub Releases)
+    │
+    ▼
+y5n-apps-yak
+    │
+    ▼
+Yakoon Platform (runtime, packs, apps, ...)
+```
+
+**PyPI ends at the Launcher. Everything below is Yakoon.**
+
+`y5n-launcher` is the only component ever delivered via an external
+package manager (PyPI, apt, brew, ...). All other Yakoon components
+distribute through Yakoon's own pipeline: `build → publish → install`.
 
 ## Naming
 
-The Launcher lives in its own namespace: **`y5n-launcher`** (not `apps/`,
-not a hidden bootstrap). It is a first-class Yakoon application — the one
-that starts all others. Like pioneers in an army, it belongs to the platform
-even though its task is different.
+The Launcher lives in its own namespace: **`y5n-launcher`**. It is a
+first-class Yakoon application — the one that starts all others. Like
+pioneers in an army, it belongs to the platform even though its task
+is different.
 
 ```
 launcher/y5n-launcher/       ← namespace: y5n.launcher
@@ -36,34 +64,38 @@ The Launcher is a **Stage 0** component. Its sole responsibility:
 
 > Ensure the default Yakoon application is available, then launch it.
 
+### What the Launcher does
+
 ```
-pip install yakoon
-       │
-       ▼
-Launcher (Stage 0)
-       │
-       ├─ 1. Is y5n-apps-yak installed?
-       ├─ 2. If not: install it from the bootstrap repository
-       └─ 3. Forward all arguments to y5n-apps-yak
+main()
+    │
+    ├─ Is y5n-apps-yak installed?
+    │   YES → forward all arguments
+    │   NO  → install from repository → forward
+    │
+    ▼
+subprocess: python -m y5n.apps.yak.hosts.cli.main [args...]
 ```
 
-### What the Launcher is NOT
+The Launcher exposes the `yak` command, but **delegates all command
+processing** to `y5n-apps-yak`. From the user's perspective `yak` is
+a CLI. Architecturally it is a delegate.
 
-The Launcher is NOT a CLI. It has:
-- No commands (`build`, `install`, `sync`, `shell`, etc.)
-- No parser (no argparse, no subcommands)
-- No runtime knowledge (no context, workspace, environment)
-- No repository protocol knowledge (it reads a bootstrap file)
-- No update logic (version resolution, fingerprints, sync)
+The Launcher explicitly does NOT contain:
+- Commands (`build`, `install`, `sync`, `shell`, ...)
+- Parser (no argparse, no subcommands)
+- Runtime knowledge (no context, workspace, environment, nodes)
+- Repository protocol logic (it reads a config file)
+- Update logic (version resolution, fingerprints, reconciliation)
 
 ALL of these belong in `y5n-apps-yak`.
 
-### Bootstrap configuration
+### Launcher Configuration
 
 The Launcher ships with a single configuration file:
 
 ```yaml
-# bootstrap.yml (bundled in the PyPI package)
+# launcher.yml (bundled in the PyPI package)
 repositories:
   - github:yakoon-runtime/apps
 
@@ -80,8 +112,6 @@ It passes it to a bundled minimal installer that:
 
 ### Interface to y5n-apps-yak
 
-The Launcher calls:
-
 ```python
 subprocess.run([
     context_venv_python,
@@ -90,13 +120,12 @@ subprocess.run([
 ])
 ```
 
-All arguments are forwarded unchanged. y5n-apps-yak is the CLI.
-The Launcher is transparent — the user never interacts with it directly.
+All arguments are forwarded unchanged.
 
 ### Evolution rule
 
 The Launcher must never grow new responsibilities. Any code that
-implements a "feature" belongs in y5n-apps-yak. The Launcher's only
+implements a "feature" belongs in `y5n-apps-yak`. The Launcher's only
 path to evolution is:
 
 > Ship a new version of y5n-apps-yak via the repository.
@@ -104,6 +133,19 @@ path to evolution is:
 The Launcher itself is frozen after its initial release. New CLI
 features, new commands, new runtime versions — all ship via
 `yak publish`, never via PyPI.
+
+### Distribution boundary
+
+| Component | Distributed via |
+|-----------|----------------|
+| `y5n-launcher` | PyPI (external package manager) |
+| `y5n-apps-yak` | Repository (Yakoon's own pipeline) |
+| `y5n-runtime-*` | Repository |
+| `y5n-packs-*` | Repository |
+| `y5n-apps-*` | Repository |
+
+This is the only exception to the "everything is an artifact" rule.
+Without it, there is no first component to bootstrap the rest.
 
 ## Consequences
 
@@ -114,6 +156,7 @@ features, new commands, new runtime versions — all ship via
 - Version 5.0 ships via `yak publish`, not PyPI
 - The Launcher has zero knowledge of the platform
 - Security boundary: Launcher is Python-only; platform is language-neutral
+- Single point of distribution: only the Launcher ever needs PyPI
 
 ### Trade-offs
 
@@ -121,4 +164,6 @@ features, new commands, new runtime versions — all ship via
   from y5n-apps-yak). This is intentional — frozen code has no
   maintenance cost.
 - First install requires network access to GitHub Releases.
-- The bootstrap repository URL is hardcoded in the package.
+- The repository URL is hardcoded in the launcher configuration.
+- The Launcher is Python-specific; non-Python platform access requires
+  a different Launcher implementation in the future.
