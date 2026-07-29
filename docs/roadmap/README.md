@@ -21,31 +21,41 @@
 - FileRepository + GitHubReleaseRepository exist
 - GitLab, S3, OCI follow the same interface
 
-## Phase E 🌱 — Ecosystem
+## Phase E 🌱 — Ecosystem validation
 
-The first independent product outside the monorepo.
-For example: `github.com/yakoon-runtime/hello`
+### TODO: First external product
 
-Goal: validate that the platform works for external developers
-who know nothing about Yakoon's internal structure.
+Extract a product from the monorepo into its own repository.
+Validate that the full lifecycle works without platform changes.
+
+Candidate repositories (one per product):
+
+```
+github.com/yakoon-runtime/hello     ← simple test
+github.com/yakoon-runtime/crm       ← real product
+github.com/yakoon-runtime/luma      ← real product
+```
+
+Expected flow:
 
 ```bash
-git clone https://github.com/yakoon-runtime/hello
+git clone github.com/yakoon-runtime/hello
 cd hello
 yak init
 yak create pack hello
-...
 yak build
 yak publish --repository github:yakoon-runtime/hello --release
 
-# Any user:
+# Any user on any machine:
 mkdir test && cd test
 yak init
-echo '[repositories]' >> .yak/context.toml
-echo 'sources = ["github:yakoon-runtime/hello"]' >> .yak/context.toml
+echo '[repositories]
+sources = ["github:yakoon-runtime/hello"]' >> .yak/context.toml
 yak install y5n-packs-hello
 yak sync
 yak shell
+# hello command available
 ```
 
-If this works without modifying the platform, the architecture is complete.
+Success criterion: no platform code changes needed.
+If changes are needed, those changes are the real Phase D work.
