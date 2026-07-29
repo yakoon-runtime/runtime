@@ -53,9 +53,9 @@ Total: ≈130 lines. No CLI, no parser, no runtime knowledge.
 ### Files
 
 ```
-launcher/yakoon/
-    pyproject.toml          # name = "yakoon", entry point = launcher:main
-    src/yakoon/
+launcher/y5n-launcher/      ← namespace: y5n.launcher
+    pyproject.toml          # name = "yakoon" (PyPI), entry = launcher:main
+    src/y5n/launcher/
         __init__.py
         launcher.py         # main(): ensure → forward
         repository.py       # resolve artifact from GitHub Releases

@@ -11,6 +11,23 @@ The `yakoon` package on PyPI is currently a stub (placeholder). It should
 become a minimal **Launcher** — the only permanently installed piece of
 Yakoon on a developer's machine.
 
+## Naming
+
+The Launcher lives in its own namespace: **`y5n-launcher`** (not `apps/`,
+not a hidden bootstrap). It is a first-class Yakoon application — the one
+that starts all others. Like pioneers in an army, it belongs to the platform
+even though its task is different.
+
+```
+launcher/y5n-launcher/       ← namespace: y5n.launcher
+    src/y5n/launcher/
+        launcher.py
+
+apps/y5n-apps-yak/           ← the actual CLI
+runtime/y5n-runtime-*/        ← runtime libraries
+packs/y5n-packs-*/            ← content packs
+```
+
 ## Decision
 
 ### What the Launcher is
