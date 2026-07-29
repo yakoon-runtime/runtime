@@ -16,15 +16,20 @@ cd launcher/y5n-launcher
 # 2. Build:
 python -m build
 
-# 3. Upload to PyPI:
-python -m twine upload dist/yakoon-<version>*
+# 3. Upload to PyPI (username MUST be __token__):
+python -m twine upload \
+    --username __token__ \
+    --password pypi-your-token-here \
+    dist/yakoon-<version>*
 
 # 4. Tag the release:
 git tag launcher-v<version>
 git push origin launcher-v<version>
 ```
 
-Requires: `pip install build twine` and PyPI credentials.
+Requires: `pip install build twine` and a PyPI API token.
+The username is literally the string `__token__` (with underscores),
+not your PyPI username. Create a token at https://pypi.org/manage/account/token/
 
 ## Development
 
