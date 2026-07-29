@@ -28,4 +28,6 @@ coverage/
 !/workspace/*/workspace.yml
 
 # Local evolution log
+evolution.log.yak/
 evolution.log
+.yak/
