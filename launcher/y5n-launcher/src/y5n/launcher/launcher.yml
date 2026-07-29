@@ -1,0 +1,5 @@
+repositories:
+  - github:yakoon-runtime/apps
+
+default_application:
+  name: y5n-apps-yak

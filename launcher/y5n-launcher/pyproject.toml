@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yakoon"
+version = "0.0.2"
+description = "Launcher for the Yakoon Platform — the only PyPI component"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Stefan Bergmann" }]
+dependencies = ["pyyaml>=6.0"]
+
+[project.scripts]
+yak = "y5n.launcher.launcher:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = true
+
+[tool.setuptools.package-data]
+"*" = ["*.yml"]
