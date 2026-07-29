@@ -1,82 +1,85 @@
 # Roadmap
 
 ## Phase A ✅ — Core hardening
-- Version-aware install, `--upgrade`, "up to date" detection
-- Full health checks (context, env, mounts, workspace, fingerprints, runtime)
-- docs/ restructuring (concepts, architecture, adr, reference)
-- dev/main branching model
-
 ## Phase B ✅ — Distribution
-- Repository protocol (DirectoryRepository + GithubReleaseRepository)
-- `install --repository github:owner/repo`
-- `publish --repository github:owner/repo` (draft + --release)
-- Cache by fingerprint under `~/.yak/cache/`
 
 ## Phase C 🚧 — Launcher (Self-hosting)
 
-**Prerequisite:** `y5n-apps-yak` exists as a published artifact on GitHub
-Releases. Until then, the Launcher has nothing to launch.
-
-### Timeline
-
-```
-Today (source world):
-  Git → apps/y5n-apps-yak → development
-
-First release:
-  yak build y5n-apps-yak → artifact → yak publish → GitHub Release
-
-Launcher world (after first release):
-  pip install yakoon → Launcher → install artifact → launch y5n-apps-yak
-```
+### Prerequisite
+- ✅ `y5n-apps-yak` exists as a published artifact on GitHub Releases
+- ✅ `install --repository github:owner/repo` works
 
 ### Goal
-The `yakoon` package on PyPI becomes a minimal **Launcher** — the only
-unchangeable entry point of the platform. Its entire job:
+The `yakoon` package on PyPI becomes a **Launcher** — the only
+unchanged entry point of the platform. The Launcher:
+
+1. Resolves `y5n-apps-yak` from a repository
+2. Installs it (pip into the context's venv)
+3. Forwards all commands to `y5n-apps-yak`
+
+### Architecture
 
 ```
-yak              ← Launcher
-  │
-  ├─ ensure y5n-apps-yak is installed
-  ├─ sync if needed
-  └─ launch y5n-apps-yak
+pip install yakoon         # installs the Launcher
+       │
+       ▼
+yak build                  # Launcher:
+  1. Resolves y5n-apps-yak from github:yakoon-runtime/apps
+  2. Downloads artifact.tar.gz → extracts → pip installs
+  3. Runs: python -m y5n.apps.yak.hosts.cli.main build
+       │
+       ▼
+y5n-apps-yak (artifact)    # does the actual work
 ```
 
-The Launcher is only viable **after** the first official build and release
-of `y5n-apps-yak`. Before that, the PyPI placeholder stays as-is.
+The Launcher bundles a minimal subset:
+- `repository.py` — resolve artifact from GitHub Releases (≈60 lines)
+- `installer.py` — download + extract + pip install (≈40 lines)
+- `launcher.py` — main(): ensure → forward (≈30 lines)
+- `__init__.py`
 
-### Security – Release pipeline
+Total: ≈130 lines. No CLI, no parser, no runtime knowledge.
+
+### Design decisions
+- **Bundled resolver**: The Launcher duplicates ≈60 lines of resolver
+  code. This is intentional — the Launcher never changes, so there's
+  no maintenance burden.
+- **pip for install**: The Launcher uses `pip install wheel` to install
+  y5n-apps-yak into the context's venv. This is pragmatic — pip is
+  always available when running a Python Launcher.
+- **Forwarding**: All arguments are passed through. The user never
+  notices whether they're talking to the Launcher or y5n-apps-yak.
+
+### Files
 
 ```
-Developer
-    ↓
-yak build
-    ↓
-yak publish --repository github:user/testing
-    ↓
-Testing (Draft Release, private)
-    ↓
-Review / CI
-    ↓
-Promote (manual)
-    ↓
-Official Repository (github:yakoon-runtime/apps)
-    ↓
-Launcher (reads only official, never testing)
+launcher/y5n-launcher/      ← namespace: y5n.launcher
+    pyproject.toml          # name = "yakoon" (PyPI), entry = launcher:main
+    src/y5n/launcher/
+        __init__.py
+        launcher.py         # main(): ensure → forward
+        repository.py       # resolve artifact from GitHub Releases
+        installer.py        # download + pip install
+
+apps/y5n-apps-yak/          # unchanged — the actual CLI artifact
 ```
 
-The Launcher never installs Draft Releases – only published, reviewed
-artifacts from the official repository. This is enforced by GitHub:
-write access is limited to maintainers; the Launcher reads publicly.
+### Flow
 
-### Design constraint
-The Launcher must not duplicate code from y5n-apps-yak. It either:
-- Bundles a minimal resolver/installer (maintenance cost), or
-- Uses pip install for PyPI-hosted bootstrap release (pragmatic start)
+```python
+# launcher.py (simplified)
+def main():
+    ctx = find_or_init_context()
+    if not is_installed("y5n-apps-yak"):
+        artifact = resolve("y5n-apps-yak",
+                           repo="github:yakoon-runtime/apps")
+        download_and_install(artifact, ctx)
+    forward_to_cli(sys.argv[1:])
+```
 
-### Why
-- `y5n-apps-yak` evolves freely — new commands, new UI, new runtime
-- The Launcher never changes — it always launches the current version
-- Version 5.0 ships via `yak publish`, not via PyPI
-- The CLI is just the first app — `y5n-apps-admin`, `y5n-apps-studio`
-  follow the same pattern
+### Migration
+1. Create `launcher/` with the minimal code
+2. Move `apps/yakoon/` → `launcher/yakoon/` (replace placeholder)
+3. Test: `pip install -e launcher/yakoon` → `yak build` → works
+4. Publish `yakoon 0.0.2` to PyPI with the Launcher
+5. Future versions of the CLI ship via `yak publish`, not PyPI
