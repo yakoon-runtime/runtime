@@ -1,0 +1,6 @@
+name: y5n-apps-yak
+version: 0.1.0
+kind: package
+host: python
+builder: python
+fingerprint: sha256:81e669b861e2d15a500150c644b4d946bd9df3c169782bf8f78fafeb1c368d41
