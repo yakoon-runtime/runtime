@@ -1,4 +1,4 @@
-# ADR 7: Context as Root Provider
+# ADR 7: Context Sources and Repositories
 
 **Status:** Draft for discussion
 
