@@ -1,85 +1,51 @@
 # Roadmap
 
 ## Phase A ✅ — Core hardening
-## Phase B ✅ — Distribution
+## Phase B ✅ — Distribution  
+## Phase C ✅ — Launcher (Self-hosting)
+## Phase D 🚧 — Platform completion
 
-## Phase C 🚧 — Launcher (Self-hosting)
+### D.1 Repository auto-discovery ✅
+- `[repositories] sources` in context.toml
+- `install` and `sync` read them automatically
 
-### Prerequisite
-- ✅ `y5n-apps-yak` exists as a published artifact on GitHub Releases
-- ✅ `install --repository github:owner/repo` works
+### D.2 RepositoryResolver (planned)
+- Unified resolution: Context → CLI → Defaults
+- Replaces ad-hoc source collection
 
-### Goal
-The `yakoon` package on PyPI becomes a **Launcher** — the only
-unchanged entry point of the platform. The Launcher:
+### D.3 Builder protocol (future)
+- PythonBuilder exists, Go/.NET/Java builders follow
+- Language-neutral artifacts already supported
 
-1. Resolves `y5n-apps-yak` from a repository
-2. Installs it (pip into the context's venv)
-3. Forwards all commands to `y5n-apps-yak`
+### D.4 Repository protocol (future)
+- FileRepository + GitHubReleaseRepository exist
+- GitLab, S3, OCI follow the same interface
 
-### Architecture
+## Phase E 🌱 — Ecosystem
 
-```
-pip install yakoon         # installs the Launcher
-       │
-       ▼
-yak build                  # Launcher:
-  1. Resolves y5n-apps-yak from github:yakoon-runtime/apps
-  2. Downloads artifact.tar.gz → extracts → pip installs
-  3. Runs: python -m y5n.apps.yak.hosts.cli.main build
-       │
-       ▼
-y5n-apps-yak (artifact)    # does the actual work
-```
+The first independent product outside the monorepo.
+For example: `github.com/yakoon-runtime/hello`
 
-The Launcher bundles a minimal subset:
-- `repository.py` — resolve artifact from GitHub Releases (≈60 lines)
-- `installer.py` — download + extract + pip install (≈40 lines)
-- `launcher.py` — main(): ensure → forward (≈30 lines)
-- `__init__.py`
+Goal: validate that the platform works for external developers
+who know nothing about Yakoon's internal structure.
 
-Total: ≈130 lines. No CLI, no parser, no runtime knowledge.
+```bash
+git clone https://github.com/yakoon-runtime/hello
+cd hello
+yak init
+yak create pack hello
+...
+yak build
+yak publish --repository github:yakoon-runtime/hello --release
 
-### Design decisions
-- **Bundled resolver**: The Launcher duplicates ≈60 lines of resolver
-  code. This is intentional — the Launcher never changes, so there's
-  no maintenance burden.
-- **pip for install**: The Launcher uses `pip install wheel` to install
-  y5n-apps-yak into the context's venv. This is pragmatic — pip is
-  always available when running a Python Launcher.
-- **Forwarding**: All arguments are passed through. The user never
-  notices whether they're talking to the Launcher or y5n-apps-yak.
-
-### Files
-
-```
-launcher/y5n-launcher/      ← namespace: y5n.launcher
-    pyproject.toml          # name = "yakoon" (PyPI), entry = launcher:main
-    src/y5n/launcher/
-        __init__.py
-        launcher.py         # main(): ensure → forward
-        repository.py       # resolve artifact from GitHub Releases
-        installer.py        # download + pip install
-
-apps/y5n-apps-yak/          # unchanged — the actual CLI artifact
+# Any user:
+mkdir test && cd test
+yak init
+echo '[repositories]' >> .yak/context.toml
+echo 'sources = ["github:yakoon-runtime/hello"]' >> .yak/context.toml
+yak install y5n-packs-hello
+yak sync
+yak shell
 ```
 
-### Flow
-
-```python
-# launcher.py (simplified)
-def main():
-    ctx = find_or_init_context()
-    if not is_installed("y5n-apps-yak"):
-        artifact = resolve("y5n-apps-yak",
-                           repo="github:yakoon-runtime/apps")
-        download_and_install(artifact, ctx)
-    forward_to_cli(sys.argv[1:])
-```
-
-### Migration
-1. Create `launcher/` with the minimal code
-2. Move `apps/yakoon/` → `launcher/yakoon/` (replace placeholder)
-3. Test: `pip install -e launcher/yakoon` → `yak build` → works
-4. Publish `yakoon 0.0.2` to PyPI with the Launcher
-5. Future versions of the CLI ship via `yak publish`, not PyPI
+If this works without modifying the platform, the architecture is complete.
