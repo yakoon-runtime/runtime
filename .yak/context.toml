@@ -1,6 +1,0 @@
-[context]
-name = "yakoon"
-created = "2026-07-29T06:18:20.736050+00:00"
-
-[logs]
-path = ".yak/logs"
