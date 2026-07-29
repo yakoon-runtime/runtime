@@ -48,3 +48,5 @@ works within a team that shares a filesystem, but not across the internet.
   artifacts — it does not operate an ecosystem.
 - Repository discovery (search, metadata) is delegated to the hosting platform.
 - Private repositories require authentication managed by the provider.
+- Authentication tokens are passed via environment variables (`YAK_GITHUB_TOKEN`),
+  never stored in configuration files.
