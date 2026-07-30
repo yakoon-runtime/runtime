@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from y5n.runtime.api.host.protocol import Marker, MarkerKind
+from y5n.runtime.api.flow.primitives import CwdEffect, Outcome
 
 
 class _Chdir:
@@ -10,7 +10,7 @@ class _Chdir:
         self._path = path
 
     def __await__(self):
-        yield Marker(MarkerKind.CWD, self._path)
+        yield Outcome(effects=[CwdEffect(self._path)])
 
 
 class _FS:

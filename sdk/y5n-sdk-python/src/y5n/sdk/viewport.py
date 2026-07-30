@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from y5n.runtime.api.host.protocol import Marker, MarkerKind
+from y5n.runtime.api.flow.primitives import EmitView, Outcome
 
 
 class _View:
@@ -12,7 +12,14 @@ class _View:
         self._params = params
 
     def __await__(self):
-        yield Marker(MarkerKind.VIEW, self._params)
+        yield Outcome(
+            effects=[
+                EmitView(
+                    {"kind": "document", "header": {"role": "info"}, "blocks": []},
+                    view_params=self._params or None,
+                )
+            ]
+        )
 
 
 class Viewport:

@@ -10,9 +10,14 @@ from .control import (
 )
 from .effect import (
     Background,
+    CwdEffect,
     Effect,
     EmitEvent,
     EmitView,
+    FlowBgEffect,
+    FlowFgEffect,
+    FlowListEffect,
+    FlowStopEffect,
     Foreground,
     Mode,
     StartCommand,
@@ -35,12 +40,16 @@ __all__ = [
     "Continue",
     "YieldToScheduler",
     # .effects
-    "Foreground",
     "Background",
+    "CwdEffect",
     "Effect",
     "EmitEvent",
     "EmitView",
+    "FlowBgEffect",
+    "FlowFgEffect",
+    "FlowListEffect",
+    "FlowStopEffect",
+    "Foreground",
     "StartCommand",
     "StartTask",
-    "Foreground",
 ]

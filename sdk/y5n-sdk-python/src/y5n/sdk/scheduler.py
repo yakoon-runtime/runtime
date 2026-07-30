@@ -1,6 +1,14 @@
 from __future__ import annotations
 
-from y5n.runtime.api.host.protocol import Marker, MarkerKind
+from y5n.runtime.api.flow.primitives import (
+    Background,
+    FlowBgEffect,
+    FlowFgEffect,
+    FlowListEffect,
+    FlowStopEffect,
+    Outcome,
+    Suspend,
+)
 
 
 class _FlowsList:
@@ -8,13 +16,13 @@ class _FlowsList:
         from y5n.sdk.context import flow as _ctx_flow
 
         exclude_id = _ctx_flow().id
-        result = yield Marker(MarkerKind.FLOWS_LIST, exclude_id)
+        result = yield Outcome(effects=[FlowListEffect(exclude_id=exclude_id)])
         return result
 
 
 class _Suspend:
     def __await__(self):
-        event = yield Marker(MarkerKind.SUSPEND, None)
+        event = yield Outcome(control=Suspend(), effects=[Background()])
         return event
 
 
@@ -25,7 +33,7 @@ class _FlowStop:
         self._flow_id = flow_id
 
     def __await__(self):
-        yield Marker(MarkerKind.FLOW_STOP, self._flow_id)
+        yield Outcome(effects=[FlowStopEffect(flow_id=self._flow_id)])
 
 
 class _FlowFg:
@@ -40,12 +48,12 @@ class _FlowFg:
             from y5n.sdk.context import flow as _ctx_flow
 
             flow_id = _ctx_flow().id
-        yield Marker(MarkerKind.FLOW_FG, flow_id)
+        yield Outcome(effects=[FlowFgEffect(flow_id=flow_id)])
 
 
 class _FlowBg:
     def __await__(self):
-        result = yield Marker(MarkerKind.FLOW_BG, None)
+        result = yield Outcome(effects=[FlowBgEffect()])
         return result
 
 

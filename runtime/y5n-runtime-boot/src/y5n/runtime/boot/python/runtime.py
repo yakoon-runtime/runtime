@@ -1,11 +1,20 @@
+import asyncio
 import importlib
 import inspect
 import os
 from pathlib import Path
 
 from y5n.runtime.api.flow.dsl import Outcome, out_text
-from y5n.runtime.api.flow.primitives import Suspend, YieldToScheduler
-from y5n.runtime.api.host import HANDLERS, MarkerKind, drive
+from y5n.runtime.api.flow.primitives import (
+    CwdEffect,
+    EmitView,
+    FlowBgEffect,
+    FlowFgEffect,
+    FlowListEffect,
+    FlowStopEffect,
+    Suspend,
+    YieldToScheduler,
+)
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
@@ -131,28 +140,83 @@ async def run(space: NodeSpace):
         session.set_foreground_flow(None)
         return {"id": fg.id, "label": fg.node.name or fg.node.key}
 
+    # --------------------------------------------------
+    # Direct coroutine stepper (replaces drive())
+    # --------------------------------------------------
+
+    def _adjust_visual_modes(effects, first):
+        if not effects:
+            return first
+        result = first
+        for e in effects:
+            if isinstance(e, EmitView) and not e.persist and not e.view_params:
+                if e.mode == "replace" and not first:
+                    e.mode = "append"
+                if result:
+                    result = False
+        return result
+
     try:
-        drive_gen = drive(
-            coro,
-            HANDLERS,
-            side_effects={
-                MarkerKind.CWD: lambda path: session.set_cwd(path),
-                MarkerKind.FLOW_STOP: _flow_stop,
-                MarkerKind.FLOW_FG: _flow_fg,
-            },
-            responses={
-                MarkerKind.FLOWS_LIST: _flows_list,
-                MarkerKind.FLOW_BG: _flow_bg,
-            },
-        )
-        outcome = await drive_gen.__anext__()
+        gen = coro.__await__()
+        val = gen.send(None)
+        first = True
+
         while True:
+            if inspect.iscoroutine(val):
+                result = await asyncio.ensure_future(val)
+                val = gen.send(result)
+                continue
+
+            if isinstance(val, asyncio.Future):
+                if val.done():
+                    result = val.result()
+                else:
+                    ev = asyncio.Event()
+                    val.add_done_callback(lambda _, ev=ev: ev.set())
+                    await ev.wait()
+                    result = val.result()
+                val = gen.send(result)
+                continue
+
+            outcome = val
+            if not isinstance(outcome, Outcome):
+                raise RuntimeError(
+                    f"Unexpected yield from coroutine: {type(outcome).__name__}"
+                )
+
+            # Boot-level effects — handled without yielding upstream
+            if outcome.effects:
+                effect = outcome.effects[0]
+
+                if isinstance(effect, CwdEffect):
+                    session.set_cwd(effect.path)
+                    val = gen.send(None)
+                    continue
+                if isinstance(effect, FlowStopEffect):
+                    flow = session.get_flow(effect.flow_id)
+                    if flow:
+                        session.del_flow(flow)
+                    val = gen.send(None)
+                    continue
+                if isinstance(effect, FlowFgEffect):
+                    _flow_fg(effect.flow_id)
+                    val = gen.send(None)
+                    continue
+                if isinstance(effect, FlowListEffect):
+                    result = _flows_list(effect.exclude_id or "")
+                    val = gen.send(result)
+                    continue
+                if isinstance(effect, FlowBgEffect):
+                    result = _flow_bg(None)
+                    val = gen.send(result)
+                    continue
+
+            # Normal outcome — yield upstream to engine
+            first = _adjust_visual_modes(outcome.effects, first)
             event_or_none = yield outcome
-            if event_or_none is not None:
-                outcome = await drive_gen.asend(event_or_none)
-            else:
-                outcome = await drive_gen.__anext__()
-    except StopAsyncIteration:
+            val = gen.send(event_or_none if event_or_none else None)
+
+    except StopIteration:
         pass
     except Exception as e:
         yield out_text(f"error: {e}")
