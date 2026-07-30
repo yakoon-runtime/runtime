@@ -95,3 +95,28 @@ class StartCommand(Effect):
         self.command = command
         self.channel = channel
         self.remote = remote
+
+
+@dataclass(slots=True)
+class CwdEffect(Effect):
+    path: str
+
+
+@dataclass(slots=True)
+class FlowListEffect(Effect):
+    exclude_id: str | None = None
+
+
+@dataclass(slots=True)
+class FlowStopEffect(Effect):
+    flow_id: str
+
+
+@dataclass(slots=True)
+class FlowFgEffect(Effect):
+    flow_id: str | None = None
+
+
+@dataclass(slots=True)
+class FlowBgEffect(Effect):
+    pass
