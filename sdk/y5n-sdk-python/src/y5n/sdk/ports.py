@@ -70,8 +70,7 @@ class _RemoteCall:
             caller_path=ctx.node.get("path", ""),
             caller_session_key=ctx.session.get("key", ""),
         )
-        result = yield asyncio.ensure_future(_do_call(call))
-        return result
+        return _do_call(call).__await__()
 
 
 class _PortProxy:
