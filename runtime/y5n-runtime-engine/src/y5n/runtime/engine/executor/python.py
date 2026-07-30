@@ -55,7 +55,7 @@ class PythonExecutor(Executor):
             if candidate.is_file():
                 return candidate
         # Fallback for commands that haven't migrated their structure
-        fallback = fs_path / "_yak" / phase.value / "app.py"
+        fallback = fs_path / ".yak" / phase.value / "app.py"
         if fallback.is_file():
             return fallback
         return None

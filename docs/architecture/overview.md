@@ -35,7 +35,7 @@ language-neutral runtime platform.
 | Kernel | `runtime` | `async def run(space)` | Python | ✅ | in-process |
 | Sprache | `python` | `print()` → stdout | Python | ❌ | in-process |
 | Skript | `script` | `print()` → stdout | Python | ❌ | Subprozess |
-| Native | `process` | `_yak/run/app` (shebang) | Any | ❌ | Subprozess |
+| Native | `process` | `.yak/run/app` (shebang) | Any | ❌ | Subprozess |
 
 ## What is a Command?
 

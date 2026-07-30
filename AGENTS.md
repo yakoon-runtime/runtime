@@ -36,7 +36,7 @@ Always:
 6. Do not introduce technical debt to satisfy a request.
 7. Never perform Git write operations (commit, amend, rebase, push, tag, reset) unless explicitly requested.
 8. Do not modify project structure or architecture unless the request explicitly requires it.
-9. The Executor ABI (`docs/EXECUTOR.md`) is the authority for all bundle entry points. Entry files are declared via `entry.run`/`entry.setup` in `_yak/yak.yml`. `_yak/` only contains `yak.yml` — no fixed subdirectory layout.
+9. The Executor ABI (`docs/EXECUTOR.md`) is the authority for all bundle entry points. Entry files are declared via `entry.run`/`entry.setup` in `.yak/yak.yml`. `.yak/` only contains `yak.yml` — no fixed subdirectory layout.
 
 ## Naming convention — three product families
 
