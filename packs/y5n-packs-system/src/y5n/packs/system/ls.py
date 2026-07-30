@@ -13,7 +13,7 @@ async def main():
     show_all = req.has_option("all")
 
     ctx = context.current()
-    root = Path(ctx.workspace) if ctx.workspace else Path.home() / "_yak"
+    root = Path(ctx.workspace) if ctx.workspace else Path.home() / ".yak"
     fs_path = _resolve_fs_path(ctx, root, target_name)
     if not fs_path.exists():
         doc = ports.get("document")
@@ -25,7 +25,7 @@ async def main():
         return
 
     expose = False
-    yak_meta_path = fs_path / "_yak" / "yak.yml"
+    yak_meta_path = fs_path / ".yak" / "yak.yml"
     if yak_meta_path.is_file():
         with open(yak_meta_path) as f:
             meta = yaml.safe_load(f) or {}
@@ -43,16 +43,16 @@ async def main():
         fs_entries = [
             p
             for p in fs_entries
-            if not p.name.startswith("_yak")
+            if not p.name.startswith(".yak")
             and not p.name.startswith(".")
             and not p.name.startswith("__")
         ]
 
-    if (fs_path / "_yak").is_dir() and not show_all and not expose:
+    if (fs_path / ".yak").is_dir() and not show_all and not expose:
         if node_map:
             fs_entries = [p for p in fs_entries if p.name in node_map]
         else:
-            fs_entries = [p for p in fs_entries if (p / "_yak").is_dir()]
+            fs_entries = [p for p in fs_entries if (p / ".yak").is_dir()]
 
     merged = []
     for p in fs_entries:

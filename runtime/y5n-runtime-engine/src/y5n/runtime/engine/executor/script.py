@@ -41,7 +41,7 @@ class ScriptExecutor(Executor):
         fs_path = node.fs_path
         if fs_path is None:
             return _empty()
-        app_file = fs_path / "_yak" / phase.value / "app.py"
+        app_file = fs_path / ".yak" / phase.value / "app.py"
         if not app_file.is_file():
             return _empty()
 

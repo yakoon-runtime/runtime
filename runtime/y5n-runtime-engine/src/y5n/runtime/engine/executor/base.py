@@ -23,7 +23,7 @@ Each Executor kind implements a different ABI:
   runtime   async def run(space)          in-process, full platform API
   python    def main()                    in-process, synchronous (batch)
   script    python3 app.py → stdout       subprocess, isolated
-  process   _yak/run/app (shebang)        subprocess, any language
+  process   .yak/run/app (shebang)        subprocess, any language
 
 The ABI is the answer to: "How does this application want to be run?"
 

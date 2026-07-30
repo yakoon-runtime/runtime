@@ -55,7 +55,7 @@ async def main():
 
 def _get_root(ctx) -> Path:
     raw = ctx.workspace
-    return Path(raw).resolve() if raw else Path.home() / "_yak"
+    return Path(raw).resolve() if raw else Path.home() / ".yak"
 
 
 def _get_cwd(ctx) -> Path:

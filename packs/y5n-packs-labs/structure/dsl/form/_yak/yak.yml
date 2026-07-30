@@ -1,9 +1,0 @@
-title: Form
-
-resolvable: true
-navigable: false
-contextual: false
-host: /boot/python/runtime
-
-entry:
-  run: pack:y5n.packs.labs.dsl.form:main

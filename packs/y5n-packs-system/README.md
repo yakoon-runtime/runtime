@@ -62,6 +62,6 @@ src/y5n/apps/system/
 
 ## Tree integration
 
-Each command is registered in the workspace tree via a `_yak/yak.yml`
+Each command is registered in the workspace tree via a `.yak/yak.yml`
 entry at the corresponding path in `structure/`. The entry's `pack:`
 directive points to the Python module and `main` function.

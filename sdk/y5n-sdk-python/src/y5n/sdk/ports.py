@@ -14,6 +14,7 @@ Usage:
     print(await hello.greet(name="Yakoon"))
 """
 
+import asyncio
 from typing import Any
 
 from .context import current as _current_context
@@ -69,8 +70,7 @@ class _RemoteCall:
             caller_path=ctx.node.get("path", ""),
             caller_session_key=ctx.session.get("key", ""),
         )
-        result = yield _do_call(call)
-        return result
+        return _do_call(call).__await__()
 
 
 class _PortProxy:

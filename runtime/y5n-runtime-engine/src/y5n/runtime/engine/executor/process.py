@@ -41,7 +41,7 @@ class ProcessExecutor(Executor):
         fs_path = node.fs_path
         if fs_path is None:
             return _empty()
-        app_file = fs_path / "_yak" / phase.value / "app"
+        app_file = fs_path / ".yak" / phase.value / "app"
         if not app_file.is_file() or not os.access(str(app_file), os.X_OK):
             return _empty()
 

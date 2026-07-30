@@ -44,9 +44,9 @@ class Capability:
 
 
 class Tree:
-    """Compiled index of _yak/ directories.
+    """Compiled index of .yak/ directories.
 
-    Scans root_path recursively for _yak/ directories and constructs
+    Scans root_path recursively for .yak/ directories and constructs
     a Node tree.  Symlinks in the filesystem are followed during scan,
     so bundles can be linked into the tree from external locations.
     """
@@ -77,14 +77,18 @@ class Tree:
 
         Uses os.walk with followlinks=True so that symlinked
         product bundles (crm, luma, …) are discovered.
+
+        Prunes symlinks that point to directories without any .yak/
+        markers to avoid walking large system trees (/home, /etc, …).
         """
         result: list[Path] = []
-        for dirpath, _dirnames, filenames in os.walk(self._root_path, followlinks=True):
+        for dirpath, dirnames, filenames in os.walk(self._root_path, followlinks=True):
             p = Path(dirpath)
-            if p.name == "_yak" and "yak.yml" in filenames:
+            if p.name == ".yak" and "yak.yml" in filenames:
                 bundle_dir = p.parent
                 if bundle_dir != self._root_path:
                     result.append(bundle_dir)
+            _prune_bare_symlinks(dirnames, p)
         return sorted(result)
 
     def _create_nodes(self, dirs: list[Path]) -> dict[str, Node]:
@@ -95,7 +99,7 @@ class Tree:
         return nodes
 
     def _build_node(self, dir_path: Path) -> Node:
-        meta = _read_yaml(dir_path / "_yak" / "yak.yml")
+        meta = _read_yaml(dir_path / ".yak" / "yak.yml")
         node = Node(
             key=dir_path.name,
             name=meta.get("title", dir_path.name),
@@ -107,9 +111,9 @@ class Tree:
         )
         node.metadata["version"] = meta.get("version")
 
-        # Backward compat: if _yak/yak.yml has no host/executor/entry,
-        # fall back to _yak/run/yak.yml (old structure).
-        run_meta = _read_yaml(dir_path / "_yak" / "run" / "yak.yml")
+        # Backward compat: if .yak/yak.yml has no host/executor/entry,
+        # fall back to .yak/run/yak.yml (old structure).
+        run_meta = _read_yaml(dir_path / ".yak" / "run" / "yak.yml")
         if (
             run_meta
             and "host" not in meta
@@ -180,7 +184,7 @@ class Tree:
                 else:
                     fpath = (dir_path / resource_ref).resolve()
                     if not fpath.is_file():
-                        fpath = (dir_path / "_yak" / "run" / resource_ref).resolve()
+                        fpath = (dir_path / ".yak" / "run" / resource_ref).resolve()
                 if fpath and fpath.is_file():
                     resolved[variant] = fpath
             if resolved:
@@ -199,7 +203,7 @@ class Tree:
     def _link_nodes(self, created: dict[str, Node]) -> None:
         sorted_rels = sorted(created.keys(), key=lambda r: len(Path(r).parts))
 
-        root_meta = _read_yaml(self._root_path / "_yak" / "yak.yml")
+        root_meta = _read_yaml(self._root_path / ".yak" / "yak.yml")
         self._root = Node(
             key="/",
             name=root_meta.get("title", "root"),
@@ -261,7 +265,7 @@ class Tree:
     def _merge_search_paths(
         self, node: Node, dir_path: Path, state: BuildState
     ) -> None:
-        path_file = dir_path / "_yak" / "path"
+        path_file = dir_path / ".yak" / "path"
         if not path_file.is_file():
             return
         node_path = self._tree_path(dir_path)
@@ -355,7 +359,7 @@ class Tree:
                 continue
 
             issues: list[str] = []
-            meta = _read_yaml(fs_path / "_yak" / "yak.yml")
+            meta = _read_yaml(fs_path / ".yak" / "yak.yml")
             entry = meta.get("entry", {}) if meta else {}
 
             for phase in ("run", "setup"):
@@ -492,3 +496,31 @@ def _resolve_pack_path(ref: str) -> Path | None:
     mod_dir = Path(mod_file).parent
     resolved = (mod_dir / rel_path).resolve()
     return resolved if resolved.is_file() else None
+
+
+def _prune_bare_symlinks(dirnames: list[str], parent: Path) -> None:
+    """Remove symlinks from os.walk dirnames if target has no .yak/ marker.
+
+    This prevents os.walk with followlinks=True from descending into
+    large external trees (like /home via a user mount) that contain
+    no Yakoon commands.
+    """
+    for name in list(dirnames):
+        child = parent / name
+        if child.is_symlink():
+            target = child.resolve()
+            if not _has_yak_marker(target):
+                dirnames.remove(name)
+
+
+def _has_yak_marker(path: Path) -> bool:
+    """Check if path or any direct child contains a .yak/yak.yml."""
+    if (path / ".yak" / "yak.yml").is_file():
+        return True
+    try:
+        for entry in path.iterdir():
+            if entry.is_dir() and (entry / ".yak" / "yak.yml").is_file():
+                return True
+    except PermissionError:
+        pass
+    return False
