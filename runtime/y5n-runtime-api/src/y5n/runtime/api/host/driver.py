@@ -83,6 +83,21 @@ async def drive(
                 result = await asyncio.ensure_future(val)
                 val = coro.send(result)
                 continue
+            # Port calls with async I/O (store queries, etc.) yield
+            # Futures through the __await__ delegation chain.
+            # Awaiting futures directly inside an async generator is
+            # rejected by Python 3.13 ("await wasn't used with future").
+            # Use an asyncio.Event to wait without direct await.
+            if isinstance(val, asyncio.Future):
+                if val.done():
+                    result = val.result()
+                else:
+                    ev = asyncio.Event()
+                    val.add_done_callback(lambda _: ev.set())
+                    await ev.wait()
+                    result = val.result()
+                val = coro.send(result)
+                continue
 
             marker: Marker = val
 
