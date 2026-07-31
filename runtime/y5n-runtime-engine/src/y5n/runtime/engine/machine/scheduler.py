@@ -13,7 +13,7 @@ from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.primitives import (
     AwaitEvent,
     Control,
-    Outcome,
+    Pulse,
     Stop,
     YieldToScheduler,
 )
@@ -28,7 +28,7 @@ class Scheduler:
 
     Maintains ready queues (user/system), a sleep heap for delayed flows,
     and per-flow step budgets.  The main loop wakes sleeping flows,
-    dispatches ready flows to the engine, and handles outcomes.
+    dispatches ready flows to the engine, and handles pulses.
     """
 
     # PULSE
@@ -188,16 +188,16 @@ class Scheduler:
                 try:
 
                     while True:
-                        outcome = await self.on_step_flow(flow=flow, session=session)
+                        pulse = await self.on_step_flow(flow=flow, session=session)
 
                         flow_steps += 1
                         steps += 1
 
                         # ----------------------------------
-                        # Handle outcome
+                        # Handle pulse
                         # ----------------------------------
-                        if outcome:
-                            await self._handle_outcome(session, flow, outcome)
+                        if pulse:
+                            await self._handle_pulse(session, flow, pulse)
                             self._refresh_resumed_flows(session)
                             break  # Flow done / blocked
 
@@ -283,9 +283,9 @@ class Scheduler:
 
             await control.on_wake(flow, self, session)
 
-    async def _handle_outcome(self, session: Session, flow: Flow, outcome: Outcome):
+    async def _handle_pulse(self, session: Session, flow: Flow, pulse: Pulse):
 
-        control = outcome.control
+        control = pulse.control
         if control is None:
             return
 
@@ -366,7 +366,7 @@ class OnSetup(Protocol):
 
 
 class OnStepFlow(Protocol):
-    async def __call__(self, *, flow: Flow, session: Session) -> Outcome | None: ...
+    async def __call__(self, *, flow: Flow, session: Session) -> Pulse | None: ...
 
 
 class OnAuditWarning(Protocol):

@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.dsl import receive, start_cmd
-from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
+from y5n.runtime.api.flow.primitives import AwaitEvent, Pulse, StartCommand, Stop
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.machine.effects import StartCommandHandler
@@ -24,7 +24,7 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
         from y5n.runtime.api.flow.dsl import out
 
         yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
-        yield Outcome()
+        yield Pulse()
 
     sub_node = Node(key="test", run=sub_handler)
 
@@ -60,17 +60,17 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
     async def caller(ctx):
         ch = uuid4().hex
         yield start_cmd("test", channel=ch)
-        yield Outcome()
+        yield Pulse()
 
         event = yield receive(ch, scope=Scope.SESSION)
         received.append(event.payload)
-        yield Outcome()
+        yield Pulse()
 
     flow = await harness.start(caller)
 
     # Parent blockt auf receive
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, AwaitEvent)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, AwaitEvent)
 
     # Sub-Flow wurde erzeugt und eingeplant
     assert created_flow is not None
@@ -78,12 +78,12 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
     assert created_flow.out_channel is not None
 
     # Sub-Flow ausführen → Projektion wird auf den Channel umgeleitet
-    outcome = await harness.run_until_blocked(created_flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(created_flow)
+    assert isinstance(pulse.control, Stop)
 
     # Parent hat jetzt die Projektion im Channel
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)
     assert len(received) == 1
 
 
@@ -124,18 +124,18 @@ async def test_command_unresolvable_sends_none(harness, effect_executor):
     async def caller(ctx):
         ch = uuid4().hex
         yield start_cmd("unknown", channel=ch)
-        yield Outcome()
+        yield Pulse()
 
         event = yield receive(ch, scope=Scope.SESSION)
         received.append(event.payload)
-        yield Outcome()
+        yield Pulse()
 
     flow = await harness.start(caller)
 
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, AwaitEvent)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, AwaitEvent)
 
     # Event liegt bereits im Channel → on_enter hat Flow rescheduled
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)
     assert received == [None]

@@ -10,10 +10,10 @@ from y5n.runtime.engine.flow import Flow, FlowCursor
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
 
-    from y5n.runtime.api.flow.primitives import Outcome
+    from y5n.runtime.api.flow.primitives import Pulse
     from y5n.runtime.engine.runtime.sessions.session import Session
 
-    _Handler = Callable[..., AsyncGenerator[Outcome | None, Any]]
+    _Handler = Callable[..., AsyncGenerator[Pulse | None, Any]]
 
 
 def make_flow(

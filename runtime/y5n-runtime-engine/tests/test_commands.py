@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.dsl import out, receive, start_cmd
-from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, StartCommand, Stop
+from y5n.runtime.api.flow.primitives import AwaitEvent, Pulse, StartCommand, Stop
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.machine.effects import StartCommandHandler
@@ -20,16 +20,16 @@ async def test_command_channel_contract(harness):
 
     async def sub_flow(ctx):
         yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
-        yield Outcome()
+        yield Pulse()
 
     async def caller(ctx):
         ch = uuid4().hex
         yield start_cmd("test", channel=ch)
-        yield Outcome()
+        yield Pulse()
 
         event = yield receive(ch, scope=Scope.SESSION)
         received.append(event.payload)
-        yield Outcome()
+        yield Pulse()
 
     sub_node = Node(key="test", run=sub_flow)
 
@@ -40,14 +40,14 @@ async def test_command_channel_contract(harness):
 
     flow = await harness.start(caller)
 
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, AwaitEvent)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, AwaitEvent)
 
     # Simulate sub-flow result on the channel
-    harness.send_session(outcome.control.channel, {"done": True})
+    harness.send_session(pulse.control.channel, {"done": True})
 
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)
 
     assert received == [{"done": True}]
 
@@ -63,7 +63,7 @@ async def test_start_cmd_parses_tokens(harness, effect_executor):
     async def sub_handler(ctx):
         received_tokens.append(ctx.request.args())
         yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
-        yield Outcome()
+        yield Pulse()
 
     sub_node = Node(key="test", run=sub_handler)
 
@@ -98,27 +98,27 @@ async def test_start_cmd_parses_tokens(harness, effect_executor):
     async def caller(ctx):
         ch = uuid4().hex
         yield start_cmd("test --flag value", channel=ch)
-        yield Outcome()
+        yield Pulse()
         yield receive(ch, scope=Scope.SESSION)
-        yield Outcome()
+        yield Pulse()
 
     flow = await harness.start(caller)
 
-    # Parent: yield start_cmd + yield Outcome → blocked on receive
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, AwaitEvent)
+    # Parent: yield start_cmd + yield Pulse → blocked on receive
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, AwaitEvent)
 
     # Sub-Flow wurde erzeugt mit korrekten Tokens
     assert created_flow is not None
     assert created_flow.tokens == ["--flag", "value"]
 
     # Sub-Flow ausführen
-    outcome = await harness.run_until_blocked(created_flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(created_flow)
+    assert isinstance(pulse.control, Stop)
 
     # Sub-Flow hat Tokens via ctx.request.args() erhalten
     assert received_tokens == [["--flag", "value"]]
 
     # Parent wurde durch _schedule_waiting aufgeweckt
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)

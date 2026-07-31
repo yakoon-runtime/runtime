@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.dsl import receive, start_task
-from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, Stop
+from y5n.runtime.api.flow.primitives import AwaitEvent, Pulse, Stop
 
 
 @pytest.mark.asyncio
@@ -18,24 +18,24 @@ async def test_start_task_result_routing(harness):
 
         ch = uuid4().hex
         yield start_task("python3", channel=ch, args=["-c", "print(42)"])
-        yield Outcome()
+        yield Pulse()
 
         event = yield receive(ch, scope=Scope.SESSION)
         received.append(event.payload)
-        yield Outcome()
+        yield Pulse()
 
     flow = await harness.start(caller)
 
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, AwaitEvent)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, AwaitEvent)
 
     # Simulate task completion (real subprocess tested in integration)
     harness.send_session(
-        outcome.control.channel,
+        pulse.control.channel,
         {"returncode": 0, "stdout": "42\n", "stderr": ""},
     )
 
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)
 
     assert received == [{"returncode": 0, "stdout": "42\n", "stderr": ""}]

@@ -23,11 +23,11 @@ from .effect import (
     StartCommand,
     StartTask,
 )
-from .outcome import Outcome
+from .pulse import Pulse
 
 __all__ = [
-    # .outcome
-    "Outcome",
+    # .pulse
+    "Pulse",
     # .types
     "Mode",
     # .controls

@@ -10,7 +10,7 @@ from y5n.runtime.api.flow.primitives import (
     Effect,
     EmitView,
     Foreground,
-    Outcome,
+    Pulse,
 )
 from y5n.runtime.api.runtime import Event
 
@@ -62,9 +62,9 @@ class Flow:
                     ctx=self.event.context,
                 )
             )
-        return Outcome(effects=effects)
+        return Pulse(effects=effects)
 
     def deactivate(self):
         """Remove this flow from the foreground."""
         effects = [Background()]
-        return Outcome(effects=effects)
+        return Pulse(effects=effects)

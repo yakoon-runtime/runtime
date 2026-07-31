@@ -52,7 +52,7 @@ async def main():    # async — runs in scheduler
 ```
 
 The host loads the module, calls `main()`, captures stdout,
-and translates it into scheduler Outcomes.
+and translates it into scheduler Pulses.
 
 Python hosts also support the `from y5n.sdk import ports`
 SDK for service discovery and RPC.

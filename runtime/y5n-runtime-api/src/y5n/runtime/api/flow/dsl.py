@@ -13,7 +13,7 @@ RULES
 ----------------------------------------
 
 DSL functions MUST:
-- return Outcome
+- return Pulse
 - be side-effect free (except describing effects)
 - NOT access services
 - NOT contain loops or flow logic
@@ -47,7 +47,7 @@ from .primitives import (
     EmitView,
     Foreground,
     Mode,
-    Outcome,
+    Pulse,
     Sleep,
     SleepUntil,
     StartCommand,
@@ -61,7 +61,7 @@ def out(
     *,
     mode: Mode = "replace",
     space: str | None = None,
-) -> Outcome:
+) -> Pulse:
     """
     Emit a transient projection to the active client.
 
@@ -73,7 +73,7 @@ def out(
         mode: "replace" (PatchReset + Append) or "append" (nur Append).
         space: Optional subspace name for independent job_id scoping.
     """
-    return Outcome(effects=[EmitView(projection, mode=mode, space=space)])
+    return Pulse(effects=[EmitView(projection, mode=mode, space=space)])
 
 
 def out_text(
@@ -81,7 +81,7 @@ def out_text(
     *,
     mode: Mode = "replace",
     space: str | None = None,
-) -> Outcome:
+) -> Pulse:
     """
     Emit a transient text projection to the active client.
 
@@ -96,43 +96,43 @@ def out_text(
     return out(to_text(text), mode=mode, space=space)
 
 
-def suspend() -> Outcome:
+def suspend() -> Pulse:
     """
     Suspend the current flow until it is explicitly resumed.
 
     The flow releases foreground interaction and remains
     paused at the current execution position.
     """
-    return Outcome(
+    return Pulse(
         control=Suspend(),
         effects=[Background()],
     )
 
 
-def foreground() -> Outcome:
+def foreground() -> Pulse:
     """
     Move the current flow into foreground interaction.
 
     The flow becomes the active user interaction context.
     """
-    return Outcome(
+    return Pulse(
         effects=[Foreground()],
     )
 
 
-def background() -> Outcome:
+def background() -> Pulse:
     """
     Remove the current flow from foreground interaction.
 
     The flow continues running unless blocked by a control
     such as receive(), sleep(), or suspend().
     """
-    return Outcome(
+    return Pulse(
         effects=[Background()],
     )
 
 
-def prompt(projection: dict) -> Outcome:
+def prompt(projection: dict) -> Pulse:
     """
     Persist and emit an interactive flow projection.
 
@@ -141,7 +141,7 @@ def prompt(projection: dict) -> Outcome:
     flow returns to foreground.
     """
 
-    return Outcome(
+    return Pulse(
         effects=[
             Foreground(),
             EmitView(projection, persist=True),
@@ -152,7 +152,7 @@ def prompt(projection: dict) -> Outcome:
 def receive(
     channel: str | None = None,
     scope: Scope | None = None,
-) -> Outcome:
+) -> Pulse:
     """
     Wait for the next input event.
 
@@ -178,7 +178,7 @@ def receive(
     elif channel is None:
         channel = "default"
 
-    return Outcome(control=AwaitEvent(channel, scope=scope))
+    return Pulse(control=AwaitEvent(channel, scope=scope))
 
 
 def send(channel: str, event: Event, scope: Scope = Scope.FLOW):
@@ -187,12 +187,12 @@ def send(channel: str, event: Event, scope: Scope = Scope.FLOW):
     """
     if scope == Scope.USER_INPUT:
         raise ValueError("USER_INPUT scope cannot be used with send()")
-    return Outcome(
+    return Pulse(
         effects=[EmitEvent(channel, event, scope=scope)],
     )
 
 
-def delay(wake_at: float) -> Outcome:
+def delay(wake_at: float) -> Pulse:
     """
     Suspend the flow for a duration.
 
@@ -200,10 +200,10 @@ def delay(wake_at: float) -> Outcome:
     time has elapsed.
     """
 
-    return Outcome(control=Sleep.for_duration(wake_at))
+    return Pulse(control=Sleep.for_duration(wake_at))
 
 
-def delay_until(timestamp: float) -> Outcome:
+def delay_until(timestamp: float) -> Pulse:
     """
     Suspend the flow until a specific timestamp.
 
@@ -211,10 +211,10 @@ def delay_until(timestamp: float) -> Outcome:
     is reached.
     """
 
-    return Outcome(control=SleepUntil.until(timestamp))
+    return Pulse(control=SleepUntil.until(timestamp))
 
 
-def view(**view_params) -> Outcome:
+def view(**view_params) -> Pulse:
     """
     Send a viewport hint to the client without content.
 
@@ -224,7 +224,7 @@ def view(**view_params) -> Outcome:
     Args:
         view_params: Viewport hints (e.g. clear=True).
     """
-    return Outcome(
+    return Pulse(
         effects=[
             EmitView(
                 {"kind": "document", "header": {"role": "info"}, "blocks": []},
@@ -236,7 +236,7 @@ def view(**view_params) -> Outcome:
 
 def start_task(
     command: str, *, channel: str, scope: Scope = Scope.SESSION, **kwargs
-) -> Outcome:
+) -> Pulse:
     """
     Start a background task.
 
@@ -247,14 +247,14 @@ def start_task(
         yield start_task("python3", channel=ch, args=["-c", "print(42)"])
         result = yield receive(ch, scope=Scope.SESSION)
     """
-    return Outcome(
+    return Pulse(
         effects=[
             StartTask(command, channel, scope=scope, **kwargs),
         ]
     )
 
 
-def start_cmd(command: str, *, channel: str, remote: str | None = None) -> Outcome:
+def start_cmd(command: str, *, channel: str, remote: str | None = None) -> Pulse:
     """
     Start a runtime command as a sub-flow.
 
@@ -266,7 +266,7 @@ def start_cmd(command: str, *, channel: str, remote: str | None = None) -> Outco
         yield start_cmd("ls", channel=cmd_ch)
         result = yield receive(cmd_ch, scope=Scope.SESSION)
     """
-    return Outcome(
+    return Pulse(
         effects=[
             StartCommand(command, channel, remote=remote),
         ]
