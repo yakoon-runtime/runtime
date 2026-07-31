@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import cast
 
-from y5n.runtime.api.flow.dsl import Outcome
+from y5n.runtime.api.flow.dsl import Pulse
 from y5n.runtime.api.flow.patterns.public.form import Form
 from y5n.runtime.api.flow.primitives import Continue
 from y5n.runtime.api.nodes import (
@@ -112,15 +112,15 @@ class Interactor:
                 title=inv.action or "",
                 initial=dict(initial.values) if initial else None,
             )
-            async for outcome in form.run():
-                yield outcome
+            async for pulse in form.run():
+                yield pulse
 
             bound = inv.bind(InvocationInput(values=form.values))
             req = RequestBuilder().build(
                 bound, command=original_node.key, lang=space.session.lang
             )
 
-            yield Outcome(control=Continue(), next_steps=[req])
+            yield Pulse(control=Continue(), next_steps=[req])
 
         return handler
 

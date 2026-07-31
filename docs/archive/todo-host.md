@@ -63,7 +63,7 @@ Stand: 16.07.2026, `experiment/runtime-host`
 ### 6. Host-Features (später)
 
 Möglichkeiten, die der Host transparent bieten kann:
-- **Progress** — `context.progress(50)` als SDK-API, Host mapped auf Outcome
+- **Progress** — `context.progress(50)` als SDK-API, Host mapped auf Pulse
 - **Timeout** — Host bricht nach N Sekunden ab
 - **Cancellation** — Ctrl+C → Host → SDK.cancel() → Command
 - **Profiling** — Host zeichnet CPU/Memory/I/O auf

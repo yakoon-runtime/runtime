@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from y5n.runtime.api.flow.dsl import receive
-from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, Stop
+from y5n.runtime.api.flow.primitives import AwaitEvent, Pulse, Stop
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.machine.runner import Runner
@@ -19,15 +19,15 @@ async def test_receive_user_input(harness):
 
     flow = await harness.start(handler)
 
-    outcome = await harness.run_until_blocked(flow)
+    pulse = await harness.run_until_blocked(flow)
 
-    assert isinstance(outcome.control, AwaitEvent)
+    assert isinstance(pulse.control, AwaitEvent)
 
     harness.send_user_input(flow, "hello")
 
-    outcome = await harness.run_until_blocked(flow)
+    pulse = await harness.run_until_blocked(flow)
 
-    assert isinstance(outcome.control, Stop)
+    assert isinstance(pulse.control, Stop)
 
     assert received == ["hello"]
 
@@ -54,7 +54,7 @@ async def test_input_without_foreground_dispatches_new_flow(harness):
     assert harness.session.foreground_flow is None
 
     async def handler(ctx):
-        yield Outcome()
+        yield Pulse()
 
     node = Node(key="test", run=handler)
 
@@ -78,8 +78,8 @@ async def test_input_without_foreground_dispatches_new_flow(harness):
     flow = flows[0]
     assert flow.node is node
 
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)
 
 
 @pytest.mark.asyncio
@@ -93,8 +93,8 @@ async def test_input_with_foreground_pushes_to_flow(harness):
         received.append(event.payload)
 
     fg = await harness.start(fg_handler)
-    outcome = await harness.run_until_blocked(fg)
-    assert isinstance(outcome.control, AwaitEvent)
+    pulse = await harness.run_until_blocked(fg)
+    assert isinstance(pulse.control, AwaitEvent)
 
     # Fokus setzen (wie runner.py line 39-43: flow = session.foreground_flow)
     harness.session.set_foreground_flow(fg.id)
@@ -104,6 +104,6 @@ async def test_input_with_foreground_pushes_to_flow(harness):
     await runner.on_input(Event(payload="hello"))
 
     # Der Foreground-Flow wurde aufgeweckt und läuft weiter
-    outcome = await harness.run_until_blocked(fg)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(fg)
+    assert isinstance(pulse.control, Stop)
     assert received == ["hello"]

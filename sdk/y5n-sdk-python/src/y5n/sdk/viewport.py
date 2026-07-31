@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from y5n.runtime.api.flow.primitives import EmitView, Outcome
+from y5n.runtime.api.flow.primitives import EmitView, Pulse
 
 
 class _View:
@@ -12,7 +12,7 @@ class _View:
         self._params = params
 
     def __await__(self):
-        yield Outcome(
+        yield Pulse(
             effects=[
                 EmitView(
                     {"kind": "document", "header": {"role": "info"}, "blocks": []},

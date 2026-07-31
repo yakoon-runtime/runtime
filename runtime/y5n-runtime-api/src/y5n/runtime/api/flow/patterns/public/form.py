@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator, Mapping
 from typing import Any
 
-from y5n.runtime.api.flow.dsl import Outcome, out, prompt, receive
+from y5n.runtime.api.flow.dsl import Pulse, out, prompt, receive
 from y5n.runtime.api.flow.policies import BasePolicy, ValidationError
 from y5n.runtime.api.nodes import Param
 
@@ -86,7 +86,7 @@ class Form:
     # Dialog
     # --------------------------------------------------------
 
-    async def run(self) -> AsyncGenerator[AsyncGenerator[Outcome, Any], None]:
+    async def run(self) -> AsyncGenerator[AsyncGenerator[Pulse, Any], None]:
         """Yield a sub-generator for each field until the dialog completes.
 
         The caller forwards each sub-generator to the engine:
@@ -214,7 +214,7 @@ class Form:
         key: str,
         title: str,
         policy: BasePolicy | None = None,
-    ) -> AsyncGenerator[Outcome, Any]:
+    ) -> AsyncGenerator[Pulse, Any]:
         """Register a field on the fly and return its input sub-generator.
 
         Used in dialog mode (field-by-field):
@@ -233,7 +233,7 @@ class Form:
         key: str,
         title: str,
         policy: BasePolicy | None = None,
-    ) -> AsyncGenerator[Outcome, Any]:
+    ) -> AsyncGenerator[Pulse, Any]:
         """Core lifecycle for a single field: prompt, receive, validate.
 
         If the incoming event is a FormAction, it is applied to the dialog

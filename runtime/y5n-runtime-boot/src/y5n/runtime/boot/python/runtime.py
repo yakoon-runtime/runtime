@@ -4,7 +4,7 @@ import inspect
 import os
 from pathlib import Path
 
-from y5n.runtime.api.flow.dsl import Outcome, out_text
+from y5n.runtime.api.flow.dsl import Pulse, out_text
 from y5n.runtime.api.flow.primitives import (
     CwdEffect,
     EmitView,
@@ -178,15 +178,15 @@ async def run(space: NodeSpace):
                 val = gen.send(result)
                 continue
 
-            outcome = val
-            if not isinstance(outcome, Outcome):
+            pulse = val
+            if not isinstance(pulse, Pulse):
                 raise RuntimeError(
-                    f"Unexpected yield from coroutine: {type(outcome).__name__}"
+                    f"Unexpected yield from coroutine: {type(pulse).__name__}"
                 )
 
             # Boot-level effects — handled without yielding upstream
-            if outcome.effects:
-                effect = outcome.effects[0]
+            if pulse.effects:
+                effect = pulse.effects[0]
 
                 if isinstance(effect, CwdEffect):
                     session.set_cwd(effect.path)
@@ -211,9 +211,9 @@ async def run(space: NodeSpace):
                     val = gen.send(result)
                     continue
 
-            # Normal outcome — yield upstream to engine
-            first = _adjust_visual_modes(outcome.effects, first)
-            event_or_none = yield outcome
+            # Normal pulse — yield upstream to engine
+            first = _adjust_visual_modes(pulse.effects, first)
+            event_or_none = yield pulse
             val = gen.send(event_or_none if event_or_none else None)
 
     except StopIteration:
@@ -223,4 +223,4 @@ async def run(space: NodeSpace):
 
     if mod_name_for_cleanup and mod_name_for_cleanup.startswith("yak.bundle"):
         unload_module(mod_name_for_cleanup)
-    yield Outcome()
+    yield Pulse()

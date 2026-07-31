@@ -8,7 +8,7 @@ import types
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from y5n.runtime.api.flow.dsl import Outcome
+from y5n.runtime.api.flow.dsl import Pulse
 from y5n.runtime.api.nodes.space import NodeSpace
 
 from .base import (
@@ -36,7 +36,7 @@ def _parse_entry(entry: str) -> tuple[str, str]:
 
 def _empty() -> RunResult:
     async def _noop():
-        yield Outcome()
+        yield Pulse()
 
     return _noop()
 

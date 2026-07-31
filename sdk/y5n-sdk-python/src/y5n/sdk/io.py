@@ -10,7 +10,7 @@ from y5n.runtime.api.flow.primitives import (
     EmitEvent,
     EmitView,
     Foreground,
-    Outcome,
+    Pulse,
 )
 from y5n.runtime.api.runtime import Event
 from y5n.sdk.models import Field as _FormFieldDef
@@ -38,7 +38,7 @@ class _Write:
         self._mode = mode
 
     def __await__(self):
-        yield Outcome(
+        yield Pulse(
             effects=[EmitView(_resolve_view(self._view), mode=self._mode or "replace")]
         )
 
@@ -50,7 +50,7 @@ class _Error:
         self._text = text
 
     def __await__(self):
-        yield Outcome(effects=[EmitView({"kind": "error", "text": self._text})])
+        yield Pulse(effects=[EmitView({"kind": "error", "text": self._text})])
 
 
 class _Prompt:
@@ -65,7 +65,7 @@ class _Prompt:
             if isinstance(self._projection, dict)
             else to_text(self._projection)
         )
-        result = yield Outcome(
+        result = yield Pulse(
             effects=[Foreground(), EmitView(view, persist=True)],
             control=AwaitEvent("__user__", scope=Scope.USER_INPUT),
         )
@@ -83,7 +83,7 @@ class _Receive:
         ch = params.get("channel")
         scope_val = params.get("scope")
         scope = Scope(scope_val) if isinstance(scope_val, str) else scope_val
-        event = yield Outcome(control=AwaitEvent(ch, scope))
+        event = yield Pulse(control=AwaitEvent(ch, scope))
         return event
 
 
@@ -145,7 +145,7 @@ class _Form:
                 ],
             }
 
-            event = yield Outcome(
+            event = yield Pulse(
                 effects=[Foreground(), EmitView(field_view, persist=True)],
                 control=AwaitEvent("__user__", scope=Scope.USER_INPUT),
             )
@@ -167,7 +167,7 @@ class _Send:
         payload = params.get("payload")
         scope_val = params.get("scope", "flow")
         scope = Scope(scope_val) if isinstance(scope_val, str) else scope_val
-        yield Outcome(effects=[EmitEvent(ch, Event(payload=payload), scope=scope)])
+        yield Pulse(effects=[EmitEvent(ch, Event(payload=payload), scope=scope)])
 
 
 class _IO:

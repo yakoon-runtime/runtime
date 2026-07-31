@@ -6,7 +6,7 @@ from y5n.runtime.api.flow.primitives import (
     FlowFgEffect,
     FlowListEffect,
     FlowStopEffect,
-    Outcome,
+    Pulse,
     Suspend,
 )
 
@@ -16,13 +16,13 @@ class _FlowsList:
         from y5n.sdk.context import flow as _ctx_flow
 
         exclude_id = _ctx_flow().id
-        result = yield Outcome(effects=[FlowListEffect(exclude_id=exclude_id)])
+        result = yield Pulse(effects=[FlowListEffect(exclude_id=exclude_id)])
         return result
 
 
 class _Suspend:
     def __await__(self):
-        event = yield Outcome(control=Suspend(), effects=[Background()])
+        event = yield Pulse(control=Suspend(), effects=[Background()])
         return event
 
 
@@ -33,7 +33,7 @@ class _FlowStop:
         self._flow_id = flow_id
 
     def __await__(self):
-        yield Outcome(effects=[FlowStopEffect(flow_id=self._flow_id)])
+        yield Pulse(effects=[FlowStopEffect(flow_id=self._flow_id)])
 
 
 class _FlowFg:
@@ -48,12 +48,12 @@ class _FlowFg:
             from y5n.sdk.context import flow as _ctx_flow
 
             flow_id = _ctx_flow().id
-        yield Outcome(effects=[FlowFgEffect(flow_id=flow_id)])
+        yield Pulse(effects=[FlowFgEffect(flow_id=flow_id)])
 
 
 class _FlowBg:
     def __await__(self):
-        result = yield Outcome(effects=[FlowBgEffect()])
+        result = yield Pulse(effects=[FlowBgEffect()])
         return result
 
 

@@ -16,7 +16,7 @@ from typing import Any
 
 import yaml
 from y5n.runtime.api.document import to_text
-from y5n.runtime.api.flow.dsl import Outcome
+from y5n.runtime.api.flow.dsl import Pulse
 from y5n.runtime.api.flow.primitives import EmitView
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
@@ -185,10 +185,10 @@ def unload_module(mod_name: str) -> None:
 
 
 def emit_output(output: str) -> list:
-    """Return Outcome list from captured stdout."""
+    """Return Pulse list from captured stdout."""
     if not output:
         return []
-    outcomes = []
+    pulses = []
     for i, line in enumerate(output.splitlines()):
         line = line.strip()
         mode = "replace" if i == 0 else "append"
@@ -196,9 +196,9 @@ def emit_output(output: str) -> list:
             try:
                 data = _json.loads(line)
                 if isinstance(data, dict) and data.get("kind") == "document":
-                    outcomes.append(Outcome(effects=[EmitView(data, mode=mode)]))
+                    pulses.append(Pulse(effects=[EmitView(data, mode=mode)]))
                     continue
             except Exception:
                 pass
-        outcomes.append(Outcome(effects=[EmitView(to_text(line), mode=mode)]))
-    return outcomes
+        pulses.append(Pulse(effects=[EmitView(to_text(line), mode=mode)]))
+    return pulses

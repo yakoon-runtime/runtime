@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from y5n.runtime.api.document import to_text
-from y5n.runtime.api.flow.dsl import Outcome
+from y5n.runtime.api.flow.dsl import Pulse
 from y5n.runtime.api.flow.primitives import EmitView
 from y5n.runtime.api.runtime.context import CommandContext, _set_context
 
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
 
 def _empty() -> RunResult:
     async def _noop():
-        yield Outcome()
+        yield Pulse()
 
     return _noop()
 
@@ -102,9 +102,9 @@ class PythonExecutor(Executor):
             output = buf.getvalue()
             if output:
                 for line in output.splitlines():
-                    yield Outcome(effects=[EmitView(to_text(line), mode="append")])
+                    yield Pulse(effects=[EmitView(to_text(line), mode="append")])
 
-            yield Outcome()
+            yield Pulse()
 
         return _stream()
 

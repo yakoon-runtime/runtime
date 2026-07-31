@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from y5n.runtime.api.flow.primitives import Outcome, Sleep, SleepUntil
+from y5n.runtime.api.flow.primitives import Pulse, Sleep, SleepUntil
 
 
 class _Delay:
@@ -10,7 +10,7 @@ class _Delay:
         self._seconds = seconds
 
     def __await__(self):
-        yield Outcome(control=Sleep.for_duration(self._seconds))
+        yield Pulse(control=Sleep.for_duration(self._seconds))
 
 
 class _DelayUntil:
@@ -20,7 +20,7 @@ class _DelayUntil:
         self._timestamp = timestamp
 
     def __await__(self):
-        yield Outcome(control=SleepUntil.until(self._timestamp))
+        yield Pulse(control=SleepUntil.until(self._timestamp))
 
 
 class _Timer:

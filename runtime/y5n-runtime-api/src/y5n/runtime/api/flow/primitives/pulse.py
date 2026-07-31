@@ -12,12 +12,15 @@ if TYPE_CHECKING:
 
 
 @dataclass(slots=True)
-class Outcome:
-    """Result of a single flow step.
+class Pulse:
+    """What a flow hands to the runtime at each yield point.
+
+    A flow executes until it emits its next pulse. The runtime applies the
+    pulse's effects and decides, via control, what happens next.
 
     Carries:
-      * control   - what happens next (Stop / Continue / …)
-      * effects   - side effects the engine must apply
+      * control   - the lifecycle instruction (Stop / Continue / …)
+      * effects   - side effects the runtime must apply
       * pipeline  - items to prepend to the flow's pipeline list
       * value     - optional result value
     """
