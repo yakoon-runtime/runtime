@@ -5,6 +5,7 @@ from typing import Any
 
 from y5n.runtime.api.document import to_text
 from y5n.runtime.api.flow.channel import Scope
+from y5n.runtime.api.flow.patterns.public import Form
 from y5n.runtime.api.flow.primitives import (
     AwaitEvent,
     EmitEvent,
@@ -12,6 +13,7 @@ from y5n.runtime.api.flow.primitives import (
     Foreground,
     Pulse,
 )
+from y5n.runtime.api.nodes import Param
 from y5n.runtime.api.runtime import Event
 from y5n.sdk.models import Field as _FormFieldDef
 from y5n.sdk.models import YdsModel
@@ -95,64 +97,27 @@ class _Form:
 
     def __await__(self):
         params = self._params
-        title = params.get("title", "")
-        intro = params.get("intro", "")
-        initial = params.get("initial", {})
-        data = dict(initial or {})
-
+        fields = []
         for f in params.get("fields", []):
-            key = f.get("key", "") if isinstance(f, dict) else getattr(f, "key", "")
-            if not key:
-                continue
-            if key in data and data[key]:
-                continue
-            field_title = (
-                f.get("title", "")
-                if isinstance(f, dict)
-                else getattr(f, "title", key.title())
-            )
-            required = (
-                f.get("required", False)
-                if isinstance(f, dict)
-                else getattr(f, "required", False)
-            )
-
-            field_view = {
-                "kind": "document",
-                "header": {"role": "info", "title": title},
-                "blocks": [
-                    {
-                        "type": "section",
-                        "blocks": [
-                            {
-                                "type": "fields",
-                                "name": title,
-                                "fields": [
-                                    {
-                                        "type": "field",
-                                        "title": field_title or key.title(),
-                                        "required": required,
-                                        "name": key,
-                                        "value": data.get(key),
-                                        "state": "active",
-                                    }
-                                ],
-                                "intro": intro or None,
-                                "state": "active",
-                            }
-                        ],
-                    }
-                ],
-            }
-
-            event = yield Pulse(
-                effects=[Foreground(), EmitView(field_view, persist=True)],
-                control=AwaitEvent("__user__", scope=Scope.USER_INPUT),
-            )
-            if event and event.payload:
-                data[key] = str(event.payload)
-
-        return data
+            if isinstance(f, dict):
+                fields.append(
+                    Param(
+                        key=f.get("key", ""),
+                        title=f.get("title", ""),
+                        required=f.get("required", False),
+                    )
+                )
+            else:
+                fields.append(f)
+        form = Form(
+            fields=fields,
+            title=params.get("title", ""),
+            intro=params.get("intro", ""),
+            initial=params.get("initial"),
+            focus=params.get("focus"),
+        )
+        result = yield from form.pulse_flow()
+        return result
 
 
 class _Send:
