@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator, Mapping
+from collections.abc import AsyncGenerator, Generator, Mapping
 from typing import Any
 
 from y5n.runtime.api.flow.dsl import Pulse, out, prompt, receive
 from y5n.runtime.api.flow.policies import BasePolicy, ValidationError
 from y5n.runtime.api.nodes import Param
+from y5n.runtime.api.runtime import Event
 
 from .dialog import Dialog
 from .form_action import FormAction
@@ -270,6 +271,85 @@ class Form:
                 self._error = None
                 yield out(self._render())
                 break
+
+            except ValidationError as e:
+                self._error = e.args[0]
+                yield prompt(self._render(key))
+
+    # --------------------------------------------------------
+    # Pulse mode (sync generator — driven via yield/send())
+    # --------------------------------------------------------
+
+    def pulse_flow(self) -> Generator[Pulse, Event, dict[str, str]]:
+        """Drive the form via the synchronous yield/send protocol.
+
+        Yields Pulse objects and accepts input events via send().
+        Used by SDKs (e.g. ``io.form``) whose ``__await__`` cannot
+        iterate async generators.
+
+            gen = form.pulse_flow()
+            pulse = gen.send(None)     # first prompt
+            # ... runtime applies pulse, delivers event ...
+            gen.send(event)            # continue until StopIteration(data)
+        """
+        while not self._dialog.completed:
+            param = self._dialog.current
+            if param is None:
+                break
+            yield from self._pulse_field(
+                key=param.key,
+                title=param.title or param.key.title(),
+                policy=param.policy,
+            )
+            if self._navigated:
+                self._navigated = False
+                continue
+            self._advance()
+        return dict(self.data)
+
+    def _pulse_field(
+        self,
+        key: str,
+        title: str,
+        policy: BasePolicy | None = None,
+    ) -> Generator[Pulse, Event, None]:
+        """Field lifecycle as a sync generator: prompt, receive, validate.
+
+        Mirrors ``_ask_field`` for the synchronous protocol. If the
+        incoming event is a FormAction, it is applied to the dialog and
+        the generator returns — ``pulse_flow()`` re-evaluates the cursor.
+        """
+
+        while True:
+
+            yield prompt(self._render(key))
+            event = yield receive()
+
+            if isinstance(event.payload, FormAction):
+                self.apply(event.payload)
+                self._navigated = True
+                return
+
+            try:
+
+                if policy:
+                    result = policy.validate(event.payload)
+                else:
+                    result = event.payload
+
+                value = str(result) if result is not None else ""
+                if not value:
+                    value = self.data.get(key, "")
+
+                param = self._field_map.get(key)
+                if param and param.required and not value:
+                    yield prompt(self._render(key))
+                    continue
+
+                self.data[key] = value
+                self._error = None
+                yield out(self._render())
+                return
 
             except ValidationError as e:
                 self._error = e.args[0]
