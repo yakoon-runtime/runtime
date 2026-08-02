@@ -1,45 +1,14 @@
-"""Resource — the content unit delivered by a resolve capability.
+"""Resource — re-exported from the API for component authors.
 
-A resolve capability (``man``, ``projection``, ...) returns a ``Resource``.
-The public contract is exactly two methods: ``read_text()`` and
-``read_bytes()``. The carrier behind a Resource is an implementation detail.
+Components build a ``Resource`` via the factories (``text``, ``path``,
+``traversable``) and return it from a resolve capability:
+
+    from y5n.sdk import Resource
+
+    def man() -> Resource:
+        return Resource.traversable(files(__package__) / "resources" / "man.ydf")
 """
 
-from __future__ import annotations
-
-from collections.abc import Callable
-from dataclasses import dataclass
-from importlib.resources.abc import Traversable
-from pathlib import Path
-
-
-@dataclass(frozen=True)
-class Resource:
-    """A readable content unit produced by a resolve capability."""
-
-    _read_text: Callable[[], str]
-    _read_bytes: Callable[[], bytes]
-
-    @classmethod
-    def text(cls, content: str) -> Resource:
-        """Wrap a literal string."""
-        return cls(lambda: content, lambda: content.encode())
-
-    @classmethod
-    def path(cls, path: Path) -> Resource:
-        """Wrap a filesystem path."""
-        return cls(path.read_text, path.read_bytes)
-
-    @classmethod
-    def traversable(cls, trav: Traversable) -> Resource:
-        """Wrap a package resource (``importlib.resources.files(...)``)."""
-        return cls(trav.read_text, trav.read_bytes)
-
-    def read_text(self) -> str:
-        return self._read_text()
-
-    def read_bytes(self) -> bytes:
-        return self._read_bytes()
-
+from y5n.runtime.api.resources import Resource
 
 __all__ = ["Resource"]

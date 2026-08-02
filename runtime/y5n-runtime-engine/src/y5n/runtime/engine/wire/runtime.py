@@ -36,6 +36,7 @@ from y5n.runtime.engine.executor import (
 )
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.resources import PackageReader
+from y5n.runtime.engine.resources.resolver import PythonResourceResolver
 from y5n.runtime.engine.runtime import (
     NodeNotExecutable,
     NodeNotFound,
@@ -53,6 +54,7 @@ from y5n.runtime.engine.sources.data import (
 )
 from y5n.runtime.engine.wire.adapter.callable import CallableAdapter
 from y5n.runtime.engine.wire.adapter.document import DocumentAdapter
+from y5n.runtime.engine.wire.adapter.resource import ResourceAdapter
 from y5n.runtime.engine.wire.adapter.runtime import RuntimeAdapter
 from y5n.runtime.engine.wire.adapter.session import SessionAdapter
 from y5n.runtime.engine.wire.adapter.source import SourceReadAdapter
@@ -287,6 +289,16 @@ def build_runtime(
     bus.transport.register_adapter(
         "runtime",
         RuntimeAdapter(host),
+    )
+
+    bus.resolver.register(
+        "system:projection",
+        {"runtime.resource": ["resolve", "supports"]},
+        path="/",
+    )
+    bus.transport.register_adapter(
+        "runtime.resource",
+        ResourceAdapter(PythonResourceResolver(), tree),
     )
 
     return host
