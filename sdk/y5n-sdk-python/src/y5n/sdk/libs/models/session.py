@@ -17,6 +17,10 @@ class Session:
     user_id: str | None = None
     data: dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def is_authenticated(self) -> bool:
+        return self.user_id is not None
+
     @classmethod
     def from_context(
         cls, session_dict: dict[str, Any], user_dict: dict[str, Any]

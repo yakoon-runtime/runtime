@@ -103,23 +103,25 @@ def _build_context_dict(space, target_path: str) -> dict:
     """Build a Context JSON dict from a Runtime space object."""
     node_name = target_path.rsplit("/", 1)[-1] if target_path else ""
     workspace = space.session.get_data("fs:root") if space.session else ""
+    session = space.session if space.session else None
+    identity = session.get_identity() if session else None
 
     return {
         "node": {
             "path": target_path,
             "name": node_name,
         },
-        "cwd": space.session.cwd if space.session else "",
+        "cwd": session.cwd if session else "",
         "workspace": str(workspace) if workspace else "",
         "user": {
-            "id": str(space.session.key) if space.session else None,
-            "name": space.session.user_name if space.session else None,
+            "id": str(identity) if identity else None,
+            "name": session.user_name if session else None,
         },
         "session": {
-            "key": str(space.session.key) if space.session else None,
-            "lang": space.session.lang if space.session else None,
-            "interaction": space.session.interaction.value if space.session else None,
-            "data": dict(space.session.data.data) if space.session else {},
+            "key": str(session.key) if session else None,
+            "lang": session.lang if session else None,
+            "interaction": session.interaction.value if session else None,
+            "data": dict(session.data.data) if session else {},
         },
         "flow": {
             "id": space.flow_id or "",
