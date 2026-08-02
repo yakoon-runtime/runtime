@@ -5,15 +5,7 @@ import os
 from pathlib import Path
 
 from y5n.runtime.api.flow.dsl import Pulse, out_text
-from y5n.runtime.api.flow.primitives import (
-    CwdEffect,
-    FlowBgEffect,
-    FlowFgEffect,
-    FlowListEffect,
-    FlowStopEffect,
-    Suspend,
-    YieldToScheduler,
-)
+from y5n.runtime.api.flow.primitives import FlowBgEffect, FlowListEffect
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
@@ -121,17 +113,6 @@ async def run(space: NodeSpace):
             )
         return result
 
-    def _flow_stop(flow_id: str) -> None:
-        flow = session.get_flow(flow_id)
-        if flow:
-            session.del_flow(flow)
-
-    def _flow_fg(flow_id: str) -> None:
-        flow = session.get_flow(flow_id)
-        if flow and isinstance(flow.control, Suspend):
-            flow.control = YieldToScheduler()
-        session.set_foreground_flow(flow_id)
-
     def _flow_bg(_: None) -> dict | None:
         fg = session.foreground_flow
         if not fg:
@@ -170,24 +151,10 @@ async def run(space: NodeSpace):
                     f"Unexpected yield from coroutine: {type(pulse).__name__}"
                 )
 
-            # Boot-level effects — handled without yielding upstream
+            # Boot-level response effects — handled without yielding upstream
             if pulse.effects:
                 effect = pulse.effects[0]
 
-                if isinstance(effect, CwdEffect):
-                    session.set_cwd(effect.path)
-                    val = gen.send(None)
-                    continue
-                if isinstance(effect, FlowStopEffect):
-                    flow = session.get_flow(effect.flow_id)
-                    if flow:
-                        session.del_flow(flow)
-                    val = gen.send(None)
-                    continue
-                if isinstance(effect, FlowFgEffect):
-                    _flow_fg(effect.flow_id)
-                    val = gen.send(None)
-                    continue
                 if isinstance(effect, FlowListEffect):
                     result = _flows_list(effect.exclude_id or "")
                     val = gen.send(result)

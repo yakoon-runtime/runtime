@@ -2,9 +2,12 @@ from collections.abc import Sequence
 
 from y5n.runtime.api.flow.primitives import (
     Background,
+    CwdEffect,
     Effect,
     EmitEvent,
     EmitView,
+    FlowFgEffect,
+    FlowStopEffect,
     Foreground,
     StartCommand,
     StartTask,
@@ -14,8 +17,11 @@ from y5n.runtime.engine.runtime import Session
 
 from .handlers import (
     BackgroundHandler,
+    CwdHandler,
     EmitEventHandler,
     EmitViewHandler,
+    FlowFgHandler,
+    FlowStopHandler,
     ForegroundHandler,
     StartCommandHandler,
     StartTaskHandler,
@@ -50,6 +56,9 @@ class EffectExecutor:
             EmitEvent: EmitEventHandler(),
             StartTask: StartTaskHandler(on_start_task),
             StartCommand: StartCommandHandler(on_start_command),
+            CwdEffect: CwdHandler(),
+            FlowStopEffect: FlowStopHandler(),
+            FlowFgEffect: FlowFgHandler(on_projection),
         }
 
     def register(self, effect_type: type[Effect], handler: EffectHandler) -> None:
