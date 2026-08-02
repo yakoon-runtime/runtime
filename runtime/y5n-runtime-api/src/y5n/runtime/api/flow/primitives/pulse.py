@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from .control import Control
 from .effect import Effect
@@ -22,10 +22,8 @@ class Pulse:
       * control   - the lifecycle instruction (Stop / Continue / …)
       * effects   - side effects the runtime must apply
       * pipeline  - items to prepend to the flow's pipeline list
-      * value     - optional result value
     """
 
     control: Control | None = None
     effects: Sequence[Effect] | None = field(default_factory=list)
     next_steps: list[str | Request] | None = None
-    value: Any = None
