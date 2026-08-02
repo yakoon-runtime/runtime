@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator, Generator, Mapping
 from typing import Any
 
-from y5n.runtime.api.flow.dsl import Pulse, out, prompt, receive
+from y5n.runtime.api.flow.dsl import Pulse, prompt, receive
 from y5n.runtime.api.flow.policies import BasePolicy, ValidationError
 from y5n.runtime.api.nodes import Param
 from y5n.runtime.api.runtime import Event
@@ -269,7 +269,7 @@ class Form:
 
                 self.data[key] = value
                 self._error = None
-                yield out(self._render())
+                yield prompt(self._render())
                 break
 
             except ValidationError as e:
@@ -348,7 +348,7 @@ class Form:
 
                 self.data[key] = value
                 self._error = None
-                yield out(self._render())
+                yield prompt(self._render())
                 return
 
             except ValidationError as e:
