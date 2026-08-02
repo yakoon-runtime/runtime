@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from y5n.runtime.api.flow.dsl import Outcome
+from y5n.runtime.api.flow.dsl import Pulse
 
 from .base import Executor, ExecutorKind, Phase, RunResult
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 def _empty() -> RunResult:
     async def _noop():
-        yield Outcome()
+        yield Pulse()
 
     return _noop()
 
@@ -85,7 +85,7 @@ class ScriptExecutor(Executor):
                     line = await proc.stdout.readline()
                     if not line:
                         break
-                    yield Outcome(effects=[_emit_text(line.decode().rstrip())])
+                    yield Pulse(effects=[_emit_text(line.decode().rstrip())])
 
             await proc.wait()
             if proc.returncode != 0:
@@ -93,6 +93,6 @@ class ScriptExecutor(Executor):
                 if proc.stderr:
                     stderr_text = (await proc.stderr.read()).decode().strip()
                 if stderr_text:
-                    yield Outcome(effects=[_emit_text(f"error: {stderr_text}")])
+                    yield Pulse(effects=[_emit_text(f"error: {stderr_text}")])
 
         return _stream()

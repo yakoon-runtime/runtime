@@ -1,8 +1,35 @@
 from __future__ import annotations
 
-from y5n.runtime.api.host.protocol import Marker, MarkerKind
+import json
+from typing import Any
+
+from y5n.runtime.api.document import to_text
+from y5n.runtime.api.flow.channel import Scope
+from y5n.runtime.api.flow.patterns.public import Form
+from y5n.runtime.api.flow.primitives import (
+    AwaitEvent,
+    EmitEvent,
+    EmitView,
+    Foreground,
+    Pulse,
+)
+from y5n.runtime.api.nodes import Param
+from y5n.runtime.api.runtime import Event
 from y5n.sdk.models import Field as _FormFieldDef
 from y5n.sdk.models import YdsModel
+
+
+def _resolve_view(view: str | dict) -> dict:
+    if isinstance(view, dict):
+        return view
+    if view.startswith("{"):
+        try:
+            data = json.loads(view)
+            if isinstance(data, dict) and data.get("kind") == "document":
+                return data
+        except Exception:
+            pass
+    return to_text(view)
 
 
 class _Write:
@@ -13,8 +40,7 @@ class _Write:
         self._mode = mode
 
     def __await__(self):
-        value: object = (self._view, self._mode) if self._mode else self._view
-        yield Marker(MarkerKind.WRITE, value)
+        yield Pulse(effects=[EmitView(_resolve_view(self._view), mode=self._mode)])
 
 
 class _Error:
@@ -24,7 +50,9 @@ class _Error:
         self._text = text
 
     def __await__(self):
-        yield Marker(MarkerKind.ERROR, self._text)
+        yield Pulse(
+            effects=[EmitView({"kind": "error", "text": self._text}, mode=None)]
+        )
 
 
 class _Prompt:
@@ -34,7 +62,15 @@ class _Prompt:
         self._projection = projection
 
     def __await__(self):
-        result = yield Marker(MarkerKind.PROMPT, self._projection)
+        view = (
+            self._projection
+            if isinstance(self._projection, dict)
+            else to_text(self._projection)
+        )
+        result = yield Pulse(
+            effects=[Foreground(), EmitView(view, persist=True)],
+            control=AwaitEvent("__user__", scope=Scope.USER_INPUT),
+        )
         return result
 
 
@@ -45,7 +81,11 @@ class _Receive:
         self._params = {"channel": channel, "scope": scope}
 
     def __await__(self):
-        event = yield Marker(MarkerKind.RECEIVE, self._params)
+        params = self._params
+        ch = params.get("channel")
+        scope_val = params.get("scope")
+        scope = Scope(scope_val) if isinstance(scope_val, str) else scope_val
+        event = yield Pulse(control=AwaitEvent(ch, scope))
         return event
 
 
@@ -56,7 +96,27 @@ class _Form:
         self._params = params
 
     def __await__(self):
-        result = yield Marker(MarkerKind.FORM, self._params)
+        params = self._params
+        fields = []
+        for f in params.get("fields", []):
+            if isinstance(f, dict):
+                fields.append(
+                    Param(
+                        key=f.get("key", ""),
+                        title=f.get("title", ""),
+                        required=f.get("required", False),
+                    )
+                )
+            else:
+                fields.append(f)
+        form = Form(
+            fields=fields,
+            title=params.get("title", ""),
+            intro=params.get("intro", ""),
+            initial=params.get("initial"),
+            focus=params.get("focus"),
+        )
+        result = yield from form.pulse_flow()
         return result
 
 
@@ -67,7 +127,12 @@ class _Send:
         self._params = {"channel": channel, "payload": payload, "scope": scope}
 
     def __await__(self):
-        yield Marker(MarkerKind.SEND, self._params)
+        params = self._params
+        ch = params.get("channel")
+        payload = params.get("payload")
+        scope_val = params.get("scope", "flow")
+        scope = Scope(scope_val) if isinstance(scope_val, str) else scope_val
+        yield Pulse(effects=[EmitEvent(ch, Event(payload=payload), scope=scope)])
 
 
 class _IO:

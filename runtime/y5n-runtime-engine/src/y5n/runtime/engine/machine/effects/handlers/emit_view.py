@@ -13,6 +13,11 @@ class EmitViewHandler:
     projection callback with the appropriate context and job id.
     Supports persisting the view on the flow and explicit context/job
     id overrides via the effect fields.
+
+    A ``mode=None`` effect resolves to "replace" for the flow's first
+    output and "append" afterwards. An explicit mode is always honored.
+    Interactive (persist) and viewport-hint (view_params) effects are
+    excluded from this tracking.
     """
 
     def __init__(self, on_projection):
@@ -37,6 +42,12 @@ class EmitViewHandler:
         if e.persist:
             flow.view = view
 
+        mode = e.mode
+        if not e.persist and not e.view_params:
+            if mode is None:
+                mode = "replace" if not flow.has_output else "append"
+                flow.has_output = True
+
         job_id = e.job_id or (f"{flow.id}:{e.space}" if e.space else flow.id)
 
         await self._on_projection(
@@ -44,6 +55,6 @@ class EmitViewHandler:
             document=view,
             ctx=ctx,
             job_id=job_id,
-            mode=e.mode,
+            mode=mode,
             view_params=e.view_params,
         )

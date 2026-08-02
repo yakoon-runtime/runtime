@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from y5n.runtime.api.host.protocol import Marker, MarkerKind
-
 
 class _NetworkList:
     def __await__(self):
