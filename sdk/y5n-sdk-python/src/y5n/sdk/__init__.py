@@ -12,12 +12,14 @@ from . import context, models, ports
 from .fs import fs
 from .io import io
 from .network import network
+from .resources import Resource
 from .scheduler import scheduler
 from .session import session
 from .timer import timer
 from .viewport import viewport
 
 __all__ = [
+    "Resource",
     "context",
     "fs",
     "io",
