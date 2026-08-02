@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Literal
 
 from y5n.runtime.api.flow.channel import Scope
@@ -17,7 +17,7 @@ class Effect:
     """
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class EmitView(Effect):
     """Send a projection to the output layer.
 
@@ -38,7 +38,7 @@ class EmitView(Effect):
     ctx: InputContext | None = None
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class EmitEvent(Effect):
     """Push an event onto a channel.
 
@@ -50,7 +50,7 @@ class EmitEvent(Effect):
     scope: Scope = Scope.FLOW
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class Foreground(Effect):
     """Mark the flow as the session's foreground flow.
 
@@ -60,7 +60,7 @@ class Foreground(Effect):
     flow_id: str | None = None
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class Background(Effect):
     """Remove the flow from foreground status.
 
@@ -68,6 +68,7 @@ class Background(Effect):
     """
 
 
+@dataclass(frozen=True, slots=True)
 class StartTask(Effect):
     """Run an OS process as a background task.
 
@@ -75,17 +76,27 @@ class StartTask(Effect):
     stdout, stderr) to *channel* on the given scope.
     """
 
+    command: str
+    channel: str
+    scope: Scope = Scope.SESSION
+    kwargs: dict = field(default_factory=dict)
+
+    def __post_init__(self):
+        if not self.channel:
+            raise ValueError("channel must be a non-empty string")
+
     def __init__(
         self, command: str, channel: str, *, scope: Scope = Scope.SESSION, **kwargs
     ):
         if not channel:
             raise ValueError("channel must be a non-empty string")
-        self.command = command
-        self.channel = channel
-        self.scope = scope
-        self.kwargs = kwargs
+        object.__setattr__(self, "command", command)
+        object.__setattr__(self, "channel", channel)
+        object.__setattr__(self, "scope", scope)
+        object.__setattr__(self, "kwargs", kwargs)
 
 
+@dataclass(frozen=True, slots=True)
 class StartCommand(Effect):
     """Dispatch a runtime command as a sub-flow.
 
@@ -93,34 +104,42 @@ class StartCommand(Effect):
     (SESSION scope). The caller reads the result with receive().
     """
 
+    command: str
+    channel: str
+    remote: str | None = None
+
+    def __post_init__(self):
+        if not self.channel:
+            raise ValueError("channel must be a non-empty string")
+
     def __init__(self, command: str, channel: str, remote: str | None = None):
         if not channel:
             raise ValueError("channel must be a non-empty string")
-        self.command = command
-        self.channel = channel
-        self.remote = remote
+        object.__setattr__(self, "command", command)
+        object.__setattr__(self, "channel", channel)
+        object.__setattr__(self, "remote", remote)
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class CwdEffect(Effect):
     path: str
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class FlowListEffect(Effect):
     exclude_id: str | None = None
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class FlowStopEffect(Effect):
     flow_id: str
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class FlowFgEffect(Effect):
     flow_id: str | None = None
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class FlowBgEffect(Effect):
     pass

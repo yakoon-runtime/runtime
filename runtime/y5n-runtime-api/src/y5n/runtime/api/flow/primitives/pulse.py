@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from y5n.runtime.api.nodes import Request
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class Pulse:
     """What a flow hands to the runtime at each yield point.
 
