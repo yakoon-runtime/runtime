@@ -4,7 +4,7 @@ from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from y5n.runtime.api.flow.channel import Scope
-from y5n.runtime.api.flow.primitives import Outcome, Stop
+from y5n.runtime.api.flow.primitives import Pulse, Stop
 from y5n.runtime.engine.flow import Flow
 
 from support.events import push_event
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from y5n.runtime.engine.machine.scheduler import Scheduler
     from y5n.runtime.engine.runtime.sessions.session import Session
 
-    _Handler = Callable[..., AsyncGenerator[Outcome | None, Any]]
+    _Handler = Callable[..., AsyncGenerator[Pulse | None, Any]]
 
 
 class RuntimeHarness:
@@ -42,19 +42,19 @@ class RuntimeHarness:
         self.scheduler.schedule_flow(flow, self.session)
         return flow
 
-    async def run_until_blocked(self, flow: Flow) -> Outcome:
+    async def run_until_blocked(self, flow: Flow) -> Pulse:
         while True:
-            outcome = await self.engine.step_flow(flow, self.session)
-            if outcome is None:
+            pulse = await self.engine.step_flow(flow, self.session)
+            if pulse is None:
                 continue
-            await self.scheduler._handle_outcome(self.session, flow, outcome)
-            return outcome
+            await self.scheduler._handle_pulse(self.session, flow, pulse)
+            return pulse
 
-    async def run_until_stop(self, flow: Flow) -> Outcome:
+    async def run_until_stop(self, flow: Flow) -> Pulse:
         while True:
-            outcome = await self.run_until_blocked(flow)
-            if isinstance(outcome.control, Stop):
-                return outcome
+            pulse = await self.run_until_blocked(flow)
+            if isinstance(pulse.control, Stop):
+                return pulse
 
     def send_user_input(self, flow: Flow, text: str) -> None:
         push_event(self.session, Scope.USER_INPUT, "__user__", text, flow=flow)

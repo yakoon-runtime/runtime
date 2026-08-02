@@ -434,11 +434,11 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
     first token (e.g. \"/labs/hosts/hello-py-server\"). The path is resolved
     lazily at call time via the node's parent chain.
     """
-    from y5n.runtime.api.flow.dsl import Outcome
+    from y5n.runtime.api.flow.dsl import Pulse
 
     def _empty():
         async def _noop():
-            yield Outcome()
+            yield Pulse()
 
         return _noop()
 

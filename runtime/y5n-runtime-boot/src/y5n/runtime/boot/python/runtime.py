@@ -1,11 +1,10 @@
+import asyncio
 import importlib
 import inspect
 import os
 from pathlib import Path
 
-from y5n.runtime.api.flow.dsl import Outcome, out_text
-from y5n.runtime.api.flow.primitives import Suspend, YieldToScheduler
-from y5n.runtime.api.host import HANDLERS, MarkerKind, drive
+from y5n.runtime.api.flow.dsl import Pulse, out_text
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
@@ -94,69 +93,46 @@ async def run(space: NodeSpace):
         )
         return
 
-    session = space.session
-    flow_id = space.flow_id
-
-    def _flows_list(exclude_id: str) -> list[dict]:
-        result = []
-        fg = session.foreground_flow
-        exclude = exclude_id or flow_id or None
-        for idx, flow in enumerate(session.flows(exclude=exclude), start=1):
-            result.append(
-                {
-                    "index": idx,
-                    "id": flow.id,
-                    "label": flow.node.name or flow.node.key,
-                    "state": flow.control.label() if flow.control else "run",
-                    "foreground": bool(fg) and fg.id == flow.id,
-                }
-            )
-        return result
-
-    def _flow_stop(flow_id: str) -> None:
-        flow = session.get_flow(flow_id)
-        if flow:
-            session.del_flow(flow)
-
-    def _flow_fg(flow_id: str) -> None:
-        flow = session.get_flow(flow_id)
-        if flow and isinstance(flow.control, Suspend):
-            flow.control = YieldToScheduler()
-        session.set_foreground_flow(flow_id)
-
-    def _flow_bg(_: None) -> dict | None:
-        fg = session.foreground_flow
-        if not fg:
-            return None
-        session.set_foreground_flow(None)
-        return {"id": fg.id, "label": fg.node.name or fg.node.key}
+    # --------------------------------------------------
+    # Direct coroutine stepper (replaces drive())
+    # --------------------------------------------------
 
     try:
-        drive_gen = drive(
-            coro,
-            HANDLERS,
-            side_effects={
-                MarkerKind.CWD: lambda path: session.set_cwd(path),
-                MarkerKind.FLOW_STOP: _flow_stop,
-                MarkerKind.FLOW_FG: _flow_fg,
-            },
-            responses={
-                MarkerKind.FLOWS_LIST: _flows_list,
-                MarkerKind.FLOW_BG: _flow_bg,
-            },
-        )
-        outcome = await drive_gen.__anext__()
+        gen = coro.__await__()
+        val = gen.send(None)
+
         while True:
-            event_or_none = yield outcome
-            if event_or_none is not None:
-                outcome = await drive_gen.asend(event_or_none)
-            else:
-                outcome = await drive_gen.__anext__()
-    except StopAsyncIteration:
+            if inspect.iscoroutine(val):
+                result = await asyncio.ensure_future(val)
+                val = gen.send(result)
+                continue
+
+            if isinstance(val, asyncio.Future):
+                if val.done():
+                    result = val.result()
+                else:
+                    ev = asyncio.Event()
+                    val.add_done_callback(lambda _, ev=ev: ev.set())
+                    await ev.wait()
+                    result = val.result()
+                val = gen.send(result)
+                continue
+
+            pulse = val
+            if not isinstance(pulse, Pulse):
+                raise RuntimeError(
+                    f"Unexpected yield from coroutine: {type(pulse).__name__}"
+                )
+
+            # Yield upstream to the engine
+            event_or_none = yield pulse
+            val = gen.send(event_or_none if event_or_none else None)
+
+    except StopIteration:
         pass
     except Exception as e:
         yield out_text(f"error: {e}")
 
     if mod_name_for_cleanup and mod_name_for_cleanup.startswith("yak.bundle"):
         unload_module(mod_name_for_cleanup)
-    yield Outcome()
+    yield Pulse()

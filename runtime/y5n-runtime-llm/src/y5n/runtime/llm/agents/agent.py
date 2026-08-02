@@ -4,7 +4,7 @@ import json
 from collections.abc import AsyncGenerator, Iterable
 
 from y5n.runtime.api.flow.channel import Scope
-from y5n.runtime.api.flow.dsl import Outcome, out_text, receive, start_task
+from y5n.runtime.api.flow.dsl import Pulse, out_text, receive, start_task
 from y5n.runtime.api.llm import LLMMessage, LLMRequest, OnCallLLM
 
 
@@ -80,7 +80,7 @@ class Agent:
         *,
         context: dict[str, str] | None = None,
         blacklist: Iterable[str] = frozenset(),
-    ) -> AsyncGenerator[Outcome, None]:
+    ) -> AsyncGenerator[Pulse, None]:
         """Run the agent loop.
 
         Yields effects (start_task, receive, out_text) to the runtime.

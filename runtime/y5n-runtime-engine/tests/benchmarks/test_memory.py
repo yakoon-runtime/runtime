@@ -10,7 +10,7 @@ from y5n.runtime.api.flow.primitives import (
     EmitEvent,
     EmitView,
     Foreground,
-    Outcome,
+    Pulse,
     StartCommand,
     StartTask,
     Stop,
@@ -94,15 +94,15 @@ def run():
     # Event
     measure("Event(payload='test')", Event(payload="test"))
 
-    # Outcome variants
-    measure("Outcome()", Outcome())
+    # Pulse variants
+    measure("Pulse()", Pulse())
     measure(
-        "Outcome(control=AwaitEvent)",
-        Outcome(control=AwaitEvent("ch", scope=Scope.SESSION)),
+        "Pulse(control=AwaitEvent)",
+        Pulse(control=AwaitEvent("ch", scope=Scope.SESSION)),
     )
     measure(
-        "Outcome(effects=[EmitView(...)])",
-        Outcome(
+        "Pulse(effects=[EmitView(...)])",
+        Pulse(
             effects=[
                 EmitView({"kind": "document", "header": {"role": "info"}, "blocks": []})
             ]
