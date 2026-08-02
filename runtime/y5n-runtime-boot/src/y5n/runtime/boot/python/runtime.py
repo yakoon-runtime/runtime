@@ -5,7 +5,6 @@ import os
 from pathlib import Path
 
 from y5n.runtime.api.flow.dsl import Pulse, out_text
-from y5n.runtime.api.flow.primitives import FlowBgEffect, FlowListEffect
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
@@ -94,32 +93,6 @@ async def run(space: NodeSpace):
         )
         return
 
-    session = space.session
-    flow_id = space.flow_id
-
-    def _flows_list(exclude_id: str) -> list[dict]:
-        result = []
-        fg = session.foreground_flow
-        exclude = exclude_id or flow_id or None
-        for idx, flow in enumerate(session.flows(exclude=exclude), start=1):
-            result.append(
-                {
-                    "index": idx,
-                    "id": flow.id,
-                    "label": flow.node.name or flow.node.key,
-                    "state": flow.control.label() if flow.control else "run",
-                    "foreground": bool(fg) and fg.id == flow.id,
-                }
-            )
-        return result
-
-    def _flow_bg(_: None) -> dict | None:
-        fg = session.foreground_flow
-        if not fg:
-            return None
-        session.set_foreground_flow(None)
-        return {"id": fg.id, "label": fg.node.name or fg.node.key}
-
     # --------------------------------------------------
     # Direct coroutine stepper (replaces drive())
     # --------------------------------------------------
@@ -151,20 +124,7 @@ async def run(space: NodeSpace):
                     f"Unexpected yield from coroutine: {type(pulse).__name__}"
                 )
 
-            # Boot-level response effects — handled without yielding upstream
-            if pulse.effects:
-                effect = pulse.effects[0]
-
-                if isinstance(effect, FlowListEffect):
-                    result = _flows_list(effect.exclude_id or "")
-                    val = gen.send(result)
-                    continue
-                if isinstance(effect, FlowBgEffect):
-                    result = _flow_bg(None)
-                    val = gen.send(result)
-                    continue
-
-            # Normal pulse — yield upstream to engine
+            # Yield upstream to the engine
             event_or_none = yield pulse
             val = gen.send(event_or_none if event_or_none else None)
 
