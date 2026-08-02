@@ -47,6 +47,19 @@ class SessionAdapter:
             raise RuntimeError(f"Session {session_key} not found")
         await self._host.detach_session(runner.session)
 
+    async def logout(self, call: Call) -> None:
+        session_key = call.caller_session_key
+        if not session_key:
+            raise RuntimeError("caller_session_key is required")
+
+        runner = self._host._sessions.get(Key.from_str(session_key))
+        if runner is None:
+            raise RuntimeError(f"Session {session_key} not found")
+
+        runner.session.logout()
+        if self._on_save:
+            await self._on_save(session=runner.session)
+
     async def update(self, call: Call, *, patch: dict[str, Any]) -> dict[str, Any]:
         session_key = call.caller_session_key
         if not session_key:

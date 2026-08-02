@@ -1,0 +1,28 @@
+<heading>logout - End the current session identity.</heading>
+
+<rule/>
+
+<heading level="2">
+Usage
+</heading>
+
+<pre>
+  logout
+</pre>
+
+<heading level="2">
+Description
+</heading>
+
+<paragraph>
+Clears the session identity (user). The session returns to an
+unauthenticated state; permission checks no longer see a user.
+</paragraph>
+
+<heading level="2">
+See also
+</heading>
+
+<paragraph>
+su
+</paragraph>

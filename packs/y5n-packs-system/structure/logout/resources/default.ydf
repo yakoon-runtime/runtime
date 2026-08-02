@@ -1,0 +1,5 @@
+{% if user %}
+Logged out.
+{% else %}
+No user is logged in.
+{% endif %}
