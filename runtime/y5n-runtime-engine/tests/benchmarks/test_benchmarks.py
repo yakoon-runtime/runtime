@@ -159,7 +159,7 @@ async def test_massive_waiting_flows(harness, scheduler):
 
 
 @pytest.mark.asyncio
-async def test_runtime_mix(harness):
+async def test_runtime_mix(harness, effect_executor):
     """Benchmark: gemischte Last aus receive, send, start_cmd, Pulse."""
 
     N = 1_000
@@ -175,7 +175,7 @@ async def test_runtime_mix(harness):
         cmd, *rest = event.payload.strip().split()
         return cmd, rest, []
 
-    def resolve_node(*, parent, key, tokens, session, strict=True):
+    def resolve_node(*, key, tokens, session, strict=True):
         if key == "sub":
             return sub_node, tokens or []
         return None, tokens or []
@@ -185,7 +185,7 @@ async def test_runtime_mix(harness):
 
     created_sub_flows: list[Flow] = []
 
-    async def on_start_command(*, command, channel, flow, session):
+    async def on_start_command(*, command, channel, flow, session, remote=None):
         new_flow = await harness.engine.dispatch(
             session=session, event=Event(payload=command)
         )
@@ -196,7 +196,7 @@ async def test_runtime_mix(harness):
         else:
             harness.send_session(channel, None)
 
-    harness.engine.effect_executor.register(
+    effect_executor.register(
         StartCommand,
         StartCommandHandler(on_start_command),
     )
