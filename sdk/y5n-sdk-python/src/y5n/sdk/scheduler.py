@@ -1,14 +1,44 @@
 from __future__ import annotations
 
+from typing import Any
+
 from y5n.runtime.api.flow.primitives import (
     Background,
-    FlowBgEffect,
     FlowFgEffect,
-    FlowListEffect,
     FlowStopEffect,
     Pulse,
     Suspend,
 )
+
+from .context import current as _current_context
+from .libs import transport as _transport
+from .libs.models import Call, Response
+
+
+async def _invoke(call: Call) -> Response:
+    result = await _transport.invoke(call.to_dict())
+    if isinstance(result, dict):
+        return Response.from_dict(result)
+    return Response(result=result)
+
+
+async def _do_call(call: Call):
+    response = await _invoke(call)
+    if response.error:
+        raise RuntimeError(response.error)
+    return response.result
+
+
+def _call_runtime(method: str, **args: Any):
+    ctx = _current_context()
+    call = Call(
+        port="runtime",
+        method=method,
+        args=args,
+        caller_path=ctx.node.get("path", ""),
+        caller_session_key=ctx.session.get("key", ""),
+    )
+    return _do_call(call)
 
 
 class _FlowsList:
@@ -16,8 +46,7 @@ class _FlowsList:
         from y5n.sdk.context import flow as _ctx_flow
 
         exclude_id = _ctx_flow().id
-        result = yield Pulse(effects=[FlowListEffect(exclude_id=exclude_id)])
-        return result
+        return _call_runtime("flows", exclude_id=exclude_id).__await__()
 
 
 class _Suspend:
@@ -53,8 +82,7 @@ class _FlowFg:
 
 class _FlowBg:
     def __await__(self):
-        result = yield Pulse(effects=[FlowBgEffect()])
-        return result
+        return _call_runtime("background").__await__()
 
 
 class _Scheduler:

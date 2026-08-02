@@ -53,6 +53,7 @@ from y5n.runtime.engine.sources.data import (
 )
 from y5n.runtime.engine.wire.adapter.callable import CallableAdapter
 from y5n.runtime.engine.wire.adapter.document import DocumentAdapter
+from y5n.runtime.engine.wire.adapter.runtime import RuntimeAdapter
 from y5n.runtime.engine.wire.adapter.session import SessionAdapter
 from y5n.runtime.engine.wire.adapter.source import SourceReadAdapter
 from y5n.runtime.engine.wire.compiler import build_compiler
@@ -276,6 +277,14 @@ def build_runtime(
     bus.transport.register_adapter(
         "session",
         SessionAdapter(host, on_save=session_manager.save),
+    )
+
+    bus.resolver.register(
+        "system:projection", {"runtime": ["flows", "background"]}, path="/"
+    )
+    bus.transport.register_adapter(
+        "runtime",
+        RuntimeAdapter(host),
     )
 
     return host

@@ -126,11 +126,6 @@ class CwdEffect(Effect):
 
 
 @dataclass(frozen=True, slots=True)
-class FlowListEffect(Effect):
-    exclude_id: str | None = None
-
-
-@dataclass(frozen=True, slots=True)
 class FlowStopEffect(Effect):
     flow_id: str
 
@@ -138,8 +133,3 @@ class FlowStopEffect(Effect):
 @dataclass(frozen=True, slots=True)
 class FlowFgEffect(Effect):
     flow_id: str | None = None
-
-
-@dataclass(frozen=True, slots=True)
-class FlowBgEffect(Effect):
-    pass
