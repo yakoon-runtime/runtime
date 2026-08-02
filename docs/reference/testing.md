@@ -27,7 +27,7 @@ Every architectural decision serves determinism:
 # Everything a handler needs comes explicitly via space.ports.get()
 # → No global imports, no hidden dependencies
 
-# Everything a handler produces is an Outcome
+# Everything a flow yields is a Pulse
 # → No side effects, no hidden state changes
 
 # Everything that is a Block is a frozen dataclass
@@ -87,11 +87,11 @@ async def test_welcome_handler():
     space = MockNodeSpace()
     gen = welcome.run(space)
 
-    outcome = await gen.__anext__()
-    assert isinstance(outcome, Outcome)
-    assert len(outcome.effects) == 1
-    assert isinstance(outcome.effects[0], EmitView)
-    assert outcome.control is None  # no stop → continues
+    pulse = await gen.__anext__()
+    assert isinstance(pulse, Pulse)
+    assert len(pulse.effects) == 1
+    assert isinstance(pulse.effects[0], EmitView)
+    assert pulse.control is None  # no stop → continues
 
     with pytest.raises(StopAsyncIteration):
         await gen.__anext__()
@@ -134,7 +134,7 @@ projection = Mapper().map_projection(ast)
 ### What is NOT mocked
 
 - **Projection models** — pure dataclasses, no mock needed
-- **Control/Effect/Outcome** — immutable value objects
+- **Control/Effect/Pulse** — immutable value objects
 - **Container/NodePorts** — test helpers themselves (no IO)
 
 ### What is mocked

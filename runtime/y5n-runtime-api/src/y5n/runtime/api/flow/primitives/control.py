@@ -55,7 +55,7 @@ class YieldToScheduler(Control):
         scheduler.schedule_flow(flow, session)
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class Stop(Control):
     """Terminate the flow and remove it from the session.
 
@@ -69,7 +69,7 @@ class Stop(Control):
         flow.scheduled = False
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class Suspend(Control):
     """Suspend the flow indefinitely.
 
@@ -89,7 +89,7 @@ class Suspend(Control):
         return YieldToScheduler()
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class Continue(Control):
     """Continue to the next command in the pipeline.
 
@@ -118,7 +118,7 @@ class Continue(Control):
 # ------------------------------------------------------------
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class AwaitEvent(Control):
     """Block the flow until an event arrives on the specified channel.
 
@@ -152,7 +152,7 @@ class AwaitEvent(Control):
 # ------------------------------------------------------------
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class Sleep(Control):
     """Block the flow for a relative duration.
 
@@ -185,7 +185,7 @@ class Sleep(Control):
         return cls(time.time() + seconds)
 
 
-@dataclass(slots=True)
+@dataclass(frozen=True, slots=True)
 class SleepUntil(Control):
     """Block the flow until an absolute timestamp.
 

@@ -4,7 +4,7 @@ from collections.abc import AsyncGenerator, Awaitable
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 
-from y5n.runtime.api.flow.dsl import Outcome
+from y5n.runtime.api.flow.dsl import Pulse
 from y5n.runtime.api.ports.models import HealthResult
 
 """
@@ -42,7 +42,7 @@ if TYPE_CHECKING:
     from y5n.runtime.api.nodes.node import Node
     from y5n.runtime.api.nodes.space import NodeSpace
 
-FlowYield: TypeAlias = Outcome | AsyncGenerator | None
+FlowYield: TypeAlias = Pulse | AsyncGenerator | None
 RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]
 
 

@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.dsl import out, receive, send, start_cmd
-from y5n.runtime.api.flow.primitives import Outcome, StartCommand, Stop
+from y5n.runtime.api.flow.primitives import Pulse, StartCommand, Stop
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.flow import Flow
@@ -29,12 +29,12 @@ async def _drive_to_stop(engine, scheduler, session, flow):
     """Drive a single flow to Stop, counting engine steps."""
     steps = 0
     while True:
-        outcome = await engine.step_flow(flow, session)
+        pulse = await engine.step_flow(flow, session)
         steps += 1
-        if outcome is not None:
-            if isinstance(outcome.control, Stop):
+        if pulse is not None:
+            if isinstance(pulse.control, Stop):
                 break
-            await scheduler._handle_outcome(session, flow, outcome)
+            await scheduler._handle_pulse(session, flow, pulse)
     return steps
 
 
@@ -45,13 +45,13 @@ async def _drive_to_stop(engine, scheduler, session, flow):
 
 @pytest.mark.asyncio
 async def test_flow_switches(harness):
-    """Benchmark: reine Outcome-Iterationen (Engine + Scheduler, kein IO)."""
+    """Benchmark: reine Pulse-Iterationen (Engine + Scheduler, kein IO)."""
 
     N = 10_000
 
     async def handler(ctx):
         for _ in range(N):
-            yield Outcome()
+            yield Pulse()
 
     flow = await harness.start(handler)
 
@@ -90,18 +90,18 @@ async def test_session_channel_throughput(harness):
     async def sender(ctx):
         for _ in range(N):
             yield send(ch, Event(payload="p"), scope=Scope.SESSION)
-        yield Outcome()
+        yield Pulse()
 
     rx = await harness.start(receiver)
     tx = await harness.start(sender)
 
     start = time.monotonic()
 
-    outcome = await harness.run_until_stop(tx)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_stop(tx)
+    assert isinstance(pulse.control, Stop)
 
-    outcome = await harness.run_until_stop(rx)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_stop(rx)
+    assert isinstance(pulse.control, Stop)
 
     elapsed = time.monotonic() - start
     msgs = N
@@ -128,7 +128,7 @@ async def test_massive_waiting_flows(harness, scheduler):
             nonlocal woke
             event = yield receive(ch, scope=Scope.SESSION)
             woke += 1
-            yield Outcome()
+            yield Pulse()
 
         flows: list[Flow] = []
         t0 = time.monotonic()
@@ -159,15 +159,15 @@ async def test_massive_waiting_flows(harness, scheduler):
 
 
 @pytest.mark.asyncio
-async def test_runtime_mix(harness):
-    """Benchmark: gemischte Last aus receive, send, start_cmd, Outcome."""
+async def test_runtime_mix(harness, effect_executor):
+    """Benchmark: gemischte Last aus receive, send, start_cmd, Pulse."""
 
     N = 1_000
     sub_ch = uuid4().hex
 
     async def sub_handler(ctx):
         yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
-        yield Outcome()
+        yield Pulse()
 
     sub_node = Node(key="sub", run=sub_handler)
 
@@ -175,7 +175,7 @@ async def test_runtime_mix(harness):
         cmd, *rest = event.payload.strip().split()
         return cmd, rest, []
 
-    def resolve_node(*, parent, key, tokens, session, strict=True):
+    def resolve_node(*, key, tokens, session, strict=True):
         if key == "sub":
             return sub_node, tokens or []
         return None, tokens or []
@@ -185,7 +185,7 @@ async def test_runtime_mix(harness):
 
     created_sub_flows: list[Flow] = []
 
-    async def on_start_command(*, command, channel, flow, session):
+    async def on_start_command(*, command, channel, flow, session, remote=None):
         new_flow = await harness.engine.dispatch(
             session=session, event=Event(payload=command)
         )
@@ -196,7 +196,7 @@ async def test_runtime_mix(harness):
         else:
             harness.send_session(channel, None)
 
-    harness.engine.effect_executor.register(
+    effect_executor.register(
         StartCommand,
         StartCommandHandler(on_start_command),
     )
@@ -207,15 +207,15 @@ async def test_runtime_mix(harness):
             if _ % 2 == 0:
                 yield start_cmd("sub", channel=sub_ch)
                 yield receive(sub_ch, scope=Scope.SESSION)
-            yield Outcome()
+            yield Pulse()
 
     flow = await harness.start(main_handler)
 
     start = time.monotonic()
 
     while True:
-        outcome = await harness.run_until_blocked(flow)
-        if isinstance(outcome.control, Stop):
+        pulse = await harness.run_until_blocked(flow)
+        if isinstance(pulse.control, Stop):
             break
 
         # Main flow awaits sub-flow results — drain created sub-flows
@@ -226,4 +226,4 @@ async def test_runtime_mix(harness):
     elapsed = time.monotonic() - start
 
     print()
-    print(_label("Runtime-Mix (send+start_cmd+receive+outcome)", N, elapsed))
+    print(_label("Runtime-Mix (send+start_cmd+receive+pulse)", N, elapsed))
