@@ -10,19 +10,22 @@ from .control import (
 )
 from .effect import (
     Background,
+    CwdEffect,
     Effect,
     EmitEvent,
     EmitView,
+    FlowFgEffect,
+    FlowStopEffect,
     Foreground,
     Mode,
     StartCommand,
     StartTask,
 )
-from .outcome import Outcome
+from .pulse import Pulse
 
 __all__ = [
-    # .outcome
-    "Outcome",
+    # .pulse
+    "Pulse",
     # .types
     "Mode",
     # .controls
@@ -35,12 +38,14 @@ __all__ = [
     "Continue",
     "YieldToScheduler",
     # .effects
-    "Foreground",
     "Background",
+    "CwdEffect",
     "Effect",
     "EmitEvent",
     "EmitView",
+    "FlowFgEffect",
+    "FlowStopEffect",
+    "Foreground",
     "StartCommand",
     "StartTask",
-    "Foreground",
 ]

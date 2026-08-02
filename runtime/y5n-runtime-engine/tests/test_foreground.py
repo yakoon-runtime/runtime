@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 from y5n.runtime.api.flow.dsl import background, foreground, receive
-from y5n.runtime.api.flow.primitives import AwaitEvent, Outcome, Stop, Suspend
+from y5n.runtime.api.flow.primitives import AwaitEvent, Pulse, Stop, Suspend
 
 
 @pytest.mark.asyncio
@@ -11,17 +11,17 @@ async def test_foreground_sets_focus(harness):
 
     async def handler(ctx):
         yield foreground()
-        yield Outcome(control=Suspend())
+        yield Pulse(control=Suspend())
 
     flow = await harness.start(handler)
 
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Suspend)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Suspend)
     assert harness.session.foreground_flow is flow
 
     await flow.control.resume(flow, harness.session)
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)
     assert harness.session.foreground_flow is None
 
 
@@ -32,17 +32,17 @@ async def test_background_clears_focus(harness):
     async def handler(ctx):
         yield foreground()
         yield background()
-        yield Outcome(control=Suspend())
+        yield Pulse(control=Suspend())
 
     flow = await harness.start(handler)
 
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Suspend)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Suspend)
     assert harness.session.foreground_flow is None
 
     await flow.control.resume(flow, harness.session)
-    outcome = await harness.run_until_blocked(flow)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)
 
 
 @pytest.mark.asyncio
@@ -56,12 +56,12 @@ async def test_foreground_receives_user_input(harness):
         yield foreground()
         event = yield receive()
         received.append(event.payload)
-        yield Outcome()
+        yield Pulse()
 
     async def bg_handler(ctx):
         event = yield receive()
         received.append(event.payload)
-        yield Outcome()
+        yield Pulse()
 
     fg = await harness.start(fg_handler)
     bg = await harness.start(bg_handler)
@@ -73,8 +73,8 @@ async def test_foreground_receives_user_input(harness):
     # Simuliert Runner: Input nur an Foreground-Flow
     harness.send_user_input(fg, "hello")
 
-    outcome = await harness.run_until_blocked(fg)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(fg)
+    assert isinstance(pulse.control, Stop)
 
     assert received == ["hello"]
     assert not bg.control.is_runnable(bg, harness.session)
@@ -90,29 +90,29 @@ async def test_foreground_switch(harness):
         yield foreground()
         event = yield receive()
         received.append(f"a:{event.payload}")
-        yield Outcome()
+        yield Pulse()
 
     async def handler_b(ctx):
         yield foreground()
         event = yield receive()
         received.append(f"b:{event.payload}")
-        yield Outcome()
+        yield Pulse()
 
     flow_a = await harness.start(handler_a)
-    outcome = await harness.run_until_blocked(flow_a)
-    assert isinstance(outcome.control, AwaitEvent)
+    pulse = await harness.run_until_blocked(flow_a)
+    assert isinstance(pulse.control, AwaitEvent)
     assert harness.session.foreground_flow is flow_a
 
     flow_b = await harness.start(handler_b)
-    outcome = await harness.run_until_blocked(flow_b)
-    assert isinstance(outcome.control, AwaitEvent)
+    pulse = await harness.run_until_blocked(flow_b)
+    assert isinstance(pulse.control, AwaitEvent)
     assert harness.session.foreground_flow is flow_b
 
     # User Input geht an flow_b (neuer Foreground)
     harness.send_user_input(flow_b, "hello")
 
-    outcome = await harness.run_until_blocked(flow_b)
-    assert isinstance(outcome.control, Stop)
+    pulse = await harness.run_until_blocked(flow_b)
+    assert isinstance(pulse.control, Stop)
     assert received == ["b:hello"]
 
     # flow_a ist immer noch blockiert — hat nichts bekommen

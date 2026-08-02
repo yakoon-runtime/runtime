@@ -4,7 +4,7 @@ import inspect
 from collections.abc import Sequence
 from typing import Protocol, cast
 
-from y5n.runtime.api.flow.primitives import AwaitEvent, Effect, Outcome, Stop
+from y5n.runtime.api.flow.primitives import AwaitEvent, Effect, Pulse, Stop
 from y5n.runtime.api.nodes import Node, NodeSpace, Request
 from y5n.runtime.api.runtime import Event, InputContext, Interaction
 from y5n.runtime.api.runtime.sessions import Session as BaseSession
@@ -19,7 +19,7 @@ class CommandEngine:
     """Core flow execution engine.
 
     Steps a flow's async generator, applies effects (emit, start, dispatch),
-    and returns the outcome control to the scheduler.
+    and returns the pulse control to the scheduler.
     """
 
     DEFAULT_FLOW_KIND = FlowKind.USER
@@ -104,7 +104,7 @@ class CommandEngine:
         session.add_flow(flow)
         return flow
 
-    async def step_flow(self, flow: Flow, session: Session) -> Outcome | None:
+    async def step_flow(self, flow: Flow, session: Session) -> Pulse | None:
 
         node = flow.node
         cursor = flow.cursor
@@ -123,7 +123,7 @@ class CommandEngine:
                 except StopAsyncIteration:
                     cursor.pop()
                     if not cursor.has_stack():
-                        return Outcome(control=Stop())
+                        return Pulse(control=Stop())
                     return None
 
             # ----------------------------------
@@ -136,29 +136,29 @@ class CommandEngine:
             # ----------------------------------
             # 3. OUTCOME direkt
             # ----------------------------------
-            assert isinstance(item, Outcome)
-            outcome = item
+            assert isinstance(item, Pulse)
+            pulse = item
 
             # ----------------------------------
             # 4. PIPELINE
             # ----------------------------------
-            if outcome.next_steps:
-                flow.pipeline = list(outcome.next_steps) + list(flow.pipeline or [])
+            if pulse.next_steps:
+                flow.pipeline = list(pulse.next_steps) + list(flow.pipeline or [])
 
             # ----------------------------------
             # 5. EFFECTS
             # ----------------------------------
-            if outcome.effects:
-                await self._on_apply_effects(outcome.effects, session, flow)
+            if pulse.effects:
+                await self._on_apply_effects(pulse.effects, session, flow)
 
             # ----------------------------------
             # 6. CONTROL (Scheduler übernimmt)
             # ----------------------------------
-            if outcome.control is not None:
-                return outcome
+            if pulse.control is not None:
+                return pulse
 
             # ----------------------------------
-            # 7. No outcome → next step later
+            # 7. No pulse → next step later
             # ----------------------------------
             return None
 
@@ -167,7 +167,7 @@ class CommandEngine:
             cursor.pop()
 
             if not cursor.has_stack():
-                return Outcome(control=Stop())
+                return Pulse(control=Stop())
 
             return None
 

@@ -4,7 +4,7 @@ import inspect
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Literal
 
-from y5n.runtime.api.flow.primitives import Outcome
+from y5n.runtime.api.flow.primitives import Pulse
 from y5n.runtime.api.nodes.handler import RunHandler
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ class FlowCursor:
         self,
         node: Node,
         ctx: NodeSpace,
-    ) -> Outcome | AsyncGenerator | None:
+    ) -> Pulse | AsyncGenerator | None:
         if not self._stack:
             if self.handler_name == "run":
                 handler = node.run
@@ -83,7 +83,7 @@ def _ensure_step(run_fn: RunHandler):
 
             async def coro_wrapper():
                 await result
-                yield Outcome()
+                yield Pulse()
 
             return coro_wrapper()
 
@@ -91,7 +91,7 @@ def _ensure_step(run_fn: RunHandler):
         if result is None:
 
             async def empty():
-                yield Outcome()
+                yield Pulse()
 
             return empty()
 

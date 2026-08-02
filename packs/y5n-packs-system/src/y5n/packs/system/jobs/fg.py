@@ -17,5 +17,5 @@ async def main():
         await runtime.io.write(f"Job {index} not found.")
         return
 
-    await runtime.scheduler.foreground(target["id"])
     await runtime.io.write(f"Job {index} moved to foreground.")
+    await runtime.scheduler.foreground(target["id"])

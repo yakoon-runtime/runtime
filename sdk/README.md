@@ -162,7 +162,7 @@ inline types.
 ## Architecture
 
 ```text
-Command                       Host
+Command                       Runtime
   │                            │
   ├─ context.current() ────────┤  (data snapshot, no call)
   │                            │
@@ -170,17 +170,14 @@ Command                       Host
   │                           │
   │  YdsModel.to_dict() ──────┤  (SDK serializes to plain dict)
   │                           │
-  │  Marker(WRITE, dict) ─────┤  (yielded via __await__)
+  │  Pulse(effects=[...]) ────┤  (yielded via __await__)
   │                           │
-  │                           └─ handler → Outcome
-  │
   └─ [done] ── StopIteration ──┘
 ```
 
-The host drives the command coroutine via `coro.send(None)` — no `create_task`,
-no Queue, no polling. Every `await runtime.*` yields a `Marker` that the host
-dispatches to a registered handler (producing a DSL Outcome) or processes as a
-side effect (e.g. `CWD`).
+The runtime drives the command coroutine via `coro.send(None)` — no `create_task`,
+no Queue, no polling. Every `await runtime.*` yields a `Pulse` carrying effects
+and control that the runtime applies directly. No translation layer.
 
 ## Generator
 
