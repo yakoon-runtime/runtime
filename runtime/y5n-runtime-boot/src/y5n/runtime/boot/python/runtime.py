@@ -7,7 +7,6 @@ from pathlib import Path
 from y5n.runtime.api.flow.dsl import Pulse, out_text
 from y5n.runtime.api.flow.primitives import (
     CwdEffect,
-    EmitView,
     FlowBgEffect,
     FlowFgEffect,
     FlowListEffect,
@@ -144,22 +143,9 @@ async def run(space: NodeSpace):
     # Direct coroutine stepper (replaces drive())
     # --------------------------------------------------
 
-    def _adjust_visual_modes(effects, first):
-        if not effects:
-            return first
-        result = first
-        for e in effects:
-            if isinstance(e, EmitView) and not e.persist and not e.view_params:
-                if e.mode == "replace" and not first:
-                    e.mode = "append"
-                if result:
-                    result = False
-        return result
-
     try:
         gen = coro.__await__()
         val = gen.send(None)
-        first = True
 
         while True:
             if inspect.iscoroutine(val):
@@ -212,7 +198,6 @@ async def run(space: NodeSpace):
                     continue
 
             # Normal pulse — yield upstream to engine
-            first = _adjust_visual_modes(pulse.effects, first)
             event_or_none = yield pulse
             val = gen.send(event_or_none if event_or_none else None)
 

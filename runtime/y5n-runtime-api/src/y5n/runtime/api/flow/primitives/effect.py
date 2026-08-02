@@ -23,11 +23,15 @@ class EmitView(Effect):
 
     The projection is rendered according to *mode* (replace or append)
     and optionally persisted across steps.
+
+    ``mode=None`` means "resolve automatically": the first output of a
+    flow replaces, subsequent ones append. An explicit mode is always
+    honored as given.
     """
 
     view: object
     persist: bool = False
-    mode: Mode = "replace"
+    mode: Mode | None = "replace"
     space: str | None = None
     view_params: dict | None = None
     job_id: str | None = None

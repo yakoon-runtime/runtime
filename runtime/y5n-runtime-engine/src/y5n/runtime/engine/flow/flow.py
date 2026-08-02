@@ -38,6 +38,8 @@ class Flow:
     control: Control | None = None
     view: Any = None
 
+    has_output: bool = False
+
     scheduled: bool = False
     wake_at: float | None = None
     kind: FlowKind = FlowKind.USER

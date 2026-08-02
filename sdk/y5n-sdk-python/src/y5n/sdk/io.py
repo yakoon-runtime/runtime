@@ -40,9 +40,7 @@ class _Write:
         self._mode = mode
 
     def __await__(self):
-        yield Pulse(
-            effects=[EmitView(_resolve_view(self._view), mode=self._mode or "replace")]
-        )
+        yield Pulse(effects=[EmitView(_resolve_view(self._view), mode=self._mode)])
 
 
 class _Error:
@@ -52,7 +50,9 @@ class _Error:
         self._text = text
 
     def __await__(self):
-        yield Pulse(effects=[EmitView({"kind": "error", "text": self._text})])
+        yield Pulse(
+            effects=[EmitView({"kind": "error", "text": self._text}, mode=None)]
+        )
 
 
 class _Prompt:
