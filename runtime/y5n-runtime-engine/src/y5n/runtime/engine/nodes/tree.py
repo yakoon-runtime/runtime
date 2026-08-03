@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from y5n.runtime.api.nodes import Invocation, Node, Param, Request
+from y5n.runtime.api.nodes import Invocation, Node, Param
 from y5n.runtime.api.nodes.ports import NodePorts
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
@@ -435,9 +435,9 @@ def _make_handler(executor: Executor, node: Node, phase: Phase):
 def _make_host_handler(tree: Tree, node_key: str, host_path: str):
     """Replace node.run with a delegating handler that routes to a host.
 
-    The host node receives the original node's full tree path as its
-    first token (e.g. \"/labs/hosts/hello-py-server\"). The path is resolved
-    lazily at call time via the node's parent chain.
+    The runtime passes the target node's space unchanged — ``space.path`` is
+    the target. How the host addresses the node is the host's decision
+    (ADR-10); the runtime does not rewrite requests.
     """
     from y5n.runtime.engine.flow.util import empty_flow
 
@@ -448,28 +448,7 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
         host_run = host_node.run
         if host_run is None:
             return empty_flow()
-        # Compute full tree path from node's own parent chain
-        # (node.path walks parents, which only works after linking)
-        target_path = str(space.path)
-        cmd = target_path.rsplit("/", 1)[-1] if target_path else ""
-        modified = Request(
-            command=cmd,
-            tokens=[target_path]
-            + (list(space.request.args()) if space.request else []),
-            payload=None,
-            lang=space.session.lang if space.session else "",
-        )
-        modified_space = NodeSpace(
-            path=space.path,
-            request=modified,
-            session=space.session,
-            ports=space.ports,
-            ports_from=space.ports_from,
-            resources=space.resources,
-            fs_path=space.fs_path,
-            flow_id=space.flow_id,
-        )
-        return host_run(modified_space)
+        return host_run(space)
 
     return _run
 

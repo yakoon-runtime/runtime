@@ -127,7 +127,8 @@ def _build_context_dict(space, target_path: str) -> dict:
             "id": space.flow_id or "",
             "key": node_name,
         },
-        "tokens": (
+        "tokens": [target_path]
+        + (
             list(space.request.args()) if space.request and space.request.args() else []
         ),
     }

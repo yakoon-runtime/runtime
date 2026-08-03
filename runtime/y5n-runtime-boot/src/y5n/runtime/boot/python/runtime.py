@@ -127,7 +127,7 @@ def _coerce_resource(result):
 
 
 async def run(space: NodeSpace):
-    target_path = space.request.arg(0) if space.request else None
+    target_path = str(space.path) if space.path else None
     if not target_path:
         yield out_text("Usage: python/runtime <tree-path>")
         return

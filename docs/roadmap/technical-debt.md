@@ -151,9 +151,15 @@
       later references (`resources:`, `ports:`, a command's `entry.run`) are
       host-interpreted. The single bootstrap linker is `engine/bootstrap.py`
       (`PackReference`), shared with the runtime executor.
-- [ ] **F2 — Engine rewrites host requests**
-      `nodes/tree.py:425-470` `_make_host_handler` builds the
-      `Request`/`NodeSpace` rewrite in the runtime.
+- [x] **F2 — Engine rewrites host requests**
+      `nodes/tree.py` `_make_host_handler` built the `Request`/`NodeSpace`
+      rewrite in the runtime, hardcoding the "path as first token" convention.
+      Done: the runtime now passes the target node's space unchanged
+      (`space.path` is the target); the boot host reads the target from
+      `space.path` and prepends it to the SDK context tokens itself — the
+      host-owned convention, preserving command-visible behavior. Consistent
+      with F1: the runtime interprets neither resource references nor command
+      conventions.
 
 ## G. Hygiene
 
