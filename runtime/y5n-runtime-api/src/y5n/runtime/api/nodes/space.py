@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from y5n.runtime.api.nodes import NodePath, Request
@@ -26,7 +26,7 @@ class NodeSpace:
     session: Session
     ports: NodePorts
     ports_from: PortsFromHandler
-    resources: dict[str, dict[str, str]] | None = None
+    resources: dict[str, dict[str, Any]] | None = None
     """Raw resource references from the originating node, keyed by type then
     variant.  Populated during command dispatch from the resolved node."""
     fs_path: Path | None = None

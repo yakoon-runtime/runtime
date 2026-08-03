@@ -23,14 +23,22 @@ async def resolve(node, capability: str, parameters: dict | None = None):
 
     Reads the reference expressions a node declared for a capability, picks
     the variant, and interprets them (``file:``, ``resource:``) into a
-    ``Resource``. The host owns the scheme semantics; the node owns the
-    expressions.
+    ``Resource``. A variant is a reference expression string or a
+    ``{ref, parameters}`` mapping whose declared parameters are merged with
+    the resolve-time parameters. The host owns the scheme semantics; the node
+    owns the expressions.
     """
     variants = (node.resources or {}).get(capability, {})
-    expr = _pick_variant(variants, parameters)
-    if not expr:
+    variant = _pick_variant(variants, parameters)
+    if not variant:
         raise LookupError(f"node '{node.key}' has no '{capability}' resource")
-    return await _interpret(expr, parameters or {}, base=node.fs_path)
+    if isinstance(variant, dict):
+        expr = variant.get("ref")
+        merged = {**(variant.get("parameters") or {}), **(parameters or {})}
+    else:
+        expr = variant
+        merged = parameters or {}
+    return await _interpret(expr, merged, base=node.fs_path)
 
 
 def _pick_variant(variants: dict, parameters: dict | None) -> str | None:

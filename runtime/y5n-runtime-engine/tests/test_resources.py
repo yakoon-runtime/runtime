@@ -288,6 +288,57 @@ async def test_python_host_resolve_missing():
         await host_resolve(node, "man")
 
 
+@pytest.mark.asyncio
+async def test_python_host_resolve_declared_parameters():
+    from y5n.runtime.boot.python.runtime import resolve as host_resolve
+
+    def load(path: str, **params):
+        return Resource.text(f"loaded:{path}:{params.get('lang', 'en')}")
+
+    module = _make_module("_test_pyhost_params", {"load": load})
+    node = _fake_node(
+        resources={
+            "man": {
+                "default": {
+                    "ref": f"resource:{module.__name__}:load",
+                    "parameters": {"path": "info/man.ydf"},
+                }
+            }
+        }
+    )
+    resource = await host_resolve(node, "man", parameters={"lang": "de"})
+    assert resource.read_text() == "loaded:info/man.ydf:de"
+
+
+@pytest.mark.asyncio
+async def test_tree_stores_ref_with_parameters(tmp_path: Path):
+    _write(
+        tmp_path / "app" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "title: App",
+                "host: /boot/python/runtime",
+                "man:",
+                "  default:",
+                "    ref: resource:y5n.packs.system.resources.loader:content",
+                "    parameters:",
+                "      path: info/man.ydf",
+            ]
+        ),
+    )
+    tree = _build_tree(tmp_path)
+    app = tree.find("/app")
+    assert app is not None
+    assert app.resources == {
+        "man": {
+            "default": {
+                "ref": "resource:y5n.packs.system.resources.loader:content",
+                "parameters": {"path": "info/man.ydf"},
+            }
+        }
+    }
+
+
 # ----------------------------------------
 # DOCUMENT ADAPTER DISPATCHES TO THE HOST
 # ----------------------------------------

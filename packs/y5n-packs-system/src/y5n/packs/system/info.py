@@ -9,7 +9,6 @@ _start_time = time.time()
 
 async def main():
     doc = ports.get("document")
-    raise Exception("Info crash - simulate logs-file entry")
 
     result = await doc.render(
         name="default",
