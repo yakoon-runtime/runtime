@@ -278,12 +278,12 @@ class EventDispatcher:
                 ops.append(op)
                 continue
 
-        stream.event_queue = remaining
+        ops, tail = ops[: self.BATCH_SIZE], ops[self.BATCH_SIZE :]
+
+        stream.event_queue = remaining + tail
 
         if not ops:
             return
-
-        ops = ops[: self.BATCH_SIZE]
 
         await stream.session.emit(
             self.on_create_batch_event(
