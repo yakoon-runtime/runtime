@@ -473,26 +473,19 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
 def _make_resolve_handler(resolve_expr: str):
     """Build a node's resolve handler from a ``pack:<module>:<func>`` expression.
 
-    The handler receives the component node and capability name and delegates
-    to the declared resolve function — the host's interpretation (ADR-10).
+    This is bootstrap linking, not interpretation (ADR-10): the runtime loads
+    the host's declared resolve function so the host can interpret later
+    references. The function is loaded lazily on first call — no module import
+    at build time.
     """
+    from y5n.runtime.engine.bootstrap import PackReference
 
-    scheme, _, value = resolve_expr.partition(":")
-    if scheme != "pack":
-        raise ValueError(f"invalid resolve expression: {resolve_expr!r}")
-    mod_name, _, func_name = value.rpartition(":")
+    ref = PackReference(resolve_expr)
 
     async def _resolve(*, node, capability, parameters=None):
-        import importlib
         import inspect
 
-        try:
-            module = importlib.import_module(mod_name)
-        except ImportError as exc:
-            raise LookupError(f"cannot import module {mod_name!r}") from exc
-        fn = getattr(module, func_name, None)
-        if fn is None or not callable(fn):
-            raise LookupError(f"no resolve function {func_name!r} in {mod_name!r}")
+        fn = ref.load()
         result = fn(node=node, capability=capability, parameters=parameters or {})
         if inspect.isawaitable(result):
             return await result
