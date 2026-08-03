@@ -280,7 +280,7 @@ class EntityStore:
             return result
 
     # ----------------------------
-    # GET (inkl. Historie)
+    # GET (incl. history)
     # ----------------------------
 
     async def get(
@@ -338,7 +338,7 @@ class EntityStore:
         if snap is None:
             base_state = None
             base_rev = 0
-            last_rev = None  # WICHTIG (nicht 0!)
+            last_rev = None  # IMPORTANT (not 0!)
         else:
             base_state = snap.data
             base_rev = snap.rev

@@ -118,7 +118,7 @@ class CommandEngine:
                 return None
 
             # ----------------------------------
-            # 3. OUTCOME direkt
+            # 3. OUTCOME directly
             # ----------------------------------
             assert isinstance(item, Pulse)
             pulse = item
@@ -136,7 +136,7 @@ class CommandEngine:
                 await self._on_apply_effects(pulse.effects, session, flow)
 
             # ----------------------------------
-            # 6. CONTROL (Scheduler übernimmt)
+            # 6. CONTROL (scheduler takes over)
             # ----------------------------------
             if pulse.control is not None:
                 return pulse

@@ -33,7 +33,7 @@ async def test_multiple_commands_parallel(harness, effect_executor):
     pulse = await harness.run_until_blocked(flow)
     assert isinstance(pulse.control, AwaitEvent)
 
-    # Beide Commands wurden dispatchet, bevor der erste receive() blockte
+    # Both commands were dispatched before the first receive() blocked
     assert effect_executor.on_start_command.call_count == 2
 
     # Ergebnisse simulieren
@@ -77,7 +77,7 @@ async def test_multiple_tasks_parallel(harness, effect_executor):
     pulse = await harness.run_until_blocked(flow)
     assert isinstance(pulse.control, AwaitEvent)
 
-    # Beide Tasks wurden dispatchet, bevor der erste receive() blockte
+    # Both tasks were dispatched before the first receive() blocked
     assert effect_executor.on_start_task.call_count == 2
 
     # Ergebnisse simulieren

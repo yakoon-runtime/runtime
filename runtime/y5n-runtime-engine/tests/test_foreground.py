@@ -115,7 +115,7 @@ async def test_foreground_switch(harness):
     assert isinstance(pulse.control, Stop)
     assert received == ["b:hello"]
 
-    # flow_a ist immer noch blockiert — hat nichts bekommen
+    # flow_a is still blocked — it got nothing
     assert not flow_a.control.is_runnable(flow_a, harness.session)
 
 

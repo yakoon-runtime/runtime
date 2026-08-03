@@ -35,7 +35,7 @@ class InputParser:
         cmd = all_tokens[0] if all_tokens else ""
         args = all_tokens[1:]
 
-        # Rest bleibt roh
+        # rest stays raw
         pipeline = parts[1:]
 
         return cmd, args, pipeline

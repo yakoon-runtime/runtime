@@ -35,7 +35,7 @@ class Scheduler:
 
     # PULSE
     # --------------------------------------------------------
-    MAX_STEPS_PER_CYCLE = 20  # konservativ
+    MAX_STEPS_PER_CYCLE = 20  # conservative
     MAX_TIME_PER_CYCLE = 0.01  # 10 ms
     MAX_ITERATIONS = 1000
 
@@ -292,15 +292,15 @@ class Scheduler:
         flow.control = control
 
         # ----------------------------------
-        # 2. Verhalten
+        # 2. Behavior
         # ----------------------------------
 
         if isinstance(control, Control):
             await control.on_enter(flow, self, session)
 
             # ----------------------------------
-            # 3. Parent wecken (Document liegt
-            #    bereits im Channel)
+            # 3. Wake parent (document already
+            #    in the channel)
             # ----------------------------------
             if isinstance(control, Stop):
                 if flow.out_channel:

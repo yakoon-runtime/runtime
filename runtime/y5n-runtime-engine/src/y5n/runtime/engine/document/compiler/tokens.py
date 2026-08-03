@@ -35,7 +35,7 @@ def _tokenize(text: str) -> list[Token]:
     for match in TAG_RE.finditer(text):
         start, end = match.span()
 
-        # Text davor
+        # text before
         if start > pos:
             tokens.append(Token(type="TEXT", content=text[pos:start]))
 

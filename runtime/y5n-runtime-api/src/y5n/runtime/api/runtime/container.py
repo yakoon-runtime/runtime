@@ -71,7 +71,7 @@ class Container:
         return Container(parent=self, allow_override=allow_override)
 
     def mount(self, root: Container) -> None:
-        """Mountes the current container chain to a new root scope.
+        """Mount the current container chain to a new root scope.
 
         This operation preserves the existing hierarchical scope chain
         while extending lookup into the attached root hierarchy.

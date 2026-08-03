@@ -52,7 +52,7 @@ class JsonPatchStrategy:
         except Exception as e:
             raise PatchError(f"Failed to apply RFC6902 patch: {e}") from e
 
-        # Boundary: externes System → wir übernehmen Kontrolle
+        # Boundary: an external system may produce anything — take control
         if not _is_json_value(result):
             raise PatchError("jsonpatch returned invalid JSON structure.")
 

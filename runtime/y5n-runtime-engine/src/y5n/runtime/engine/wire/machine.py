@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Protocol, cast
 
 from y5n.runtime.api.flow import Scope
@@ -28,6 +29,8 @@ from y5n.runtime.engine.machine import (
 )
 from y5n.runtime.engine.machine.ports import OnAuditWarning, OnSuggest
 from y5n.runtime.engine.runtime import Session
+
+logger = logging.getLogger(__name__)
 from y5n.runtime.engine.runtime.bus import BusOutput
 from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.settings.version import resolve_runtime_info
@@ -81,7 +84,7 @@ def build_machine(
             on_error = node.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
         except Exception as exc:  # fallback
-            print(exc)
+            logger.warning("error resolve fallback failed: %s", exc)
             on_error = node.root.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
 
