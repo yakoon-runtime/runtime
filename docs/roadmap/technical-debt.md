@@ -82,10 +82,16 @@
 - [ ] **D3 — Renderer/compiler constructed twice**
       `wire/runtime.py:91-93` and `build_projector` each build a
       `JinjaRenderEngine`, `PackageReader`, and `Compiler`. Inject one set.
-- [ ] **D4 — Small duplicates**
-      `Sleep`/`SleepUntil`, `form.py` async/sync mirror, `_empty()`/`_emit_text()`
-      helpers, `_norm_value`, three identical `create_store` wirings, duplicated
-      `Protocol` declarations (move to `machine/ports.py`).
+- [x] **D4 — Small duplicates**
+      `Sleep`/`SleepUntil` (SleepUntil is now a subclass of Sleep),
+      `form.py` async/sync mirror (one sync field-lifecycle generator,
+      driven by the async wrapper), `_empty()` helpers (one `empty_flow()`
+      in `engine/flow/util.py`), three identical `create_store` wirings
+      (one `create_entity_store()` factory in the store), duplicated
+      `Protocol` declarations (true duplicates moved to
+      `machine/ports.py`). `_norm_value` was left as-is: the memory
+      backend validates types, the postgres backend coerces — intentional
+      difference, not a duplicate.
 - [ ] **D5 — Simplify runtime initialization chain**
       the console app calls `host.setup()`, which creates a throwaway session
       (`on_get_session()`) that `setup_nodes()` ignores; the app only needs
