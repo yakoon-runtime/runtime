@@ -79,9 +79,11 @@
       — same `token()`/`arg()`/`option()` logic (~180 lines). Extract one shared
       base. Done: shared `TokenQuery` base in `api/tokens.py`; the API `Request`
       and the SDK `Request` subclass it, `DataRequest` delegates to it.
-- [ ] **D3 — Renderer/compiler constructed twice**
+- [x] **D3 — Renderer/compiler constructed twice**
       `wire/runtime.py:91-93` and `build_projector` each build a
-      `JinjaRenderEngine`, `PackageReader`, and `Compiler`. Inject one set.
+      `JinjaRenderEngine`, `PackageReader`, and `Compiler`. Done: one wire-level
+      assembly (`build_document_stack`) builds the full pipeline once and
+      returns it as a `DocumentStack`; `build_runtime` consumes it.
 - [x] **D4 — Small duplicates**
       `Sleep`/`SleepUntil` (SleepUntil is now a subclass of Sleep),
       `form.py` async/sync mirror (one sync field-lifecycle generator,
@@ -92,11 +94,11 @@
       `machine/ports.py`). `_norm_value` was left as-is: the memory
       backend validates types, the postgres backend coerces — intentional
       difference, not a duplicate.
-- [ ] **D5 — Simplify runtime initialization chain**
-      the console app calls `host.setup()`, which creates a throwaway session
-      (`on_get_session()`) that `setup_nodes()` ignores; the app only needs
-      `on_initialize()` (store.initialize + tree.setup). Adapt the console app
-      or `RuntimeManager.setup()` so initialization is direct.
+- [x] **D5 — Simplify runtime initialization chain**
+      the console app calls `host.setup()`, which created a throwaway session
+      (`on_get_session()`) that `setup_nodes()` ignored. `RuntimeManager.setup()`
+      now calls `on_setup()` directly; the app only needs
+      `on_initialize()` (store.initialize + tree.setup).
 
 ## E. Over-engineering
 
