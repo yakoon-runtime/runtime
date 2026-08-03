@@ -28,7 +28,7 @@ async def main():
         node_data = result.one()
         node_path = node_data.get("path")
 
-        if node_path:
+        if node_path and await runtime.supports(node_path=node_path, capability="man"):
 
             resource = await runtime.resolve(node_path=node_path, capability="man")
             template = resource.read_text()
