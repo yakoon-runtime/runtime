@@ -68,10 +68,12 @@
 
 ## D. Duplication
 
-- [ ] **D1 — Module loader duplicated**
-      `executor/runtime.py:186-218` is byte-identical logic to
-      `boot/python/_shared.py:136-178` (`yak.bundle.*` import surgery). The
-      engine should reuse the boot helper.
+- [x] **D1 — Module loader duplicated**
+      `executor/runtime.py` and `nodes/tree.py` both did the same
+      `rpartition` + importlib + getattr dance for `pack:` references.
+      Extracted one shared `PackReference` bootstrap linker
+      (`engine/bootstrap.py`), used by the runtime executor and the tree's
+      resolve-handler builder. Single source for the `pack:` bootstrap link.
 - [ ] **D2 — Token parser triplicated**
       `nodes/request/request.py`, `sources/request.py`, `sdk/libs/models/request.py`
       — same `token()`/`arg()`/`option()` logic (~180 lines). Extract one shared
@@ -111,11 +113,17 @@
       console typewriter animation + profiler live in the runtime API; move to
       the console app.
 
-## F. Ownership First (ADR-10) violations
+## F. Ownership First (ADR-10) boundaries
 
-- [ ] **F1 — Engine interprets `pack:` scheme**
-      `nodes/tree.py:473-501` `_make_resolve_handler` parses and imports the
-      `pack:` reference in the runtime — belongs to the host.
+- [x] **F1 — Engine interprets `pack:` scheme**
+      Resolved as a **bootstrap exception**, not an ownership violation (ADR-10,
+      "Bootstrap linking"): before a host can interpret references, the first
+      host itself must be loaded. The runtime performs a minimal, mechanical
+      linking step for the `entry.run` and `resolve` declarations of host nodes
+      only — it loads the declared function, it does not understand it. All
+      later references (`resources:`, `ports:`, a command's `entry.run`) are
+      host-interpreted. The single bootstrap linker is `engine/bootstrap.py`
+      (`PackReference`), shared with the runtime executor.
 - [ ] **F2 — Engine rewrites host requests**
       `nodes/tree.py:425-470` `_make_host_handler` builds the
       `Request`/`NodeSpace` rewrite in the runtime.
@@ -130,3 +138,12 @@
       `runtime/bus/session_bus.py:48`).
 - [ ] **G3 — Small fixes** "Mountes" typo (3 files), `NodeSpace` `None`
       type-ignores (`nodes/tree.py:287-293`).
+
+## H. Parked ideas
+
+- **A host is just a node with a job** — if a host were an ordinary node
+  (`async def main()` + SDK), the runtime would only say `await host.run()` and
+  the host would use the same runtime services as any component. Its two
+  capabilities (execute / resolve) would be offered via ports, not methods.
+  This dissolves the last special treatment of hosts. Parked: first resolve the
+  rest of this list, then revisit — likely after D2–D5 and E.
