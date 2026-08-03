@@ -74,10 +74,11 @@
       Extracted one shared `PackReference` bootstrap linker
       (`engine/bootstrap.py`), used by the runtime executor and the tree's
       resolve-handler builder. Single source for the `pack:` bootstrap link.
-- [ ] **D2 — Token parser triplicated**
+- [x] **D2 — Token parser triplicated**
       `nodes/request/request.py`, `sources/request.py`, `sdk/libs/models/request.py`
       — same `token()`/`arg()`/`option()` logic (~180 lines). Extract one shared
-      base.
+      base. Done: shared `TokenQuery` base in `api/tokens.py`; the API `Request`
+      and the SDK `Request` subclass it, `DataRequest` delegates to it.
 - [ ] **D3 — Renderer/compiler constructed twice**
       `wire/runtime.py:91-93` and `build_projector` each build a
       `JinjaRenderEngine`, `PackageReader`, and `Compiler`. Inject one set.
