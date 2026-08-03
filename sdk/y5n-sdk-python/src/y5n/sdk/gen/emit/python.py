@@ -15,9 +15,35 @@ _HEADER = """\
 from __future__ import annotations
 
 import dataclasses
+import types
+import typing
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, get_args, get_origin, get_type_hints
+
+
+def _coerce_union(args: tuple, value: Any) -> Any:
+    if isinstance(value, dict) and "type" in value:
+        for arg in args:
+            if isinstance(arg, type) and issubclass(arg, YdsModel):
+                for fld in dataclasses.fields(arg):  # type: ignore[arg-type]
+                    if fld.name == "type" and fld.default == value["type"]:
+                        return arg.from_dict(value)
+    return value
+
+
+def _coerce(tp: Any, value: Any) -> Any:
+    if value is None or tp is None:
+        return value
+    origin = get_origin(tp)
+    if origin in (list, Sequence, tuple):
+        item = get_args(tp)[0]
+        return [_coerce(item, v) for v in value]
+    if origin in (types.UnionType, typing.Union):
+        return _coerce_union(get_args(tp), value)
+    if isinstance(tp, type) and issubclass(tp, YdsModel):
+        return tp.from_dict(value)
+    return value
 
 
 class YdsModel:
@@ -41,6 +67,18 @@ class YdsModel:
             else:
                 result[f.name] = value
         return result
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any] | None) -> YdsModel | None:
+        if data is None:
+            return None
+        hints = get_type_hints(cls)
+        kwargs: dict[str, Any] = {}
+        for f in dataclasses.fields(cls):  # type: ignore[arg-type]
+            if f.name not in data:
+                continue
+            kwargs[f.name] = _coerce(hints.get(f.name), data[f.name])
+        return cls(**kwargs)
 """
 
 _TYPE_MAP = {
@@ -107,6 +145,7 @@ def _emit_class(cls: ClassDef, *, add_type_discriminator: bool = False) -> str:
 
     if cls.description:
         lines.append(f'    """{cls.description}"""')
+        lines.append("")
 
     all_props = list(cls.properties)
     if add_type_discriminator and cls.type_value:

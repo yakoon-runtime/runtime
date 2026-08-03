@@ -102,12 +102,20 @@
 
 ## E. Over-engineering
 
-- [ ] **E1 — Dual document model**
-      compiler builds dicts, API builds `Inline*` dataclasses, hand-written
-      decoder bridges them; `error_kind` drift (`core.py` allows only
-      `validation`/`system`); `normalize()` + `_blocks_to_dict` build the same
-      shell; `gc.collect()` workaround; broken `ImageResolver`. Pick one
-      representation (derive from `yds-v1.yaml`).
+- [ ] **E1 — Manual Python document model**
+      The YDS specification is already canonical, and a generator already
+      emits the document model classes into
+      `sdk/y5n-sdk-python/src/y5n/sdk/models.py` (36 classes, `generate.sh`).
+      Per ADR-11 ("Transport is untyped. SDK is typed."), the wire layer owns
+      no document types: `DocumentEvent` carries data only, and every typed
+      model lives in the generated SDK model. Implementation order:
+      1. add `from_dict()` to the generator (making `to_dict()`/`from_dict()`
+         symmetric and the SDK complete),
+      2. remove the hand-written `api/document/model/inline.py` +
+         `DocumentHeader` + the `wire/deserialize.py` decoder
+         (`INLINE_TYPES` / `_reconstruct_inlines`),
+      3. switch the shell to `sdk.models` via `from_dict()`.
+      This also removes the `error_kind` drift between compiler and spec.
 - [x] **E2 — Dispatcher rewrite**
       `document/transport/dispatcher.py` 367 → 273 lines: recursive
       `emit_block` replaced with explicit stack-based traversal (with finish
