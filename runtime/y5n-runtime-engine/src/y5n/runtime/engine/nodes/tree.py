@@ -237,6 +237,16 @@ class Tree:
             tree_path = f"/{rel_str}"
             parent_path = str(Path(tree_path).parent)
             parent = self._nodes.get(parent_path) or self._root
+
+            # An implicit intermediate node may already exist for this path
+            # (created while linking deeper bundles). Adopt its children so a
+            # bundle that is also a mount point keeps its subtree reachable.
+            existing = self._nodes.get(tree_path)
+            if existing is not None and existing is not node:
+                for key, child in existing.children.items():
+                    child.parent = node
+                    node.children[key] = child
+
             parent.mount(node)
             self._nodes[tree_path] = node
 
