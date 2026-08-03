@@ -311,18 +311,21 @@ async def test_python_host_resolve_declared_parameters():
 
 
 @pytest.mark.asyncio
-async def test_tree_stores_ref_with_parameters(tmp_path: Path):
+async def test_tree_stores_resources_strategy(tmp_path: Path):
     _write(
         tmp_path / "app" / ".yak" / "yak.yml",
         "\n".join(
             [
                 "title: App",
                 "host: /boot/python/runtime",
-                "man:",
-                "  default:",
-                "    ref: resource:y5n.packs.system.resources.loader:content",
-                "    parameters:",
+                "resources:",
+                "  ref: resource:y5n.packs.system.resources.loader:content",
+                "  man:",
+                "    default:",
                 "      path: info/man.ydf",
+                "  document:",
+                "    de:",
+                "      path: info/de.ydf",
             ]
         ),
     )
@@ -330,13 +333,48 @@ async def test_tree_stores_ref_with_parameters(tmp_path: Path):
     app = tree.find("/app")
     assert app is not None
     assert app.resources == {
-        "man": {
-            "default": {
-                "ref": "resource:y5n.packs.system.resources.loader:content",
-                "parameters": {"path": "info/man.ydf"},
-            }
-        }
+        "ref": "resource:y5n.packs.system.resources.loader:content",
+        "man": {"default": {"path": "info/man.ydf"}},
+        "document": {"de": {"path": "info/de.ydf"}},
     }
+
+
+@pytest.mark.asyncio
+async def test_python_host_resolve_resources_strategy():
+    from y5n.runtime.boot.python.runtime import resolve as host_resolve
+
+    node = _fake_node(
+        resources={
+            "ref": "resource:y5n.packs.system.resources.loader:content",
+            "man": {"default": {"path": "info/man.ydf"}},
+            "document": {"default": {"path": "info/default.ydf"}},
+        }
+    )
+    resource = await host_resolve(node, "man", parameters={"lang": "de"})
+    assert resource.read_text()  # resolves via the strategy loader
+    resource = await host_resolve(node, "document")
+    assert resource.read_text()
+
+
+@pytest.mark.asyncio
+async def test_python_host_resolve_passes_capability_and_variant():
+    from y5n.runtime.boot.python.runtime import resolve as host_resolve
+
+    def strategy(capability, variant, **params):
+        return Resource.text(f"{capability}:{variant}:{params.get('path')}")
+
+    module = _make_module("_test_pyhost_strategy", {"content": strategy})
+    node = _fake_node(
+        resources={
+            "ref": f"resource:{module.__name__}:content",
+            "man": {
+                "default": {"path": "info/man.ydf"},
+                "de": {"path": "info/man_de.ydf"},
+            },
+        }
+    )
+    resource = await host_resolve(node, "man", parameters={"lang": "de"})
+    assert resource.read_text() == "man:de:info/man_de.ydf"
 
 
 # ----------------------------------------

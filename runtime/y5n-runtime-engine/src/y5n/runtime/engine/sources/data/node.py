@@ -138,9 +138,17 @@ class NodeSource(DataSource):
 
     def _to_row(self, node: Node) -> dict[str, Any]:
 
-        resources: dict[str, dict[str, str]] = {}
-        for rtype, variants in node.resources.items():
-            resources[rtype] = {v: _serialize_ref(p) for v, p in variants.items()}
+        resources: dict[str, str] = {}
+        section = node.resources or {}
+        ref = section.get("ref")
+        for cap, data in section.items():
+            if cap == "ref" or not isinstance(data, dict):
+                continue
+            if isinstance(ref, str):
+                resources[cap] = ref
+            else:
+                first = next(iter(data.values()), None)
+                resources[cap] = _serialize_ref(first) if first is not None else ""
 
         return {
             "key": node.key,
