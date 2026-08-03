@@ -102,7 +102,6 @@ class SnapshotHint(StrEnum):
     NONE = "none"
     AUTO = "auto"  # let store policy decide
     COMMIT = "commit"  # business boundary (CommandFinished / InputCompleted)
-    FORCE = "force"  # always write a snapshot
 
 
 @dataclass(frozen=True, slots=True)

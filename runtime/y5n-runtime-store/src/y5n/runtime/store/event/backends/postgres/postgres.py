@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
-from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Literal
 
@@ -62,17 +61,6 @@ class PostgresBackend:
     async def shutdown(self):
         if self.pool:
             await self.pool.close()
-
-    # ----------------------------
-    # TRANSACTION
-    # ----------------------------
-
-    @asynccontextmanager
-    async def transaction(self):
-        assert self.pool, "PostgresBackend not initialized"
-        async with self.pool.acquire() as conn:
-            async with conn.transaction():
-                yield self.bind(conn)
 
     def exec(self):
         return _PoolExec(self)
@@ -420,7 +408,7 @@ class _PostgresExec:
         limit,
         as_of,
     ):
-        params = [
+        params: list[object] = [
             str(domain_id),
             str(kind_id),
             str(space_id),
@@ -494,7 +482,7 @@ class _PostgresExec:
         specs = {r["key"]: ValueType(r["value_type"]) for r in rows}
 
         conditions: list[str] = []
-        params: list[str] = []
+        params: list[object] = []
         idx = 4  # first 3 params are domain, kind, space
 
         for term in terms:
@@ -560,12 +548,6 @@ class _PostgresExec:
     # GC (stub)
     # ----------------------------
 
-    async def gc(self, **kwargs):
-        return None
-
-    async def gc_global(self, **kwargs):
-        return None
-
 
 class _PoolExec:
     def __init__(self, backend):
@@ -607,12 +589,6 @@ class _PoolExec:
 
     async def query_index(self, **kwargs):
         return await self._run("query_index", **kwargs)
-
-    async def gc(self, **kwargs):
-        return await self._run("gc", **kwargs)
-
-    async def gc_global(self, **kwargs):
-        return await self._run("gc_global", **kwargs)
 
     async def load_snapshot_at_or_before(self, **kwargs):
         return await self._run("load_snapshot_at_or_before", **kwargs)

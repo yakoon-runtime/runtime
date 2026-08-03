@@ -4,7 +4,7 @@ import asyncio
 import bisect
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Literal
 
 from ..models.entity import (
@@ -18,7 +18,6 @@ from ..models.entity import (
     JsonValue,
     KindId,
     PatchFormat,
-    RetentionPolicy,
     SpaceId,
     ValueType,
 )
@@ -72,9 +71,6 @@ class MemoryBackend:
             tuple[str, str, str, str],
             dict[str, list[_IndexRecord]],
         ] = {}
-
-    def transaction(self) -> MemoryTransactionScope:
-        return MemoryTransactionScope(self)
 
     # --- helpers ---
 
@@ -574,55 +570,3 @@ class MemoryBackend:
                 lst.insert(i, rec)
 
         self._index_terms_by_entity[ent_k] = newmap
-
-    # --- maintenance ---
-
-    async def gc(
-        self,
-        *,
-        domain_id: DomainId,
-        kind_id: KindId,
-        space_id: SpaceId,
-        policy: RetentionPolicy,
-        now: datetime,
-    ) -> None:
-        cutoff = now - timedelta(days=policy.keep_revisions_days)
-
-        # prune revisions and snapshots
-        for k in list(self._revisions.keys()):
-            d, kd, s, _ = k
-            if d == str(domain_id) and kd == str(kind_id) and s == str(space_id):
-                self._revisions[k] = [r for r in self._revisions[k] if r.ts >= cutoff]
-                if not self._revisions[k]:
-                    self._revisions.pop(k, None)
-
-        snap_cutoff = now - timedelta(days=policy.keep_snapshots_days or 0)
-        for k in list(self._snapshots.keys()):
-            d, kd, s, _ = k
-            if d == str(domain_id) and kd == str(kind_id) and s == str(space_id):
-                self._snapshots[k] = [
-                    r for r in self._snapshots[k] if r.ts >= snap_cutoff
-                ]
-                if not self._snapshots[k]:
-                    self._snapshots.pop(k, None)
-
-    async def gc_global(self, *, policy: RetentionPolicy) -> None:
-        return None
-
-
-# ----------------------------------
-# TRANSACTION SCOPE
-# ----------------------------------
-
-
-class MemoryTransactionScope:
-
-    def __init__(self, backend):
-        self._b = backend
-
-    async def __aenter__(self):
-        await self._b._lock.acquire()
-        return self._b
-
-    async def __aexit__(self, *args):
-        self._b._lock.release()

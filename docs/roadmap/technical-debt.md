@@ -112,15 +112,24 @@
       `document/transport/dispatcher.py` 367 → ~150 lines: stack-based traversal
       instead of recursion, delete the dead partition logic and the 8-protocol
       port layer.
-- [ ] **E3 — Store feature trim**
-      `transaction()`, `gc`, historical `at_time`, `FastPatchStrategy`,
-      `SnapshotHint.FORCE` are unused by consumers (~400-500 removable lines).
+- [x] **E3 — Store feature trim**
+      Removed: `transaction()`/`begin_transaction` (StoreRuntime, wires,
+      backend `transaction()` methods, `MemoryTransactionScope`),
+      `gc`/`gc_global` (EntityStore, backends, protocols),
+      `SnapshotHint.FORCE`, the always-on `_enable_revisions` toggle, and
+      their now-unused imports.
+      Kept: historical `get(at_time)` — a tested, working feature that the
+      engine's `OnGet` protocol already declares; and `FastPatchStrategy` —
+      a complete, unwired alternative patch format (`PatchFormat.FASTPATCH`
+      exists in the model) kept as a future option for switching the flat-entity
+      write path. Revisit either when a consumer needs it.
 - [ ] **E4 — `flow/policies/` fragmentation + German UI strings**
       one tiny class per file; error messages hardcoded German in an API
       library. Merge into one module; make messages English/parametrized.
-- [ ] **E5 — `percept/` in the wrong layer**
-      console typewriter animation + profiler live in the runtime API; move to
-      the console app.
+- [x] **E5 — `percept/` in the wrong layer**
+      Closed as by design: the typewriter animation is shared infrastructure —
+      it will be used by both the console and the future `texture` app, so it
+      belongs in the runtime API, not in one app.
 
 ## F. Ownership First (ADR-10) boundaries
 
