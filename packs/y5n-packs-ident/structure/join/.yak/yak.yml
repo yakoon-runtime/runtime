@@ -1,0 +1,15 @@
+title: Join
+resolvable: true
+navigable: true
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.ident.apps.joins.add:main
+resources:
+  ref: resource:y5n.packs.ident.resources.loader:content
+  document:
+    default:
+      path: join/default.ydf
+  man:
+    default:
+      path: join/man.ydf

@@ -1,0 +1,15 @@
+title: Group List
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.ident.apps.groups.list:main
+resources:
+  ref: resource:y5n.packs.ident.resources.loader:content
+  document:
+    default:
+      path: group/list/default.ydf
+  man:
+    default:
+      path: group/list/man.ydf

@@ -1,0 +1,17 @@
+title: Entry
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.entry:main
+invocation:
+  params:
+  - key: world
+    required: true
+    positional: true
+  - key: box
+man:
+  default: file:resources/man.ydf
+document:
+  default: file:resources/man.ydf

@@ -1,0 +1,7 @@
+title: Contact
+resolvable: true
+navigable: true
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.crm.apps.contact.list:main

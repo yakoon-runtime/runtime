@@ -1,0 +1,12 @@
+title: Session Current
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.system.session.current:main
+resources:
+  ref: resource:y5n.packs.system.resources.loader:content
+  man:
+    default:
+      path: session/current/man.ydf

@@ -1,0 +1,15 @@
+title: Logout
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.ident.apps.logout:main
+resources:
+  ref: resource:y5n.packs.system.resources.loader:content
+  document:
+    default:
+      path: logout/default.ydf
+  man:
+    default:
+      path: logout/man.ydf
