@@ -1,0 +1,12 @@
+title: Clear
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.system.clear:main
+resources:
+  ref: resource:y5n.packs.system.resources.loader:content
+  man:
+    default:
+      path: clear/man.ydf

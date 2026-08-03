@@ -1,0 +1,17 @@
+title: Inspect
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.inspect:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  man:
+    default:
+      path: inspect/man.ydf

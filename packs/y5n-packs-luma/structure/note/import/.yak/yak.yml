@@ -1,0 +1,16 @@
+title: Import Notes
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.note.import:main
+invocation:
+  params:
+  - key: file
+    required: true
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  man:
+    default:
+      path: note/import/man.ydf

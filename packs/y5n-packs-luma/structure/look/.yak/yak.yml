@@ -1,0 +1,12 @@
+title: Look
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.look:main
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  man:
+    default:
+      path: look/man.ydf

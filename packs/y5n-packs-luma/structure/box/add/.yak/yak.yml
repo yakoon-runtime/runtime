@@ -1,0 +1,21 @@
+title: Add Box
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.box.add:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: world
+    required: true
+  - key: parent
+  - key: description
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  man:
+    default:
+      path: box/add/man.ydf

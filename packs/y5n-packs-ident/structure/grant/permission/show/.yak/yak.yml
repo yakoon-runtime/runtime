@@ -1,0 +1,20 @@
+title: Show Permission Grants
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.ident.apps.grants.perm_show:main
+invocation:
+  params:
+  - key: permission
+    positional: true
+    required: true
+resources:
+  ref: resource:y5n.packs.ident.resources.loader:content
+  document:
+    default:
+      path: grant/permission/show/default.ydf
+  man:
+    default:
+      path: grant/permission/show/man.ydf

@@ -1,0 +1,24 @@
+title: Edit Exit
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.exit.edit:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: world
+    required: true
+  - key: box
+    required: true
+  - key: new-name
+  - key: description
+  - key: direction
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  man:
+    default:
+      path: exit/edit/man.ydf

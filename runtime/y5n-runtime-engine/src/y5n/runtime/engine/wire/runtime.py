@@ -53,6 +53,7 @@ from y5n.runtime.engine.sources.data import (
 )
 from y5n.runtime.engine.wire.adapter.callable import CallableAdapter
 from y5n.runtime.engine.wire.adapter.document import DocumentAdapter
+from y5n.runtime.engine.wire.adapter.resource import ResourceAdapter
 from y5n.runtime.engine.wire.adapter.runtime import RuntimeAdapter
 from y5n.runtime.engine.wire.adapter.session import SessionAdapter
 from y5n.runtime.engine.wire.adapter.source import SourceReadAdapter
@@ -89,7 +90,6 @@ def build_runtime(
 
     package_reader = PackageReader()
     jinja_engine = JinjaRenderEngine()
-    projector = build_projector()
     compiler = build_compiler()
 
     guidance_service = GuidanceService()
@@ -134,6 +134,8 @@ def build_runtime(
     )
 
     tree.build()
+
+    projector = build_projector(tree=tree)
 
     # -----------------------
     # --- ERROR RESOLVING ---
@@ -272,7 +274,9 @@ def build_runtime(
     )
 
     bus.resolver.register(
-        "system:projection", {"session": ["attach", "detach", "update"]}, path="/"
+        "system:projection",
+        {"session": ["attach", "detach", "update", "logout"]},
+        path="/",
     )
     bus.transport.register_adapter(
         "session",
@@ -285,6 +289,16 @@ def build_runtime(
     bus.transport.register_adapter(
         "runtime",
         RuntimeAdapter(host),
+    )
+
+    bus.resolver.register(
+        "system:projection",
+        {"runtime.resource": ["resolve", "supports"]},
+        path="/",
+    )
+    bus.transport.register_adapter(
+        "runtime.resource",
+        ResourceAdapter(tree),
     )
 
     return host

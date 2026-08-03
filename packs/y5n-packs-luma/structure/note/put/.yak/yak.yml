@@ -1,0 +1,19 @@
+title: Put Note
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.note.put:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: box
+  - key: world
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  man:
+    default:
+      path: note/put/man.ydf

@@ -1,0 +1,20 @@
+title: Join Groups (for User)
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.ident.apps.joins.groups:main
+invocation:
+  params:
+  - key: user
+    positional: true
+    required: true
+resources:
+  ref: resource:y5n.packs.ident.resources.loader:content
+  document:
+    default:
+      path: join/groups/default.ydf
+  man:
+    default:
+      path: join/groups/man.ydf

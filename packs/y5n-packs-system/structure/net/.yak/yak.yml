@@ -1,0 +1,12 @@
+title: Net
+resolvable: true
+navigable: true
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.system.net.list:main
+resources:
+  ref: resource:y5n.packs.system.resources.loader:content
+  man:
+    default:
+      path: net/man.ydf

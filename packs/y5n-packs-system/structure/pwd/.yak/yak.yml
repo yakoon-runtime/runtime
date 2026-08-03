@@ -1,0 +1,12 @@
+title: Pwd
+resolvable: true
+navigable: false
+contextual: false
+host: /boot/python/runtime
+entry:
+  run: pack:y5n.packs.system.pwd:main
+resources:
+  ref: resource:y5n.packs.system.resources.loader:content
+  man:
+    default:
+      path: pwd/man.ydf

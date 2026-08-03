@@ -1,0 +1,18 @@
+title: Add Note
+host: /boot/python/runtime
+resolvable: true
+navigable: false
+contextual: false
+entry:
+  run: pack:y5n.packs.luma.apps.note.add:main
+invocation:
+  params:
+  - key: name
+    required: true
+    positional: true
+  - key: content
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  man:
+    default:
+      path: note/add/man.ydf
