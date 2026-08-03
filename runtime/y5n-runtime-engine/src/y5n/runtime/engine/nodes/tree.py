@@ -164,21 +164,18 @@ class Tree:
             )
         node.invocations = invocations
 
-        resources: dict[str, dict[str, Any]] = {}
-        for res_type in RESOURCE_KEYS:
-            variants = meta.get(res_type)
-            if not isinstance(variants, dict):
-                continue
-            resolved: dict[str, Any] = {}
-            for variant, resource_ref in variants.items():
-                if isinstance(resource_ref, str):
-                    resolved[variant] = resource_ref
-                elif isinstance(resource_ref, dict) and isinstance(
-                    resource_ref.get("ref"), str
-                ):
-                    resolved[variant] = resource_ref
-            if resolved:
-                resources[res_type] = resolved
+        resources: dict[str, Any] = {}
+        res_section = meta.get("resources")
+        if isinstance(res_section, dict) and isinstance(res_section.get("ref"), str):
+            resources = res_section
+        else:
+            # Legacy: top-level document/man sections (per-capability refs).
+            legacy: dict[str, Any] = {}
+            for res_type in RESOURCE_KEYS:
+                variants = meta.get(res_type)
+                if isinstance(variants, dict):
+                    legacy[res_type] = variants
+            resources = legacy
         node.resources = resources
 
         # Run handler

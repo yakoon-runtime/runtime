@@ -3,6 +3,7 @@ import importlib
 import inspect
 import os
 from pathlib import Path
+from typing import Any
 
 from y5n.runtime.api.flow.dsl import Pulse, out_text
 from y5n.runtime.api.nodes.space import NodeSpace
@@ -21,15 +22,31 @@ from ._shared import (
 async def resolve(node, capability: str, parameters: dict | None = None):
     """The Python host's content interpretation (ADR-10).
 
-    Reads the reference expressions a node declared for a capability, picks
-    the variant, and interprets them (``file:``, ``resource:``) into a
-    ``Resource``. A variant is a reference expression string or a
-    ``{ref, parameters}`` mapping whose declared parameters are merged with
-    the resolve-time parameters. The host owns the scheme semantics; the node
-    owns the expressions.
+    The node's ``resources:`` block owns the pack's strategy (``ref``) and
+    the component's content capabilities. The host picks the capability's
+    variant, merges its parameters with the resolve-time parameters, and
+    interprets the strategy expression — passing ``capability`` and
+    ``variant`` so the pack's loader can decide. Legacy top-level
+    ``document``/``man`` sections (per-capability refs) stay supported.
     """
-    variants = (node.resources or {}).get(capability, {})
-    variant = _pick_variant(variants, parameters)
+    section = node.resources or {}
+    ref = section.get("ref")
+    if isinstance(ref, str):
+        cap_data = section.get(capability)
+        if not isinstance(cap_data, dict):
+            raise LookupError(f"node '{node.key}' has no '{capability}' resource")
+        variant_name, variant_params = _pick_variant(cap_data, parameters)
+        merged = {
+            "capability": capability,
+            "variant": variant_name or "",
+            **(variant_params or {}),
+            **(parameters or {}),
+        }
+        return await _interpret(ref, merged, base=node.fs_path)
+
+    # Legacy: per-capability variant map with inline refs.
+    cap_data = section.get(capability) or {}
+    variant_name, variant = _pick_variant(cap_data, parameters)
     if not variant:
         raise LookupError(f"node '{node.key}' has no '{capability}' resource")
     if isinstance(variant, dict):
@@ -41,13 +58,19 @@ async def resolve(node, capability: str, parameters: dict | None = None):
     return await _interpret(expr, merged, base=node.fs_path)
 
 
-def _pick_variant(variants: dict, parameters: dict | None) -> str | None:
+def _pick_variant(variants: dict, parameters: dict | None) -> tuple[str | None, Any]:
+    """Pick a variant by lang/variant/name hints, then default."""
     params = parameters or {}
     for key in ("lang", "variant", "name"):
         value = params.get(key)
         if value and value in variants:
-            return variants[value]
-    return variants.get("default")
+            return value, variants[value]
+    if "default" in variants:
+        return "default", variants["default"]
+    if variants:
+        name = next(iter(variants))
+        return name, variants[name]
+    return None, None
 
 
 async def _interpret(expr: str, parameters: dict, base: Path | None):
