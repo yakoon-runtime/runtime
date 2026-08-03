@@ -44,7 +44,6 @@ class Scheduler:
     def __init__(
         self,
         platform: Node,
-        on_setup: OnSetup,
         on_dispatch: OnDispatch,
         on_step_flow: OnStepFlow,
         on_show_projection: OnShowDocument,
@@ -55,7 +54,6 @@ class Scheduler:
         self.platform = platform
 
         # Hooks
-        self.on_setup = on_setup
         self.on_dispatch = on_dispatch
         self.on_step_flow = on_step_flow
         self.on_show_projection = on_show_projection
@@ -74,9 +72,6 @@ class Scheduler:
     # --------------------------------------------------------
     # Public API
     # --------------------------------------------------------
-
-    async def setup(self, session: Session, node: Node):
-        await self._call_runtime(session, None, self.on_setup, node=node)
 
     async def dispatch(self, session: Session, event: Event):
         await self._call_runtime(session, event.context, self.on_dispatch, event=event)
@@ -359,10 +354,6 @@ class Scheduler:
 
 class OnDispatch(Protocol):
     async def __call__(self, *, session: Session, event: Event) -> Flow | None: ...
-
-
-class OnSetup(Protocol):
-    async def __call__(self, *, session: Session, node: Node) -> Flow | None: ...
 
 
 class OnStepFlow(Protocol):

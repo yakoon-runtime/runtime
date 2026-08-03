@@ -38,27 +38,29 @@
 
 ## C. Dead code
 
-- [ ] **C1 — `flow/port.py` imports a nonexistent module**
+- [x] **C1 — `flow/port.py` imports a nonexistent module**
       `api/flow/port.py:3` — would crash on import; nothing uses it. Delete.
-- [ ] **C2 — `contracts/` duplicates the runtime protocols**
+- [x] **C2 — `contracts/` duplicates the runtime protocols**
       `api/contracts/*` — ~150 lines, imported by nobody, a second definition of
       `Call`/`Response`/`Register`/`Context`. Delete or unify.
-- [ ] **C3 — Executor kinds other than `RUNTIME` are dead**
+- [x] **C3 — Executor kinds other than `RUNTIME` are dead**
       `executor/{python,script,process,dotnet}.py` — `executor:` is declared
       nowhere in the tree; `dotnet.py` only raises. Keep `RuntimeExecutor`,
       delete the unused kinds plus the `.yak/run/` and `.yak/<phase>/app.py`
       fallbacks and `health()`/`DiagnosticExecutor`.
-- [ ] **C4 — Dead setup path**
+- [x] **C4 — Dead setup path**
       `machine/engine.py:43-57`, `wire/machine.py:224-236`, `flow/cursor.py`
       — `node.setup` is never assigned; `CommandEngine.setup()`,
       `setup_nodes()`, and the `"setup"` handler path are unreachable. Remove.
-- [ ] **C5 — `devtools/` broken import**
+      (The live `RuntimeManager.setup()` → `on_initialize` chain that the
+      console app calls was kept.)
+- [x] **C5 — `devtools/` broken import**
       `runtime/devtools/__init__.py:2` imports `.prompt`, which does not exist.
       Delete the package (unreferenced) or fix it.
-- [ ] **C6 — Other dead symbols**
+- [x] **C6 — Other dead symbols**
       `settings/ai.py` (whole file), `percept/profiler.py`,
-      `values/secret_value.py`, `naming/resolver.py`, empty `host/`,
-      `_DocumentHeader`/`Intent` (`document/model/header.py`),
+      `values/secret_value.py` (+ the whole `values/` package), `naming/resolver.py`,
+      empty `host/`, `_DocumentHeader`/`Intent` (`document/model/header.py`),
       `DocumentEvent.is_final()`, `NodeNotRunnable`, dead `__post_init__` in
       `flow/primitives/effect.py`, `build_index()` stub
       (`wire/runtime.py:216`), duplicate themes (`ONE_DARK`==`ATOM_DARK`,
@@ -81,6 +83,11 @@
       `Sleep`/`SleepUntil`, `form.py` async/sync mirror, `_empty()`/`_emit_text()`
       helpers, `_norm_value`, three identical `create_store` wirings, duplicated
       `Protocol` declarations (move to `machine/ports.py`).
+- [ ] **D5 — Simplify runtime initialization chain**
+      the console app calls `host.setup()`, which creates a throwaway session
+      (`on_get_session()`) that `setup_nodes()` ignores; the app only needs
+      `on_initialize()` (store.initialize + tree.setup). Adapt the console app
+      or `RuntimeManager.setup()` so initialization is direct.
 
 ## E. Over-engineering
 

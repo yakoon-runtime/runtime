@@ -12,15 +12,6 @@ Role = Literal[
     "help",  # Erklärend
 ]
 
-# Verhalten des Systems
-# Was wird vom Nutzer / System erwartet? (interaktional)
-Intent = Literal[
-    "info",  # nur anzeigen
-    "input",  # Eingabe erwartet
-    "progress",  # Läuft weiter
-    "transition",  # Zustand wechelt
-]
-
 ErrorKind = Literal[
     "validation",  # Field / Input
     "domain",  # Business / erwartbar
@@ -56,23 +47,3 @@ class DocumentHeader:
     error_kind: ErrorKind | None = None
     error_code: str | None = None
     meta: dict[str, Any] | DocumentMeta | None = None
-
-
-class _DocumentHeader:
-
-    # WHAT is this state?
-    role: Role = "info"
-
-    # HOW should the client interpret interaction?
-    intent: Intent = "info"
-
-    # Human communication
-    title: str | None = None
-    subtitle: str | None = None
-
-    # Error semantics
-    error_kind: ErrorKind | None = None
-    error_code: str | None = None
-
-    # Extension point (careful usage)
-    meta: dict[str, Any] | None = None

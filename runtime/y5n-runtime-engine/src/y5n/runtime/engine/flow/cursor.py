@@ -10,10 +10,7 @@ from y5n.runtime.api.nodes.handler import RunHandler
 if TYPE_CHECKING:
     from y5n.runtime.api.nodes import Node, NodeSpace
 
-HandlerName = Literal[
-    "run",
-    "setup",
-]
+HandlerName = Literal["run",]
 
 
 class FlowCursor:
@@ -33,12 +30,9 @@ class FlowCursor:
         ctx: NodeSpace,
     ) -> Pulse | AsyncGenerator | None:
         if not self._stack:
-            if self.handler_name == "run":
-                handler = node.run
-            elif self.handler_name == "setup":
-                handler = node.setup
-            else:
+            if self.handler_name != "run":
                 raise ValueError(f"Invalid handler: {self.handler_name}")
+            handler = node.run
             if handler is None:
                 raise RuntimeError(f"Node {node} has no {self.handler_name} handler")
             gen = _ensure_step(handler)(ctx)

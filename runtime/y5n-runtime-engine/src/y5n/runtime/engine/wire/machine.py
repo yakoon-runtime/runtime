@@ -169,7 +169,6 @@ def build_machine(
 
     scheduler = Scheduler(
         platform=platform,
-        on_setup=engine.setup,
         on_dispatch=engine.dispatch,
         on_step_flow=engine.step_flow,
         on_show_projection=on_projection_send,
@@ -221,19 +220,8 @@ def build_machine(
     # --- SETUP NODES ---
     # -------------------
 
-    async def setup_nodes(session):
-
+    async def setup_nodes(_session):
         await on_initialize()
-
-        nodes_to_setup: list[Node] = []
-
-        def collect_nodes(node: Node):
-            if node.has_setup():
-                nodes_to_setup.append(node)
-
-        platform.walk(collect_nodes)
-        for node in nodes_to_setup:
-            await scheduler.setup(session, node)
 
     # ---------------
     # --- HOSTING ---
