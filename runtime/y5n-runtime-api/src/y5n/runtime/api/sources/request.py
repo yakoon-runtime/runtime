@@ -4,6 +4,8 @@ import shlex
 from dataclasses import dataclass, field
 from typing import Any
 
+from y5n.runtime.api.tokens import TokenQuery
+
 
 @dataclass(frozen=True)
 class DataRequest:
@@ -12,7 +14,7 @@ class DataRequest:
     context: dict[str, Any] = field(default_factory=dict)
 
     _source: str = field(init=False, repr=False)
-    _tokens: list[str] = field(init=False, repr=False)
+    _query: TokenQuery = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         parts = shlex.split(self.query)
@@ -21,68 +23,29 @@ class DataRequest:
             raise ValueError("Empty data request")
 
         object.__setattr__(self, "_source", parts[0])
-        object.__setattr__(self, "_tokens", parts[1:])
+        object.__setattr__(self, "_query", TokenQuery(parts[1:]))
 
     @property
     def source(self) -> str:
         return self._source
 
     def args(self) -> list[str]:
-        return self._tokens
+        return self._query.args()
 
     def token(self, index: int, default: Any = None) -> Any:
-        try:
-            return self._tokens[index]
-        except IndexError:
-            return default
+        return self._query.token(index, default)
 
     def arg(self, index: int, default: Any = None) -> Any:
-        pos = self._pos_args()
-        try:
-            return pos[index]
-        except IndexError:
-            return default
+        return self._query.arg(index, default)
 
     def has_args(self) -> bool:
-        return bool(self._tokens)
+        return self._query.has_args()
 
     def arg_count(self) -> int:
-        return len(self._tokens)
+        return self._query.arg_count()
 
     def has_option(self, name: str) -> bool:
-        return f"--{name}" in self._tokens
+        return self._query.has_option(name)
 
     def option(self, name: str, default: Any = None) -> Any:
-        key = f"--{name}"
-
-        try:
-            idx = self._tokens.index(key)
-        except ValueError:
-            return default
-
-        if idx + 1 >= len(self._tokens):
-            return default
-
-        value = self._tokens[idx + 1]
-        if value.startswith("--"):
-            return default
-
-        return value
-
-    def _pos_args(self) -> list[str]:
-        out: list[str] = []
-        i = 0
-
-        while i < len(self._tokens):
-            tok = self._tokens[i]
-
-            if tok.startswith("--"):
-                i += 1
-                if i < len(self._tokens) and not self._tokens[i].startswith("--"):
-                    i += 1
-                continue
-
-            out.append(tok)
-            i += 1
-
-        return out
+        return self._query.option(name, default)
