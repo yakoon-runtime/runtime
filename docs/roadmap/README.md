@@ -1,6 +1,11 @@
 # Roadmap
 
 ## Phase A ✅ — Core hardening
+
+### Technical debt
+
+See [technical-debt.md](technical-debt.md) — working list of correctness
+issues, dead code, and simplification opportunities in `runtime/`.
 ## Phase B ✅ — Distribution  
 ## Phase C ✅ — Launcher (Self-hosting)
 ## Phase D 🚧 — Platform completion
