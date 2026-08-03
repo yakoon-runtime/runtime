@@ -9,6 +9,7 @@ from y5n.runtime.api.naming.key import Key
 from y5n.runtime.api.runtime import RuntimeInfo
 from y5n.runtime.engine.runtime import Session
 
+from .ports import OnCreateRunner
 from .runner import Runner
 
 
@@ -179,10 +180,6 @@ class OnSchedule(Protocol):
 
 class OnGetSession(Protocol):
     async def __call__(self) -> Session: ...
-
-
-class OnCreateRunner(Protocol):
-    def __call__(self, *, session) -> Runner: ...
 
 
 class OnSetup(Protocol):

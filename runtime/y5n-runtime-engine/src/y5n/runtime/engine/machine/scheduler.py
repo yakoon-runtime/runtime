@@ -22,6 +22,8 @@ from y5n.runtime.api.runtime import Event, InputContext
 from y5n.runtime.engine.flow import Flow, FlowKind
 from y5n.runtime.engine.runtime import Session
 
+from .ports import OnAuditWarning
+
 
 class Scheduler:
     """Cooperative async scheduler for flows.
@@ -358,10 +360,6 @@ class OnDispatch(Protocol):
 
 class OnStepFlow(Protocol):
     async def __call__(self, *, flow: Flow, session: Session) -> Pulse | None: ...
-
-
-class OnAuditWarning(Protocol):
-    def __call__(self, *, message: str, session: Session) -> None: ...
 
 
 class OnShowDocument(Protocol):

@@ -6,6 +6,8 @@ from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.runtime import Event, Routing
 from y5n.runtime.engine.runtime import Session
 
+from .ports import OnCreateRunner
+
 
 class Runner:
     """Per-session input runner.
@@ -59,7 +61,3 @@ class OnDispatch(Protocol):
 
 class OnScheduleFlow(Protocol):
     def __call__(self, *, flow, session) -> None: ...
-
-
-class OnCreateRunner(Protocol):
-    def __call__(self, *, session) -> Runner: ...

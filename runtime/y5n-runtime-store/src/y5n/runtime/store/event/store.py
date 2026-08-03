@@ -10,6 +10,7 @@ from typing import Literal, Protocol
 
 from y5n.runtime.api.naming import Key, Namespace
 
+from .batches.json_patch import JsonPatchStrategy
 from .models import (
     CurrentRow,
     DomainId,
@@ -819,3 +820,31 @@ class OnGC(Protocol):
 
 class OnGCGlobal(Protocol):
     async def __call__(self, *, policy: RetentionPolicy) -> None: ...
+
+
+def create_entity_store(exec) -> EntityStore:
+    """Wire an entity store onto a backend's exec object.
+
+    Shared by the memory and postgres store builders (and tests) so the
+    EntityStore construction is defined exactly once.
+    """
+    patch = JsonPatchStrategy(max_ops=50)
+
+    return EntityStore(
+        on_load_current=exec.load_current,
+        on_load_current_many=exec.load_current_many,
+        on_load_revisions=exec.load_revisions,
+        on_load_snapshot=exec.load_snapshot_at_or_before,
+        on_append_revision=exec.append_revision,
+        on_upsert_current=exec.upsert_current,
+        on_write_snapshot=exec.write_snapshot,
+        on_index_ensure=exec.index_ensure,
+        on_index_list=exec.index_list,
+        on_index_replace_terms=exec.index_replace_terms,
+        on_index_scan=exec.index_scan,
+        on_query_index=exec.query_index,
+        on_gc=exec.gc,
+        on_gc_global=exec.gc_global,
+        writer=patch,
+        readers={patch.format: patch},
+    )

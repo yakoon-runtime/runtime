@@ -429,21 +429,15 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
     first token (e.g. \"/labs/hosts/hello-py-server\"). The path is resolved
     lazily at call time via the node's parent chain.
     """
-    from y5n.runtime.api.flow.dsl import Pulse
-
-    def _empty():
-        async def _noop():
-            yield Pulse()
-
-        return _noop()
+    from y5n.runtime.engine.flow.util import empty_flow
 
     def _run(space):
         host_node = tree.find(host_path)
         if host_node is None or not host_node.has_run():
-            return _empty()
+            return empty_flow()
         host_run = host_node.run
         if host_run is None:
-            return _empty()
+            return empty_flow()
         # Compute full tree path from node's own parent chain
         # (node.path walks parents, which only works after linking)
         target_path = str(space.path)

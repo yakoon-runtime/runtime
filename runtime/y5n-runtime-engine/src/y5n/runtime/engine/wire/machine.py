@@ -26,6 +26,7 @@ from y5n.runtime.engine.machine import (
     SessionBuilder,
     TaskRunner,
 )
+from y5n.runtime.engine.machine.ports import OnAuditWarning, OnSuggest
 from y5n.runtime.engine.runtime import Session
 from y5n.runtime.engine.runtime.bus import BusOutput
 from y5n.runtime.engine.settings import Settings
@@ -252,10 +253,6 @@ class OnHasPermission(Protocol):
     def __call__(self, *, session: Session, perm_key: str) -> bool: ...
 
 
-class OnAuditWarning(Protocol):
-    def __call__(self, *, message: str, session: Session) -> None: ...
-
-
 class OnGetOrCreateSession(Protocol):
     async def __call__(self, key: Key, **kwargs) -> tuple[Session, bool]: ...
 
@@ -271,14 +268,3 @@ class OnDocumentSend(Protocol):
         mode: str = "replace",
         view_params: dict | None = None,
     ) -> None: ...
-
-
-class OnSuggest(Protocol):
-    def __call__(
-        self,
-        *,
-        value: str,
-        choices: list[str],
-        limit: int = 3,
-        cutoff: float = 0.5,
-    ) -> list[str]: ...

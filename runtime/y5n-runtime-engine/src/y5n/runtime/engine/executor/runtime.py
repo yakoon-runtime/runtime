@@ -4,21 +4,14 @@ import inspect
 import os
 from typing import TYPE_CHECKING
 
-from y5n.runtime.api.flow.dsl import Pulse
 from y5n.runtime.api.nodes.space import NodeSpace
 
 from ..bootstrap import PackReference
+from ..flow.util import empty_flow
 from .base import Executor, ExecutorKind, Phase, RunResult
 
 if TYPE_CHECKING:
     from y5n.runtime.api.nodes.node import Node
-
-
-def _empty() -> RunResult:
-    async def _noop():
-        yield Pulse()
-
-    return _noop()
 
 
 class RuntimeExecutor(Executor):
@@ -31,15 +24,15 @@ class RuntimeExecutor(Executor):
             return None
         return entry.get(phase.value)
 
-    def _handle_module_entry(self, entry: str, space: NodeSpace) -> RunResult | None:
+    def _handle_module_entry(self, entry: str, space: NodeSpace) -> RunResult:
         try:
             ref = PackReference(entry)
         except ValueError:
-            return None
+            return empty_flow()
         try:
             fn = ref.load()
         except LookupError:
-            return None
+            return empty_flow()
         os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
         try:
             result = fn(space)
@@ -49,7 +42,7 @@ class RuntimeExecutor(Executor):
             return result
         if hasattr(result, "__aiter__"):
             return result
-        return None
+        return empty_flow()
 
     def run(
         self,
@@ -59,6 +52,6 @@ class RuntimeExecutor(Executor):
     ) -> RunResult:
         entry = self._entry_value(node, phase)
         if not entry:
-            return _empty()
+            return empty_flow()
 
         return self._handle_module_entry(entry, space)
