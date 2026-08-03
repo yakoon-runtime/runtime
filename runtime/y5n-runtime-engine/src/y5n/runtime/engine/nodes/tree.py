@@ -164,14 +164,18 @@ class Tree:
             )
         node.invocations = invocations
 
-        resources: dict[str, dict[str, str]] = {}
+        resources: dict[str, dict[str, Any]] = {}
         for res_type in RESOURCE_KEYS:
             variants = meta.get(res_type)
             if not isinstance(variants, dict):
                 continue
-            resolved: dict[str, str] = {}
+            resolved: dict[str, Any] = {}
             for variant, resource_ref in variants.items():
                 if isinstance(resource_ref, str):
+                    resolved[variant] = resource_ref
+                elif isinstance(resource_ref, dict) and isinstance(
+                    resource_ref.get("ref"), str
+                ):
                     resolved[variant] = resource_ref
             if resolved:
                 resources[res_type] = resolved

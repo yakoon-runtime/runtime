@@ -144,11 +144,12 @@ class Node:
     """Pre-computed search paths for command resolution.  Assembled by
     Tree.build() from .yak/path files, inherited and merged top-down."""
 
-    resources: dict[str, dict[str, str]] = field(default_factory=dict)
+    resources: dict[str, dict[str, Any]] = field(default_factory=dict)
     """Raw resource references assembled by Tree.build().  Keyed by resource
     type (projection, man, …) then variant (default, de, compact, …).
-    Values are reference strings (``file:...``, ``resource:...``) resolved
-    lazily by the host (ADR-10)."""
+    Values are a reference expression string (``file:...``, ``resource:...``)
+    or a ``{ref, parameters}`` mapping; resolved lazily by the host
+    (ADR-10)."""
 
     # ----------------------------------
     # RENDERING HINTS
