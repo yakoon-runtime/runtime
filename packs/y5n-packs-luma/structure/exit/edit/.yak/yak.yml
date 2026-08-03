@@ -17,7 +17,11 @@ invocation:
   - key: new-name
   - key: description
   - key: direction
-man:
-  default: file:resources/man.ydf
-document:
-  default: file:resources/man.ydf
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  document:
+    default:
+      path: exit/edit/man.ydf
+  man:
+    default:
+      path: exit/edit/man.ydf

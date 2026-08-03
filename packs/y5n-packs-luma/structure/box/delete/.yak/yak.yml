@@ -12,7 +12,11 @@ invocation:
     positional: true
   - key: world
     required: true
-man:
-  default: file:resources/man.ydf
-document:
-  default: file:resources/man.ydf
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  document:
+    default:
+      path: box/delete/man.ydf
+  man:
+    default:
+      path: box/delete/man.ydf

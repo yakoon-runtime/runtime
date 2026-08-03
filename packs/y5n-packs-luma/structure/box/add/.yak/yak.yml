@@ -14,7 +14,11 @@ invocation:
     required: true
   - key: parent
   - key: description
-man:
-  default: file:resources/man.ydf
-document:
-  default: file:resources/man.ydf
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  document:
+    default:
+      path: box/add/man.ydf
+  man:
+    default:
+      path: box/add/man.ydf

@@ -11,7 +11,11 @@ invocation:
     required: true
     positional: true
   - key: box
-man:
-  default: file:resources/man.ydf
-document:
-  default: file:resources/man.ydf
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  document:
+    default:
+      path: entry/man.ydf
+  man:
+    default:
+      path: entry/man.ydf

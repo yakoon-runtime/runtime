@@ -10,7 +10,11 @@ invocation:
   - key: world
     required: true
   - key: box
-man:
-  default: file:resources/man.ydf
-document:
-  default: file:resources/man.ydf
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  document:
+    default:
+      path: exit/list/man.ydf
+  man:
+    default:
+      path: exit/list/man.ydf

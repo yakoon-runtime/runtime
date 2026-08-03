@@ -5,7 +5,11 @@ navigable: false
 contextual: false
 entry:
   run: pack:y5n.packs.luma.apps.inv:main
-man:
-  default: file:resources/man.ydf
-document:
-  default: file:resources/man.ydf
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  document:
+    default:
+      path: inv/man.ydf
+  man:
+    default:
+      path: inv/man.ydf

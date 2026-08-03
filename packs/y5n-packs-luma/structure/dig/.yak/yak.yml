@@ -13,7 +13,11 @@ invocation:
   - key: direction
   - key: via
   - key: twoway
-man:
-  default: file:resources/man.ydf
-document:
-  default: file:resources/man.ydf
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  document:
+    default:
+      path: dig/man.ydf
+  man:
+    default:
+      path: dig/man.ydf

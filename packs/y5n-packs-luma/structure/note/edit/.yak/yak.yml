@@ -12,7 +12,11 @@ invocation:
     positional: true
   - key: new-name
   - key: content
-man:
-  default: file:resources/man.ydf
-document:
-  default: file:resources/man.ydf
+resources:
+  ref: resource:y5n.packs.luma.resources.loader:content
+  document:
+    default:
+      path: note/edit/man.ydf
+  man:
+    default:
+      path: note/edit/man.ydf
