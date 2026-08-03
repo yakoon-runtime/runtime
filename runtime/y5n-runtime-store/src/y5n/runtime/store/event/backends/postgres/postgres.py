@@ -15,6 +15,7 @@ from ...models import (
     IndexValue,
     PatchFormat,
     RevisionRow,
+    SnapshotRow,
     ValueType,
 )
 from ...models.mode import ScanMode
@@ -248,14 +249,68 @@ class _PostgresExec:
         ]
 
     # ----------------------------
-    # SNAPSHOT (minimal stub)
+    # SNAPSHOT
     # ----------------------------
 
-    async def load_snapshot_at_or_before(self, **kwargs):
-        return None
+    async def load_snapshot_at_or_before(
+        self,
+        *,
+        domain_id,
+        kind_id,
+        space_id,
+        entity_id,
+        ts_lte,
+    ) -> SnapshotRow | None:
+        row = await self.conn.fetchrow(
+            """
+            SELECT rev, data, ts
+            FROM snapshots
+            WHERE domain=$1 AND kind=$2 AND space=$3 AND entity_id=$4 AND ts <= $5
+            ORDER BY ts DESC
+            LIMIT 1
+            """,
+            str(domain_id),
+            str(kind_id),
+            str(space_id),
+            str(entity_id),
+            ts_lte,
+        )
 
-    async def write_snapshot(self, **kwargs):
-        return None
+        if not row:
+            return None
+
+        data = json.loads(row["data"]) if isinstance(row["data"], str) else row["data"]
+        return SnapshotRow(
+            entity_id=entity_id,
+            rev=row["rev"],
+            ts=row["ts"],
+            data=data,
+        )
+
+    async def write_snapshot(
+        self,
+        *,
+        domain_id,
+        kind_id,
+        space_id,
+        entity_id,
+        rev,
+        ts,
+        data,
+    ) -> None:
+        await self.conn.execute(
+            """
+            INSERT INTO snapshots(domain, kind, space, entity_id, rev, data, ts)
+            VALUES ($1,$2,$3,$4,$5,$6,$7)
+            """,
+            str(domain_id),
+            str(kind_id),
+            str(space_id),
+            str(entity_id),
+            rev,
+            json.dumps(data),
+            ts,
+        )
 
     # ----------------------------
     # INDEX

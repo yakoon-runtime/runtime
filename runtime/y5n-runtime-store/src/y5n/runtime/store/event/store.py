@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 from collections import defaultdict
@@ -82,6 +83,10 @@ class EntityStore:
         self._snap = SnapshotPolicy()
         self._enable_revisions = True
 
+        # Serializes read-check-write sequences (append/replace/delete) so
+        # concurrent mutations of the same entity cannot interleave.
+        self._write_lock = asyncio.Lock()
+
     # ----------------------------
     # Index
     # ----------------------------
@@ -99,6 +104,26 @@ class EntityStore:
     # ----------------------------
 
     async def append(
+        self,
+        *,
+        key: Key,
+        patch: JsonValue,
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        meta: Mapping[str, object] | None = None,
+        expected_rev: int | None = None,
+    ) -> PutResult:
+        async with self._write_lock:
+            return await self._append(
+                key=key,
+                patch=patch,
+                indexes=indexes,
+                snapshot_hint=snapshot_hint,
+                meta=meta,
+                expected_rev=expected_rev,
+            )
+
+    async def _append(
         self,
         *,
         key: Key,
@@ -214,20 +239,21 @@ class EntityStore:
         expected_rev: int | None = None,
     ) -> PutResult:
 
-        row = await self.get(key=key)
+        async with self._write_lock:
+            row = await self.get(key=key)
 
-        patch = self._writer.create_full_replace(
-            current=row.data if row else None,
-            new_doc=doc,
-        )
+            patch = self._writer.create_full_replace(
+                current=row.data if row else None,
+                new_doc=doc,
+            )
 
-        return await self.append(
-            key=key,
-            patch=patch,
-            indexes=indexes,
-            snapshot_hint=snapshot_hint,
-            expected_rev=expected_rev,
-        )
+            return await self._append(
+                key=key,
+                patch=patch,
+                indexes=indexes,
+                snapshot_hint=snapshot_hint,
+                expected_rev=expected_rev,
+            )
 
     # ----------------------------
     # DELETE (Tombstone)
@@ -240,24 +266,25 @@ class EntityStore:
         meta: Mapping[str, object] | None = None,
         expected_rev: int | None = None,
     ) -> PutResult:
-        patch = self._writer.create_tombstone()
-        result = await self.append(
-            key=key,
-            patch=patch,
-            indexes=(),  # don't update via append
-            meta=meta,
-            expected_rev=expected_rev,
-        )
-        d, k, s, eid = _dims_from_key(key)
-        await self.on_index_replace_terms(
-            domain_id=d,
-            kind_id=k,
-            space_id=s,
-            entity_id=eid,
-            terms=[],
-            written_at=result.updated_at,
-        )
-        return result
+        async with self._write_lock:
+            patch = self._writer.create_tombstone()
+            result = await self._append(
+                key=key,
+                patch=patch,
+                indexes=(),  # don't update via append
+                meta=meta,
+                expected_rev=expected_rev,
+            )
+            d, k, s, eid = _dims_from_key(key)
+            await self.on_index_replace_terms(
+                domain_id=d,
+                kind_id=k,
+                space_id=s,
+                entity_id=eid,
+                terms=[],
+                written_at=result.updated_at,
+            )
+            return result
 
     # ----------------------------
     # GET (inkl. Historie)
