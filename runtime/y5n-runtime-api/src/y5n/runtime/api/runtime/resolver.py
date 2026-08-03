@@ -50,7 +50,13 @@ class Resolver:
         *,
         path: str = "/",
     ) -> None:
-        self._providers[provider_id] = exports
+        merged = dict(self._providers.get(provider_id, {}))
+        for port, methods in exports.items():
+            existing = set(merged.get(port, ()))
+            existing.update(methods)
+            merged[port] = sorted(existing)
+        self._providers[provider_id] = merged
+
         for port, methods in exports.items():
             for method in methods:
                 key = f"{port}:{method}"
