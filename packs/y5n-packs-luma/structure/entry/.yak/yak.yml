@@ -13,9 +13,6 @@ invocation:
   - key: box
 resources:
   ref: resource:y5n.packs.luma.resources.loader:content
-  document:
-    default:
-      path: entry/man.ydf
   man:
     default:
       path: entry/man.ydf

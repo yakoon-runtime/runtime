@@ -19,9 +19,6 @@ invocation:
   - key: direction
 resources:
   ref: resource:y5n.packs.luma.resources.loader:content
-  document:
-    default:
-      path: exit/edit/man.ydf
   man:
     default:
       path: exit/edit/man.ydf

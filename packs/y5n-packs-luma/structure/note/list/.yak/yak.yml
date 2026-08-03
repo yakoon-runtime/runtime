@@ -11,9 +11,6 @@ invocation:
   - key: world
 resources:
   ref: resource:y5n.packs.luma.resources.loader:content
-  document:
-    default:
-      path: note/list/man.ydf
   man:
     default:
       path: note/list/man.ydf

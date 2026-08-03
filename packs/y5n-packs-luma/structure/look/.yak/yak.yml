@@ -7,9 +7,6 @@ entry:
   run: pack:y5n.packs.luma.apps.look:main
 resources:
   ref: resource:y5n.packs.luma.resources.loader:content
-  document:
-    default:
-      path: look/man.ydf
   man:
     default:
       path: look/man.ydf

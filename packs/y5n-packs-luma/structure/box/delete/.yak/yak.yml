@@ -14,9 +14,6 @@ invocation:
     required: true
 resources:
   ref: resource:y5n.packs.luma.resources.loader:content
-  document:
-    default:
-      path: box/delete/man.ydf
   man:
     default:
       path: box/delete/man.ydf

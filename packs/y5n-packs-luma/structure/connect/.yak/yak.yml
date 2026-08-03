@@ -15,9 +15,6 @@ invocation:
   - key: twoway
 resources:
   ref: resource:y5n.packs.luma.resources.loader:content
-  document:
-    default:
-      path: connect/man.ydf
   man:
     default:
       path: connect/man.ydf

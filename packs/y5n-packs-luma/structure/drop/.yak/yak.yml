@@ -12,9 +12,6 @@ invocation:
     positional: true
 resources:
   ref: resource:y5n.packs.luma.resources.loader:content
-  document:
-    default:
-      path: drop/man.ydf
   man:
     default:
       path: drop/man.ydf

@@ -7,9 +7,6 @@ entry:
   run: pack:y5n.packs.luma.apps.note.inbox:main
 resources:
   ref: resource:y5n.packs.luma.resources.loader:content
-  document:
-    default:
-      path: note/inbox/man.ydf
   man:
     default:
       path: note/inbox/man.ydf
