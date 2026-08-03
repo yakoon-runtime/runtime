@@ -8,7 +8,7 @@ from typing import Any, TypeVar
 from y5n.runtime.api.runtime import Container
 from y5n.runtime.api.runtime.input import Interaction
 
-from .handler import RunHandler
+from .handler import ResolveHandler, RunHandler
 from .invocation import Invocation, InvocationValidator
 from .path import NodePath
 from .ports import NodePorts
@@ -122,6 +122,11 @@ class Node:
     setup: RunHandler | None = None
     """Async generator called once during node initialisation."""
 
+    resolve: ResolveHandler | None = None
+    """Content interpretation of the node's host. Built by the tree from the
+    host's ``resolve:`` declaration (ADR-10). The runtime dispatches a node's
+    capability resolution to its host node's handler."""
+
     # ----------------------------------
     # TREE STRUCTURE
     # ----------------------------------
@@ -139,10 +144,12 @@ class Node:
     """Pre-computed search paths for command resolution.  Assembled by
     Tree.build() from .yak/path files, inherited and merged top-down."""
 
-    resources: dict[str, dict[str, Path]] = field(default_factory=dict)
-    """Resource paths assembled by Tree.build().  Keyed by resource type
-    (projection, man, …) then variant (default, de, compact, …).
-    Values are absolute Paths to the resource files."""
+    resources: dict[str, dict[str, Any]] = field(default_factory=dict)
+    """Raw resource references assembled by Tree.build().  Keyed by resource
+    type (projection, man, …) then variant (default, de, compact, …).
+    Values are a reference expression string (``file:...``, ``resource:...``)
+    or a ``{ref, parameters}`` mapping; resolved lazily by the host
+    (ADR-10)."""
 
     # ----------------------------------
     # RENDERING HINTS
