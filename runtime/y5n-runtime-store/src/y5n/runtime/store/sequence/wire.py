@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from .allocator import ShardAllocator
 from .backends.memory import MemoryShardRepository
-from .backends.postgres import PostgresShardRepository
 from .runtime import Sequencer
 from .settings import SequenceSettings
 
@@ -13,6 +12,8 @@ def build_store(settings: SequenceSettings) -> Sequencer:
         on_initialize = None
         on_shutdown = None
     elif settings.backend == "postgres":
+        from .backends.postgres import PostgresShardRepository
+
         repo = PostgresShardRepository(settings.dsn)
         on_initialize = repo.initialize
         on_shutdown = repo.shutdown
