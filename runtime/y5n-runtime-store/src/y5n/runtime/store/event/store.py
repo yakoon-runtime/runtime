@@ -26,7 +26,6 @@ from .models import (
     PatchFormat,
     PatchStrategy,
     PutResult,
-    RetentionPolicy,
     RevisionRow,
     ScanCursor,
     ScanMode,
@@ -54,8 +53,6 @@ class EntityStore:
         on_index_replace_terms: OnIndexReplaceTerms,
         on_index_scan: OnIndexScan,
         on_query_index: OnQueryIndex,
-        on_gc: OnGC,
-        on_gc_global: OnGCGlobal,
         writer: PatchStrategy,
         readers: Mapping[PatchFormat, PatchStrategy],
     ):
@@ -74,15 +71,11 @@ class EntityStore:
         self.on_index_scan = on_index_scan
         self.on_query_index = on_query_index
 
-        self.on_gc = on_gc
-        self.on_gc_global = on_gc_global
-
         self._writer = writer
         self._readers = dict(readers)
         self._readers.setdefault(writer.format, writer)
 
         self._snap = SnapshotPolicy()
-        self._enable_revisions = True
 
         # Serializes read-check-write sequences (append/replace/delete) so
         # concurrent mutations of the same entity cannot interleave.
@@ -168,17 +161,16 @@ class EntityStore:
         new_state = strat.apply(current=cur_state, patch=patch)
         new_rev = cur_rev + 1
 
-        if self._enable_revisions:
-            await self.on_append_revision(
-                domain_id=d,
-                kind_id=k,
-                space_id=s,
-                entity_id=eid,
-                rev=new_rev,
-                ts=now,
-                patch_format=self._writer.format,
-                patch=patch,
-            )
+        await self.on_append_revision(
+            domain_id=d,
+            kind_id=k,
+            space_id=s,
+            entity_id=eid,
+            rev=new_rev,
+            ts=now,
+            patch_format=self._writer.format,
+            patch=patch,
+        )
 
         await self.on_upsert_current(
             domain_id=d,
@@ -544,19 +536,6 @@ class EntityStore:
         ]
         return keys, None
 
-    # ----------------------------
-    # GC
-    # ----------------------------
-
-    async def gc(self, *, namespace: Namespace, policy: RetentionPolicy):
-        d, k, s = _dims_from_namespace(namespace)
-        await self.on_gc(
-            domain_id=d, kind_id=k, space_id=s, policy=policy, now=_utc_now()
-        )
-
-    async def gc_global(self, *, policy: RetentionPolicy):
-        await self.on_gc_global(policy=policy)
-
     async def _should_snapshot(
         self,
         *,
@@ -806,22 +785,6 @@ class OnQueryIndex(Protocol):
     ) -> list[EntityId]: ...
 
 
-class OnGC(Protocol):
-    async def __call__(
-        self,
-        *,
-        domain_id: DomainId,
-        kind_id: KindId,
-        space_id: SpaceId,
-        policy: RetentionPolicy,
-        now: datetime,
-    ) -> None: ...
-
-
-class OnGCGlobal(Protocol):
-    async def __call__(self, *, policy: RetentionPolicy) -> None: ...
-
-
 def create_entity_store(exec) -> EntityStore:
     """Wire an entity store onto a backend's exec object.
 
@@ -843,8 +806,6 @@ def create_entity_store(exec) -> EntityStore:
         on_index_replace_terms=exec.index_replace_terms,
         on_index_scan=exec.index_scan,
         on_query_index=exec.query_index,
-        on_gc=exec.gc,
-        on_gc_global=exec.gc_global,
         writer=patch,
         readers={patch.format: patch},
     )
