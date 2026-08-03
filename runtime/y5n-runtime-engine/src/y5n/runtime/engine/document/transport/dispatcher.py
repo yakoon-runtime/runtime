@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Protocol
 
-from y5n.runtime.api.document.transfer import (
-    DocumentEvent,
-    PatchAppendStructure,
-    PatchFinishNode,
-    PatchOp,
-)
+from y5n.runtime.api.document.transfer import PatchAppendStructure, PatchFinishNode
 from y5n.runtime.api.runtime import InputContext
 from y5n.runtime.engine.runtime import Session
+
+from .factory import EventFactory
+from .traversal import EventTraversal
 
 
 class EventDispatcher:
@@ -21,21 +18,11 @@ class EventDispatcher:
 
     def __init__(
         self,
-        on_create_begin_event: OnCreateBeginEvent,
-        on_create_batch_event: OnCreateEmitEvent,
-        on_create_finish_event: OnCreateFinishEvent,
-        on_get_traversal_root: OnGetTraversalRoot,
-        on_get_traversal_parent: OnGetTraversalParent,
-        on_get_traversal_prepare: OnGetTraversalPrepareBlock,
+        factory: EventFactory,
+        traversal: EventTraversal,
     ) -> None:
-        self.on_create_begin_event = on_create_begin_event
-        self.on_create_batch_event = on_create_batch_event
-        self.on_create_finish_event = on_create_finish_event
-
-        self.on_get_traversal_root = on_get_traversal_root
-        self.on_get_traversal_parent = on_get_traversal_parent
-        self.on_get_traversal_prepare = on_get_traversal_prepare
-
+        self.factory = factory
+        self.traversal = traversal
         self._streams: dict[str, _ViewStream] = {}
 
     # ---------------------------------------------------------
@@ -66,25 +53,19 @@ class EventDispatcher:
             projection_id=vid,
             ctx=ctx,
             job_id=job_id,
-            view_params=view_params,
             event_queue=[],
             node_depth={},
-            published_nodes=set(),
             last_flush=time.monotonic(),
         )
 
         self._streams[vid] = stream
 
-        root = self.on_get_traversal_root(
-            projection_id=vid,
-        )
-
+        root = self.traversal.root_id(projection_id=vid)
         stream.node_depth[root] = -1
-        stream.published_nodes.add(root)
 
         if reset:
             await session.emit(
-                self.on_create_begin_event(
+                self.factory.begin_event(
                     header=header,
                     ctx=ctx,
                     vid=vid,
@@ -112,7 +93,7 @@ class EventDispatcher:
         await self._flush(stream)
 
         await session.emit(
-            self.on_create_finish_event(
+            self.factory.finish_event(
                 vid=vid,
                 ctx=stream.ctx,
                 job_id=stream.job_id,
@@ -136,7 +117,7 @@ class EventDispatcher:
         stream.event_queue.clear()
 
         await session.emit(
-            self.on_create_finish_event(
+            self.factory.finish_event(
                 vid=projection_id,
                 ctx=stream.ctx,
                 job_id=stream.job_id,
@@ -161,18 +142,16 @@ class EventDispatcher:
 
         for block in document.get("blocks", []):
             await self.emit_block(
-                session,
                 document=document,
                 block=block,
             )
 
     # ---------------------------------------------------------
-    # CORE EMIT
+    # CORE EMIT — iterative traversal
     # ---------------------------------------------------------
 
     async def emit_block(
         self,
-        session: Session,
         *,
         document: dict,
         block: dict,
@@ -187,47 +166,44 @@ class EventDispatcher:
         if stream is None:
             return
 
-        block_id = block.get("id")
-        if block_id is None:
+        if block.get("id") is None:
             raise RuntimeError("Block without id passed to dispatcher")
 
-        parent = self.on_get_traversal_parent(projection_id=vid, parent_id=parent_id)
-        parent_depth = stream.node_depth.get(parent, -1)
-        depth = parent_depth + 1
+        # Iterative depth-first traversal. A node's structure op is queued
+        # before its children's, so the client always receives the tree
+        # topology first; the remaining content flows in size- and
+        # time-bounded chunks (BATCH_SIZE / MAX_BUFFER_DELAY).
+        stack: list[tuple[dict, str | None] | _Finish] = [(block, parent_id)]
 
-        node, children = self.on_get_traversal_prepare(
-            block=block,
-            parent=parent,
-            depth=depth,
-        )
+        while stack:
+            item = stack.pop()
 
-        stream.node_depth[node["id"]] = depth
+            if isinstance(item, _Finish):
+                stream.event_queue.append(PatchFinishNode(block_id=item.node_id))
+                await self._maybe_flush(stream)
+                continue
 
-        # -------------------------------------------------
-        # STRUCTURE
-        # -------------------------------------------------
-        stream.event_queue.append(
-            PatchAppendStructure(nodes=[node]),
-        )
+            cur_block, cur_parent = item
 
-        # -------------------------------------------------
-        # CHILDREN
-        # -------------------------------------------------
-        for child in children:
+            parent = self.traversal.resolve_parent(
+                projection_id=vid,
+                parent_id=cur_parent,
+            )
+            depth = stream.node_depth.get(parent, -1) + 1
 
-            await self.emit_block(
-                session,
-                document=document,
-                block=child,
-                parent_id=node["id"],
+            node, children = self.traversal.prepare_block(
+                cur_block,
+                parent=parent,
+                depth=depth,
             )
 
-        # -------------------------------------------------
-        # FINISH
-        # -------------------------------------------------
-        stream.event_queue.append(PatchFinishNode(block_id=node["id"]))
+            stream.node_depth[node["id"]] = depth
 
-        await self._maybe_flush(stream)
+            stream.event_queue.append(PatchAppendStructure(nodes=[node]))
+
+            stack.append(_Finish(node["id"]))
+            for child in reversed(children):
+                stack.append((child, node["id"]))
 
     # ---------------------------------------------------------
     # BUFFER / FLUSH
@@ -254,39 +230,18 @@ class EventDispatcher:
         if stream.projection_id not in self._streams:
             return
 
-        ops = []
-        remaining = []
+        ops, tail = (
+            stream.event_queue[: self.BATCH_SIZE],
+            stream.event_queue[self.BATCH_SIZE :],
+        )
 
-        for op in stream.event_queue:
-
-            if isinstance(op, PatchAppendStructure):
-                node = op.nodes[0]
-
-                if node["parent"] not in stream.published_nodes:
-                    remaining.append(op)
-                    continue
-
-                stream.published_nodes.add(node["id"])
-                ops.append(op)
-                continue
-
-            if isinstance(op, PatchFinishNode):
-                if op.block_id not in stream.published_nodes:
-                    remaining.append(op)
-                    continue
-
-                ops.append(op)
-                continue
-
-        ops, tail = ops[: self.BATCH_SIZE], ops[self.BATCH_SIZE :]
-
-        stream.event_queue = remaining + tail
+        stream.event_queue = tail
 
         if not ops:
             return
 
         await stream.session.emit(
-            self.on_create_batch_event(
+            self.factory.patch_event(
                 vid=stream.projection_id,
                 ctx=stream.ctx,
                 ops=ops,
@@ -310,58 +265,9 @@ class _ViewStream:
     job_id: str
     event_queue: list
     node_depth: dict[str, int]
-    published_nodes: set[str]
     last_flush: float
-    view_params: dict | None = None
 
 
-# -------------
-# --- PORTS ---
-# -------------
-
-
-class OnCreateBeginEvent(Protocol):
-    def __call__(
-        self,
-        *,
-        header: dict,
-        vid: str,
-        ctx: InputContext | None,
-        job_id: str,
-        view_params: dict | None = None,
-    ) -> DocumentEvent: ...
-
-
-class OnCreateEmitEvent(Protocol):
-    def __call__(
-        self,
-        *,
-        vid: str,
-        ops: list[PatchOp],
-        job_id: str,
-        ctx: InputContext | None,
-    ) -> DocumentEvent: ...
-
-
-class OnCreateFinishEvent(Protocol):
-    def __call__(
-        self,
-        *,
-        vid: str,
-        job_id: str,
-        ctx: InputContext | None,
-    ) -> DocumentEvent: ...
-
-
-class OnGetTraversalRoot(Protocol):
-    def __call__(self, *, projection_id: str) -> str: ...
-
-
-class OnGetTraversalParent(Protocol):
-    def __call__(self, *, projection_id: str, parent_id: str | None) -> str: ...
-
-
-class OnGetTraversalPrepareBlock(Protocol):
-    def __call__(
-        self, *, block: dict, parent: str, depth: int
-    ) -> tuple[dict, list[dict]]: ...
+@dataclass(frozen=True)
+class _Finish:
+    node_id: str

@@ -108,10 +108,17 @@
       `validation`/`system`); `normalize()` + `_blocks_to_dict` build the same
       shell; `gc.collect()` workaround; broken `ImageResolver`. Pick one
       representation (derive from `yds-v1.yaml`).
-- [ ] **E2 — Dispatcher rewrite**
-      `document/transport/dispatcher.py` 367 → ~150 lines: stack-based traversal
-      instead of recursion, delete the dead partition logic and the 8-protocol
-      port layer.
+- [x] **E2 — Dispatcher rewrite**
+      `document/transport/dispatcher.py` 367 → 273 lines: recursive
+      `emit_block` replaced with explicit stack-based traversal (with finish
+      markers), the dead `published_nodes`/`remaining` partition logic removed,
+      and the 8-protocol port layer collapsed into direct composition
+      (dispatcher takes `EventFactory` + `EventTraversal`). The chunking
+      architecture is preserved: structure ops always precede their children's,
+      and content flows in size- and time-bounded batches (BATCH_SIZE /
+      MAX_BUFFER_DELAY). A pipeline test covering the dispatcher is still open
+      (see roadmap "Postgres store backend tests" note; the compiler→mapper→
+      normalize→dispatcher round-trip has no test yet).
 - [x] **E3 — Store feature trim**
       Removed: `transaction()`/`begin_transaction` (StoreRuntime, wires,
       backend `transaction()` methods, `MemoryTransactionScope`),
