@@ -18,6 +18,83 @@ from ._shared import (
 )
 
 
+async def resolve(node, capability: str, parameters: dict | None = None):
+    """The Python host's content interpretation (ADR-10).
+
+    Reads the reference expressions a node declared for a capability, picks
+    the variant, and interprets them (``file:``, ``resource:``) into a
+    ``Resource``. The host owns the scheme semantics; the node owns the
+    expressions.
+    """
+    variants = (node.resources or {}).get(capability, {})
+    expr = _pick_variant(variants, parameters)
+    if not expr:
+        raise LookupError(f"node '{node.key}' has no '{capability}' resource")
+    return await _interpret(expr, parameters or {}, base=node.fs_path)
+
+
+def _pick_variant(variants: dict, parameters: dict | None) -> str | None:
+    params = parameters or {}
+    for key in ("lang", "variant", "name"):
+        value = params.get(key)
+        if value and value in variants:
+            return variants[value]
+    return variants.get("default")
+
+
+async def _interpret(expr: str, parameters: dict, base: Path | None):
+
+    scheme, _, value = expr.partition(":")
+    if scheme == "file":
+        return _file_resource(value, base)
+    if scheme == "resource":
+        return await _capability_resource(value, parameters)
+    raise LookupError(f"unsupported resource expression: {expr!r}")
+
+
+def _file_resource(value: str, base: Path | None):
+    from y5n.runtime.api.resources import Resource
+
+    if not value:
+        raise LookupError("file: reference requires a path")
+    path = Path(value)
+    if path.is_absolute():
+        raise LookupError(f"file: reference must be relative: {value!r}")
+    if base is None:
+        raise LookupError("file: reference requires a base node")
+    return Resource.path((base / path).resolve())
+
+
+async def _capability_resource(value: str, parameters: dict):
+
+    module_name, sep, func_name = value.rpartition(":")
+    if not sep or not module_name or not func_name:
+        raise LookupError(f"resource: reference must be '<module>:<func>': {value!r}")
+    try:
+        module = importlib.import_module(module_name)
+    except ImportError as exc:
+        raise LookupError(f"cannot import module {module_name!r}") from exc
+    fn = getattr(module, func_name, None)
+    if fn is None or not callable(fn):
+        raise LookupError(f"no capability {func_name!r} in module {module_name!r}")
+    result = fn(**parameters)
+    if inspect.isawaitable(result):
+        result = await result
+    return _coerce_resource(result)
+
+
+def _coerce_resource(result):
+    from y5n.runtime.api.resources import Resource
+
+    if isinstance(result, Resource):
+        return result
+    if isinstance(result, str):
+        return Resource.text(result)
+    if isinstance(result, Path):
+        return Resource.path(result)
+    raise LookupError(f"capability returned unsupported type: {type(result).__name__}")
+
+
 async def run(space: NodeSpace):
     target_path = space.request.arg(0) if space.request else None
     if not target_path:

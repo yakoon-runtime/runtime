@@ -26,8 +26,11 @@ class NodeSpace:
     session: Session
     ports: NodePorts
     ports_from: PortsFromHandler
-    resources: dict[str, dict[str, Path]] | None = None
-    """Resource paths from the originating node, keyed by type then variant.
-    Populated during command dispatch from the resolved node."""
+    resources: dict[str, dict[str, str]] | None = None
+    """Raw resource references from the originating node, keyed by type then
+    variant.  Populated during command dispatch from the resolved node."""
+    fs_path: Path | None = None
+    """Structure directory of the originating node, base for ``file:``
+    resource references."""
     flow_id: str = ""
     """ID of the flow executing this command, set by the engine."""

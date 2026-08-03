@@ -4,7 +4,7 @@ from .compiler import build_compiler
 from .renderer import build_renderer
 
 
-def build_projector() -> Projector:
+def build_projector(tree=None) -> Projector:
 
     # --- RENDERING ---
 
@@ -20,5 +20,6 @@ def build_projector() -> Projector:
         on_render=renderer.render,
         on_render_str=renderer.render_str,
         on_compile=compiler.compile,
+        tree=tree,
     )
     return projector

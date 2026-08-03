@@ -214,6 +214,7 @@ class CommandEngine:
                 ports=node.ports,
                 ports_from=node.ports_from,
                 resources=node.resources,
+                fs_path=node.fs_path,
                 flow_id=flow.id,
             ),
         )

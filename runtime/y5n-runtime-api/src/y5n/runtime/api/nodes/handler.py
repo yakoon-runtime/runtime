@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeAlias
 from y5n.runtime.api.flow.dsl import Pulse
 
 if TYPE_CHECKING:
+    from .node import Node
     from .path import NodePath
     from .ports import NodePorts
     from .space import NodeSpace
@@ -33,6 +34,23 @@ class RunHandler(Protocol):
         space: NodeSpace,
         /,
     ) -> RunResult: ...
+
+
+class ResolveHandler(Protocol):
+    """Host-side content interpretation.
+
+    ``node`` is the component whose capability is resolved; ``capability``
+    names the capability (``man``, ``document``, ...). Returns a ``Resource``
+    or an awaitable of one.
+    """
+
+    def __call__(
+        self,
+        *,
+        node: Node,
+        capability: str,
+        parameters: dict[str, Any] | None = None,
+    ) -> Any: ...
 
 
 class PortsFromHandler(Protocol):

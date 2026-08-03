@@ -36,7 +36,6 @@ from y5n.runtime.engine.executor import (
 )
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.resources import PackageReader
-from y5n.runtime.engine.resources.resolver import PythonResourceResolver
 from y5n.runtime.engine.runtime import (
     NodeNotExecutable,
     NodeNotFound,
@@ -91,7 +90,6 @@ def build_runtime(
 
     package_reader = PackageReader()
     jinja_engine = JinjaRenderEngine()
-    projector = build_projector()
     compiler = build_compiler()
 
     guidance_service = GuidanceService()
@@ -136,6 +134,8 @@ def build_runtime(
     )
 
     tree.build()
+
+    projector = build_projector(tree=tree)
 
     # -----------------------
     # --- ERROR RESOLVING ---
@@ -298,7 +298,7 @@ def build_runtime(
     )
     bus.transport.register_adapter(
         "runtime.resource",
-        ResourceAdapter(PythonResourceResolver(), tree),
+        ResourceAdapter(tree),
     )
 
     return host

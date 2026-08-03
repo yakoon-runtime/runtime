@@ -5,8 +5,9 @@
 > **A component exports capabilities. The host invokes them.**
 >
 > Yakoon describes a reference. The host decides how it is resolved. Scheme
-> names and reference values are host-defined. As little architecture as
-> possible.
+> names and reference values are host-defined. The node owns the definition
+> of its capabilities; the host interprets their reference expressions. As
+> little architecture as possible.
 
 A component ships code *and* content. Both are delivered the same way: the
 component exports a capability, and the host invokes it. `main` is a capability
@@ -64,6 +65,7 @@ that layer.
 
 > **Yakoon describes a reference. The host decides how it is resolved.**
 > **Scheme names and reference values are host-defined.**
+> **The node owns the expression; the host interprets it.**
 > As little architecture as possible.
 
 Yakoon's runtime knows references: `scheme:value` strings handed to a host. It
@@ -82,10 +84,11 @@ This matches the port convention (`ports.get("crm.contact.service")`, never
 
 ### References, resolved by the host
 
-A resource is a **reference** — a `scheme:value` string. Every host resolves the
-schemes it supports; there is no central resolver registry. `file:` is not a
-runtime built-in — a host registers it for scripts, an embedded host may not. A
-reference's semantics are scoped to the node's host.
+A resource is declared as a **reference expression** — a `scheme:value` string
+whose meaning the host defines. Every host interprets the schemes it supports;
+there is no central resolver registry. `file:` is not a runtime built-in — a
+host registers it for scripts, an embedded host may not. A reference's
+semantics are scoped to the node's host.
 
 ### The resolve scheme: `resource:`
 
@@ -98,8 +101,6 @@ entry:
 
 man:
   default: resource:y5n.packs.system.info:man
-  parameters:
-    language: de
 
 document:
   default: resource:shared.projections:list
@@ -135,6 +136,59 @@ contract; `man` / `document` the resolve contract. In the value-stream view
 both are streams — run is a sustained, bidirectional flow; resolve is a stream
 that ends in one response.
 
+### The Host — the interpreter of a component's expressions
+
+A Host is the runtime environment of a component — the implementation behind
+a language or execution strategy (`PythonComponentHost`, a future .NET host,
+...). The seam is drawn by one question: **who owns the expression, and who
+interprets it?**
+
+| Ownership | What | Example |
+|-----------|------|---------|
+| **The node** | the definition of its capabilities — reference *expressions* | `man: {default: resource:man}` |
+| **The host** | the interpretation of those expressions | `resource:man` → importlib, assembly, ... |
+| **The runtime** | neither schemes nor their meaning | `resolve(node, "man")` |
+
+A node's yak.yml does not hold references to resources — it holds **reference
+expressions** whose meaning is host-defined. `resource:man` is a host
+expression, not a resolved reference: the Python host reads it via
+`importlib.resources`, a .NET host via its assembly API. The node owns the
+expression; it does not know what it means.
+
+The same seam runs through `entry.run`: it too is a node-owned expression
+(`pack:y5n.packs.system.info:main`) that the host interprets. `execute` and
+`resolve` are therefore the same pattern — the node declares, the host
+interprets, the runtime knows nothing.
+
+The host is a node itself (`/boot/python/runtime`), referenced by other nodes
+via `host:`. The runtime needs no loading or registration — the host node is
+already in the tree; the runtime delegates to it.
+
+The host declares its interpretation in its own yak.yml:
+
+```yaml
+# /boot/python/runtime/.yak/yak.yml
+resolve:
+  default: pack:y5n.runtime.boot.python.runtime:resolve
+```
+
+The tree builds a `resolve` handler on the host node from this declaration —
+lazy, no module import at build time. Every host node exports its own
+interpretation, so arbitrary hosts run in parallel without conflicting: a
+ticker host and the Python host coexist, each resolving its own nodes.
+
+The host owns variant selection too (`de` / `en` / `default`): it reads the
+expressions a node declared for a capability, picks the variant, and
+interprets. The runtime never unpacks `node.resources`:
+
+```python
+def resolve(self, node, capability, parameters=None) -> Resource
+```
+
+There is no resolver registry and no global host-service registration — each
+host node provides its own `resolve` handler, and the runtime knows no host
+type.
+
 ### The `Resource` result
 
 A resolve capability returns a `Resource` with exactly two requirements:
@@ -160,27 +214,31 @@ Every consumer reaches content through the same service — the projector, the
 `man` command, other commands, tests:
 
 ```python
-resource = await runtime.resolve("resource:y5n.docs.info:man")
+resource = await runtime.resolve(node=info, capability="man")
 text = resource.read_text()
 ```
 
 The service has two operations:
 
 ```python
-resolve(ref, parameters) -> Resource
-supports(ref)            -> bool
+resolve(node, capability, parameters) -> Resource
+supports(node, capability)            -> bool
 ```
 
-`man` is no special case. The host implements behind the service, fully hidden —
-exactly as `session` and `flows` hide theirs. For v1, `entry` (the run
-contract) stays on its existing path; resolve is the new service.
+`man` is no special case. The service **dispatches per node-host**: it finds
+the target node, follows its `host:` path, and delegates to the host node's
+`resolve` handler. The runtime never knows which host it is — exactly as
+`session` and `flows` hide theirs. Because the interpretation is a capability
+of the host node (not a globally registered service), parallel hosts each
+resolve their own nodes. For v1, `entry` (the run contract) stays on its
+existing path; resolve is the new delegation.
 
 ### Resolution is lazy and host-owned
 
-- The engine tree stores raw reference strings — no resolution, no module
+- The engine tree stores raw reference expressions — no resolution, no module
   import at build time.
-- The host resolves a node's reference on demand, through the node's host.
-- Consumers reach a reference only through `runtime.resource`.
+- The host interprets a node's expressions on demand, through the node's host.
+- Consumers reach content only through `runtime.resource`.
 
 ## Rejected alternatives
 
@@ -188,8 +246,15 @@ contract) stays on its existing path; resolve is the new service.
   module. Rejected: too much architecture.
 - **Module anchor inheritance** — implicit resolution. Rejected: explicit
   everywhere.
-- **A central resolver registry** — another runtime component. Rejected: hosts
-  own their schemes.
+- **A resolver registry (host-path → resolver)** — the runtime would know every
+  host type (`PythonHostResolver`, `DotnetHostResolver`, ...). This is the
+  executor trap the platform already avoided: the runtime enumerates
+  implementations. Rejected: the node owns expressions, the host interprets
+  them.
+- **Host-registered global services** (`document`, `projection`, `resource`
+  registered by each host at init) — the bus holds one adapter per port;
+  parallel hosts would overwrite each other. Rejected: the interpretation is a
+  capability of the host node, dispatched per node-host.
 - **`file:` as a runtime built-in** — rejected: it is a host scheme like any
   other.
 - **`pack:` as the capability scheme** — merges the host's namespace into the
@@ -210,7 +275,7 @@ contract) stays on its existing path; resolve is the new service.
 | `pack:<mod>:<path>` resource refs (unused) | `resource:<value>` — capability resolution |
 | Prefix-free resource strings as file paths | gone (references carry a scheme) |
 | Resource resolution at tree build | lazy resolution via `runtime.resource` |
-| `node.resources: dict[str, dict[str, Path]]` | reference strings |
+| `node.resources: dict[str, dict[str, Path]]` | reference expressions |
 | `_resolve_pack_path` (engine) | gone |
 
 ### What stays
