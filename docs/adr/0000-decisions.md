@@ -5,6 +5,31 @@
 
 ---
 
+## 2026-08-03 — Ownership First
+
+The architectural question is not *"how do we build this?"* but **"who owns this?"**. Every capability, piece of state, or decision has exactly one owner. If you cannot name the owner, the design is unfinished — and that is precisely when code becomes complicated.
+
+**The ownership chain:**
+
+```
+Node declares → Pack provides → Host interprets → Runtime coordinates
+```
+
+- The **node** declares its capabilities (reference expressions in `yak.yml`)
+- The **pack** provides static content (generic loader in the pack's resources)
+- The **host** interprets the expressions (its `resolve` capability)
+- The **runtime** coordinates (per-node-host dispatch)
+
+**Recurring answers to the same question:**
+- `logout()` → Session
+- `has_output` → Flow
+- `resolve` → Host
+- resources → Pack
+- description → Node
+- coordination → Runtime
+
+**Key sentence:** Yakoon describes not *how* something is done, only *whom* something belongs to. The mechanisms may change; the ownership chain is the foundation.
+
 ## 2026-06-29 — Interaction is Flow
 
 Interactive dialogs (forms, wizards, input prompts) are not a separate subsystem. They are regular flows that pause on `AwaitEvent` and produce a `Request` via `Context(control=Continue(...))`.
