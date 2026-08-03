@@ -47,7 +47,6 @@ def engine(effect_executor):
 def scheduler(engine):
     return Scheduler(
         platform=Node(key="root"),
-        on_setup=AsyncMock(return_value=None),
         on_dispatch=AsyncMock(return_value=None),
         on_step_flow=engine.step_flow,
         on_show_projection=AsyncMock(),

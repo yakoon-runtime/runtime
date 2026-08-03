@@ -26,13 +26,9 @@ from y5n.runtime.engine.capabilities.permission import (
 )
 from y5n.runtime.engine.document.rendering import JinjaRenderEngine
 from y5n.runtime.engine.executor import (
-    DotnetExecutor,
     ExecutorKind,
     ExecutorRegistry,
-    ProcessExecutor,
-    PythonExecutor,
     RuntimeExecutor,
-    ScriptExecutor,
 )
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.resources import PackageReader
@@ -119,10 +115,6 @@ def build_runtime(
 
     executors = ExecutorRegistry()
     executors.register(ExecutorKind.RUNTIME, RuntimeExecutor())
-    executors.register(ExecutorKind.PYTHON, PythonExecutor())
-    executors.register(ExecutorKind.SCRIPT, ScriptExecutor())
-    executors.register(ExecutorKind.PROCESS, ProcessExecutor())
-    executors.register(ExecutorKind.DOTNET, DotnetExecutor())
 
     # -----------------------
     # --- YAK TREE BUILD ---
@@ -207,14 +199,6 @@ def build_runtime(
     async def initialize():
         await store.initialize()
         await tree.setup()
-        await build_index()
-
-    # -------------------
-    # --- BUILD INDEX ---
-    # -------------------
-
-    async def build_index():
-        pass
 
     # ------------------------
     # --- MACHINE HANDLING ---

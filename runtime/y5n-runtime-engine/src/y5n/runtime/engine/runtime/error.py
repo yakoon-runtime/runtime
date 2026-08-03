@@ -20,10 +20,6 @@ class NodeNotExecutable(Exception):
         self.command = command
 
 
-class NodeNotRunnable(Exception):
-    pass
-
-
 # ----------------------------------------
 # PERMISSION ERRORS
 # ----------------------------------------

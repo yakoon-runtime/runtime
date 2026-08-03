@@ -40,22 +40,6 @@ class CommandEngine:
     # PUBLIC API
     # ----------------------------------------------------
 
-    async def setup(self, session: Session, node: Node) -> Flow | None:
-
-        if not node.has_setup():
-            return None
-
-        flow = Flow(
-            id=session.next_flow_id(),
-            node=node,
-            event=Event(payload=node.key),
-            cursor=FlowCursor("setup"),
-            kind=self.DEFAULT_FLOW_KIND,
-        )
-
-        session.add_flow(flow)
-        return flow
-
     async def dispatch(self, session: Session, event: Event) -> Flow | None:
 
         node: Node | None = None
