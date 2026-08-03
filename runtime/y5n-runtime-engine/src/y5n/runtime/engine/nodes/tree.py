@@ -19,7 +19,8 @@ from y5n.runtime.engine.executor import (
 )
 
 # Resource types that capabilities can declare in yak.yml.
-# Each entry becomes a node.resources[type][variant] to Path mapping.
+# Each entry becomes a node.resources[type][variant] to reference string
+# mapping (ADR-10); resolution is lazy and host-owned.
 RESOURCE_KEYS = frozenset({"document", "man"})
 
 
@@ -163,30 +164,15 @@ class Tree:
             )
         node.invocations = invocations
 
-        resources: dict[str, dict[str, Path]] = {}
+        resources: dict[str, dict[str, str]] = {}
         for res_type in RESOURCE_KEYS:
             variants = meta.get(res_type)
             if not isinstance(variants, dict):
                 continue
-            resolved: dict[str, Path] = {}
+            resolved: dict[str, str] = {}
             for variant, resource_ref in variants.items():
-                if not isinstance(resource_ref, str):
-                    continue
-                if ":" in resource_ref:
-                    scheme, _, rest = resource_ref.partition(":")
-                    if scheme not in ("pack", "file"):
-                        continue
-                    if scheme == "pack":
-                        mod_name = ".".join(rest.split(":")[0].rsplit(":", 1)[0])
-                        fpath = _resolve_pack_path(resource_ref)
-                    else:
-                        fpath = (dir_path / rest).resolve()
-                else:
-                    fpath = (dir_path / resource_ref).resolve()
-                    if not fpath.is_file():
-                        fpath = (dir_path / ".yak" / "run" / resource_ref).resolve()
-                if fpath and fpath.is_file():
-                    resolved[variant] = fpath
+                if isinstance(resource_ref, str):
+                    resolved[variant] = resource_ref
             if resolved:
                 resources[res_type] = resolved
         node.resources = resources
@@ -197,6 +183,14 @@ class Tree:
         else:
             executor = self._executors.get(executor_kind)
             node.run = _make_handler(executor, node, Phase.RUN)
+
+        # Resolve handler — a host declares how it interprets content
+        # expressions (ADR-10). Built lazily; no module import at build time.
+        resolve_meta = meta.get("resolve")
+        if isinstance(resolve_meta, dict):
+            resolve_expr = resolve_meta.get("default") or resolve_meta.get("run")
+            if isinstance(resolve_expr, str):
+                node.resolve = _make_resolve_handler(resolve_expr)
 
         return node
 
@@ -467,6 +461,7 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
             ports=space.ports,
             ports_from=space.ports_from,
             resources=space.resources,
+            fs_path=space.fs_path,
             flow_id=space.flow_id,
         )
         return host_run(modified_space)
@@ -474,28 +469,35 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
     return _run
 
 
-def _resolve_pack_path(ref: str) -> Path | None:
-    """Resolve a 'pack:<module>:<path>' reference to an absolute path.
+def _make_resolve_handler(resolve_expr: str):
+    """Build a node's resolve handler from a ``pack:<module>:<func>`` expression.
 
-    e.g. 'pack:core.cd:resources/man.ydf' → import core.cd,
-    get its directory, resolve resources/man.ydf relative to it.
+    The handler receives the component node and capability name and delegates
+    to the declared resolve function — the host's interpretation (ADR-10).
     """
-    import importlib
 
-    rest = ref[len("pack:") :]
-    mod_name, _, rel_path = rest.rpartition(":")
-    if not mod_name or not rel_path:
-        return None
-    try:
-        mod = importlib.import_module(mod_name)
-    except ImportError:
-        return None
-    mod_file = getattr(mod, "__file__", None)
-    if not mod_file:
-        return None
-    mod_dir = Path(mod_file).parent
-    resolved = (mod_dir / rel_path).resolve()
-    return resolved if resolved.is_file() else None
+    scheme, _, value = resolve_expr.partition(":")
+    if scheme != "pack":
+        raise ValueError(f"invalid resolve expression: {resolve_expr!r}")
+    mod_name, _, func_name = value.rpartition(":")
+
+    async def _resolve(*, node, capability, parameters=None):
+        import importlib
+        import inspect
+
+        try:
+            module = importlib.import_module(mod_name)
+        except ImportError as exc:
+            raise LookupError(f"cannot import module {mod_name!r}") from exc
+        fn = getattr(module, func_name, None)
+        if fn is None or not callable(fn):
+            raise LookupError(f"no resolve function {func_name!r} in {mod_name!r}")
+        result = fn(node=node, capability=capability, parameters=parameters or {})
+        if inspect.isawaitable(result):
+            return await result
+        return result
+
+    return _resolve
 
 
 def _prune_bare_symlinks(dirnames: list[str], parent: Path) -> None:

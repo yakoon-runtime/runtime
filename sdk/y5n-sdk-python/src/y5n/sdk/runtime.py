@@ -25,18 +25,33 @@ from .timer import timer
 from .viewport import viewport
 
 
-def resolve(ref: str, parameters: dict[str, Any] | None = None):
-    """Resolve a resource reference into a ``Resource`` (awaitable)."""
+def resolve(
+    node_path: str,
+    capability: str,
+    parameters: dict[str, Any] | None = None,
+):
+    """Resolve a node's content capability into a ``Resource`` (awaitable).
+
+    ``node_path`` identifies the declaring node; the runtime dispatches to
+    the node's host (ADR-10).
+    """
     from .ports import get
 
-    return get("runtime.resource").resolve(ref=ref, parameters=parameters or {})
+    return get("runtime.resource").resolve(
+        node_path=node_path,
+        capability=capability,
+        parameters=parameters or {},
+    )
 
 
-def supports(ref: str):
-    """Ask the runtime whether a reference can be resolved (awaitable)."""
+def supports(node_path: str, capability: str):
+    """Ask whether a node's host can resolve a capability (awaitable)."""
     from .ports import get
 
-    return get("runtime.resource").supports(ref=ref)
+    return get("runtime.resource").supports(
+        node_path=node_path,
+        capability=capability,
+    )
 
 
 __all__ = [

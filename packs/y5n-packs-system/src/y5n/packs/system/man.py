@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from y5n.sdk import context, ports, runtime
 
 
@@ -28,13 +26,12 @@ async def main():
 
     if result.status == "ok":
         node_data = result.one()
-        resources = node_data.get("resources", {})
-        man_res = resources.get("man", {})
-        template_path = man_res.get("default")
+        node_path = node_data.get("path")
 
-        if template_path:
+        if node_path:
 
-            template = Path(template_path).read_text()
+            resource = await runtime.resolve(node_path=node_path, capability="man")
+            template = resource.read_text()
             jinja = ports.get("jinja")
             html = await jinja(content=template, context={"key": key})
             compile_port = ports.get("compile")

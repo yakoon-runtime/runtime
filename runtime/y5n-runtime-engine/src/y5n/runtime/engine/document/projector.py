@@ -5,6 +5,7 @@ from typing import Any, Protocol
 
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.runtime.api.resources import ResourceRef
+from y5n.runtime.engine.resources.host import resolve_via_host
 
 
 class Projector:
@@ -21,10 +22,12 @@ class Projector:
         on_render: OnRender,
         on_render_str: Callable[[str, dict], str],
         on_compile: OnCompile,
+        tree=None,
     ) -> None:
         self.on_render = on_render
         self.on_render_str = on_render_str
         self.on_compile = on_compile
+        self._tree = tree
 
     async def project(
         self,
@@ -55,22 +58,16 @@ class Projector:
     ) -> dict:
         if self.on_render_str is None:
             raise RuntimeError("OnProject port not configured")
-        variants = space.resources.get(resource, {}) if space.resources else {}
-        template_path = self._resolve_variant(variants, space.session.lang)
-        if template_path is None:
-            raise FileNotFoundError(
-                f"Template not found: resource={resource}, lang={space.session.lang}"
-            )
-        template = template_path.read_text()
+        if self._tree is None:
+            raise RuntimeError("Projector has no tree configured")
+        node = self._tree.find(str(space.path))
+        if node is None:
+            raise FileNotFoundError(f"Node not found: {space.path}")
+        params: dict[str, Any] = {"name": "default", "lang": space.session.lang}
+        content = await resolve_via_host(self._tree, node, resource, params)
+        template = content.read_text()
         html = self.on_render_str(template, state or {})
         return self.on_compile(text=html, context={})
-
-    # ----------------------------------
-    # INTERNALS
-    # ----------------------------------
-
-    def _resolve_variant(self, variants: dict[str, Any], lang: str) -> Any | None:
-        return variants.get(lang) or variants.get("default")
 
 
 # ----------------------------------

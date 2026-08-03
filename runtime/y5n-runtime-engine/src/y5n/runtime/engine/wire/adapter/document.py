@@ -12,6 +12,7 @@ import json
 from typing import Any
 
 from y5n.runtime.api.runtime.context import Call
+from y5n.runtime.engine.resources.host import resolve_via_host
 
 
 class DocumentAdapter:
@@ -34,15 +35,17 @@ class DocumentAdapter:
             assert call.caller_path
             return _error_json(call.caller_path)
 
-        variants = (node.resources or {}).get("document", {})
-        template_path = (
-            variants.get(lang) or variants.get(name) or variants.get("default")
-        )
-        if not template_path:
+        params: dict[str, Any] = {"name": name, "lang": lang}
+        if state:
+            params.update(state)
+
+        try:
+            resource = await resolve_via_host(self._tree, node, "document", params)
+        except LookupError:
             assert call.caller_path
             return _error_json(call.caller_path, name)
 
-        template = template_path.read_text()
+        template = resource.read_text()
         rendered = self._projector.on_render_str(template, context=state or {})
         doc = self._projector.on_compile(text=rendered, context={})
         return json.dumps(doc, default=str)

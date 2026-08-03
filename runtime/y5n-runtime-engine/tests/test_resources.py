@@ -7,7 +7,9 @@ from pathlib import Path
 import pytest
 from y5n.runtime.api.resources import Resource
 from y5n.runtime.api.runtime.context import Call
-from y5n.runtime.engine.resources.resolver import PythonResourceResolver
+from y5n.runtime.engine.executor import ExecutorKind, ExecutorRegistry, RuntimeExecutor
+from y5n.runtime.engine.nodes.tree import Tree
+from y5n.runtime.engine.wire.adapter.document import DocumentAdapter
 from y5n.runtime.engine.wire.adapter.resource import ResourceAdapter
 
 
@@ -19,112 +21,328 @@ def _make_module(name: str, funcs: dict) -> types.ModuleType:
     return module
 
 
-@pytest.fixture
-def resolver() -> PythonResourceResolver:
-    return PythonResourceResolver()
+def _build_tree(root: Path) -> Tree:
+    registry = ExecutorRegistry()
+    registry.register(ExecutorKind.RUNTIME, RuntimeExecutor())
+    tree = Tree(root_path=root, executors=registry)
+    tree.build()
+    return tree
+
+
+def _write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content)
+
+
+def _fake_node(**kwargs) -> types.SimpleNamespace:
+    defaults = {"key": "app", "resources": {}, "fs_path": None}
+    defaults.update(kwargs)
+    return types.SimpleNamespace(**defaults)
+
+
+# ----------------------------------
+# TREE: RAW REFERENCES + RESOLVE HANDLER
+# ----------------------------------
 
 
 @pytest.mark.asyncio
-async def test_supports(resolver: PythonResourceResolver):
-    assert resolver.supports("file:resources/man.ydf")
-    assert resolver.supports("resource:y5n.packs.system.info:man")
-    assert not resolver.supports("http://example.com/man")
-    assert not resolver.supports("nonsense")
+async def test_tree_stores_raw_references_and_builds_resolve(tmp_path: Path):
+    _write(
+        tmp_path / "boot" / "python" / "runtime" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "entry:",
+                "  run: pack:x:run",
+                "resolve:",
+                "  default: pack:x:resolve",
+            ]
+        ),
+    )
+    _write(
+        tmp_path / "app" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "title: App",
+                "host: /boot/python/runtime",
+                "man:",
+                "  default: file:resources/man.ydf",
+            ]
+        ),
+    )
+    tree = _build_tree(tmp_path)
+
+    host = tree.find("/boot/python/runtime")
+    assert host is not None
+    assert host.resolve is not None
+
+    app = tree.find("/app")
+    assert app is not None
+    assert app.resources == {"man": {"default": "file:resources/man.ydf"}}
+    assert app.resolve is None
+
+
+# ----------------------------------------
+# RUNTIME.RESOURCE DISPATCHES TO THE HOST
+# ----------------------------------------
 
 
 @pytest.mark.asyncio
-async def test_file_resolve(resolver: PythonResourceResolver, tmp_path: Path):
+async def test_runtime_resource_dispatches_to_host(tmp_path: Path):
+    async def host_resolve(node, capability, parameters=None):
+        expr = (node.resources or {}).get(capability, {}).get("default")
+        return Resource.text(f"resolved:{capability}:{expr}")
+
+    _make_module("_test_host_resolve", {"resolve": host_resolve})
+    _write(
+        tmp_path / "boot" / "python" / "runtime" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "entry:",
+                "  run: pack:x:run",
+                "resolve:",
+                "  default: pack:_test_host_resolve:resolve",
+            ]
+        ),
+    )
+    _write(
+        tmp_path / "app" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "title: App",
+                "host: /boot/python/runtime",
+                "man:",
+                "  default: resource:y5n.packs.system.app:man",
+            ]
+        ),
+    )
+    tree = _build_tree(tmp_path)
+    adapter = ResourceAdapter(tree)
+    call = Call(
+        port="runtime.resource",
+        method="resolve",
+        args={},
+        caller_path="/app",
+        caller_session_key="session-1",
+    )
+    resource = await adapter.resolve(call, node_path="/app", capability="man")
+    assert resource.read_text() == "resolved:man:resource:y5n.packs.system.app:man"
+
+
+@pytest.mark.asyncio
+async def test_runtime_resource_supports(tmp_path: Path):
+    async def host_resolve(node, capability, parameters=None):
+        return Resource.text("x")
+
+    _make_module("_test_host_supports", {"resolve": host_resolve})
+    _write(
+        tmp_path / "boot" / "python" / "runtime" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "entry:",
+                "  run: pack:x:run",
+                "resolve:",
+                "  default: pack:_test_host_supports:resolve",
+            ]
+        ),
+    )
+    _write(
+        tmp_path / "app" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "title: App",
+                "host: /boot/python/runtime",
+                "man:",
+                "  default: file:resources/man.ydf",
+            ]
+        ),
+    )
+    tree = _build_tree(tmp_path)
+    adapter = ResourceAdapter(tree)
+    call = Call(
+        port="runtime.resource",
+        method="supports",
+        args={},
+        caller_path="/app",
+        caller_session_key="session-1",
+    )
+    assert await adapter.supports(call, node_path="/app", capability="man") is True
+    assert await adapter.supports(call, node_path="/app", capability="logo") is False
+
+
+# ----------------------------------------
+# PARALLEL HOSTS — EACH RESOLVES ITS OWN
+# ----------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_parallel_hosts_resolve_their_own_nodes(tmp_path: Path):
+    async def python_resolve(node, capability, parameters=None):
+        return Resource.text(f"python:{capability}")
+
+    async def ticker_resolve(node, capability, parameters=None):
+        return Resource.text(f"ticker:{capability}")
+
+    _make_module("_test_parallel_py", {"resolve": python_resolve})
+    _make_module("_test_parallel_tick", {"resolve": ticker_resolve})
+
+    for host_path, mod in (
+        ("python", "_test_parallel_py"),
+        ("ticker", "_test_parallel_tick"),
+    ):
+        _write(
+            tmp_path / "boot" / host_path / "runtime" / ".yak" / "yak.yml",
+            "\n".join(
+                [
+                    "entry:",
+                    "  run: pack:x:run",
+                    "resolve:",
+                    f"  default: pack:{mod}:resolve",
+                ]
+            ),
+        )
+
+    for app, host in (("app1", "python"), ("app2", "ticker")):
+        _write(
+            tmp_path / app / ".yak" / "yak.yml",
+            "\n".join(
+                [
+                    f"title: {app}",
+                    f"host: /boot/{host}/runtime",
+                    "man:",
+                    "  default: file:resources/man.ydf",
+                ]
+            ),
+        )
+
+    tree = _build_tree(tmp_path)
+    adapter = ResourceAdapter(tree)
+    call = Call(
+        port="runtime.resource",
+        method="resolve",
+        args={},
+        caller_path="/",
+        caller_session_key="session-1",
+    )
+    r1 = await adapter.resolve(call, node_path="/app1", capability="man")
+    r2 = await adapter.resolve(call, node_path="/app2", capability="man")
+    assert r1.read_text() == "python:man"
+    assert r2.read_text() == "ticker:man"
+
+
+# ----------------------------------------
+# PYTHON HOST RESOLVE (file: / resource:)
+# ----------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_python_host_resolve_file(tmp_path: Path):
+    from y5n.runtime.boot.python.runtime import resolve as host_resolve
+
     (tmp_path / "man.ydf").write_text("# Man")
-    resource = await resolver.resolve("file:man.ydf", base=tmp_path)
+    node = _fake_node(
+        resources={"man": {"default": "file:man.ydf"}},
+        fs_path=tmp_path,
+    )
+    resource = await host_resolve(node, "man")
     assert resource.read_text() == "# Man"
     assert resource.read_bytes() == b"# Man"
 
 
 @pytest.mark.asyncio
-async def test_file_requires_base(resolver: PythonResourceResolver):
-    with pytest.raises(LookupError, match="base"):
-        await resolver.resolve("file:man.ydf")
+async def test_python_host_resolve_capability():
+    from y5n.runtime.boot.python.runtime import resolve as host_resolve
 
+    def man(**params):
+        return Resource.text("man " + params.get("lang", "en"))
 
-@pytest.mark.asyncio
-async def test_capability_resolve_resource(
-    resolver: PythonResourceResolver,
-):
-    module = _make_module(
-        "_test_res_capability",
-        {"man": lambda **params: Resource.text("man " + params.get("lang", "en"))},
-    )
-    resource = await resolver.resolve(
-        f"resource:{module.__name__}:man",
-        parameters={"lang": "de"},
-    )
+    module = _make_module("_test_pyhost_cap", {"man": man})
+    node = _fake_node(resources={"man": {"default": f"resource:{module.__name__}:man"}})
+    resource = await host_resolve(node, "man", parameters={"lang": "de"})
     assert resource.read_text() == "man de"
 
 
 @pytest.mark.asyncio
-async def test_capability_coerces_str(resolver: PythonResourceResolver):
-    module = _make_module("_test_res_coerce", {"man": lambda **params: "plain text"})
-    resource = await resolver.resolve(f"resource:{module.__name__}:man")
-    assert resource.read_text() == "plain text"
-    assert resource.read_bytes() == b"plain text"
+async def test_python_host_resolve_variant():
+    from y5n.runtime.boot.python.runtime import resolve as host_resolve
+
+    node = _fake_node(
+        resources={
+            "man": {
+                "de": "file:man_de.ydf",
+                "default": "file:man.ydf",
+            }
+        },
+        fs_path=Path("/nonexistent"),
+    )
+    resource = await host_resolve(node, "man", parameters={"lang": "de"})
+    with pytest.raises(FileNotFoundError, match="man_de"):
+        resource.read_text()
 
 
 @pytest.mark.asyncio
-async def test_capability_awaitable(resolver: PythonResourceResolver):
-    async def _async_man(**params):
-        return Resource.text("async")
+async def test_python_host_resolve_missing():
+    from y5n.runtime.boot.python.runtime import resolve as host_resolve
 
-    module = _make_module("_test_res_async", {"man": _async_man})
-    resource = await resolver.resolve(f"resource:{module.__name__}:man")
-    assert resource.read_text() == "async"
-
-
-@pytest.mark.asyncio
-async def test_capability_missing(resolver: PythonResourceResolver):
-    _make_module("_test_res_missing", {})
-    with pytest.raises(LookupError, match="capability"):
-        await resolver.resolve("resource:_test_res_missing:man")
+    node = _fake_node(resources={})
+    with pytest.raises(LookupError, match="man"):
+        await host_resolve(node, "man")
 
 
-class FakeNode:
-    fs_path: Path
+# ----------------------------------------
+# DOCUMENT ADAPTER DISPATCHES TO THE HOST
+# ----------------------------------------
 
 
-class FakeTree:
-    def __init__(self, node: FakeNode) -> None:
-        self._node = node
+class FakeProjector:
+    def on_render_str(self, template: str, context: dict) -> str:
+        return f"<{template}>"
 
-    def find(self, path: str) -> FakeNode:
-        return self._node
+    def on_compile(self, text: str, context: dict) -> dict:
+        return {"kind": "document", "id": "doc", "text": text}
 
 
 @pytest.mark.asyncio
-async def test_adapter_resolve_file(tmp_path: Path):
-    (tmp_path / "help.ydf").write_text("# Help")
+async def test_document_adapter_dispatches(tmp_path: Path):
+    async def host_resolve(node, capability, parameters=None):
+        expr = (node.resources or {}).get(capability, {}).get("default")
+        path = Path(node.fs_path) / expr[len("file:") :]
+        return Resource.path(path)
 
-    node = FakeNode()
-    node.fs_path = tmp_path
-    adapter = ResourceAdapter(PythonResourceResolver(), FakeTree(node))
+    _make_module("_test_doc_host", {"resolve": host_resolve})
+    _write(
+        tmp_path / "boot" / "python" / "runtime" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "entry:",
+                "  run: pack:x:run",
+                "resolve:",
+                "  default: pack:_test_doc_host:resolve",
+            ]
+        ),
+    )
+    _write(
+        tmp_path / "app" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "title: App",
+                "host: /boot/python/runtime",
+                "document:",
+                "  default: file:default.ydf",
+            ]
+        ),
+    )
+    (tmp_path / "app" / "default.ydf").write_text("hello")
+    tree = _build_tree(tmp_path)
+
+    import json
+
+    adapter = DocumentAdapter(FakeProjector(), tree)
     call = Call(
-        port="runtime.resource",
-        method="resolve",
+        port="document",
+        method="render",
         args={},
-        caller_path="/fake",
+        caller_path="/app",
         caller_session_key="session-1",
     )
-    resource = await adapter.resolve(call, ref="file:help.ydf")
-    assert resource.read_text() == "# Help"
-
-
-@pytest.mark.asyncio
-async def test_adapter_supports():
-    adapter = ResourceAdapter(PythonResourceResolver(), FakeTree(FakeNode()))
-    call = Call(
-        port="runtime.resource",
-        method="supports",
-        args={},
-        caller_path="/fake",
-        caller_session_key="session-1",
-    )
-    assert await adapter.supports(call, ref="file:x") is True
-    assert await adapter.supports(call, ref="http://x") is False
+    result = json.loads(await adapter.render(call))
+    assert result["text"] == "<hello>"
