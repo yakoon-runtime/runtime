@@ -221,7 +221,7 @@ def build_machine(
     # --- SETUP NODES ---
     # -------------------
 
-    async def setup_nodes(_session):
+    async def setup_nodes():
         await on_initialize()
 
     # ---------------

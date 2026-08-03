@@ -47,8 +47,7 @@ class RuntimeManager:
         asyncio.create_task(self.on_flow_schedule())
 
     async def setup(self):
-        session = await self.on_get_session()
-        await self.on_setup(session)
+        await self.on_setup()
 
     def register_session_done(
         self, session_key: str, callback: Callable[[], Awaitable[None]]
@@ -183,4 +182,4 @@ class OnGetSession(Protocol):
 
 
 class OnSetup(Protocol):
-    async def __call__(self, session) -> None: ...
+    async def __call__(self) -> None: ...
