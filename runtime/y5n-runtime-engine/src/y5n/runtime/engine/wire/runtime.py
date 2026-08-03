@@ -24,14 +24,12 @@ from y5n.runtime.engine.capabilities.permission import (
     PermissionParser,
     PermissionSet,
 )
-from y5n.runtime.engine.document.rendering import JinjaRenderEngine
 from y5n.runtime.engine.executor import (
     ExecutorKind,
     ExecutorRegistry,
     RuntimeExecutor,
 )
 from y5n.runtime.engine.nodes.tree import Tree
-from y5n.runtime.engine.resources import PackageReader
 from y5n.runtime.engine.runtime import (
     NodeNotExecutable,
     NodeNotFound,
@@ -53,9 +51,8 @@ from y5n.runtime.engine.wire.adapter.resource import ResourceAdapter
 from y5n.runtime.engine.wire.adapter.runtime import RuntimeAdapter
 from y5n.runtime.engine.wire.adapter.session import SessionAdapter
 from y5n.runtime.engine.wire.adapter.source import SourceReadAdapter
-from y5n.runtime.engine.wire.compiler import build_compiler
+from y5n.runtime.engine.wire.document import build_document_stack
 from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
-from y5n.runtime.engine.wire.projector import build_projector
 from y5n.runtime.engine.wire.stream import build_stream
 from y5n.runtime.store.event.wire import build_store
 
@@ -83,10 +80,6 @@ def build_runtime(
     # ----------------
     # --- SERVICES ---
     # ----------------
-
-    package_reader = PackageReader()
-    jinja_engine = JinjaRenderEngine()
-    compiler = build_compiler()
 
     guidance_service = GuidanceService()
     audit_service = AuditLogService(settings.logging)
@@ -127,7 +120,12 @@ def build_runtime(
 
     tree.build()
 
-    projector = build_projector(tree=tree)
+    # ----------------
+    # --- DOCUMENT ---
+    # ----------------
+
+    doc = build_document_stack(tree=tree)
+    projector = doc.projector
 
     # -----------------------
     # --- ERROR RESOLVING ---
@@ -172,9 +170,9 @@ def build_runtime(
     root_ports.provide(PARSE_PERMISSION_SPEC, perm_parser.parse)
     root_ports.provide(DOCUMENT, projector.project_from_space)
     root_ports.provide(DOCUMENT_RESOLVE, projector.project)
-    root_ports.provide(RESOURCE_LOAD, package_reader.get_text)
-    root_ports.provide(JINJA_RENDER, jinja_engine.render_str)
-    root_ports.provide(COMPILE, compiler.compile)
+    root_ports.provide(RESOURCE_LOAD, doc.loader.get_text)
+    root_ports.provide(JINJA_RENDER, doc.jinja.render_str)
+    root_ports.provide(COMPILE, doc.compiler.compile)
     root_ports.provide(ERROR_RESOLVE, error_resolve)
     root_ports.provide(VALIDATE, tree.validate)
 
@@ -248,13 +246,13 @@ def build_runtime(
     bus.resolver.register("system:projection", {"jinja": ["__call__"]}, path="/")
     bus.transport.register_adapter(
         "jinja",
-        CallableAdapter(jinja_engine.render_str),
+        CallableAdapter(doc.jinja.render_str),
     )
 
     bus.resolver.register("system:projection", {"compile": ["__call__"]}, path="/")
     bus.transport.register_adapter(
         "compile",
-        CallableAdapter(compiler.compile),
+        CallableAdapter(doc.compiler.compile),
     )
 
     bus.resolver.register(
