@@ -3,20 +3,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Literal
 
-# Bedeutung für den Menschen
+# Meaning for the human
 Role = Literal[
     "info",  # neutral
-    "success",  # abgeschlossen
-    "warning",  # Aufmerksamkeit
-    "error",  # Problem
-    "help",  # Erklärend
+    "success",  # completed
+    "warning",  # attention
+    "error",  # problem
+    "help",  # explanatory
 ]
 
 ErrorKind = Literal[
-    "validation",  # Field / Input
-    "domain",  # Business / erwartbar
-    "system",  # Infrastruktur
-    "fatal",  # Crash / unrecoverable
+    "validation",  # field / input
+    "domain",  # business / expected
+    "system",  # infrastructure
+    "fatal",  # crash / unrecoverable
 ]
 
 

@@ -286,10 +286,10 @@ class Tree:
 
             space = NodeSpace(
                 path=node.path,
-                request=None,  # type: ignore
-                session=None,  # type: ignore
+                request=None,
+                session=None,
                 ports=node.ports,
-                ports_from=lambda: node.ports,  # type: ignore  # noqa: B023
+                ports_from=node.ports_from,
             )
             result = executor.run(node, Phase.SETUP, space)
             if result is not None:

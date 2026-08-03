@@ -185,7 +185,7 @@ class Node:
     # ----------------------------------
 
     def mount(self, node: T) -> T:
-        """Mountes an existing runtime subtree.
+        """Mount an existing runtime subtree.
 
         Unlike add(), mount() preserves the existing capability
         hierarchy of the mounted subtree.

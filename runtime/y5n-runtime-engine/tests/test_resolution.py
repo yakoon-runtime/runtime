@@ -72,16 +72,16 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
     pulse = await harness.run_until_blocked(flow)
     assert isinstance(pulse.control, AwaitEvent)
 
-    # Sub-Flow wurde erzeugt und eingeplant
+    # Sub-flow was created and scheduled
     assert created_flow is not None
     assert created_flow.node is sub_node
     assert created_flow.out_channel is not None
 
-    # Sub-Flow ausführen → Projektion wird auf den Channel umgeleitet
+    # Run the sub-flow: the projection is redirected to the channel
     pulse = await harness.run_until_blocked(created_flow)
     assert isinstance(pulse.control, Stop)
 
-    # Parent hat jetzt die Projektion im Channel
+    # The parent now has the projection in the channel
     pulse = await harness.run_until_blocked(flow)
     assert isinstance(pulse.control, Stop)
     assert len(received) == 1
@@ -89,7 +89,7 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
 
 @pytest.mark.asyncio
 async def test_command_unresolvable_sends_none(harness, effect_executor):
-    """Ein nicht auflösbarer Command sendet None auf den Channel."""
+    """An unresolvable command sends None to the channel."""
 
     received: list[object] = []
 
@@ -98,7 +98,7 @@ async def test_command_unresolvable_sends_none(harness, effect_executor):
         return cmd, rest, []
 
     def resolve_node2(*, key, tokens, session, strict=True):
-        # Kein Node für "unknown" → Auflösung fehlschlagen
+        # No node for "unknown" → resolution fails
         return None, tokens or []
 
     harness.engine.on_parse_input = parse_input

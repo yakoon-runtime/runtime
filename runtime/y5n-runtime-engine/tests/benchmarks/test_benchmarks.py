@@ -75,7 +75,7 @@ async def test_flow_switches(harness):
 
 @pytest.mark.asyncio
 async def test_session_channel_throughput(harness):
-    """Benchmark: send/receive über SESSION-Channel."""
+    """Benchmark: send/receive over the SESSION channel."""
 
     N = 5_000
     ch = uuid4().hex

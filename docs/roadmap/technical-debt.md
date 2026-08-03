@@ -150,14 +150,15 @@
 
 ## G. Hygiene
 
-- [ ] **G1 — German comments** violate AGENTS.md (all comments in English):
-      `machine/engine.py`, `machine/scheduler.py`, `machine/parser.py`,
-      `document/compiler/tokens.py`, `store/event/store.py`,
-      `document/model/header.py`.
-- [ ] **G2 — `print()` instead of logging** (`wire/machine.py:83`,
+- [x] **G1 — German comments** violate AGENTS.md (all comments in English):
+      translated across the engine, API, store, transport, tests, and the yak
+      app (headers, schedulers, parsers, store, policy).
+- [x] **G2 — `print()` instead of logging** (`wire/machine.py:83`,
       `runtime/bus/session_bus.py:48`).
-- [ ] **G3 — Small fixes** "Mountes" typo (3 files), `NodeSpace` `None`
-      type-ignores (`nodes/tree.py:287-293`).
+- [x] **G3 — Small fixes** "Mountes" typo (3 files), `NodeSpace`
+      `request`/`session` are now `| None` in the API and the `type: ignore`
+      workarounds plus the wrong `ports_from` lambda in `tree.setup()` are
+      removed (`node.ports_from` used directly).
 
 ## H. Parked ideas
 

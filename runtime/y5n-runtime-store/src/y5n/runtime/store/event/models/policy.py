@@ -11,4 +11,4 @@ class SnapshotPolicy:
     """
 
     every_n_revisions: int = 20
-    max_age_seconds: int = 15  # 15x5 min
+    max_age_seconds: int = 15  # snapshot every 15 seconds
