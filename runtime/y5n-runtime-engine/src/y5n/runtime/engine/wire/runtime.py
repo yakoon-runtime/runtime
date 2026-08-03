@@ -58,7 +58,7 @@ from y5n.runtime.engine.wire.adapter.runtime import RuntimeAdapter
 from y5n.runtime.engine.wire.adapter.session import SessionAdapter
 from y5n.runtime.engine.wire.adapter.source import SourceReadAdapter
 from y5n.runtime.engine.wire.compiler import build_compiler
-from y5n.runtime.engine.wire.machine import RuntimeHost, build_machine
+from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
 from y5n.runtime.engine.wire.projector import build_projector
 from y5n.runtime.engine.wire.stream import build_stream
 from y5n.runtime.store.event.wire import build_store
@@ -76,7 +76,7 @@ errors = {
 def build_runtime(
     *,
     settings: Settings,
-) -> RuntimeHost:
+) -> RuntimeManager:
 
     # -----------------
     # --- STORAGING ---
@@ -220,7 +220,7 @@ def build_runtime(
     # --- MACHINE HANDLING ---
     # ------------------------
 
-    host = build_machine(
+    manager = build_machine(
         platform=root,
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
@@ -233,9 +233,9 @@ def build_runtime(
         on_get_node=tree.resolve,
     )
 
-    ds.bind("system:sessions", SessionSource(host))
-    root_ports.provide(SESSION_ATTACH, host.attach_session)
-    root_ports.provide(SESSION_DETACH, host.detach_session)
+    ds.bind("system:sessions", SessionSource(manager))
+    root_ports.provide(SESSION_ATTACH, manager.attach_session)
+    root_ports.provide(SESSION_DETACH, manager.detach_session)
 
     # ---------------------------------------
     # --- SDK ADAPTERS (on the Runtime Bus) ---
@@ -280,7 +280,7 @@ def build_runtime(
     )
     bus.transport.register_adapter(
         "session",
-        SessionAdapter(host, on_save=session_manager.save),
+        SessionAdapter(manager, on_save=session_manager.save),
     )
 
     bus.resolver.register(
@@ -288,7 +288,7 @@ def build_runtime(
     )
     bus.transport.register_adapter(
         "runtime",
-        RuntimeAdapter(host),
+        RuntimeAdapter(manager),
     )
 
     bus.resolver.register(
@@ -301,4 +301,4 @@ def build_runtime(
         ResourceAdapter(tree),
     )
 
-    return host
+    return manager

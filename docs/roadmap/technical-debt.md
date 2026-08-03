@@ -30,12 +30,11 @@
 
 ## B. Host naming collision
 
-- [ ] **B1 — `RuntimeHost` vs ADR-10 host**
-      `machine/host.py:15` — the session manager class shares the word "host"
+- [x] **B1 — `RuntimeHost` vs ADR-10 host**
+      `machine/manager.py` — the session manager class shared the word "host"
       with the ADR-10 component host (three distinct meanings across the
-      engine). Rename to `RuntimeManager`/`RuntimeServer`; adapters should stop
-      reaching into private `_sessions`
-      (`wire/adapter/runtime.py:28`).
+      engine). Renamed to `RuntimeManager`, file `host.py` → `manager.py`,
+      adapters use `manager` instead of reaching into private `_host`.
 
 ## C. Dead code
 

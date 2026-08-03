@@ -1,6 +1,6 @@
 from .effects import EffectExecutor
 from .engine import CommandEngine
-from .host import RuntimeHost
+from .manager import RuntimeManager
 from .parser import InputParser
 from .resolver import InvocationResolver, OnGetNode
 from .runner import Runner
@@ -12,7 +12,7 @@ __all__ = [
     # .engine
     "CommandEngine",
     # .host
-    "RuntimeHost",
+    "RuntimeManager",
     # .parser
     "InputParser",
     # .resolver

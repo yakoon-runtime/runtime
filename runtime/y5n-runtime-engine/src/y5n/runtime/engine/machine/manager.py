@@ -12,8 +12,8 @@ from y5n.runtime.engine.runtime import Session
 from .runner import Runner
 
 
-class RuntimeHost:
-    """Top-level runtime host.
+class RuntimeManager:
+    """Top-level runtime manager.
 
     Manages sessions, client connections, and the session lifecycle.
     A connection can subscribe to multiple sessions (observing their

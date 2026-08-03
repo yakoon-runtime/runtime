@@ -21,7 +21,7 @@ from y5n.runtime.engine.machine import (
     InvocationResolver,
     OnGetNode,
     Runner,
-    RuntimeHost,
+    RuntimeManager,
     Scheduler,
     SessionBuilder,
     TaskRunner,
@@ -47,7 +47,7 @@ def build_machine(
     known_runtimes: dict[str, str],
     settings: Settings,
     on_get_node: OnGetNode,
-) -> RuntimeHost:
+) -> RuntimeManager:
 
     # ---------------
     # --- ROUTING ---
@@ -109,7 +109,7 @@ def build_machine(
         remote: str | None = None,
     ):
         if remote:
-            conn = RuntimeConnection(url=host.resolve_runtime(remote))
+            conn = RuntimeConnection(url=manager.resolve_runtime(remote))
 
             async def on_remote_done():
                 session.push_event(Scope.SESSION, channel, Event(payload=None))
@@ -165,7 +165,7 @@ def build_machine(
     # -----------------
 
     async def flow_complete(flow: Flow, session: Session) -> None:
-        await host.flow_complete(flow, session)
+        await manager.flow_complete(flow, session)
 
     scheduler = Scheduler(
         platform=platform,
@@ -239,7 +239,7 @@ def build_machine(
     # --- HOSTING ---
     # ---------------
 
-    host = RuntimeHost(
+    manager = RuntimeManager(
         on_schedule=scheduler.run,
         on_create_runner=create_runner,
         on_get_session=session_builder.create,
@@ -248,7 +248,7 @@ def build_machine(
         info=resolve_runtime_info(),
     )
 
-    return host
+    return manager
 
 
 # ----------------------------------
