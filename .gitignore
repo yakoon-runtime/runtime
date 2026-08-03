@@ -31,3 +31,4 @@ coverage/
 evolution.log.yak/
 evolution.log
 .yak/
+!**/structure/**/.yak/
