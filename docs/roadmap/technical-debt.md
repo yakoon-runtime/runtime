@@ -123,9 +123,11 @@
       a complete, unwired alternative patch format (`PatchFormat.FASTPATCH`
       exists in the model) kept as a future option for switching the flat-entity
       write path. Revisit either when a consumer needs it.
-- [ ] **E4 — `flow/policies/` fragmentation + German UI strings**
-      one tiny class per file; error messages hardcoded German in an API
-      library. Merge into one module; make messages English/parametrized.
+- [x] **E4 — `flow/policies/` fragmentation + German UI strings**
+      nine one-class files merged into a single `flow/policies.py`; error
+      messages translated to English; `DatePolicy` (defined but unexported) is
+      now part of the public exports; a wrong `from ValidationError` exception
+      cause in `FloatPolicy` fixed to `from ValueError`.
 - [x] **E5 — `percept/` in the wrong layer**
       Closed as by design: the typewriter animation is shared infrastructure —
       it will be used by both the console and the future `texture` app, so it
