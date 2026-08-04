@@ -102,20 +102,15 @@
 
 ## E. Over-engineering
 
-- [ ] **E1 — Manual Python document model**
-      The YDS specification is already canonical, and a generator already
-      emits the document model classes into
-      `sdk/y5n-sdk-python/src/y5n/sdk/models.py` (36 classes, `generate.sh`).
-      Per ADR-11 ("Transport is untyped. SDK is typed."), the wire layer owns
-      no document types: `DocumentEvent` carries data only, and every typed
-      model lives in the generated SDK model. Implementation order:
-      1. add `from_dict()` to the generator (making `to_dict()`/`from_dict()`
-         symmetric and the SDK complete),
-      2. remove the hand-written `api/document/model/inline.py` +
-         `DocumentHeader` + the `wire/deserialize.py` decoder
-         (`INLINE_TYPES` / `_reconstruct_inlines`),
-      3. switch the shell to `sdk.models` via `from_dict()`.
-      This also removes the `error_kind` drift between compiler and spec.
+- [x] **E1 — Manual Python document model**
+      Resolved via ADR-11 ("Transport is untyped. SDK is typed."). The wire
+      layer owns no document types: `DocumentEvent` carries data only
+      (`header: dict`), the `DocumentHeader`/`Inline*` dataclasses and the
+      hand-written decoder are gone, and the shell renders through
+      `sdk.models` (`inline_from_dict` / `block_from_dict` generated from YDS).
+      `to_text` became the DSL-internal `_text_document`; `io` builds text
+      documents from `sdk.models`. Phase 4 (whether the compiler's mappers can
+      eventually emit the generated model directly) is deliberately deferred.
 - [x] **E2 — Dispatcher rewrite**
       `document/transport/dispatcher.py` 367 → 273 lines: recursive
       `emit_block` replaced with explicit stack-based traversal (with finish
