@@ -33,8 +33,8 @@ class WebSocketServerTransport:
 
         session = await self._host.connect(connection)
 
-        # Sende "done" über WS wenn ein Flow auf diesem Host
-        # komplettiert wird.
+        # Send "done" over WS when a flow on this host
+        # completes.
         async def session_done():
             await websocket.send(json.dumps({"type": "done"}))
 

@@ -78,8 +78,8 @@ class IndexSpec:
     unique: bool = False
     retention_days: int | None = None  # optional: if index data has its own TTL
 
-    # TODO: Nachdenke, ob wir index sharding verwenden. um statt
-    # 1 Bucket -> 100000 Records 16 Buckets -> je ~6000 Records zu erhalten.
+    # TODO: consider index sharding — instead of 1 bucket of ~100000 records,
+    # use 16 buckets of ~6000 records each.
     shard_count: int | None = 1
 
 
@@ -102,7 +102,6 @@ class SnapshotHint(StrEnum):
     NONE = "none"
     AUTO = "auto"  # let store policy decide
     COMMIT = "commit"  # business boundary (CommandFinished / InputCompleted)
-    FORCE = "force"  # always write a snapshot
 
 
 @dataclass(frozen=True, slots=True)

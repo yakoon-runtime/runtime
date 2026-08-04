@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
-from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Any, Literal
 
@@ -15,6 +14,7 @@ from ...models import (
     IndexValue,
     PatchFormat,
     RevisionRow,
+    SnapshotRow,
     ValueType,
 )
 from ...models.mode import ScanMode
@@ -61,17 +61,6 @@ class PostgresBackend:
     async def shutdown(self):
         if self.pool:
             await self.pool.close()
-
-    # ----------------------------
-    # TRANSACTION
-    # ----------------------------
-
-    @asynccontextmanager
-    async def transaction(self):
-        assert self.pool, "PostgresBackend not initialized"
-        async with self.pool.acquire() as conn:
-            async with conn.transaction():
-                yield self.bind(conn)
 
     def exec(self):
         return _PoolExec(self)
@@ -248,14 +237,68 @@ class _PostgresExec:
         ]
 
     # ----------------------------
-    # SNAPSHOT (minimal stub)
+    # SNAPSHOT
     # ----------------------------
 
-    async def load_snapshot_at_or_before(self, **kwargs):
-        return None
+    async def load_snapshot_at_or_before(
+        self,
+        *,
+        domain_id,
+        kind_id,
+        space_id,
+        entity_id,
+        ts_lte,
+    ) -> SnapshotRow | None:
+        row = await self.conn.fetchrow(
+            """
+            SELECT rev, data, ts
+            FROM snapshots
+            WHERE domain=$1 AND kind=$2 AND space=$3 AND entity_id=$4 AND ts <= $5
+            ORDER BY ts DESC
+            LIMIT 1
+            """,
+            str(domain_id),
+            str(kind_id),
+            str(space_id),
+            str(entity_id),
+            ts_lte,
+        )
 
-    async def write_snapshot(self, **kwargs):
-        return None
+        if not row:
+            return None
+
+        data = json.loads(row["data"]) if isinstance(row["data"], str) else row["data"]
+        return SnapshotRow(
+            entity_id=entity_id,
+            rev=row["rev"],
+            ts=row["ts"],
+            data=data,
+        )
+
+    async def write_snapshot(
+        self,
+        *,
+        domain_id,
+        kind_id,
+        space_id,
+        entity_id,
+        rev,
+        ts,
+        data,
+    ) -> None:
+        await self.conn.execute(
+            """
+            INSERT INTO snapshots(domain, kind, space, entity_id, rev, data, ts)
+            VALUES ($1,$2,$3,$4,$5,$6,$7)
+            """,
+            str(domain_id),
+            str(kind_id),
+            str(space_id),
+            str(entity_id),
+            rev,
+            json.dumps(data),
+            ts,
+        )
 
     # ----------------------------
     # INDEX
@@ -365,7 +408,7 @@ class _PostgresExec:
         limit,
         as_of,
     ):
-        params = [
+        params: list[object] = [
             str(domain_id),
             str(kind_id),
             str(space_id),
@@ -439,7 +482,7 @@ class _PostgresExec:
         specs = {r["key"]: ValueType(r["value_type"]) for r in rows}
 
         conditions: list[str] = []
-        params: list[str] = []
+        params: list[object] = []
         idx = 4  # first 3 params are domain, kind, space
 
         for term in terms:
@@ -505,12 +548,6 @@ class _PostgresExec:
     # GC (stub)
     # ----------------------------
 
-    async def gc(self, **kwargs):
-        return None
-
-    async def gc_global(self, **kwargs):
-        return None
-
 
 class _PoolExec:
     def __init__(self, backend):
@@ -552,12 +589,6 @@ class _PoolExec:
 
     async def query_index(self, **kwargs):
         return await self._run("query_index", **kwargs)
-
-    async def gc(self, **kwargs):
-        return await self._run("gc", **kwargs)
-
-    async def gc_global(self, **kwargs):
-        return await self._run("gc_global", **kwargs)
 
     async def load_snapshot_at_or_before(self, **kwargs):
         return await self._run("load_snapshot_at_or_before", **kwargs)

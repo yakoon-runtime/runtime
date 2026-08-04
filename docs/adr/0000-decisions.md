@@ -5,6 +5,28 @@
 
 ---
 
+## 2026-08-03 — One Responsibility per Layer
+
+Almost every architecture decision reduces to one principle: **each layer owns
+exactly one responsibility.** Ownership First is its general form. If a layer
+holds knowledge that belongs to another layer, the design is unfinished.
+
+**The recurring assignments:**
+
+```
+Node declares → Pack provides → Host interprets → Runtime coordinates
+Wire transports → SDK models → Compiler produces → Client decides
+```
+
+- The **node** declares, the **host** interprets — the runtime only coordinates
+- The **wire** transports untyped data, the **SDK** owns the typed model
+  (ADR-11) — a lower layer never owns what an upper layer owns
+- The developer works against `sdk.models`, never against the wire
+
+**Recurring questions, one answer:** who owns it? Resources → pack, resolve →
+host, description → node, coordination → runtime, typing → SDK, transport →
+wire. When the answer is clear, the code is simple.
+
 ## 2026-08-03 — Ownership First
 
 The architectural question is not *"how do we build this?"* but **"who owns this?"**. Every capability, piece of state, or decision has exactly one owner. If you cannot name the owner, the design is unfinished — and that is precisely when code becomes complicated.

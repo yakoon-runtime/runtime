@@ -40,22 +40,6 @@ class CommandEngine:
     # PUBLIC API
     # ----------------------------------------------------
 
-    async def setup(self, session: Session, node: Node) -> Flow | None:
-
-        if not node.has_setup():
-            return None
-
-        flow = Flow(
-            id=session.next_flow_id(),
-            node=node,
-            event=Event(payload=node.key),
-            cursor=FlowCursor("setup"),
-            kind=self.DEFAULT_FLOW_KIND,
-        )
-
-        session.add_flow(flow)
-        return flow
-
     async def dispatch(self, session: Session, event: Event) -> Flow | None:
 
         node: Node | None = None
@@ -134,7 +118,7 @@ class CommandEngine:
                 return None
 
             # ----------------------------------
-            # 3. OUTCOME direkt
+            # 3. OUTCOME directly
             # ----------------------------------
             assert isinstance(item, Pulse)
             pulse = item
@@ -152,7 +136,7 @@ class CommandEngine:
                 await self._on_apply_effects(pulse.effects, session, flow)
 
             # ----------------------------------
-            # 6. CONTROL (Scheduler übernimmt)
+            # 6. CONTROL (scheduler takes over)
             # ----------------------------------
             if pulse.control is not None:
                 return pulse

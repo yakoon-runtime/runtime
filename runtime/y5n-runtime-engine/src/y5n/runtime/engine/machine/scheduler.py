@@ -22,6 +22,8 @@ from y5n.runtime.api.runtime import Event, InputContext
 from y5n.runtime.engine.flow import Flow, FlowKind
 from y5n.runtime.engine.runtime import Session
 
+from .ports import OnAuditWarning
+
 
 class Scheduler:
     """Cooperative async scheduler for flows.
@@ -33,7 +35,7 @@ class Scheduler:
 
     # PULSE
     # --------------------------------------------------------
-    MAX_STEPS_PER_CYCLE = 20  # konservativ
+    MAX_STEPS_PER_CYCLE = 20  # conservative
     MAX_TIME_PER_CYCLE = 0.01  # 10 ms
     MAX_ITERATIONS = 1000
 
@@ -44,7 +46,6 @@ class Scheduler:
     def __init__(
         self,
         platform: Node,
-        on_setup: OnSetup,
         on_dispatch: OnDispatch,
         on_step_flow: OnStepFlow,
         on_show_projection: OnShowDocument,
@@ -55,7 +56,6 @@ class Scheduler:
         self.platform = platform
 
         # Hooks
-        self.on_setup = on_setup
         self.on_dispatch = on_dispatch
         self.on_step_flow = on_step_flow
         self.on_show_projection = on_show_projection
@@ -74,9 +74,6 @@ class Scheduler:
     # --------------------------------------------------------
     # Public API
     # --------------------------------------------------------
-
-    async def setup(self, session: Session, node: Node):
-        await self._call_runtime(session, None, self.on_setup, node=node)
 
     async def dispatch(self, session: Session, event: Event):
         await self._call_runtime(session, event.context, self.on_dispatch, event=event)
@@ -295,15 +292,15 @@ class Scheduler:
         flow.control = control
 
         # ----------------------------------
-        # 2. Verhalten
+        # 2. Behavior
         # ----------------------------------
 
         if isinstance(control, Control):
             await control.on_enter(flow, self, session)
 
             # ----------------------------------
-            # 3. Parent wecken (Document liegt
-            #    bereits im Channel)
+            # 3. Wake parent (document already
+            #    in the channel)
             # ----------------------------------
             if isinstance(control, Stop):
                 if flow.out_channel:
@@ -361,16 +358,8 @@ class OnDispatch(Protocol):
     async def __call__(self, *, session: Session, event: Event) -> Flow | None: ...
 
 
-class OnSetup(Protocol):
-    async def __call__(self, *, session: Session, node: Node) -> Flow | None: ...
-
-
 class OnStepFlow(Protocol):
     async def __call__(self, *, flow: Flow, session: Session) -> Pulse | None: ...
-
-
-class OnAuditWarning(Protocol):
-    def __call__(self, *, message: str, session: Session) -> None: ...
 
 
 class OnShowDocument(Protocol):

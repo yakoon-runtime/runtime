@@ -51,6 +51,10 @@ async def resolve(node, capability: str, parameters: dict | None = None):
         raise LookupError(f"node '{node.key}' has no '{capability}' resource")
     if isinstance(variant, dict):
         expr = variant.get("ref")
+        if not isinstance(expr, str):
+            raise LookupError(
+                f"node '{node.key}' has no ref expression for '{capability}'"
+            )
         merged = {**(variant.get("parameters") or {}), **(parameters or {})}
     else:
         expr = variant
@@ -127,7 +131,7 @@ def _coerce_resource(result):
 
 
 async def run(space: NodeSpace):
-    target_path = space.request.arg(0) if space.request else None
+    target_path = str(space.path) if space.path else None
     if not target_path:
         yield out_text("Usage: python/runtime <tree-path>")
         return

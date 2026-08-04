@@ -158,7 +158,7 @@ class NodePorts:
     # ----------------------------------
 
     def mount(self, parent: NodePorts) -> None:
-        """Mountes the local hierarchy to a parent runtime scope.
+        """Mount the local hierarchy to a parent runtime scope.
 
         The existing local scope chain remains intact while
         extending hierarchical lookup into the parent runtime.

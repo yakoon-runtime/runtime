@@ -22,8 +22,8 @@ class NodeSpace:
     """
 
     path: NodePath
-    request: Request
-    session: Session
+    request: Request | None
+    session: Session | None
     ports: NodePorts
     ports_from: PortsFromHandler
     resources: dict[str, dict[str, Any]] | None = None

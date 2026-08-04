@@ -1,4 +1,4 @@
-from y5n.runtime.api.document import DocumentEvent, DocumentHeader
+from y5n.runtime.api.document import DocumentEvent
 from y5n.runtime.api.document.transfer import Patch, PatchOp, PatchReset
 from y5n.runtime.api.runtime import InputContext
 
@@ -7,7 +7,7 @@ class EventFactory:
 
     def begin_event(
         self,
-        header: DocumentHeader,
+        header: dict,
         *,
         vid: str,
         ctx: InputContext | None,

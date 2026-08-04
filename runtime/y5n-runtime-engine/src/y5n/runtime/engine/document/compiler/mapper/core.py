@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import uuid
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 
 from ..nodes import ElementNode, Node, TextNode
-from .resolver import BlockResolver
 
 BlockMapper = Callable[["Mapper", ElementNode], dict]
 InlineMapper = Callable[["Mapper", ElementNode], dict]
@@ -12,10 +10,9 @@ InlineMapper = Callable[["Mapper", ElementNode], dict]
 
 class Mapper:
 
-    def __init__(self, resolvers: Mapping[str, BlockResolver]):
+    def __init__(self):
         self._block_mappers: dict[str, BlockMapper] = {}
         self._inline_mappers: dict[str, InlineMapper] = {}
-        self._resolvers = resolvers
 
     # -----------------
     # REGISTRATION
@@ -54,12 +51,7 @@ class Mapper:
             header = self._default_header()
 
         blocks = self._map_nodes(content_nodes)
-        result = _blocks_to_dict(header, blocks)
-        # Drop temporary AST references early.
-        # The returned document only needs `result`.
-        # free temp references so CPython can reclaim AST nodes earlier
-        del blocks, header, content_nodes
-        return result
+        return _blocks_to_dict(header, blocks)
 
     # -----------------
     # HEADER
@@ -77,7 +69,7 @@ class Mapper:
             raise ValueError(f"Invalid role: {role}")
 
         error_kind = node.attrs.get("error_kind")
-        if error_kind not in (None, "validation", "system"):
+        if error_kind not in (None, "validation", "domain", "system", "fatal"):
             raise ValueError(f"Invalid error_kind: {error_kind}")
 
         return {
@@ -118,15 +110,7 @@ class Mapper:
             if not handler:
                 raise ValueError(f"Unknown block tag: {node.tag}")
 
-            block = handler(self, node)
-
-            if self._resolvers:
-                block_type = block.get("type", "")
-                resolver = self._resolvers.get(block_type)
-                if resolver:
-                    block = resolver.resolve(block)
-
-            blocks.append(block)
+            blocks.append(handler(self, node))
 
         if buffer:
             blocks.append(self._flush_text(buffer))
@@ -176,7 +160,6 @@ class Mapper:
 def _blocks_to_dict(header: dict, blocks: list[dict]) -> dict:
     return {
         "kind": "document",
-        "id": f"doc.{uuid.uuid4().hex}",
         "header": header,
         "blocks": blocks,
     }

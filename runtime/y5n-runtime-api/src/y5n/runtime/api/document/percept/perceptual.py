@@ -1,7 +1,6 @@
 import random
 from collections import deque
 
-from .profiler import StreamProfiler
 from .types import FinishEvent, StreamEvent, StreamEventType, TextEvent
 
 
@@ -43,22 +42,6 @@ class PerceptualStream:
 
         self._first = True
         self._sleep = 0.0
-
-        self._profiler = StreamProfiler()
-
-    # -------------------------------------------------
-    # profiler control
-    # -------------------------------------------------
-
-    def enable_profiler(self):
-        self._profiler.enabled = True
-        self._profiler.reset()
-
-    def disable_profiler(self):
-        self._profiler.enabled = False
-
-    def profiler_stats(self):
-        return self._profiler.stats()
 
     # -------------------------------------------------
     # API used by ConsoleOutput
@@ -121,9 +104,6 @@ class PerceptualStream:
         if self._sleep > 0:
             self._sleep -= dt
 
-            if self._profiler.enabled:
-                self._profiler.sleep(dt)
-
             return
 
         processed = 0
@@ -140,9 +120,6 @@ class PerceptualStream:
 
                 self._handle_finish(event)
 
-                if self._profiler.enabled:
-                    self._profiler.event()
-
                 processed += 1
 
                 continue
@@ -154,9 +131,6 @@ class PerceptualStream:
             if isinstance(event, TextEvent):
 
                 should_pause = self._handle_text(event)
-
-                if self._profiler.enabled:
-                    self._profiler.event()
 
                 processed += 1
 
@@ -231,9 +205,6 @@ class PerceptualStream:
         event.pos = new_pos
 
         self._on_text(node_id, key, chunk)
-
-        if self._profiler.enabled:
-            self._profiler.chunk(len(chunk))
 
         return self._apply_pacing(chunk)
 

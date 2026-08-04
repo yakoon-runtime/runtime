@@ -8,6 +8,9 @@
 #  Defaults:
 #    input   = sdk/spec/yds/yds-v1.yaml
 #    output  = sdk/y5n-sdk-python/src/y5n/sdk/models.py
+#
+#  Uses the project venv python so the installed y5n-sdk-python generator is
+#  the one in this repo (not a stale system copy), then formats the output.
 # -----------------------------------------------------------------------------
 
 set -euo pipefail
@@ -27,11 +30,20 @@ if [[ "$OUTPUT" != /* ]]; then
     OUTPUT="$PROJECT_ROOT/$OUTPUT"
 fi
 
+PYTHON="${YAKOON_PYTHON:-$PROJECT_ROOT/.venv/bin/python}"
+if [[ ! -x "$PYTHON" ]]; then
+    PYTHON="python3"
+fi
+
 echo "Generating from: $INPUT"
 echo "Writing to:      $OUTPUT"
 
-python3 -m y5n.sdk.gen \
+"$PYTHON" -m y5n.sdk.gen \
     --input "$INPUT" \
     --output "$OUTPUT"
+
+if "$PYTHON" -m black --version >/dev/null 2>&1; then
+    "$PYTHON" -m black "$OUTPUT" -q
+fi
 
 echo "Done."
