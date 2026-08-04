@@ -1,22 +1,5 @@
-from typing import Any
-
 from y5n.runtime.api.document import DocumentEvent
 from y5n.runtime.api.document.model.header import DocumentHeader
-from y5n.runtime.api.document.model.inline import (
-    Inline,
-    InlineArg,
-    InlineBreak,
-    InlineCmd,
-    InlineCode,
-    InlineEm,
-    InlineLink,
-    InlineMark,
-    InlineSelect,
-    InlineSpace,
-    InlineStrong,
-    InlineText,
-    InlineUnderline,
-)
 from y5n.runtime.api.document.transfer import (
     DocumentState,
     Patch,
@@ -120,58 +103,10 @@ def _deserialize_op(data: dict):
 
 
 def _deserialize_node(data: dict) -> dict:
-    props = _reconstruct_inlines(data.get("props", {}))
     return {
         "id": data["id"],
         "type": data["type"],
         "parent": data.get("parent"),
         "depth": data.get("depth", 0),
-        "props": props,
+        "props": data.get("props", {}),
     }
-
-
-INLINE_TYPES = {
-    "text": InlineText,
-    "code": InlineCode,
-    "strong": InlineStrong,
-    "em": InlineEm,
-    "underline": InlineUnderline,
-    "link": InlineLink,
-    "arg": InlineArg,
-    "mark": InlineMark,
-    "cmd": InlineCmd,
-    "select": InlineSelect,
-    "break": InlineBreak,
-    "space": InlineSpace,
-}
-
-
-def _reconstruct_inlines(value: Any) -> Any:
-    if isinstance(value, list):
-        return [_reconstruct_inlines(v) for v in value]
-    if isinstance(value, dict):
-        if "type" in value and value["type"] in INLINE_TYPES:
-            return _dict_to_inline(value)
-        return {k: _reconstruct_inlines(v) for k, v in value.items()}
-    return value
-
-
-def _dict_to_inline(data: dict) -> Inline:
-    cls = INLINE_TYPES[data["type"]]
-    kwargs = {}
-    for field in cls.__dataclass_fields__:
-        if field == "type":
-            continue
-        raw = data.get(field)
-        if field == "children" and isinstance(raw, list):
-            kwargs[field] = [
-                (
-                    _dict_to_inline(c)
-                    if isinstance(c, dict) and "type" in INLINE_TYPES
-                    else _reconstruct_inlines(c)
-                )
-                for c in raw
-            ]
-        else:
-            kwargs[field] = raw
-    return cls(**kwargs)
