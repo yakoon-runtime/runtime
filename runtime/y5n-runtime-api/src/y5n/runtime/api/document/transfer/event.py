@@ -5,7 +5,6 @@ from typing import Literal
 
 from y5n.runtime.api.runtime.input.context import InputContext
 
-from ..model import DocumentHeader
 from .patch import Patch
 
 
@@ -31,13 +30,10 @@ class DocumentEvent:
 
     kind: Literal["view_event"] = "view_event"
     id: str = ""
-    header: DocumentHeader | None = None
+    header: dict | None = None
     ctx: InputContext | None = None
     state: DocumentState | None = None
 
     job_id: str = "system"
     view_params: dict | None = None
     patch: Patch = field(default_factory=Patch)
-
-    def is_final(self) -> bool:
-        return self.patch.final

@@ -1,6 +1,11 @@
 # Roadmap
 
 ## Phase A ✅ — Core hardening
+
+### Technical debt
+
+See [technical-debt.md](technical-debt.md) — working list of correctness
+issues, dead code, and simplification opportunities in `runtime/`.
 ## Phase B ✅ — Distribution  
 ## Phase C ✅ — Launcher (Self-hosting)
 ## Phase D 🚧 — Platform completion
@@ -31,6 +36,13 @@ Add tests that cover the complete flow end-to-end (not just isolated components)
 - Sync consistency: environment ↔ workspace ↔ scanner agreement on paths
 
 Key invariant for every test: **the Tree scanner must find all mounted commands**.
+
+### TODO: Postgres store backend tests
+
+The postgres event backend is untested (CI never installs asyncpg) and had a
+latent `params` type bug (fixed). Add `asyncpg`-based contract tests covering
+the store surface: append/replace/delete, revisions, snapshots, indexes, and
+scan — mirroring `tests/event/test_contracts.py` for the memory backend.
 
 ## Phase E 🌱 — Ecosystem validation
 

@@ -31,7 +31,11 @@ def map_table(mapper, node):
                     text = cell.text.strip()
                     if text:
                         row.append(text)
-                elif isinstance(cell, ElementNode) and cell.tag == "cell":
+                    continue
+
+                assert isinstance(cell, ElementNode)
+
+                if cell.tag == "cell":
                     row.append(_extract_text(cell))
                 else:
                     raise ValueError(

@@ -1,6 +1,6 @@
-title: Process Host
+title: Boot
 
 resolvable: true
+navigable: true
 contextual: false
 expose: false
-navigable: false

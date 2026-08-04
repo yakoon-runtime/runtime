@@ -102,22 +102,22 @@ async def test_multiple_session_receivers(harness):
     await harness.run_until_blocked(flow_a)
     await harness.run_until_blocked(flow_b)
 
-    # Ein Event auf den SESSION-Channel → beide sehen Mail,
-    # aber nur einer kriegt das Event beim Pop
+    # One event on the SESSION channel → both see the mail,
+    # but only one gets the event on pop
     harness.send_session("shared", "one")
 
     assert flow_a.control.is_runnable(flow_a, harness.session)
     assert flow_b.control.is_runnable(flow_b, harness.session)
 
-    # Flow A poppt das Event und läuft durch
+    # Flow A pops the event and continues
     pulse = await harness.run_until_blocked(flow_a)
     assert isinstance(pulse.control, Stop)
     assert received == [("a", "one")]
 
-    # Flow B poppt None → ist wieder blockiert
+    # Flow B pops None → blocked again
     assert not flow_b.control.is_runnable(flow_b, harness.session)
 
-    # Zweites Event → jetzt kriegt Flow B es
+    # Second event → now Flow B gets it
     harness.send_session("shared", "two")
     pulse = await harness.run_until_blocked(flow_b)
     assert isinstance(pulse.control, Stop)
@@ -144,20 +144,20 @@ async def test_schedule_waiting_wakes_flow(harness):
     assert isinstance(pulse.control, AwaitEvent)
     assert pulse.control.scope == Scope.SESSION
 
-    # Flow blockiert — simuliere Zustand nach scheduler.run()-Pop
+    # Flow blocked — simulate the state after scheduler.run() pop
     flow.scheduled = False
     assert not flow.scheduled
 
-    # Event im Channel → Flow ist rüstig, aber noch nicht scheduled
+    # Event in the channel → flow is ready but not yet scheduled
     harness.send_session("wake_ch", "hello")
     assert flow.control.is_runnable(flow, harness.session)
     assert not flow.scheduled
 
-    # _schedule_waiting weckt passende Flows
+    # _schedule_waiting wakes matching flows
     harness.scheduler._schedule_waiting(harness.session, "wake_ch")
     assert flow.scheduled
 
-    # Flow verarbeitet das Event
+    # Flow processes the event
     pulse = await harness.run_until_blocked(flow)
     assert isinstance(pulse.control, Stop)
     assert received == ["hello"]

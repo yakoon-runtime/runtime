@@ -1,6 +1,6 @@
 """Adapter: session.* ports for the Runtime Bus.
 
-Converts SDK-style calls into internal host operations:
+Converts SDK-style calls into internal manager operations:
 
 * ``attach(target_key=..., session_key=...)``
 * ``detach(session_key=...)``
@@ -29,30 +29,30 @@ class SessionAdapter:
 
     def __init__(
         self,
-        host,
+        manager,
         on_save: Callable[..., Awaitable[None]] | None = None,
     ) -> None:
-        self._host = host
+        self._manager = manager
         self._on_save = on_save
 
     async def attach(self, call: Call, *, session_key: str, target_key: str) -> None:
-        runner = self._host._sessions.get(Key.from_str(session_key))
+        runner = self._manager._sessions.get(Key.from_str(session_key))
         if runner is None:
             raise RuntimeError(f"Session {session_key} not found")
-        await self._host.attach_session(runner.session, target_key)
+        await self._manager.attach_session(runner.session, target_key)
 
     async def detach(self, call: Call, *, session_key: str) -> None:
-        runner = self._host._sessions.get(Key.from_str(session_key))
+        runner = self._manager._sessions.get(Key.from_str(session_key))
         if runner is None:
             raise RuntimeError(f"Session {session_key} not found")
-        await self._host.detach_session(runner.session)
+        await self._manager.detach_session(runner.session)
 
     async def logout(self, call: Call) -> None:
         session_key = call.caller_session_key
         if not session_key:
             raise RuntimeError("caller_session_key is required")
 
-        runner = self._host._sessions.get(Key.from_str(session_key))
+        runner = self._manager._sessions.get(Key.from_str(session_key))
         if runner is None:
             raise RuntimeError(f"Session {session_key} not found")
 
@@ -65,7 +65,7 @@ class SessionAdapter:
         if not session_key:
             raise RuntimeError("caller_session_key is required")
 
-        runner = self._host._sessions.get(Key.from_str(session_key))
+        runner = self._manager._sessions.get(Key.from_str(session_key))
         if runner is None:
             raise RuntimeError(f"Session {session_key} not found")
 

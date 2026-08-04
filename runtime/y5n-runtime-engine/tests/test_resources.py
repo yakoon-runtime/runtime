@@ -387,7 +387,11 @@ class FakeProjector:
         return f"<{template}>"
 
     def on_compile(self, text: str, context: dict) -> dict:
-        return {"kind": "document", "id": "doc", "text": text}
+        return {
+            "kind": "document",
+            "header": {"role": "info"},
+            "blocks": [{"type": "text", "text": [{"type": "text", "text": text}]}],
+        }
 
 
 @pytest.mark.asyncio
@@ -434,4 +438,5 @@ async def test_document_adapter_dispatches(tmp_path: Path):
         caller_session_key="session-1",
     )
     result = json.loads(await adapter.render(call))
-    assert result["text"] == "<hello>"
+    assert result["blocks"][0]["text"][0]["text"] == "<hello>"
+    assert result["id"]  # normalize stamps the document id

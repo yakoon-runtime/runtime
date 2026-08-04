@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import json
 from collections import defaultdict
@@ -9,6 +10,7 @@ from typing import Literal, Protocol
 
 from y5n.runtime.api.naming import Key, Namespace
 
+from .batches.json_patch import JsonPatchStrategy
 from .models import (
     CurrentRow,
     DomainId,
@@ -24,7 +26,6 @@ from .models import (
     PatchFormat,
     PatchStrategy,
     PutResult,
-    RetentionPolicy,
     RevisionRow,
     ScanCursor,
     ScanMode,
@@ -52,8 +53,6 @@ class EntityStore:
         on_index_replace_terms: OnIndexReplaceTerms,
         on_index_scan: OnIndexScan,
         on_query_index: OnQueryIndex,
-        on_gc: OnGC,
-        on_gc_global: OnGCGlobal,
         writer: PatchStrategy,
         readers: Mapping[PatchFormat, PatchStrategy],
     ):
@@ -72,15 +71,15 @@ class EntityStore:
         self.on_index_scan = on_index_scan
         self.on_query_index = on_query_index
 
-        self.on_gc = on_gc
-        self.on_gc_global = on_gc_global
-
         self._writer = writer
         self._readers = dict(readers)
         self._readers.setdefault(writer.format, writer)
 
         self._snap = SnapshotPolicy()
-        self._enable_revisions = True
+
+        # Serializes read-check-write sequences (append/replace/delete) so
+        # concurrent mutations of the same entity cannot interleave.
+        self._write_lock = asyncio.Lock()
 
     # ----------------------------
     # Index
@@ -99,6 +98,26 @@ class EntityStore:
     # ----------------------------
 
     async def append(
+        self,
+        *,
+        key: Key,
+        patch: JsonValue,
+        indexes: Sequence[IndexTerm] = (),
+        snapshot_hint: SnapshotHint = SnapshotHint.AUTO,
+        meta: Mapping[str, object] | None = None,
+        expected_rev: int | None = None,
+    ) -> PutResult:
+        async with self._write_lock:
+            return await self._append(
+                key=key,
+                patch=patch,
+                indexes=indexes,
+                snapshot_hint=snapshot_hint,
+                meta=meta,
+                expected_rev=expected_rev,
+            )
+
+    async def _append(
         self,
         *,
         key: Key,
@@ -142,17 +161,16 @@ class EntityStore:
         new_state = strat.apply(current=cur_state, patch=patch)
         new_rev = cur_rev + 1
 
-        if self._enable_revisions:
-            await self.on_append_revision(
-                domain_id=d,
-                kind_id=k,
-                space_id=s,
-                entity_id=eid,
-                rev=new_rev,
-                ts=now,
-                patch_format=self._writer.format,
-                patch=patch,
-            )
+        await self.on_append_revision(
+            domain_id=d,
+            kind_id=k,
+            space_id=s,
+            entity_id=eid,
+            rev=new_rev,
+            ts=now,
+            patch_format=self._writer.format,
+            patch=patch,
+        )
 
         await self.on_upsert_current(
             domain_id=d,
@@ -214,20 +232,21 @@ class EntityStore:
         expected_rev: int | None = None,
     ) -> PutResult:
 
-        row = await self.get(key=key)
+        async with self._write_lock:
+            row = await self.get(key=key)
 
-        patch = self._writer.create_full_replace(
-            current=row.data if row else None,
-            new_doc=doc,
-        )
+            patch = self._writer.create_full_replace(
+                current=row.data if row else None,
+                new_doc=doc,
+            )
 
-        return await self.append(
-            key=key,
-            patch=patch,
-            indexes=indexes,
-            snapshot_hint=snapshot_hint,
-            expected_rev=expected_rev,
-        )
+            return await self._append(
+                key=key,
+                patch=patch,
+                indexes=indexes,
+                snapshot_hint=snapshot_hint,
+                expected_rev=expected_rev,
+            )
 
     # ----------------------------
     # DELETE (Tombstone)
@@ -240,27 +259,28 @@ class EntityStore:
         meta: Mapping[str, object] | None = None,
         expected_rev: int | None = None,
     ) -> PutResult:
-        patch = self._writer.create_tombstone()
-        result = await self.append(
-            key=key,
-            patch=patch,
-            indexes=(),  # don't update via append
-            meta=meta,
-            expected_rev=expected_rev,
-        )
-        d, k, s, eid = _dims_from_key(key)
-        await self.on_index_replace_terms(
-            domain_id=d,
-            kind_id=k,
-            space_id=s,
-            entity_id=eid,
-            terms=[],
-            written_at=result.updated_at,
-        )
-        return result
+        async with self._write_lock:
+            patch = self._writer.create_tombstone()
+            result = await self._append(
+                key=key,
+                patch=patch,
+                indexes=(),  # don't update via append
+                meta=meta,
+                expected_rev=expected_rev,
+            )
+            d, k, s, eid = _dims_from_key(key)
+            await self.on_index_replace_terms(
+                domain_id=d,
+                kind_id=k,
+                space_id=s,
+                entity_id=eid,
+                terms=[],
+                written_at=result.updated_at,
+            )
+            return result
 
     # ----------------------------
-    # GET (inkl. Historie)
+    # GET (incl. history)
     # ----------------------------
 
     async def get(
@@ -318,7 +338,7 @@ class EntityStore:
         if snap is None:
             base_state = None
             base_rev = 0
-            last_rev = None  # WICHTIG (nicht 0!)
+            last_rev = None  # IMPORTANT (not 0!)
         else:
             base_state = snap.data
             base_rev = snap.rev
@@ -515,19 +535,6 @@ class EntityStore:
             for eid in entity_ids
         ]
         return keys, None
-
-    # ----------------------------
-    # GC
-    # ----------------------------
-
-    async def gc(self, *, namespace: Namespace, policy: RetentionPolicy):
-        d, k, s = _dims_from_namespace(namespace)
-        await self.on_gc(
-            domain_id=d, kind_id=k, space_id=s, policy=policy, now=_utc_now()
-        )
-
-    async def gc_global(self, *, policy: RetentionPolicy):
-        await self.on_gc_global(policy=policy)
 
     async def _should_snapshot(
         self,
@@ -778,17 +785,27 @@ class OnQueryIndex(Protocol):
     ) -> list[EntityId]: ...
 
 
-class OnGC(Protocol):
-    async def __call__(
-        self,
-        *,
-        domain_id: DomainId,
-        kind_id: KindId,
-        space_id: SpaceId,
-        policy: RetentionPolicy,
-        now: datetime,
-    ) -> None: ...
+def create_entity_store(exec) -> EntityStore:
+    """Wire an entity store onto a backend's exec object.
 
+    Shared by the memory and postgres store builders (and tests) so the
+    EntityStore construction is defined exactly once.
+    """
+    patch = JsonPatchStrategy(max_ops=50)
 
-class OnGCGlobal(Protocol):
-    async def __call__(self, *, policy: RetentionPolicy) -> None: ...
+    return EntityStore(
+        on_load_current=exec.load_current,
+        on_load_current_many=exec.load_current_many,
+        on_load_revisions=exec.load_revisions,
+        on_load_snapshot=exec.load_snapshot_at_or_before,
+        on_append_revision=exec.append_revision,
+        on_upsert_current=exec.upsert_current,
+        on_write_snapshot=exec.write_snapshot,
+        on_index_ensure=exec.index_ensure,
+        on_index_list=exec.index_list,
+        on_index_replace_terms=exec.index_replace_terms,
+        on_index_scan=exec.index_scan,
+        on_query_index=exec.query_index,
+        writer=patch,
+        readers={patch.format: patch},
+    )

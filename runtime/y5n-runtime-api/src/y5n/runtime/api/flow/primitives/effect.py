@@ -81,10 +81,6 @@ class StartTask(Effect):
     scope: Scope = Scope.SESSION
     kwargs: dict = field(default_factory=dict)
 
-    def __post_init__(self):
-        if not self.channel:
-            raise ValueError("channel must be a non-empty string")
-
     def __init__(
         self, command: str, channel: str, *, scope: Scope = Scope.SESSION, **kwargs
     ):
@@ -107,10 +103,6 @@ class StartCommand(Effect):
     command: str
     channel: str
     remote: str | None = None
-
-    def __post_init__(self):
-        if not self.channel:
-            raise ValueError("channel must be a non-empty string")
 
     def __init__(self, command: str, channel: str, remote: str | None = None):
         if not channel:

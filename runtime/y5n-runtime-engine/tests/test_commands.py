@@ -108,17 +108,17 @@ async def test_start_cmd_parses_tokens(harness, effect_executor):
     pulse = await harness.run_until_blocked(flow)
     assert isinstance(pulse.control, AwaitEvent)
 
-    # Sub-Flow wurde erzeugt mit korrekten Tokens
+    # Sub-flow was created with correct tokens
     assert created_flow is not None
     assert created_flow.tokens == ["--flag", "value"]
 
-    # Sub-Flow ausführen
+    # Run the sub-flow
     pulse = await harness.run_until_blocked(created_flow)
     assert isinstance(pulse.control, Stop)
 
     # Sub-Flow hat Tokens via ctx.request.args() erhalten
     assert received_tokens == [["--flag", "value"]]
 
-    # Parent wurde durch _schedule_waiting aufgeweckt
+    # The parent was woken by _schedule_waiting
     pulse = await harness.run_until_blocked(flow)
     assert isinstance(pulse.control, Stop)

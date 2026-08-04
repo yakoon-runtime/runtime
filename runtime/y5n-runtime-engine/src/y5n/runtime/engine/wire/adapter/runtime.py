@@ -18,14 +18,14 @@ from y5n.runtime.api.runtime.context import Call
 class RuntimeAdapter:
     """SDK-facing runtime.flows / runtime.background Port."""
 
-    def __init__(self, host) -> None:
-        self._host = host
+    def __init__(self, manager) -> None:
+        self._manager = manager
 
     def _resolve_session(self, call: Call):
         session_key = call.caller_session_key
         if not session_key:
             raise RuntimeError("caller_session_key is required")
-        runner = self._host._sessions.get(Key.from_str(session_key))
+        runner = self._manager._sessions.get(Key.from_str(session_key))
         if runner is None:
             raise RuntimeError(f"Session {session_key} not found")
         return runner.session

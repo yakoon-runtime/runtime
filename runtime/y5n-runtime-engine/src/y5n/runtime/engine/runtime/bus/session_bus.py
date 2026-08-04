@@ -1,4 +1,8 @@
+import logging
+
 from y5n.runtime.api.clients import ClientConnection
+
+logger = logging.getLogger(__name__)
 
 
 class SessionBus:
@@ -45,7 +49,7 @@ class SessionBus:
             try:
                 await client.emit(event)
             except Exception as e:
-                print(e)
+                logger.warning("client emit failed: %s", e)
                 dead.append(client)
 
         # cleanup broken clients

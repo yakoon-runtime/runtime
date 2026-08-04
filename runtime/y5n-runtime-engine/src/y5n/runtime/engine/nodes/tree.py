@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from y5n.runtime.api.nodes import Invocation, Node, Param, Request
+from y5n.runtime.api.nodes import Invocation, Node, Param
 from y5n.runtime.api.nodes.ports import NodePorts
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
@@ -237,6 +237,16 @@ class Tree:
             tree_path = f"/{rel_str}"
             parent_path = str(Path(tree_path).parent)
             parent = self._nodes.get(parent_path) or self._root
+
+            # An implicit intermediate node may already exist for this path
+            # (created while linking deeper bundles). Adopt its children so a
+            # bundle that is also a mount point keeps its subtree reachable.
+            existing = self._nodes.get(tree_path)
+            if existing is not None and existing is not node:
+                for key, child in existing.children.items():
+                    child.parent = node
+                    node.children[key] = child
+
             parent.mount(node)
             self._nodes[tree_path] = node
 
@@ -286,10 +296,10 @@ class Tree:
 
             space = NodeSpace(
                 path=node.path,
-                request=None,  # type: ignore
-                session=None,  # type: ignore
+                request=None,
+                session=None,
                 ports=node.ports,
-                ports_from=lambda: node.ports,  # type: ignore  # noqa: B023
+                ports_from=node.ports_from,
             )
             result = executor.run(node, Phase.SETUP, space)
             if result is not None:
@@ -425,47 +435,20 @@ def _make_handler(executor: Executor, node: Node, phase: Phase):
 def _make_host_handler(tree: Tree, node_key: str, host_path: str):
     """Replace node.run with a delegating handler that routes to a host.
 
-    The host node receives the original node's full tree path as its
-    first token (e.g. \"/labs/hosts/hello-py-server\"). The path is resolved
-    lazily at call time via the node's parent chain.
+    The runtime passes the target node's space unchanged — ``space.path`` is
+    the target. How the host addresses the node is the host's decision
+    (ADR-10); the runtime does not rewrite requests.
     """
-    from y5n.runtime.api.flow.dsl import Pulse
-
-    def _empty():
-        async def _noop():
-            yield Pulse()
-
-        return _noop()
+    from y5n.runtime.engine.flow.util import empty_flow
 
     def _run(space):
         host_node = tree.find(host_path)
         if host_node is None or not host_node.has_run():
-            return _empty()
+            return empty_flow()
         host_run = host_node.run
         if host_run is None:
-            return _empty()
-        # Compute full tree path from node's own parent chain
-        # (node.path walks parents, which only works after linking)
-        target_path = str(space.path)
-        cmd = target_path.rsplit("/", 1)[-1] if target_path else ""
-        modified = Request(
-            command=cmd,
-            tokens=[target_path]
-            + (list(space.request.args()) if space.request else []),
-            payload=None,
-            lang=space.session.lang if space.session else "",
-        )
-        modified_space = NodeSpace(
-            path=space.path,
-            request=modified,
-            session=space.session,
-            ports=space.ports,
-            ports_from=space.ports_from,
-            resources=space.resources,
-            fs_path=space.fs_path,
-            flow_id=space.flow_id,
-        )
-        return host_run(modified_space)
+            return empty_flow()
+        return host_run(space)
 
     return _run
 
@@ -473,26 +456,19 @@ def _make_host_handler(tree: Tree, node_key: str, host_path: str):
 def _make_resolve_handler(resolve_expr: str):
     """Build a node's resolve handler from a ``pack:<module>:<func>`` expression.
 
-    The handler receives the component node and capability name and delegates
-    to the declared resolve function — the host's interpretation (ADR-10).
+    This is bootstrap linking, not interpretation (ADR-10): the runtime loads
+    the host's declared resolve function so the host can interpret later
+    references. The function is loaded lazily on first call — no module import
+    at build time.
     """
+    from y5n.runtime.engine.bootstrap import PackReference
 
-    scheme, _, value = resolve_expr.partition(":")
-    if scheme != "pack":
-        raise ValueError(f"invalid resolve expression: {resolve_expr!r}")
-    mod_name, _, func_name = value.rpartition(":")
+    ref = PackReference(resolve_expr)
 
     async def _resolve(*, node, capability, parameters=None):
-        import importlib
         import inspect
 
-        try:
-            module = importlib.import_module(mod_name)
-        except ImportError as exc:
-            raise LookupError(f"cannot import module {mod_name!r}") from exc
-        fn = getattr(module, func_name, None)
-        if fn is None or not callable(fn):
-            raise LookupError(f"no resolve function {func_name!r} in {mod_name!r}")
+        fn = ref.load()
         result = fn(node=node, capability=capability, parameters=parameters or {})
         if inspect.isawaitable(result):
             return await result

@@ -11,6 +11,8 @@ from y5n.runtime.engine.runtime import (
     Session,
 )
 
+from .ports import OnSuggest
+
 
 class InvocationResolver:
     """Resolve command strings to Node targets.
@@ -268,18 +270,6 @@ class OnAuthorize(Protocol):
         session,
         perm_key: str,
     ) -> bool: ...
-
-
-class OnSuggest(Protocol):
-
-    def __call__(
-        self,
-        *,
-        value: str,
-        choices: list[str],
-        limit: int = 3,
-        cutoff: float = 0.5,
-    ) -> list[str]: ...
 
 
 class OnGetNode(Protocol):

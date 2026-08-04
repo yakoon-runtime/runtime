@@ -9,11 +9,12 @@ from y5n.runtime.api.naming.key import Key
 from y5n.runtime.api.runtime import RuntimeInfo
 from y5n.runtime.engine.runtime import Session
 
+from .ports import OnCreateRunner
 from .runner import Runner
 
 
-class RuntimeHost:
-    """Top-level runtime host.
+class RuntimeManager:
+    """Top-level runtime manager.
 
     Manages sessions, client connections, and the session lifecycle.
     A connection can subscribe to multiple sessions (observing their
@@ -46,8 +47,7 @@ class RuntimeHost:
         asyncio.create_task(self.on_flow_schedule())
 
     async def setup(self):
-        session = await self.on_get_session()
-        await self.on_setup(session)
+        await self.on_setup()
 
     def register_session_done(
         self, session_key: str, callback: Callable[[], Awaitable[None]]
@@ -181,9 +181,5 @@ class OnGetSession(Protocol):
     async def __call__(self) -> Session: ...
 
 
-class OnCreateRunner(Protocol):
-    def __call__(self, *, session) -> Runner: ...
-
-
 class OnSetup(Protocol):
-    async def __call__(self, session) -> None: ...
+    async def __call__(self) -> None: ...

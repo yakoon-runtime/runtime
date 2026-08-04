@@ -103,7 +103,7 @@ async def test_input_with_foreground_pushes_to_flow(harness):
     runner = _make_runner(harness)
     await runner.on_input(Event(payload="hello"))
 
-    # Der Foreground-Flow wurde aufgeweckt und läuft weiter
+    # The foreground flow was woken and keeps running
     pulse = await harness.run_until_blocked(fg)
     assert isinstance(pulse.control, Stop)
     assert received == ["hello"]

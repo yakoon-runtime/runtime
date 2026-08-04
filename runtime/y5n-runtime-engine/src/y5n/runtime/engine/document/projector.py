@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, Protocol
 
+from y5n.runtime.api.document.normalize import normalize
 from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.runtime.api.resources import ResourceRef
 from y5n.runtime.engine.resources.host import resolve_via_host
@@ -41,11 +42,7 @@ class Projector:
 
         text = self.on_render(resource=resource, context=state)
 
-        document = self.on_compile(text=text, context={})
-        if document.get("id") is None:
-            raise RuntimeError(
-                "Renderer returned a Document without id (parser invariant violated)"
-            )
+        document = normalize(self.on_compile(text=text, context={}))
 
         return document
 
@@ -63,11 +60,14 @@ class Projector:
         node = self._tree.find(str(space.path))
         if node is None:
             raise FileNotFoundError(f"Node not found: {space.path}")
-        params: dict[str, Any] = {"name": "default", "lang": space.session.lang}
+        params: dict[str, Any] = {
+            "name": "default",
+            "lang": space.session.lang if space.session else "en",
+        }
         content = await resolve_via_host(self._tree, node, resource, params)
         template = content.read_text()
         html = self.on_render_str(template, state or {})
-        return self.on_compile(text=html, context={})
+        return normalize(self.on_compile(text=html, context={}))
 
 
 # ----------------------------------

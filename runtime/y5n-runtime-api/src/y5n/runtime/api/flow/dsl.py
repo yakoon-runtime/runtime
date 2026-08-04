@@ -36,7 +36,6 @@ Patterns = Behavior
 Commands = Orchestration
 """
 
-from y5n.runtime.api.document import to_text
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.runtime import Event
 
@@ -85,15 +84,15 @@ def out_text(
     """
     Emit a transient text projection to the active client.
 
-    Convenience shortcut for:
-        out(to_text(...))
+    Convenience shortcut for building the wire document directly:
+        out(_text_document(text), mode=mode)
 
     Args:
         text: The text content to display.
         mode: "replace" (PatchReset + Append) or "append" (nur Append).
         space: Optional subspace name for independent job_id scoping.
     """
-    return out(to_text(text), mode=mode, space=space)
+    return out(_text_document(text), mode=mode, space=space)
 
 
 def suspend() -> Pulse:
@@ -271,3 +270,24 @@ def start_cmd(command: str, *, channel: str, remote: str | None = None) -> Pulse
             StartCommand(command, channel, remote=remote),
         ]
     )
+
+
+# ============================================================
+# INTERNAL
+# ============================================================
+
+
+def _text_document(text: str) -> dict:
+    """Build the wire document for a plain text projection."""
+    if not text:
+        return {"kind": "document", "header": {"role": "info"}, "blocks": []}
+    return {
+        "kind": "document",
+        "header": {"role": "info"},
+        "blocks": [
+            {
+                "type": "text",
+                "text": [{"type": "text", "text": text}],
+            }
+        ],
+    }

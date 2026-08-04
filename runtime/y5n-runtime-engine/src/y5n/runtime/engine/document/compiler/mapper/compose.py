@@ -29,16 +29,11 @@ from .inline import (
     map_strong,
     map_underline,
 )
-from .resolver import ImageResolver
 
 
-def create_mapper(context: dict) -> Mapper:
+def create_mapper() -> Mapper:
 
-    resolvers = {
-        "image": ImageResolver(context.get("assets", "")),
-    }
-
-    mapper = Mapper(resolvers)
+    mapper = Mapper()
 
     # -------- INLINE --------
     mapper.register_inline("cmd", map_cmd)

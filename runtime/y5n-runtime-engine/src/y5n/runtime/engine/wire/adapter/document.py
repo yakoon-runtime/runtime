@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 from typing import Any
 
+from y5n.runtime.api.document.normalize import normalize
 from y5n.runtime.api.runtime.context import Call
 from y5n.runtime.engine.resources.host import resolve_via_host
 
@@ -47,7 +48,7 @@ class DocumentAdapter:
 
         template = resource.read_text()
         rendered = self._projector.on_render_str(template, context=state or {})
-        doc = self._projector.on_compile(text=rendered, context={})
+        doc = normalize(self._projector.on_compile(text=rendered, context={}))
         return json.dumps(doc, default=str)
 
 

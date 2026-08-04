@@ -217,8 +217,9 @@ class Session:
         self.data.user_name = None
 
     def get_identity(self) -> Key | None:
-        if self.is_authenticated:
-            return Key.from_str(self.data.user_key)
+        user_key = self.data.user_key
+        if user_key is not None:
+            return Key.from_str(user_key)
         return None
 
     @property

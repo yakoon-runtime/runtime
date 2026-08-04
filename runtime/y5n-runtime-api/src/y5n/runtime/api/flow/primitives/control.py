@@ -186,28 +186,16 @@ class Sleep(Control):
 
 
 @dataclass(frozen=True, slots=True)
-class SleepUntil(Control):
+class SleepUntil(Sleep):
     """Block the flow until an absolute timestamp.
 
-    Like Sleep but takes a fixed wall-clock time instead of a duration.
-    Users call delay_until(timestamp).
+    Same as Sleep, but constructed from a fixed wall-clock time instead
+    of a duration. Users call delay_until(timestamp).
     """
 
-    timestamp: float = 0.0
-    blocking: ClassVar[bool] = True
-
-    def is_runnable(self, flow, session):
-        return False
-
-    async def on_enter(self, flow, scheduler, session):
-        scheduler.schedule_sleep(flow, session, self.timestamp)
-
-    async def on_wake(self, flow, scheduler, session):
-        flow.control = YieldToScheduler()
-        scheduler.schedule_flow(flow, session)
-
-    def label(self) -> str:
-        return "sleep"
+    @property
+    def timestamp(self) -> float:
+        return self.wake_at
 
     @classmethod
     def until(cls, timestamp: float) -> SleepUntil:

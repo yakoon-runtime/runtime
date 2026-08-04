@@ -15,8 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from y5n.runtime.api.document import to_text
-from y5n.runtime.api.flow.dsl import Pulse
+from y5n.runtime.api.flow.dsl import Pulse, out_text
 from y5n.runtime.api.flow.primitives import EmitView
 from y5n.sdk import context as sdk_context
 from y5n.sdk.libs.models import Context as SdkContext
@@ -127,7 +126,8 @@ def _build_context_dict(space, target_path: str) -> dict:
             "id": space.flow_id or "",
             "key": node_name,
         },
-        "tokens": (
+        "tokens": [target_path]
+        + (
             list(space.request.args()) if space.request and space.request.args() else []
         ),
     }
@@ -202,5 +202,5 @@ def emit_output(output: str) -> list:
                     continue
             except Exception:
                 pass
-        pulses.append(Pulse(effects=[EmitView(to_text(line), mode=mode)]))
+        pulses.append(out_text(line, mode=mode))
     return pulses

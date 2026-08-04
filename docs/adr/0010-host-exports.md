@@ -189,6 +189,33 @@ There is no resolver registry and no global host-service registration — each
 host node provides its own `resolve` handler, and the runtime knows no host
 type.
 
+### Bootstrap linking
+
+> The runtime is allowed to resolve `pack:` only for host bootstrap
+> declarations. Nothing else.
+
+Before a host can interpret reference expressions, the first host itself must
+be loaded. For this reason, the runtime performs a minimal, mechanical linking
+step for the `entry.run` and `resolve` declarations of host nodes.
+
+This is **not** reference interpretation. It is **bootstrap linking**. The
+runtime does not understand what `pack:y5n.runtime.boot.python.runtime:resolve`
+*means* — it only loads the declared function so the first host can run. All
+subsequent reference expressions (`resources:`, `ports:`, a command's
+`entry.run`) are interpreted exclusively by the host.
+
+There are therefore exactly two kinds of references:
+
+| Kind | Where | Who resolves it |
+|------|-------|-----------------|
+| **Bootstrap references** | `entry:` / `resolve:` of a *host node* | the runtime's single bootstrap linker (`pack:` only) |
+| **Runtime references** | `resources:`, `ports:`, a *command's* `entry.run` | the host |
+
+The rule is deliberately narrow: the bootstrap linker understands one scheme
+(`pack:<module>:<func>`), one meaning (load the function), and is exercised
+only for host nodes that have no host of their own. The first host cannot be
+interpreted by anything but the runtime — every later reference can.
+
 ### The `Resource` result
 
 A resolve capability returns a `Resource` with exactly two requirements:

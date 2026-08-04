@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import Protocol, cast
 
 from y5n.runtime.api.flow import Scope
@@ -21,12 +22,15 @@ from y5n.runtime.engine.machine import (
     InvocationResolver,
     OnGetNode,
     Runner,
-    RuntimeHost,
+    RuntimeManager,
     Scheduler,
     SessionBuilder,
     TaskRunner,
 )
+from y5n.runtime.engine.machine.ports import OnAuditWarning, OnSuggest
 from y5n.runtime.engine.runtime import Session
+
+logger = logging.getLogger(__name__)
 from y5n.runtime.engine.runtime.bus import BusOutput
 from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.settings.version import resolve_runtime_info
@@ -47,7 +51,7 @@ def build_machine(
     known_runtimes: dict[str, str],
     settings: Settings,
     on_get_node: OnGetNode,
-) -> RuntimeHost:
+) -> RuntimeManager:
 
     # ---------------
     # --- ROUTING ---
@@ -80,7 +84,7 @@ def build_machine(
             on_error = node.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
         except Exception as exc:  # fallback
-            print(exc)
+            logger.warning("error resolve fallback failed: %s", exc)
             on_error = node.root.ports.get(OnErrorResolve)
             return await on_error(key=node.path, session=session, error=error)
 
@@ -109,7 +113,7 @@ def build_machine(
         remote: str | None = None,
     ):
         if remote:
-            conn = RuntimeConnection(url=host.resolve_runtime(remote))
+            conn = RuntimeConnection(url=manager.resolve_runtime(remote))
 
             async def on_remote_done():
                 session.push_event(Scope.SESSION, channel, Event(payload=None))
@@ -165,11 +169,10 @@ def build_machine(
     # -----------------
 
     async def flow_complete(flow: Flow, session: Session) -> None:
-        await host.flow_complete(flow, session)
+        await manager.flow_complete(flow, session)
 
     scheduler = Scheduler(
         platform=platform,
-        on_setup=engine.setup,
         on_dispatch=engine.dispatch,
         on_step_flow=engine.step_flow,
         on_show_projection=on_projection_send,
@@ -221,25 +224,14 @@ def build_machine(
     # --- SETUP NODES ---
     # -------------------
 
-    async def setup_nodes(session):
-
+    async def setup_nodes():
         await on_initialize()
-
-        nodes_to_setup: list[Node] = []
-
-        def collect_nodes(node: Node):
-            if node.has_setup():
-                nodes_to_setup.append(node)
-
-        platform.walk(collect_nodes)
-        for node in nodes_to_setup:
-            await scheduler.setup(session, node)
 
     # ---------------
     # --- HOSTING ---
     # ---------------
 
-    host = RuntimeHost(
+    manager = RuntimeManager(
         on_schedule=scheduler.run,
         on_create_runner=create_runner,
         on_get_session=session_builder.create,
@@ -248,7 +240,7 @@ def build_machine(
         info=resolve_runtime_info(),
     )
 
-    return host
+    return manager
 
 
 # ----------------------------------
@@ -262,10 +254,6 @@ class Oninitialize(Protocol):
 
 class OnHasPermission(Protocol):
     def __call__(self, *, session: Session, perm_key: str) -> bool: ...
-
-
-class OnAuditWarning(Protocol):
-    def __call__(self, *, message: str, session: Session) -> None: ...
 
 
 class OnGetOrCreateSession(Protocol):
@@ -283,14 +271,3 @@ class OnDocumentSend(Protocol):
         mode: str = "replace",
         view_params: dict | None = None,
     ) -> None: ...
-
-
-class OnSuggest(Protocol):
-    def __call__(
-        self,
-        *,
-        value: str,
-        choices: list[str],
-        limit: int = 3,
-        cutoff: float = 0.5,
-    ) -> list[str]: ...
