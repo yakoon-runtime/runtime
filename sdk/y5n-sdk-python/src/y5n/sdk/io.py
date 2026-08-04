@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from y5n.runtime.api.document import to_text
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.patterns.public import Form
 from y5n.runtime.api.flow.primitives import (
@@ -11,12 +10,13 @@ from y5n.runtime.api.flow.primitives import (
     EmitEvent,
     EmitView,
     Foreground,
+    Mode,
     Pulse,
 )
 from y5n.runtime.api.nodes import Param
 from y5n.runtime.api.runtime import Event
+from y5n.sdk.models import Document, Header, InlineText, Text, YdsModel
 from y5n.sdk.models import Field as _FormFieldDef
-from y5n.sdk.models import YdsModel
 
 
 def _resolve_view(view: str | dict) -> dict:
@@ -29,13 +29,15 @@ def _resolve_view(view: str | dict) -> dict:
                 return data
         except Exception:
             pass
-    return to_text(view)
+    return _text_document(view)
 
 
 class _Write:
     __slots__ = ("_view", "_mode")
+    _view: dict | str
+    _mode: Mode | None
 
-    def __init__(self, view: dict | str, mode: str | None = None) -> None:
+    def __init__(self, view: dict | str, mode: Mode | None = None) -> None:
         self._view = view
         self._mode = mode
 
@@ -65,7 +67,7 @@ class _Prompt:
         view = (
             self._projection
             if isinstance(self._projection, dict)
-            else to_text(self._projection)
+            else _text_document(self._projection)
         )
         result = yield Pulse(
             effects=[Foreground(), EmitView(view, persist=True)],
@@ -75,17 +77,26 @@ class _Prompt:
 
 
 class _Receive:
-    __slots__ = ("_params",)
+    __slots__ = ("_channel", "_scope")
+    _channel: str | None
+    _scope: str | None
 
     def __init__(self, channel: str | None = None, scope: str | None = None) -> None:
-        self._params = {"channel": channel, "scope": scope}
+        self._channel = channel
+        self._scope = scope
 
     def __await__(self):
-        params = self._params
-        ch = params.get("channel")
-        scope_val = params.get("scope")
-        scope = Scope(scope_val) if isinstance(scope_val, str) else scope_val
-        event = yield Pulse(control=AwaitEvent(ch, scope))
+        channel = self._channel
+        scope = Scope(self._scope) if isinstance(self._scope, str) else self._scope
+        if scope is None:
+            if channel is None:
+                scope = Scope.USER_INPUT
+                channel = "__user__"
+            else:
+                scope = Scope.FLOW
+        elif channel is None:
+            channel = "default"
+        event = yield Pulse(control=AwaitEvent(channel, scope))
         return event
 
 
@@ -121,18 +132,23 @@ class _Form:
 
 
 class _Send:
-    __slots__ = ("_params",)
+    __slots__ = ("_channel", "_payload", "_scope")
+    _channel: str
+    _payload: Any
+    _scope: str
 
     def __init__(self, channel: str, payload: Any = None, scope: str = "flow") -> None:
-        self._params = {"channel": channel, "payload": payload, "scope": scope}
+        self._channel = channel
+        self._payload = payload
+        self._scope = scope
 
     def __await__(self):
-        params = self._params
-        ch = params.get("channel")
-        payload = params.get("payload")
-        scope_val = params.get("scope", "flow")
-        scope = Scope(scope_val) if isinstance(scope_val, str) else scope_val
-        yield Pulse(effects=[EmitEvent(ch, Event(payload=payload), scope=scope)])
+        scope = Scope(self._scope) if isinstance(self._scope, str) else self._scope
+        yield Pulse(
+            effects=[
+                EmitEvent(self._channel, Event(payload=self._payload), scope=scope)
+            ]
+        )
 
 
 class _IO:
@@ -140,7 +156,7 @@ class _IO:
         self,
         view: YdsModel | dict | str,
         *,
-        mode: str | None = None,
+        mode: Mode | None = None,
     ) -> _Write:
         if isinstance(view, YdsModel):
             view = view.to_dict()
@@ -219,3 +235,18 @@ def form(
 
 
 __all__ = ["error", "form", "io", "prompt", "receive", "send", "write"]
+
+
+# ============================================================
+# INTERNAL
+# ============================================================
+
+
+def _text_document(text: str) -> dict:
+    """Build the wire document for a plain text projection."""
+    if not text:
+        return Document(header=Header()).to_dict()
+    return Document(
+        header=Header(),
+        blocks=[Text(text=[InlineText(text=text)])],
+    ).to_dict()
