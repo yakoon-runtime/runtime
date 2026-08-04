@@ -50,25 +50,17 @@ def _serialize_state(state: DocumentState | None) -> dict | None:
     return data or None
 
 
-def _serialize_header(header):
+def _serialize_header(header: dict | None) -> dict | None:
     if not header:
         return None
 
-    if isinstance(header, dict):
-        return {
-            "role": header.get("role"),
-            "title": header.get("title"),
-            "subtitle": header.get("subtitle"),
-            "error_kind": header.get("error_kind"),
-            "error_code": header.get("error_code"),
-        }
-
     return {
-        "role": header.role,
-        "title": header.title,
-        "subtitle": header.subtitle,
-        "error_kind": header.error_kind,
-        "error_code": header.error_code,
+        "role": header.get("role"),
+        "title": header.get("title"),
+        "subtitle": header.get("subtitle"),
+        "error_kind": header.get("error_kind"),
+        "error_code": header.get("error_code"),
+        "meta": header.get("meta"),
     }
 
 
