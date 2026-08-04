@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable
 
 from ..nodes import ElementNode, Node, TextNode
-from .resolver import BlockResolver
 
 BlockMapper = Callable[["Mapper", ElementNode], dict]
 InlineMapper = Callable[["Mapper", ElementNode], dict]
@@ -11,10 +10,9 @@ InlineMapper = Callable[["Mapper", ElementNode], dict]
 
 class Mapper:
 
-    def __init__(self, resolvers: Mapping[str, BlockResolver]):
+    def __init__(self):
         self._block_mappers: dict[str, BlockMapper] = {}
         self._inline_mappers: dict[str, InlineMapper] = {}
-        self._resolvers = resolvers
 
     # -----------------
     # REGISTRATION
@@ -112,15 +110,7 @@ class Mapper:
             if not handler:
                 raise ValueError(f"Unknown block tag: {node.tag}")
 
-            block = handler(self, node)
-
-            if self._resolvers:
-                block_type = block.get("type", "")
-                resolver = self._resolvers.get(block_type)
-                if resolver:
-                    block = resolver.resolve(block)
-
-            blocks.append(block)
+            blocks.append(handler(self, node))
 
         if buffer:
             blocks.append(self._flush_text(buffer))

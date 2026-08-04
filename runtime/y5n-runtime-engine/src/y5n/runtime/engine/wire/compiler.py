@@ -13,7 +13,8 @@ def build_compiler() -> Compiler:
     # --- MAPPING ---
 
     def mapper(context: dict, root: ElementNode) -> dict:
-        m = create_mapper(context)
+        del context
+        m = create_mapper()
         return m.map_document(root)
 
     # --- COMPILING ---
