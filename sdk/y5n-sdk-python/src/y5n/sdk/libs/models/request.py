@@ -5,8 +5,6 @@ Mirrors the runtime's Request API as a local SDK model.
 
 from __future__ import annotations
 
-from typing import Any
-
 from y5n.runtime.api.tokens import TokenQuery
 
 

@@ -12,7 +12,7 @@ import types
 import typing
 from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, TypeAlias, get_args, get_origin, get_type_hints
+from typing import Any, Self, TypeAlias, get_args, get_origin, get_type_hints
 
 
 def _coerce_union(args: tuple, value: Any) -> Any:
@@ -62,9 +62,7 @@ class YdsModel:
         return result
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any] | None) -> YdsModel | None:
-        if data is None:
-            return None
+    def from_dict(cls, data: dict[str, Any]) -> Self:
         hints = get_type_hints(cls)
         kwargs: dict[str, Any] = {}
         for f in dataclasses.fields(cls):  # type: ignore[arg-type]
@@ -405,3 +403,73 @@ Inline: TypeAlias = (
     | InlineSpace
     | InlineBreak
 )
+
+
+def block_from_dict(data: dict) -> Block:
+    t = data.get("type")
+    if t == "text":
+        return Text.from_dict(data)
+    if t == "paragraph":
+        return Paragraph.from_dict(data)
+    if t == "heading":
+        return Heading.from_dict(data)
+    if t == "pre":
+        return Pre.from_dict(data)
+    if t == "rule":
+        return Rule.from_dict(data)
+    if t == "spacer":
+        return Spacer.from_dict(data)
+    if t == "list":
+        return List.from_dict(data)
+    if t == "list_item":
+        return ListItem.from_dict(data)
+    if t == "kv":
+        return Kv.from_dict(data)
+    if t == "kv_item":
+        return KvItem.from_dict(data)
+    if t == "table":
+        return Table.from_dict(data)
+    if t == "fields":
+        return Fields.from_dict(data)
+    if t == "actions":
+        return Actions.from_dict(data)
+    if t == "section":
+        return Section.from_dict(data)
+    if t == "stack":
+        return Stack.from_dict(data)
+    if t == "flow":
+        return Flow.from_dict(data)
+    if t == "collapsible":
+        return Collapsible.from_dict(data)
+    if t == "image":
+        return Image.from_dict(data)
+    raise ValueError(f"unknown block type: {t!r}")
+
+
+def inline_from_dict(data: dict) -> Inline:
+    t = data.get("type")
+    if t == "text":
+        return InlineText.from_dict(data)
+    if t == "strong":
+        return InlineStrong.from_dict(data)
+    if t == "em":
+        return InlineEm.from_dict(data)
+    if t == "underline":
+        return InlineUnderline.from_dict(data)
+    if t == "code":
+        return InlineCode.from_dict(data)
+    if t == "link":
+        return InlineLink.from_dict(data)
+    if t == "cmd":
+        return InlineCmd.from_dict(data)
+    if t == "arg":
+        return InlineArg.from_dict(data)
+    if t == "mark":
+        return InlineMark.from_dict(data)
+    if t == "select":
+        return InlineSelect.from_dict(data)
+    if t == "space":
+        return InlineSpace.from_dict(data)
+    if t == "break":
+        return InlineBreak.from_dict(data)
+    raise ValueError(f"unknown inline type: {t!r}")
