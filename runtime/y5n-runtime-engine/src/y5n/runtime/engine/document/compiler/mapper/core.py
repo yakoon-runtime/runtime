@@ -77,7 +77,7 @@ class Mapper:
             raise ValueError(f"Invalid role: {role}")
 
         error_kind = node.attrs.get("error_kind")
-        if error_kind not in (None, "validation", "system"):
+        if error_kind not in (None, "validation", "domain", "system", "fatal"):
             raise ValueError(f"Invalid error_kind: {error_kind}")
 
         return {
