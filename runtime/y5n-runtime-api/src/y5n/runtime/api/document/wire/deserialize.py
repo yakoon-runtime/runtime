@@ -1,5 +1,4 @@
 from y5n.runtime.api.document import DocumentEvent
-from y5n.runtime.api.document.model.header import DocumentHeader
 from y5n.runtime.api.document.transfer import (
     DocumentState,
     Patch,
@@ -50,18 +49,18 @@ def _deserialize_state(data: dict | None) -> DocumentState | None:
     )
 
 
-def _deserialize_header(data: dict | None) -> DocumentHeader | None:
+def _deserialize_header(data: dict | None) -> dict | None:
     if not data:
         return None
 
-    return DocumentHeader(
-        role=data.get("role"),
-        title=data.get("title"),
-        subtitle=data.get("subtitle"),
-        error_kind=data.get("error_kind"),
-        error_code=data.get("error_code"),
-        meta=data.get("meta"),
-    )
+    return {
+        "role": data.get("role"),
+        "title": data.get("title"),
+        "subtitle": data.get("subtitle"),
+        "error_kind": data.get("error_kind"),
+        "error_code": data.get("error_code"),
+        "meta": data.get("meta"),
+    }
 
 
 # ------------------------
