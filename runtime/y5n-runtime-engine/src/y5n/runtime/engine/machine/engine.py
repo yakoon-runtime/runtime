@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import inspect
 from collections.abc import Sequence
-from typing import Protocol, cast
+from typing import Protocol
 
 from y5n.runtime.api.flow.primitives import AwaitEvent, Effect, Pulse, Stop
-from y5n.runtime.api.nodes import Node, NodeSpace, Request
+from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event, InputContext, Interaction
-from y5n.runtime.api.runtime.sessions import Session as BaseSession
 from y5n.runtime.engine.flow import Flow, FlowCursor, FlowKind
 from y5n.runtime.engine.interaction import resolve_interaction
 from y5n.runtime.engine.runtime import Session
@@ -181,13 +180,6 @@ class CommandEngine:
         # NEXT
         # ----------------------------------
 
-        request = Request(
-            event.payload,
-            flow.tokens,
-            None,
-            session.lang,
-        )
-
         set_invocation_context(
             node=node,
             session=session,
@@ -195,19 +187,7 @@ class CommandEngine:
             tokens=flow.tokens,
         )
 
-        return await flow.cursor.next(
-            node,
-            NodeSpace(
-                path=node.path,
-                request=request,
-                session=cast(BaseSession, session),
-                ports=node.ports,
-                ports_from=node.ports_from,
-                resources=node.resources,
-                fs_path=node.fs_path,
-                flow_id=flow.id,
-            ),
-        )
+        return await flow.cursor.next(node)
 
 
 # ----------------------------------

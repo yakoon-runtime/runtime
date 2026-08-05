@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.runtime.api.nodes import NodePath, NodeSpace
+from y5n.runtime.api.nodes import NodePath
 from y5n.runtime.api.permissions import Permission, PermissionSet
 from y5n.runtime.api.resources import ResourceRef
 from y5n.runtime.api.runtime.sessions import Session
@@ -62,9 +62,7 @@ class OnAuthorizeWrite(Protocol):
 
 
 class OnAuthenticate(Protocol):
-    async def __call__(
-        self, *, space: NodeSpace, username: str, secret: str
-    ) -> AuthResult: ...
+    async def __call__(self, *, username: str, secret: str) -> AuthResult: ...
 
 
 class OnAfterVerify(Protocol):

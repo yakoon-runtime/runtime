@@ -20,7 +20,7 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
     received: list[object] = []
     created_flow = None
 
-    async def sub_handler(ctx):
+    async def sub_handler():
         from y5n.runtime.api.flow.dsl import out
 
         yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
@@ -57,7 +57,7 @@ async def test_command_resolves_and_dispatches_subflow(harness, effect_executor)
         StartCommandHandler(on_start_command),
     )
 
-    async def caller(ctx):
+    async def caller():
         ch = uuid4().hex
         yield start_cmd("test", channel=ch)
         yield Pulse()
@@ -121,7 +121,7 @@ async def test_command_unresolvable_sends_none(harness, effect_executor):
         StartCommandHandler(on_start_command),
     )
 
-    async def caller(ctx):
+    async def caller():
         ch = uuid4().hex
         yield start_cmd("unknown", channel=ch)
         yield Pulse()

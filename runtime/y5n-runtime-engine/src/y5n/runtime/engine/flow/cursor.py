@@ -8,7 +8,7 @@ from y5n.runtime.api.flow.primitives import Pulse
 from y5n.runtime.api.nodes.handler import RunHandler
 
 if TYPE_CHECKING:
-    from y5n.runtime.api.nodes import Node, NodeSpace
+    from y5n.runtime.api.nodes import Node
 
 HandlerName = Literal["run",]
 
@@ -27,7 +27,6 @@ class FlowCursor:
     async def next(
         self,
         node: Node,
-        ctx: NodeSpace,
     ) -> Pulse | AsyncGenerator | None:
         if not self._stack:
             if self.handler_name != "run":
@@ -35,7 +34,7 @@ class FlowCursor:
             handler = node.run
             if handler is None:
                 raise RuntimeError(f"Node {node} has no {self.handler_name} handler")
-            gen = _ensure_step(handler)(ctx)
+            gen = _ensure_step(handler)()
             self._stack.append(gen)
 
         gen = self._stack[-1]
@@ -64,9 +63,9 @@ class FlowCursor:
 
 def _ensure_step(run_fn: RunHandler):
 
-    def factory(ctx):
+    def factory():
 
-        result = run_fn(ctx)
+        result = run_fn()
 
         # --- async generator ---
         if inspect.isasyncgen(result):

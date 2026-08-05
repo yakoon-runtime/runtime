@@ -38,18 +38,9 @@ def _prepare_session(session: Session) -> None:
     session.set_identity(Key.from_parts("users", "user", "global", "u-1"), "alice")
 
 
-def _parameterless(handler):
-    """Adapter: call ``main()`` with no arguments, discarding the ctx."""
-
-    def _run(ctx):
-        return handler()
-
-    return _run
-
-
 def _make_node(main) -> Node:
     node = _build_add_node()
-    node.run = _parameterless(main)
+    node.run = main
     return node
 
 

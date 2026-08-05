@@ -8,7 +8,6 @@ from typing import Any
 import yaml
 from y5n.runtime.api.nodes import Invocation, Node, Param
 from y5n.runtime.api.nodes.ports import NodePorts
-from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
 from y5n.runtime.api.runtime import Container
 from y5n.runtime.engine.executor import (
@@ -294,14 +293,7 @@ class Tree:
             if executor is None:
                 continue
 
-            space = NodeSpace(
-                path=node.path,
-                request=None,
-                session=None,
-                ports=node.ports,
-                ports_from=node.ports_from,
-            )
-            result = executor.run(node, Phase.SETUP, space)
+            result = executor.run(node, Phase.SETUP)
             if result is not None:
                 if hasattr(result, "__await__"):
                     await result  # type: ignore
@@ -426,8 +418,8 @@ def _read_yaml(path: Path) -> dict[str, Any]:
 
 
 def _make_handler(executor: Executor, node: Node, phase: Phase):
-    def _run(space):
-        return executor.run(node, phase, space)
+    def _run():
+        return executor.run(node, phase)
 
     return _run
 
@@ -435,20 +427,19 @@ def _make_handler(executor: Executor, node: Node, phase: Phase):
 def _make_host_handler(tree: Tree, node_key: str, host_path: str):
     """Replace node.run with a delegating handler that routes to a host.
 
-    The runtime passes the target node's space unchanged — ``space.path`` is
-    the target. How the host addresses the node is the host's decision
-    (ADR-10); the runtime does not rewrite requests.
+    The runtime passes the invocation context through the SDK; the host
+    reads the target from ``context.current().node.path`` (ADR-10/ADR-12).
     """
     from y5n.runtime.engine.flow.util import empty_flow
 
-    def _run(space):
+    def _run():
         host_node = tree.find(host_path)
         if host_node is None or not host_node.has_run():
             return empty_flow()
         host_run = host_node.run
         if host_run is None:
             return empty_flow()
-        return host_run(space)
+        return host_run()
 
     return _run
 

@@ -4,8 +4,6 @@ import inspect
 import os
 from typing import TYPE_CHECKING
 
-from y5n.runtime.api.nodes.space import NodeSpace
-
 from ..bootstrap import PackReference
 from ..flow.util import empty_flow
 from .base import Executor, ExecutorKind, Phase, RunResult
@@ -24,7 +22,7 @@ class RuntimeExecutor(Executor):
             return None
         return entry.get(phase.value)
 
-    def _handle_module_entry(self, entry: str, space: NodeSpace) -> RunResult:
+    def _handle_module_entry(self, entry: str) -> RunResult:
         try:
             ref = PackReference(entry)
         except ValueError:
@@ -35,7 +33,7 @@ class RuntimeExecutor(Executor):
             return empty_flow()
         os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
         try:
-            result = fn(space)
+            result = fn()
         except TypeError:
             result = fn()
         if inspect.iscoroutine(result):
@@ -48,10 +46,9 @@ class RuntimeExecutor(Executor):
         self,
         node: Node,
         phase: Phase,
-        space: NodeSpace,
     ) -> RunResult:
         entry = self._entry_value(node, phase)
         if not entry:
             return empty_flow()
 
-        return self._handle_module_entry(entry, space)
+        return self._handle_module_entry(entry)
