@@ -6,6 +6,6 @@ expose: false
 navigable: false
 
 entry:
-  run: pack:y5n.runtime.boot.python.runtime:run
+  run: pack:y5n.runtime.boot.python.runtime:main
 resolve:
   default: pack:y5n.runtime.boot.python.runtime:resolve
