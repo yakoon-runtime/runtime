@@ -165,7 +165,7 @@ async def test_shared_workspace_two_clients(manager: RuntimeManager):
 @pytest.mark.asyncio
 async def test_cleanup_no_subscribers_no_flows(manager: RuntimeManager):
     conn = _fake_connection()
-    session = await manager.connect(conn)
+    await manager.connect(conn)
 
     await manager.disconnect(conn)
 
@@ -202,7 +202,7 @@ async def test_flow_complete_triggers_cleanup(manager: RuntimeManager):
 @pytest.mark.asyncio
 async def test_receive_input_always_has_active_session(manager: RuntimeManager):
     conn = _fake_connection()
-    session = await manager.connect(conn)
+    await manager.connect(conn)
 
     event = AsyncMock()
     # must not raise
@@ -228,7 +228,7 @@ async def test_receive_input_after_detach_still_works(manager: RuntimeManager):
 @pytest.mark.asyncio
 async def test_disconnect_cleans_home(manager: RuntimeManager):
     conn = _fake_connection()
-    session = await manager.connect(conn)
+    await manager.connect(conn)
 
     await manager.disconnect(conn)
 

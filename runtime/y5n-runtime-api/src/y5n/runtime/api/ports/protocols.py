@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.runtime.api.nodes import NodePath, NodeSpace
+from y5n.runtime.api.nodes import NodePath
 from y5n.runtime.api.permissions import Permission, PermissionSet
 from y5n.runtime.api.resources import ResourceRef
 from y5n.runtime.api.runtime.sessions import Session
@@ -19,24 +19,6 @@ from .models import AuthResult, HealthResult
 class OnDocumentResolve(Protocol):
     async def __call__(
         self, *, resource: ResourceRef, state: dict | None = None
-    ) -> dict: ...
-
-
-class OnProject(Protocol):
-    """Resolve a document from a node's resources.
-
-    Uses the pre-assembled resource paths on the space to find
-    the template, renders it via Jinja, and compiles it into
-    a Document.  The optional *resource* parameter selects
-    which resource type to use (defaults to ``"document"``).
-    """
-
-    async def __call__(
-        self,
-        *,
-        space: NodeSpace,
-        resource: str = "document",
-        state: dict | None = None,
     ) -> dict: ...
 
 
@@ -80,9 +62,7 @@ class OnAuthorizeWrite(Protocol):
 
 
 class OnAuthenticate(Protocol):
-    async def __call__(
-        self, *, space: NodeSpace, username: str, secret: str
-    ) -> AuthResult: ...
+    async def __call__(self, *, username: str, secret: str) -> AuthResult: ...
 
 
 class OnAfterVerify(Protocol):

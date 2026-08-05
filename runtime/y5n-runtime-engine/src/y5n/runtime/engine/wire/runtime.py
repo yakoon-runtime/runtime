@@ -3,7 +3,6 @@ from y5n.runtime.api.ports.system import (
     AUTHORIZE_READ,
     AUTHORIZE_WRITE,
     COMPILE,
-    DOCUMENT,
     DOCUMENT_RESOLVE,
     ERROR_RESOLVE,
     JINJA_RENDER,
@@ -168,7 +167,6 @@ def build_runtime(
     root_ports.provide(AUTHORIZE_WRITE, perm_checker.can_write)
     root_ports.provide(NEW_PERMISSION_SET, lambda: PermissionSet())
     root_ports.provide(PARSE_PERMISSION_SPEC, perm_parser.parse)
-    root_ports.provide(DOCUMENT, projector.project_from_space)
     root_ports.provide(DOCUMENT_RESOLVE, projector.project)
     root_ports.provide(RESOURCE_LOAD, doc.loader.get_text)
     root_ports.provide(JINJA_RENDER, doc.jinja.render_str)
@@ -257,7 +255,7 @@ def build_runtime(
 
     bus.resolver.register(
         "system:projection",
-        {"session": ["attach", "detach", "update", "logout"]},
+        {"session": ["attach", "detach", "update", "logout", "current"]},
         path="/",
     )
     bus.transport.register_adapter(

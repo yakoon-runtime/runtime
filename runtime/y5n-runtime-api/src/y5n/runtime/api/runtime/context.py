@@ -1,93 +1,37 @@
-"""Runtime context — command context and protocol-level invocation.
+"""Invocation ABI — which data describes the current call.
 
-Four types form the protocol between the host and the SDK:
+This is one of the three ABIs of the Runtime API:
 
-* ``CommandContext`` — frozen snapshot of the invocation.
-* ``Call`` — a port invocation request.
-* ``Response`` — the result of a Call.
-* ``invoke()`` — async dispatch of a Call through the Runtime Bus.
+* ``context.py`` — the invocation ABI: which data describes the current call.
+* ``invoke.py`` — the port ABI: which capability is being called.
+* ``flow/`` — the flow ABI: how an execution advances (Pulse, AwaitEvent, ...).
+
+The invocation ABI answers "who am I, where do I run, with which tokens?".
+The engine sets it once, before the flow starts (ADR-12 Section 4). The data
+is a plain dict — the runtime only transports it; the SDK models it into its
+typed ``Context`` (ADR-11).
 """
 
 from __future__ import annotations
 
 from contextvars import ContextVar
-from dataclasses import dataclass
 from typing import Any
 
+_context_var: ContextVar[dict[str, Any]] = ContextVar("y5n_invocation_context")
 
-@dataclass
-class CommandContext:
-    """Language-neutral command context.
 
-    The runtime builds this from its internal objects and makes it
-    available to the executor. The executor passes it to the command.
-    The SDK wraps it into language-native objects.
+def set_context(data: dict[str, Any]) -> None:
+    """Set the invocation context for the current execution (engine-side).
 
-    Fields are simple types (str, list, dict) so this can be
-    serialized to JSON for non-Python executors.
+    Called exactly once, before the flow starts. The data is a plain dict —
+    the SDK reads the same variable and models it into its typed Context.
     """
-
-    path: str | None = None
-    command: str | None = None
-    tokens: list[str] | None = None
-    session: dict | None = None
-
-    def __getitem__(self, key: str):
-        return getattr(self, key)
+    _context_var.set(data)
 
 
-_context_var: ContextVar[CommandContext] = ContextVar("y5n_command_context")
-
-
-@dataclass
-class Call:
-    """A protocol-level invocation request."""
-
-    port: str
-    method: str
-    args: dict | None = None
-    caller_path: str | None = None
-    caller_session_key: str | None = None
-
-
-@dataclass
-class Response:
-    """A protocol-level invocation result."""
-
-    result: Any = None
-    error: str | None = None
-
-
-async def invoke(call: Call) -> Response:
-    """Execute a Call through the Runtime Bus.
-
-    The bus routes to CallHandler, which resolves the provider
-    and delivers the call via the executor's transport.
-    """
-    from y5n.runtime.api.runtime.bus import get_bus
-
-    return await get_bus().async_dispatch(call)
-
-
-def _set_context(ctx: CommandContext) -> None:
-    _context_var.set(ctx)
-
-
-class _Context:
-    @staticmethod
-    def current() -> CommandContext:
-        try:
-            return _context_var.get()
-        except LookupError:
-            return CommandContext()
-
-    def request(self) -> Any:
-        from y5n.runtime.api.nodes.request import Request
-
-        ctx = self.current()
-        return Request.from_tokens(
-            [ctx.command] + (ctx.tokens or []) if ctx.command else ctx.tokens
-        )
-
-
-context = _Context()
+def current_context() -> dict[str, Any]:
+    """Return the current raw invocation context, or an empty snapshot."""
+    try:
+        return _context_var.get()
+    except LookupError:
+        return {}

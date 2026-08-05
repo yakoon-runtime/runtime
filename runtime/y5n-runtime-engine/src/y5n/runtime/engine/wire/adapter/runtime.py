@@ -12,7 +12,7 @@ same pattern as the session adapter.
 from __future__ import annotations
 
 from y5n.runtime.api.naming.key import Key
-from y5n.runtime.api.runtime.context import Call
+from y5n.runtime.api.runtime.invoke import Call
 
 
 class RuntimeAdapter:

@@ -13,7 +13,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from y5n.runtime.api.naming.key import Key
-from y5n.runtime.api.runtime.context import Call
+from y5n.runtime.api.runtime.invoke import Call
 from y5n.runtime.engine.runtime import Session
 
 _PATCH_MAP: dict[str, str] = {
@@ -89,3 +89,22 @@ class SessionAdapter:
             await self._on_save(session=session)
 
         return {"applied": applied, "ignored": ignored}
+
+    async def current(self, call: Call) -> dict[str, Any]:
+        """Return the live Session state for the caller's session key."""
+        session_key = call.caller_session_key
+        if not session_key:
+            raise RuntimeError("caller_session_key is required")
+
+        runner = self._manager._sessions.get(Key.from_str(session_key))
+        if runner is None:
+            raise RuntimeError(f"Session {session_key} not found")
+
+        session: Session = runner.session
+        return {
+            "key": str(session.key),
+            "lang": session.lang,
+            "user_name": session.user_name,
+            "user_id": str(session.get_identity()) if session.get_identity() else None,
+            "data": dict(session.data.data),
+        }

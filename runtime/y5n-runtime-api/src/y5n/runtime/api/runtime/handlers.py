@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .context import Call, Response
+from .invoke import Call, Response
 from .messages import Ok, RegisterProvider, UnregisterProvider
 
 if TYPE_CHECKING:

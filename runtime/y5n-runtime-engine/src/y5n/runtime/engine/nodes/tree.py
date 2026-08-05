@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -8,15 +9,16 @@ from typing import Any
 import yaml
 from y5n.runtime.api.nodes import Invocation, Node, Param
 from y5n.runtime.api.nodes.ports import NodePorts
-from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
 from y5n.runtime.api.runtime import Container
+from y5n.runtime.engine.bootstrap import PackReference
 from y5n.runtime.engine.executor import (
     Executor,
     ExecutorKind,
     ExecutorRegistry,
     Phase,
 )
+from y5n.runtime.engine.flow.util import empty_flow
 
 # Resource types that capabilities can declare in yak.yml.
 # Each entry becomes a node.resources[type][variant] to reference string
@@ -180,7 +182,7 @@ class Tree:
 
         # Run handler
         if host:
-            node.run = _make_host_handler(self, node.key, host)
+            node.run = _make_dispatch_handler(self, node.key, host)
         else:
             executor = self._executors.get(executor_kind)
             node.run = _make_handler(executor, node, Phase.RUN)
@@ -294,14 +296,7 @@ class Tree:
             if executor is None:
                 continue
 
-            space = NodeSpace(
-                path=node.path,
-                request=None,
-                session=None,
-                ports=node.ports,
-                ports_from=node.ports_from,
-            )
-            result = executor.run(node, Phase.SETUP, space)
+            result = executor.run(node, Phase.SETUP)
             if result is not None:
                 if hasattr(result, "__await__"):
                     await result  # type: ignore
@@ -426,29 +421,29 @@ def _read_yaml(path: Path) -> dict[str, Any]:
 
 
 def _make_handler(executor: Executor, node: Node, phase: Phase):
-    def _run(space):
-        return executor.run(node, phase, space)
+    def _run():
+        return executor.run(node, phase)
 
     return _run
 
 
-def _make_host_handler(tree: Tree, node_key: str, host_path: str):
-    """Replace node.run with a delegating handler that routes to a host.
+def _make_dispatch_handler(tree: Tree, node_key: str, host_path: str):
+    """Build a dispatch handler that routes a node to its declared executor.
 
-    The runtime passes the target node's space unchanged — ``space.path`` is
-    the target. How the host addresses the node is the host's decision
-    (ADR-10); the runtime does not rewrite requests.
+    A node declares ``host:`` in yak.yml — the runtime's dispatch rule is
+    "this node is executed by that node". The handler finds the declared
+    node in the tree and runs it. It holds no host knowledge: the target is
+    an ordinary node (ADR-12); it reads the invocation from the context.
     """
-    from y5n.runtime.engine.flow.util import empty_flow
 
-    def _run(space):
+    def _run():
         host_node = tree.find(host_path)
         if host_node is None or not host_node.has_run():
             return empty_flow()
         host_run = host_node.run
         if host_run is None:
             return empty_flow()
-        return host_run(space)
+        return host_run()
 
     return _run
 
@@ -461,13 +456,9 @@ def _make_resolve_handler(resolve_expr: str):
     references. The function is loaded lazily on first call — no module import
     at build time.
     """
-    from y5n.runtime.engine.bootstrap import PackReference
-
     ref = PackReference(resolve_expr)
 
     async def _resolve(*, node, capability, parameters=None):
-        import inspect
-
         fn = ref.load()
         result = fn(node=node, capability=capability, parameters=parameters or {})
         if inspect.isawaitable(result):

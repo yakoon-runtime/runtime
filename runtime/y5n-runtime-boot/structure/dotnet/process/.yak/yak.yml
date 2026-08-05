@@ -6,4 +6,4 @@ expose: false
 navigable: false
 
 entry:
-  run: pack:y5n.runtime.boot.dotnet.process:run
+  run: pack:y5n.runtime.boot.dotnet.process:main

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-_FONT = '"SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", "Consolas", "DejaVu Sans Mono", monospace'
+_FONT = (
+    '"SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", '
+    '"Consolas", "DejaVu Sans Mono", monospace'
+)
 
 
 @dataclass(frozen=True)

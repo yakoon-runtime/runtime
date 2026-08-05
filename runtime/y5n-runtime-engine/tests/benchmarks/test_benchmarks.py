@@ -49,7 +49,7 @@ async def test_flow_switches(harness):
 
     N = 10_000
 
-    async def handler(ctx):
+    async def handler():
         for _ in range(N):
             yield Pulse()
 
@@ -81,13 +81,13 @@ async def test_session_channel_throughput(harness):
     ch = uuid4().hex
     received = 0
 
-    async def receiver(ctx):
+    async def receiver():
         nonlocal received
         for _ in range(N):
-            event = yield receive(ch, scope=Scope.SESSION)
+            yield receive(ch, scope=Scope.SESSION)
             received += 1
 
-    async def sender(ctx):
+    async def sender():
         for _ in range(N):
             yield send(ch, Event(payload="p"), scope=Scope.SESSION)
         yield Pulse()
@@ -124,9 +124,9 @@ async def test_massive_waiting_flows(harness, scheduler):
         ch = uuid4().hex
         woke = 0
 
-        async def waiter(ctx):
+        async def waiter(_ch=ch):
             nonlocal woke
-            event = yield receive(ch, scope=Scope.SESSION)
+            yield receive(_ch, scope=Scope.SESSION)
             woke += 1
             yield Pulse()
 
@@ -165,7 +165,7 @@ async def test_runtime_mix(harness, effect_executor):
     N = 1_000
     sub_ch = uuid4().hex
 
-    async def sub_handler(ctx):
+    async def sub_handler():
         yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
         yield Pulse()
 
@@ -201,7 +201,7 @@ async def test_runtime_mix(harness, effect_executor):
         StartCommandHandler(on_start_command),
     )
 
-    async def main_handler(ctx):
+    async def main_handler():
         for _ in range(N):
             yield send("mix", Event(payload="data"), scope=Scope.SESSION)
             if _ % 2 == 0:
