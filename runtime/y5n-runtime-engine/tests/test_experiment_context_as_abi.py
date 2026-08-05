@@ -20,22 +20,22 @@ import pytest
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.primitives import AwaitEvent, EmitView, Pulse, Stop
 from y5n.runtime.api.nodes import Node
+from y5n.runtime.api.runtime.context import set_context
 from y5n.sdk import context as sdk_context
-from y5n.sdk.libs.models import Context
 
 
 def _set_test_context() -> None:
-    """Set the SDK context exactly as the host's _build_context_dict does."""
-    sdk_context._set(  # noqa: SLF001 — the host's setter, test-only
-        Context(
-            node={"path": "/crm/contact/add", "name": "add"},
-            cwd="/crm/contact",
-            workspace="/tmp/workspace",
-            user={"id": "u-1", "name": "alice"},
-            session={"key": "s-1", "lang": "en", "interaction": "cli"},
-            flow={"id": "f-1", "key": "add"},
-            tokens=["/crm/contact/add", "jane"],
-        )
+    """Set the raw invocation context exactly as the engine would."""
+    set_context(
+        {
+            "node": {"path": "/crm/contact/add", "name": "add"},
+            "cwd": "/crm/contact",
+            "workspace": "/tmp/workspace",
+            "user": {"id": "u-1", "name": "alice"},
+            "session": {"key": "s-1", "lang": "en", "interaction": "cli"},
+            "flow": {"id": "f-1", "key": "add"},
+            "tokens": ["/crm/contact/add", "jane"],
+        }
     )
 
 

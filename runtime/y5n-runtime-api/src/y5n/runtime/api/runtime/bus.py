@@ -6,7 +6,7 @@ import inspect
 from collections.abc import Callable
 from typing import Any
 
-from .context import Call
+from .invoke import Call
 from .messages import RegisterProvider, UnregisterProvider
 from .resolver import Resolver
 from .transport import DirectTransport

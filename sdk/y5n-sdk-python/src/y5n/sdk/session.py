@@ -4,7 +4,7 @@ from __future__ import annotations
 class _SessionList:
     def __await__(self):
         from y5n.runtime.api.runtime.bus import get_bus
-        from y5n.runtime.api.runtime.context import Call
+        from y5n.runtime.api.runtime.invoke import Call
 
         bus = get_bus()
         resp = yield from bus.async_dispatch(
@@ -28,7 +28,7 @@ class _SessionAttach:
 
     def __await__(self):
         from y5n.runtime.api.runtime.bus import get_bus
-        from y5n.runtime.api.runtime.context import Call
+        from y5n.runtime.api.runtime.invoke import Call
         from y5n.sdk.context import session as ctx_session
 
         bus = get_bus()
@@ -48,7 +48,7 @@ class _SessionAttach:
 class _SessionDetach:
     def __await__(self):
         from y5n.runtime.api.runtime.bus import get_bus
-        from y5n.runtime.api.runtime.context import Call
+        from y5n.runtime.api.runtime.invoke import Call
         from y5n.sdk.context import session as ctx_session
 
         bus = get_bus()

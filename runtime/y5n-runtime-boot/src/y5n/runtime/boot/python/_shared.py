@@ -17,8 +17,7 @@ from typing import Any
 import yaml
 from y5n.runtime.api.flow.dsl import Pulse, out_text
 from y5n.runtime.api.flow.primitives import EmitView
-from y5n.sdk import context as sdk_context
-from y5n.sdk.libs.models import Context as SdkContext
+from y5n.runtime.api.runtime.context import set_context
 
 
 def parse_entry(entry: str) -> tuple[str, str]:
@@ -99,7 +98,7 @@ def read_entry(root: Path, target_path: str) -> str | None:
 
 
 def _build_context_dict(space, target_path: str) -> dict:
-    """Build a Context JSON dict from a Runtime space object."""
+    """Build a raw invocation context dict from a Runtime space object."""
     node_name = target_path.rsplit("/", 1)[-1] if target_path else ""
     workspace = space.session.get_data("fs:root") if space.session else ""
     session = space.session if space.session else None
@@ -165,8 +164,8 @@ def load_and_capture(
 
     os.environ["YAK_ENDPOINT"] = "inprocess://"
 
-    ctx = SdkContext.from_dict(_build_context_dict(space, target_path))
-    sdk_context._set(ctx)
+    ctx = _build_context_dict(space, target_path)
+    set_context(ctx)
 
     mod = importlib.util.module_from_spec(spec)
     sys.modules[full_name] = mod

@@ -21,8 +21,8 @@ import pytest
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.primitives import AwaitEvent, EmitView, Pulse, Stop
 from y5n.runtime.api.nodes import Node
+from y5n.runtime.api.runtime.context import set_context
 from y5n.sdk import context as sdk_context
-from y5n.sdk.libs.models import Context
 
 # ---------------------------------------------------------------
 # Helpers: a real target command as a module, like the packs
@@ -56,16 +56,16 @@ def _write_target_pack(root: Path) -> None:
 
 
 def _set_command_context() -> None:
-    sdk_context._set(  # noqa: SLF001 — the engine's ABI setter, test-only
-        Context(
-            node={"path": "/crm/contact/add", "name": "add"},
-            cwd="/crm/contact",
-            workspace=".",
-            user={"id": "u-1", "name": "alice"},
-            session={"key": "s-1", "lang": "en", "interaction": "cli"},
-            flow={"id": "f-1", "key": "add"},
-            tokens=["/crm/contact/add", "jane"],
-        )
+    set_context(
+        {
+            "node": {"path": "/crm/contact/add", "name": "add"},
+            "cwd": "/crm/contact",
+            "workspace": ".",
+            "user": {"id": "u-1", "name": "alice"},
+            "session": {"key": "s-1", "lang": "en", "interaction": "cli"},
+            "flow": {"id": "f-1", "key": "add"},
+            "tokens": ["/crm/contact/add", "jane"],
+        }
     )
 
 

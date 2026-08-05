@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from y5n.runtime.api.runtime.context import Call
+from y5n.runtime.api.runtime.invoke import Call
 from y5n.runtime.api.sources import DataRequest
 
 

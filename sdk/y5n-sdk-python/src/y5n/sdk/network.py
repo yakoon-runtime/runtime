@@ -4,7 +4,7 @@ from __future__ import annotations
 class _NetworkList:
     def __await__(self):
         from y5n.runtime.api.runtime.bus import get_bus
-        from y5n.runtime.api.runtime.context import Call
+        from y5n.runtime.api.runtime.invoke import Call
 
         bus = get_bus()
         resp = yield from bus.async_dispatch(
@@ -28,7 +28,7 @@ class _NetworkResolve:
 
     def __await__(self):
         from y5n.runtime.api.runtime.bus import get_bus
-        from y5n.runtime.api.runtime.context import Call
+        from y5n.runtime.api.runtime.invoke import Call
 
         bus = get_bus()
         resp = yield from bus.async_dispatch(

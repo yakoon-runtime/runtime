@@ -201,6 +201,18 @@ tokens       the invocation arguments      (was: space.request.args())
 engine, before the flow starts. The host does **not** build it; the host
 reads it, like any application.
 
+**The runtime sets a raw invocation context through the Runtime API. The SDK
+exposes that invocation as a typed `Context` model. The runtime never depends
+on SDK types.**
+
+This is ADR-11 applied to the invocation itself: the API defines the minimal
+contract (a plain dict — the fields above, transported through the Runtime
+API), the SDK provides the ergonomic surface (`context.current()`,
+`context.node.path`, `context.request()`, typed `Session` / `Flow`). The
+runtime produces data and transports it; it never models it — the SDK
+interprets it. The host sits between them and — like any application —
+speaks only the SDK.
+
 The experiment proves the shape end-to-end (`test_experiment_context_as_abi.py`,
 `test_experiment_host_context.py`): a parameterless `main()` reads its whole
 world from `context.current()`, a host drives a real target command using
