@@ -18,10 +18,8 @@ import types
 from pathlib import Path
 
 import pytest
-from y5n.runtime.api.flow.channel import Scope
-from y5n.runtime.api.flow.primitives import AwaitEvent, EmitView, Pulse, Stop
+from y5n.runtime.api.flow.primitives import EmitView, Pulse, Stop
 from y5n.runtime.api.nodes import Node
-from y5n.runtime.api.runtime.context import set_context
 from y5n.sdk import context as sdk_context
 
 # ---------------------------------------------------------------
@@ -47,25 +45,6 @@ def _write_target_pack(root: Path) -> None:
                 "  run: pack:_test_target_add:main",
             ]
         )
-    )
-
-
-# ---------------------------------------------------------------
-# The context the engine would set for /crm/contact/add
-# ---------------------------------------------------------------
-
-
-def _set_command_context() -> None:
-    set_context(
-        {
-            "node": {"path": "/crm/contact/add", "name": "add"},
-            "cwd": "/crm/contact",
-            "workspace": ".",
-            "user": {"id": "u-1", "name": "alice"},
-            "session": {"key": "s-1", "lang": "en", "interaction": "cli"},
-            "flow": {"id": "f-1", "key": "add"},
-            "tokens": ["/crm/contact/add", "jane"],
-        }
     )
 
 
@@ -194,7 +173,12 @@ def _make_parameterless_node(host: _Host) -> Node:
     def _run(ctx):
         return host.main()
 
-    return Node(key="test", run=_run)
+    add = Node(key="add", run=_run)
+    contact = Node(key="contact")
+    contact.mount(add)
+    crm = Node(key="crm")
+    crm.mount(contact)
+    return add
 
 
 # ---------------------------------------------------------------
@@ -207,6 +191,8 @@ async def test_host_from_context_drives_target(tmp_path, harness, effect_executo
     """A context-driven host resolves and drives a real target command."""
 
     _write_target_pack(tmp_path)
+    harness.session.set_data("fs:root", str(tmp_path))
+    harness.session.set_cwd("/crm/contact")
 
     async def target_main():
         # The target command reads the SAME context the engine set
@@ -217,13 +203,20 @@ async def test_host_from_context_drives_target(tmp_path, harness, effect_executo
 
     _make_target_module("_test_target_add", target_main)
 
-    _set_command_context()
     host = _Host(root=tmp_path)
     node = _make_parameterless_node(host)
 
-    from support.flow import make_flow
+    from y5n.runtime.api.runtime import Event
+    from y5n.runtime.engine.flow import Flow, FlowCursor
 
-    flow = make_flow(node.run, session=harness.session)
+    flow = Flow(
+        id=harness.session.next_flow_id(),
+        node=node,
+        event=Event(payload="/crm/contact/add"),
+        cursor=FlowCursor("run"),
+        tokens=["/crm/contact/add", "jane"],
+    )
+    harness.session.add_flow(flow)
     harness.scheduler.schedule_flow(flow, harness.session)
 
     projections = effect_executor._on_projection
@@ -233,7 +226,7 @@ async def test_host_from_context_drives_target(tmp_path, harness, effect_executo
     views = [c.kwargs["document"] for c in projections.call_args_list]
     assert views == [
         {"kind": "text", "text": "hi jane"},
-        {"kind": "text", "text": "resolved::/crm/contact"},
+        {"kind": "text", "text": f"resolved:{tmp_path.name}:/crm/contact"},
     ]
 
 
@@ -241,13 +234,21 @@ async def test_host_from_context_drives_target(tmp_path, harness, effect_executo
 async def test_host_from_context_missing_entry(tmp_path, harness, effect_executor):
     """No entry → the host reports it, still terminating cleanly."""
 
-    _set_command_context()
+    harness.session.set_data("fs:root", str(tmp_path))
     host = _Host(root=tmp_path)
     node = _make_parameterless_node(host)
 
-    from support.flow import make_flow
+    from y5n.runtime.api.runtime import Event
+    from y5n.runtime.engine.flow import Flow, FlowCursor
 
-    flow = make_flow(node.run, session=harness.session)
+    flow = Flow(
+        id=harness.session.next_flow_id(),
+        node=node,
+        event=Event(payload="/crm/contact/add"),
+        cursor=FlowCursor("run"),
+        tokens=["/crm/contact/add", "jane"],
+    )
+    harness.session.add_flow(flow)
     harness.scheduler.schedule_flow(flow, harness.session)
 
     projections = effect_executor._on_projection
@@ -273,4 +274,4 @@ def import_module(name: str):
     return importlib.import_module(name)
 
 
-__all__ = []  # noqa: WPS410
+__all__ = []
