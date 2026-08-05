@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 from y5n.runtime.api.flow.primitives import CwdEffect, EmitView, Pulse, Stop
+from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.executor.base import ExecutorKind, ExecutorRegistry
 from y5n.runtime.engine.executor.runtime import RuntimeExecutor
@@ -22,11 +23,12 @@ from y5n.runtime.engine.machine.parser import InputParser
 from y5n.runtime.engine.machine.runner import Runner
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.runtime.invocation import derive_invocation_context
+from y5n.sdk import context as sdk_context
 
 
 def _make_module(name: str, main) -> types.ModuleType:
     module = types.ModuleType(name)
-    module.main = main
+    module.main = main  # type: ignore[attr-defined]
     sys.modules[name] = module
     return module
 
@@ -271,6 +273,75 @@ async def test_cd_then_pwd_full_engine(tmp_path, harness, effect_executor):
 
     assert harness.session.cwd == "/foo", f"session.cwd = {harness.session.cwd!r}"
     assert seen == ["/foo"], f"pwd saw cwd {seen!r}"
+
+
+@pytest.mark.asyncio
+async def test_invocation_is_a_dispatch_snapshot(harness, effect_executor):
+    """ADR-12 Invocation lifetime: the conditions of the start.
+
+    The context is an immutable snapshot established at dispatch — it does
+    not track later session mutations. A flow that yields a CwdEffect must
+    NOT see the new cwd through context.current() in a later step of the
+    SAME flow (that would be a live projection). The next command (a new
+    flow) gets a fresh snapshot.
+    """
+
+    harness.session.set_data("fs:root", "/tmp/ws")
+    harness.session.set_cwd("/home")
+
+    seen_after_mutation = []
+
+    async def handler():
+        # read the invocation snapshot BEFORE the mutation
+        before = sdk_context.current().cwd
+        yield Pulse(effects=[CwdEffect("/foo")])
+        # read again AFTER the mutation, still in the same flow
+        after = sdk_context.current().cwd
+        seen_after_mutation.append((before, after))
+        yield Pulse()
+
+    node = Node(key="cd", run=handler)
+    flow = _make_flow(node, harness.session, tokens=["/foo"])
+    harness.scheduler.schedule_flow(flow, harness.session)
+
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)
+
+    # Model A: both reads see the dispatch-time snapshot ("/home")
+    assert seen_after_mutation == [("/home", "/home")], seen_after_mutation
+    # but the session itself WAS mutated
+    assert harness.session.cwd == "/foo"
+
+
+@pytest.mark.asyncio
+async def test_next_command_sees_fresh_snapshot(harness, effect_executor):
+    """The next command is a new flow with a fresh invocation snapshot."""
+
+    harness.session.set_data("fs:root", "/tmp/ws")
+    harness.session.set_cwd("/home")
+
+    async def cd_handler():
+        yield Pulse(effects=[CwdEffect("/foo")])
+        yield Pulse()
+
+    async def pwd_handler():
+        seen.append(sdk_context.current().cwd)
+        yield Pulse()
+
+    seen = []
+    cd_node = Node(key="cd", run=cd_handler)
+    flow = _make_flow(cd_node, harness.session, tokens=["/foo"])
+    harness.scheduler.schedule_flow(flow, harness.session)
+    pulse = await harness.run_until_blocked(flow)
+    assert isinstance(pulse.control, Stop)
+
+    pwd_node = Node(key="pwd", run=pwd_handler)
+    flow2 = _make_flow(pwd_node, harness.session, tokens=[])
+    harness.scheduler.schedule_flow(flow2, harness.session)
+    pulse = await harness.run_until_blocked(flow2)
+    assert isinstance(pulse.control, Stop)
+
+    assert seen == ["/foo"], f"next command saw {seen!r}"
 
 
 @pytest.mark.asyncio

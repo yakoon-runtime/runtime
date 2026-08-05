@@ -25,7 +25,8 @@ The ADR uses three terms that are worth fixing once:
 
 > **Invocation** — a request to execute a node.
 >
-> **Context** — the immutable snapshot describing that invocation.
+> **Context** — the immutable snapshot describing the conditions under
+> which that invocation was started.
 >
 > **Node** — the executable unit consuming the Context.
 
@@ -212,33 +213,90 @@ flow         id of the executing flow      (was: space.flow_id)
 args         the invocation arguments      (was: space.request.args())
 ```
 
-**The invocation context is immutable and ephemeral.** The runtime derives
-it immediately before executing a flow step; it describes exactly one
-invocation at one point in time. The context is not owned by the scheduler,
-the host, or the application — it is recreated for every step and discarded
-afterwards.
+**The invocation context is immutable and ephemeral.** It describes exactly
+one invocation at one point in time. The context is not owned by the
+scheduler, the host, or the application — it is derived when the invocation
+is born, carried by the flow, and discarded when the flow ends.
+
+### Invocation lifetime: the conditions of the start
+
+**The invocation context answers one question only: under what conditions
+was this invocation started?** It is the immutable snapshot established at
+dispatch — like a process environment (`PWD=/tmp my_program`). A later
+change in the parent's session is never expected to propagate into a
+running child; neither does a session mutation propagate into a running
+flow's context.
+
+**The invocation context does not track subsequent mutations of the
+session or runtime state. Components requiring current state must query the
+owning service (e.g. session or filesystem) directly.**
+
+This is why the context is deliberately immutable: it is *data about the
+start*, not a live view of the world. When a flow needs current state, it
+asks the owner of that state — `session.cwd()`, the filesystem, the
+session service — never the context.
+
+| Question | Source |
+|----------|--------|
+| Under what conditions was I started? | `context.current()` (snapshot) |
+| What is the current cwd right now? | the filesystem / session service |
+| Who am I (identity)? | `context.current()` — identity is a start condition |
+| What changed mid-command? | the owning service, not the context |
+
+Three possible models for what `context.current()` means:
+
+| Model | Lifetime | Behavior after a session change |
+|-------|----------|--------------------------------|
+| A | **dispatch** | snapshot — `cwd` etc. frozen at dispatch, even if the flow later `chdir`s |
+| B | **whole command** | dynamic within the flow — context reflects the current session state |
+| C | **every step** | fully live — re-derived before every resume |
+
+**Decision: Model A.** The invocation context is a **snapshot taken at
+dispatch**. A flow that mutates its session (e.g. `cd` → `CwdEffect`) does
+not see the change through `context.current()` in a later step of the
+*same* flow; the next *command* is a new flow with a fresh snapshot.
+
+Rationale:
+
+- The context describes the **invocation** — *what was called and with
+  what arguments* — not the mutable execution state. Arguments do not
+  change mid-command; neither should the snapshot.
+- This matches every execution boundary: a thread, process, or remote
+  host receives the invocation snapshot once and never sees it change.
+  Any other semantics would make the context's meaning host-dependent.
+- Model C (per-step re-derivation) is the semantically live model, but it
+  costs a re-derivation per step (measured ~65% of a step before the
+  fix). Model A moves the cost to dispatch, where it is paid once — the
+  optimization is a logical consequence of the semantics, not a shortcut.
+- Model A keeps the flow self-contained: the flow carries its invocation,
+  so it can migrate between schedulers/processes without re-deriving from
+  a session the target may not have (ADR-12 Section 4).
+
+Consequence: **a flow that needs to observe its own session mutation must
+read the mutated state explicitly** (e.g. the `session` service or the
+effect's result), not via `context.current()`. Today no pack reads
+`context.current()` after mutating the session in the same flow, so the
+snapshot is behaviorally safe — but the contract is now explicit.
 
 **The Flow is the source of truth; the Context is its projection.** The
 context is not persistent state — it is the most convenient representation
-of the flow during one step. The truth lives in the flow (its node, tokens,
-and session reference); the context is derived from it and thrown away. This
-is why the context is never transported: you do not move a context, you move
-the *flow* and re-derive the context where the flow continues.
+of the flow's invocation. The truth lives in the flow (its node, tokens,
+and invocation snapshot); the context is derived from it once and carried.
+This is why the context is never transported: you do not move a context,
+you move the *flow* and its snapshot.
 
 ```
 Flow ──derive──→ Context ──project──→ the host-friendly view
 ```
 
-**The runtime derives the invocation context before every flow step.**
-Not once, not "at start" — before *every* resume. The truth flows from the
-flow to the context; the engine establishes the result as the current
-invocation. Today this is one call (`set_invocation_context` in
-`_next_step`); the derivation and the establishing may later split into two
-distinct responsibilities — `derive_context(flow)` produces the context,
-`set_invocation_context(ctx)` makes it current. The direction is what
-matters: the flow is the source, the context is the projection. This holds
-regardless of scheduler shape: round-robin, one task per flow, multiple
-workers, parallel stepping, or several schedulers across processes.
+**The runtime derives the invocation context once, at dispatch.** The
+derivation and the establishing are distinct responsibilities:
+`derive_invocation_context(...)` produces the snapshot,
+`establish_invocation_context(ctx)` makes it current for a step. The
+direction is what matters: the flow is the source, the context is its
+snapshot. This holds regardless of scheduler shape: round-robin, one task
+per flow, multiple workers, parallel stepping, or several schedulers across
+processes.
 
 Because the context is represented as plain data (`dict`), it propagates
 across any execution boundary without translation. **Execution boundaries
@@ -288,7 +346,7 @@ data — it is a node whose `main()` does the same thing every command does:
 | `space.session.get_data("fs:root")` → root | `ctx.workspace` → root |
 | `space.session.cwd` → resolve | `ctx.cwd` → resolve |
 | builds context for the target | passes the existing context through |
-| `_build_context_dict` (translation) | gone — the engine derives the Context per step |
+| `_build_context_dict` (translation) | gone — the engine derives the Context once, at dispatch |
 
 This is the strongest form of "a host is a node": the host not only *runs
 like* a node, it *reads like* one. It owns no special data and no special
@@ -374,7 +432,7 @@ to the full run contract.
 | The unspoken assumption "execute = start Python" | "ask the responsible host to execute this resource" |
 | The engine's knowledge of host wiring | gone — the engine coordinates via ports |
 | `NodeSpace` as a hand-off object | an engine implementation detail — the Context is the invocation (Section 4) |
-| `_build_context_dict` (host translates space → context) | gone — the engine derives the Context per step |
+| `_build_context_dict` (host translates space → context) | gone — the engine derives the Context once, at dispatch |
 
 ## What stays
 
