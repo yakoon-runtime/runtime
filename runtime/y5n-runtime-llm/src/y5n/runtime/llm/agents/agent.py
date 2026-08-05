@@ -173,7 +173,10 @@ class Agent:
                 messages.append(
                     LLMMessage(
                         role="user",
-                        content="Du wiederholst dieselbe Aktion mit demselben Ergebnis. Versuche einen anderen Ansatz.",
+                        content=(
+                            "Du wiederholst dieselbe Aktion mit demselben "
+                            "Ergebnis. Versuche einen anderen Ansatz."
+                        ),
                     )
                 )
                 step += 1

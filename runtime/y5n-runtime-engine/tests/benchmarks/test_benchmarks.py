@@ -84,7 +84,7 @@ async def test_session_channel_throughput(harness):
     async def receiver():
         nonlocal received
         for _ in range(N):
-            event = yield receive(ch, scope=Scope.SESSION)
+            yield receive(ch, scope=Scope.SESSION)
             received += 1
 
     async def sender():
@@ -124,9 +124,9 @@ async def test_massive_waiting_flows(harness, scheduler):
         ch = uuid4().hex
         woke = 0
 
-        async def waiter():
+        async def waiter(_ch=ch):
             nonlocal woke
-            event = yield receive(ch, scope=Scope.SESSION)
+            yield receive(_ch, scope=Scope.SESSION)
             woke += 1
             yield Pulse()
 

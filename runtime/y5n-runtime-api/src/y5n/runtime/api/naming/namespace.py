@@ -12,10 +12,12 @@ class Namespace:
 
     Components:
     - domain: The functional domain or module (e.g., 'realm', 'minddojo')
-    - kind: A specific collection or entity type (session, account, permission, invoice, npc)
+    - kind: A specific collection or entity type
+      (session, account, permission, invoice, npc)
     - space: Isolation boundary (tenant/workspace) — develop, acme, global
 
-    Together, these define a unique namespace used for ID resolution, scoping, and separation.
+    Together, these define a unique namespace used for ID resolution,
+    scoping, and separation.
     """
 
     def __init__(self, domain: str, kind: str, space: str = "global"):
