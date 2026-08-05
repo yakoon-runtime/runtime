@@ -47,9 +47,6 @@ def derive_invocation_context(
         },
         "session": {
             "key": str(session.key) if session else None,
-            "lang": session.lang if session else None,
-            "interaction": session.interaction.value if session else None,
-            "data": dict(session.data.data) if session else {},
         },
         "flow": {
             "id": flow_id or "",
