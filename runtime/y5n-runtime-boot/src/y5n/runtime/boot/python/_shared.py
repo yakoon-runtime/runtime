@@ -17,7 +17,6 @@ from typing import Any
 import yaml
 from y5n.runtime.api.flow.dsl import Pulse, out_text
 from y5n.runtime.api.flow.primitives import EmitView
-from y5n.runtime.api.runtime.context import set_context
 
 
 def parse_entry(entry: str) -> tuple[str, str]:
@@ -97,43 +96,7 @@ def read_entry(root: Path, target_path: str) -> str | None:
     return meta.get("entry", {}).get("run") if meta else None
 
 
-def _build_context_dict(space, target_path: str) -> dict:
-    """Build a raw invocation context dict from a Runtime space object."""
-    node_name = target_path.rsplit("/", 1)[-1] if target_path else ""
-    workspace = space.session.get_data("fs:root") if space.session else ""
-    session = space.session if space.session else None
-    identity = session.get_identity() if session else None
-
-    return {
-        "node": {
-            "path": target_path,
-            "name": node_name,
-        },
-        "cwd": session.cwd if session else "",
-        "workspace": str(workspace) if workspace else "",
-        "user": {
-            "id": str(identity) if identity else None,
-            "name": session.user_name if session else None,
-        },
-        "session": {
-            "key": str(session.key) if session else None,
-            "lang": session.lang if session else None,
-            "interaction": session.interaction.value if session else None,
-            "data": dict(session.data.data) if session else {},
-        },
-        "flow": {
-            "id": space.flow_id or "",
-            "key": node_name,
-        },
-        "tokens": [target_path]
-        + (
-            list(space.request.args()) if space.request and space.request.args() else []
-        ),
-    }
-
-
 def load_and_capture(
-    space,
     target_path: str,
     app_file: Path,
 ) -> tuple[list[str], str, Any, str]:
@@ -163,9 +126,6 @@ def load_and_capture(
         return [f"error: cannot load {app_file}"], "", None, ""
 
     os.environ["YAK_ENDPOINT"] = "inprocess://"
-
-    ctx = _build_context_dict(space, target_path)
-    set_context(ctx)
 
     mod = importlib.util.module_from_spec(spec)
     sys.modules[full_name] = mod

@@ -28,6 +28,20 @@ The ADR uses three terms that are worth fixing once:
 >
 > **Node** — the executable unit consuming the Context.
 
+**The canonical Invocation is normalized.** It is exactly two primary
+fields:
+
+```
+node.path   → what is executed
+args        → how it was invoked
+```
+
+Everything else is derived. The SDK's `Request` is a convenience view over
+these two fields (`command` = `node.path`, tokens = `args`) — it re-parses
+nothing and holds no truth. The shell's "token list with the command as
+first token" (`["/cd", "/opt"]`) is deliberately gone: it duplicates
+`node.path` and forces a reconstruction that the engine already knows.
+
 The runtime executes nodes. Some nodes provide execution capabilities for
 other nodes; the ADR calls those "hosts" only because the name is familiar —
 they are not a separate type. A node that executes other nodes consumes the
@@ -194,7 +208,7 @@ cwd          the working directory         (was: space.session.cwd)
 session      key, lang, interaction, data  (was: space.session)
 user         identity of the caller        (was: session identity)
 flow         id of the executing flow      (was: space.flow_id)
-tokens       the invocation arguments      (was: space.request.args())
+args         the invocation arguments      (was: space.request.args())
 ```
 
 **The invocation context is immutable and ephemeral.** The runtime derives
@@ -442,7 +456,7 @@ to the full run contract.
 
 1. **Set the Context where NodeSpace is built.** In `engine.py` and
    `tree.py` (SETUP), replace `NodeSpace(...)` with building the SDK Context
-   (`node.path`, `workspace`, `cwd`, `session`, `user`, `flow`, `tokens`)
+   (`node.path`, `workspace`, `cwd`, `session`, `user`, `flow`, `args`)
    and setting it via the SDK contextvar — the ABI (Section 4).
 2. **Migrate the boot host.** `boot/python/runtime.py`: read `ctx.node.path`,
    `ctx.workspace`, `ctx.cwd` instead of `space.*`; delete

@@ -14,7 +14,6 @@ Usage:
     print(await hello.greet(name="Yakoon"))
 """
 
-import asyncio
 from typing import Any
 
 from .context import current as _current_context

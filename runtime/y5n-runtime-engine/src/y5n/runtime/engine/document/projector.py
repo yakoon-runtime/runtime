@@ -4,9 +4,7 @@ from collections.abc import Callable
 from typing import Any, Protocol
 
 from y5n.runtime.api.document.normalize import normalize
-from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.runtime.api.resources import ResourceRef
-from y5n.runtime.engine.resources.host import resolve_via_host
 
 
 class Projector:
@@ -15,7 +13,6 @@ class Projector:
 
     Responsibilities:
       - render a view into a UI document
-      - resolve projections from node resources
     """
 
     def __init__(
@@ -45,29 +42,6 @@ class Projector:
         document = normalize(self.on_compile(text=text, context={}))
 
         return document
-
-    async def project_from_space(
-        self,
-        *,
-        space: NodeSpace,
-        resource: str = "document",
-        state: dict[str, Any] | None = None,
-    ) -> dict:
-        if self.on_render_str is None:
-            raise RuntimeError("OnProject port not configured")
-        if self._tree is None:
-            raise RuntimeError("Projector has no tree configured")
-        node = self._tree.find(str(space.path))
-        if node is None:
-            raise FileNotFoundError(f"Node not found: {space.path}")
-        params: dict[str, Any] = {
-            "name": "default",
-            "lang": space.session.lang if space.session else "en",
-        }
-        content = await resolve_via_host(self._tree, node, resource, params)
-        template = content.read_text()
-        html = self.on_render_str(template, state or {})
-        return normalize(self.on_compile(text=html, context={}))
 
 
 # ----------------------------------

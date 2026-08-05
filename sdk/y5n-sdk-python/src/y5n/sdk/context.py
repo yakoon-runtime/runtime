@@ -30,9 +30,14 @@ def current() -> _Ctx:
 
 
 def request() -> _Request:
-    """Return a Request object parsed from the current context tokens."""
+    """Return a Request view over the current invocation.
+
+    ``node.path`` names the command; ``args`` are the positional arguments
+    and options. The Request is a convenience view — the truth lives in
+    the context's canonical fields.
+    """
     ctx = current()
-    return _Request.from_tokens(ctx.tokens)
+    return _Request(command=ctx.node.get("path", ""), tokens=ctx.args)
 
 
 def session() -> _Session:

@@ -12,6 +12,7 @@ from y5n.runtime.api.nodes import (
     UsageError,
 )
 from y5n.runtime.api.nodes.request.builder import RequestBuilder
+from y5n.runtime.api.runtime.context import current_context
 from y5n.runtime.api.runtime.input import (
     InputContext,
     Interaction,
@@ -116,9 +117,9 @@ class Interactor:
                 yield pulse
 
             bound = inv.bind(InvocationInput(values=form.values))
-            req = RequestBuilder().build(
-                bound, command=original_node.key, lang=space.session.lang
-            )
+            ctx = current_context()
+            lang = ctx.get("session", {}).get("lang", "en") if ctx else "en"
+            req = RequestBuilder().build(bound, command=original_node.key, lang=lang)
 
             yield Pulse(control=Continue(), next_steps=[req])
 

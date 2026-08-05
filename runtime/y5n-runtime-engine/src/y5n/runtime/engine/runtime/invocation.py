@@ -27,8 +27,8 @@ def set_invocation_context(
 
     The flow is the source of truth; the context is its projection for this
     one step (ADR-12 Section 4). ``tokens`` are the invocation arguments
-    (command path plus arguments); when absent, they default to the node
-    path alone.
+    (as produced by the parser — positional args and options); when absent,
+    they default to no arguments.
     """
     path = str(node.path) if node.path is not None else ""
     name = node.key or path.rsplit("/", 1)[-1]
@@ -56,6 +56,6 @@ def set_invocation_context(
             "id": flow_id or "",
             "key": name,
         },
-        "tokens": tokens if tokens else [path],
+        "args": list(tokens or []),
     }
     set_context(data)
