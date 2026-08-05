@@ -10,9 +10,8 @@ from y5n.runtime.api.runtime import Event, InputContext, Interaction
 from y5n.runtime.api.runtime.sessions import Session as BaseSession
 from y5n.runtime.engine.flow import Flow, FlowCursor, FlowKind
 from y5n.runtime.engine.interaction import resolve_interaction
-from y5n.runtime.engine.runtime import (
-    Session,
-)
+from y5n.runtime.engine.runtime import Session
+from y5n.runtime.engine.runtime.invocation import set_invocation_context
 
 
 class CommandEngine:
@@ -187,6 +186,13 @@ class CommandEngine:
             flow.tokens,
             None,
             session.lang,
+        )
+
+        set_invocation_context(
+            node=node,
+            session=session,
+            flow_id=flow.id,
+            tokens=flow.tokens,
         )
 
         return await flow.cursor.next(

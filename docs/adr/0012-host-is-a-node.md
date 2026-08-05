@@ -197,9 +197,48 @@ flow         id of the executing flow      (was: space.flow_id)
 tokens       the invocation arguments      (was: space.request.args())
 ```
 
-`context.current()` is read-only, frozen, and set exactly once — by the
-engine, before the flow starts. The host does **not** build it; the host
-reads it, like any application.
+**The invocation context is immutable and ephemeral.** The runtime derives
+it immediately before executing a flow step; it describes exactly one
+invocation at one point in time. The context is not owned by the scheduler,
+the host, or the application — it is recreated for every step and discarded
+afterwards.
+
+**The Flow is the source of truth; the Context is its projection.** The
+context is not persistent state — it is the most convenient representation
+of the flow during one step. The truth lives in the flow (its node, tokens,
+and session reference); the context is derived from it and thrown away. This
+is why the context is never transported: you do not move a context, you move
+the *flow* and re-derive the context where the flow continues.
+
+```
+Flow ──derive──→ Context ──project──→ the host-friendly view
+```
+
+**The runtime derives the invocation context before every flow step.**
+Not once, not "at start" — before *every* resume. The truth flows from the
+flow to the context; the engine establishes the result as the current
+invocation. Today this is one call (`set_invocation_context` in
+`_next_step`); the derivation and the establishing may later split into two
+distinct responsibilities — `derive_context(flow)` produces the context,
+`set_invocation_context(ctx)` makes it current. The direction is what
+matters: the flow is the source, the context is the projection. This holds
+regardless of scheduler shape: round-robin, one task per flow, multiple
+workers, parallel stepping, or several schedulers across processes.
+
+Because the context is represented as plain data (`dict`), it propagates
+across any execution boundary without translation. **Execution boundaries
+are responsible for propagating the invocation context** — the thread host
+captures it and re-establishes it in the thread; the process host serializes
+it and re-creates it in the child; the remote host forwards it. When a new
+execution unit is created, whoever creates it carries the context over —
+precisely the `ContextVar` philosophy. Not the scheduler guarantees the
+right context; the creator of the boundary does. Serialization is a
+consequence of this design, not its motivation.
+
+A flow migrating between schedulers needs no context transfer: it carries
+its node, tokens, and session reference, and the receiving scheduler calls
+`derive_context(flow)` again. Scaling to multiple schedulers or processes is
+a mechanical consequence, not an architecture problem.
 
 **The runtime sets a raw invocation context through the Runtime API. The SDK
 exposes that invocation as a typed `Context` model. The runtime never depends
@@ -234,7 +273,7 @@ data — it is a node whose `main()` does the same thing every command does:
 | `space.session.get_data("fs:root")` → root | `ctx.workspace` → root |
 | `space.session.cwd` → resolve | `ctx.cwd` → resolve |
 | builds context for the target | passes the existing context through |
-| `_build_context_dict` (translation) | gone — one context, set once |
+| `_build_context_dict` (translation) | gone — the engine derives the Context per step |
 
 This is the strongest form of "a host is a node": the host not only *runs
 like* a node, it *reads like* one. It owns no special data and no special
@@ -320,7 +359,7 @@ to the full run contract.
 | The unspoken assumption "execute = start Python" | "ask the responsible host to execute this resource" |
 | The engine's knowledge of host wiring | gone — the engine coordinates via ports |
 | `NodeSpace` as a hand-off object | an engine implementation detail — the Context is the invocation (Section 4) |
-| `_build_context_dict` (host translates space → context) | gone — the engine sets the Context once |
+| `_build_context_dict` (host translates space → context) | gone — the engine derives the Context per step |
 
 ## What stays
 
