@@ -1,6 +1,6 @@
 """Demonstrates context, session, and request access."""
 
-from y5n.sdk import context, io
+from y5n.sdk import context, io, session
 
 
 async def main():
@@ -9,7 +9,7 @@ async def main():
     await io.write(f"cwd:      {ctx.cwd}")
     await io.write(f"user:     {ctx.user.get('name', ctx.user.get('id', '?'))}")
 
-    ses = context.session()
+    ses = await session.current()
     await io.write(f"key:      {ses.key}")
     await io.write(f"locale:   {ses.locale}")
     await io.write(f"user_id:  {ses.user_id}")

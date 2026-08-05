@@ -62,6 +62,32 @@ class _SessionDetach:
         ).__await__()
 
 
+class _SessionCurrent:
+    def __await__(self):
+        from y5n.runtime.api.runtime.bus import get_bus
+        from y5n.runtime.api.runtime.invoke import Call
+        from y5n.runtime.api.runtime.context import current_context
+        from y5n.sdk.libs.models import Session as _SessionModel
+
+        ctx = current_context()
+        session_key = ctx.get("session", {}).get("key", "")
+
+        bus = get_bus()
+        resp = yield from bus.async_dispatch(
+            Call(
+                port="session",
+                method="current",
+                caller_path="",
+                caller_session_key=session_key,
+            )
+        ).__await__()
+        data = resp.result if hasattr(resp, "result") else resp
+        return _SessionModel.from_context(
+            {"key": data.get("key"), "lang": data.get("lang"), "data": data.get("data", {})},
+            {"id": data.get("user_id"), "name": data.get("user_name")},
+        )
+
+
 class _Session:
     def list(self) -> _SessionList:
         return _SessionList()
@@ -71,6 +97,9 @@ class _Session:
 
     def detach(self) -> _SessionDetach:
         return _SessionDetach()
+
+    def current(self) -> _SessionCurrent:
+        return _SessionCurrent()
 
 
 session = _Session()

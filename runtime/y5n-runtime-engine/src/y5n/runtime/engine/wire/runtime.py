@@ -255,7 +255,7 @@ def build_runtime(
 
     bus.resolver.register(
         "system:projection",
-        {"session": ["attach", "detach", "update", "logout"]},
+        {"session": ["attach", "detach", "update", "logout", "current"]},
         path="/",
     )
     bus.transport.register_adapter(

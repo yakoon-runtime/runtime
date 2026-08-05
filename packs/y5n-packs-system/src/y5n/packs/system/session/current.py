@@ -9,7 +9,8 @@ async def main():
     if current:
         await io.write(f"Session:  {current_key}")
         await io.write(
-            f"clients={current['clients']}  homes={current['homes']}  flows={current['flows']}"
+            f"clients={current['clients']}  "
+            f"homes={current['homes']}  flows={current['flows']}"
         )
     else:
         await io.write(f"Session:  {current_key}")

@@ -1,4 +1,4 @@
-from y5n.sdk import context, io, ports
+from y5n.sdk import context, io, ports, session
 
 
 async def main():
@@ -32,7 +32,7 @@ async def main():
 
 async def _resolve_box_id(box_ref: str, world_ref: str | None) -> str | None:
     if box_ref == "." or box_ref is None:
-        return context.session().data.get("luma.current_box")
+        return (await session.current()).data.get("luma.current_box")
     if box_ref.isdigit():
         return box_ref
     if not world_ref:
