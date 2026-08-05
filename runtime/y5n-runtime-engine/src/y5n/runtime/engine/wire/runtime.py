@@ -1,28 +1,9 @@
 from y5n.runtime.api.nodes import NodePath, UnknownOptionsError, UsageError
-from y5n.runtime.api.ports.system import (
-    AUTHORIZE_READ,
-    AUTHORIZE_WRITE,
-    COMPILE,
-    DOCUMENT_RESOLVE,
-    ERROR_RESOLVE,
-    JINJA_RENDER,
-    NEW_PERMISSION_SET,
-    PARSE_PERMISSION_SPEC,
-    RESOURCE_LOAD,
-    SESSION_ATTACH,
-    SESSION_DETACH,
-    SESSION_SAVE,
-    SOURCE_READ,
-    VALIDATE,
-)
+from y5n.runtime.api.ports.system import ERROR_RESOLVE
 from y5n.runtime.api.resources import ResourceRef
 from y5n.runtime.api.runtime import get_bus
 from y5n.runtime.engine.capabilities.audit import AuditLogService
-from y5n.runtime.engine.capabilities.permission import (
-    PermissionChecker,
-    PermissionParser,
-    PermissionSet,
-)
+from y5n.runtime.engine.capabilities.permission import PermissionChecker
 from y5n.runtime.engine.executor import (
     ExecutorKind,
     ExecutorRegistry,
@@ -93,7 +74,6 @@ def build_runtime(
     # -------------------
 
     perm_checker = PermissionChecker()
-    perm_parser = PermissionParser()
 
     # --------------------
     # --- DATASOURCING ---
@@ -161,18 +141,7 @@ def build_runtime(
     assert root
     root_ports = root.ports
 
-    root_ports.provide(SOURCE_READ, ds.read)
-    root_ports.provide(SESSION_SAVE, session_manager.save)
-    root_ports.provide(AUTHORIZE_READ, perm_checker.can_read)
-    root_ports.provide(AUTHORIZE_WRITE, perm_checker.can_write)
-    root_ports.provide(NEW_PERMISSION_SET, lambda: PermissionSet())
-    root_ports.provide(PARSE_PERMISSION_SPEC, perm_parser.parse)
-    root_ports.provide(DOCUMENT_RESOLVE, projector.project)
-    root_ports.provide(RESOURCE_LOAD, doc.loader.get_text)
-    root_ports.provide(JINJA_RENDER, doc.jinja.render_str)
-    root_ports.provide(COMPILE, doc.compiler.compile)
     root_ports.provide(ERROR_RESOLVE, error_resolve)
-    root_ports.provide(VALIDATE, tree.validate)
 
     # --------------------
     # --- DATASOURCING ---
@@ -214,8 +183,6 @@ def build_runtime(
     )
 
     ds.bind("system:sessions", SessionSource(manager))
-    root_ports.provide(SESSION_ATTACH, manager.attach_session)
-    root_ports.provide(SESSION_DETACH, manager.detach_session)
 
     # ---------------------------------------
     # --- SDK ADAPTERS (on the Runtime Bus) ---

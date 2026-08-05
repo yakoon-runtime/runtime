@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import cast
-
 from y5n.runtime.api.flow.dsl import Pulse
 from y5n.runtime.api.flow.patterns.public.form import Form
 from y5n.runtime.api.flow.primitives import Continue
@@ -16,10 +14,8 @@ from y5n.runtime.api.runtime.context import current_context
 from y5n.runtime.api.runtime.input import (
     InputContext,
     Interaction,
-    OnPrepareInput,
     Origin,
 )
-from y5n.runtime.api.runtime.sessions import Session as BaseSession
 from y5n.runtime.engine.runtime import Session
 
 
@@ -29,11 +25,6 @@ class Interactor:
     In CLI mode (override, agent/scheduler caller, node.interaction=CLI)
     the request passes through unchanged. In form mode, _run_form creates
     a replacement node whose run handler drives a Form directly.
-
-    If a node provides OnPrepareInput via its port hierarchy, initial
-    values are loaded before rendering (e.g. entity data on edit).
-    The Interactor itself has no knowledge about the origin of these
-    values.
     """
 
     async def intercept(
@@ -80,17 +71,6 @@ class Interactor:
             return node, tokens
 
         initial = None
-        if node.ports is not None:
-            try:
-                on_prepare = node.ports.get(OnPrepareInput)
-                initial = await on_prepare(
-                    node=node,
-                    invocation=inv,
-                    tokens=tokens,
-                    session=cast(BaseSession, session),
-                )
-            except KeyError:
-                pass
 
         form_node = Node(
             key=node.key,
