@@ -29,11 +29,11 @@ from y5n.runtime.engine.machine import (
 )
 from y5n.runtime.engine.machine.ports import OnAuditWarning, OnSuggest
 from y5n.runtime.engine.runtime import Session
-
-logger = logging.getLogger(__name__)
 from y5n.runtime.engine.runtime.bus import BusOutput
 from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.settings.version import resolve_runtime_info
+
+logger = logging.getLogger(__name__)
 
 # ----------------------------------
 # ERRORS

@@ -361,7 +361,9 @@ class Header(YdsModel):
 
 @dataclass(slots=True, kw_only=True)
 class Document(YdsModel):
-    """Root of every YDS document.  Produced by the Compiler and normalised by the Runtime before dispatch."""
+    """Root of every YDS document. Produced by the Compiler and
+    normalised by the Runtime before dispatch.
+    """
 
     kind: str = "document"
     header: Header
