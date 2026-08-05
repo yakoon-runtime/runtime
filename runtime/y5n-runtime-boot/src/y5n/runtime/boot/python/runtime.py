@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from y5n.runtime.api.flow.dsl import Pulse, out_text
-from y5n.runtime.api.nodes.space import NodeSpace
 from y5n.runtime.api.runtime.context import current_context
 
 from ._shared import (
@@ -128,7 +127,7 @@ def _coerce_resource(result):
     raise LookupError(f"capability returned unsupported type: {type(result).__name__}")
 
 
-async def run(space: NodeSpace):
+async def run():
     ctx = current_context()
     target_path = ctx.get("node", {}).get("path") if ctx else None
     if not target_path:

@@ -170,10 +170,7 @@ class _Host:
 
 
 def _make_parameterless_node(host: _Host) -> Node:
-    def _run(ctx):
-        return host.main()
-
-    add = Node(key="add", run=_run)
+    add = Node(key="add", run=host.main)
     contact = Node(key="contact")
     contact.mount(add)
     crm = Node(key="crm")

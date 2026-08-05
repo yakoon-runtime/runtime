@@ -8,7 +8,7 @@ from y5n.runtime.api.flow.primitives import Pulse, Stop, Suspend, YieldToSchedul
 async def test_suspend_blocks_then_resume(harness):
     """A suspended flow is not runnable until resumed."""
 
-    async def my_handler(ctx):
+    async def my_handler():
         yield Pulse(control=Suspend())
         yield Pulse()
 

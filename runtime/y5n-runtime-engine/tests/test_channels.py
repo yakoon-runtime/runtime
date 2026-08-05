@@ -13,12 +13,12 @@ async def test_flow_channel_isolation(harness):
 
     results: list[str] = []
 
-    async def handler_a(ctx):
+    async def handler_a():
         event = yield receive("form")
         results.append(f"a:{event.payload}")
         yield Pulse()
 
-    async def handler_b(ctx):
+    async def handler_b():
         event = yield receive("form")
         results.append(f"b:{event.payload}")
         yield Pulse()
@@ -52,14 +52,14 @@ async def test_session_channel_cross_flow(harness):
 
     results: list[str] = []
 
-    async def sender(ctx):
+    async def sender():
         from y5n.runtime.api.flow.dsl import send
         from y5n.runtime.api.runtime import Event
 
         yield send("shared", Event(payload="cross-flow!"), scope=Scope.SESSION)
         yield Pulse()
 
-    async def receiver(ctx):
+    async def receiver():
         event = yield receive("shared", scope=Scope.SESSION)
         results.append(event.payload)
         yield Pulse()
@@ -86,12 +86,12 @@ async def test_multiple_session_receivers(harness):
 
     received: list[tuple[str, object]] = []
 
-    async def listener_a(ctx):
+    async def listener_a():
         event = yield receive("shared", scope=Scope.SESSION)
         received.append(("a", event.payload))
         yield Pulse()
 
-    async def listener_b(ctx):
+    async def listener_b():
         event = yield receive("shared", scope=Scope.SESSION)
         received.append(("b", event.payload))
         yield Pulse()
@@ -134,7 +134,7 @@ async def test_schedule_waiting_wakes_flow(harness):
 
     received = []
 
-    async def handler(ctx):
+    async def handler():
         event = yield receive("wake_ch", scope=Scope.SESSION)
         received.append(event.payload)
         yield Pulse()

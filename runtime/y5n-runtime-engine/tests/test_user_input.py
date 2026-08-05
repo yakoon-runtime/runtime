@@ -13,7 +13,7 @@ async def test_receive_user_input(harness):
 
     received = []
 
-    async def handler(ctx):
+    async def handler():
         event = yield receive()
         received.append(event.payload)
 
@@ -53,7 +53,7 @@ async def test_input_without_foreground_dispatches_new_flow(harness):
 
     assert harness.session.foreground_flow is None
 
-    async def handler(ctx):
+    async def handler():
         yield Pulse()
 
     node = Node(key="test", run=handler)
@@ -88,7 +88,7 @@ async def test_input_with_foreground_pushes_to_flow(harness):
 
     received = []
 
-    async def fg_handler(ctx):
+    async def fg_handler():
         event = yield receive()
         received.append(event.payload)
 
