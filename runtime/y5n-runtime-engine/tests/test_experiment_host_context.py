@@ -214,7 +214,7 @@ async def test_host_from_context_drives_target(tmp_path, harness, effect_executo
         node=node,
         event=Event(payload="/crm/contact/add"),
         cursor=FlowCursor("run"),
-        tokens=["/crm/contact/add", "jane"],
+        tokens=["jane"],
     )
     harness.session.add_flow(flow)
     harness.scheduler.schedule_flow(flow, harness.session)
@@ -246,7 +246,7 @@ async def test_host_from_context_missing_entry(tmp_path, harness, effect_executo
         node=node,
         event=Event(payload="/crm/contact/add"),
         cursor=FlowCursor("run"),
-        tokens=["/crm/contact/add", "jane"],
+        tokens=["jane"],
     )
     harness.session.add_flow(flow)
     harness.scheduler.schedule_flow(flow, harness.session)

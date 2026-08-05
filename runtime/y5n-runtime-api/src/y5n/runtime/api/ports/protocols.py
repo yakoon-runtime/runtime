@@ -22,24 +22,6 @@ class OnDocumentResolve(Protocol):
     ) -> dict: ...
 
 
-class OnProject(Protocol):
-    """Resolve a document from a node's resources.
-
-    Uses the pre-assembled resource paths on the space to find
-    the template, renders it via Jinja, and compiles it into
-    a Document.  The optional *resource* parameter selects
-    which resource type to use (defaults to ``"document"``).
-    """
-
-    async def __call__(
-        self,
-        *,
-        space: NodeSpace,
-        resource: str = "document",
-        state: dict | None = None,
-    ) -> dict: ...
-
-
 class OnManualResolve(Protocol):
     async def __call__(
         self,

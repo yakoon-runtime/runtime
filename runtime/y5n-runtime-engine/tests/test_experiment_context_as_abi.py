@@ -62,7 +62,7 @@ def _make_flow(node: Node, session: Session, tokens=None, payload="test"):
         node=node,
         event=Event(payload=payload),
         cursor=FlowCursor("run"),
-        tokens=tokens or ["/crm/contact/add", "jane"],
+        tokens=tokens or ["jane"],
     )
     session.add_flow(flow)
     return flow
@@ -78,7 +78,7 @@ async def test_engine_sets_invocation_context(harness, effect_executor):
         assert ctx.node.get("name") == "add"
         assert ctx.workspace == "/tmp/workspace"
         assert ctx.cwd == "/crm/contact"
-        assert ctx.tokens == ["/crm/contact/add", "jane"]
+        assert ctx.args == ["jane"]
 
         req = sdk_context.request()
         assert req.arg(0) == "jane"
