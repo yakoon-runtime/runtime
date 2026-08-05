@@ -19,6 +19,7 @@ from y5n.runtime.api.naming import Key
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.flow import Flow, FlowCursor
+from y5n.runtime.engine.runtime.invocation import derive_invocation_context
 from y5n.runtime.engine.runtime.sessions.session import Session
 from y5n.sdk import context as sdk_context
 
@@ -47,12 +48,16 @@ def _make_node(main) -> Node:
 
 
 def _make_flow(node: Node, session: Session, tokens=None, payload="test"):
+    flow_id = session.next_flow_id()
     flow = Flow(
-        id=session.next_flow_id(),
+        id=flow_id,
         node=node,
         event=Event(payload=payload),
         cursor=FlowCursor("run"),
         tokens=tokens or ["jane"],
+        invocation=derive_invocation_context(
+            node=node, session=session, flow_id=flow_id, tokens=tokens or ["jane"]
+        ),
     )
     session.add_flow(flow)
     return flow

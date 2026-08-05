@@ -10,7 +10,10 @@ from y5n.runtime.api.runtime import Event, InputContext, Interaction
 from y5n.runtime.engine.flow import Flow, FlowCursor, FlowKind
 from y5n.runtime.engine.interaction import resolve_interaction
 from y5n.runtime.engine.runtime import Session
-from y5n.runtime.engine.runtime.invocation import set_invocation_context
+from y5n.runtime.engine.runtime.invocation import (
+    derive_invocation_context,
+    establish_invocation_context,
+)
 
 
 class CommandEngine:
@@ -73,14 +76,24 @@ class CommandEngine:
         if not node.has_run():
             return None
 
+        flow_id = session.next_flow_id()
+
+        invocation = derive_invocation_context(
+            node=node,
+            session=session,
+            flow_id=flow_id,
+            tokens=tokens,
+        )
+
         flow = Flow(
-            id=session.next_flow_id(),
+            id=flow_id,
             node=node,
             tokens=tokens,
             pipeline=pipeline,
             event=event.update(payload=node.key),
             cursor=FlowCursor("run"),
             kind=self.DEFAULT_FLOW_KIND,
+            invocation=invocation,
         )
 
         session.add_flow(flow)
@@ -180,12 +193,8 @@ class CommandEngine:
         # NEXT
         # ----------------------------------
 
-        set_invocation_context(
-            node=node,
-            session=session,
-            flow_id=flow.id,
-            tokens=flow.tokens,
-        )
+        if flow.invocation is not None:
+            establish_invocation_context(flow.invocation)
 
         return await flow.cursor.next(node)
 

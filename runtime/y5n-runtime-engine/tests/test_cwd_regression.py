@@ -21,6 +21,7 @@ from y5n.runtime.engine.flow import Flow, FlowCursor
 from y5n.runtime.engine.machine.parser import InputParser
 from y5n.runtime.engine.machine.runner import Runner
 from y5n.runtime.engine.nodes.tree import Tree
+from y5n.runtime.engine.runtime.invocation import derive_invocation_context
 
 
 def _make_module(name: str, main) -> types.ModuleType:
@@ -351,12 +352,16 @@ async def test_real_input_cd_opt(tmp_path, harness, effect_executor):
 
 def _make_flow(node, session, tokens=None):
 
+    flow_id = session.next_flow_id()
     flow = Flow(
-        id=session.next_flow_id(),
+        id=flow_id,
         node=node,
         event=Event(payload=node.key),
         cursor=FlowCursor("run"),
         tokens=tokens or [node.key],
+        invocation=derive_invocation_context(
+            node=node, session=session, flow_id=flow_id, tokens=tokens or []
+        ),
     )
     session.add_flow(flow)
     return flow

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.flow import Flow, FlowCursor
+from y5n.runtime.engine.runtime.invocation import derive_invocation_context
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
@@ -23,11 +24,15 @@ def make_flow(
     payload: object = "test",
 ) -> Flow:
     node = Node(key="test", run=handler)  # type: ignore[arg-type]
+    flow_id = session.next_flow_id()
     flow = Flow(
-        id=session.next_flow_id(),
+        id=flow_id,
         node=node,
         event=Event(payload=payload),
         cursor=FlowCursor("run"),
+        invocation=derive_invocation_context(
+            node=node, session=session, flow_id=flow_id
+        ),
     )
     session.add_flow(flow)
     return flow
