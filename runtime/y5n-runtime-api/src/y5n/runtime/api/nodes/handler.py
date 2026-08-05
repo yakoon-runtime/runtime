@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from .node import Node
     from .path import NodePath
     from .ports import NodePorts
-    from .space import NodeSpace
 
 # ----------------------------------
 # RESULT
@@ -28,11 +27,15 @@ RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]
 
 
 class RunHandler(Protocol):
+    """A node's run contract — parameterless.
+
+    The handler is ``async def main()``: it reads its whole invocation from
+    ``context.current()`` (ADR-12). The engine establishes the invocation
+    context before every step; the handler consumes it.
+    """
 
     def __call__(
         self,
-        space: NodeSpace,
-        /,
     ) -> RunResult: ...
 
 

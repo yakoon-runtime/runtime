@@ -13,7 +13,7 @@ async def test_multiple_commands_parallel(harness, effect_executor):
 
     received: list[object] = []
 
-    async def caller(ctx):
+    async def caller():
         from uuid import uuid4
 
         ch_a = uuid4().hex
@@ -57,7 +57,7 @@ async def test_multiple_tasks_parallel(harness, effect_executor):
 
     received: list[object] = []
 
-    async def caller(ctx):
+    async def caller():
         from uuid import uuid4
 
         ch_a = uuid4().hex

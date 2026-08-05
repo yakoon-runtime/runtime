@@ -7,8 +7,8 @@ from typing import Any
 
 
 async def invoke(call_dict: dict[str, Any]) -> dict[str, Any]:
-    from y5n.runtime.api.runtime.context import Call as _RuntimeCall
-    from y5n.runtime.api.runtime.context import invoke as _runtime_invoke
+    from y5n.runtime.api.runtime.invoke import Call as _RuntimeCall
+    from y5n.runtime.api.runtime.invoke import invoke as _runtime_invoke
 
     rc = _RuntimeCall(
         port=call_dict.get("port", ""),

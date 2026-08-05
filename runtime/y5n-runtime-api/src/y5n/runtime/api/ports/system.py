@@ -8,7 +8,6 @@ from y5n.runtime.api.ports.protocols import (
     OnJinjaRender,
     OnNewPermissionSet,
     OnParsePermissionSpec,
-    OnProject,
     OnResourceLoad,
     OnSessionAttach,
     OnSessionDetach,
@@ -66,11 +65,6 @@ NEW_PERMISSION_SET = Port(
 PARSE_PERMISSION_SPEC = Port(
     "permission.parse",
     protocol=OnParsePermissionSpec,
-)
-
-DOCUMENT = Port(
-    "document.project",
-    protocol=OnProject,
 )
 
 DOCUMENT_RESOLVE = Port(

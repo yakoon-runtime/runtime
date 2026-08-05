@@ -18,11 +18,11 @@ async def test_command_channel_contract(harness):
 
     received: list[object] = []
 
-    async def sub_flow(ctx):
+    async def sub_flow():
         yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
         yield Pulse()
 
-    async def caller(ctx):
+    async def caller():
         ch = uuid4().hex
         yield start_cmd("test", channel=ch)
         yield Pulse()
@@ -60,8 +60,10 @@ async def test_start_cmd_parses_tokens(harness, effect_executor):
     received_tokens: list[list[str]] = []
     created_flow = None
 
-    async def sub_handler(ctx):
-        received_tokens.append(ctx.request.args())
+    async def sub_handler():
+        from y5n.sdk import context
+
+        received_tokens.append(context.request().args())
         yield out({"kind": "document", "header": {"role": "info"}, "blocks": []})
         yield Pulse()
 
@@ -95,7 +97,7 @@ async def test_start_cmd_parses_tokens(harness, effect_executor):
         StartCommandHandler(on_start_command),
     )
 
-    async def caller(ctx):
+    async def caller():
         ch = uuid4().hex
         yield start_cmd("test --flag value", channel=ch)
         yield Pulse()

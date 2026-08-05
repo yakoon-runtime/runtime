@@ -13,7 +13,8 @@ async def main():
     for r in rows:
         marker = "* " if r["key"] == current_key else "  "
         lines.append(
-            f"{marker}{r['key']:<45} clients={r['clients']}  homes={r['homes']}  flows={r['flows']}"
+            f"{marker}{r['key']:<45} clients={r['clients']}  "
+            f"homes={r['homes']}  flows={r['flows']}"
         )
 
     await io.write("Active sessions:\n" + "\n".join(lines))

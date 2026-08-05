@@ -1,4 +1,3 @@
-from typing import Any
 
 from y5n.runtime.api.sources import DataRequest, DataResult, DataSource
 

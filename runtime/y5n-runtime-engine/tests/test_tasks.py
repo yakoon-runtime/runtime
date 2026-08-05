@@ -13,7 +13,7 @@ async def test_start_task_result_routing(harness):
 
     received: list[object] = []
 
-    async def caller(ctx):
+    async def caller():
         from uuid import uuid4
 
         ch = uuid4().hex

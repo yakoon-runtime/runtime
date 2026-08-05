@@ -9,7 +9,7 @@ from y5n.runtime.api.flow.primitives import AwaitEvent, Pulse, Stop, Suspend
 async def test_foreground_sets_focus(harness):
     """foreground() macht den Flow zum Foreground-Flow der Session."""
 
-    async def handler(ctx):
+    async def handler():
         yield foreground()
         yield Pulse(control=Suspend())
 
@@ -29,7 +29,7 @@ async def test_foreground_sets_focus(harness):
 async def test_background_clears_focus(harness):
     """background() entfernt den Flow aus dem Foreground-Status."""
 
-    async def handler(ctx):
+    async def handler():
         yield foreground()
         yield background()
         yield Pulse(control=Suspend())
@@ -52,13 +52,13 @@ async def test_foreground_receives_user_input(harness):
 
     received: list[str] = []
 
-    async def fg_handler(ctx):
+    async def fg_handler():
         yield foreground()
         event = yield receive()
         received.append(event.payload)
         yield Pulse()
 
-    async def bg_handler(ctx):
+    async def bg_handler():
         event = yield receive()
         received.append(event.payload)
         yield Pulse()
@@ -86,13 +86,13 @@ async def test_foreground_switch(harness):
 
     received: list[str] = []
 
-    async def handler_a(ctx):
+    async def handler_a():
         yield foreground()
         event = yield receive()
         received.append(f"a:{event.payload}")
         yield Pulse()
 
-    async def handler_b(ctx):
+    async def handler_b():
         yield foreground()
         event = yield receive()
         received.append(f"b:{event.payload}")
@@ -127,7 +127,7 @@ async def test_error_kills_foreground(harness):
     session.del_flow(session.foreground_flow) auf, was den Fokus löscht.
     """
 
-    async def handler(ctx):
+    async def handler():
         yield foreground()
         raise RuntimeError("boom")
 

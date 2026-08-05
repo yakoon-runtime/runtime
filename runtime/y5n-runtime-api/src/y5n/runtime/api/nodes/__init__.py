@@ -8,12 +8,9 @@ from .invocation import (
 from .node import Node
 from .path import NodePath
 from .request import Request, RequestBuilder
-from .space import NodeSpace
 from .types import NodeKind, NodeVisibility
 
 __all__ = [
-    # .space
-    "NodeSpace",
     # .node
     "Node",
     # .types

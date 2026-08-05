@@ -186,7 +186,9 @@ class _PostgresExec:
     ):
         await self.conn.execute(
             """
-            INSERT INTO revisions(domain, kind, space, entity_id, rev, ts, patch, patch_format)
+            INSERT INTO revisions(
+                domain, kind, space, entity_id, rev, ts, patch, patch_format
+            )
             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
             """,
             str(domain_id),
@@ -315,7 +317,9 @@ class _PostgresExec:
         for spec in specs:
             await self.conn.execute(
                 """
-                INSERT INTO index_specs(domain, kind, space, key, value_type, unique_flag)
+                INSERT INTO index_specs(
+                    domain, kind, space, key, value_type, unique_flag
+                )
                 VALUES ($1,$2,$3,$4,$5,$6)
                 ON CONFLICT DO NOTHING
                 """,

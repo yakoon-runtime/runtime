@@ -1,9 +1,10 @@
-from y5n.sdk import context, io, ports
+from y5n.sdk import io, ports, session
 
 
 async def main():
-    current_world = context.session().data.get("luma.current_world")
-    current_box = context.session().data.get("luma.current_box")
+    ses = await session.current()
+    current_world = ses.data.get("luma.current_world")
+    current_box = ses.data.get("luma.current_box")
 
     if current_world is None and current_box is None:
         await io.write("Nowhere to leave.")

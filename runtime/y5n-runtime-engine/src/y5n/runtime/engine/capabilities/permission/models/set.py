@@ -10,7 +10,8 @@ class PermissionSet:
     Policy:
       - Allows accumulate (union)
       - Denies subtract (deny wins over allow for the denied bits)
-      - For now we apply scope1 always; scope2 is stored but not enforced unless you pass a scope2 requirement.
+      - For now we apply scope1 always; scope2 is stored but not
+        enforced unless you pass a scope2 requirement.
     """
 
     def __init__(self) -> None:

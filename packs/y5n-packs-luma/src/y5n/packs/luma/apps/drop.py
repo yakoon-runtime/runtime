@@ -1,9 +1,10 @@
-from y5n.sdk import context, io, ports
+from y5n.sdk import context, io, ports, session
 
 
 async def main():
-    current_box = context.session().data.get("luma.current_box")
-    current_world = context.session().data.get("luma.current_world")
+    ses = await session.current()
+    current_box = ses.data.get("luma.current_box")
+    current_world = ses.data.get("luma.current_world")
     if not current_box or not current_world:
         await io.write("You are not inside any box.")
         return
@@ -13,7 +14,7 @@ async def main():
         await io.write("Drop what?")
         return
 
-    inv_id = context.session().data.get("luma.inventory_id")
+    inv_id = ses.data.get("luma.inventory_id")
     if not inv_id:
         await io.write("Nothing in inventory.")
         return

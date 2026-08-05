@@ -6,8 +6,6 @@ from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.runtime import Event, Routing
 from y5n.runtime.engine.runtime import Session
 
-from .ports import OnCreateRunner
-
 
 class Runner:
     """Per-session input runner.

@@ -25,7 +25,6 @@ It remains the primary way Yakoon services are executed.
 
 if TYPE_CHECKING:
     from y5n.runtime.api.nodes.node import Node
-    from y5n.runtime.api.nodes.space import NodeSpace
 
 FlowYield: TypeAlias = Pulse | AsyncGenerator | None
 RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]
@@ -46,7 +45,6 @@ class Executor(Protocol):
         self,
         node: Node,
         phase: Phase,
-        space: NodeSpace,
     ) -> RunResult: ...
 
 

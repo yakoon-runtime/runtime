@@ -3,6 +3,9 @@
 This module is read-only. It provides the frozen snapshot of
 the current invocation's starting conditions.
 
+The raw invocation context is set by the engine through the Runtime API
+(ADR-12 Section 4); this module is the typed, ergonomic view on it.
+
 Usage:
     from y5n.sdk import context
 
@@ -13,33 +16,28 @@ Usage:
 
 from __future__ import annotations
 
-from contextvars import ContextVar
+from y5n.runtime.api.runtime.context import current_context
 
 from .libs.models import Context as _Ctx
 from .libs.models import Flow as _Flow
 from .libs.models import Request as _Request
 from .libs.models import Session as _Session
 
-_var: ContextVar[_Ctx] = ContextVar("y5n_sdk_context")
-
-
-def _set(ctx: _Ctx) -> None:
-    """Set the current context (called by the Host)."""
-    _var.set(ctx)
-
 
 def current() -> _Ctx:
     """Return the current execution context."""
-    try:
-        return _var.get()
-    except LookupError:
-        return _Ctx()
+    return _Ctx.from_dict(current_context())
 
 
 def request() -> _Request:
-    """Return a Request object parsed from the current context tokens."""
+    """Return a Request view over the current invocation.
+
+    ``node.path`` names the command; ``args`` are the positional arguments
+    and options. The Request is a convenience view — the truth lives in
+    the context's canonical fields.
+    """
     ctx = current()
-    return _Request.from_tokens(ctx.tokens)
+    return _Request(command=ctx.node.get("path", ""), tokens=ctx.args)
 
 
 def session() -> _Session:

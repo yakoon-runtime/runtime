@@ -2,7 +2,8 @@
 
 Usage:
     python -m y5n.sdk.gen --input spec/yds/yds-v1.yaml --output models.py
-    python -m y5n.sdk.gen --input spec/yds/yds-v1.yaml --output models.py --language python
+    python -m y5n.sdk.gen --input spec/yds/yds-v1.yaml --output models.py \\
+        --language python
 """
 
 from __future__ import annotations

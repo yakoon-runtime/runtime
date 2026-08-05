@@ -6,13 +6,12 @@ from pathlib import Path
 from typing import Any
 
 from y5n.runtime.api.flow.dsl import Pulse, out_text
-from y5n.runtime.api.nodes.space import NodeSpace
-from y5n.sdk import context as sdk_context
-from y5n.sdk.libs.models import Context as SdkContext
+from y5n.runtime.api.resources import Resource
+from y5n.runtime.api.runtime.context import current_context
 
 from ._shared import (
-    _build_context_dict,
     load_and_capture,
+    parse_entry,
     read_entry,
     resolve_tree_path,
     unload_module,
@@ -88,8 +87,6 @@ async def _interpret(expr: str, parameters: dict, base: Path | None):
 
 
 def _file_resource(value: str, base: Path | None):
-    from y5n.runtime.api.resources import Resource
-
     if not value:
         raise LookupError("file: reference requires a path")
     path = Path(value)
@@ -119,8 +116,6 @@ async def _capability_resource(value: str, parameters: dict):
 
 
 def _coerce_resource(result):
-    from y5n.runtime.api.resources import Resource
-
     if isinstance(result, Resource):
         return result
     if isinstance(result, str):
@@ -130,26 +125,25 @@ def _coerce_resource(result):
     raise LookupError(f"capability returned unsupported type: {type(result).__name__}")
 
 
-async def run(space: NodeSpace):
-    target_path = str(space.path) if space.path else None
+async def main():
+    ctx = current_context()
+    target_path = ctx.get("node", {}).get("path") if ctx else None
     if not target_path:
         yield out_text("Usage: python/runtime <tree-path>")
         return
 
-    root = Path(space.session.get_data("fs:root")) if space.session else Path()
+    root = Path(ctx.get("workspace", "")) if ctx else Path()
     if not root.is_dir():
         yield out_text(f"error: workspace root not found: {root}")
         return
 
-    current = space.session.cwd if space.session else None
+    current = ctx.get("cwd", "") if ctx else None
     target_path = resolve_tree_path(target_path, current)
 
     entry = read_entry(root, target_path)
     if not entry:
         yield out_text(f"error: no entry for '{target_path}'")
         return
-
-    from ._shared import parse_entry
 
     try:
         scheme, value = parse_entry(entry)
@@ -172,8 +166,6 @@ async def run(space: NodeSpace):
         if main_fn is None:
             yield out_text(f"error: {mod_name} has no '{func_name}'")
             return
-        ctx = SdkContext.from_dict(_build_context_dict(space, target_path))
-        sdk_context._set(ctx)
         mod_name_for_cleanup = ""
     elif scheme == "file":
         app_file = root / value
@@ -181,9 +173,7 @@ async def run(space: NodeSpace):
             yield out_text(f"error: file not found: '{app_file}'")
             return
 
-        errors, _, mod, mod_name_for_cleanup = load_and_capture(
-            space, target_path, app_file
-        )
+        errors, _, mod, mod_name_for_cleanup = load_and_capture(target_path, app_file)
         if errors:
             for err in errors:
                 yield out_text(err)
