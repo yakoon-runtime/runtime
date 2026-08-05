@@ -127,7 +127,7 @@ def _coerce_resource(result):
     raise LookupError(f"capability returned unsupported type: {type(result).__name__}")
 
 
-async def run():
+async def main():
     ctx = current_context()
     target_path = ctx.get("node", {}).get("path") if ctx else None
     if not target_path:

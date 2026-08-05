@@ -94,7 +94,7 @@ async def test_real_cd_module(tmp_path, harness, effect_executor):
             [
                 "title: Python Runtime Host",
                 "entry:",
-                "  run: pack:y5n.runtime.boot.python.runtime:run",
+                "  run: pack:y5n.runtime.boot.python.runtime:main",
                 "resolve:",
                 "  default: pack:y5n.runtime.boot.python.runtime:resolve",
             ]
@@ -167,7 +167,7 @@ async def test_cd_through_full_engine(tmp_path, harness, effect_executor):
             [
                 "title: Python Runtime Host",
                 "entry:",
-                "  run: pack:y5n.runtime.boot.python.runtime:run",
+                "  run: pack:y5n.runtime.boot.python.runtime:main",
                 "resolve:",
                 "  default: pack:y5n.runtime.boot.python.runtime:resolve",
             ]
@@ -216,7 +216,7 @@ async def test_cd_then_pwd_full_engine(tmp_path, harness, effect_executor):
             [
                 "title: Python Runtime Host",
                 "entry:",
-                "  run: pack:y5n.runtime.boot.python.runtime:run",
+                "  run: pack:y5n.runtime.boot.python.runtime:main",
                 "resolve:",
                 "  default: pack:y5n.runtime.boot.python.runtime:resolve",
             ]
@@ -294,7 +294,7 @@ async def test_real_input_cd_opt(tmp_path, harness, effect_executor):
             [
                 "title: Python Runtime Host",
                 "entry:",
-                "  run: pack:y5n.runtime.boot.python.runtime:run",
+                "  run: pack:y5n.runtime.boot.python.runtime:main",
                 "resolve:",
                 "  default: pack:y5n.runtime.boot.python.runtime:resolve",
             ]
