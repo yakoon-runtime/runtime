@@ -200,18 +200,20 @@ no host-type knowledge.
 > the application. It is the frozen snapshot of *why this code is running*
 > and *where*. Every node — command or host — reads it through the same SDK.
 
-`context.current()` is the single data source. It carries exactly what an
-invocation is:
+`context.current()` carries the immutable start conditions of an
+invocation:
 
 ```
-node.path    the node being invoked        (was: space.path)
-workspace    the workspace root            (was: space.session "fs:root")
-cwd          the working directory         (was: space.session.cwd)
-session      key, lang, interaction, data  (was: space.session)
-user         identity of the caller        (was: session identity)
-flow         id of the executing flow      (was: space.flow_id)
-args         the invocation arguments      (was: space.request.args())
+node.path       the node being invoked        (was: space.path)
+args            the invocation arguments      (was: space.request.args())
+flow.id         the executing flow            (was: space.flow_id)
+session.key     reference to the live Session (was: space.session)
 ```
+
+`session`, `cwd`, and `user` are **not** snapshotted — they are live state
+owned by the SessionService (see "The Session is the one exception"). The
+context carries only the session key; everything mutable is queried live
+through the SDK.
 
 **The invocation context is immutable and ephemeral.** It describes exactly
 one invocation at one point in time. The context is not owned by the
@@ -278,6 +280,40 @@ effect's result), not via `context.current()`. Today no pack reads
 `context.current()` after mutating the session in the same flow, so the
 snapshot is behaviorally safe — but the contract is now explicit.
 
+### The Session is the one exception: a live reference, not a copy
+
+The snapshot rule has exactly one exception — the **Session**. It is the
+single piece of invocation data that other flows mutate (logout, `cd`,
+`luma.current_box`, ...). Copying it into the snapshot would make it stale
+by definition: a long-running flow that started at 08:00 must see a logout
+at 09:00.
+
+**The Session is live, shared state — like a database connection, not an
+argument.** The invocation context therefore carries only the session
+**key** (a reference), never a copy of the session's data. Components that
+need the current session query the SessionService through the SDK
+(`session.current()`), which is a live lookup — never the context.
+
+```
+Invocation (snapshot)              Live state (owned elsewhere)
+├── node.path                      
+├── args                            SessionService
+├── flow.id                          ├── session (key, lang, data)
+└── session.key ──────────────────→  └── cwd, user
+```
+
+Consequences:
+
+- A logout, role change, or session timeout is visible **immediately** to a
+  running flow — it reads live state, not a stale snapshot.
+- Flow migration carries only the session key; every scheduler resolves the
+  same session through the shared service.
+- The SDK `session.current()` becomes a live (async) lookup over the Bus
+  (port `session.current`), mirroring the existing `session.attach` /
+  `detach` / `update` ports. `context.session()` as a snapshot is removed.
+- `cwd` is session state (`cd` mutates it) and follows the session — read
+  live, not from the snapshot.
+
 **The Flow is the source of truth; the Context is its projection.** The
 context is not persistent state — it is the most convenient representation
 of the flow's invocation. The truth lives in the flow (its node, tokens,
@@ -343,8 +379,8 @@ data — it is a node whose `main()` does the same thing every command does:
 | Before (host reads `space`) | After (host reads the same context) |
 |-----------------------------|--------------------------------------|
 | `space.path` → target | `ctx.node.path` → target |
-| `space.session.get_data("fs:root")` → root | `ctx.workspace` → root |
-| `space.session.cwd` → resolve | `ctx.cwd` → resolve |
+| `space.session.get_data("fs:root")` → root | live `session.current()` → workspace |
+| `space.session.cwd` → resolve | live `session.current()` → cwd |
 | builds context for the target | passes the existing context through |
 | `_build_context_dict` (translation) | gone — the engine derives the Context once, at dispatch |
 
@@ -510,26 +546,32 @@ to the full run contract.
    logic. Should that live in the boot package as a shared helper, or stay
    duplicated per host? (A shared helper inside `y5n-runtime-boot` is a
    host-owned library — not an engine concern.)
+6. **`session.current()` surface.** The Session is live state (Section 4).
+   The SDK needs a `session.current()` port over the Bus — how does it map
+   to the existing `SessionService.get(key)`? And does `context.session()`
+   become this live call, or is a separate `sdk.session.current()` the
+   surface? This decides the migration of the ~15 packs that read
+   `context.session().data` today.
 
 ## Implementation sketch (for later)
 
-1. **Set the Context where NodeSpace is built.** In `engine.py` and
-   `tree.py` (SETUP), replace `NodeSpace(...)` with building the SDK Context
-   (`node.path`, `workspace`, `cwd`, `session`, `user`, `flow`, `args`)
-   and setting it via the SDK contextvar — the ABI (Section 4).
-2. **Migrate the boot host.** `boot/python/runtime.py`: read `ctx.node.path`,
-   `ctx.workspace`, `ctx.cwd` instead of `space.*`; delete
-   `_build_context_dict`; keep the stepper (Section 6). The flow engine keeps
-   driving the host's `main()` async generator.
-3. **Migrate engine consumers.** `interactor.py` and `projector.py` read
-   `session.lang` / the target path from the Context instead of `space`.
+**Done on the experiment branch:** items 1–3 are implemented (Context ABI,
+parameterless `main()`, engine derives once at dispatch). Remaining:
+
+1. **Session as a live reference.** Add a `session.current` Bus port
+   (SDK-facing, mirroring `session.attach`/`detach`/`update` in
+   `SessionAdapter`) that resolves `SessionService.get(session_key)`. The
+   SDK's `session.current()` calls it; `context.session()` no longer builds
+   from a snapshot.
+2. **Slim the invocation context.** `derive_invocation_context` keeps only
+   `node.path`, `args`, `flow.id`, `session.key`. Drop `session` data,
+   `user`, `workspace`, `cwd` — those become live lookups (session/cwd
+   through the SessionService, `user` from the session).
+3. **Migrate packs.** ~15 packs read `context.session().data` today
+   (luma, ident) and `ctx.cwd` (cd, ls, pwd, man). Switch them to the live
+   SDK surface (`session.current()`, `session.cwd()`).
 4. Expose `host.execute` and `host.resolve` ports on the boot host node
    (per ADR-10's resolve service).
-5. Remove `_make_host_handler`; a node with `host:` resolves its host via a
-   port lookup.
-6. Narrow `PackReference` to the first host only.
-7. Migrate tests: `test_resources.py` host calls → port-based; add a flow-level
-   test that a `host:`-declared command runs end-to-end through
-   `FlowCursor`/`CommandEngine` (already sketched in the experiment files).
-8. Leave the PythonHost's stepper where it is — it is the host's execution
+5. Narrow `PackReference` to the first host only.
+6. Leave the PythonHost's stepper where it is — it is the host's execution
    strategy (Section 6), not an engine mechanism.
