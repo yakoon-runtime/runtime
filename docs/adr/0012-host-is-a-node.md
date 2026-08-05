@@ -1,7 +1,6 @@
 # ADR 12: The Host is a Node — The Host Owns Execution
 
-**Status:** Accepted — implemented on the experiment branch; production
-migration follows
+**Status:** Accepted — implemented on `main`
 
 > **The runtime executes nodes. Some nodes happen to execute other nodes.**
 >
@@ -17,7 +16,8 @@ migration follows
 > removes the last runtime-owned behavior. ADR-10 shifted responsibility;
 > ADR-12 removes the mechanical residue of the old responsibility. The runtime
 > ends up knowing only nodes and ports — and the nodes that execute other
-> nodes own that execution.
+> nodes own that execution. In the end, the engine knows exactly one
+> contract: `await node.main()`.
 
 ## Vocabulary
 
@@ -49,6 +49,31 @@ other nodes; the ADR calls those "hosts" only because the name is familiar —
 they are not a separate type. A node that executes other nodes consumes the
 same Context as every other node (Section 5) and owns its own execution
 strategy (Section 6).
+
+**"The Host is a Node" never meant "a host does the same as any other
+node."** A Python host interprets Python, a .NET host starts a CLR, a WASM
+host will load WASM — of course they work differently internally. The
+claim is about the engine, not the host:
+
+> **The engine knows exactly one contract: `await node.main()`.**
+>
+> The engine no longer cares whether a node is a CRM command, the Python
+> host, a thread host, or a remote host. It speaks one language: *"here is
+> a node — start it."* Everything else belongs to the node itself.
+
+This is Ownership First in its purest form: the engine decides **which**
+node executes an invocation; the node decides **how** it executes it. Two
+different responsibilities:
+
+```
+Dispatcher → answers: which node is responsible for this invocation?
+Host/Node  → answers: how is this invocation carried out?
+```
+
+Like an operating system: the kernel does not handle ELF, DLL, Mach-O,
+WASM — it says "for this format, this loader is responsible", and the
+loader takes over. The engine says "for this node, this execution is
+responsible", and the node takes over.
 
 The resulting grammar of Yakoon is consistent:
 
