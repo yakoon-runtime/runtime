@@ -35,6 +35,7 @@ class Flow:
     event: Event
     cursor: FlowCursor
     tokens: list[str] | None = None
+    invocation: dict[str, Any] | None = None
     control: Control | None = None
     view: Any = None
 

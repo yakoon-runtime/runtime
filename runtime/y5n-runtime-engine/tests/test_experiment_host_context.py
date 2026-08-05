@@ -18,6 +18,7 @@ from y5n.runtime.api.flow.primitives import EmitView, Pulse, Stop
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.flow import Flow, FlowCursor
+from y5n.runtime.engine.runtime.invocation import derive_invocation_context
 from y5n.sdk import context as sdk_context
 
 # ---------------------------------------------------------------
@@ -174,6 +175,22 @@ def _make_parameterless_node(host: _Host) -> Node:
     return add
 
 
+def _make_invoked_flow(harness, node: Node, tokens=None) -> Flow:
+    flow_id = harness.session.next_flow_id()
+    flow = Flow(
+        id=flow_id,
+        node=node,
+        event=Event(payload="/crm/contact/add"),
+        cursor=FlowCursor("run"),
+        tokens=tokens or [],
+        invocation=derive_invocation_context(
+            node=node, session=harness.session, flow_id=flow_id, tokens=tokens or []
+        ),
+    )
+    harness.session.add_flow(flow)
+    return flow
+
+
 # ---------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------
@@ -199,14 +216,7 @@ async def test_host_from_context_drives_target(tmp_path, harness, effect_executo
     host = _Host(root=tmp_path)
     node = _make_parameterless_node(host)
 
-    flow = Flow(
-        id=harness.session.next_flow_id(),
-        node=node,
-        event=Event(payload="/crm/contact/add"),
-        cursor=FlowCursor("run"),
-        tokens=["jane"],
-    )
-    harness.session.add_flow(flow)
+    flow = _make_invoked_flow(harness, node, tokens=["jane"])
     harness.scheduler.schedule_flow(flow, harness.session)
 
     projections = effect_executor._on_projection
@@ -228,14 +238,7 @@ async def test_host_from_context_missing_entry(tmp_path, harness, effect_executo
     host = _Host(root=tmp_path)
     node = _make_parameterless_node(host)
 
-    flow = Flow(
-        id=harness.session.next_flow_id(),
-        node=node,
-        event=Event(payload="/crm/contact/add"),
-        cursor=FlowCursor("run"),
-        tokens=["jane"],
-    )
-    harness.session.add_flow(flow)
+    flow = _make_invoked_flow(harness, node, tokens=["jane"])
     harness.scheduler.schedule_flow(flow, harness.session)
 
     projections = effect_executor._on_projection
