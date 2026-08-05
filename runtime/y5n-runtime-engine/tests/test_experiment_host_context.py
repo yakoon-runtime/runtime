@@ -1,18 +1,14 @@
-"""Phase 2 experiment (ADR-12): the host as a context consumer.
+"""Experiment (ADR-12): the host as a context consumer.
 
-The boot host today reads everything from ``space`` and then *builds* the
-SDK context from it (``_build_context_dict``). This experiment proves the
-target shape: a host that reads its needs from ``context.current()``
-instead — ``node.path`` for the target, ``workspace`` for the root, ``cwd``
-for resolution, ``tokens``/``request`` for arguments — and then drives the
-target command's ``main()`` exactly as the boot host does today.
-
-If this round-trip works, the real host migration is a pure swap:
-``space.X`` → ``ctx.Y``, and ``_build_context_dict`` disappears.
+A host is an ordinary node: ``async def main()`` that reads its whole
+invocation from ``context.current()`` — ``node.path`` for the target,
+``workspace`` for the root, ``cwd`` for resolution, ``args`` for the
+arguments — and then drives the target command's ``main()``.
 """
 
 from __future__ import annotations
 
+import inspect
 import sys
 import types
 from pathlib import Path
@@ -20,6 +16,8 @@ from pathlib import Path
 import pytest
 from y5n.runtime.api.flow.primitives import EmitView, Pulse, Stop
 from y5n.runtime.api.nodes import Node
+from y5n.runtime.api.runtime import Event
+from y5n.runtime.engine.flow import Flow, FlowCursor
 from y5n.sdk import context as sdk_context
 
 # ---------------------------------------------------------------
@@ -59,8 +57,6 @@ def _drive_coroutine(coro):
     The stepper is host-owned (ADR-12 Section 4): it stays in the host,
     it does not move into the flow engine.
     """
-
-    import inspect
 
     async def _drive():
         if inspect.isasyncgen(coro):
@@ -203,9 +199,6 @@ async def test_host_from_context_drives_target(tmp_path, harness, effect_executo
     host = _Host(root=tmp_path)
     node = _make_parameterless_node(host)
 
-    from y5n.runtime.api.runtime import Event
-    from y5n.runtime.engine.flow import Flow, FlowCursor
-
     flow = Flow(
         id=harness.session.next_flow_id(),
         node=node,
@@ -234,9 +227,6 @@ async def test_host_from_context_missing_entry(tmp_path, harness, effect_executo
     harness.session.set_data("fs:root", str(tmp_path))
     host = _Host(root=tmp_path)
     node = _make_parameterless_node(host)
-
-    from y5n.runtime.api.runtime import Event
-    from y5n.runtime.engine.flow import Flow, FlowCursor
 
     flow = Flow(
         id=harness.session.next_flow_id(),
