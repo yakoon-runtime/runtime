@@ -7,8 +7,7 @@ from typing import Any
 
 from y5n.runtime.api.flow.dsl import Pulse, out_text
 from y5n.runtime.api.nodes.space import NodeSpace
-from y5n.sdk import context as sdk_context
-from y5n.sdk.libs.models import Context as SdkContext
+from y5n.runtime.api.runtime.context import set_context
 
 from ._shared import (
     _build_context_dict,
@@ -172,8 +171,8 @@ async def run(space: NodeSpace):
         if main_fn is None:
             yield out_text(f"error: {mod_name} has no '{func_name}'")
             return
-        ctx = SdkContext.from_dict(_build_context_dict(space, target_path))
-        sdk_context._set(ctx)
+        ctx = _build_context_dict(space, target_path)
+        set_context(ctx)
         mod_name_for_cleanup = ""
     elif scheme == "file":
         app_file = root / value

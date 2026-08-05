@@ -12,7 +12,7 @@ import json
 from typing import Any
 
 from y5n.runtime.api.document.normalize import normalize
-from y5n.runtime.api.runtime.context import Call
+from y5n.runtime.api.runtime.invoke import Call
 from y5n.runtime.engine.resources.host import resolve_via_host
 
 

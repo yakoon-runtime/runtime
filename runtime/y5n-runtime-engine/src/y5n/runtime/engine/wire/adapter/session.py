@@ -13,7 +13,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 from y5n.runtime.api.naming.key import Key
-from y5n.runtime.api.runtime.context import Call
+from y5n.runtime.api.runtime.invoke import Call
 from y5n.runtime.engine.runtime import Session
 
 _PATCH_MAP: dict[str, str] = {

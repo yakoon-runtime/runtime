@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 from y5n.runtime.api.resources import Resource
-from y5n.runtime.api.runtime.context import Call
+from y5n.runtime.api.runtime.invoke import Call
 from y5n.runtime.engine.executor import ExecutorKind, ExecutorRegistry, RuntimeExecutor
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.wire.adapter.document import DocumentAdapter
