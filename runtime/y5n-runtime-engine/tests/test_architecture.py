@@ -15,8 +15,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 _ENGINE_SRC = Path(__file__).resolve().parents[1] / "src" / "y5n" / "runtime" / "engine"
 
 # Patterns that only a hand-written coroutine stepper produces. The one
@@ -66,20 +64,21 @@ def test_exactly_one_execution_path():
     assert not offenders, f"hand-written stepper in engine: {offenders}"
 
 
-@pytest.mark.xfail(
-    reason="ADR-12 Phase 4: _make_host_handler removed from the tree",
-    strict=False,
-)
-def test_tree_never_rewrites_run_handlers():
-    """The tree never swaps a node's run handler for a host delegation.
+def test_dispatch_handler_has_no_host_knowledge():
+    """The dispatch handler routes to a declared node — no host specifics.
 
-    ``_make_host_handler`` reaches into the tree and rewrites ``node.run``
-    at build time — the last special host treatment in the engine. After
-    ADR-12 a node with ``host:`` resolves its host via a port lookup and
-    the tree stores declarations only.
+    A node declares ``host:`` in yak.yml; ``_make_dispatch_handler`` finds
+    that node in the tree and runs it. The handler must stay a pure
+    dispatcher: it may only look up the declared node by path and call its
+    ``run()``. It must never learn what a host is (no import of the boot
+    implementation, no host-type branching, no scheme interpretation).
     """
     tree_src = _ENGINE_SRC / "nodes" / "tree.py"
     src = tree_src.read_text(encoding="utf-8")
-    assert "_make_host_handler" not in src, (
-        "nodes/tree.py still rewrites run handlers via _make_host_handler"
+
+    assert "y5n.runtime.boot" not in src, (
+        "dispatch handler would reach into a concrete host implementation"
+    )
+    assert "_make_dispatch_handler" in src, (
+        "nodes/tree.py lost its dispatch handler — host routing broken"
     )

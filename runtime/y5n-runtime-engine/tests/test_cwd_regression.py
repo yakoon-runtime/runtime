@@ -13,9 +13,13 @@ import types
 from pathlib import Path
 
 import pytest
-from y5n.runtime.api.flow.primitives import Pulse, Stop
+from y5n.runtime.api.flow.primitives import CwdEffect, EmitView, Pulse, Stop
+from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.executor.base import ExecutorKind, ExecutorRegistry
 from y5n.runtime.engine.executor.runtime import RuntimeExecutor
+from y5n.runtime.engine.flow import Flow, FlowCursor
+from y5n.runtime.engine.machine.parser import InputParser
+from y5n.runtime.engine.machine.runner import Runner
 from y5n.runtime.engine.nodes.tree import Tree
 
 
@@ -44,16 +48,12 @@ class _Chdir:
         self._path = path
 
     def __await__(self):
-        from y5n.runtime.api.flow.primitives import CwdEffect
-
         yield Pulse(effects=[CwdEffect(self._path)])
         return None
 
 
 class _Write:
     def __await__(self):
-        from y5n.runtime.api.flow.primitives import EmitView
-
         yield Pulse(effects=[EmitView(view={"kind": "text", "text": "ok"})])
         return None
 
@@ -117,9 +117,6 @@ async def test_real_cd_module(tmp_path, harness, effect_executor):
     harness.session.set_data("fs:root", str(tmp_path))
     harness.session.set_cwd("/")
 
-    from y5n.runtime.api.runtime import Event
-    from y5n.runtime.engine.machine.parser import InputParser
-
     parser = InputParser()
     cd_node = tree.find("/cd")
 
@@ -135,8 +132,6 @@ async def test_real_cd_module(tmp_path, harness, effect_executor):
         flow = await harness.engine.dispatch(session=session, event=event)
         if flow:
             harness.scheduler.schedule_flow(flow, harness.session)
-
-    from y5n.runtime.engine.machine.runner import Runner
 
     runner = Runner(
         session=harness.session,
@@ -316,9 +311,6 @@ async def test_real_input_cd_opt(tmp_path, harness, effect_executor):
     harness.session.set_data("fs:root", str(tmp_path))
     harness.session.set_cwd("/")
 
-    from y5n.runtime.api.runtime import Event
-    from y5n.runtime.engine.machine.parser import InputParser
-
     parser = InputParser()
     cmd, args, _ = parser.parse(Event(payload="cd /opt"))
     assert cmd == "cd"
@@ -335,8 +327,6 @@ async def test_real_input_cd_opt(tmp_path, harness, effect_executor):
 
     harness.engine.on_parse_input = parser.parse
     harness.engine.on_resolve_command = resolve_node
-
-    from y5n.runtime.engine.machine.runner import Runner
 
     async def on_dispatch(*, session, event):
         flow = await harness.engine.dispatch(session=session, event=event)
@@ -360,8 +350,6 @@ async def test_real_input_cd_opt(tmp_path, harness, effect_executor):
 
 
 def _make_flow(node, session, tokens=None):
-    from y5n.runtime.api.runtime import Event
-    from y5n.runtime.engine.flow import Flow, FlowCursor
 
     flow = Flow(
         id=session.next_flow_id(),

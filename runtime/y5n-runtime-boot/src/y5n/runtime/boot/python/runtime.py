@@ -6,10 +6,12 @@ from pathlib import Path
 from typing import Any
 
 from y5n.runtime.api.flow.dsl import Pulse, out_text
+from y5n.runtime.api.resources import Resource
 from y5n.runtime.api.runtime.context import current_context
 
 from ._shared import (
     load_and_capture,
+    parse_entry,
     read_entry,
     resolve_tree_path,
     unload_module,
@@ -85,8 +87,6 @@ async def _interpret(expr: str, parameters: dict, base: Path | None):
 
 
 def _file_resource(value: str, base: Path | None):
-    from y5n.runtime.api.resources import Resource
-
     if not value:
         raise LookupError("file: reference requires a path")
     path = Path(value)
@@ -116,8 +116,6 @@ async def _capability_resource(value: str, parameters: dict):
 
 
 def _coerce_resource(result):
-    from y5n.runtime.api.resources import Resource
-
     if isinstance(result, Resource):
         return result
     if isinstance(result, str):
@@ -146,8 +144,6 @@ async def main():
     if not entry:
         yield out_text(f"error: no entry for '{target_path}'")
         return
-
-    from ._shared import parse_entry
 
     try:
         scheme, value = parse_entry(entry)

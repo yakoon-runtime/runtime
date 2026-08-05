@@ -178,9 +178,10 @@
 
 ## H. Parked ideas
 
-- **A host is just a node with a job** — if a host were an ordinary node
-  (`async def main()` + SDK), the runtime would only say `await host.run()` and
-  the host would use the same runtime services as any component. Its two
-  capabilities (execute / resolve) would be offered via ports, not methods.
-  This dissolves the last special treatment of hosts. Parked: first resolve the
-  rest of this list, then revisit — likely after D2–D5 and E.
+- [x] **A host is just a node with a job** — resolved via ADR-12 ("The Host
+      is a Node — The Host Owns Execution"). The host is an ordinary node:
+      `async def main()` + SDK, reading `context.current()` like any
+      command. The engine establishes the invocation context per step and
+      starts the node; `NodeSpace` is gone. The host's remaining dispatch
+      rule (`host:` → the declared executor node) is a plain dispatcher
+      (`_make_dispatch_handler`), not a host special case.

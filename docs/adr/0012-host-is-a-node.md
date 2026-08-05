@@ -1,6 +1,7 @@
 # ADR 12: The Host is a Node — The Host Owns Execution
 
-**Status:** Draft — design exploration, no code changes yet
+**Status:** Accepted — implemented on the experiment branch; production
+migration follows
 
 > **The runtime executes nodes. Some nodes happen to execute other nodes.**
 >

@@ -17,6 +17,8 @@ from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.primitives import AwaitEvent, EmitView, Pulse, Stop
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.nodes import Node
+from y5n.runtime.api.runtime import Event
+from y5n.runtime.engine.flow import Flow, FlowCursor
 from y5n.runtime.engine.runtime.sessions.session import Session
 from y5n.sdk import context as sdk_context
 
@@ -45,9 +47,6 @@ def _make_node(main) -> Node:
 
 
 def _make_flow(node: Node, session: Session, tokens=None, payload="test"):
-    from y5n.runtime.api.runtime import Event
-    from y5n.runtime.engine.flow import Flow, FlowCursor
-
     flow = Flow(
         id=session.next_flow_id(),
         node=node,
