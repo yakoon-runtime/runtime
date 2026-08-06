@@ -48,6 +48,14 @@ class Flow:
     pipeline: Sequence[str | Request] | None = None
     out_channel: str | None = None
 
+    error_depth: int = 0
+    """How many consecutive error routes this flow has taken.
+
+    Guards the recursion baseline: the first exception routes to the
+    error node; a second one (the error node itself failed) terminates
+    at the boot fallback.
+    """
+
     def has_stack(self):
         return self.cursor.has_stack()
 

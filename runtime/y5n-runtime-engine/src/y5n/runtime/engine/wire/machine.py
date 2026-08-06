@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import logging
 from typing import Protocol, cast
 
 from y5n.runtime.api.flow import Scope
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.nodes import Node
-from y5n.runtime.api.ports.protocols import OnErrorResolve
 from y5n.runtime.api.runtime import Event, InputContext
 from y5n.runtime.api.runtime.input import Origin
 from y5n.runtime.engine.connections import (
@@ -32,8 +30,6 @@ from y5n.runtime.engine.runtime import Session
 from y5n.runtime.engine.runtime.bus import BusOutput
 from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.settings.version import resolve_runtime_info
-
-logger = logging.getLogger(__name__)
 
 # ----------------------------------
 # ERRORS
@@ -69,24 +65,6 @@ def build_machine(
     # ---------------
 
     parser = InputParser()
-
-    # --------------
-    # --- ERRORS ---
-    # --------------
-
-    async def on_error_resolve(
-        *,
-        node: Node,
-        session,
-        error: Exception,
-    ) -> dict:
-        try:
-            on_error = node.ports.get(OnErrorResolve)
-            return await on_error(key=node.path, session=session, error=error)
-        except Exception as exc:  # fallback
-            logger.warning("error resolve fallback failed: %s", exc)
-            on_error = node.root.ports.get(OnErrorResolve)
-            return await on_error(key=node.path, session=session, error=error)
 
     # ---------------
     # --- TASKS  ----
@@ -177,7 +155,6 @@ def build_machine(
         on_step_flow=engine.step_flow,
         on_show_projection=on_projection_send,
         on_audit_warning=on_audit_warning,
-        on_error_resolve=on_error_resolve,
         on_flow_complete=flow_complete,
     )
 
@@ -185,10 +162,6 @@ def build_machine(
     # --- ON TASK COMPLETED ---
     # -------------------------
 
-    async def on_task_error(*, flow, session, error):
-        await on_error_resolve(node=flow.node, session=session, error=error)
-
-    task_runner.on_error(on_task_error)
     task_runner.on_complete(scheduler.schedule_flow)
 
     # ------------------------

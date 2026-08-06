@@ -1,3 +1,0 @@
-<text>
-  "{{ state.command }}" is not executable.
-</text>

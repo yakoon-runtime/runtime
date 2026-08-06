@@ -17,6 +17,7 @@ class Event:
     payload: Any
     context: InputContext | None = None
     routing: Routing = Routing.DEFAULT
+    error: dict[str, Any] | None = None
 
     @classmethod
     def from_raw(cls, data: str, context=None, *, routing: Routing = Routing.DEFAULT):

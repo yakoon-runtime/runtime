@@ -5,8 +5,6 @@ It only knows which provider exports which capabilities.
 
 Resolution walks the tree upward from the caller's path
 toward root ("/"). The closest registration wins.
-
-This matches the classic NodePorts search: child → parent → root.
 """
 
 from __future__ import annotations

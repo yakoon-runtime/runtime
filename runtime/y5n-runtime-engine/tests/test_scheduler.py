@@ -36,7 +36,6 @@ def _make_scheduler(**overrides) -> tuple[Scheduler, dict]:
         "dispatch": AsyncMock(return_value=None),
         "step": AsyncMock(return_value=None),
         "projection": AsyncMock(),
-        "error_resolve": AsyncMock(return_value={"kind": "document", "blocks": []}),
         "flow_complete": AsyncMock(),
     }
     scheduler = Scheduler(
@@ -45,7 +44,6 @@ def _make_scheduler(**overrides) -> tuple[Scheduler, dict]:
         on_step_flow=calls["step"],
         on_show_projection=calls["projection"],
         on_audit_warning=lambda **kw: None,
-        on_error_resolve=calls["error_resolve"],
         on_flow_complete=calls["flow_complete"],
     )
     if "platform" in overrides:
@@ -241,7 +239,7 @@ async def test_continue_flow_schedules_both_flows(session):
     assert new.scheduled is True
 
 
-async def test_dispatch_error_shows_error_projection(session):
+async def test_dispatch_error_propagates(session):
     scheduler, calls = _make_scheduler()
 
     async def boom(*, session, event):
@@ -249,9 +247,12 @@ async def test_dispatch_error_shows_error_projection(session):
 
     scheduler.on_dispatch = boom
 
-    await scheduler.dispatch(session, Event(payload="x"))
+    # Ein echter Runtime-Fehler beim Dispatch ist kein Benutzer-Fehler:
+    # der Scheduler behandelt ihn nicht, er propagiert.
+    with pytest.raises(ValueError, match="boom"):
+        await scheduler.dispatch(session, Event(payload="x"))
 
-    calls["projection"].assert_awaited_once()
+    calls["projection"].assert_not_awaited()
 
 
 # ----------------------------------------
@@ -259,7 +260,7 @@ async def test_dispatch_error_shows_error_projection(session):
 # ----------------------------------------
 
 
-async def test_step_error_shows_error_projection(session):
+async def test_step_error_propagates(session):
     scheduler, calls = _make_scheduler()
 
     async def boom(*, flow, session):
@@ -275,9 +276,13 @@ async def test_step_error_shows_error_projection(session):
     await asyncio.sleep(0.02)
     scheduler._running = False
     scheduler._event.set()
-    await task
 
-    calls["projection"].assert_awaited()
+    # Ein echter Runtime-Fehler beim Steppen ist kein Benutzer-Fehler:
+    # der Scheduler behandelt ihn nicht, er propagiert.
+    with pytest.raises(ValueError, match="boom"):
+        await task
+
+    calls["projection"].assert_not_awaited()
 
 
 # ----------------------------------------
@@ -419,7 +424,7 @@ async def test_run_warns_at_iteration_limit(session, monkeypatch):
     assert any("iteration limit" in msg for msg, _ in warnings)
 
 
-async def test_run_removes_foreground_flow_on_error(session):
+async def test_run_propagates_runtime_error(session):
     scheduler, calls = _make_scheduler()
     flow = _make_flow(session)
     session.set_foreground_flow(flow.id)
@@ -434,10 +439,13 @@ async def test_run_removes_foreground_flow_on_error(session):
     await asyncio.sleep(0.02)
     scheduler._running = False
     scheduler._event.set()
-    await task
 
-    assert session.get_flow(flow.id) is None
-    calls["projection"].assert_awaited()
+    # Ein echter Runtime-Fehler ist kein Benutzer-Fehler: der Scheduler
+    # behandelt ihn nicht, er propagiert.
+    with pytest.raises(ValueError, match="boom"):
+        await task
+
+    calls["projection"].assert_not_awaited()
 
 
 async def test_wake_sleeping_skips_flow_without_control(session):
@@ -464,18 +472,6 @@ async def test_call_runtime_schedules_session_flows(session):
 
     assert flow.scheduled is True
     assert other.scheduled is True
-
-
-async def test_show_error_handles_error_resolve_failure(session):
-    scheduler, calls = _make_scheduler()
-
-    async def boom(*, node, session, error):
-        raise RuntimeError("resolve failed")
-
-    scheduler.on_error_resolve = boom
-
-    # must not raise despite error_resolve failing
-    await scheduler._show_error(session, None, None, ValueError("original"))
 
 
 async def test_run_waits_for_sleeping_flow_timeout(session):

@@ -35,8 +35,16 @@ def effect_executor():
 
 @pytest.fixture
 def engine(effect_executor):
+    def _err_handler():
+        return None
+
+    def _resolve(key, tokens, session, strict=True):
+        if key == "/usr/bin/err":
+            return Node(key="err", anonymous=True, run=_err_handler), []
+        return None, []
+
     return CommandEngine(
-        on_resolve_node=AsyncMock(return_value=(None, [])),
+        on_resolve_node=_resolve,
         on_parse_input=AsyncMock(return_value=("", [], [])),
         on_intercept=_passthrough_intercept,
         on_apply_effects=effect_executor.execute,
@@ -51,7 +59,6 @@ def scheduler(engine):
         on_step_flow=engine.step_flow,
         on_show_projection=AsyncMock(),
         on_audit_warning=lambda **kw: None,
-        on_error_resolve=AsyncMock(return_value=None),
         on_flow_complete=AsyncMock(),
     )
 

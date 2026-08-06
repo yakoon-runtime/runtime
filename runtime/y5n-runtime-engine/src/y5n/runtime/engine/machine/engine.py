@@ -4,6 +4,7 @@ import inspect
 from collections.abc import Sequence
 from typing import Protocol
 
+from y5n.runtime.api.flow.dsl import out_text
 from y5n.runtime.api.flow.primitives import AwaitEvent, Effect, Pulse, Stop
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event, InputContext, Interaction
@@ -12,8 +13,11 @@ from y5n.runtime.engine.interaction import resolve_interaction
 from y5n.runtime.engine.runtime import Session
 from y5n.runtime.engine.runtime.invocation import (
     derive_invocation_context,
+    error_payload,
     establish_invocation_context,
 )
+
+ERROR_NODE = "/usr/bin/err"
 
 
 class CommandEngine:
@@ -57,21 +61,36 @@ class CommandEngine:
         strict = policy is Interaction.CLI
 
         # find node
-        node, resolved_tokens = self.on_resolve_command(
-            key=cmd,
-            tokens=tokens,
-            session=session,
-            strict=strict,
-        )
+        try:
+            node, resolved_tokens = self.on_resolve_command(
+                key=cmd,
+                tokens=tokens,
+                session=session,
+                strict=strict,
+            )
+        except Exception as error:
+            # The invocation could not be resolved (NodeNotFound,
+            # PermissionDenied, UsageError). The error creates a new
+            # invocation: dispatch the error node like any other command.
+            # Guard the recursion baseline — if the error node itself
+            # cannot be resolved, there is no further invocation to make.
+            if event.error is not None:
+                return None
+            return await self.dispatch(session, error_event(error, event))
 
         tokens = resolved_tokens
 
-        node, tokens = await self._on_intercept(
-            node=node,
-            tokens=tokens,
-            session=session,
-            context=event.context,
-        )
+        try:
+            node, tokens = await self._on_intercept(
+                node=node,
+                tokens=tokens,
+                session=session,
+                context=event.context,
+            )
+        except Exception as error:
+            if event.error is not None:
+                return None
+            return await self.dispatch(session, error_event(error, event))
 
         if not node.has_run():
             return None
@@ -83,6 +102,7 @@ class CommandEngine:
             session=session,
             flow_id=flow_id,
             tokens=tokens,
+            error=event.error,
         )
 
         flow = Flow(
@@ -166,6 +186,61 @@ class CommandEngine:
 
             return None
 
+        except Exception as error:
+            # The flow's generator failed. This is a boundary, not a
+            # failure of the scheduler: the exception is translated into
+            # a new invocation on the error node and the SAME flow is
+            # pointed at it. The flow's id, channel and session stay —
+            # only the next step changes (ADR: an error creates a new
+            # invocation).
+            return await self._route_error(flow, session, error)
+
+    async def _route_error(
+        self,
+        flow: Flow,
+        session: Session,
+        error: Exception,
+    ) -> Pulse | None:
+        """Translate an exception into an error invocation on this flow.
+
+        The first failure routes the flow to the error node; the error
+        node's own failure terminates at the boot fallback (``error_depth``
+        guards the recursion baseline). The engine only knows the ABI
+        convention ``/usr/bin/err`` — never error handling.
+        """
+        if flow.error_depth >= 1:
+            flow.error_depth += 1
+            return out_text("Internal Error")
+
+        flow.error_depth += 1
+
+        try:
+            error_node, _ = self.on_resolve_command(
+                key=ERROR_NODE,
+                tokens=[],
+                session=session,
+                strict=True,
+            )
+        except Exception:
+            # The error node itself cannot be resolved (not found, denied).
+            # Terminate at the boot fallback.
+            return out_text("Internal Error")
+
+        if not error_node.has_run():
+            return out_text("Internal Error")
+
+        flow.node = error_node
+        flow.invocation = derive_invocation_context(
+            node=error_node,
+            session=session,
+            flow_id=flow.id,
+            tokens=[],
+            error=error_payload(error),
+        )
+        flow.cursor = FlowCursor("run")
+        flow.tokens = []
+        return None
+
     async def _next_step(
         self,
         flow: Flow,
@@ -242,3 +317,16 @@ class OnIntercept(Protocol):
         session: Session,
         context: InputContext | None,
     ) -> tuple[Node, list[str]]: ...
+
+
+def error_event(error: Exception, source: Event | None = None) -> Event:
+    """Translate an exception into an error invocation event.
+
+    A boundary (shell, bus, exception, …) produces an event; the error
+    node is a normal command the dispatcher resolves like any other.
+    """
+    return Event(
+        payload=ERROR_NODE,
+        error=error_payload(error),
+        context=source.context if source else None,
+    )

@@ -8,9 +8,7 @@ from typing import Any
 
 import yaml
 from y5n.runtime.api.nodes import Invocation, Node, Param
-from y5n.runtime.api.nodes.ports import NodePorts
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
-from y5n.runtime.api.runtime import Container
 from y5n.runtime.engine.bootstrap import PackReference
 from y5n.runtime.engine.executor import (
     Executor,
@@ -58,13 +56,8 @@ class Tree:
         self,
         root_path: str | Path,
         executors: ExecutorRegistry,
-        root_ports: NodePorts | None = None,
     ):
         self._root_path = Path(root_path).resolve()
-        self._root_ports = root_ports or NodePorts(
-            Container(allow_override=False),
-            Container(allow_override=True),
-        )
         self._executors = executors
         self._nodes: dict[str, Node] = {}
         self._root: Node | None = None
@@ -206,7 +199,6 @@ class Tree:
             name=root_meta.get("title", "root"),
             resolvable=False,
             navigable=True,
-            ports=self._root_ports.fork(),
             fs_path=self._root_path,
         )
         self._nodes["/"] = self._root

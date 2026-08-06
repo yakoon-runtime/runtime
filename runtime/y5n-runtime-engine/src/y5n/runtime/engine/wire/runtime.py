@@ -1,41 +1,13 @@
-from y5n.runtime.api.nodes import NodePath, UnknownOptionsError, UsageError
-from y5n.runtime.api.ports.system import (
-    AUTHORIZE_READ,
-    AUTHORIZE_WRITE,
-    COMPILE,
-    DOCUMENT_RESOLVE,
-    ERROR_RESOLVE,
-    JINJA_RENDER,
-    NEW_PERMISSION_SET,
-    PARSE_PERMISSION_SPEC,
-    RESOURCE_LOAD,
-    SESSION_ATTACH,
-    SESSION_DETACH,
-    SESSION_SAVE,
-    SOURCE_READ,
-    VALIDATE,
-)
-from y5n.runtime.api.resources import ResourceRef
 from y5n.runtime.api.runtime import get_bus
 from y5n.runtime.engine.capabilities.audit import AuditLogService
-from y5n.runtime.engine.capabilities.permission import (
-    PermissionChecker,
-    PermissionParser,
-    PermissionSet,
-)
+from y5n.runtime.engine.capabilities.permission import PermissionChecker
 from y5n.runtime.engine.executor import (
     ExecutorKind,
     ExecutorRegistry,
     RuntimeExecutor,
 )
 from y5n.runtime.engine.nodes.tree import Tree
-from y5n.runtime.engine.runtime import (
-    NodeNotExecutable,
-    NodeNotFound,
-    PermissionDenied,
-    Session,
-    SessionService,
-)
+from y5n.runtime.engine.runtime import SessionService
 from y5n.runtime.engine.services import GuidanceService
 from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.sources import DataSourceRegistry
@@ -54,15 +26,6 @@ from y5n.runtime.engine.wire.document import build_document_stack
 from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
 from y5n.runtime.engine.wire.stream import build_stream
 from y5n.runtime.store.event.wire import build_store
-
-errors = {
-    Exception: "error.ydf",
-    NodeNotFound: "command/not_found.ydf",
-    NodeNotExecutable: "command/not_executable.ydf",
-    UsageError: "command/usage.ydf",
-    UnknownOptionsError: "command/unknown_options.ydf",
-    PermissionDenied: "permissions/denied.ydf",
-}
 
 
 def build_runtime(
@@ -93,7 +56,6 @@ def build_runtime(
     # -------------------
 
     perm_checker = PermissionChecker()
-    perm_parser = PermissionParser()
 
     # --------------------
     # --- DATASOURCING ---
@@ -126,54 +88,6 @@ def build_runtime(
     doc = build_document_stack(tree=tree)
     projector = doc.projector
 
-    # -----------------------
-    # --- ERROR RESOLVING ---
-    # -----------------------
-
-    async def error_resolve(
-        *,
-        key: NodePath,
-        session: Session,
-        error: Exception,
-    ) -> dict:
-
-        if isinstance(error, PermissionDenied):
-            audit_service.security(session=session, obj="command", action=root.key)  # type: ignore
-        elif type(error) not in errors:
-            audit_service.error(exc=error, session=session)
-
-        parts = errors.get(type(error), "error")
-        resource = ResourceRef(
-            package="y5n.runtime.engine",
-            path=f"templates/{session.lang}/{parts}",
-        )
-
-        return await projector.project(
-            resource=resource,
-            state=vars(error),
-        )
-
-    # ----------------
-    # --- BINDINGS ---
-    # ----------------
-    root = tree.root()
-
-    assert root
-    root_ports = root.ports
-
-    root_ports.provide(SOURCE_READ, ds.read)
-    root_ports.provide(SESSION_SAVE, session_manager.save)
-    root_ports.provide(AUTHORIZE_READ, perm_checker.can_read)
-    root_ports.provide(AUTHORIZE_WRITE, perm_checker.can_write)
-    root_ports.provide(NEW_PERMISSION_SET, lambda: PermissionSet())
-    root_ports.provide(PARSE_PERMISSION_SPEC, perm_parser.parse)
-    root_ports.provide(DOCUMENT_RESOLVE, projector.project)
-    root_ports.provide(RESOURCE_LOAD, doc.loader.get_text)
-    root_ports.provide(JINJA_RENDER, doc.jinja.render_str)
-    root_ports.provide(COMPILE, doc.compiler.compile)
-    root_ports.provide(ERROR_RESOLVE, error_resolve)
-    root_ports.provide(VALIDATE, tree.validate)
-
     # --------------------
     # --- DATASOURCING ---
     # --------------------
@@ -181,6 +95,9 @@ def build_runtime(
     ds.bind("system:nodes", NodeSource(tree))
     ds.bind("system:runtimes", RuntimeSource(settings.runtime.known))
     # ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
+
+    root = tree.root()
+    assert root
 
     # -----------------
     # --- STREAMING ---
@@ -214,8 +131,6 @@ def build_runtime(
     )
 
     ds.bind("system:sessions", SessionSource(manager))
-    root_ports.provide(SESSION_ATTACH, manager.attach_session)
-    root_ports.provide(SESSION_DETACH, manager.detach_session)
 
     # ---------------------------------------
     # --- SDK ADAPTERS (on the Runtime Bus) ---

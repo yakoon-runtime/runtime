@@ -5,13 +5,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, TypeVar
 
-from y5n.runtime.api.runtime import Container
 from y5n.runtime.api.runtime.input import Interaction
 
 from .handler import ResolveHandler, RunHandler
 from .invocation import Invocation, InvocationValidator
 from .path import NodePath
-from .ports import NodePorts
 from .types import NodeKind, NodeVisibility
 
 # ----------------------------------
@@ -35,9 +33,6 @@ class Node:
     - define local capability scopes
     - provide child runtime spaces
     - participate in hierarchical resolution
-
-    Each node owns a local capability scope through NodePorts.
-    Child nodes automatically inherit a forked capability scope.
     """
 
     key: str
@@ -58,14 +53,6 @@ class Node:
 
     visibility: NodeVisibility = NodeVisibility.NORMAL
     """Controls whether the node appears in listings."""
-
-    ports: NodePorts = field(
-        default_factory=lambda: NodePorts(
-            Container(allow_override=False),
-            Container(allow_override=True),
-        )
-    )
-    """Hierarchical capability scope.  Children inherit a forked copy."""
 
     # ----------------------------------
     # INVOCATIONS
@@ -224,9 +211,6 @@ class Node:
 
         node.parent = self
 
-        # Mount existing runtime scope into current hierarchy.
-        node.ports.mount(self.ports)
-
         self.children[node.key] = node
         return node
 
@@ -319,10 +303,6 @@ class Node:
 
         child.parent = self
 
-        # Inherit hierarchical capability scope.
-        if self.ports:
-            child.ports = self.ports.fork()
-
         self.children[child.key] = child
         return child
 
@@ -330,46 +310,6 @@ class Node:
         """Returns a direct child node by key."""
 
         return self.children.get(key)
-
-    def ports_from(
-        self,
-        path: NodePath,
-        *,
-        absolute: bool = False,
-    ) -> NodePorts | None:
-        """Resolves the capability scope of another runtime space.
-
-        This method traverses the runtime hierarchy and returns the
-        published capability scope of the target runtime node.
-
-        Unlike direct node access, this method exposes only semantic
-        runtime capabilities and does not leak mutable runtime topology.
-
-        The returned NodePorts object may provide:
-
-        - projection capabilities
-        - runtime services
-        - infrastructure adapters
-        - plugin-local semantic capabilities
-        - platform-provided services
-
-        Args:
-            path:
-                Runtime path to resolve.
-
-            absolute:
-                If True, resolution starts from the runtime root.
-
-        Returns:
-            The target runtime capability scope or None if the
-            runtime space cannot be resolved.
-        """
-
-        node = self.find(path, absolute=absolute)
-        if node is None:
-            return None
-
-        return node.ports
 
     # ----------------------------------
     # HAS

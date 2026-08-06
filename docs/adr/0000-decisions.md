@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-08-06 — An Error Creates a New Invocation (ADR-13)
+
+The last special case of the runtime disappears. An exception is a boundary
+like the shell or the bus: it produces an event, the event is dispatched, a
+node is resolved, and the node's `main()` runs. The error command
+(`/usr/bin/err`) is an ordinary node — the engine knows it only as an ABI
+convention, never as error handling.
+
+**Key sentence:** *"Ein Fehler erzeugt eine neue Invocation."* Every boundary —
+shell, bus, exception, later timer/webhook — produces an event; every event is
+dispatched; every invocation is resolved to a node; every node is executed.
+The engine has exactly one capability and no error mode.
+
+**The invocation carries a payload:** `args` for command invocations, `error`
+for error invocations, later `timer`/`webhook`. The event is transport; the
+invocation is execution context.
+
 ## 2026-08-03 — One Responsibility per Layer
 
 Almost every architecture decision reduces to one principle: **each layer owns
