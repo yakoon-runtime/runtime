@@ -5,6 +5,31 @@
 
 ---
 
+## 2026-08-06 — The Runtime Is the Smallest Scalable Unit (ADR-14)
+
+**Status: Closed — not adopted for production.**
+
+An experiment disproved the assumption that more schedulers (or more worker
+processes) make the runtime faster — and thereby reached the architecture
+decision: **the runtime is the smallest replicable unit.**
+
+**Key sentence:** *"The scheduler is not the bottleneck of the runtime. More
+schedulers solve the wrong problem."* Measured: ~960k steps/s but only
+~40–50k complete flows/s (1 scheduler) — the runtime spends its time on
+dispatch, not scheduling. Even with correct parallel dispatch, 3 real worker
+processes are slower than 1 scheduler (0.56x) for pulse-heavy flows, because
+`yield Pulse()` releases the GIL.
+
+**Capacity estimate:** a mid-sized company uses ~0.12% of the runtime's
+50k flows/s, a large installation ~2%. The runtime is effectively idle for
+Yakoon's real workload; PostgreSQL, the filesystem, and projection dominate
+real command latency. Architecture no longer has to be traded against
+performance.
+
+**Decision:** No process pool is built into the product. Scaling is an
+operational decision (start more runtimes), not a runtime decision. The
+experiment branch is closed and deleted; the measurements live on in ADR-14.
+
 ## 2026-08-06 — An Error Creates a New Invocation (ADR-13)
 
 The last special case of the runtime disappears. An exception is a boundary
