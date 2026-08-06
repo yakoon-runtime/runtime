@@ -14,7 +14,8 @@ from __future__ import annotations
 
 import pytest
 from y5n.runtime.api.naming import Key
-from y5n.runtime.api.nodes import Invocation, Node, UsageError
+from y5n.runtime.api.runtime.invocation import CommandSignature, Invocation, Param
+from y5n.runtime.engine.nodes import Node, UsageError
 from y5n.runtime.engine.machine.resolver import InvocationResolver
 from y5n.runtime.engine.runtime.error import (
     NodeNotExecutable,
@@ -39,7 +40,7 @@ def _build_tree() -> Node:
 
     system = Node(
         key="system",
-        invocations=[Invocation(action="version", default=True)],
+        signatures=[CommandSignature(action="version", default=True)],
     )
     root.add(system)
 
@@ -48,10 +49,12 @@ def _build_tree() -> Node:
     users = Node(
         key="users",
         contextual=True,
-        invocations=[Invocation(action="list", default=True)],
+        signatures=[CommandSignature(action="list", default=True)],
     )
     ident.add(users)
-    users.add(Node(key="admin", invocations=[Invocation(action="show", default=True)]))
+    users.add(
+        Node(key="admin", signatures=[CommandSignature(action="show", default=True)])
+    )
 
     app = Node(key="app")
     root.add(app)
@@ -59,7 +62,7 @@ def _build_tree() -> Node:
         Node(
             key="hello",
             anonymous=True,
-            invocations=[Invocation(action="greet", default=True)],
+            signatures=[CommandSignature(action="greet", default=True)],
         )
     )
 
@@ -238,7 +241,7 @@ def test_usage_token_falls_back_to_children():
     resolver, _ = _make_resolver(root)
     leaf = Node(key="bare")
     root.add(leaf)
-    leaf.add(Node(key="run", invocations=[Invocation(action="do")]))
+    leaf.add(Node(key="run", signatures=[CommandSignature(action="do")]))
 
     with pytest.raises(UsageError) as exc:
         resolver.resolve("bare", ["?"], _session())
@@ -317,3 +320,52 @@ def test_anonymous_node_skips_permission_check():
     resolver.resolve("app/hello", None, _session())
 
     assert permissions == []
+
+
+def test_signature_bind_produces_invocation_without_action_in_args():
+    """CommandSignature.bind() erzeugt eine Invocation ohne Action im Args.
+
+    ADR-12: eine Invocation ist path + args, der Command-Name lebt nur im
+    path — er wird nie in args dupliziert.
+    """
+
+    sig = CommandSignature(
+        action="copy",
+        params=[
+            Param(key="source", required=True, positional=True),
+            Param(key="target", required=True, positional=True),
+            Param(key="verbose", positional=False),
+        ],
+    )
+
+    inv = sig.bind(
+        {"source": "a.txt", "target": "b.txt", "verbose": "1"},
+        path="/usr/bin/copy",
+        lang="de",
+    )
+
+    assert inv.path == "/usr/bin/copy"
+    assert inv.args == ["a.txt", "b.txt", "--verbose", "1"]
+    assert inv.lang == "de"
+    assert "copy" not in inv.args
+
+
+def test_invocation_is_dispatchable_via_parser():
+    """Eine gebundene Invocation kann direkt dispatcht werden.
+
+    Der Parser erkennt eine Invocation im Event-Payload und extrahiert
+    path + args — der Request-Roundtrip ist weg.
+    """
+
+    from y5n.runtime.api.runtime import Event
+    from y5n.runtime.api.runtime.invocation import Invocation
+    from y5n.runtime.engine.machine.parser import InputParser
+
+    parser = InputParser()
+    inv = Invocation(path="/usr/bin/copy", args=["a.txt", "b.txt"])
+
+    cmd, args, pipeline = parser.parse(Event(payload=inv))
+
+    assert cmd == "/usr/bin/copy"
+    assert args == ["a.txt", "b.txt"]
+    assert pipeline == []

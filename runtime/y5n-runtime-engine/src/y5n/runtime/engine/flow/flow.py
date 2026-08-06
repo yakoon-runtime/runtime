@@ -15,7 +15,8 @@ from y5n.runtime.api.flow.primitives import (
 from y5n.runtime.api.runtime import Event
 
 if TYPE_CHECKING:
-    from y5n.runtime.api.nodes import Node, Request
+    from y5n.runtime.api.runtime.invocation import Invocation
+    from y5n.runtime.engine.nodes import Node
 
 from .cursor import FlowCursor
 from .types import FlowKind
@@ -45,7 +46,7 @@ class Flow:
     wake_at: float | None = None
     kind: FlowKind = FlowKind.USER
 
-    pipeline: Sequence[str | Request] | None = None
+    pipeline: Sequence[str | Invocation] | None = None
     out_channel: str | None = None
 
     error_depth: int = 0

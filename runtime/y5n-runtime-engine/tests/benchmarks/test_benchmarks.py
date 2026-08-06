@@ -7,7 +7,7 @@ import pytest
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.dsl import out, receive, send, start_cmd
 from y5n.runtime.api.flow.primitives import Pulse, StartCommand, Stop
-from y5n.runtime.api.nodes import Node
+from y5n.runtime.engine.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.flow import Flow
 from y5n.runtime.engine.machine.effects import StartCommandHandler

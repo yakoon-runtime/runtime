@@ -24,7 +24,7 @@ It remains the primary way Yakoon services are executed.
 
 
 if TYPE_CHECKING:
-    from y5n.runtime.api.nodes.node import Node
+    from y5n.runtime.engine.nodes.node import Node
 
 FlowYield: TypeAlias = Pulse | AsyncGenerator | None
 RunResult: TypeAlias = AsyncGenerator[FlowYield, Any] | Awaitable[None]

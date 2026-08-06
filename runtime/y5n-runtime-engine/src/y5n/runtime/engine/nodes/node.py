@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 from y5n.runtime.api.runtime.input import Interaction
+from y5n.runtime.api.runtime.invocation import CommandSignature
 
 from .handler import ResolveHandler, RunHandler
-from .invocation import Invocation, InvocationValidator
+from .invocation import CommandSignatureValidator
 from .path import NodePath
 from .types import NodeKind, NodeVisibility
 
@@ -55,24 +56,26 @@ class Node:
     """Controls whether the node appears in listings."""
 
     # ----------------------------------
-    # INVOCATIONS
+    # SIGNATURES
     # ----------------------------------
 
-    invocations: list[Invocation] = field(default_factory=list)
+    signatures: list[CommandSignature] = field(default_factory=list)
     """Declared CLI signatures.  Matched against user input during resolution."""
 
-    validator: InvocationValidator = field(default_factory=InvocationValidator)
-    """Strategy object that matches tokens against *invocations*."""
+    validator: CommandSignatureValidator = field(
+        default_factory=CommandSignatureValidator
+    )
+    """Strategy object that matches tokens against *signatures*."""
 
     def validate(
         self,
         tokens: list[str] | None,
         strict: bool = True,
-    ) -> Invocation | None:
+    ) -> CommandSignature | None:
         return self.validator.validate(node=self, tokens=tokens, strict=strict)
 
     def consumes(self, tokens: list[str] | None) -> bool:
-        if not self.resolvable or not self.invocations:
+        if not self.resolvable or not self.signatures:
             return False
 
         tokens = tokens or []
@@ -86,8 +89,8 @@ class Node:
         if action.startswith("--"):
             return True
 
-        for invocation in self.invocations:
-            if invocation.action == action:
+        for signature in self.signatures:
+            if signature.action == action:
                 return True
 
         return False

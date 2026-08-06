@@ -94,7 +94,7 @@ class Continue(Control):
     """Continue to the next command in the pipeline.
 
     Pops the next entry from *flow.pipeline* (a command string or a
-    pre-built ``Request``) and dispatches it as the next flow.
+    pre-built ``Invocation``) and dispatches it as the next flow.
     """
 
     blocking: ClassVar[bool] = False

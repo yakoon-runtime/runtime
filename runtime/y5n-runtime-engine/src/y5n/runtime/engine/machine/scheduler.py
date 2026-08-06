@@ -15,9 +15,9 @@ from y5n.runtime.api.flow.primitives import (
     Stop,
     YieldToScheduler,
 )
-from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event, InputContext
 from y5n.runtime.engine.flow import Flow, FlowKind
+from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.runtime import Session
 
 from .ports import OnAuditWarning

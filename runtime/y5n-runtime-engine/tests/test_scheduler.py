@@ -24,7 +24,7 @@ from y5n.runtime.api.flow.primitives import (
     Stop,
     YieldToScheduler,
 )
-from y5n.runtime.api.nodes import Node
+from y5n.runtime.engine.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.flow import Flow, FlowCursor
 from y5n.runtime.engine.flow.types import FlowKind
