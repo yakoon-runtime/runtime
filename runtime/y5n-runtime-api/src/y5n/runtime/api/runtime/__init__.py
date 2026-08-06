@@ -1,5 +1,4 @@
 from .bus import RuntimeBus, get_bus, set_bus
-from .container import Container
 from .context import current_context, set_context
 from .handlers import CallHandler, RegisterProviderHandler, UnregisterProviderHandler
 from .info import RuntimeInfo
@@ -12,7 +11,6 @@ from .transport import DirectTransport, set_main_loop
 __all__ = [
     "Call",
     "CallHandler",
-    "Container",
     "DirectTransport",
     "Event",
     "InputContext",

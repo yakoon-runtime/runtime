@@ -9,6 +9,44 @@ from y5n.runtime.api.flow.primitives import AwaitEvent, Pulse, StartCommand, Sto
 from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.machine.effects import StartCommandHandler
+from y5n.runtime.engine.runtime import NodeNotFound
+
+
+@pytest.mark.asyncio
+async def test_unresolved_command_dispatches_error_flow(harness):
+    """Ein nicht auflösbarer Command erzeugt eine Error-Invocation.
+
+    Die Exception ist ein Ereignis: dispatch löst den Error-Node auf
+    (ADR: an error creates a new invocation). Der resultierende Flow
+    trägt den error-Payload im Invocation-Context.
+    """
+
+    async def err_handler():
+        yield Pulse()
+
+    err_node = Node(key="err", anonymous=True, run=err_handler)
+
+    def parse_input(*, event):
+        cmd, *rest = event.payload.strip().split()
+        return cmd, rest, []
+
+    def resolve_node(*, key, tokens, session, strict=True):
+        if key == "/usr/bin/err":
+            return err_node, tokens or []
+        raise NodeNotFound(command=key)
+
+    harness.engine.on_parse_input = parse_input
+    harness.engine.on_resolve_command = resolve_node
+
+    flow = await harness.engine.dispatch(
+        session=harness.session,
+        event=Event(payload="unknown-command"),
+    )
+
+    assert flow is not None
+    assert flow.node.key == "err"
+    assert flow.invocation["error"]["type"] == "NodeNotFound"
+    assert flow.invocation["error"]["command"] == "unknown-command"
 
 
 @pytest.mark.asyncio

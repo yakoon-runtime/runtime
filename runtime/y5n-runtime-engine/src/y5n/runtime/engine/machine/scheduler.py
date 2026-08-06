@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import asyncio
 import heapq
-import logging
 import time
 from collections import deque
 from collections.abc import Awaitable, Callable
 from typing import Protocol
-from uuid import uuid4
 
 from y5n.runtime.api.flow.channel import Scope
 from y5n.runtime.api.flow.primitives import (
@@ -50,7 +48,6 @@ class Scheduler:
         on_step_flow: OnStepFlow,
         on_show_projection: OnShowDocument,
         on_audit_warning: OnAuditWarning,
-        on_error_resolve: OnErrorResolve,
         on_flow_complete: OnFlowComplete,
     ):
         self.platform = platform
@@ -60,7 +57,6 @@ class Scheduler:
         self.on_step_flow = on_step_flow
         self.on_show_projection = on_show_projection
         self.on_audit_warning = on_audit_warning
-        self.on_error_resolve = on_error_resolve
         self.on_flow_complete = on_flow_complete
 
         # Flow-basierte Queue: (session, flow)
@@ -182,37 +178,30 @@ class Scheduler:
                 flow_steps = 0
                 flow_start = time.time()
 
-                try:
+                while True:
+                    pulse = await self.on_step_flow(flow=flow, session=session)
 
-                    while True:
-                        pulse = await self.on_step_flow(flow=flow, session=session)
+                    flow_steps += 1
+                    steps += 1
 
-                        flow_steps += 1
-                        steps += 1
+                    # ----------------------------------
+                    # Handle pulse
+                    # ----------------------------------
+                    if pulse:
+                        await self._handle_pulse(session, flow, pulse)
+                        self._refresh_resumed_flows(session)
+                        break  # Flow done / blocked
 
-                        # ----------------------------------
-                        # Handle pulse
-                        # ----------------------------------
-                        if pulse:
-                            await self._handle_pulse(session, flow, pulse)
-                            self._refresh_resumed_flows(session)
-                            break  # Flow done / blocked
+                    # ----------------------------------
+                    # Check budget (flow)
+                    # ----------------------------------
+                    if flow_steps >= self.MAX_STEPS_PER_FLOW:
+                        self.schedule_flow(flow, session)
+                        break
 
-                        # ----------------------------------
-                        # Check budget (flow)
-                        # ----------------------------------
-                        if flow_steps >= self.MAX_STEPS_PER_FLOW:
-                            self.schedule_flow(flow, session)
-                            break
-
-                        if time.time() - flow_start > self.MAX_TIME_PER_FLOW:
-                            self.schedule_flow(flow, session)
-                            break
-
-                except Exception as error:
-                    if session.foreground_flow:
-                        session.del_flow(session.foreground_flow)
-                    await self._show_error(session, None, flow.node, error)
+                    if time.time() - flow_start > self.MAX_TIME_PER_FLOW:
+                        self.schedule_flow(flow, session)
+                        break
 
             # --------------------------------------------------
             # Yield back to event loop
@@ -255,18 +244,11 @@ class Scheduler:
         callback: Callable[..., Awaitable[Flow | None]],
         **kwargs,
     ):
-        node: Node | None = None
-        try:
-            flow = await callback(session=session, **kwargs)
-            if flow:
-                node = flow.node
+        flow = await callback(session=session, **kwargs)
 
-            # Schedule all flows of the session
-            for flow in session.flows():
-                self.schedule_flow(flow, session)
-
-        except Exception as error:
-            await self._show_error(session, ctx, node, error)
+        # Schedule all flows of the session
+        for flow in session.flows():
+            self.schedule_flow(flow, session)
 
     async def _wake_sleeping(self):
         now = time.time()
@@ -321,33 +303,6 @@ class Scheduler:
             if isinstance(ctrl, AwaitEvent) and ctrl.channel == channel:
                 self.schedule_flow(f, session)
 
-    async def _show_error(self, session, ctx, node, error):
-
-        try:
-            projection = await self.on_error_resolve(
-                node=node or self.platform,
-                session=session,
-                error=error,
-            )
-
-            await self.on_show_projection(
-                session=session,
-                document=projection,
-                ctx=ctx,
-                job_id=uuid4().hex,
-            )
-        except Exception:
-            logger = logging.getLogger("error")
-            logger.critical(
-                "Error while showing error projection for: %s",
-                error,
-                exc_info=True,
-            )
-            logger.critical(
-                "Original error that triggered _show_error:",
-                exc_info=(type(error), error, error.__traceback__),
-            )
-
 
 # ----------------------------------
 # PORTS
@@ -371,16 +326,6 @@ class OnShowDocument(Protocol):
         ctx: InputContext | None,
         job_id: str = "system",
     ) -> None: ...
-
-
-class OnErrorResolve(Protocol):
-    async def __call__(
-        self,
-        *,
-        node: Node,
-        session: Session,
-        error: Exception,
-    ) -> dict: ...
 
 
 class OnFlowComplete(Protocol):

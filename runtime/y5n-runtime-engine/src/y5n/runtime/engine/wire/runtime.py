@@ -1,6 +1,3 @@
-from y5n.runtime.api.nodes import NodePath, UnknownOptionsError, UsageError
-from y5n.runtime.api.ports.system import ERROR_RESOLVE
-from y5n.runtime.api.resources import ResourceRef
 from y5n.runtime.api.runtime import get_bus
 from y5n.runtime.engine.capabilities.audit import AuditLogService
 from y5n.runtime.engine.capabilities.permission import PermissionChecker
@@ -10,13 +7,7 @@ from y5n.runtime.engine.executor import (
     RuntimeExecutor,
 )
 from y5n.runtime.engine.nodes.tree import Tree
-from y5n.runtime.engine.runtime import (
-    NodeNotExecutable,
-    NodeNotFound,
-    PermissionDenied,
-    Session,
-    SessionService,
-)
+from y5n.runtime.engine.runtime import SessionService
 from y5n.runtime.engine.services import GuidanceService
 from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.sources import DataSourceRegistry
@@ -35,15 +26,6 @@ from y5n.runtime.engine.wire.document import build_document_stack
 from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
 from y5n.runtime.engine.wire.stream import build_stream
 from y5n.runtime.store.event.wire import build_store
-
-errors = {
-    Exception: "error.ydf",
-    NodeNotFound: "command/not_found.ydf",
-    NodeNotExecutable: "command/not_executable.ydf",
-    UsageError: "command/usage.ydf",
-    UnknownOptionsError: "command/unknown_options.ydf",
-    PermissionDenied: "permissions/denied.ydf",
-}
 
 
 def build_runtime(
@@ -106,43 +88,6 @@ def build_runtime(
     doc = build_document_stack(tree=tree)
     projector = doc.projector
 
-    # -----------------------
-    # --- ERROR RESOLVING ---
-    # -----------------------
-
-    async def error_resolve(
-        *,
-        key: NodePath,
-        session: Session,
-        error: Exception,
-    ) -> dict:
-
-        if isinstance(error, PermissionDenied):
-            audit_service.security(session=session, obj="command", action=root.key)  # type: ignore
-        elif type(error) not in errors:
-            audit_service.error(exc=error, session=session)
-
-        parts = errors.get(type(error), "error")
-        resource = ResourceRef(
-            package="y5n.runtime.engine",
-            path=f"templates/{session.lang}/{parts}",
-        )
-
-        return await projector.project(
-            resource=resource,
-            state=vars(error),
-        )
-
-    # ----------------
-    # --- BINDINGS ---
-    # ----------------
-    root = tree.root()
-
-    assert root
-    root_ports = root.ports
-
-    root_ports.provide(ERROR_RESOLVE, error_resolve)
-
     # --------------------
     # --- DATASOURCING ---
     # --------------------
@@ -150,6 +95,9 @@ def build_runtime(
     ds.bind("system:nodes", NodeSource(tree))
     ds.bind("system:runtimes", RuntimeSource(settings.runtime.known))
     # ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
+
+    root = tree.root()
+    assert root
 
     # -----------------
     # --- STREAMING ---

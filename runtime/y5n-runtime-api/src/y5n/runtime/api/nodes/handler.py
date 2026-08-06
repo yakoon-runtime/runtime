@@ -10,8 +10,6 @@ from y5n.runtime.api.flow.dsl import Pulse
 
 if TYPE_CHECKING:
     from .node import Node
-    from .path import NodePath
-    from .ports import NodePorts
 
 # ----------------------------------
 # RESULT
@@ -54,13 +52,3 @@ class ResolveHandler(Protocol):
         capability: str,
         parameters: dict[str, Any] | None = None,
     ) -> Any: ...
-
-
-class PortsFromHandler(Protocol):
-
-    def __call__(
-        self,
-        path: NodePath,
-        *,
-        absolute: bool = False,
-    ) -> NodePorts | None: ...

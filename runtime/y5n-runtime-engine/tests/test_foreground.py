@@ -120,11 +120,12 @@ async def test_foreground_switch(harness):
 
 
 @pytest.mark.asyncio
-async def test_error_kills_foreground(harness):
-    """Foreground-Flow wirft Exception → Scheduler killt den Flow und räumt Fokus.
+async def test_error_routes_to_error_node(harness):
+    """Exception im Generator → Flow wird auf /usr/bin/err geroutet.
 
-    scheduler.py:204-207 fängt die Exception, ruft
-    session.del_flow(session.foreground_flow) auf, was den Fokus löscht.
+    Der Fehler erzeugt eine neue Invocation; der bestehende Flow wird
+    umgestellt (gleiche Flow-ID), der nächste Step führt den Error-Node
+    aus (ADR: an error creates a new invocation).
     """
 
     async def handler():
@@ -133,17 +134,14 @@ async def test_error_kills_foreground(harness):
 
     flow = await harness.start(handler)
 
-    # Schritt: foreground() → Foreground-Effekt angewandt,
-    # dann im zweiten Loop-Durchlauf: Generator wirft RuntimeError
-    with pytest.raises(RuntimeError, match="boom"):
-        await harness.run_until_blocked(flow)
+    # Step 1: foreground() → Foreground-Effekt angewandt (control=None → None)
+    assert await harness.engine.step_flow(flow, harness.session) is None
 
-    # Foreground war gesetzt (vor dem Crash)
-    assert harness.session.foreground_flow is flow
+    # Step 2: Generator wirft RuntimeError → _route_error stellt den Flow um
+    assert await harness.engine.step_flow(flow, harness.session) is None
 
-    # Simuliere scheduler.run() cleanup (scheduler.py:205-206)
-    if harness.session.foreground_flow:
-        harness.session.del_flow(harness.session.foreground_flow)
-
-    assert harness.session.foreground_flow is None
-    assert harness.session.get_flow(flow.id) is None
+    assert flow.error_depth == 1
+    assert flow.node.key == "err"
+    assert "error" in flow.invocation
+    assert flow.invocation["error"]["type"] == "RuntimeError"
+    assert harness.session.get_flow(flow.id) is flow
