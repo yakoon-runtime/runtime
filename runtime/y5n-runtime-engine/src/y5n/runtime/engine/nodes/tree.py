@@ -7,8 +7,8 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from y5n.runtime.api.nodes import CommandSignature, Node, Param
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
+from y5n.runtime.api.runtime.invocation import CommandSignature, Param
 from y5n.runtime.engine.bootstrap import PackReference
 from y5n.runtime.engine.executor import (
     Executor,
@@ -17,6 +17,7 @@ from y5n.runtime.engine.executor import (
     Phase,
 )
 from y5n.runtime.engine.flow.util import empty_flow
+from y5n.runtime.engine.nodes import Node
 
 # Resource types that capabilities can declare in yak.yml.
 # Each entry becomes a node.resources[type][variant] to reference string

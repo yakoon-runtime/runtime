@@ -15,7 +15,8 @@ from y5n.runtime.api.flow.primitives import (
 from y5n.runtime.api.runtime import Event
 
 if TYPE_CHECKING:
-    from y5n.runtime.api.nodes import Invocation, Node
+    from y5n.runtime.api.runtime.invocation import Invocation
+    from y5n.runtime.engine.nodes import Node
 
 from .cursor import FlowCursor
 from .types import FlowKind

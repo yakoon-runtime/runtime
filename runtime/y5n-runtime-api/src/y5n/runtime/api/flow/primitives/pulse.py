@@ -8,7 +8,7 @@ from .control import Control
 from .effect import Effect
 
 if TYPE_CHECKING:
-    from y5n.runtime.api.nodes import Invocation
+    from y5n.runtime.api.runtime.invocation import Invocation
 
 
 @dataclass(frozen=True, slots=True)

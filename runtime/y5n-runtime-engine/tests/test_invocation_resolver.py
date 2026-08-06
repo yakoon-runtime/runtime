@@ -14,7 +14,8 @@ from __future__ import annotations
 
 import pytest
 from y5n.runtime.api.naming import Key
-from y5n.runtime.api.nodes import CommandSignature, Node, Param, UsageError
+from y5n.runtime.api.runtime.invocation import CommandSignature, Invocation, Param
+from y5n.runtime.engine.nodes import Node, UsageError
 from y5n.runtime.engine.machine.resolver import InvocationResolver
 from y5n.runtime.engine.runtime.error import (
     NodeNotExecutable,
@@ -356,8 +357,8 @@ def test_invocation_is_dispatchable_via_parser():
     path + args — der Request-Roundtrip ist weg.
     """
 
-    from y5n.runtime.api.nodes import Invocation
     from y5n.runtime.api.runtime import Event
+    from y5n.runtime.api.runtime.invocation import Invocation
     from y5n.runtime.engine.machine.parser import InputParser
 
     parser = InputParser()

@@ -6,10 +6,10 @@ from typing import Protocol
 
 from y5n.runtime.api.flow.dsl import out_text
 from y5n.runtime.api.flow.primitives import AwaitEvent, Effect, Pulse, Stop
-from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event, InputContext, Interaction
 from y5n.runtime.engine.flow import Flow, FlowCursor, FlowKind
 from y5n.runtime.engine.interaction import resolve_interaction
+from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.runtime import Session
 from y5n.runtime.engine.runtime.invocation import (
     derive_invocation_context,

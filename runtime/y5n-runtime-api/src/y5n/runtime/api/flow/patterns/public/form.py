@@ -6,8 +6,8 @@ from typing import Any
 from y5n.runtime.api.flow.dsl import Pulse, prompt, receive
 from y5n.runtime.api.flow.policies import BasePolicy, ValidationError
 from y5n.runtime.api.flow.primitives import AwaitEvent
-from y5n.runtime.api.nodes import Param
 from y5n.runtime.api.runtime import Event
+from y5n.runtime.api.runtime.invocation import Param
 
 from .dialog import Dialog
 from .form_action import FormAction

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.runtime.api.nodes import Node, UsageError
 from y5n.runtime.engine.capabilities.permission import Permission
+from y5n.runtime.engine.nodes import Node, UsageError
 from y5n.runtime.engine.runtime import (
     NodeNotExecutable,
     NodeNotFound,

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 import pytest
 from support.runtime import RuntimeHarness
 from y5n.runtime.api.naming import Key
-from y5n.runtime.api.nodes import Node
+from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.machine.effects import EffectExecutor
 from y5n.runtime.engine.machine.engine import CommandEngine
 from y5n.runtime.engine.machine.scheduler import Scheduler

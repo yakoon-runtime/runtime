@@ -9,7 +9,7 @@ from ..flow.util import empty_flow
 from .base import Executor, ExecutorKind, Phase, RunResult
 
 if TYPE_CHECKING:
-    from y5n.runtime.api.nodes.node import Node
+    from y5n.runtime.engine.nodes.node import Node
 
 
 class RuntimeExecutor(Executor):

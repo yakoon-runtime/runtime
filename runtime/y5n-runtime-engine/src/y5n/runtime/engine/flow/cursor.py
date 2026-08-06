@@ -5,10 +5,10 @@ from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Literal
 
 from y5n.runtime.api.flow.primitives import Pulse
-from y5n.runtime.api.nodes.handler import RunHandler
+from y5n.runtime.engine.nodes.handler import RunHandler
 
 if TYPE_CHECKING:
-    from y5n.runtime.api.nodes import Node
+    from y5n.runtime.engine.nodes import Node
 
 HandlerName = Literal["run",]
 

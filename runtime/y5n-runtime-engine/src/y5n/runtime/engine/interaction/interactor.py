@@ -3,17 +3,14 @@ from __future__ import annotations
 from y5n.runtime.api.flow.dsl import Pulse
 from y5n.runtime.api.flow.patterns.public.form import Form
 from y5n.runtime.api.flow.primitives import Continue
-from y5n.runtime.api.nodes import (
-    CommandSignature,
-    Node,
-    UsageError,
-)
 from y5n.runtime.api.runtime.context import current_context
 from y5n.runtime.api.runtime.input import (
     InputContext,
     Interaction,
     Origin,
 )
+from y5n.runtime.api.runtime.invocation import CommandSignature
+from y5n.runtime.engine.nodes import Node, UsageError
 from y5n.runtime.engine.runtime import Session
 
 

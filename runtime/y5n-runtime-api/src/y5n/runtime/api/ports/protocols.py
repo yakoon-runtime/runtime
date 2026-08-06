@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.runtime.api.nodes import NodePath
 from y5n.runtime.api.permissions import Permission, PermissionSet
 from y5n.runtime.api.resources import ResourceRef
 from y5n.runtime.api.runtime.sessions import Session
@@ -14,31 +13,6 @@ from .models import AuthResult, HealthResult
 # -------------------
 # -- PLUGIN PORTS ---
 # -------------------
-
-
-class OnDocumentResolve(Protocol):
-    async def __call__(
-        self, *, resource: ResourceRef, state: dict | None = None
-    ) -> dict: ...
-
-
-class OnManualResolve(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: NodePath,
-        lang: str,
-    ) -> dict | None: ...
-
-
-class OnErrorResolve(Protocol):
-    async def __call__(
-        self,
-        *,
-        key: NodePath,
-        session: Session,
-        error: Exception,
-    ) -> dict: ...
 
 
 class OnSessionSave(Protocol):

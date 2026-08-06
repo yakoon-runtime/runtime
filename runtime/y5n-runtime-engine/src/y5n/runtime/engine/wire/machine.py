@@ -4,7 +4,6 @@ from typing import Protocol, cast
 
 from y5n.runtime.api.flow import Scope
 from y5n.runtime.api.naming import Key
-from y5n.runtime.api.nodes import Node
 from y5n.runtime.api.runtime import Event, InputContext
 from y5n.runtime.api.runtime.input import Origin
 from y5n.runtime.engine.connections import (
@@ -26,6 +25,7 @@ from y5n.runtime.engine.machine import (
     TaskRunner,
 )
 from y5n.runtime.engine.machine.ports import OnAuditWarning, OnSuggest
+from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.runtime import Session
 from y5n.runtime.engine.runtime.bus import BusOutput
 from y5n.runtime.engine.settings import Settings

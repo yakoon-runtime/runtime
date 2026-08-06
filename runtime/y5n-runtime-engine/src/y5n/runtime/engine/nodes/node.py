@@ -6,9 +6,10 @@ from pathlib import Path
 from typing import Any, TypeVar
 
 from y5n.runtime.api.runtime.input import Interaction
+from y5n.runtime.api.runtime.invocation import CommandSignature
 
 from .handler import ResolveHandler, RunHandler
-from .invocation import CommandSignature, CommandSignatureValidator
+from .invocation import CommandSignatureValidator
 from .path import NodePath
 from .types import NodeKind, NodeVisibility
 
