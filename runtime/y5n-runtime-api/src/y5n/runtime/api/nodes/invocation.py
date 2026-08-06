@@ -9,7 +9,7 @@ from .errors import UnknownOptionsError, UsageError
 
 @dataclass(slots=True)
 class Param:
-    """A single named parameter within an Invocation."""
+    """A single named parameter within a CommandSignature."""
 
     key: str
     title: str = ""
@@ -22,11 +22,12 @@ class Param:
 
 
 @dataclass(slots=True)
-class Invocation:
-    """A single command invocation: action + parameters.
+class CommandSignature:
+    """A declared way a command can be invoked: action + parameters.
 
-    Matched against user input during node resolution.  The validator
-    determines whether a token sequence fits this signature.
+    Declared in yak.yml (``invocation:``). Matched against user input
+    during node resolution. A signature is a *description* — it says
+    how a command may be called, it is not a concrete call.
     """
 
     action: str | None = None
@@ -55,16 +56,39 @@ class Invocation:
             "min_options": self.min_options,
         }
 
-    def bind(self, input: InvocationInput) -> BoundInvocation:
-        """Bind concrete values, filling defaults as needed."""
-        values = dict(input.values)
+    def bind(
+        self,
+        values: Mapping[str, Any],
+        *,
+        path: str,
+        lang: str = "en",
+    ) -> Invocation:
+        """Bind concrete values into a concrete Invocation.
+
+        Fills defaults as needed and builds the argument tokens. The
+        command name lives in ``path`` — it is never duplicated into
+        ``args`` (ADR-12: an invocation is ``path`` + ``args``).
+        """
+        filled = dict(values)
         for param in self.params:
-            if param.key not in values:
+            if param.key not in filled:
                 if param.default is not None:
-                    values[param.key] = param.default
+                    filled[param.key] = param.default
                 elif param.required:
                     raise ValueError(f"Missing required parameter: {param.key!r}")
-        return BoundInvocation(invocation=self, values=values)
+
+        args: list[str] = []
+        for param in self.params:
+            val = filled.get(param.key)
+            if val is None:
+                continue
+            if param.positional:
+                args.append(str(val))
+            else:
+                args.append(f"--{param.key}")
+                args.append(str(val))
+
+        return Invocation(path=path, args=args, lang=lang)
 
     def has_required(self, tokens: list[str]) -> bool:
         """Check whether all required params are covered by *tokens*."""
@@ -92,35 +116,34 @@ class Invocation:
 
 
 @dataclass(frozen=True, slots=True)
-class InvocationInput:
-    """Raw key/value data produced by a Renderer (Form, Chat, …).
+class Invocation:
+    """A concrete call: what to execute and with what arguments.
 
-    Keys correspond to Param.key.  Values are the unconverted user input.
+    ``path`` answers *what is executed*; ``args`` answers *with what it
+    is executed* (never the command name — that lives in ``path``).
+    ``payload`` is the ADR-13 payload (``None`` for ordinary commands,
+    the exception for error invocations, later timer/webhook).
     """
 
-    values: Mapping[str, Any]
+    path: str
+    args: list[str] = field(default_factory=list)
+    payload: Any | None = None
+    lang: str = "en"
 
 
-@dataclass(slots=True)
-class BoundInvocation:
-    """A fully bound invocation with concrete values for every parameter."""
-
-    invocation: Invocation
-    values: Mapping[str, Any]
-
-
-class InvocationValidator:
+class CommandSignatureValidator:
+    """Match token sequences against a node's declared signatures."""
 
     def validate(
         self,
         node,
         tokens: list[str] | None,
         strict: bool = True,
-    ) -> Invocation | None:
+    ) -> CommandSignature | None:
 
-        invocations = node.invocations
+        signatures = node.signatures
 
-        if not invocations:
+        if not signatures:
             return None
 
         tokens = tokens or []
@@ -129,15 +152,15 @@ class InvocationValidator:
         # GROUPS
         # ----------------------------------
 
-        default_invocations = [x for x in invocations if x.default]
+        default_signatures = [x for x in signatures if x.default]
 
-        action_invocations = [x for x in invocations if x.action is not None]
+        action_signatures = [x for x in signatures if x.action is not None]
 
-        positional_invocations = [
-            x for x in invocations if not x.default and x.action is None
+        positional_signatures = [
+            x for x in signatures if not x.default and x.action is None
         ]
 
-        matching: list[Invocation] = []
+        matching: list[CommandSignature] = []
 
         # ----------------------------------
         # ACTION MATCHING
@@ -147,7 +170,7 @@ class InvocationValidator:
 
             action = tokens[0]
 
-            matching = [x for x in action_invocations if x.action == action]
+            matching = [x for x in action_signatures if x.action == action]
 
         # ----------------------------------
         # DEFAULT MATCHING
@@ -155,7 +178,7 @@ class InvocationValidator:
 
         if not matching:
 
-            matching = default_invocations
+            matching = default_signatures
 
         # ----------------------------------
         # POSITIONAL MATCHING
@@ -163,7 +186,7 @@ class InvocationValidator:
 
         if not matching:
 
-            matching = positional_invocations
+            matching = positional_signatures
 
         # ----------------------------------
         # NO MATCH
@@ -174,12 +197,12 @@ class InvocationValidator:
             raise UsageError(
                 usages=self._usage_data(
                     node,
-                    invocations,
+                    signatures,
                 ),
             )
 
         # ----------------------------------
-        # OPTIONS KNOWN BY THE CANDIDATE INVOCATIONS
+        # OPTIONS KNOWN BY THE CANDIDATE SIGNATURES
         # ----------------------------------
 
         allowed_options = self._allowed_options(matching)
@@ -189,9 +212,9 @@ class InvocationValidator:
         # VALIDATE MATCHES
         # ----------------------------------
 
-        for invocation in matching:
+        for signature in matching:
 
-            offset = 1 if invocation.action else 0
+            offset = 1 if signature.action else 0
 
             # ----------------------------------
             # POSITIONAL TOKENS
@@ -213,16 +236,16 @@ class InvocationValidator:
             # REQUIRED PARAMS
             # ----------------------------------
 
-            num_positional = sum(1 for p in invocation.params if p.positional)
+            num_positional = sum(1 for p in signature.params if p.positional)
 
             if len(positional) > num_positional:
                 continue
 
-            required_keys = {p.key for p in invocation.params if p.required}
+            required_keys = {p.key for p in signature.params if p.required}
             provided: set[str] = set()
 
             pos_idx = 0
-            for param in invocation.params:
+            for param in signature.params:
                 if not param.positional:
                     continue
                 if pos_idx < len(positional):
@@ -244,9 +267,9 @@ class InvocationValidator:
             # MIN OPTIONS
             # ----------------------------------
 
-            valid_options = {f"--{x.key}" for x in invocation.params}
+            valid_options = {f"--{x.key}" for x in signature.params}
 
-            if invocation.min_options > 0 and strict:
+            if signature.min_options > 0 and strict:
 
                 option_count = 0
                 for token in tokens[offset:]:
@@ -256,17 +279,17 @@ class InvocationValidator:
                     if key in valid_options:
                         option_count += 1
 
-                if option_count < invocation.min_options:
+                if option_count < signature.min_options:
                     continue
 
             # ----------------------------------
             # MATCH
             # ----------------------------------
 
-            return invocation
+            return signature
 
         # ----------------------------------
-        # INVALID INVOCATION
+        # INVALID SIGNATURE
         # ----------------------------------
 
         raise UsageError(
@@ -281,10 +304,10 @@ class InvocationValidator:
     # ----------------------------------
 
     @staticmethod
-    def _allowed_options(invocations: list[Invocation]) -> set[str]:
+    def _allowed_options(signatures: list[CommandSignature]) -> set[str]:
         allowed: set[str] = set()
-        for inv in invocations:
-            for p in inv.params:
+        for sig in signatures:
+            for p in sig.params:
                 if not p.positional:
                     allowed.add(f"--{p.key}")
         return allowed
@@ -294,7 +317,7 @@ class InvocationValidator:
         tokens: list[str],
         allowed_options: set[str],
         node,
-        matching: list[Invocation],
+        matching: list[CommandSignature],
     ) -> None:
         unknown: list[str] = []
         for token in tokens or []:
@@ -313,7 +336,7 @@ class InvocationValidator:
     def _usage_data(
         self,
         node,
-        invocations: list[Invocation],
+        signatures: list[CommandSignature],
     ) -> list[dict]:
 
-        return [invocation.usage_data(node.key) for invocation in invocations]
+        return [signature.usage_data(node.key) for signature in signatures]

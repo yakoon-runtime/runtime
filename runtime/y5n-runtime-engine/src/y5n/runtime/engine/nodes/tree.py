@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from y5n.runtime.api.nodes import Invocation, Node, Param
+from y5n.runtime.api.nodes import CommandSignature, Node, Param
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
 from y5n.runtime.engine.bootstrap import PackReference
 from y5n.runtime.engine.executor import (
@@ -35,12 +35,11 @@ class BuildState:
 
 @dataclass
 class Capability:
-    """Bundle metadata: invocations and resource paths."""
+    """Bundle metadata: executor, host, entry, and resource paths."""
 
     executor_kind: ExecutorKind = ExecutorKind.RUNTIME
     host: str | None = None
     entry: dict[str, str] = field(default_factory=dict)
-    invocations: list[Invocation] = field(default_factory=list)
     resources: dict[str, dict[str, Path]] = field(default_factory=dict)
 
 
@@ -132,12 +131,12 @@ class Tree:
         if isinstance(entry, dict):
             node.metadata["entry"] = entry
 
-        # Invocations
-        invocations: list[Invocation] = []
-        inv_data = meta.get("invocation")
-        if isinstance(inv_data, dict):
+        # Signatures
+        signatures: list[CommandSignature] = []
+        sig_data = meta.get("invocation")
+        if isinstance(sig_data, dict):
             params: list[Param] = []
-            for p in inv_data.get("params", []):
+            for p in sig_data.get("params", []):
                 if isinstance(p, dict):
                     key = p.get("key", "")
                     if key:
@@ -149,15 +148,15 @@ class Tree:
                                 default=p.get("default"),
                             )
                         )
-            invocations.append(
-                Invocation(
-                    action=inv_data.get("action"),
+            signatures.append(
+                CommandSignature(
+                    action=sig_data.get("action"),
                     params=params,
-                    min_options=inv_data.get("min_options", 0),
-                    default=inv_data.get("default", True),
+                    min_options=sig_data.get("min_options", 0),
+                    default=sig_data.get("default", True),
                 )
             )
-        node.invocations = invocations
+        node.signatures = signatures
 
         resources: dict[str, Any] = {}
         res_section = meta.get("resources")

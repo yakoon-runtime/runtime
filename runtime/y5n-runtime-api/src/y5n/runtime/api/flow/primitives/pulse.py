@@ -8,7 +8,7 @@ from .control import Control
 from .effect import Effect
 
 if TYPE_CHECKING:
-    from y5n.runtime.api.nodes import Request
+    from y5n.runtime.api.nodes import Invocation
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,4 +26,4 @@ class Pulse:
 
     control: Control | None = None
     effects: Sequence[Effect] | None = field(default_factory=list)
-    next_steps: list[str | Request] | None = None
+    next_steps: list[str | Invocation] | None = None

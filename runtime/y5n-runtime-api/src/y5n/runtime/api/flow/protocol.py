@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 
 if TYPE_CHECKING:
     from y5n.runtime.api.flow.primitives import Control
-    from y5n.runtime.api.nodes import Node, Request
+    from y5n.runtime.api.nodes import Invocation, Node
 
 
 class Flow(Protocol):
@@ -20,7 +20,7 @@ class Flow(Protocol):
     node: Node
     control: Control | None
     scheduled: bool
-    pipeline: Sequence[str | Request] | None
+    pipeline: Sequence[str | Invocation] | None
     out_channel: str | None
     view: Any | None
     kind: Any

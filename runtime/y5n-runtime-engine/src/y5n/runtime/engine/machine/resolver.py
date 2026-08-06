@@ -221,11 +221,11 @@ class InvocationResolver:
         self,
         node: Node,
     ) -> None:
-        usages = [inv.usage_data(node.key) for inv in (node.invocations or [])]
+        usages = [sig.usage_data(node.key) for sig in (node.signatures or [])]
         if not usages:
             for child in node.children.values():
-                for inv in child.invocations or []:
-                    usages.append(inv.usage_data(child.key))
+                for sig in child.signatures or []:
+                    usages.append(sig.usage_data(child.key))
         raise UsageError(usages=usages, command=node.key)
 
     def _ensure_invocation(

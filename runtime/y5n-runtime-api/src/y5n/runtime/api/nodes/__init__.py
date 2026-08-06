@@ -1,13 +1,12 @@
 from .errors import InvocationError, UnknownOptionsError, UsageError
 from .invocation import (
-    BoundInvocation,
+    CommandSignature,
+    CommandSignatureValidator,
     Invocation,
-    InvocationInput,
     Param,
 )
 from .node import Node
 from .path import NodePath
-from .request import Request, RequestBuilder
 from .types import NodeKind, NodeVisibility
 
 __all__ = [
@@ -18,13 +17,10 @@ __all__ = [
     "NodeKind",
     # .path
     "NodePath",
-    # .request
-    "Request",
-    "RequestBuilder",
     # .invocation
+    "CommandSignature",
+    "CommandSignatureValidator",
     "Invocation",
-    "BoundInvocation",
-    "InvocationInput",
     "Param",
     # .errors
     "InvocationError",

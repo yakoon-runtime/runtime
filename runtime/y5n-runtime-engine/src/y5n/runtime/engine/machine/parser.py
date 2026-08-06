@@ -2,23 +2,23 @@ from __future__ import annotations
 
 import shlex
 
-from y5n.runtime.api.nodes import Request
+from y5n.runtime.api.nodes import Invocation
 from y5n.runtime.api.runtime import Event
 
 
 class InputParser:
     """Parse raw input events into command, tokens, and pipeline segments.
 
-    When the event carries a pre-built ``Request`` object (e.g. from a
-    pipeline stage like ``Continue(next=Request(...))``) the command and
-    tokens are taken directly, skipping string parsing.
+    When the event carries a pre-built ``Invocation`` (e.g. from a
+    pipeline stage like ``Continue(next=Invocation(...))``) the command
+    and tokens are taken directly, skipping string parsing.
     """
 
     def parse(self, event: Event) -> tuple[str, list[str], list[str]]:
 
-        if isinstance(event.payload, Request):
-            req = event.payload
-            return req.command, list(req.args()), []
+        if isinstance(event.payload, Invocation):
+            inv = event.payload
+            return inv.path, list(inv.args), []
 
         if not isinstance(event.payload, str) or not event.payload.strip():
             return "", [], []
