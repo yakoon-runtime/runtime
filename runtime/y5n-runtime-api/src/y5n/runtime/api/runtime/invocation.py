@@ -2,7 +2,21 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any
+
+
+class ParamKind(StrEnum):
+    """The syntactic form a parameter takes on the command line.
+
+    ``VALUE`` is the default: the option is followed by exactly one
+    value (``--world crm``). ``FLAG`` takes no value (``--twoway``).
+    The vocabulary is closed; new forms (``list``, ``path``, ``enum``,
+    …) extend the enum without changing the model.
+    """
+
+    VALUE = "value"
+    FLAG = "flag"
 
 
 @dataclass(slots=True)
@@ -17,6 +31,7 @@ class Param:
     policy: Any = None
     required: bool = False
     positional: bool = False
+    kind: ParamKind = ParamKind.VALUE
 
 
 @dataclass(slots=True)
@@ -50,7 +65,16 @@ class CommandSignature:
             "key": key,
             "action": self.action,
             "args": self.arg_keys,
-            "options": self.option_keys,
+            "options": [
+                p.key
+                for p in self.params
+                if not p.positional and p.kind is not ParamKind.FLAG
+            ],
+            "flags": [
+                p.key
+                for p in self.params
+                if not p.positional and p.kind is ParamKind.FLAG
+            ],
             "min_options": self.min_options,
         }
 
@@ -82,6 +106,9 @@ class CommandSignature:
                 continue
             if param.positional:
                 args.append(str(val))
+            elif param.kind is ParamKind.FLAG:
+                if val:
+                    args.append(f"--{param.key}")
             else:
                 args.append(f"--{param.key}")
                 args.append(str(val))
@@ -133,4 +160,5 @@ __all__ = [
     "CommandSignature",
     "Invocation",
     "Param",
+    "ParamKind",
 ]

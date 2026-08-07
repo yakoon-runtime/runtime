@@ -15,9 +15,13 @@ from __future__ import annotations
 import pytest
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.permissions import Operation
-from y5n.runtime.api.runtime.invocation import CommandSignature, Invocation, Param
+from y5n.runtime.api.runtime.invocation import (
+    CommandSignature,
+    Param,
+    ParamKind,
+)
 from y5n.runtime.engine.machine.resolver import InvocationResolver
-from y5n.runtime.engine.nodes import Node, UsageError
+from y5n.runtime.engine.nodes import InvalidOptionError, Node, UsageError
 from y5n.runtime.engine.runtime.error import (
     NodeNotExecutable,
     NodeNotFound,
@@ -370,3 +374,97 @@ def test_invocation_is_dispatchable_via_parser():
     assert cmd == "/usr/bin/copy"
     assert args == ["a.txt", "b.txt"]
     assert pipeline == []
+
+
+# ----------------------------------------
+# OPTION ARITY (kind: flag vs value)
+# ----------------------------------------
+
+
+def _flag_node() -> Node:
+    return Node(
+        key="bridge",
+        signatures=[
+            CommandSignature(
+                default=True,
+                params=[
+                    Param(key="world"),
+                    Param(key="twoway", kind=ParamKind.FLAG),
+                ],
+            )
+        ],
+    )
+
+
+def test_usage_data_splits_flags_from_options():
+    sig = _flag_node().signatures[0]
+
+    data = sig.usage_data("bridge")
+
+    assert data["options"] == ["world"]
+    assert data["flags"] == ["twoway"]
+
+
+def test_bind_renders_flag_without_value():
+    sig = _flag_node().signatures[0]
+
+    on = sig.bind(
+        {"world": "crm", "twoway": True},
+        path="/usr/bin/bridge",
+    )
+    assert on.args == ["--world", "crm", "--twoway"]
+
+    off = sig.bind({"world": "crm", "twoway": False}, path="/usr/bin/bridge")
+    assert off.args == ["--world", "crm"]
+
+
+def test_flag_with_value_raises_invalid_option():
+    root = _build_tree()
+    node = _flag_node()
+    root.add(node)
+    resolver, _ = _make_resolver(root)
+
+    with pytest.raises(InvalidOptionError) as exc:
+        resolver.resolve("bridge", ["--twoway", "x"], _session())
+
+    assert exc.value.option == "--twoway"
+    assert exc.value.reason == "Unexpected value after '--twoway'"
+
+
+def test_flag_with_inline_value_raises_invalid_option():
+    root = _build_tree()
+    node = _flag_node()
+    root.add(node)
+    resolver, _ = _make_resolver(root)
+
+    with pytest.raises(InvalidOptionError) as exc:
+        resolver.resolve("bridge", ["--twoway=1"], _session())
+
+    assert exc.value.reason == "Unexpected value after '--twoway'"
+
+
+def test_value_option_without_value_raises_invalid_option():
+    root = _build_tree()
+    node = _flag_node()
+    root.add(node)
+    resolver, _ = _make_resolver(root)
+
+    with pytest.raises(InvalidOptionError) as exc:
+        resolver.resolve("bridge", ["--world"], _session())
+
+    assert exc.value.option == "--world"
+    assert exc.value.reason == "Missing value after '--world'"
+
+
+def test_flag_without_value_resolves():
+    root = _build_tree()
+    node = _flag_node()
+    root.add(node)
+    resolver, _ = _make_resolver(root)
+
+    node_out, tokens = resolver.resolve(
+        "bridge", ["--world", "crm", "--twoway"], _session()
+    )
+
+    assert node_out is node
+    assert tokens == ["--world", "crm", "--twoway"]

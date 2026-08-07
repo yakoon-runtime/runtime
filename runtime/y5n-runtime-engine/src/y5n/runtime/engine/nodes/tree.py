@@ -8,7 +8,7 @@ from typing import Any
 
 import yaml
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
-from y5n.runtime.api.runtime.invocation import CommandSignature, Param
+from y5n.runtime.api.runtime.invocation import CommandSignature, Param, ParamKind
 from y5n.runtime.engine.bootstrap import PackReference
 from y5n.runtime.engine.executor import (
     Executor,
@@ -23,6 +23,13 @@ from y5n.runtime.engine.nodes import Node
 # Each entry becomes a node.resources[type][variant] to reference string
 # mapping (ADR-10); resolution is lazy and host-owned.
 RESOURCE_KEYS = frozenset({"document", "man"})
+
+
+def _parse_param_kind(raw: Any) -> ParamKind:
+    """Map a yak.yml ``kind`` value onto the closed ParamKind vocabulary."""
+    if isinstance(raw, str) and raw in ParamKind._value2member_map_:
+        return ParamKind(raw)
+    return ParamKind.VALUE
 
 
 @dataclass
@@ -148,6 +155,7 @@ class Tree:
                                 required=p.get("required", False),
                                 positional=p.get("positional", False),
                                 default=p.get("default"),
+                                kind=_parse_param_kind(p.get("kind")),
                             )
                         )
             signatures.append(
