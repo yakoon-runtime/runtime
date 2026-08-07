@@ -129,8 +129,8 @@ that yields `Pulse`s through the flow engine — the same `FlowCursor` /
 today**: `boot/python/runtime.py`'s `run(space)` is `async def` with `yield`
 statements (Contract B), so the FlowCursor drives it directly.
 
-The experiment (`tests/test_experiment_host_is_node.py` → now
-`test_experiment_context_as_abi.py` + `test_experiment_host_context.py`)
+The experiment (`tests/test_host_is_node.py` → now
+`test_context_as_abi.py` + `test_host_context.py`)
 proves the two contracts:
 
 | Contract | What `main()` is | FlowCursor can drive it |
@@ -361,8 +361,8 @@ runtime produces data and transports it; it never models it — the SDK
 interprets it. The host sits between them and — like any application —
 speaks only the SDK.
 
-The experiment proves the shape end-to-end (`test_experiment_context_as_abi.py`,
-`test_experiment_host_context.py`): a parameterless `main()` reads its whole
+The experiment proves the shape end-to-end (`test_context_as_abi.py`,
+`test_host_context.py`): a parameterless `main()` reads its whole
 world from `context.current()`, a host drives a real target command using
 nothing but that context, and the target command sees the *same* context the
 engine set. `NodeSpace` becomes an implementation detail of the engine — it

@@ -1,4 +1,4 @@
-"""Experiment (ADR-12): the host as a context consumer.
+"""ADR-12: the host as a context consumer.
 
 A host is an ordinary node: ``async def main()`` that reads its whole
 invocation from ``context.current()`` — ``node.path`` for the target,

@@ -329,7 +329,7 @@ nodes are permission-enforcing — the check is real, not dead code.
 12. Grant vocabulary: `permission_key` → `path` (model, service, commands,
     structure, YDF docs). The grant is `path + bits + deny` — the operator
     grants access to a runtime path, not an abstract permission.
-13. Experiment test `tests/test_permissions_experiment.py` (direct, group,
+13. Experiment test `tests/test_permissions.py` (direct, group,
     deny subtraction).
 14. Elevation: `privileged: bool` on `Node` (read from yak.yml), gate in
     `InvocationResolver._ensure_invocation` (ElevationRequired → err node),
