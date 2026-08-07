@@ -229,8 +229,15 @@ greifen heute ohne `check(DISCOVER)`. Der Anschluss
 - [x] **Zwei Ebenen definiert**: Runtime-Operationen (discover/read/write/
       execute) vs. Bits (rwx); Node-Typ bildet ab. Node-Typ-Marker ist
       bereits `navigable` in der yak.yml.
-- [ ] **Operation->Bit-Anschluss**: `cd`/`ls` pruefen `check(path, DISCOVER)`
-      via navigable (Container -> r). Noch nicht angeschlossen.
+- [x] **Operation-Klasse**: `Operation(READ, WRITE, EXECUTE)` — bewusst nur
+      drei Operationen; `cd`/`ls`/`man`/`cat` sind alle READ (kein
+      DISCOVER/LIST-Sonderweg). `Node.required_bit(operation)` mappt
+      via `navigable` (Container: READ->r/WRITE->w; Leaf: READ->r/
+      EXECUTE->x). `PermissionChecker.check(session, node, operation)` und
+      `InvocationResolver` pruefen EXECUTE ueber Node+Operation statt
+      perm_key-String. Tests: `test_operations.py`.
+- [ ] **cd/ls als READ-Operation**: `cd`/`ls` rufen `check(node, READ)` auf
+      das Ziel/Container, bevor sie navigieren/listen. Noch nicht angeschlossen.
 - [ ] **Elevation**: privilegierte Pfade verlangen Verifikation, auch wenn der
       Account die Berechtigung hat. (Design: Policy vs. Pfad-Deklaration — offen)
 - [ ] End-to-End auf Prozessebene: echte su-Session -> PermissionDenied sichtbar

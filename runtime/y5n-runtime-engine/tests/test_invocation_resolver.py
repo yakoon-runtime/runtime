@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import pytest
 from y5n.runtime.api.naming import Key
+from y5n.runtime.api.permissions import Operation
 from y5n.runtime.api.runtime.invocation import CommandSignature, Invocation, Param
 from y5n.runtime.engine.machine.resolver import InvocationResolver
 from y5n.runtime.engine.nodes import Node, UsageError
@@ -85,8 +86,8 @@ def _make_resolver(
     ) -> list[str]:
         return [f"suggest:{value}"]
 
-    def on_authorize(*, session: Session, perm_key: str) -> bool:
-        permissions.append(perm_key)
+    def on_authorize(*, session: Session, node: Node, operation: Operation) -> bool:
+        permissions.append(f"{str(node.path)}:{operation.value}")
         return authorized
 
     resolver = InvocationResolver(
@@ -288,22 +289,22 @@ def test_contextual_node_keeps_target_when_no_match():
 # ----------------------------------------
 
 
-def test_permission_checked_with_fq_key():
+def test_permission_checked_as_execute_operation():
     root = _build_tree()
     resolver, permissions = _make_resolver(root)
 
     resolver.resolve("system", None, _session())
 
-    assert "/root/system" in permissions
+    assert "/root/system:execute" in permissions
 
 
-def test_permission_with_action_uses_action_suffix():
+def test_permission_with_action_uses_same_operation():
     root = _build_tree()
     resolver, permissions = _make_resolver(root)
 
     resolver.resolve("system", ["version"], _session())
 
-    assert "/root/system.version" in permissions
+    assert "/root/system:execute" in permissions
 
 
 def test_permission_denied_raises():

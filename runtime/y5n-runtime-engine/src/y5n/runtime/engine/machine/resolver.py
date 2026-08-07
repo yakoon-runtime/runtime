@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from y5n.runtime.engine.capabilities.permission import Permission
+from y5n.runtime.api.permissions import Operation
 from y5n.runtime.engine.nodes import Node, UsageError
 from y5n.runtime.engine.runtime import (
     NodeNotExecutable,
@@ -240,18 +240,10 @@ class InvocationResolver:
         if node.anonymous:
             return
 
-        action = tokens[0] if tokens else None
-
-        path = str(node.path)
-
-        fq = Permission.fq_key(
-            path,
-            action,
-        )
-
         if not self.on_authorize(
             session=session,
-            perm_key=fq,
+            node=node,
+            operation=Operation.EXECUTE,
         ):
             raise PermissionDenied()
 
@@ -267,7 +259,8 @@ class OnAuthorize(Protocol):
         self,
         *,
         session,
-        perm_key: str,
+        node: Node,
+        operation: Operation,
     ) -> bool: ...
 
 

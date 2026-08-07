@@ -122,7 +122,7 @@ def build_runtime(
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
         on_projection_send=output.send_document,
-        on_has_permission=perm_checker.can_execute,
+        on_has_permission=perm_checker.check,
         on_audit_warning=audit_service.warning,
         on_initialize=initialize,
         known_runtimes=settings.runtime.known,

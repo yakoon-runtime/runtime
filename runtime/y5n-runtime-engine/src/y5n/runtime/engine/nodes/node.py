@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, TypeVar
 
+from y5n.runtime.api.permissions import Operation
 from y5n.runtime.api.runtime.input import Interaction
 from y5n.runtime.api.runtime.invocation import CommandSignature
 
@@ -101,6 +102,22 @@ class Node:
 
     anonymous: bool = False
     """Skip permission checks when True.  Used for public/utility nodes."""
+
+    def required_bit(self, operation: Operation) -> str:
+        """Map a runtime operation onto the required permission bit.
+
+        The node type decides the mapping — the engine knows only
+        operations, never bits directly:
+          - Container (navigable): READ -> r, WRITE -> w
+          - Leaf / Command:        READ -> r, EXECUTE -> x
+        """
+        if operation is Operation.WRITE:
+            return "w"
+        if operation is Operation.READ:
+            return "r"
+        if operation is Operation.EXECUTE:
+            return "x" if not self.navigable else "r"
+        raise ValueError(f"Unknown operation: {operation}")
 
     # ----------------------------------
     # RUN HANDLER
