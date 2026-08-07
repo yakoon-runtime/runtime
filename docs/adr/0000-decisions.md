@@ -5,6 +5,26 @@
 
 ---
 
+## 2026-08-07 — Permissions Are Granted to Accounts on Runtime Paths (ADR-15)
+
+Yakoon has exactly one identity: the **Account** (login, credentials, groups,
+grants). An account optionally carries profile information; a bot is an
+account without a profile. The term **User** is removed from the security
+vocabulary — the distinction is *account with profile* vs. *account without
+profile*, never *user vs. account*.
+
+**Key sentence:** *"Permissions are granted to Accounts on runtime paths."*
+Grants are full node paths (`/crm/contact/edit`), the engine checks via
+`node.path`, and deny grants subtract bits. The pipeline is
+**Identity → Authorization → Elevation → Execution**: privileged operations
+are activated by verification (sudo-equivalent) within the same identity —
+Stefan never becomes `stefan-admin`.
+
+**What was repaired:** the runtime's permission check was dead code (every
+tree node `anonymous=True`), the grant keys never matched the check keys, and
+no session ever received permissions. The experiment enabled the check, made
+the keys agree, and connected `su → resolver → set_permissions()`.
+
 ## 2026-08-06 — An Error Creates a New Invocation (ADR-13)
 
 The last special case of the runtime disappears. An exception is a boundary

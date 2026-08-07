@@ -14,6 +14,7 @@ from typing import Any
 
 from y5n.runtime.api.naming.key import Key
 from y5n.runtime.api.runtime.invoke import Call
+from y5n.runtime.engine.capabilities.permission import PermissionParser
 from y5n.runtime.engine.runtime import Session
 
 _PATCH_MAP: dict[str, str] = {
@@ -57,8 +58,37 @@ class SessionAdapter:
             raise RuntimeError(f"Session {session_key} not found")
 
         runner.session.logout()
+        runner.session.set_permissions(self._empty_permissions())
         if self._on_save:
             await self._on_save(session=runner.session)
+
+    def _empty_permissions(self):
+        from y5n.runtime.engine.capabilities.permission import PermissionSet
+
+        return PermissionSet()
+
+    async def set_permissions(self, call: Call, *, specs: list[str]) -> dict[str, int]:
+        """Set the caller session's permissions from serializable spec strings.
+
+        The ident pack resolves the account's effective permissions into
+        spec strings (e.g. "/crm/contact/edit|rwx"); the engine parses them
+        into a PermissionSet. The pack never touches engine internals.
+        """
+        session_key = call.caller_session_key
+        if not session_key:
+            raise RuntimeError("caller_session_key is required")
+
+        runner = self._manager._sessions.get(Key.from_str(session_key))
+        if runner is None:
+            raise RuntimeError(f"Session {session_key} not found")
+
+        parser = PermissionParser()
+        permset = self._empty_permissions()
+        for spec in specs or []:
+            permset.add(parser.parse(spec))
+
+        runner.session.set_permissions(permset)
+        return {"granted": len(specs or [])}
 
     async def update(self, call: Call, *, patch: dict[str, Any]) -> dict[str, Any]:
         session_key = call.caller_session_key

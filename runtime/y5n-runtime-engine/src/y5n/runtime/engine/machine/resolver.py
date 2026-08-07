@@ -242,11 +242,10 @@ class InvocationResolver:
 
         action = tokens[0] if tokens else None
 
-        parent_key = node.parent.key if node.parent else ""
+        path = str(node.path)
 
         fq = Permission.fq_key(
-            parent_key,
-            node.key,
+            path,
             action,
         )
 

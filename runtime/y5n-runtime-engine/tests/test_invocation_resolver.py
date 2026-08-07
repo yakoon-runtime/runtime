@@ -15,8 +15,8 @@ from __future__ import annotations
 import pytest
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.runtime.invocation import CommandSignature, Invocation, Param
-from y5n.runtime.engine.nodes import Node, UsageError
 from y5n.runtime.engine.machine.resolver import InvocationResolver
+from y5n.runtime.engine.nodes import Node, UsageError
 from y5n.runtime.engine.runtime.error import (
     NodeNotExecutable,
     NodeNotFound,
@@ -294,7 +294,7 @@ def test_permission_checked_with_fq_key():
 
     resolver.resolve("system", None, _session())
 
-    assert "root:system" in permissions
+    assert "/root/system" in permissions
 
 
 def test_permission_with_action_uses_action_suffix():
@@ -303,7 +303,7 @@ def test_permission_with_action_uses_action_suffix():
 
     resolver.resolve("system", ["version"], _session())
 
-    assert "root:system.version" in permissions
+    assert "/root/system.version" in permissions
 
 
 def test_permission_denied_raises():
