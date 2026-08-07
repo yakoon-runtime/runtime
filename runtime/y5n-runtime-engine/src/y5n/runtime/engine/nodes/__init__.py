@@ -1,4 +1,9 @@
-from .errors import InvocationError, UnknownOptionsError, UsageError
+from .errors import (
+    InvalidOptionError,
+    InvocationError,
+    UnknownOptionsError,
+    UsageError,
+)
 from .handler import ResolveHandler, RunHandler
 from .invocation import CommandSignatureValidator
 from .node import Node
@@ -7,6 +12,7 @@ from .types import NodeKind, NodeVisibility
 
 __all__ = [
     "CommandSignatureValidator",
+    "InvalidOptionError",
     "InvocationError",
     "Node",
     "NodeKind",

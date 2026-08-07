@@ -7,9 +7,9 @@ is therefore engine logic, not public language.
 
 from __future__ import annotations
 
-from y5n.runtime.api.runtime.invocation import CommandSignature
+from y5n.runtime.api.runtime.invocation import CommandSignature, ParamKind
 
-from .errors import UnknownOptionsError, UsageError
+from .errors import InvalidOptionError, UnknownOptionsError, UsageError
 
 
 class CommandSignatureValidator:
@@ -164,6 +164,12 @@ class CommandSignatureValidator:
                     continue
 
             # ----------------------------------
+            # OPTION ARITY (flag vs value)
+            # ----------------------------------
+
+            self._raise_invalid_arity(node, matching, signature, tokens, offset)
+
+            # ----------------------------------
             # MATCH
             # ----------------------------------
 
@@ -192,6 +198,69 @@ class CommandSignatureValidator:
                 if not p.positional:
                     allowed.add(f"--{p.key}")
         return allowed
+
+    def _raise_invalid_arity(
+        self,
+        node,
+        signatures: list[CommandSignature],
+        signature: CommandSignature,
+        tokens: list[str],
+        offset: int,
+    ) -> None:
+        """Enforce each option's declared form against the token stream.
+
+        A flag (``ParamKind.FLAG``) must not be followed by a value; a
+        value option must be followed by one. Raises InvalidOptionError
+        with a ready-to-show message, mirroring UnknownOptionsError.
+        """
+        for param in signature.params:
+            if param.positional:
+                continue
+            token_key = f"--{param.key}"
+            i = offset
+            while i < len(tokens):
+                tok = tokens[i]
+                if tok == token_key:
+                    has_value = i + 1 < len(tokens) and not tokens[i + 1].startswith(
+                        "--"
+                    )
+                    if param.kind is ParamKind.FLAG:
+                        if has_value:
+                            self._raise_invalid_option(
+                                node,
+                                signatures,
+                                token_key,
+                                f"Unexpected value after '{token_key}'",
+                            )
+                    elif not has_value:
+                        self._raise_invalid_option(
+                            node,
+                            signatures,
+                            token_key,
+                            f"Missing value after '{token_key}'",
+                        )
+                elif tok.startswith(f"{token_key}="):
+                    if param.kind is ParamKind.FLAG:
+                        self._raise_invalid_option(
+                            node,
+                            signatures,
+                            token_key,
+                            f"Unexpected value after '{token_key}'",
+                        )
+                i += 1
+
+    def _raise_invalid_option(
+        self,
+        node,
+        signatures: list[CommandSignature],
+        option: str,
+        reason: str,
+    ) -> None:
+        raise InvalidOptionError(
+            option=option,
+            reason=reason,
+            usages=self._usage_data(node, signatures),
+        )
 
     def _raise_unknown_options(
         self,
