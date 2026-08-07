@@ -123,6 +123,8 @@ async def _run_err(tmp_path: Path, harness, bus, error: dict) -> list[dict]:
                 "      path: err/not_found.ydf",
                 "    denied:",
                 "      path: err/denied.ydf",
+                "    elevation:",
+                "      path: err/elevation.ydf",
             ]
         ),
     )
@@ -219,3 +221,22 @@ async def test_err_renders_permission_denied(tmp_path, harness, bus):
 
     text = _projection_text(views)
     assert "denied" in text.lower() or "Access Denied" in text
+
+
+@pytest.mark.asyncio
+async def test_err_renders_elevation_required(tmp_path, harness, bus):
+    """ElevationRequired im Invocation-Context -> err.main() projiziert elevation."""
+
+    views = await _run_err(
+        tmp_path,
+        harness,
+        bus,
+        {
+            "type": "ElevationRequired",
+            "message": "Elevation required",
+            "command": "account/delete",
+        },
+    )
+
+    text = _projection_text(views)
+    assert "elevation" in text.lower()
