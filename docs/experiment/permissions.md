@@ -96,10 +96,80 @@ Gelost vom `PermissionResolver` beim Login; Ergebnis landet per
 
 ## PermissionBits
 
+> **Permissions gelten fuer Runtime-Ressourcen, nicht nur fuer Commands.**
+
 - Ein einzelnes Bit-Feld pro Grant: `r`, `w`, `x` heute; weitere Bits
   (z.B. `a` administer, `d` delegate) koennen spaeter ergaenzt werden.
 - Kein Doppel-`rwx:rwx` (Owner/Group/Other existiert nicht als Achse — die
   Entitaeten Account/Gruppe sind bereits erste Klasse).
+- **Die Bits beschreiben die Operationen, die auf einem Knoten moeglich sind —
+  nicht den Typ des Knotens.** Ein Command nutzt heute fast nur `x`; eine
+  Datei morgen `rw`; ein Dokument uebermorgen `rwad`. Der Runtime-Baum wird
+  mehr als ein Command-Baum: Commands, Dateien, Dokumente, Datenbanken, APIs,
+  Queues, Modelle — alles sind Knoten mit denselben Bits.
+
+## Zwei Ebenen: Runtime-Operationen und Bits
+
+> **Operationen der Runtime und Bits sind getrennt. Der Node-Typ bildet die
+> Runtime-Operationen auf die Bits ab.**
+
+Es gibt zwei Ebenen, die nicht verwechselt werden duerfen:
+
+1. **Operationen der Runtime:** `discover`, `read`, `write`, `execute` —
+   benannt nach dem, was der Nutzer tut (`cd` ist *discover*, nicht
+   *execute*).
+2. **Bits:** `r`, `w`, `x` — das kleine, stabile Permission-Vokabular.
+
+Der **Node-Typ** (Container, Command, Document, API, Queue, DB) mappt
+Runtime-Operationen auf Bits:
+
+```text
+Container  DISCOVER -> r   (sehen + sich bewegen)
+Command    READ -> r, EXECUTE -> x
+Document   READ -> r, WRITE -> w
+API        EXECUTE -> x
+Queue      READ -> r, WRITE -> w
+Datenbank  READ -> r, WRITE -> w
+```
+
+- `cd` fragt nicht direkt "brauche ich r?" — es fragt
+  `check(path, DISCOVER)`, und der Container sagt `DISCOVER -> r`.
+- Dadurch bleibt das Permission-System klein (`rwx`), waehrend die Runtime
+  beliebig wachsen kann — neue Node-Typen mappen nur neu, sie brauchen keine
+  neuen Bits.
+- **Kein Unix-Kopieren:** `x` auf Verzeichnissen ist ein historischer
+  Kompromiss (search/traverse zweckentfremdet). Wir leiten die Semantik sauber
+  her: `cd`/`ls`/`man`/`cat` sind Leseoperationen (`discover`/`read`),
+  `edit`/`rm`/`mkdir` sind `write`, Command-Ausfuehrung ist `execute`.
+- **Bewusste Entscheidung (2026-08-07):** `rwx` wird NICHT auf `x` reduziert.
+  Die Bits sind das allgemeine Operationsmodell der Runtime und wachsen mit
+  dem System — bei jedem neuen Ressourcentyp keine neuen Sonderregeln.
+
+## Node-Typ via navigable (bestehendes Modell)
+
+Der Node-Typ-Marker existiert bereits: `navigable` in der yak.yml
+(`tree.py` liest es, `find_navigable()`/`find_resolvable()` nutzen es).
+
+```text
+navigable: true   → Container (Folder)   → DISCOVER -> r
+navigable: false  → Eintrag (Leaf)
+                     Command    → READ -> r, EXECUTE -> x
+                     Document   → READ -> r, WRITE -> w
+                     API        → EXECUTE -> x
+                     Queue/DB   → READ -> r, WRITE -> w
+```
+
+> **Navigation ist eine Runtime-Operation.** `cd` und `ls` sind keine
+> Sonderfaelle der Shell, sondern Operationen auf einem Container-Knoten.
+> Ob sie erlaubt sind, entscheidet der Permission-Check anhand der Operation
+> (`DISCOVER` bzw. `LIST`) und der vom Node-Typ definierten Abbildung auf die
+> Bits. In einem Baum mit Dateien/Dokumenten/DBs ist Navigation selbst Teil
+> des Permission-Modells, kein Bypass. (Ersetzt die fruehere
+> "Visibility/filesystem"-Formulierung.)
+
+Noch offen: Der Permission-Check kennt den Node-Typ noch nicht — `cd`/`ls`
+greifen heute ohne `check(DISCOVER)`. Der Anschluss
+(Operation -> Bit via navigable) ist der naechste Schritt.
 
 ## allow / deny
 
@@ -147,6 +217,20 @@ Gelost vom `PermissionResolver` beim Login; Ergebnis landet per
       allow-Bits addieren sich, deny-Bits subtrahieren. Bootstrap-Grants auf den
       realen Baum (`/usr/bin`, `/usr/sbin/ident`, `/opt`, `/dsl`). 9 Tests in
       `test_permission_set.py`, Gesamtlauf 238 gruen.
+- [x] **Grant-Vokabular**: `permission_key` → `path`. Ein Grant ist
+      `path + bits + deny` — der Administrator vergibt Zugriff auf einen
+      Runtime-Pfad, nicht auf eine abstrakte Permission. `grants perm show`
+      wurde `grants path show`.
+- [x] **Invocation-Fix**: grant-yak.yml zeigen `add NAME PATH`, show nutzt nur
+      noch `name` (fehlerhafter `permission`-Param entfernt).
+- [x] **`rwx` als Operationsmodell bestaetigt**: nicht auf `x` reduziert —
+      Permissions gelten fuer Runtime-Ressourcen (Commands, Dateien, Docs,
+      DBs, APIs, Queues), Bits = Operationen am Knoten.
+- [x] **Zwei Ebenen definiert**: Runtime-Operationen (discover/read/write/
+      execute) vs. Bits (rwx); Node-Typ bildet ab. Node-Typ-Marker ist
+      bereits `navigable` in der yak.yml.
+- [ ] **Operation->Bit-Anschluss**: `cd`/`ls` pruefen `check(path, DISCOVER)`
+      via navigable (Container -> r). Noch nicht angeschlossen.
 - [ ] **Elevation**: privilegierte Pfade verlangen Verifikation, auch wenn der
       Account die Berechtigung hat. (Design: Policy vs. Pfad-Deklaration — offen)
 - [ ] End-to-End auf Prozessebene: echte su-Session -> PermissionDenied sichtbar

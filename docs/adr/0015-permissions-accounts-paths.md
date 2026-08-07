@@ -116,6 +116,42 @@ key from `node.path` (`InvocationResolver._ensure_invocation`).
 - One bitset per grant: `r`, `w`, `x` today; later `a` (administer),
   `d` (delegate) can be added. No `rwx:rwx` double scope — owner/group/other
   is not an axis here; account and group are already first-class entities.
+- **The bits describe the operations possible on a node — not the node's
+  type** (Decision 2026-08-07). The runtime tree will grow beyond commands:
+  files, documents, databases, APIs, queues, models — all are nodes with the
+  same bits. A command today uses mostly `x`; a file tomorrow uses `rw`; a
+  document may later use `rwad`. `rwx` is deliberately NOT reduced to `x`:
+  the bits are the general operations model of the runtime and grow with the
+  system, without special rules per resource type.
+- **Two levels: runtime operations vs. bits** (Decision 2026-08-07). The
+  node type maps runtime operations onto bits:
+
+  ```
+  Container  DISCOVER -> r   (see + move)
+  Command    READ -> r, EXECUTE -> x
+  Document   READ -> r, WRITE -> w
+  API        EXECUTE -> x
+  Queue      READ -> r, WRITE -> w
+  Database   READ -> r, WRITE -> w
+  ```
+
+  `cd` asks `check(path, DISCOVER)` — the container maps it to `r`. The
+  permission system stays small (`rwx`) while the runtime grows: new node
+  types only remap, they never need new bits. No Unix copying — `x`-on-
+  directories is a historical compromise (search/traverse repurposed);
+  navigation (`cd`/`ls`/`man`/`cat`) is a read operation, editing is
+  `write`, command execution is `execute`.
+- **Navigation is a runtime operation** (Decision 2026-08-07, replaces the
+  earlier "visibility / filesystem" framing). `cd` and `ls` are not shell
+  special cases — they are operations on a container node. Whether they are
+  allowed is decided by the permission check for the operation
+  (`DISCOVER`, `LIST`) and the node type's mapping to the permission bits.
+  A runtime tree that will hold files, documents, databases and APIs makes
+  navigation itself part of the permission model, not a bypass.
+- **The node type needs no new `type:` marker.** `navigable` in `yak.yml`
+  already says it: `navigable: true` → container, `navigable: false` → leaf
+  (resource). A leaf may later declare `kind: command | document | database`
+  for finer operation mapping — for navigation, `navigable` is enough.
 - **Deny stays** (Decision 2026-08-06): deny grants subtract bits. A single
   account can be excluded from a group grant without changing membership.
   Fail-closed standard.
@@ -232,7 +268,10 @@ nodes are permission-enforcing — the check is real, not dead code.
     → `accounts` commands, `joins users` → `joins accounts`.
 11. Path inheritance: `PermissionSet.check` walks the chain upward, allows
     accumulate, denies subtract. Tests in `test_permission_set.py`.
-12. Experiment test `tests/test_permissions_experiment.py` (direct, group,
+12. Grant vocabulary: `permission_key` → `path` (model, service, commands,
+    structure, YDF docs). The grant is `path + bits + deny` — the operator
+    grants access to a runtime path, not an abstract permission.
+13. Experiment test `tests/test_permissions_experiment.py` (direct, group,
     deny subtraction).
 
 **Remaining / parked:**
