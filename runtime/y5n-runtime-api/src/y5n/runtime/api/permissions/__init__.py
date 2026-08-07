@@ -1,5 +1,6 @@
 from .bit import PermBit, PermBits
 from .model import Permission
+from .operation import Operation
 from .protocol import PermissionSet
 
 __all__ = [
@@ -7,4 +8,5 @@ __all__ = [
     "PermBits",
     "Permission",
     "PermissionSet",
+    "Operation",
 ]

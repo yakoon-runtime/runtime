@@ -5,6 +5,84 @@
 
 ---
 
+## 2026-08-07 — Parked Decisions Conserved from the Technical-Debt Roadmap
+
+Three decisions from the (now deleted) technical-debt working list are
+parked for the future — deliberately kept or deferred, and worth
+recording so they are not re-derived later.
+
+- **Typewriter animation is shared infrastructure.** It will be used by
+  both the console and the future `texture` app, so it belongs in the
+  runtime API, not in one app (kept as-is).
+- **Store behavior differs intentionally between backends.** The memory
+  backend validates types, the postgres backend coerces — an intentional
+  difference, not a duplicate to remove.
+- **Store features deliberately kept, unwired.** Historical `get(at_time)`
+  is a tested, working feature the engine's `OnGet` protocol already
+  declares. `FastPatchStrategy` is a complete, unwired alternative patch
+  format (`PatchFormat.FASTPATCH`) kept as a future option for switching
+  the flat-entity write path. Revisit either when a consumer needs it.
+
+## 2026-08-07 — The Invocation Context Is Derived Once, at Dispatch (ADR-16)
+
+After the ADR-12 migration (host-is-a-node), engine-step throughput dropped
+by up to 37%. Per-step profiling showed the cost concentrated in
+re-deriving the invocation context: repeated Session attribute access on
+every step even when the session did not change.
+
+**Key sentence:** *"The flow is the source of truth; the step projects it."*
+The context is derived **once, at dispatch**, stored on the flow
+(`flow.invocation`), and each step only re-establishes it (one
+`ContextVar.set`, ~97 ns). No global caching, no reuse across flows — each
+flow owns its invocation snapshot. Result: throughput recovered and
+exceeded the pre-migration baseline (Flow-Switches +92%, Session-Channel
++15%, Runtime-Mix +9%). Mechanism, not architecture.
+
+## 2026-08-07 — Permissions Are Granted to Accounts on Runtime Paths (ADR-15)
+
+Yakoon has exactly one identity: the **Account** (login, credentials, groups,
+grants). An account optionally carries profile information; a bot is an
+account without a profile. The term **User** is removed from the security
+vocabulary — the distinction is *account with profile* vs. *account without
+profile*, never *user vs. account*.
+
+**Key sentence:** *"Permissions are granted to Accounts on runtime paths."*
+Grants are full node paths (`/usr/bin/ls`, `/opt/crm/contact/edit`), the
+engine checks via `node.path`, and deny grants subtract bits. **Permissions
+are inherited along the runtime path hierarchy**: a grant on `/usr/bin`
+applies to all descendants — the mount structure *is* the security model,
+no wildcards needed. Allows accumulate, denies subtract only their bits.
+The pipeline is
+**Identity → Authorization → Elevation → Execution**.
+
+**What was repaired:** the runtime's permission check was dead code (every
+tree node `anonymous=True`), the grant keys never matched the check keys, and
+no session ever received permissions. The experiment enabled the check, made
+the keys agree, and connected `su → resolver → set_permissions()`.
+
+### Elevation is a session security context (2026-08-07 follow-up)
+
+Elevation completes the separation into three domains:
+**Account** (who am I?), **Grant** (what may I do?),
+**Session** (under which security mode?). The session's `security_context`
+is **normal | temporary | administrative** and never carries rights — an
+administrative session has no power a normal session lacks. It changes only
+the interaction mode: is the will question asked again before a privileged
+invocation?
+
+**Key sentence:** *"Permissions answer 'may I?'. The session security
+context answers 'under which security mode?'."* `privileged: true` is an
+invocation flag on the path (like `anonymous`); the engine gate refuses
+privileged invocations in a normal session (`ElevationRequired` → error
+node). The login is the will act, the password is the confirmation:
+`su --administrative` (password) establishes an administrative session,
+`su --temporary` elevates exactly one invocation and falls back to normal.
+
+**There is no root concept anymore.** `root` is merely the conventional demo
+account shipped with Yakoon — the runtime never treats the name specially.
+A normal session is asked at privileged operations, an administrative
+session is not; the session context decides, not the identity.
+
 ## 2026-08-06 — The Runtime Is the Smallest Scalable Unit (ADR-14)
 
 **Status: Closed — not adopted for production.**

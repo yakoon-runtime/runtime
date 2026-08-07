@@ -1,4 +1,4 @@
-"""Phase 3a experiment (ADR-12): the engine sets the invocation context.
+"""ADR-12: the engine sets the invocation context.
 
 The engine owns the invocation ABI. In ``CommandEngine._next_step`` it
 builds the raw context dict from node + session + flow and sets it once —

@@ -30,6 +30,7 @@ class SessionData:
     current_path: str | None = None
     user_key: str | None = None
     user_name: str | None = None
+    security_context: str = "normal"
     last_active: datetime | None = None
     lang: str = "en"
     debug: bool = True
@@ -215,6 +216,14 @@ class Session:
         """
         self.data.user_key = None
         self.data.user_name = None
+        self.data.security_context = "normal"
+
+    def set_security_context(self, context: str) -> None:
+        self.data.security_context = context
+
+    @property
+    def security_context(self) -> str:
+        return self.data.security_context
 
     def get_identity(self) -> Key | None:
         user_key = self.data.user_key

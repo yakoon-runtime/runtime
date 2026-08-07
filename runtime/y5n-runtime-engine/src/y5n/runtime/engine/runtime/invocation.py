@@ -53,6 +53,7 @@ def derive_invocation_context(
         },
         "session": {
             "key": str(session.key) if session else None,
+            "security_context": session.security_context if session else None,
         },
         "flow": {
             "id": flow_id or "",

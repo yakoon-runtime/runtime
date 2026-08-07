@@ -8,28 +8,22 @@ from .bit import PermBits
 @dataclass(frozen=True)
 class Permission:
     """
-    command_key: e.g. "auth:su"
+    A grant of operations on a runtime path.
+
+    path: full node path, e.g. "/crm/contact/edit"
     bits: PermBits, e.g. rwx
-    scope1/scope2:
-      - scope1 is the "primary" scope (e.g. account)
-      - scope2 optional (e.g. group / tenant / controller-context)
     deny: if True, removes bits instead of adding them
     """
 
-    command_key: str
-    scope1: PermBits
-    scope2: PermBits | None = None
+    path: str
+    bits: PermBits
     deny: bool = False
 
-    @property
-    def is_scoped(self) -> bool:
-        return self.scope2 is not None
-
     @staticmethod
-    def fq_key(parent_key: str, child_key: str, action: str | None) -> str:
+    def fq_key(path: str, action: str | None) -> str:
         """
-        Returns fq_key (fully qualified key)
+        Returns the fully qualified permission key for a runtime path.
         """
         if action and action != "*":
-            return f"{parent_key}:{child_key}.{action}"
-        return f"{parent_key}:{child_key}"
+            return f"{path}.{action}"
+        return path

@@ -4,6 +4,7 @@ from typing import Protocol, cast
 
 from y5n.runtime.api.flow import Scope
 from y5n.runtime.api.naming import Key
+from y5n.runtime.api.permissions import Operation
 from y5n.runtime.api.runtime import Event, InputContext
 from y5n.runtime.api.runtime.input import Origin
 from y5n.runtime.engine.connections import (
@@ -226,7 +227,13 @@ class Oninitialize(Protocol):
 
 
 class OnHasPermission(Protocol):
-    def __call__(self, *, session: Session, perm_key: str) -> bool: ...
+    def __call__(
+        self,
+        *,
+        session: Session,
+        node: Node,
+        operation: Operation,
+    ) -> bool: ...
 
 
 class OnGetOrCreateSession(Protocol):

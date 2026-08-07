@@ -18,6 +18,7 @@ from y5n.runtime.engine.sources.data import (
 )
 from y5n.runtime.engine.wire.adapter.callable import CallableAdapter
 from y5n.runtime.engine.wire.adapter.document import DocumentAdapter
+from y5n.runtime.engine.wire.adapter.permission import PermissionAdapter
 from y5n.runtime.engine.wire.adapter.resource import ResourceAdapter
 from y5n.runtime.engine.wire.adapter.runtime import RuntimeAdapter
 from y5n.runtime.engine.wire.adapter.session import SessionAdapter
@@ -122,7 +123,7 @@ def build_runtime(
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
         on_projection_send=output.send_document,
-        on_has_permission=perm_checker.can_execute,
+        on_has_permission=perm_checker.check,
         on_audit_warning=audit_service.warning,
         on_initialize=initialize,
         known_runtimes=settings.runtime.known,
@@ -170,7 +171,16 @@ def build_runtime(
 
     bus.resolver.register(
         "system:projection",
-        {"session": ["attach", "detach", "update", "logout", "current"]},
+        {
+            "session": [
+                "attach",
+                "detach",
+                "update",
+                "logout",
+                "current",
+                "set_permissions",
+            ]
+        },
         path="/",
     )
     bus.transport.register_adapter(
@@ -184,6 +194,16 @@ def build_runtime(
     bus.transport.register_adapter(
         "runtime",
         RuntimeAdapter(manager),
+    )
+
+    bus.resolver.register(
+        "system:projection",
+        {"permissions": ["check"]},
+        path="/",
+    )
+    bus.transport.register_adapter(
+        "permissions",
+        PermissionAdapter(manager, tree, perm_checker),
     )
 
     bus.resolver.register(
