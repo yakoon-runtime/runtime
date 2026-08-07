@@ -86,8 +86,7 @@ treatment survive:
 
 So today a "host" is a node, but a node with strings attached: ordinary nodes
 point at it through a rewritten handler, and the engine wires hosts into the
-tree by hand. The parked idea in `docs/roadmap/technical-debt.md` H named the
-direction:
+tree by hand. The parked idea (resolved by this ADR) named the direction:
 
 > A host is just a node with a job. If a host were an ordinary node
 > (`async def main()` + SDK), the runtime would only say `await host.run()` and

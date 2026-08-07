@@ -5,6 +5,39 @@
 
 ---
 
+## 2026-08-07 — Parked Decisions Conserved from the Technical-Debt Roadmap
+
+Three decisions from the (now deleted) technical-debt working list are
+parked for the future — deliberately kept or deferred, and worth
+recording so they are not re-derived later.
+
+- **Typewriter animation is shared infrastructure.** It will be used by
+  both the console and the future `texture` app, so it belongs in the
+  runtime API, not in one app (kept as-is).
+- **Store behavior differs intentionally between backends.** The memory
+  backend validates types, the postgres backend coerces — an intentional
+  difference, not a duplicate to remove.
+- **Store features deliberately kept, unwired.** Historical `get(at_time)`
+  is a tested, working feature the engine's `OnGet` protocol already
+  declares. `FastPatchStrategy` is a complete, unwired alternative patch
+  format (`PatchFormat.FASTPATCH`) kept as a future option for switching
+  the flat-entity write path. Revisit either when a consumer needs it.
+
+## 2026-08-07 — The Invocation Context Is Derived Once, at Dispatch (ADR-16)
+
+After the ADR-12 migration (host-is-a-node), engine-step throughput dropped
+by up to 37%. Per-step profiling showed the cost concentrated in
+re-deriving the invocation context: repeated Session attribute access on
+every step even when the session did not change.
+
+**Key sentence:** *"The flow is the source of truth; the step projects it."*
+The context is derived **once, at dispatch**, stored on the flow
+(`flow.invocation`), and each step only re-establishes it (one
+`ContextVar.set`, ~97 ns). No global caching, no reuse across flows — each
+flow owns its invocation snapshot. Result: throughput recovered and
+exceeded the pre-migration baseline (Flow-Switches +92%, Session-Channel
++15%, Runtime-Mix +9%). Mechanism, not architecture.
+
 ## 2026-08-07 — Permissions Are Granted to Accounts on Runtime Paths (ADR-15)
 
 Yakoon has exactly one identity: the **Account** (login, credentials, groups,

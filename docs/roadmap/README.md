@@ -4,8 +4,8 @@
 
 ### Technical debt
 
-See [technical-debt.md](technical-debt.md) — working list of correctness
-issues, dead code, and simplification opportunities in `runtime/`.
+The working list was resolved and deleted; its parked decisions were
+conserved in [ADR-0000](../adr/0000-decisions.md).
 ## Phase B ✅ — Distribution  
 ## Phase C ✅ — Launcher (Self-hosting)
 ## Phase D 🚧 — Platform completion
