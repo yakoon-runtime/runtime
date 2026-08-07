@@ -240,11 +240,13 @@ fixes a verification, not a secret.
 
 ### 7. Process boundary
 
-The ident pack and the engine are separate processes (stdio/JSON). The
+The ident pack and the engine are separate processes. The
 `PermissionResolver` therefore returns **spec strings** (e.g.
 `/crm/contact/edit|rwx`, `-/ident/users|x`); the engine parses them into a
 `PermissionSet` via `SessionAdapter.set_permissions`. No engine object
-crosses the boundary.
+crosses the boundary. Transport is WebSocket today (the shell
+`y5n-apps-shell` connects to the runtime process over
+`WebSocketClientTransport`); stdio/JSON is the planned headless path.
 
 ### 8. The runtime declares permission enforcement
 
@@ -366,4 +368,8 @@ nodes are permission-enforcing — the check is real, not dead code.
    hierarchy; allows accumulate, denies subtract (Open question 3 resolved).
 3. ~~Elevation~~ — **done**: privileged paths + verification (Open questions
    1–2 resolved); challenge mechanism still password-only, not yet pluggable.
-4. Process-level end-to-end: real `su` session → visible `PermissionDenied`.
+4. ~~Process-level end-to-end~~ — **done**: the shell (`y5n-apps-shell`)
+   connects to the runtime process over WebSocket; a real `su` session
+   produces a visible `PermissionDenied` / `ElevationRequired` in the
+   terminal. The console (`y5n-apps-console`) stays on `LocalTransport`
+   for the in-process dev loop.
