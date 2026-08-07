@@ -38,7 +38,11 @@ class DocumentAdapter:
 
         params: dict[str, Any] = {"name": name, "lang": lang}
         if state:
-            params.update(state)
+            # The variant selector (name/variant/lang) must survive the
+            # state merge: state feeds the template, the selector picks
+            # the resource. If a template state field collides with the
+            # selector key (e.g. state={"name": ...}), the selector wins.
+            params = {**state, **params}
 
         try:
             resource = await resolve_via_host(self._tree, node, "document", params)

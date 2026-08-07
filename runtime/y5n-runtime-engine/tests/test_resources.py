@@ -440,3 +440,81 @@ async def test_document_adapter_dispatches(tmp_path: Path):
     result = json.loads(await adapter.render(call))
     assert result["blocks"][0]["text"][0]["text"] == "<hello>"
     assert result["id"]  # normalize stamps the document id
+
+
+@pytest.mark.asyncio
+async def test_document_adapter_variant_survives_state_collision(tmp_path: Path):
+    """The variant selector (name=...) wins over a colliding template state.
+
+    A template renders ``{{ name }}``; the same key must not clobber the
+    variant selector that picks the resource. Regression: state={"name": ...}
+    used to override name="denied", so the variant fell back to default.
+    """
+
+    async def host_resolve(node, capability, parameters=None):
+        variants = (node.resources or {}).get(capability, {})
+        selector = parameters or {}
+        chosen = None
+        for key in ("lang", "variant", "name"):
+            value = selector.get(key)
+            if value and value in variants:
+                chosen = variants[value]
+                break
+        if chosen is None:
+            chosen = variants.get("default")
+        if not isinstance(chosen, dict):
+            return None
+        expr = chosen.get("path")
+        path = Path(node.fs_path) / expr
+        return Resource.path(path)
+
+    _make_module("_test_doc_variant_host", {"resolve": host_resolve})
+    _write(
+        tmp_path / "boot" / "python" / "runtime" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "entry:",
+                "  run: pack:x:run",
+                "resolve:",
+                "  default: pack:_test_doc_variant_host:resolve",
+            ]
+        ),
+    )
+    _write(
+        tmp_path / "app" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "title: App",
+                "host: /boot/python/runtime",
+                "document:",
+                "  default:",
+                "    path: default.ydf",
+                "  denied:",
+                "    path: denied.ydf",
+            ]
+        ),
+    )
+    (tmp_path / "app" / "default.ydf").write_text("deleted {{ name }}")
+    (tmp_path / "app" / "denied.ydf").write_text("cannot delete {{ name }}")
+    tree = _build_tree(tmp_path)
+
+    import json
+
+    adapter = DocumentAdapter(FakeProjector(), tree)
+    call = Call(
+        port="document",
+        method="render",
+        args={},
+        caller_path="/app",
+        caller_session_key="session-1",
+    )
+
+    denied = json.loads(
+        await adapter.render(call, name="denied", state={"name": "root"})
+    )
+    assert denied["blocks"][0]["text"][0]["text"] == "<cannot delete {{ name }}>"
+
+    default = json.loads(
+        await adapter.render(call, name="default", state={"name": "lara"})
+    )
+    assert default["blocks"][0]["text"][0]["text"] == "<deleted {{ name }}>"
