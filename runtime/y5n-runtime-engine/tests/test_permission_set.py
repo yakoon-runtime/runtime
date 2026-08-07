@@ -41,7 +41,8 @@ def test_exact_path_grants_work():
     assert ps.check("/crm/contact/edit", "r")
     assert ps.check("/crm/contact/edit", "x")
     assert not ps.check("/crm/contact/edit", "w")
-    assert not ps.check("/crm/contact", "r")
+    # traversal: /crm/contact is the path to the grant -> readable
+    assert ps.check("/crm/contact", "r")
     assert ps.check("/crm/contact/edit/extra", "r")
 
 
@@ -100,3 +101,54 @@ def test_deny_can_shadow_an_allow_bit_from_ancestor():
     assert ps.check("/crm/contact", "r")
     assert not ps.check("/crm/contact", "w")
     assert ps.check("/crm/notes", "w")
+
+
+def test_traversal_grants_read_on_path_to_grant():
+    ps = PermissionSet()
+    _add(ps, "/usr/bin|rwx")
+
+    assert ps.check("/", "r")
+    assert ps.check("/usr", "r")
+    assert ps.check("/usr/bin", "r")
+
+
+def test_traversal_does_not_leak_to_sibling_branches():
+    ps = PermissionSet()
+    _add(ps, "/usr/bin|rwx")
+
+    assert not ps.check("/usr/sbin", "r")
+    assert not ps.check("/opt", "r")
+    assert not ps.check("/usr/sbin/ident", "r")
+
+
+def test_traversal_is_guaranteed_despite_ancestor_deny():
+    ps = PermissionSet()
+    _add(ps, "/usr/bin|rwx")
+    _add(ps, "-/usr|r")
+
+    # an explicitly allowed area is always reachable: the deny on /usr
+    # cannot remove the derived traversal path
+    assert ps.check("/usr/bin", "r")
+    assert ps.check("/usr", "r")
+    assert ps.check("/", "r")
+
+
+def test_deny_blocks_target_without_child_grant():
+    ps = PermissionSet()
+    _add(ps, "/usr|rwx")
+    _add(ps, "-/usr/bin|r")
+
+    # /usr itself is granted; /usr/bin loses r via the deny and has no
+    # deeper grant, so no traversal rescues it
+    assert ps.check("/usr", "r")
+    assert not ps.check("/usr/bin", "r")
+
+
+def test_traversal_applies_only_to_pure_read():
+    ps = PermissionSet()
+    _add(ps, "/usr/bin|rwx")
+
+    # traversal gives read, never execute on the container itself
+    assert ps.check("/usr", "r")
+    assert not ps.check("/usr", "x")
+    assert not ps.check("/usr", "rx")

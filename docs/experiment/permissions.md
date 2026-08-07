@@ -86,6 +86,18 @@ Gelost vom `PermissionResolver` beim Login; Ergebnis landet per
 - Allow-Bits **addieren sich** entlang der Kette, Deny-Bits werden **subtrahiert**.
   `effective = union(allow) - union(deny)`. Ein deny entfernt nur seine Bits —
   ein generellerer allow bleibt Basis. Kein "most specific wins".
+- **Durchquerung (Traversal) — abgeleitet, nicht vergeben:** Ancestor-
+  Container eines expliziten Grants sind automatisch erreichbar. Aus
+  `allow /usr/bin` folgt `/, /usr -> r (derived)`. Drei Regeln:
+  1. **Grants definieren fachliche Berechtigungen.**
+  2. **Traversal wird aus expliziten Grants automatisch abgeleitet** — ein
+     explizit erlaubter Bereich ist IMMER erreichbar.
+  3. **Ancestor-Denies wirken nur auf fachliche Rechte, niemals auf die
+     abgeleitete Erreichbarkeit eines explizit erlaubten Zieles.** Ein
+     `deny /usr|r` sperrt `/usr` als Ziel und `/usr/sbin`, aber nicht den
+     Weg zu `/usr/bin`. Ein Self-Grant wird nur durch Self-Denies reduziert.
+  Trennt **Autorisierung** ("Darf ich?") von **Erreichbarkeit**
+  ("Wie komme ich dorthin?").
 
 ## Grant-Key-Schema
 
@@ -236,8 +248,20 @@ greifen heute ohne `check(DISCOVER)`. Der Anschluss
       EXECUTE->x). `PermissionChecker.check(session, node, operation)` und
       `InvocationResolver` pruefen EXECUTE ueber Node+Operation statt
       perm_key-String. Tests: `test_operations.py`.
-- [ ] **cd/ls als READ-Operation**: `cd`/`ls` rufen `check(node, READ)` auf
-      das Ziel/Container, bevor sie navigieren/listen. Noch nicht angeschlossen.
+- [x] **cd/ls als READ-Operation**: neuer `permissions`-Port
+      (`PermissionAdapter.check(path, operation)`) — Commands fragen in
+      Operationen statt Bits. `cd` verweigert `Access denied` ohne READ auf
+      den Ziel-Container; `ls` filtert Eintraege ohne READ. Nur Runtime-Knoten
+      sind geschuetzt — reine Dateisystem-Mounts (z.B. ~/home) bleiben frei.
+      Tests: `test_permission_adapter.py`, `test_checker_wire.py`.
+- [x] **Root-Grant `/\|rwx`**: root/admins bekommt den hierarchisch hoechsten
+      Grant. Vererbung deckt den ganzen Baum — root ist root, weil sein Grant
+      ganz oben beginnt. Kein Superuser-Flag, kein Bypass: dieselbe Mechanik
+      wie fuer jeden Account. `ls /` zeigt wieder alle Mounts.
+- [x] **Durchquerung**: Pfad zu den eigenen Rechten ist automatisch lesbar
+      (Traversal im `PermissionSet`, segmentbasiert). Stefan mit Grant auf
+      `/usr/bin` sieht `/usr` und `/` beim `ls`, aber `/usr/sbin`/`/opt`
+      nicht. Tests: `test_permission_set.py` (5 neue).
 - [ ] **Elevation**: privilegierte Pfade verlangen Verifikation, auch wenn der
       Account die Berechtigung hat. (Design: Policy vs. Pfad-Deklaration — offen)
 - [ ] End-to-End auf Prozessebene: echte su-Session -> PermissionDenied sichtbar

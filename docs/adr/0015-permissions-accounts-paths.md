@@ -110,6 +110,15 @@ key from `node.path` (`InvocationResolver._ensure_invocation`).
   (`effective = union(allow) - union(deny)`). A deny removes only its own
   bits — a broader allow stays as the base. There is no "most specific
   wins" override.
+- **Traversal is derived, not granted** (Decision 2026-08-07). Two graphs
+  live in one tree: the *authorization graph* (what an account may use)
+  and the *reachability graph* (how the runtime reaches it). Ancestor
+  containers of an explicit grant are automatically discoverable — an
+  explicitly allowed area is **always reachable**. Ancestor denies affect
+  only functional rights, never the derived reachability of an explicitly
+  allowed target. An explicit self-grant is reduced only by self-denies.
+  This separates authorization ("may I?") from reachability ("how do I get
+  there?").
 
 ### 4. A single bitset, deny stays
 

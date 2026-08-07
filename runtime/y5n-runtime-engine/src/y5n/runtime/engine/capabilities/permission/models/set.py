@@ -13,6 +13,9 @@ class PermissionSet:
       - The most specific matching grant decides.
       - On the same level: allows accumulate (union), denies subtract
         (deny wins over allow for the denied bits).
+      - Traversal: READ on a container is granted when a grant lies
+        underneath it (the path to your rights is traversable), as long
+        as a deny does not remove `r` on the path itself.
     """
 
     def __init__(self) -> None:
@@ -46,41 +49,66 @@ class PermissionSet:
         """
         need: "r" | "w" | "x" | combinations like "rw", "rwx"
 
-        Allows and denies each accumulate along the whole path chain
-        (most specific to most general ancestor, e.g. /usr/bin/ls ->
-        /usr/bin -> /usr -> /). Effective bits = union(allows) minus
-        union(denies). A deny only removes its own bits — a broader
-        allow stays as the base.
+        Rules, evaluated in order:
+          1. An explicit grant on the path itself wins over all ancestor
+             denies (an explicitly allowed area stays usable). Only denies
+             on the path itself reduce it.
+          2. Otherwise allows and denies accumulate along the chain;
+             effective = union(allow) - union(deny); a deny removes only
+             its own bits.
+          3. Traversal: pure READ on a container reached via a deeper
+             grant is guaranteed — the path to your rights is always
+             reachable, ancestor denies cannot remove it.
         """
         need_bits = PermBits.from_str(need)
 
+        # Ancestor allows always accumulate.
         allow_bits = PermBits()
-        deny_bits = PermBits()
-        has_allow = False
-
         for ancestor in _ancestors(path):
             allow = self._allow.get(ancestor)
             if allow:
                 allow_bits = allow_bits.union(allow.bits)
-                has_allow = True
 
-            deny = self._deny.get(ancestor)
-            if deny:
-                deny_bits = deny_bits.union(deny.bits)
+        # A deny on the path itself (or an ancestor when there is no
+        # self-grant) subtracts. An explicit self-grant makes the area
+        # usable regardless of ancestor denies — only the self-deny
+        # reduces it.
+        self_allow = self._allow.get(path)
+        if self_allow is not None:
+            deny_bits = PermBits()
+            self_deny = self._deny.get(path)
+            if self_deny:
+                deny_bits = deny_bits.union(self_deny.bits)
+        else:
+            deny_bits = PermBits()
+            for ancestor in _ancestors(path):
+                deny = self._deny.get(ancestor)
+                if deny:
+                    deny_bits = deny_bits.union(deny.bits)
 
-        if not has_allow:
-            return False
+        if allow_bits:
+            eff = allow_bits.subtract(deny_bits)
+            if _satisfies(eff, need_bits):
+                return True
 
-        eff = allow_bits.subtract(deny_bits)
+        # Traversal: pure READ on a container reached via a deeper grant.
+        # Derived traversal is a guaranteed property of an explicit grant —
+        # an explicitly allowed area is always reachable. Ancestor denies
+        # cannot remove the derived path.
+        if (
+            need_bits.r
+            and not need_bits.w
+            and not need_bits.x
+            and self._has_descendant_grant(path)
+        ):
+            return True
 
-        if need_bits.r and not eff.r:
-            return False
-        if need_bits.w and not eff.w:
-            return False
-        if need_bits.x and not eff.x:
-            return False
+        return False
 
-        return True
+    def _has_descendant_grant(self, path: str) -> bool:
+        """True if an allow grant lies underneath *path* (segment-based)."""
+        prefix = _child_prefix(path)
+        return any(k.startswith(prefix) for k in self._allow)
 
     def clone(self) -> PermissionSet:
 
@@ -110,6 +138,16 @@ class PermissionSet:
         return out
 
 
+def _satisfies(eff: PermBits, need: PermBits) -> bool:
+    if need.r and not eff.r:
+        return False
+    if need.w and not eff.w:
+        return False
+    if need.x and not eff.x:
+        return False
+    return True
+
+
 def _ancestors(path: str) -> list[str]:
     """Return path and all its ancestors, most specific first.
 
@@ -128,3 +166,13 @@ def _ancestors(path: str) -> list[str]:
         out.append("/" + "/".join(parts[:i]))
     out.append("/")
     return out
+
+
+def _child_prefix(path: str) -> str:
+    """Segment prefix for descendants of *path*.
+
+    "/usr" -> "/usr/"; "/" -> "/"
+    """
+    if path == "/":
+        return "/"
+    return path.rstrip("/") + "/"
