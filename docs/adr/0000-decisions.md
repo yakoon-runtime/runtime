@@ -20,14 +20,35 @@ are inherited along the runtime path hierarchy**: a grant on `/usr/bin`
 applies to all descendants — the mount structure *is* the security model,
 no wildcards needed. Allows accumulate, denies subtract only their bits.
 The pipeline is
-**Identity → Authorization → Elevation → Execution**: privileged operations
-are activated by verification (sudo-equivalent) within the same identity —
-Stefan never becomes `stefan-admin`.
+**Identity → Authorization → Elevation → Execution**.
 
 **What was repaired:** the runtime's permission check was dead code (every
 tree node `anonymous=True`), the grant keys never matched the check keys, and
 no session ever received permissions. The experiment enabled the check, made
 the keys agree, and connected `su → resolver → set_permissions()`.
+
+### Elevation is a session security context (2026-08-07 follow-up)
+
+Elevation completes the separation into three domains:
+**Account** (who am I?), **Grant** (what may I do?),
+**Session** (under which security mode?). The session's `security_context`
+is **normal | temporary | administrative** and never carries rights — an
+administrative session has no power a normal session lacks. It changes only
+the interaction mode: is the will question asked again before a privileged
+invocation?
+
+**Key sentence:** *"Permissions answer 'may I?'. The session security
+context answers 'under which security mode?'."* `privileged: true` is an
+invocation flag on the path (like `anonymous`); the engine gate refuses
+privileged invocations in a normal session (`ElevationRequired` → error
+node). The login is the will act, the password is the confirmation:
+`su --administrative` (password) establishes an administrative session,
+`su --temporary` elevates exactly one invocation and falls back to normal.
+
+**There is no root concept anymore.** `root` is merely the conventional demo
+account shipped with Yakoon — the runtime never treats the name specially.
+A normal session is asked at privileged operations, an administrative
+session is not; the session context decides, not the identity.
 
 ## 2026-08-06 — An Error Creates a New Invocation (ADR-13)
 

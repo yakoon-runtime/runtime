@@ -103,6 +103,16 @@ class Node:
     anonymous: bool = False
     """Skip permission checks when True.  Used for public/utility nodes."""
 
+    privileged: bool = False
+    """Require an elevated session security context when True.
+
+    ``privileged`` is an invocation flag, not a permission: the account
+    may well hold the grant. It declares that the runtime asks for a
+    conscious confirmation (elevation) on top of the permission. The
+    session's security context (normal/temporary/administrative) decides
+    whether that confirmation is still required.
+    """
+
     def required_bit(self, operation: Operation) -> str:
         """Map a runtime operation onto the required permission bit.
 

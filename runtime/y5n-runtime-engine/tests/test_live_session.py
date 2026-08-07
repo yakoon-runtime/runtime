@@ -122,3 +122,40 @@ async def test_session_current_unknown_key_raises(adapter):
 
     with pytest.raises(RuntimeError):
         await adapter.current(_call_for("system/session/runtime#missing"))
+
+
+@pytest.mark.asyncio
+async def test_security_context_lifecycle(adapter):
+    """security_context flows through current/patch/logout end to end."""
+
+    conn = _fake_connection()
+    session = await adapter._manager.connect(conn)
+
+    # Default is a normal session.
+    state = await adapter.current(_call_for(str(session.key)))
+    assert state["security_context"] == "normal"
+
+    # A privileged login (su --administrative) patches the context.
+    await adapter.update(
+        Call(
+            port="session",
+            method="update",
+            caller_path="",
+            caller_session_key=str(session.key),
+        ),
+        patch={"security_context": "administrative"},
+    )
+    state = await adapter.current(_call_for(str(session.key)))
+    assert state["security_context"] == "administrative"
+
+    # logout resets the security context to normal.
+    await adapter.logout(
+        Call(
+            port="session",
+            method="logout",
+            caller_path="",
+            caller_session_key=str(session.key),
+        )
+    )
+    state = await adapter.current(_call_for(str(session.key)))
+    assert state["security_context"] == "normal"

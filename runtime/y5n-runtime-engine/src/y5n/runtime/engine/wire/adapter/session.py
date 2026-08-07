@@ -22,6 +22,7 @@ _PATCH_MAP: dict[str, str] = {
     "locale": "lang",
     "user_key": "user_key",
     "user_name": "user_name",
+    "security_context": "security_context",
 }
 
 
@@ -136,5 +137,6 @@ class SessionAdapter:
             "lang": session.lang,
             "user_name": session.user_name,
             "user_id": str(session.get_identity()) if session.get_identity() else None,
+            "security_context": session.security_context,
             "data": dict(session.data.data),
         }

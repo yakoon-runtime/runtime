@@ -3,8 +3,10 @@ from __future__ import annotations
 from typing import Protocol
 
 from y5n.runtime.api.permissions import Operation
+from y5n.runtime.api.runtime.sessions import SecurityContext
 from y5n.runtime.engine.nodes import Node, UsageError
 from y5n.runtime.engine.runtime import (
+    ElevationRequired,
     NodeNotExecutable,
     NodeNotFound,
     PermissionDenied,
@@ -246,6 +248,18 @@ class InvocationResolver:
             operation=Operation.EXECUTE,
         ):
             raise PermissionDenied()
+
+        # Elevation: privileged nodes need a security context that is
+        # already elevated. Permission was checked above — the account
+        # may well hold the grant. The context only answers *how*: a
+        # normal session must consciously confirm first; temporary
+        # elevates exactly one invocation and falls back to normal.
+        if node.privileged:
+            context = session.security_context
+            if context == SecurityContext.NORMAL:
+                raise ElevationRequired(command=node.key)
+            if context == SecurityContext.TEMPORARY:
+                session.set_security_context(SecurityContext.NORMAL)
 
 
 # -------------------------------------------------------------------------

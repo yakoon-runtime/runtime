@@ -103,6 +103,7 @@ class Tree:
             navigable=meta.get("navigable", True),
             contextual=meta.get("contextual", False),
             anonymous=meta.get("anonymous", False),
+            privileged=meta.get("privileged", False),
             fs_path=dir_path,
         )
         node.metadata["version"] = meta.get("version")

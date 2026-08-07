@@ -119,6 +119,13 @@ key from `node.path` (`InvocationResolver._ensure_invocation`).
   allowed target. An explicit self-grant is reduced only by self-denies.
   This separates authorization ("may I?") from reachability ("how do I get
   there?").
+- **Root is the top grant, not an exception** (Decision 2026-08-07). The
+  `admins` group receives the hierarchically highest grant `/\|rwx`.
+  Inheritance then covers the whole tree — "root" is merely what an account
+  looks like from the outside when its grant begins at the root. No
+  superuser flag, no bypass: the same mechanism as for any account. The
+  name is irrelevant — only the grant position and the session security
+  context matter.
 
 ### 4. A single bitset, deny stays
 
@@ -185,17 +192,51 @@ Execution
 
 Four domains: **Identity → Authorization → Elevation → Execution**.
 
-### 6. Elevation, not a second identity
+### 6. Elevation is a session security context, not a second identity
 
-> **Elevation activates privileged operations after successful verification.**
+> **Permissions answer "may I?". The session security context answers "under which security mode?".**
 
-Stefan stays Stefan. To run a privileged operation (`users delete peter`),
-the system asks for verification — he never becomes `stefan-admin`.
-Authorization comes from the group; activation requires verification.
+Three domains, fully separate:
 
-"Verification" is deliberately open: today a password, tomorrow passkey,
-FIDO2, MFA, hardware key, biometrics. The architecture fixes a verification,
-not a secret.
+```text
+Account  → Who am I?
+Grant    → What may I do?
+Session  → Under which security mode?  (security_context)
+```
+
+The session's `security_context` is **normal | temporary | administrative**.
+It never carries rights — an administrative session has no power a normal
+session lacks. It changes only the interaction mode: is the will question
+asked again before a privileged invocation?
+
+- **normal**: privileged invocations require elevation.
+- **temporary**: the next privileged invocation runs, then the session
+  falls back to normal — exactly one invocation, no TTL, no cache.
+- **administrative**: a session consciously established as administrative
+  (`su --administrative`) — privileged invocations run without repeated
+  confirmation.
+
+The **login is the will act**, the password is the confirmation. Therefore
+`su --administrative` requires a password. Elevation does not come from the
+identity: a normal session is asked at privileged operations, an
+administrative session is not. The session context decides, not the name.
+
+> **There is no root concept anymore.** `root` is merely the conventional
+> demo account shipped with Yakoon (bootstrap seeds it with the top grant
+> `/\|rwx`). Nothing in the runtime treats the name `root` specially —
+> there are only accounts with grants, and sessions with a security
+> context. `login root` (normal) is asked at privileged operations,
+> `login root --administrative` is not — exactly like any other account.
+
+> **An administrative session never holds rights. It changes only the interaction mode between user and runtime.**
+
+`privileged: true` is an **invocation flag** (like `anonymous` describes
+the entry, `privileged` describes the flow). The engine rebuilds the
+pipeline automatically; the command knows nothing about it.
+
+"Verification" is deliberately open: today a password (re-auth via `su`),
+tomorrow passkey, FIDO2, MFA, hardware key, biometrics. The architecture
+fixes a verification, not a secret.
 
 ### 7. Process boundary
 
@@ -246,12 +287,20 @@ nodes are permission-enforcing — the check is real, not dead code.
 
 ## Open questions
 
-1. **Elevation semantics.** Where is verification requested — at the engine
-   dispatch, or inside the command (sudo-style wrapper)? Not decided.
-2. **`privileged: true` vs. policy.** Whether a path *requires* elevation may
-   be a security-policy decision rather than a path declaration. The runtime
-   should know only that a path *can* require elevation; whether it does may
-   be policy. Open.
+1. ~~Elevation semantics.~~ **Resolved (2026-08-07):** the elevation gate
+   lives at the engine dispatch (`InvocationResolver._ensure_invocation`);
+   `su --administrative` / `su --temporary` establish the session security
+   context. The challenge is the login itself (password = will act).
+2. ~~`privileged: true` vs. policy.~~ **Resolved (2026-08-07):** `privileged`
+   is an invocation flag declared on the path, like `anonymous`. Elevation
+   is deliberately not a policy decision in the minimal model — the path
+   declares that a conscious confirmation is required on top of the grant.
+3. **Challenge mechanism.** Today the challenge is password re-auth via
+   `su --administrative`. The re-auth port is not yet pluggable (passkey,
+   FIDO2, biometrics as alternative challenge mechanisms).
+4. **`temporary` TTL.** `temporary` is deliberately implemented without TTL
+   or cache (exactly one invocation). A `temporary(ttl=5m)` can be added
+   later as a comfort feature without changing the model.
 
 ## Implementation sketch (for later)
 
@@ -282,6 +331,30 @@ nodes are permission-enforcing — the check is real, not dead code.
     grants access to a runtime path, not an abstract permission.
 13. Experiment test `tests/test_permissions_experiment.py` (direct, group,
     deny subtraction).
+14. Elevation: `privileged: bool` on `Node` (read from yak.yml), gate in
+    `InvocationResolver._ensure_invocation` (ElevationRequired → err node),
+    `security_context` on `SessionData`/`Session` (normal/temporary/
+    administrative), `su --administrative` / `su --temporary` establish the
+    context after password verification, logout resets it. Tests:
+    `test_elevation.py`, `test_elevation_e2e.py`, `test_elevation_dispatch.py`,
+    `test_privileged_node.py`, `test_ident_elevation.py`.
+15. Root-Grant `/\|rwx`: bootstrap grants root/admins the hierarchically
+    highest grant instead of individual mounts (`_root_grant_specs =
+    [("/", "rwx")]`). `ls /` shows all mounts again.
+16. Runtime operations: `Operation(READ, WRITE, EXECUTE)` in the API;
+    `Node.required_bit(operation)` maps via `navigable` (container:
+    READ→r/WRITE→w; leaf: READ→r/EXECUTE→x); `PermissionChecker.check`
+    and the resolver enforce operations via node + operation instead of
+    perm-key strings. Tests: `test_operations.py`.
+17. cd/ls as READ: new `permissions` port (`PermissionAdapter.check(path,
+    operation)`); `cd` rejects without READ on the target container, `ls`
+    filters entries without READ. Only runtime nodes are protected —
+    filesystem mounts (`~/home`) stay open. Tests:
+    `test_permission_adapter.py`, `test_checker_wire.py`.
+18. Traversal in `PermissionSet.check`: the path to one's own grants is
+    automatically readable (segment-based). Stefan with a grant on
+    `/usr/bin` sees `/usr` and `/` in `ls`, but not `/usr/sbin` or `/opt`.
+    Tests: `test_permission_set.py`.
 
 **Remaining / parked:**
 
@@ -291,5 +364,6 @@ nodes are permission-enforcing — the check is real, not dead code.
    became `joins accounts`.
 2. ~~Path inheritance~~ — **done**: grants inherit along the runtime path
    hierarchy; allows accumulate, denies subtract (Open question 3 resolved).
-3. Elevation: privileged paths + verification (Open questions 1–2).
+3. ~~Elevation~~ — **done**: privileged paths + verification (Open questions
+   1–2 resolved); challenge mechanism still password-only, not yet pluggable.
 4. Process-level end-to-end: real `su` session → visible `PermissionDenied`.
