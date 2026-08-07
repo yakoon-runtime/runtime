@@ -86,25 +86,45 @@ grants
 Grant keys are full node paths in the runtime tree:
 
 ```
-/ident/users
-/crm/contact/edit
-/usr/bin/man
+/usr/bin/ls
+/usr/sbin/ident/accounts
+/opt/crm/contact/edit
 ```
 
-Optional action suffix: `/crm/contact/edit.version`. The engine knows only
-the runtime tree — no app/command scheme. The engine builds the check key
-from `node.path` (`InvocationResolver._ensure_invocation`).
+Optional action suffix: `/opt/crm/contact/edit.version`. The engine knows
+only the runtime tree — no app/command scheme. The engine builds the check
+key from `node.path` (`InvocationResolver._ensure_invocation`).
 
-### 3. A single bitset, deny stays
+### 3. Permissions are inherited along the runtime path hierarchy
+
+> **Permissions are inherited along the runtime path hierarchy.**
+
+- A grant on `/usr/bin` applies to `/usr/bin` and **all descendants**
+  (segment-based: `/usr/bin/ls` matches, `/usr/binary` does not). No
+  wildcards needed.
+- The mount structure of the runtime tree thereby *becomes* the security
+  model: a pack chooses where it lives by its mount path, and grants are
+  placed exactly there (`admins → /usr/bin`, `ident-admins →
+  /usr/sbin/ident`).
+- Allow bits **accumulate** along the chain, deny bits are **subtracted**
+  (`effective = union(allow) - union(deny)`). A deny removes only its own
+  bits — a broader allow stays as the base. There is no "most specific
+  wins" override.
+
+### 4. A single bitset, deny stays
 
 - One bitset per grant: `r`, `w`, `x` today; later `a` (administer),
   `d` (delegate) can be added. No `rwx:rwx` double scope — owner/group/other
   is not an axis here; account and group are already first-class entities.
-- **Deny stays** (Decision 2026-08-06): deny grants subtract bits
-  ("deny wins"). A single account can be excluded from a group grant without
-  changing membership. Fail-closed standard.
+- **Deny stays** (Decision 2026-08-06): deny grants subtract bits. A single
+  account can be excluded from a group grant without changing membership.
+  Fail-closed standard.
+- **Deny subtracts only its bits** (Decision 2026-08-07): a
+  `deny /usr/bin/shutdown|x` removes only `x` from the inherited
+  `allow /usr/bin|rwx` — `r`/`w` remain. This keeps the bits meaningful as
+  the primitive of the permission model.
 
-### 4. Pipeline
+### 5. Pipeline
 
 ```
 Account
@@ -120,7 +140,7 @@ Execution
 
 Four domains: **Identity → Authorization → Elevation → Execution**.
 
-### 5. Elevation, not a second identity
+### 6. Elevation, not a second identity
 
 > **Elevation activates privileged operations after successful verification.**
 
@@ -132,7 +152,7 @@ Authorization comes from the group; activation requires verification.
 FIDO2, MFA, hardware key, biometrics. The architecture fixes a verification,
 not a secret.
 
-### 6. Process boundary
+### 7. Process boundary
 
 The ident pack and the engine are separate processes (stdio/JSON). The
 `PermissionResolver` therefore returns **spec strings** (e.g.
@@ -140,7 +160,7 @@ The ident pack and the engine are separate processes (stdio/JSON). The
 `PermissionSet` via `SessionAdapter.set_permissions`. No engine object
 crosses the boundary.
 
-### 7. The runtime declares permission enforcement
+### 8. The runtime declares permission enforcement
 
 The tree reads `anonymous` from `yak.yml` (default `False`). Public/utility
 nodes (`su`, `logout`, `err`) declare `anonymous: true` explicitly. All other
@@ -187,8 +207,6 @@ nodes are permission-enforcing — the check is real, not dead code.
    be a security-policy decision rather than a path declaration. The runtime
    should know only that a path *can* require elevation; whether it does may
    be policy. Open.
-3. **Grant paths vs. real tree.** Concrete grant paths (e.g. `/ident/users`)
-   must match the actual pack mount structure.
 
 ## Implementation sketch (for later)
 
@@ -206,12 +224,15 @@ nodes are permission-enforcing — the check is real, not dead code.
 6. Auth flow: `su`/`authenticate` → resolver → `session.set_permissions()`
    (new `SessionAdapter.set_permissions` parses specs → `PermissionSet`).
 7. `grants user*` → `grants account*` (modules, structure, YDF docs).
-8. Bootstrap: root account + admins group, grants on path scheme.
+8. Bootstrap: root account + admins group, grants on the real tree
+   (`/usr/bin`, `/usr/sbin/ident`, `/opt`, `/dsl`).
 9. `anonymous` read from yak.yml (default False); `su`/`logout`/`err`
    declare it.
 10. User concept removed: profile fields on `AccountData`, `users` commands
     → `accounts` commands, `joins users` → `joins accounts`.
-11. Experiment test `tests/test_permissions_experiment.py` (direct, group,
+11. Path inheritance: `PermissionSet.check` walks the chain upward, allows
+    accumulate, denies subtract. Tests in `test_permission_set.py`.
+12. Experiment test `tests/test_permissions_experiment.py` (direct, group,
     deny subtraction).
 
 **Remaining / parked:**
@@ -220,5 +241,7 @@ nodes are permission-enforcing — the check is real, not dead code.
    (`name`, `mail`, `language`), `UserData`/`UserService`/user namespace
    removed, `users` commands became `accounts` commands, `joins users`
    became `joins accounts`.
-2. Elevation: privileged paths + verification (Open questions 1–2).
-3. Process-level end-to-end: real `su` session → visible `PermissionDenied`.
+2. ~~Path inheritance~~ — **done**: grants inherit along the runtime path
+   hierarchy; allows accumulate, denies subtract (Open question 3 resolved).
+3. Elevation: privileged paths + verification (Open questions 1–2).
+4. Process-level end-to-end: real `su` session → visible `PermissionDenied`.

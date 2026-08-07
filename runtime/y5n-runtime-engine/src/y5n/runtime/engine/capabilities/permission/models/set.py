@@ -8,8 +8,11 @@ class PermissionSet:
     Holds effective permissions for a session/account.
 
     Policy:
-      - Allows accumulate (union)
-      - Denies subtract (deny wins over allow for the denied bits)
+      - A grant on a path applies to that path and all its descendants
+        (segment-based inheritance along the runtime path hierarchy).
+      - The most specific matching grant decides.
+      - On the same level: allows accumulate (union), denies subtract
+        (deny wins over allow for the denied bits).
     """
 
     def __init__(self) -> None:
@@ -42,18 +45,33 @@ class PermissionSet:
     def check(self, path: str, need: str = "x") -> bool:
         """
         need: "r" | "w" | "x" | combinations like "rw", "rwx"
+
+        Allows and denies each accumulate along the whole path chain
+        (most specific to most general ancestor, e.g. /usr/bin/ls ->
+        /usr/bin -> /usr -> /). Effective bits = union(allows) minus
+        union(denies). A deny only removes its own bits — a broader
+        allow stays as the base.
         """
         need_bits = PermBits.from_str(need)
 
-        allow = self._allow.get(path)
-        if not allow:
+        allow_bits = PermBits()
+        deny_bits = PermBits()
+        has_allow = False
+
+        for ancestor in _ancestors(path):
+            allow = self._allow.get(ancestor)
+            if allow:
+                allow_bits = allow_bits.union(allow.bits)
+                has_allow = True
+
+            deny = self._deny.get(ancestor)
+            if deny:
+                deny_bits = deny_bits.union(deny.bits)
+
+        if not has_allow:
             return False
 
-        # compute effective bits = allow - deny
-        deny = self._deny.get(path)
-        eff = allow.bits
-        if deny:
-            eff = eff.subtract(deny.bits)
+        eff = allow_bits.subtract(deny_bits)
 
         if need_bits.r and not eff.r:
             return False
@@ -90,3 +108,23 @@ class PermissionSet:
                 "deny": bits_to_str(d.bits) if d else "",
             }
         return out
+
+
+def _ancestors(path: str) -> list[str]:
+    """Return path and all its ancestors, most specific first.
+
+    "/usr/bin/ls" -> ["/usr/bin/ls", "/usr/bin", "/usr", "/"]
+    """
+    normalized = path.strip()
+    if not normalized:
+        return ["/"]
+
+    parts = [p for p in normalized.strip("/").split("/") if p]
+    if not parts:
+        return ["/"]
+
+    out: list[str] = []
+    for i in range(len(parts), 0, -1):
+        out.append("/" + "/".join(parts[:i]))
+    out.append("/")
+    return out

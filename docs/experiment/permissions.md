@@ -72,11 +72,26 @@ EffectivePermissions(Account) =
 ```
 
 Gelost vom `PermissionResolver` beim Login; Ergebnis landet per
-`session.set_permissions()` auf der Session.## Grant-Key-Schema
+`session.set_permissions()` auf der Session.
+
+## Pfad-Vererbung (Invariante)
+
+> **Permissions are inherited along the runtime path hierarchy.**
+
+- Ein Grant auf `/usr/bin` gilt fuer `/usr/bin` und **alle Nachfahren**
+  (segmentbasiert: `/usr/bin/ls` ja, `/usr/binary` nein). Keine Wildcards noetig.
+- Die Mount-Struktur des Runtime-Baums wird dadurch zum Sicherheitsmodell:
+  ein Pack waehlt mit seinem Mount-Pfad, wo es lebt — und dort werden Rechte
+  vergeben (`admins → /usr/bin`, `ident-admins → /usr/sbin/ident`).
+- Allow-Bits **addieren sich** entlang der Kette, Deny-Bits werden **subtrahiert**.
+  `effective = union(allow) - union(deny)`. Ein deny entfernt nur seine Bits —
+  ein generellerer allow bleibt Basis. Kein "most specific wins".
+
+## Grant-Key-Schema
 
 - Grant-Keys sind **volle Node-Pfade** im Runtime-Baum:
-  `/ident/users`, `/crm/contact/edit`, `/usr/bin/man`.
-- Optionaler Action-Suffix: `/crm/contact/edit.version`.
+  `/usr/bin/ls`, `/usr/sbin/ident/accounts`, `/opt/crm/contact/edit`.
+- Optionaler Action-Suffix: `/opt/crm/contact/edit.version`.
 - Die Engine kennt ausschliesslich den Runtime-Baum — kein App/Command-Schema.
 
 ## PermissionBits
@@ -88,9 +103,15 @@ Gelost vom `PermissionResolver` beim Login; Ergebnis landet per
 
 ## allow / deny
 
-- **Deny bleibt** (Decision 2026-08-06). `deny`-Grants subtrahieren Bits
-  ("deny wins"), ermoeglicht gezielten Ausschluss einzelner Accounts aus
-  Gruppen-Rechten ohne Membership-Aenderung. Fail-Closed-Standard.
+- **Deny bleibt** (Decision 2026-08-06). `deny`-Grants subtrahieren Bits,
+  ermoeglicht gezielten Ausschluss einzelner Accounts aus Gruppen-Rechten
+  ohne Membership-Aenderung. Fail-Closed-Standard.
+- **Deny subtrahiert nur seine Bits** (Decision 2026-08-07): ein
+  `deny /usr/bin/shutdown|x` entfernt nur `x` vom ererbten
+  `allow /usr/bin|rwx` — `r`/`w` bleiben. Kein "most specific wins".
+- Drei Command-Typen: **public** (`anonymous: true`), **normal**
+  (`anonymous: false, privileged: false`), **gefaehrlich**
+  (`privileged: true` → Elevation noetig).
 
 ## Trennung Engine / Ident
 
@@ -116,12 +137,16 @@ Gelost vom `PermissionResolver` beim Login; Ergebnis landet per
       `su`/`logout`/`err` deklarieren es explizit. Alle anderen Knoten sind
       jetzt permission-pflichtig.
 - [x] Experiment-Test `tests/test_permissions_experiment.py`: bootstrap ->
-      resolver -> parser -> set (direkt, Gruppe, deny-Subtraktion). 229 Tests grün.
+      resolver -> parser -> set (direkt, Gruppe, deny-Subtraktion).
 - [x] **User-Konzept gestrichen**: `AccountData` traegt optionale Profil-Felder
       (`name`, `mail`, `language`); `UserData`/`UserService`/user-Namespace
       entfernt; `users`-Commands wurden zu `accounts`-Commands
       (`add/list/edit/delete` mit `--name/--mail/--language`);
       `joins users` wurde `joins accounts`.
+- [x] **Pfad-Vererbung**: `PermissionSet.check` laeuft die Pfadkette nach oben,
+      allow-Bits addieren sich, deny-Bits subtrahieren. Bootstrap-Grants auf den
+      realen Baum (`/usr/bin`, `/usr/sbin/ident`, `/opt`, `/dsl`). 9 Tests in
+      `test_permission_set.py`, Gesamtlauf 238 gruen.
 - [ ] **Elevation**: privilegierte Pfade verlangen Verifikation, auch wenn der
       Account die Berechtigung hat. (Design: Policy vs. Pfad-Deklaration — offen)
 - [ ] End-to-End auf Prozessebene: echte su-Session -> PermissionDenied sichtbar
@@ -134,8 +159,6 @@ sofern er nicht `anonymous: true` deklariert. Das macht den Check real wirksam.
 
 ## Noch offene Fragen
 
-- Die konkreten Grant-Pfade im echten Baum (z.B. `/ident/users`) muessen mit der
-  tatsaechlichen Mount-Struktur der Packs zusammenpassen.
 - Prozesstraennung: Resolver liefert Spec-Strings, Engine parst — bewusst so,
   damit kein Engine-Objekt ueber die stdio/JSON-Grenze wandert.
 - Elevation-Semantik: wann/wo wird die Verifikation eingeholt? (am Engine-Dispatch
