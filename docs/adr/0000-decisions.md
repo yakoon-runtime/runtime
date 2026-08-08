@@ -5,6 +5,29 @@
 
 ---
 
+## 2026-08-08 — Audit Is a Property of the Event Store (ADR-17)
+
+**Status: Proposed.** The term **Audit** is replaced by the concept it was
+trying to be. The Event Store already is the domain-event log (every
+revision is a domain event); what is missing is Context and Activity
+Events as entities in the same store.
+
+**Key sentence:** *"There is no audit store and no audit log — there are
+only events."* The axis is a single question: **does the event change the
+domain state?** **Domain Events** change state (they are today's store
+revisions); **Activity Events** change nothing (`Read`, `CommandExecuted`,
+`PermissionDenied`, `LoginFailed`, `Warning` — actions *and* decision
+outcomes alike) and are written by an observer at the engine boundary.
+An Activity Event is written once and never materialized — it exists
+purely as history, no current state. Every event carries a **Context**
+(`actor`, `session`, `command`, `trace`) — the store's reserved `meta`
+slot finally gets its purpose. Runtime failures (`Traceback`, memory,
+scheduler) stay in the runtime log files, never in the store. **"Audit is
+a saved view, not a subsystem"** — it becomes a projection over the event
+stream (`events list` / `events show session …`), not a thing to build.
+Resolves ADR-13's open question 1 (is audit an observer or a concern of
+the error command?) — the engine observes, the store records.
+
 ## 2026-08-07 — Parked Decisions Conserved from the Technical-Debt Roadmap
 
 Three decisions from the (now deleted) technical-debt working list are
