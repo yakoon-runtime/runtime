@@ -24,7 +24,7 @@ from y5n.runtime.engine.wire.adapter.resource import ResourceAdapter
 from y5n.runtime.engine.wire.adapter.runtime import RuntimeAdapter
 from y5n.runtime.engine.wire.adapter.session import SessionAdapter
 from y5n.runtime.engine.wire.adapter.source import SourceReadAdapter
-from y5n.runtime.engine.wire.adapter.store import StoreAdapter
+from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver
 from y5n.runtime.engine.wire.document import build_document_stack
 from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
 from y5n.runtime.engine.wire.stream import build_stream
@@ -229,7 +229,11 @@ def build_runtime(
     )
     bus.transport.register_adapter(
         "store",
-        StoreAdapter(store.objects, sequencer),
+        StoreAdapter(
+            store.objects,
+            sequencer,
+            resolver=StoreResolver(tree=tree, default=store.objects),
+        ),
     )
 
     bus.resolver.register(

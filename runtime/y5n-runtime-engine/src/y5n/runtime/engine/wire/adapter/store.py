@@ -67,12 +67,48 @@ def _index_key(raw: str):
     return IndexKey(raw)
 
 
-class StoreAdapter:
-    """SDK-facing ``store`` Port — the shared Event Store + sequencer."""
+class StoreResolver:
+    """Resolve the physical store for a call from the calling node's declaration.
 
-    def __init__(self, objects, sequencer) -> None:
+    Chain (ADR-18): ``call.caller_path`` → ``tree.find()`` → ``node.store``
+    → registry → the physical store. The SDK stays dumb — ``sdk.store()``
+    asks only for "a store"; the runtime derives which store from the
+    component's declaration. The identity is the node, never the host
+    language: a Python, Ruby, or .NET pack declaring ``store: crm`` all
+    resolve to the same logical store.
+    """
+
+    def __init__(self, tree, stores: dict[str, Any] | None = None, default=None):
+        self._tree = tree
+        self._stores = stores or {}
+        self._default = default
+
+    def resolve(self, call: Call):
+        if self._tree is None:
+            return self._default
+        node = self._tree.find(call.caller_path or "/") if call.caller_path else None
+        profile = node.store if node is not None else None
+        if profile and profile in self._stores:
+            return self._stores[profile]
+        return self._default
+
+
+class StoreAdapter:
+    """SDK-facing ``store`` Port — the shared Event Store + sequencer.
+
+    The adapter holds the *default* store and a resolver. Every call is
+    resolved against the calling node's declared store profile; a profile
+    without a registered physical store falls back to the default. Today
+    that is the only store — the registry is the future router boundary.
+    """
+
+    def __init__(self, objects, sequencer, resolver: StoreResolver | None = None):
         self._objects = objects
         self._sequencer = sequencer
+        self._resolver = resolver or StoreResolver(tree=None, default=objects)
+
+    def _objects_for(self, call: Call):
+        return self._resolver.resolve(call)
 
     # ------------------------
     # ENTITY API
@@ -81,11 +117,13 @@ class StoreAdapter:
     async def get(
         self, call: Call, *, key: _KeyDict, at_time: str | None = None
     ) -> dict:
-        result = await self._objects.get(key=_key(key), at_time=_from_iso(at_time))
+        result = await self._objects_for(call).get(
+            key=_key(key), at_time=_from_iso(at_time)
+        )
         return _get_result_to_dict(result)
 
     async def get_many(self, call: Call, *, keys: list[_KeyDict]) -> list[dict]:
-        results = await self._objects.get_many(keys=[_key(k) for k in keys])
+        results = await self._objects_for(call).get_many(keys=[_key(k) for k in keys])
         return [_get_result_to_dict(r) for r in results]
 
     async def history(self, call: Call, *, key: _KeyDict) -> list[dict]:
@@ -93,7 +131,7 @@ class StoreAdapter:
         from datetime import UTC, datetime
 
         k = _key(key)
-        revs = await self._objects.on_load_revisions(
+        revs = await self._objects_for(call).on_load_revisions(
             domain_id=k.namespace.domain,
             kind_id=k.namespace.kind,
             space_id=k.namespace.space,
@@ -125,7 +163,7 @@ class StoreAdapter:
         meta: dict | None = None,
         expected_rev: int | None = None,
     ) -> dict:
-        result = await self._objects.append(
+        result = await self._objects_for(call).append(
             key=_key(key),
             patch=patch,
             indexes=_terms(indexes),
@@ -145,7 +183,7 @@ class StoreAdapter:
         snapshot_hint: str | None = None,
         expected_rev: int | None = None,
     ) -> dict:
-        result = await self._objects.replace(
+        result = await self._objects_for(call).replace(
             key=_key(key),
             doc=doc,
             indexes=_terms(indexes),
@@ -164,7 +202,7 @@ class StoreAdapter:
         context: dict | None = None,
         indexes: list[dict] | None = None,
     ) -> dict:
-        result = await self._objects.record(
+        result = await self._objects_for(call).record(
             key=_key(key),
             doc=doc,
             expected_rev=expected_rev,
@@ -181,7 +219,7 @@ class StoreAdapter:
         meta: dict | None = None,
         expected_rev: int | None = None,
     ) -> dict:
-        result = await self._objects.delete(
+        result = await self._objects_for(call).delete(
             key=_key(key), meta=meta, expected_rev=expected_rev
         )
         return _put_result_to_dict(result)
@@ -203,7 +241,7 @@ class StoreAdapter:
         prefix: str | None = None,
         cursor: str | None = None,
     ) -> dict:
-        keys, next_cursor = await self._objects.scan(
+        keys, next_cursor = await self._objects_for(call).scan(
             namespace=_namespace(namespace),
             index_key=_index_key(index_key),
             value=value,
@@ -218,7 +256,7 @@ class StoreAdapter:
     async def ensure_indexes(
         self, call: Call, *, namespace: str, specs: list[dict]
     ) -> None:
-        await self._objects.ensure_indexes(
+        await self._objects_for(call).ensure_indexes(
             namespace=_namespace(namespace),
             specs=_specs(specs),
         )
@@ -232,7 +270,7 @@ class StoreAdapter:
         mode: str = "and",
         limit: int = 100,
     ) -> dict:
-        keys, _ = await self._objects.query_index(
+        keys, _ = await self._objects_for(call).query_index(
             namespace=_namespace(namespace),
             terms=_query_terms(terms),
             mode=mode,
