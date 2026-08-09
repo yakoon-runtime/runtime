@@ -17,6 +17,26 @@ from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.settings.logging import LoggingSettings
 
 
+class RuntimeLogService:
+
+    def __init__(self, settings: LoggingSettings):
+        self.settings = settings
+        self._error = logging.getLogger("error")
+        self._warning = logging.getLogger("warning")
+
+    def warning(self, message: str, session):
+        if self.settings.log_warnings:
+            self._warning.warning(message, extra={"session": session.key})
+
+    def error(self, exc: Exception, session=None):
+        if self.settings.log_errors:
+            self._error.error(
+                "Unhandled exception",
+                exc_info=(type(exc), exc, exc.__traceback__),
+                extra={"session": session.key if session else None},
+            )
+
+
 def _resolve_logdir() -> Path:
     """Use context .yak/logs/ if configured, otherwise fall back to settings."""
     cwd = Path.cwd()
@@ -77,23 +97,3 @@ if _settings.logging.log_errors:
     _file_logger("error", "y5n.error.log", logging.ERROR)
 if _settings.logging.log_warnings:
     _file_logger("warning", "y5n.warning.log", logging.WARNING)
-
-
-class RuntimeLogService:
-
-    def __init__(self, settings: LoggingSettings):
-        self.settings = settings
-        self._error = logging.getLogger("error")
-        self._warning = logging.getLogger("warning")
-
-    def warning(self, message: str, session):
-        if self.settings.log_warnings:
-            self._warning.warning(message, extra={"session": session.key})
-
-    def error(self, exc: Exception, session=None):
-        if self.settings.log_errors:
-            self._error.error(
-                "Unhandled exception",
-                exc_info=(type(exc), exc, exc.__traceback__),
-                extra={"session": session.key if session else None},
-            )
