@@ -134,7 +134,7 @@ async def test_events_show_displays_context(bus_store, monkeypatch):
         None, namespace="system/activity/global", index_key="all", value="1"
     )
     event_key = page["keys"][0]
-    event_id = event_key.rsplit("#", 1)[-1]
+    event_id = event_key["id"]
 
     lines: list[str] = []
 

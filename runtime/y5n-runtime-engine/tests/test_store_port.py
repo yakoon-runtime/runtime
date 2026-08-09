@@ -1,7 +1,7 @@
 """Store port (ADR-17): the shared Event Store over the Runtime Bus.
 
 The SDK calls ``store.get/replace/record/...`` via the ``store`` port; the
-wire adapter maps RPC-safe primitives (string keys) onto the EntityStore.
+wire adapter maps RPC-safe structured keys (dicts) onto the EntityStore.
 """
 
 from __future__ import annotations
@@ -31,16 +31,22 @@ def _call(port="store") -> Call:
     )
 
 
+def _key(domain: str, kind: str, space: str, entity_id: str) -> dict:
+    return {
+        "namespace": {"domain": domain, "kind": kind, "space": space},
+        "id": entity_id,
+    }
+
+
 @pytest.mark.asyncio
 async def test_replace_and_get_roundtrip():
     adapter = _adapter()
+    key = _key("luma", "box", "global", "1")
 
-    result = await adapter.replace(
-        _call(), key="luma/box/global#1", doc={"name": "office"}
-    )
+    result = await adapter.replace(_call(), key=key, doc={"name": "office"})
     assert result["rev"] == 1
 
-    got = await adapter.get(_call(), key="luma/box/global#1")
+    got = await adapter.get(_call(), key=key)
     assert got["data"] == {"name": "office"}
     assert got["rev"] == 1
 
@@ -48,30 +54,26 @@ async def test_replace_and_get_roundtrip():
 @pytest.mark.asyncio
 async def test_record_is_write_only():
     adapter = _adapter()
+    key = _key("system", "activity", "global", "evt-1")
 
     result = await adapter.record(
-        _call(),
-        key="system/activity/global#evt-1",
-        doc={"kind": "read", "path": "/opt"},
+        _call(), key=key, doc={"kind": "read", "path": "/opt"}
     )
     assert result["rev"] == 1
     assert result["snapshot_written"] is False
 
-    got = await adapter.get(_call(), key="system/activity/global#evt-1")
+    got = await adapter.get(_call(), key=key)
     assert got["data"] is None
 
 
 @pytest.mark.asyncio
 async def test_history_returns_revisions_with_context():
     adapter = _adapter()
+    key = _key("system", "activity", "global", "evt-1")
 
-    await adapter.record(
-        _call(),
-        key="system/activity/global#evt-1",
-        doc={"kind": "read", "path": "/opt"},
-    )
+    await adapter.record(_call(), key=key, doc={"kind": "read", "path": "/opt"})
 
-    history = await adapter.history(_call(), key="system/activity/global#evt-1")
+    history = await adapter.history(_call(), key=key)
     assert len(history) == 1
     assert history[0]["rev"] == 1
     assert history[0]["data"] == {"kind": "read", "path": "/opt"}
@@ -81,11 +83,10 @@ async def test_history_returns_revisions_with_context():
 @pytest.mark.asyncio
 async def test_append_and_next_id():
     adapter = _adapter()
+    key = _key("crm", "contact", "global", "1")
 
     result = await adapter.append(
-        _call(),
-        key="crm/contact/global#1",
-        patch=[{"op": "add", "path": "/x", "value": 1}],
+        _call(), key=key, patch=[{"op": "add", "path": "/x", "value": 1}]
     )
     assert result["rev"] == 1
 

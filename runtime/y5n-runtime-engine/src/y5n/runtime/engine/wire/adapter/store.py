@@ -5,19 +5,41 @@ Every pack gets the *same* store instance through this port — no more
 ``build_store()`` inside pack setup (ADR-17: the store belongs to the
 runtime, not the pack).
 
-The port is RPC-safe: keys and namespaces travel as strings
-(``domain/kind/space#id``), results as plain dicts. The SDK models them
-into typed wrappers (ADR-11).
+The port is RPC-safe: keys travel as structured dicts
+(``{"namespace": {"domain", "kind", "space"}, "id"}``) because an id may
+itself contain a ``#`` (composite keys). Namespaces travel as strings,
+results as plain dicts. The SDK models them into typed wrappers (ADR-11).
 """
 
 from __future__ import annotations
+
+from typing import Any
 
 from y5n.runtime.api.naming import Key, Namespace
 from y5n.runtime.api.runtime.invoke import Call
 
 
-def _key(raw: str) -> Key:
-    return Key.from_str(raw)
+def _key(raw: dict) -> Key:
+    ns = raw.get("namespace") or {}
+    return Key(
+        namespace=Namespace(
+            domain=ns.get("domain"),
+            kind=ns.get("kind"),
+            space=ns.get("space", "global"),
+        ),
+        id=raw.get("id", ""),
+    )
+
+
+def _key_to_dict(key: Key) -> dict[str, Any]:
+    return {
+        "namespace": {
+            "domain": key.namespace.domain,
+            "kind": key.namespace.kind,
+            "space": key.namespace.space,
+        },
+        "id": key.id,
+    }
 
 
 def _namespace(raw: str) -> Namespace:
@@ -26,14 +48,6 @@ def _namespace(raw: str) -> Namespace:
     except ValueError as exc:
         raise ValueError(f"Invalid namespace: {raw!r}") from exc
     return Namespace(domain, kind, space)
-
-
-def _key_str(key: Key) -> str:
-    return str(key)
-
-
-def _ns_str(ns: Namespace) -> str:
-    return ns.to_str()
 
 
 class StoreAdapter:
@@ -88,12 +102,16 @@ class StoreAdapter:
         key: str,
         patch: list[dict] | dict,
         indexes: list[dict] | None = None,
+        snapshot_hint: str | None = None,
+        meta: dict | None = None,
         expected_rev: int | None = None,
     ) -> dict:
         result = await self._objects.append(
             key=_key(key),
             patch=patch,
             indexes=_terms(indexes),
+            snapshot_hint=_snapshot_hint(snapshot_hint),
+            meta=meta,
             expected_rev=expected_rev,
         )
         return _put_result_to_dict(result)
@@ -105,12 +123,14 @@ class StoreAdapter:
         key: str,
         doc: dict,
         indexes: list[dict] | None = None,
+        snapshot_hint: str | None = None,
         expected_rev: int | None = None,
     ) -> dict:
         result = await self._objects.replace(
             key=_key(key),
             doc=doc,
             indexes=_terms(indexes),
+            snapshot_hint=_snapshot_hint(snapshot_hint),
             expected_rev=expected_rev,
         )
         return _put_result_to_dict(result)
@@ -123,19 +143,28 @@ class StoreAdapter:
         doc: dict,
         expected_rev: int | None = None,
         context: dict | None = None,
+        indexes: list[dict] | None = None,
     ) -> dict:
         result = await self._objects.record(
             key=_key(key),
             doc=doc,
             expected_rev=expected_rev,
             context=context,
+            indexes=_terms(indexes),
         )
         return _put_result_to_dict(result)
 
     async def delete(
-        self, call: Call, *, key: str, expected_rev: int | None = None
+        self,
+        call: Call,
+        *,
+        key: str,
+        meta: dict | None = None,
+        expected_rev: int | None = None,
     ) -> dict:
-        result = await self._objects.delete(key=_key(key), expected_rev=expected_rev)
+        result = await self._objects.delete(
+            key=_key(key), meta=meta, expected_rev=expected_rev
+        )
         return _put_result_to_dict(result)
 
     # ------------------------
@@ -165,7 +194,7 @@ class StoreAdapter:
             prefix=prefix,
             cursor=cursor,
         )
-        return {"keys": [_key_str(k) for k in keys], "cursor": next_cursor}
+        return {"keys": [_key_to_dict(k) for k in keys], "cursor": next_cursor}
 
     async def ensure_indexes(
         self, call: Call, *, namespace: str, specs: list[dict]
@@ -190,7 +219,7 @@ class StoreAdapter:
             mode=mode,
             limit=limit,
         )
-        return {"keys": [_key_str(k) for k in keys]}
+        return {"keys": [_key_to_dict(k) for k in keys]}
 
     # ------------------------
     # SEQUENCER
@@ -217,6 +246,14 @@ def _terms(indexes: list[dict] | None):
     return [IndexTerm(key=t["key"], value=t["value"]) for t in indexes]
 
 
+def _snapshot_hint(value: str | None):
+    from y5n.runtime.store.event.models import SnapshotHint
+
+    if value is None:
+        return None
+    return SnapshotHint(value)
+
+
 def _specs(specs: list[dict]):
     from y5n.runtime.store.event.models import IndexSpec, ValueType
 
@@ -241,7 +278,7 @@ def _query_terms(terms: list[dict]):
 
 def _get_result_to_dict(result) -> dict:
     return {
-        "key": str(result.key),
+        "key": _key_to_dict(result.key),
         "entity_id": str(result.entity_id),
         "data": result.data,
         "rev": result.rev,
