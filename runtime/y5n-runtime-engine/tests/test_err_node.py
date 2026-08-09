@@ -56,7 +56,7 @@ async def _wire_bus(bus, tree) -> None:
     doc = build_document_stack(tree=tree)
 
     bus.resolver.register(
-        "system:projection",
+        "system:jinja",
         {"jinja": ["__call__"]},
         path="/",
     )
@@ -66,7 +66,7 @@ async def _wire_bus(bus, tree) -> None:
     )
 
     bus.resolver.register(
-        "system:projection",
+        "system:compile",
         {"compile": ["__call__"]},
         path="/",
     )
@@ -76,7 +76,7 @@ async def _wire_bus(bus, tree) -> None:
     )
 
     bus.resolver.register(
-        "system:projection",
+        "system:runtime.resource",
         {"runtime.resource": ["resolve"]},
         path="/",
     )

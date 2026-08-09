@@ -24,10 +24,12 @@ from y5n.runtime.engine.wire.adapter.resource import ResourceAdapter
 from y5n.runtime.engine.wire.adapter.runtime import RuntimeAdapter
 from y5n.runtime.engine.wire.adapter.session import SessionAdapter
 from y5n.runtime.engine.wire.adapter.source import SourceReadAdapter
+from y5n.runtime.engine.wire.adapter.store import StoreAdapter
 from y5n.runtime.engine.wire.document import build_document_stack
 from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
 from y5n.runtime.engine.wire.stream import build_stream
 from y5n.runtime.store.event.wire import build_store
+from y5n.runtime.store.sequence.wire import build_store as build_sequencer
 
 
 def build_runtime(
@@ -40,6 +42,7 @@ def build_runtime(
     # -----------------
 
     store = build_store(settings.storage)
+    sequencer = build_sequencer(settings.sequencer)
 
     # ----------------
     # --- SERVICES ---
@@ -115,6 +118,7 @@ def build_runtime(
 
     async def initialize():
         await store.initialize()
+        await sequencer.initialize()
         await tree.setup()
 
     # ------------------------
@@ -143,38 +147,38 @@ def build_runtime(
 
     bus = get_bus()
 
-    bus.resolver.register("system:projection", {"document": ["render"]}, path="/")
+    bus.resolver.register("system:document", {"document": ["render"]}, path="/")
     bus.transport.register_adapter(
         "document",
         DocumentAdapter(projector=projector, tree=tree),
     )
 
-    bus.resolver.register("system:projection", {"validate": ["__call__"]}, path="/")
+    bus.resolver.register("system:validate", {"validate": ["__call__"]}, path="/")
     bus.transport.register_adapter(
         "validate",
         CallableAdapter(tree.validate),
     )
 
-    bus.resolver.register("system:projection", {"source": ["read"]}, path="/")
+    bus.resolver.register("system:source", {"source": ["read"]}, path="/")
     bus.transport.register_adapter(
         "source",
         SourceReadAdapter(ds),
     )
 
-    bus.resolver.register("system:projection", {"jinja": ["__call__"]}, path="/")
+    bus.resolver.register("system:jinja", {"jinja": ["__call__"]}, path="/")
     bus.transport.register_adapter(
         "jinja",
         CallableAdapter(doc.jinja.render_str),
     )
 
-    bus.resolver.register("system:projection", {"compile": ["__call__"]}, path="/")
+    bus.resolver.register("system:compile", {"compile": ["__call__"]}, path="/")
     bus.transport.register_adapter(
         "compile",
         CallableAdapter(doc.compiler.compile),
     )
 
     bus.resolver.register(
-        "system:projection",
+        "system:session",
         {
             "session": [
                 "attach",
@@ -193,7 +197,7 @@ def build_runtime(
     )
 
     bus.resolver.register(
-        "system:projection", {"runtime": ["flows", "background"]}, path="/"
+        "system:runtime", {"runtime": ["flows", "background"]}, path="/"
     )
     bus.transport.register_adapter(
         "runtime",
@@ -201,7 +205,30 @@ def build_runtime(
     )
 
     bus.resolver.register(
-        "system:projection",
+        "system:store",
+        {
+            "store": [
+                "get",
+                "get_many",
+                "append",
+                "replace",
+                "record",
+                "delete",
+                "scan",
+                "ensure_indexes",
+                "query_index",
+                "next_id",
+            ]
+        },
+        path="/",
+    )
+    bus.transport.register_adapter(
+        "store",
+        StoreAdapter(store.objects, sequencer),
+    )
+
+    bus.resolver.register(
+        "system:permissions",
         {"permissions": ["check"]},
         path="/",
     )
@@ -211,7 +238,7 @@ def build_runtime(
     )
 
     bus.resolver.register(
-        "system:projection",
+        "system:runtime.resource",
         {"runtime.resource": ["resolve", "supports"]},
         path="/",
     )
