@@ -163,12 +163,23 @@ stores:
 The runtime starts with a deployment that knows `crm`, and
 `sdk.store()` returns the store called `crm`.
 
+The `yak` tool is not an installer of files — it is the **assembler of a
+runtime environment**. A pack declares its needs; the tool collects the
+needs of all installed packs and materializes the deployment that satisfies
+them. Installing three packs (`crm` → `store: crm`, `ident` → `store:
+security`, `telemetry` → `store: telemetry`) yields three logical stores in
+the deployment — and only then does the tool decide which already exist,
+which to create, which to migrate. The store is the first capability this
+mechanism serves; hosts, caches, queues, and schedulers follow the same
+path. The pack never creates a database, opens a connection, or runs a
+migration — it says "I need this logical store", and the platform builds it.
+
 ### 5. Ownership
 
 | Level | Responsibility |
 |-------|----------------|
 | **Pack** | describes the store profile it needs |
-| **yak** | creates / binds store profiles |
+| **yak** | assembles the deployment from all installed packs' needs |
 | **Runtime** | provides the store service |
 | **SDK** | delivers `sdk.store()` |
 

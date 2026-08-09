@@ -37,8 +37,12 @@ principle, not a store decision: **"A pack describes what it needs. The
 platform decides how that need is met."** Pack declares → tool prepares →
 runtime resolves → code stays clean. Cache, messaging, scheduling, and any
 future runtime service face the same question and inherit the same answer.
-Store router, multiple physical databases, event aggregation, replication,
-and sharding build *on* this contract and are explicitly out of scope.
+**`yak` is not an installer of files but the assembler of a runtime
+environment**: it collects the declared needs of all installed packs and
+materializes the deployment that satisfies them — the store is the first
+capability this mechanism serves, not the last. Store router, multiple
+physical databases, event aggregation, replication, and sharding build *on*
+this contract and are explicitly out of scope.
 
 ## 2026-08-08 — Audit Is a Property of the Event Store (ADR-17)
 
