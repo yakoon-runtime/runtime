@@ -233,7 +233,6 @@ def build_runtime(
             sequencer,
             resolver=StoreResolver(
                 tree=tree,
-                stores={},
                 default=store.objects,
             ),
         ),
