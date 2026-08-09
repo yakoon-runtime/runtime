@@ -81,7 +81,7 @@ class Interactor:
         initial: dict | None = None,
     ):
 
-        async def handler(space):
+        async def handler():
             form = Form(
                 fields=list(sig.params),
                 title=sig.action or "",

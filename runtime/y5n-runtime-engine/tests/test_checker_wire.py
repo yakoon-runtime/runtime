@@ -11,11 +11,10 @@ from __future__ import annotations
 import pytest
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.permissions import Operation, PermBits, Permission
-from y5n.runtime.engine.capabilities.permission import PermissionChecker
-from y5n.runtime.engine.capabilities.permission.models.set import PermissionSet
 from y5n.runtime.engine.machine.resolver import InvocationResolver
 from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.runtime.sessions.session import Session, SessionData
+from y5n.runtime.engine.services.permissions import PermissionChecker, PermissionSet
 
 
 def _session(permset: PermissionSet) -> Session:

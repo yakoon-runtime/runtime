@@ -1,4 +1,4 @@
-"""Bootstrap reference linking (ADR-10).
+"""Pack reference linking (ADR-10).
 
 The runtime resolves ``pack:<module>:<func>`` for exactly one purpose:
 loading the first host. This is *linking*, not interpretation — the runtime

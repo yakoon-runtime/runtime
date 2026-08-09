@@ -14,7 +14,6 @@ from y5n.runtime.api.naming import Key
 from y5n.runtime.api.permissions import PermBits, Permission
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.api.runtime.sessions import SecurityContext
-from y5n.runtime.engine.capabilities.permission.models.set import PermissionSet
 from y5n.runtime.engine.executor import ExecutorKind, ExecutorRegistry, RuntimeExecutor
 from y5n.runtime.engine.machine.engine import CommandEngine
 from y5n.runtime.engine.machine.resolver import InvocationResolver
@@ -22,6 +21,7 @@ from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.runtime.invocation import error_payload
 from y5n.runtime.engine.runtime.sessions.session import Session, SessionData
+from y5n.runtime.engine.services.permissions import PermissionSet
 
 
 def _write(path: Path, content: str) -> None:
@@ -90,7 +90,7 @@ def _engine(tree: Tree) -> CommandEngine:
     root = tree.root()
     checker = None
 
-    from y5n.runtime.engine.capabilities.permission import PermissionChecker
+    from y5n.runtime.engine.services.permissions import PermissionChecker
 
     checker = PermissionChecker()
 

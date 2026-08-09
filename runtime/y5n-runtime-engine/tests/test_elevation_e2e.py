@@ -13,14 +13,13 @@ from y5n.runtime.api.naming import Key
 from y5n.runtime.api.permissions import PermBits, Permission
 from y5n.runtime.api.runtime.invocation import CommandSignature
 from y5n.runtime.api.runtime.sessions import SecurityContext
-from y5n.runtime.engine.capabilities.permission import PermissionChecker
-from y5n.runtime.engine.capabilities.permission.models.set import PermissionSet
 from y5n.runtime.engine.executor import ExecutorKind, ExecutorRegistry, RuntimeExecutor
 from y5n.runtime.engine.machine.resolver import InvocationResolver
 from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.runtime.error import ElevationRequired
 from y5n.runtime.engine.runtime.sessions.session import Session, SessionData
+from y5n.runtime.engine.services.permissions import PermissionChecker, PermissionSet
 
 
 def _write(path, content: str) -> None:

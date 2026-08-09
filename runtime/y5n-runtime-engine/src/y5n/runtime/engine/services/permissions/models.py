@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from y5n.runtime.api.permissions import PermBits, Permission
+from y5n.runtime.api.permissions import PermBit, PermBits, Permission
 
 
 class PermissionSet:

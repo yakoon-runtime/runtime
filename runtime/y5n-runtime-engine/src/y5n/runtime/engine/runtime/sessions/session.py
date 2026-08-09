@@ -16,9 +16,9 @@ from y5n.runtime.api.naming import Key
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.api.runtime.input import Interaction
 from y5n.runtime.api.transport import IO
-from y5n.runtime.engine.capabilities.permission import PermissionSet
 from y5n.runtime.engine.flow import Flow
 from y5n.runtime.engine.runtime.bus import SessionBus
+from y5n.runtime.engine.services.permissions import PermissionSet
 from y5n.runtime.store.event import GetResult
 
 

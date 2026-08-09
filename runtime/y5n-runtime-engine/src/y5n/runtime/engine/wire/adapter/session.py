@@ -14,8 +14,8 @@ from typing import Any
 
 from y5n.runtime.api.naming.key import Key
 from y5n.runtime.api.runtime.invoke import Call
-from y5n.runtime.engine.capabilities.permission import PermissionParser
 from y5n.runtime.engine.runtime import Session
+from y5n.runtime.engine.services.permissions import PermissionParser
 
 _PATCH_MAP: dict[str, str] = {
     "cwd": "current_path",
@@ -64,7 +64,7 @@ class SessionAdapter:
             await self._on_save(session=runner.session)
 
     def _empty_permissions(self):
-        from y5n.runtime.engine.capabilities.permission import PermissionSet
+        from y5n.runtime.engine.services.permissions import PermissionSet
 
         return PermissionSet()
 

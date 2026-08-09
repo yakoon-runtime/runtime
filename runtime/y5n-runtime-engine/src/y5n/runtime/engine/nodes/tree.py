@@ -9,13 +9,13 @@ from typing import Any
 import yaml
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
 from y5n.runtime.api.runtime.invocation import CommandSignature, Param, ParamKind
-from y5n.runtime.engine.bootstrap import PackReference
 from y5n.runtime.engine.executor import (
     Executor,
     ExecutorKind,
     ExecutorRegistry,
     Phase,
 )
+from y5n.runtime.engine.executor.pack import PackReference
 from y5n.runtime.engine.flow.util import empty_flow
 from y5n.runtime.engine.nodes import Node
 

@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING
 
 from y5n.runtime.api.permissions import Operation
 
+from .models import PermBits, Permission
+
 if TYPE_CHECKING:
     from y5n.runtime.engine.nodes import Node
     from y5n.runtime.engine.runtime import Session
@@ -45,3 +47,41 @@ class PermissionChecker:
         if not session.permissions:
             return False
         return session.permissions.check(perm_key, "x")
+
+
+class PermissionParser:
+
+    def parse(self, spec: str) -> Permission:
+        """
+        Formats:
+
+        /ident/users/list|rx
+        -/ident/users/list|x
+        """
+
+        if not spec or not spec.strip():
+            raise ValueError("Empty permission spec")
+
+        s = spec.strip()
+        deny = s.startswith("-")
+        if deny:
+            s = s[1:].strip()
+
+        if "|" not in s:
+            raise ValueError(f"Invalid permission " f"(missing '|'): {spec}")
+
+        key, rights = s.split("|", 1)
+
+        key = key.strip()
+        rights = rights.strip()
+        if not key:
+            raise ValueError(f"Invalid permission " f"(empty key): {spec}")
+
+        if ":" in rights:
+            raise ValueError(f"Invalid permission " f"(scope not supported): {spec}")
+
+        return Permission(
+            path=key,
+            bits=PermBits.from_str(rights),
+            deny=deny,
+        )

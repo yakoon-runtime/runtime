@@ -4,9 +4,9 @@ import inspect
 import os
 from typing import TYPE_CHECKING
 
-from ..bootstrap import PackReference
 from ..flow.util import empty_flow
 from .base import Executor, ExecutorKind, Phase, RunResult
+from .pack import PackReference
 
 if TYPE_CHECKING:
     from y5n.runtime.engine.nodes.node import Node

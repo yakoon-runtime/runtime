@@ -7,7 +7,7 @@ on the same level, deny wins over allow.
 
 from __future__ import annotations
 
-from y5n.runtime.engine.capabilities.permission import PermissionParser, PermissionSet
+from y5n.runtime.engine.services.permissions import PermissionParser, PermissionSet
 
 
 def _add(permset: PermissionSet, spec: str) -> None:
