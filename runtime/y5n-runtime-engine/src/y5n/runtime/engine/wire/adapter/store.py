@@ -13,13 +13,24 @@ results as plain dicts. The SDK models them into typed wrappers (ADR-11).
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, TypedDict
 
 from y5n.runtime.api.naming import Key, Namespace
 from y5n.runtime.api.runtime.invoke import Call
 
 
-def _key(raw: dict) -> Key:
+class _NamespaceDict(TypedDict, total=False):
+    domain: str
+    kind: str
+    space: str
+
+
+class _KeyDict(TypedDict, total=False):
+    namespace: _NamespaceDict
+    id: str
+
+
+def _key(raw: _KeyDict) -> Key:
     ns = raw.get("namespace") or {}
     return Key(
         namespace=Namespace(
@@ -50,6 +61,12 @@ def _namespace(raw: str) -> Namespace:
     return Namespace(domain, kind, space)
 
 
+def _index_key(raw: str):
+    from y5n.runtime.store.event.models import IndexKey
+
+    return IndexKey(raw)
+
+
 class StoreAdapter:
     """SDK-facing ``store`` Port — the shared Event Store + sequencer."""
 
@@ -61,15 +78,17 @@ class StoreAdapter:
     # ENTITY API
     # ------------------------
 
-    async def get(self, call: Call, *, key: str, at_time: str | None = None) -> dict:
+    async def get(
+        self, call: Call, *, key: _KeyDict, at_time: str | None = None
+    ) -> dict:
         result = await self._objects.get(key=_key(key), at_time=_from_iso(at_time))
         return _get_result_to_dict(result)
 
-    async def get_many(self, call: Call, *, keys: list[str]) -> list[dict]:
+    async def get_many(self, call: Call, *, keys: list[_KeyDict]) -> list[dict]:
         results = await self._objects.get_many(keys=[_key(k) for k in keys])
         return [_get_result_to_dict(r) for r in results]
 
-    async def history(self, call: Call, *, key: str) -> list[dict]:
+    async def history(self, call: Call, *, key: _KeyDict) -> list[dict]:
         """Return the revisions of an entity — the history, not current state."""
         from datetime import UTC, datetime
 
@@ -99,7 +118,7 @@ class StoreAdapter:
         self,
         call: Call,
         *,
-        key: str,
+        key: _KeyDict,
         patch: list[dict] | dict,
         indexes: list[dict] | None = None,
         snapshot_hint: str | None = None,
@@ -120,7 +139,7 @@ class StoreAdapter:
         self,
         call: Call,
         *,
-        key: str,
+        key: _KeyDict,
         doc: dict,
         indexes: list[dict] | None = None,
         snapshot_hint: str | None = None,
@@ -139,7 +158,7 @@ class StoreAdapter:
         self,
         call: Call,
         *,
-        key: str,
+        key: _KeyDict,
         doc: dict,
         expected_rev: int | None = None,
         context: dict | None = None,
@@ -158,7 +177,7 @@ class StoreAdapter:
         self,
         call: Call,
         *,
-        key: str,
+        key: _KeyDict,
         meta: dict | None = None,
         expected_rev: int | None = None,
     ) -> dict:
@@ -186,7 +205,7 @@ class StoreAdapter:
     ) -> dict:
         keys, next_cursor = await self._objects.scan(
             namespace=_namespace(namespace),
-            index_key=index_key,
+            index_key=_index_key(index_key),
             value=value,
             lo=lo,
             hi=hi,
