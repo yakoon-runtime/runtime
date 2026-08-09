@@ -4,7 +4,7 @@ import inspect
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 import yaml
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
@@ -329,6 +329,15 @@ class Tree:
             if node.key == key:
                 return node
         return None
+
+    def iter_nodes(self) -> Iterator[Node]:
+        """Iterate over all nodes in the tree.
+
+        The tree *describes* the installed components; it does not answer
+        domain questions about them. Collectors (store, queue, cache, …)
+        walk these nodes and evaluate their declared needs.
+        """
+        return iter(self._nodes.values())
 
     def resolve(self, parent: Node, key: str) -> Node | None:
         ppath = str(parent.path)
