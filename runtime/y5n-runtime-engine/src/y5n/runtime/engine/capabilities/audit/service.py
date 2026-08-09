@@ -1,20 +1,22 @@
+"""Runtime logging (ADR-17 Phase 4).
+
+After the audit rework, this service is no longer an audit trail — the
+Event Store records activity and domain events. What remains is *runtime*
+logging: warnings and errors that describe the runtime itself (a scheduler
+iteration limit, an unhandled exception), not fachliche events.
+"""
+
 import logging
 
 from y5n.runtime.engine.settings.logging import LoggingSettings
 
 
-class AuditLogService:
+class RuntimeLogService:
 
     def __init__(self, settings: LoggingSettings):
         self.settings = settings
-        self._audit = logging.getLogger("audit")
         self._error = logging.getLogger("error")
         self._warning = logging.getLogger("warning")
-        self._security = logging.getLogger("security")
-
-    def audit(self, message: str):
-        if self.settings.log_commands:
-            self._audit.info(message)
 
     def warning(self, message: str, session):
         if self.settings.log_warnings:
@@ -26,15 +28,4 @@ class AuditLogService:
                 "Unhandled exception",
                 exc_info=(type(exc), exc, exc.__traceback__),
                 extra={"session": session.key if session else None},
-            )
-
-    def security(self, session, obj, action):
-        if self.settings.log_security:
-            self._security.warning(
-                "Permission denied",
-                extra={
-                    "session": session.key,
-                    "object": obj,
-                    "action": action,
-                },
             )

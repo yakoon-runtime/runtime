@@ -1,5 +1,5 @@
 from y5n.runtime.api.runtime import get_bus
-from y5n.runtime.engine.capabilities.audit import AuditLogService
+from y5n.runtime.engine.capabilities.audit import RuntimeLogService
 from y5n.runtime.engine.capabilities.permission import PermissionChecker
 from y5n.runtime.engine.executor import (
     ExecutorKind,
@@ -47,7 +47,7 @@ def build_runtime(
     # ----------------
 
     guidance_service = GuidanceService()
-    audit_service = AuditLogService(settings.logging)
+    audit_service = RuntimeLogService(settings.logging)
 
     activity_service = ActivityService(on_record=store.objects.record)
 

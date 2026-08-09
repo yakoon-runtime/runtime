@@ -1,7 +1,6 @@
-from .logger import RotatingFileHandler
-from .service import AuditLogService
+from . import logger  # noqa: F401  (registers runtime log handlers on import)
+from .service import RuntimeLogService
 
 __all__ = [
-    "AuditLogService",
-    "RotatingFileHandler",
+    "RuntimeLogService",
 ]
