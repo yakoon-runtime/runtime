@@ -25,6 +25,7 @@ class RevisionRow:
     ts: datetime
     patch: JsonValue
     patch_format: PatchFormat
+    context: JsonValue | None = None
 
 
 @dataclass(frozen=True, slots=True)

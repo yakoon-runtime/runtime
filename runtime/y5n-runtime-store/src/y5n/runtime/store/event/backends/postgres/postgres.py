@@ -183,13 +183,14 @@ class _PostgresExec:
         ts,
         patch_format,
         patch,
+        context=None,
     ):
         await self.conn.execute(
             """
             INSERT INTO revisions(
-                domain, kind, space, entity_id, rev, ts, patch, patch_format
+                domain, kind, space, entity_id, rev, ts, patch, patch_format, context
             )
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
             """,
             str(domain_id),
             str(kind_id),
@@ -199,6 +200,7 @@ class _PostgresExec:
             ts,
             json.dumps(patch),
             patch_format.value,
+            json.dumps(context) if context is not None else None,
         )
 
     async def load_revisions(
@@ -213,7 +215,7 @@ class _PostgresExec:
     ):
         rows = await self.conn.fetch(
             """
-            SELECT rev, ts, patch, patch_format
+            SELECT rev, ts, patch, patch_format, context
             FROM revisions
             WHERE domain=$1 AND kind=$2 AND space=$3 AND entity_id=$4
               AND rev > $5 AND ts <= $6
@@ -234,6 +236,7 @@ class _PostgresExec:
                 ts=r["ts"],
                 patch=r["patch"],
                 patch_format=PatchFormat(r["patch_format"]),
+                context=r["context"],
             )
             for r in rows
         ]

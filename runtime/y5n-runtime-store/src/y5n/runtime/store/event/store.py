@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from typing import Literal, Protocol
 
 from y5n.runtime.api.naming import Key, Namespace
+from y5n.runtime.api.runtime.context import Context, current_context
 
 from .batches.json_patch import JsonPatchStrategy
 from .models import (
@@ -134,6 +135,8 @@ class EntityStore:
 
         d, k, s, eid = _dims_from_key(key)
 
+        context = _derive_context()
+
         cur = await self.on_load_current(
             domain_id=d, kind_id=k, space_id=s, entity_id=eid
         )
@@ -170,6 +173,7 @@ class EntityStore:
             ts=now,
             patch_format=self._writer.format,
             patch=patch,
+            context=context,
         )
 
         await self.on_upsert_current(
@@ -567,6 +571,20 @@ def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
+def _derive_context() -> JsonValue | None:
+    """Project the ambient invocation ABI into the stored context envelope.
+
+    The engine establishes the invocation context before every flow step
+    (ADR-12/16). Any write that happens inside a command therefore carries
+    its actor, session, command, and trace — without the writer ever
+    knowing about Context (ADR-17: Context, not audit).
+    """
+    raw = current_context()
+    if not raw:
+        return None
+    return Context.from_invocation(raw).to_dict()
+
+
 def _dims_from_namespace(ns: Namespace):
     return DomainId(ns.domain), KindId(ns.kind), SpaceId(ns.space)
 
@@ -692,6 +710,7 @@ class OnAppendRevision(Protocol):
         ts: datetime,
         patch_format: PatchFormat,
         patch: JsonValue,
+        context: JsonValue | None = None,
     ) -> None: ...
 
 

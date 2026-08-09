@@ -184,6 +184,7 @@ class MemoryBackend:
         ts: datetime,
         patch_format: PatchFormat,
         patch: JsonValue,
+        context: JsonValue | None = None,
     ) -> None:
         k = self._k(
             domain_id=domain_id, kind_id=kind_id, space_id=space_id, entity_id=entity_id
@@ -196,6 +197,7 @@ class MemoryBackend:
                 ts=ts,
                 patch=patch,
                 patch_format=patch_format,
+                context=context,
             )
         )
         rows.sort(key=lambda r: r.rev)
