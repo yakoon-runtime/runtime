@@ -1,14 +1,24 @@
+"""Runtime logging (ADR-17 Phase 4).
+
+After the audit rework, this is no longer an audit trail — the Event
+Store records activity and domain events. What remains is *runtime*
+logging: warnings and errors that describe the runtime itself (a scheduler
+iteration limit, an unhandled exception), not fachliche events.
+"""
+
+from __future__ import annotations
+
 import logging
+import tomllib
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from ...settings import Settings
+from y5n.runtime.engine.settings import Settings
+from y5n.runtime.engine.settings.logging import LoggingSettings
 
 
 def _resolve_logdir() -> Path:
     """Use context .yak/logs/ if configured, otherwise fall back to settings."""
-    import tomllib
-
     cwd = Path.cwd()
     for parent in [cwd, *cwd.parents]:
         ctx = parent / ".yak" / "context.toml"
@@ -41,7 +51,7 @@ class _SafeFormatter(logging.Formatter):
         return super().format(record)
 
 
-def file_logger(name, filename, level=logging.INFO):
+def _file_logger(name, filename, level=logging.INFO):
     logger = logging.getLogger(name)
     logger.setLevel(level)
 
@@ -61,9 +71,29 @@ def file_logger(name, filename, level=logging.INFO):
     return logger
 
 
-settings = Settings()
+_settings = Settings()
 
-if settings.logging.log_errors:
-    file_logger("error", "y5n.error.log", logging.ERROR)
-if settings.logging.log_warnings:
-    file_logger("warning", "y5n.warning.log", logging.WARNING)
+if _settings.logging.log_errors:
+    _file_logger("error", "y5n.error.log", logging.ERROR)
+if _settings.logging.log_warnings:
+    _file_logger("warning", "y5n.warning.log", logging.WARNING)
+
+
+class RuntimeLogService:
+
+    def __init__(self, settings: LoggingSettings):
+        self.settings = settings
+        self._error = logging.getLogger("error")
+        self._warning = logging.getLogger("warning")
+
+    def warning(self, message: str, session):
+        if self.settings.log_warnings:
+            self._warning.warning(message, extra={"session": session.key})
+
+    def error(self, exc: Exception, session=None):
+        if self.settings.log_errors:
+            self._error.error(
+                "Unhandled exception",
+                exc_info=(type(exc), exc, exc.__traceback__),
+                extra={"session": session.key if session else None},
+            )

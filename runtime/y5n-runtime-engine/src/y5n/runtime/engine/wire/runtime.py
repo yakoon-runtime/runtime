@@ -1,5 +1,4 @@
 from y5n.runtime.api.runtime import get_bus
-from y5n.runtime.engine.capabilities.audit import RuntimeLogService
 from y5n.runtime.engine.capabilities.permission import PermissionChecker
 from y5n.runtime.engine.executor import (
     ExecutorKind,
@@ -9,7 +8,7 @@ from y5n.runtime.engine.executor import (
 from y5n.runtime.engine.flow import Flow
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.runtime import SessionService
-from y5n.runtime.engine.services import GuidanceService
+from y5n.runtime.engine.services import GuidanceService, RuntimeLogService
 from y5n.runtime.engine.services.activity import ActivityService
 from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.sources import DataSourceRegistry
