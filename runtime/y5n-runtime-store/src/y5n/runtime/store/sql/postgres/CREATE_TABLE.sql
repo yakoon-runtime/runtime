@@ -24,6 +24,18 @@ CREATE TABLE revisions (
   PRIMARY KEY (domain, kind, space, entity_id, rev)
 );
 
+-- snapshots (periodic materialization)
+CREATE TABLE snapshots (
+  domain TEXT,
+  kind TEXT,
+  space TEXT,
+  entity_id TEXT,
+  rev INT,
+  ts TIMESTAMPTZ,
+  data JSONB,
+  PRIMARY KEY (domain, kind, space, entity_id, rev)
+);
+
 -- index specs
 CREATE TABLE index_specs (
   domain TEXT,

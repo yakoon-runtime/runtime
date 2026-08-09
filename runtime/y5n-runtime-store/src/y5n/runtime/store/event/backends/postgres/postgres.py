@@ -236,7 +236,11 @@ class _PostgresExec:
                 ts=r["ts"],
                 patch=r["patch"],
                 patch_format=PatchFormat(r["patch_format"]),
-                context=r["context"],
+                context=(
+                    json.loads(r["context"])
+                    if isinstance(r["context"], str)
+                    else r["context"]
+                ),
             )
             for r in rows
         ]
