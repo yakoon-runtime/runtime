@@ -25,7 +25,7 @@ from y5n.runtime.engine.machine import (
     SessionBuilder,
     TaskRunner,
 )
-from y5n.runtime.engine.machine.ports import OnAuditWarning, OnSuggest
+from y5n.runtime.engine.machine.ports import OnActivity, OnAuditWarning, OnSuggest
 from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.runtime import Session
 from y5n.runtime.engine.runtime.bus import BusOutput
@@ -44,6 +44,7 @@ def build_machine(
     on_session: OnGetOrCreateSession,
     on_has_permission: OnHasPermission,
     on_audit_warning: OnAuditWarning,
+    on_activity: OnActivity,
     on_initialize: Oninitialize,
     known_runtimes: dict[str, str],
     settings: Settings,
@@ -148,6 +149,11 @@ def build_machine(
     # -----------------
 
     async def flow_complete(flow: Flow, session: Session) -> None:
+        await on_activity(
+            kind="command.executed",
+            session=session,
+            payload={"path": str(flow.node.path) if flow.node else None},
+        )
         await manager.flow_complete(flow, session)
 
     scheduler = Scheduler(

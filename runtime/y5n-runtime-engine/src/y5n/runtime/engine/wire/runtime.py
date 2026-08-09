@@ -6,9 +6,11 @@ from y5n.runtime.engine.executor import (
     ExecutorRegistry,
     RuntimeExecutor,
 )
+from y5n.runtime.engine.flow import Flow
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.runtime import SessionService
 from y5n.runtime.engine.services import GuidanceService
+from y5n.runtime.engine.services.activity import ActivityService
 from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.sources import DataSourceRegistry
 from y5n.runtime.engine.sources.data import (
@@ -46,6 +48,8 @@ def build_runtime(
 
     guidance_service = GuidanceService()
     audit_service = AuditLogService(settings.logging)
+
+    activity_service = ActivityService(on_record=store.objects.record)
 
     session_manager = SessionService(
         on_replace=store.objects.replace,
@@ -125,6 +129,7 @@ def build_runtime(
         on_projection_send=output.send_document,
         on_has_permission=perm_checker.check,
         on_audit_warning=audit_service.warning,
+        on_activity=activity_service.record,
         on_initialize=initialize,
         known_runtimes=settings.runtime.known,
         settings=settings,

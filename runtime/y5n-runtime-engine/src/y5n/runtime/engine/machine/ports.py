@@ -18,6 +18,23 @@ class OnAuditWarning(Protocol):
     def __call__(self, *, message: str, session: Session) -> None: ...
 
 
+class OnActivity(Protocol):
+    """Observer port for activity events (ADR-17 Phase 2).
+
+    The engine boundary reports what happened (a command executed, a
+    permission denied, a login failed) without changing state. The wire
+    connects it to the write-only activity store.
+    """
+
+    async def __call__(
+        self,
+        *,
+        kind: str,
+        session: Session,
+        payload: dict | None = None,
+    ) -> None: ...
+
+
 class OnSuggest(Protocol):
     def __call__(
         self,

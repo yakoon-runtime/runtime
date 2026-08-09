@@ -14,13 +14,13 @@ from pathlib import Path
 
 import pytest
 from y5n.runtime.api.flow.primitives import CwdEffect, EmitView, Pulse, Stop
-from y5n.runtime.engine.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.executor.base import ExecutorKind, ExecutorRegistry
 from y5n.runtime.engine.executor.runtime import RuntimeExecutor
 from y5n.runtime.engine.flow import Flow, FlowCursor
 from y5n.runtime.engine.machine.parser import InputParser
 from y5n.runtime.engine.machine.runner import Runner
+from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.runtime.invocation import derive_invocation_context
 from y5n.sdk import context as sdk_context

@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 from y5n.runtime.api.flow.primitives import EmitView, Pulse, Stop
-from y5n.runtime.engine.nodes import Node
 from y5n.runtime.api.runtime import Event
 from y5n.runtime.engine.flow import Flow, FlowCursor
+from y5n.runtime.engine.nodes import Node
 from y5n.runtime.engine.runtime.invocation import derive_invocation_context
 from y5n.sdk import context as sdk_context
 

@@ -113,3 +113,48 @@ async def test_context_value_object_projects_and_serializes():
         "flow_id": "f9",
         "args": ["--world", "crm"],
     }
+
+
+async def test_record_never_materializes_current_state():
+    store = build_store()
+    key = NS.get_key("evt-1")
+
+    result = await store.record(key=key, doc={"kind": "read", "path": "/opt"})
+
+    assert result.rev == 1
+    assert result.snapshot_written is False
+
+    cur = await store.on_load_current(
+        domain_id=NS.domain, kind_id=NS.kind, space_id=NS.space, entity_id="evt-1"
+    )
+    assert cur is None
+
+
+async def test_record_carries_ambient_context():
+    store = build_store()
+    set_context(_invocation(flow_id="f-activity"))
+
+    await store.record(key=NS.get_key("evt-1"), doc={"kind": "read", "path": "/opt"})
+
+    revs = await _load_revisions(store, "evt-1")
+    ctx = revs[0].context
+    assert ctx is not None
+    assert ctx["actor"] == {"id": "u1", "name": "stefan"}
+    assert ctx["command"]["flow_id"] == "f-activity"
+
+
+async def test_record_explicit_context_overrides_ambient():
+    store = build_store()
+    set_context(_invocation(flow_id="f-ambient"))
+
+    await store.record(
+        key=NS.get_key("evt-1"),
+        doc={"kind": "permission.denied", "path": "/usr/bin/ls"},
+        context={"actor": {"id": "u-99", "name": "system"}, "session": {}},
+    )
+
+    revs = await _load_revisions(store, "evt-1")
+    ctx = revs[0].context
+    assert ctx is not None
+    assert ctx["actor"] == {"id": "u-99", "name": "system"}
+    assert "command" not in ctx

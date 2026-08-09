@@ -42,6 +42,23 @@ class OnAppend(Protocol):
     ) -> PutResult: ...
 
 
+class OnRecord(Protocol):
+    """Record an activity event — never materialized as current state.
+
+    Used for activity events (ADR-17 Phase 2): an immutable, timestamped
+    revision that exists purely as history.
+    """
+
+    async def __call__(
+        self,
+        *,
+        key: Key,
+        doc: Mapping[str, JsonValue],
+        expected_rev: int | None = None,
+        context: JsonValue | None = None,
+    ) -> PutResult: ...
+
+
 class OnReplace(Protocol):
     async def __call__(
         self,

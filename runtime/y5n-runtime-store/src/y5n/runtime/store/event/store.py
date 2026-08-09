@@ -118,6 +118,58 @@ class EntityStore:
                 expected_rev=expected_rev,
             )
 
+    async def record(
+        self,
+        *,
+        key: Key,
+        doc: Mapping[str, JsonValue],
+        expected_rev: int | None = None,
+        context: JsonValue | None = None,
+    ) -> PutResult:
+        """Record an activity event, write-only (ADR-17 Phase 2).
+
+        Appends an immutable, timestamped revision that is never
+        materialized: no current row, no index terms, no snapshot. The
+        event exists purely as history. Context comes from the ambient
+        invocation; an explicit ``context`` overrides it (used when the
+        event is written outside a flow step).
+        """
+        async with self._write_lock:
+            patch = self._writer.create_full_replace(current=None, new_doc=doc)
+            self._writer.validate(patch)
+
+            now = _utc_now()
+            d, k, s, eid = _dims_from_key(key)
+
+            cur = await self.on_load_current(
+                domain_id=d, kind_id=k, space_id=s, entity_id=eid
+            )
+            cur_rev = 0 if cur is None else cur.rev
+
+            if expected_rev is not None and expected_rev != cur_rev:
+                raise ConcurrencyError()
+
+            new_rev = cur_rev + 1
+
+            await self.on_append_revision(
+                domain_id=d,
+                kind_id=k,
+                space_id=s,
+                entity_id=eid,
+                rev=new_rev,
+                ts=now,
+                patch_format=self._writer.format,
+                patch=patch,
+                context=context if context is not None else _derive_context(),
+            )
+
+            return PutResult(
+                entity_id=eid,
+                rev=new_rev,
+                updated_at=now,
+                snapshot_written=False,
+            )
+
     async def _append(
         self,
         *,
