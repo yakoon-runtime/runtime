@@ -14,5 +14,4 @@ class Settings:
     logging: LoggingSettings = field(default_factory=LoggingSettings)
     runtime: RuntimeSettings = field(default_factory=RuntimeSettings)
     storage: StorageSettings = field(default_factory=StorageSettings)
-    stores: dict[str, StorageSettings] = field(default_factory=dict)
     sequencer: SequenceSettings = field(default_factory=SequenceSettings)

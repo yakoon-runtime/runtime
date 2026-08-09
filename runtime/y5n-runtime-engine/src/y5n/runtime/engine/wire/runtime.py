@@ -27,8 +27,6 @@ from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver
 from y5n.runtime.engine.wire.document import build_document_stack
 from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
 from y5n.runtime.engine.wire.stream import build_stream
-from y5n.runtime.store.event.runtime import StoreRuntime
-from y5n.runtime.store.event.store import EntityStore
 from y5n.runtime.store.event.wire import build_store
 from y5n.runtime.store.sequence.wire import build_store as build_sequencer
 
@@ -44,13 +42,6 @@ def build_runtime(
 
     store = build_store(settings.storage)
     sequencer = build_sequencer(settings.sequencer)
-
-    extra_stores: list[StoreRuntime] = []
-    stores: dict[str, EntityStore] = {}
-    for name, s in settings.stores.items():
-        built = build_store(s)
-        extra_stores.append(built)
-        stores[name] = built.objects
 
     # ----------------
     # --- SERVICES ---
@@ -129,8 +120,6 @@ def build_runtime(
 
     async def initialize():
         await store.initialize()
-        for extra in extra_stores:
-            await extra.initialize()
         await sequencer.initialize()
         await activity_service.ensure_index()
         await tree.setup()
@@ -244,7 +233,7 @@ def build_runtime(
             sequencer,
             resolver=StoreResolver(
                 tree=tree,
-                stores=stores,
+                stores={},
                 default=store.objects,
             ),
         ),
