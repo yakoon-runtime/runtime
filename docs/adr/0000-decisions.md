@@ -5,6 +5,41 @@
 
 ---
 
+## 2026-08-09 — Declarative Store Profiles (ADR-18)
+
+**Status: Proposed.** A pack declares its persistence need as a **named store
+profile** — `store: crm` in `yak.yml` — and nothing else. No backend, no
+connection, no profile-configuration.
+
+**Key sentence:** *"A pack declares its store as a named profile, never as
+infrastructure."* `store: crm` says *"this pack works against the store
+profile called crm"*; which backend that is, where it lives, how it is
+tuned is the deployment's decision. The code stays forever
+`store = sdk.store()` — `sdk.store("crm")` is never introduced, the pack
+names its store in its declaration, not in code. The `yak` tool translates
+need into deployment: `yak install` reads `store: crm` and adds a
+`stores: crm: backend: postgres` entry when missing. A pack without `store:`
+binds to the default store (today the only one) — the declaration is
+additive, single-store deployment is the degenerate case where every name
+maps to one physical store.
+
+**Language independent:** the store is built for Yakoon, not for Python.
+Store profiles live in the component description (`yak.yml`), not in a
+language SDK; every SDK exposes the same abstraction (`sdk.store()`) and no
+SDK knows which store lies behind it — that is runtime/deployment
+knowledge. A future Ruby, .NET, or Go host reads the same `yak.yml` and the
+`yak` tool works unchanged; the contract is fixed at the level every host
+already shares.
+
+**The general principle:** this is the fourth instance of a Yakoon pattern —
+`entry:`, `resources:`, `host:`, now `store:` — and the ADR records it as a
+principle, not a store decision: **"A pack describes what it needs. The
+platform decides how that need is met."** Pack declares → tool prepares →
+runtime resolves → code stays clean. Cache, messaging, scheduling, and any
+future runtime service face the same question and inherit the same answer.
+Store router, multiple physical databases, event aggregation, replication,
+and sharding build *on* this contract and are explicitly out of scope.
+
 ## 2026-08-08 — Audit Is a Property of the Event Store (ADR-17)
 
 **Status: Proposed.** The term **Audit** is replaced by the concept it was
