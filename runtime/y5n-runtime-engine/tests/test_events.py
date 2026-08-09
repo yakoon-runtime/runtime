@@ -102,7 +102,10 @@ async def test_events_list_shows_recorded_events(bus_store, monkeypatch):
 
     lines = _capture_io(monkeypatch)
 
+    import y5n.packs.system.events.list as list_mod
     from y5n.packs.system.events import list as events_list
+
+    monkeypatch.setattr(list_mod, "context", _FakeContextModule(""))
 
     await events_list.main()
 
@@ -150,7 +153,7 @@ async def test_events_show_displays_context(bus_store, monkeypatch):
     await show_mod.main()
 
     text = "\n".join(lines)
-    assert f"Event {event_id}" in text
+    assert f"Event {event_id[:8]}" in text
     assert "command.executed" in text
     assert "stefan" in text
 
@@ -180,8 +183,25 @@ class _FakeContextModule:
     def __init__(self, event_id):
         self._event_id = event_id
 
+    def request(self):
+        return _FakeRequest([self._event_id])
+
     def current(self):
         return _FakeContextInstance(self._event_id)
+
+
+class _FakeRequest:
+    def __init__(self, tokens):
+        self._tokens = tokens
+
+    def has_args(self):
+        return bool(self._tokens)
+
+    def arg(self, index, default=None):
+        return self._tokens[index] if index < len(self._tokens) else default
+
+    def option(self, name, default=None):
+        return default
 
 
 class _FakeContextInstance:
