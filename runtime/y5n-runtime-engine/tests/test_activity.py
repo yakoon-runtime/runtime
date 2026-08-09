@@ -62,10 +62,13 @@ async def test_record_never_materializes_current_state():
 async def test_record_forwards_kind_payload_and_context():
     writes: list[dict] = []
 
-    async def on_record(*, key, doc, expected_rev=None, context=None):
-        writes.append({"key": key, "doc": doc, "context": context})
+    async def on_record(*, key, doc, expected_rev=None, context=None, indexes=()):
+        writes.append({"key": key, "doc": doc, "context": context, "indexes": indexes})
 
-    service = ActivityService(on_record=on_record)
+    async def on_ensure_indexes(*, namespace, specs):
+        return None
+
+    service = ActivityService(on_record=on_record, on_ensure_indexes=on_ensure_indexes)
     session = _session()
 
     await service.record(
@@ -87,16 +90,20 @@ async def test_record_forwards_kind_payload_and_context():
     }
     assert entry["context"]["session"]["key"] == "system/activity/global#s-1"
     assert entry["context"]["session"]["security_context"] == "normal"
+    assert entry["indexes"][0].value == "1"
 
 
 @pytest.mark.asyncio
 async def test_record_without_session_has_no_context():
     writes: list[dict] = []
 
-    async def on_record(*, key, doc, expected_rev=None, context=None):
+    async def on_record(*, key, doc, expected_rev=None, context=None, indexes=()):
         writes.append({"key": key, "doc": doc, "context": context})
 
-    service = ActivityService(on_record=on_record)
+    async def on_ensure_indexes(*, namespace, specs):
+        return None
+
+    service = ActivityService(on_record=on_record, on_ensure_indexes=on_ensure_indexes)
 
     await service.record(kind="read", session=None)
 

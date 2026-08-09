@@ -125,14 +125,15 @@ class EntityStore:
         doc: Mapping[str, JsonValue],
         expected_rev: int | None = None,
         context: JsonValue | None = None,
+        indexes: Sequence[IndexTerm] = (),
     ) -> PutResult:
         """Record an activity event, write-only (ADR-17 Phase 2).
 
         Appends an immutable, timestamped revision that is never
-        materialized: no current row, no index terms, no snapshot. The
-        event exists purely as history. Context comes from the ambient
-        invocation; an explicit ``context`` overrides it (used when the
-        event is written outside a flow step).
+        materialized: no current row, no snapshot. Index terms are written
+        when provided (e.g. an ``all`` index so events can be listed).
+        Context comes from the ambient invocation; an explicit ``context``
+        overrides it (used when the event is written outside a flow step).
         """
         async with self._write_lock:
             patch = self._writer.create_full_replace(current=None, new_doc=doc)
@@ -162,6 +163,16 @@ class EntityStore:
                 patch=patch,
                 context=context if context is not None else _derive_context(),
             )
+
+            if indexes:
+                await self.on_index_replace_terms(
+                    domain_id=d,
+                    kind_id=k,
+                    space_id=s,
+                    entity_id=eid,
+                    terms=indexes,
+                    written_at=now,
+                )
 
             return PutResult(
                 entity_id=eid,

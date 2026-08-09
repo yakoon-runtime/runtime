@@ -33,7 +33,9 @@ async def test_flow_complete_emits_command_executed(harness):
 
     backend = MemoryBackend()
     store = create_entity_store(backend)
-    service = ActivityService(on_record=store.record)
+    service = ActivityService(
+        on_record=store.record, on_ensure_indexes=store.ensure_indexes
+    )
 
     async def on_flow_complete(flow, session):
         await service.record(
@@ -74,7 +76,9 @@ async def test_flow_complete_activity_has_actor_context(harness):
 
     backend = MemoryBackend()
     store = create_entity_store(backend)
-    service = ActivityService(on_record=store.record)
+    service = ActivityService(
+        on_record=store.record, on_ensure_indexes=store.ensure_indexes
+    )
 
     async def on_flow_complete(flow, session):
         await service.record(kind="command.executed", session=session)

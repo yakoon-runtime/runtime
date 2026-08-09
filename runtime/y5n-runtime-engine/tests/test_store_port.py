@@ -62,6 +62,23 @@ async def test_record_is_write_only():
 
 
 @pytest.mark.asyncio
+async def test_history_returns_revisions_with_context():
+    adapter = _adapter()
+
+    await adapter.record(
+        _call(),
+        key="system/activity/global#evt-1",
+        doc={"kind": "read", "path": "/opt"},
+    )
+
+    history = await adapter.history(_call(), key="system/activity/global#evt-1")
+    assert len(history) == 1
+    assert history[0]["rev"] == 1
+    assert history[0]["data"] == {"kind": "read", "path": "/opt"}
+    assert history[0]["ts"] is not None
+
+
+@pytest.mark.asyncio
 async def test_append_and_next_id():
     adapter = _adapter()
 

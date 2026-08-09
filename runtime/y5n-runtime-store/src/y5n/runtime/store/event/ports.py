@@ -56,6 +56,7 @@ class OnRecord(Protocol):
         doc: Mapping[str, JsonValue],
         expected_rev: int | None = None,
         context: JsonValue | None = None,
+        indexes: Sequence[IndexTerm] = (),
     ) -> PutResult: ...
 
 

@@ -51,7 +51,10 @@ def build_runtime(
     guidance_service = GuidanceService()
     audit_service = RuntimeLogService(settings.logging)
 
-    activity_service = ActivityService(on_record=store.objects.record)
+    activity_service = ActivityService(
+        on_record=store.objects.record,
+        on_ensure_indexes=store.objects.ensure_indexes,
+    )
 
     session_manager = SessionService(
         on_replace=store.objects.replace,
@@ -119,6 +122,7 @@ def build_runtime(
     async def initialize():
         await store.initialize()
         await sequencer.initialize()
+        await activity_service.ensure_index()
         await tree.setup()
 
     # ------------------------
@@ -215,6 +219,7 @@ def build_runtime(
                 "record",
                 "delete",
                 "scan",
+                "history",
                 "ensure_indexes",
                 "query_index",
                 "next_id",

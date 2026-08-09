@@ -55,6 +55,32 @@ class StoreAdapter:
         results = await self._objects.get_many(keys=[_key(k) for k in keys])
         return [_get_result_to_dict(r) for r in results]
 
+    async def history(self, call: Call, *, key: str) -> list[dict]:
+        """Return the revisions of an entity — the history, not current state."""
+        from datetime import UTC, datetime
+
+        k = _key(key)
+        revs = await self._objects.on_load_revisions(
+            domain_id=k.namespace.domain,
+            kind_id=k.namespace.kind,
+            space_id=k.namespace.space,
+            entity_id=k.id,
+            rev_gt=0,
+            ts_lte=datetime.now(UTC),
+        )
+        out = []
+        for r in revs:
+            data = r.patch[0].get("value") if isinstance(r.patch, list) else r.patch
+            out.append(
+                {
+                    "rev": r.rev,
+                    "ts": r.ts.isoformat() if r.ts else None,
+                    "data": data,
+                    "context": r.context,
+                }
+            )
+        return out
+
     async def append(
         self,
         call: Call,
