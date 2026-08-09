@@ -16,12 +16,20 @@ infrastructure."* `store: crm` says *"this pack works against the store
 profile called crm"*; which backend that is, where it lives, how it is
 tuned is the deployment's decision. The code stays forever
 `store = sdk.store()` — `sdk.store("crm")` is never introduced, the pack
-names its store in its declaration, not in code. The `yak` tool translates
-need into deployment: `yak install` reads `store: crm` and adds a
-`stores: crm: backend: postgres` entry when missing. A pack without `store:`
-binds to the default store (today the only one) — the declaration is
-additive, single-store deployment is the degenerate case where every name
-maps to one physical store.
+names its store in its declaration, not in code. The pack knows only the
+**name** — not even the backend. The `yak` tool collects the logical store
+names all installed packs declare, asks *"Store 'crm' — which backend?"*,
+and adds a `stores: crm: backend: postgres` entry to the deployment when
+missing. A pack without `store:` binds to the default store (today the only
+one) — the declaration is additive, single-store deployment is the
+degenerate case where every name maps to one physical store.
+
+**Four layers of store knowledge:** what (pack: `store: crm`), where the
+runtime runs (runtime config: network, ports, logging — never stores), what
+and where the store is (installation: `stores:` with backend, host, port,
+database — machine-specific, not versioned, created by `yak install`), and
+who may open it (secret store: credentials referenced by name, never in
+Git). Nothing sensitive ever becomes part of a pack or a repository.
 
 **Language independent:** the store is built for Yakoon, not for Python.
 Store profiles live in the component description (`yak.yml`), not in a

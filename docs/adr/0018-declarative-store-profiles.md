@@ -117,20 +117,29 @@ The decision fixes the *principle* — declare a profile, not
 infrastructure — and deliberately leaves the scalar form as the current
 syntax.
 
-### 2. The pack never knows infrastructure
+### 2. The pack knows only the name
 
-The following are **not** part of the declaration:
+The pack declares the store's **logical name** and nothing else — not the
+backend, not the instance. It does not even say whether the store is
+postgres, sqlite, or memory:
 
 ```yaml
 # never
 store:
   backend: postgres
+  host: db.company.local
+  port: 5432
+  database: crm
+  username: stefan
   connection: postgres://...
   retention: 30d
 ```
 
-All of it is deployment configuration. The pack describes its need; the
-deployment describes the store.
+The backend is *also* a realization, not a need — ``store: crm`` says "I
+need the store called crm", and it is the deployment's decision whether
+that is a postgres cluster, a sqlite file on a Raspberry Pi, or a managed
+database in a Kubernetes cluster. The pack describes its need; the
+deployment describes the store (see *Four Layers of Store Knowledge*).
 
 ### 3. The code stays `sdk.store()`
 
@@ -148,11 +157,10 @@ code, it names it in its declaration.
 
 ### 4. The `yak` tool translates need into deployment
 
-`yak install` reads `store: crm`, resolves the logical name against the
-deployment configuration, and:
-
-- if the store already exists → does nothing;
-- if it does not exist → adds it:
+`yak install` reads `store: crm`, and asks: *"Store 'crm' — which
+backend?"* (postgres, sqlite, memory). If the store already exists in the
+deployment configuration → does nothing; if it does not exist → asks the
+backend and instance, then adds it:
 
 ```yaml
 stores:
@@ -160,7 +168,9 @@ stores:
     backend: postgres
 ```
 
-The runtime starts with a deployment that knows `crm`, and
+The pack never names a backend — the tool collects the logical store names
+all installed packs declare, and the deployment decides what each name
+means. The runtime starts with a deployment that knows `crm`, and
 `sdk.store()` returns the store called `crm`.
 
 The `yak` tool is not an installer of files — it is the **assembler of a
@@ -257,6 +267,84 @@ the `yak` tool works unchanged. The ADR fixes the contract at the component
 level — the level every host already shares — so it does not need to change
 when a new host language arrives.
 
+## Four Layers of Store Knowledge
+
+Store knowledge is not one thing — it is four things, and each belongs to a
+different owner. This is the same separation Docker, Kubernetes, and
+ASP.NET make between the image, the manifest, and the injected secret.
+
+### 1. Pack — versioned
+
+The pack declares the store's logical name and nothing more:
+
+```yaml
+store: crm
+```
+
+That is the entire contract. The pack does not even say which backend it
+is — ``crm`` is the shared term between pack, runtime, and deployment. The
+pack is portable: hand it to anyone, they install it, and the store is
+built from their deployment — never from a DSN committed to Git.
+
+### 2. Runtime — versioned
+
+The runtime config holds only what the runtime itself needs to run:
+network, ports, scheduling, logging, transport. It does **not** list
+stores — the runtime is an executor, not a store registry. It runs packs;
+the packs' commands use stores; the runtime is indifferent to which ones.
+What the runtime *does* collect is the set of logical store names the
+installed packs declare — `{crm, security, telemetry}` — so its store
+registry knows which names must exist.
+
+```
+runtime:
+  host: 0.0.0.0
+  port: 9100
+  logging: ...
+```
+
+### 3. Installation — not versioned, machine-specific
+
+The installation decides the backend **and** the instance of each store.
+It is created by `yak install` (which asks *"Store 'crm' — which backend?"*,
+then *"where does it live?"*), lives outside Git (e.g.
+`.yak/runtime/stores.yml`), and answers *"what is crm and where?"* — never
+*"which DSN is in the repo?"*.
+
+```yaml
+stores:
+  crm:
+    backend: postgres
+    host: db.company.local
+    port: 5432
+    database: crm
+    username: stefan
+    credential: company-postgres
+```
+
+The same pack installs on a Raspberry Pi with `backend: sqlite`, in a
+company with a postgres cluster, and in Kubernetes with a managed database
+— the pack never changes.
+
+### 4. Secret store — never in Git
+
+Passwords, tokens, and certificates never live in the pack, the runtime
+config, or the installation. They live in a secret store the platform
+knows: the OS keychain, the Linux Secret Service, Windows Credential
+Manager, Vault, or a cloud secrets manager. The installation only
+references the credential by name:
+
+```yaml
+stores:
+  crm:
+    credential: company-postgres
+```
+
+The four layers answer one question each: **what** (pack), **where the
+runtime runs** (runtime), **what and where the store is** (installation),
+**who may open it** (secret store). Nothing sensitive ever becomes part of
+a pack or a Git repository.
+
 ## Consequences
 
 ### Benefits
@@ -339,12 +427,14 @@ without a declared profile has nothing to route.
    remap, or is it simply "the only store" until a deployment says
    otherwise? Default bias: an explicit `default` name, remappable.
 3. **Who owns the `stores:` section?** The runtime configuration file, or a
-   deployment-level file the `yak` tool maintains? The earlier sketch put
-   it in runtime configuration; a deployment file keeps runtime and
-   deployment separate. Default bias: deployment-level, owned by `yak`.
-4. **Where do stores' own needs live?** Retention, backend tuning, DSNs —
-   next to the store in the deployment. Whether they are per-store keys or
-   a reference to a named backend definition is left open.
+   deployment-level file the `yak` tool maintains? The direction is now
+   clear: not the runtime config (the runtime collects only store *names*)
+   and not the pack (which declares only the name). The `stores:` section
+   belongs to the deployment — created by `yak install`, machine-specific,
+   not versioned.
+4. **Where do stores' own needs live?** Retention, backend tuning — next to
+   the store in the deployment. Whether they are per-store keys or a
+   reference to a named backend definition is left open.
 5. **Does the declared name constrain the namespace?** Does `store: crm`
    imply a `crm/*` namespace inside the store, or do namespaces and store
    names vary independently? Default bias: independent — namespaces are the
