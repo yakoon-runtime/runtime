@@ -1,5 +1,5 @@
 -- id shards (sequencer)
-CREATE TABLE id_shards (
+CREATE TABLE IF NOT EXISTS id_shards (
   prefix TEXT,
   shard_id INT,
   range_start BIGINT,

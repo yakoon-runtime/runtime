@@ -1,5 +1,5 @@
 -- current state
-CREATE TABLE current (
+CREATE TABLE IF NOT EXISTS current (
   domain TEXT,
   kind TEXT,
   space TEXT,
@@ -11,7 +11,7 @@ CREATE TABLE current (
 );
 
 -- revisions (append-only)
-CREATE TABLE revisions (
+CREATE TABLE IF NOT EXISTS revisions (
   domain TEXT,
   kind TEXT,
   space TEXT,
@@ -25,7 +25,7 @@ CREATE TABLE revisions (
 );
 
 -- snapshots (periodic materialization)
-CREATE TABLE snapshots (
+CREATE TABLE IF NOT EXISTS snapshots (
   domain TEXT,
   kind TEXT,
   space TEXT,
@@ -37,7 +37,7 @@ CREATE TABLE snapshots (
 );
 
 -- index specs
-CREATE TABLE index_specs (
+CREATE TABLE IF NOT EXISTS index_specs (
   domain TEXT,
   kind TEXT,
   space TEXT,
@@ -48,7 +48,7 @@ CREATE TABLE index_specs (
 );
 
 -- index values
-CREATE TABLE index_entries (
+CREATE TABLE IF NOT EXISTS index_entries (
   domain TEXT,
   kind TEXT,
   space TEXT,
