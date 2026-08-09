@@ -168,6 +168,11 @@ class Node:
     or a ``{ref, parameters}`` mapping; resolved lazily by the host
     (ADR-10)."""
 
+    store: str | None = None
+    """Declared store profile (ADR-18).  Read from ``store:`` in yak.yml;
+    a logical name (``crm``, ``security``), never infrastructure.  None
+    means "the default store".  Not yet bound — declaration only."""
+
     # ----------------------------------
     # RENDERING HINTS
     # ----------------------------------
