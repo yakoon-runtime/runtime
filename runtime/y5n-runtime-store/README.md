@@ -4,7 +4,8 @@ The Event Store of the Yakoon runtime.
 
 ## The principle
 
-> **The runtime provides a store. Audit is a property of that store.**
+> **The runtime provides a store service. Audit is a property of that
+> service.**
 
 An application does not attach PostgreSQL, manage revisions, build
 context, or implement auditing. It writes:
@@ -31,11 +32,18 @@ knowing: every mutation goes through the `EntityStore`, which stamps the
 context automatically. Audit is structurally enforced, not disciplinary
 (ADR-17).
 
-## A shared store, not per-pack stores
+## One store service, not per-pack stores
 
-The store belongs to the runtime. Packs do not call `build_store()` —
-the runtime builds one store and exposes it over the SDK `store` port, so
-a command that uses the store always carries audit.
+The store service belongs to the runtime. Packs do not call `build_store()`
+— the runtime owns the store service and exposes it over the SDK `store`
+port, so a command that uses the store always carries audit.
+
+How many physical stores sit behind that service is a **deployment
+decision**, not an architecture decision. Today there is one; an
+enterprise installation may later give each space its own backend
+(Postgres cluster per space, ClickHouse for telemetry, memory for cache).
+The pack only ever says *"I need persistence"* — never *"I need
+PostgreSQL"*.
 
 No one forces a command to use the store. But when it does, it always
 audits.
