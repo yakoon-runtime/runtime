@@ -13,32 +13,37 @@ results as plain dicts. The SDK models them into typed wrappers (ADR-11).
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 from y5n.runtime.api.naming import Key, Namespace
 from y5n.runtime.api.runtime.invoke import Call
 
+if TYPE_CHECKING:
+    from y5n.runtime.engine.nodes.tree import Tree
+    from y5n.runtime.store.event.models import JsonValue, RevisionRow
+    from y5n.runtime.store.event.store import EntityStore
 
-class _NamespaceDict(TypedDict, total=False):
+
+class _NamespaceDict(TypedDict):
     domain: str
     kind: str
     space: str
 
 
-class _KeyDict(TypedDict, total=False):
+class _KeyDict(TypedDict):
     namespace: _NamespaceDict
     id: str
 
 
 def _key(raw: _KeyDict) -> Key:
-    ns = raw.get("namespace") or {}
+    ns = raw["namespace"]
     return Key(
         namespace=Namespace(
-            domain=ns.get("domain"),
-            kind=ns.get("kind"),
-            space=ns.get("space", "global"),
+            domain=ns["domain"],
+            kind=ns["kind"],
+            space=ns["space"],
         ),
-        id=raw.get("id", ""),
+        id=raw["id"],
     )
 
 
@@ -78,12 +83,17 @@ class StoreResolver:
     resolve to the same logical store.
     """
 
-    def __init__(self, tree, stores: dict[str, Any] | None = None, default=None):
+    def __init__(
+        self,
+        tree: Tree | None,
+        stores: dict[str, EntityStore] | None = None,
+        default: EntityStore | None = None,
+    ):
         self._tree = tree
         self._stores = stores or {}
         self._default = default
 
-    def resolve(self, call: Call):
+    def resolve(self, call: Call) -> EntityStore | None:
         if self._tree is None:
             return self._default
         node = self._tree.find(call.caller_path or "/") if call.caller_path else None
@@ -102,13 +112,21 @@ class StoreAdapter:
     that is the only store — the registry is the future router boundary.
     """
 
-    def __init__(self, objects, sequencer, resolver: StoreResolver | None = None):
+    def __init__(
+        self,
+        objects: EntityStore,
+        sequencer,
+        resolver: StoreResolver | None = None,
+    ):
         self._objects = objects
         self._sequencer = sequencer
         self._resolver = resolver or StoreResolver(tree=None, default=objects)
 
-    def _objects_for(self, call: Call):
-        return self._resolver.resolve(call)
+    def _objects_for(self, call: Call) -> EntityStore:
+        resolved = self._resolver.resolve(call)
+        if resolved is None:
+            return self._objects
+        return resolved
 
     # ------------------------
     # ENTITY API
@@ -130,18 +148,20 @@ class StoreAdapter:
         """Return the revisions of an entity — the history, not current state."""
         from datetime import UTC, datetime
 
+        from y5n.runtime.store.event.models import DomainId, EntityId, KindId, SpaceId
+
         k = _key(key)
         revs = await self._objects_for(call).on_load_revisions(
-            domain_id=k.namespace.domain,
-            kind_id=k.namespace.kind,
-            space_id=k.namespace.space,
-            entity_id=k.id,
+            domain_id=DomainId(k.namespace.domain),
+            kind_id=KindId(k.namespace.kind),
+            space_id=SpaceId(k.namespace.space),
+            entity_id=EntityId(k.id),
             rev_gt=0,
             ts_lte=datetime.now(UTC),
         )
         out = []
         for r in revs:
-            data = r.patch[0].get("value") if isinstance(r.patch, list) else r.patch
+            data = _revision_data(r)
             out.append(
                 {
                     "rev": r.rev,
@@ -157,7 +177,7 @@ class StoreAdapter:
         call: Call,
         *,
         key: _KeyDict,
-        patch: list[dict] | dict,
+        patch: Any,
         indexes: list[dict] | None = None,
         snapshot_hint: str | None = None,
         meta: dict | None = None,
@@ -273,7 +293,7 @@ class StoreAdapter:
         keys, _ = await self._objects_for(call).query_index(
             namespace=_namespace(namespace),
             terms=_query_terms(terms),
-            mode=mode,
+            mode="and" if mode not in ("and", "or") else mode,  # type: ignore[arg-type]
             limit=limit,
         )
         return {"keys": [_key_to_dict(k) for k in keys]}
@@ -295,6 +315,23 @@ def _from_iso(at_time: str | None):
     return datetime.fromisoformat(at_time)
 
 
+def _revision_data(revision: RevisionRow) -> JsonValue | None:
+    """Extract the stored value from a revision's patch (history view).
+
+    A revision's patch is either a list of patch operations (the first
+    carries the value) or the value itself (write-only activity events).
+    """
+    patch = revision.patch
+    if isinstance(patch, list):
+        if not patch:
+            return None
+        first = patch[0]
+        if isinstance(first, dict):
+            return first.get("value")
+        return first
+    return patch
+
+
 def _terms(indexes: list[dict] | None):
     from y5n.runtime.store.event.models import IndexTerm
 
@@ -307,7 +344,7 @@ def _snapshot_hint(value: str | None):
     from y5n.runtime.store.event.models import SnapshotHint
 
     if value is None:
-        return None
+        return SnapshotHint.AUTO
     return SnapshotHint(value)
 
 
