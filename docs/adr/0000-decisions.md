@@ -7,9 +7,13 @@
 
 ## 2026-08-09 — Declarative Store Profiles (ADR-18)
 
-**Status: Proposed.** A pack declares the **logical stores it uses** —
+**Status: Validated.** A pack declares the **logical stores it uses** —
 `stores: [crm, telemetry]` in `yak.yml` — and nothing else. No backend, no
-connection, no profile-configuration.
+connection, no profile-configuration. The hypothesis is proven end to end:
+the model holds from the pack declaration to the resolver with no special
+cases (`stores:` → parser → node → `BuildState` → tree → `StoreCollector` →
+`StoreResolver` → `sdk.store("crm")`). The three packs (crm, luma, ident)
+run on the new contract; an architecture test proves the full path.
 
 **Key sentence:** *"A pack declares the logical stores it uses, never
 infrastructure."* `stores: [crm]` says *"my commands work against the store
