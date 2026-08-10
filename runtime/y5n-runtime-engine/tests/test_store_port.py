@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 from y5n.runtime.api.runtime.invoke import Call
-from y5n.runtime.engine.wire.adapter.store import StoreAdapter
+from y5n.runtime.engine.wire.adapter.store import StoreAdapter, _KeyDict
 from y5n.runtime.store.event.backends.memory import MemoryBackend
 from y5n.runtime.store.event.store import create_entity_store
 from y5n.runtime.store.sequence.allocator import ShardAllocator
@@ -31,7 +31,7 @@ def _call(port="store") -> Call:
     )
 
 
-def _key(domain: str, kind: str, space: str, entity_id: str) -> dict:
+def _key(domain: str, kind: str, space: str, entity_id: str) -> _KeyDict:
     return {
         "namespace": {"domain": domain, "kind": kind, "space": space},
         "id": entity_id,

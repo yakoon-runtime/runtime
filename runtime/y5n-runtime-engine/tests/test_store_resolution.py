@@ -15,7 +15,7 @@ from y5n.runtime.api.naming import Key, Namespace
 from y5n.runtime.api.runtime.invoke import Call
 from y5n.runtime.engine.executor import ExecutorKind, ExecutorRegistry, RuntimeExecutor
 from y5n.runtime.engine.nodes.tree import Tree
-from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver
+from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver, _KeyDict
 from y5n.runtime.store.event.backends.memory import MemoryBackend
 from y5n.runtime.store.event.store import create_entity_store
 from y5n.runtime.store.sequence.allocator import ShardAllocator
@@ -46,7 +46,7 @@ def _call(caller_path: str, store_name: str | None = None) -> Call:
     )
 
 
-def _key(domain: str, kind: str, space: str, entity_id: str) -> dict:
+def _key(domain: str, kind: str, space: str, entity_id: str) -> _KeyDict:
     return {
         "namespace": {"domain": domain, "kind": kind, "space": space},
         "id": entity_id,
