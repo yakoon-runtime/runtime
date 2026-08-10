@@ -43,6 +43,25 @@ def build_runtime(
     store = build_store(settings.storage)
     sequencer = build_sequencer(settings.sequencer)
 
+    # The installation (ADR-19): the deployment mapping materialized by
+    # `yak`. The runtime consumes it at startup to build its store registry.
+    from pathlib import Path
+
+    from y5n.runtime.engine.installation import (
+        build_store_registry,
+        load_installation,
+    )
+
+    installation = load_installation(
+        Path(settings.runtime.installation_path)
+        if settings.runtime.installation_path
+        else Path(settings.runtime.workspace_path).parent
+        / ".yak"
+        / "installation"
+        / "deployment.yml"
+    )
+    registry = build_store_registry(installation, store.objects, _build_from_deployment)
+
     # ----------------
     # --- SERVICES ---
     # ----------------
@@ -233,6 +252,7 @@ def build_runtime(
             sequencer,
             resolver=StoreResolver(
                 tree=tree,
+                stores=registry,
                 default=store.objects,
             ),
         ),
@@ -259,3 +279,19 @@ def build_runtime(
     )
 
     return manager
+
+
+def _build_from_deployment(deployment):
+    """Build a physical store from a deployment definition (ADR-19).
+
+    Today the backend map is small (memory, postgres); the secret store
+    and capability providers arrive later. An unknown backend falls back
+    to memory.
+    """
+    from y5n.runtime.store.event.settings import StorageSettings
+
+    backend = (
+        deployment.backend if deployment.backend in ("memory", "postgres") else "memory"
+    )
+    settings = StorageSettings(backend=backend, dsn=deployment.dsn)
+    return build_store(settings).objects
