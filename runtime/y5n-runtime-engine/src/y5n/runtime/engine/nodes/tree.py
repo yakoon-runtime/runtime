@@ -39,6 +39,7 @@ class BuildState:
     """
 
     search_paths: list[str] = field(default_factory=list)
+    stores: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -265,12 +266,22 @@ class Tree:
     def _assemble_node(
         self, node: Node, dir_path: Path | None, state: BuildState
     ) -> None:
-        current = BuildState(search_paths=list(state.search_paths))
+        current = BuildState(
+            search_paths=list(state.search_paths),
+            stores=list(state.stores),
+        )
 
         if dir_path:
             self._merge_search_paths(node, dir_path, current)
 
+        # A node's own declared stores override the inherited ones; an
+        # undeclared node inherits its pack's stores (ADR-18: a pack
+        # declares the logical stores it uses, once, at the pack root).
+        if node.stores:
+            current.stores = list(node.stores)
+
         node.search_paths = current.search_paths
+        node.stores = current.stores
 
         for child_node in node.children.values():
             self._assemble_node(child_node, child_node.fs_path, current)
