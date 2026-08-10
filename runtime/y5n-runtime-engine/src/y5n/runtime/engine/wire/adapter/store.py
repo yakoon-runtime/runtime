@@ -75,13 +75,16 @@ def _index_key(raw: str):
 class StoreResolver:
     """Resolve the physical store for a call.
 
-    Two questions, two steps (ADR-18):
+    Three questions, three steps (ADR-18, ADR-19):
 
     1. *Which pack am I?* — ``call.caller_path`` → ``tree.find()`` → the
        node's declared stores.
     2. *Which store do I want?* — ``call.store_name`` names the store the
        code asked for (``sdk.store("crm")``); with no name, the node's
        single declared store is used.
+    3. *Is it declared?* — a named store must be in the node's declared
+       stores. An undeclared dependency is an error, like an import whose
+       module is not in the requirements (ADR-19).
 
     The mapping from logical name to physical store is the registry; an
     unregistered name falls back to the default store (today the only one).
@@ -106,6 +109,11 @@ class StoreResolver:
         if node is None:
             return self._default
         if call.store_name:
+            if call.store_name not in node.stores:
+                raise ValueError(
+                    f"Undeclared store '{call.store_name}'. "
+                    "Add it to the pack's stores: declaration."
+                )
             if call.store_name in self._stores:
                 return self._stores[call.store_name]
             return self._default

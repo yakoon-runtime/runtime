@@ -107,10 +107,12 @@ def test_full_chain_declares_and_resolves(tmp_path: Path):
     assert resolver.resolve(_call("/crm/contact/add", store_name="crm")) is crm_store
     assert resolver.resolve(_call("/luma/box/add")) is luma_store
 
-    # 3. An undeclared store name resolves to the default.
-    assert (
-        resolver.resolve(_call("/crm/contact/add", store_name="nope")) is default_store
-    )
+    # 3. A declared but unregistered store resolves to the default.
+    assert resolver.resolve(_call("/luma/box/add", store_name="luma")) is luma_store
+
+    # 4. An undeclared store name is rejected (dependency check, ADR-19).
+    with pytest.raises(ValueError, match="Undeclared store 'nope'"):
+        resolver.resolve(_call("/crm/contact/add", store_name="nope"))
 
 
 @pytest.mark.asyncio

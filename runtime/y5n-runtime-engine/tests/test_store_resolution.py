@@ -191,3 +191,24 @@ async def test_adapter_writes_land_in_the_resolved_store(tmp_path: Path):
             key=Key(namespace=Namespace("crm", "contact", "global"), id="3")
         )
     ).data == {"name": "grace"}
+
+
+def test_resolver_raises_on_undeclared_named_store(tmp_path: Path):
+    tree = _tree_with_declared_stores(tmp_path)
+    default_store = create_entity_store(MemoryBackend())
+
+    resolver = StoreResolver(tree=tree, default=default_store)
+
+    with pytest.raises(ValueError, match="Undeclared store 'nope'"):
+        resolver.resolve(_call("/crm/contact/add", store_name="nope"))
+
+
+def test_resolver_allows_any_declared_store_even_unregistered(tmp_path: Path):
+    tree = _tree_with_declared_stores(tmp_path)
+    default_store = create_entity_store(MemoryBackend())
+
+    resolver = StoreResolver(tree=tree, default=default_store)
+
+    # telemetry is declared by /crm/sync but has no physical store yet —
+    # it resolves to the default until the deployment provides it.
+    assert resolver.resolve(_call("/crm/sync", store_name="telemetry")) is default_store
