@@ -5,6 +5,25 @@
 
 ---
 
+## 2026-08-10 — Declarative Deployment (ADR-19)
+
+**Status: Proposed.** The second half of ADR-18: how does a collection of
+declarative packs become a running installation? The answer is the
+**deployment model** — the mapping between logical stores and physical
+resources, owned by the installation, materialized by `yak`.
+
+**Key sentence:** *"A store is always logical; a database is physical. The
+deployment maps the one to the other."* Two axes: capability names are
+**globally unique** (like port names), but access is **pack-local** — a
+pack can only use the stores it declares. `stores:` is a dependency list,
+not a registry; `sdk.store("x")` without `x` declared is an undeclared
+dependency and an error. **Store ≠ Database**: several logical stores may
+map to one physical resource; the deployment owns the mapping (1:n), the
+pack never sees a database. `yak` **assembles, it does not guess**: it
+collects declared stores and guides the administrator through the mapping
+(new/existing, which), never searching databases or knowing naming
+conventions.
+
 ## 2026-08-09 — Declarative Store Profiles (ADR-18)
 
 **Status: Validated.** A pack declares the **logical stores it uses** —
