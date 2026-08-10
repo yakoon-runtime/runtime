@@ -27,7 +27,11 @@ configuration**: `yak` writes `.yak/installation/` (mapping + deployment
 definitions + secret references), machine-specific and not versioned; the
 runtime consumes it at startup — reads the mapping, resolves secrets
 through the secret store, builds the store registry. Same pack, same
-runtime, a different installation per machine.
+runtime, a different installation per machine. **Migrations belong to the
+pack** and run at the assembler (`yak install`/`update`), never in the
+runtime. **Capability providers** (packs like `y5n-store-postgres`) answer
+"which backends exist" — `yak` knows no databases, it asks which store
+backends are installed.
 
 ## 2026-08-09 — Declarative Store Profiles (ADR-18)
 
