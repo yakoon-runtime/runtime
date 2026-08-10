@@ -7,24 +7,28 @@
 
 ## 2026-08-09 — Declarative Store Profiles (ADR-18)
 
-**Status: Proposed.** A pack declares its persistence need as a **named store
-profile** — `store: crm` in `yak.yml` — and nothing else. No backend, no
+**Status: Proposed.** A pack declares the **logical stores it uses** —
+`stores: [crm, telemetry]` in `yak.yml` — and nothing else. No backend, no
 connection, no profile-configuration.
 
-**Key sentence:** *"A pack declares its store as a named profile, never as
-infrastructure."* `store: crm` says *"this pack works against the store
-profile called crm"*; which backend that is, where it lives, how it is
-tuned is the deployment's decision. The code stays forever
-`store = sdk.store()` — `sdk.store("crm")` is never introduced, the pack
-names its store in its declaration, not in code. The pack knows only the
-**name** — not even the backend. The `yak` tool collects the logical store
-names all installed packs declare, asks *"Store 'crm' — which backend?"*,
-and adds a `stores: crm: backend: postgres` entry to the deployment when
-missing. A pack without `store:` binds to the default store (today the only
-one) — the declaration is additive, single-store deployment is the
-degenerate case where every name maps to one physical store.
+**Key sentence:** *"A pack declares the logical stores it uses, never
+infrastructure."* `stores: [crm]` says *"my commands work against the store
+called crm"*; which backend that is, where it lives, how it is tuned is the
+deployment's decision. A logical store name is pack knowledge, not
+infrastructure — like `ports.get("crm.contact")`, the code names a store
+the pack declared: `crm = sdk.store("crm")`. `sdk.store()` without a name
+is a convenience for a single declared store; with several it raises
+(*"Multiple stores declared"*) rather than hiding ambiguity behind a
+default. A pack **uses** stores, it does not own them — a command is
+application logic and may orchestrate several (migration, sync, reporting,
+ETL). The `yak` tool collects the names all installed packs declare, asks
+*"Store 'crm' — which backend?"*, and adds a `stores: crm: backend:
+postgres` entry to the deployment when missing. A pack without `stores:`
+binds to the default store (today the only one) — the declaration is
+additive, single-store deployment is the degenerate case where every name
+maps to one physical store.
 
-**Four layers of store knowledge:** what (pack: `store: crm`), where the
+**Four layers of store knowledge:** what (pack: `stores: [crm]`), where the
 runtime runs (runtime config: network, ports, logging — never stores), what
 and where the store is (installation: `stores:` with backend, host, port,
 database — machine-specific, not versioned, created by `yak install`), and
@@ -33,14 +37,14 @@ Git). Nothing sensitive ever becomes part of a pack or a repository.
 
 **Language independent:** the store is built for Yakoon, not for Python.
 Store profiles live in the component description (`yak.yml`), not in a
-language SDK; every SDK exposes the same abstraction (`sdk.store()`) and no
-SDK knows which store lies behind it — that is runtime/deployment
+language SDK; every SDK exposes the same abstraction (`sdk.store(name)`)
+and no SDK knows which store lies behind it — that is runtime/deployment
 knowledge. A future Ruby, .NET, or Go host reads the same `yak.yml` and the
 `yak` tool works unchanged; the contract is fixed at the level every host
 already shares.
 
 **The general principle:** this is the fourth instance of a Yakoon pattern —
-`entry:`, `resources:`, `host:`, now `store:` — and the ADR records it as a
+`entry:`, `resources:`, `host:`, now `stores:` — and the ADR records it as a
 principle, not a store decision: **"A pack describes what it needs. The
 platform decides how that need is met."** Pack declares → tool prepares →
 runtime resolves → code stays clean. Cache, messaging, scheduling, and any
