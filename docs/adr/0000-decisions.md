@@ -22,7 +22,12 @@ map to one physical resource; the deployment owns the mapping (1:n), the
 pack never sees a database. `yak` **assembles, it does not guess**: it
 collects declared stores and guides the administrator through the mapping
 (new/existing, which), never searching databases or knowing naming
-conventions.
+conventions. **The product is an installation, not runtime
+configuration**: `yak` writes `.yak/installation/` (mapping + deployment
+definitions + secret references), machine-specific and not versioned; the
+runtime consumes it at startup — reads the mapping, resolves secrets
+through the secret store, builds the store registry. Same pack, same
+runtime, a different installation per machine.
 
 ## 2026-08-09 — Declarative Store Profiles (ADR-18)
 

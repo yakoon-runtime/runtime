@@ -32,8 +32,13 @@ materializes the deployment from the packs' declared needs.
 > (`postgres-main`, `analytics`). Owned by the installation, not by any
 > pack.
 
+> **Installation** — the machine-specific product of the assembler: the
+> mapping of logical stores to deployments, plus the references to
+> secrets. Not versioned. Consumed by the runtime — `yak` does not write
+> runtime configuration, it writes an installation.
+
 > **Assembler** — the role of `yak`: it collects the declared needs of all
-> installed packs and materializes the deployment that satisfies them.
+> installed packs and materializes the installation that satisfies them.
 
 The rule is the same as for ports: **capability names are globally unique,
 but every pack explicitly declares which capabilities it uses.**
@@ -134,6 +139,45 @@ administrator through the mapping: *new resource or existing? which one?*
 It never searches databases, knows no naming conventions, no `yakoon_crm`
 heuristics. The administrator knows more than the tool.
 
+### 5. The product is an installation, not runtime configuration
+
+`yak` writes **no configuration for the runtime.** It writes an
+**installation** — the machine-specific product of the assembler, kept
+outside Git (e.g. `.yak/installation/`):
+
+```yaml
+# .yak/installation/deployment.yml
+stores:
+  crm:
+    deployment: postgres-main
+  ident:
+    deployment: postgres-main
+  telemetry:
+    deployment: analytics
+
+deployments:
+  postgres-main:
+    backend: postgres
+    secret: postgres-main
+  analytics:
+    backend: clickhouse
+    secret: analytics
+```
+
+Secrets are not here — only references. The installation points at the
+secret store (`secret: postgres-main`); the secret itself (host, port,
+user, password, ssl) lives in the platform's secret store.
+
+The runtime **consumes** the installation at startup: it reads the
+mapping, asks the secret store for each referenced secret, and builds the
+store registry from it. The runtime never learns *why* crm and ident share
+postgres-main or *why* telemetry uses clickhouse — it receives a finished
+store registry.
+
+The same installation reads on any machine. A notebook maps `crm` to
+sqlite, a server maps it to a postgres cluster — same pack, same runtime,
+a different installation.
+
 ## Consequences
 
 ### Benefits
@@ -167,15 +211,15 @@ heuristics. The administrator knows more than the tool.
 1. **Who knows the backend list?** Which backends exist (postgres, sqlite,
    memory) — does `yak` know it, or does the deployment declare it?
 2. **Where do credentials live?** Four Layers (ADR-18): a secret store,
-   never in pack or deployment. How does the deployment reference a secret?
+   never in pack or deployment. The installation references a secret by
+   name (`secret: postgres-main`); the secret store resolves it. Which
+   secret stores exist is open.
 3. **When do migrations run?** First `install`, `update`, runtime start?
    Who owns migration logic — the pack or the deployment?
 4. **What happens on update?** A new pack adds stores — existing resources
    stay untouched?
 5. **What happens on uninstall?** The physical database stays (data does
    not belong to the pack)?
-6. **Where is the deployment file?** Not versioned, machine-specific —
-   `.yak/runtime/stores.yml`, owned by `yak`?
 
 ## Implementation sketch (for later)
 
@@ -183,10 +227,16 @@ heuristics. The administrator knows more than the tool.
 
 1. **Enforce declared access.** `StoreResolver` raises when
    `store_name` is not in the node's declared stores (dependency check).
-2. **Deployment model.** A mapping file (logical store → physical
-   deployment) owned by `yak`, machine-specific, not versioned.
-3. **`yak install`.** Collect declared stores, guide the mapping
-   (new/existing, which), write the deployment.
-4. **Tests.** A pack cannot reach an undeclared store; two packs share one
+2. **Installation model.** `.yak/installation/deployment.yml` — the
+   mapping (logical store → deployment) plus deployment definitions
+   (backend, secret reference). Owned by `yak`, machine-specific, not
+   versioned.
+3. **Runtime consumption.** At startup the runtime reads the installation,
+   resolves secrets through the secret store, and builds the store
+   registry from it — it never configures itself.
+4. **`yak install`.** Collect declared stores, guide the mapping
+   (new/existing, which), write the installation.
+5. **Tests.** A pack cannot reach an undeclared store; two packs share one
    declared store; the deployment maps several logical stores to one
-   physical resource.
+   physical resource; the same pack installs as sqlite on one machine and
+   postgres on another.
