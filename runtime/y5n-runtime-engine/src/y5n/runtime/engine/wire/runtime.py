@@ -1,8 +1,14 @@
+from pathlib import Path
+
 from y5n.runtime.api.runtime import get_bus
 from y5n.runtime.engine.executor import (
     ExecutorKind,
     ExecutorRegistry,
     RuntimeExecutor,
+)
+from y5n.runtime.engine.installation import (
+    build_store_registry,
+    load_installation,
 )
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.runtime import SessionService
@@ -16,17 +22,21 @@ from y5n.runtime.engine.sources.data import (
     RuntimeSource,
     SessionSource,
 )
-from y5n.runtime.engine.wire.adapter.callable import CallableAdapter
-from y5n.runtime.engine.wire.adapter.document import DocumentAdapter
-from y5n.runtime.engine.wire.adapter.permission import PermissionAdapter
-from y5n.runtime.engine.wire.adapter.resource import ResourceAdapter
-from y5n.runtime.engine.wire.adapter.runtime import RuntimeAdapter
-from y5n.runtime.engine.wire.adapter.session import SessionAdapter
-from y5n.runtime.engine.wire.adapter.source import SourceReadAdapter
-from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver
+from y5n.runtime.engine.wire.adapter import (
+    CallableAdapter,
+    DocumentAdapter,
+    PermissionAdapter,
+    ResourceAdapter,
+    RuntimeAdapter,
+    SessionAdapter,
+    SourceReadAdapter,
+    StoreAdapter,
+    StoreResolver,
+)
 from y5n.runtime.engine.wire.document import build_document_stack
 from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
 from y5n.runtime.engine.wire.stream import build_stream
+from y5n.runtime.store.event.settings import StorageSettings
 from y5n.runtime.store.event.wire import build_store
 from y5n.runtime.store.sequence.wire import build_store as build_sequencer
 
@@ -44,14 +54,9 @@ def build_runtime(
     sequencer = build_sequencer(settings.sequencer)
 
     # The installation (ADR-19): the deployment mapping materialized by
-    # `yak`. The runtime consumes it at startup to build its store registry.
-    from pathlib import Path
-
-    from y5n.runtime.engine.installation import (
-        build_store_registry,
-        load_installation,
-    )
-
+    # `yak`. There is no runtime without an installation — the runtime
+    # never guesses missing deployment information. No installation means
+    # no store registry; `yak install` must be run first.
     installation = load_installation(
         Path(settings.runtime.installation_path)
         if settings.runtime.installation_path
@@ -60,6 +65,8 @@ def build_runtime(
         / "installation"
         / "deployment.yml"
     )
+    if installation is None:
+        raise RuntimeError("No installation found. Run `yak install` to create one.")
     registry = build_store_registry(installation, store.objects, _build_from_deployment)
 
     # ----------------
@@ -288,8 +295,6 @@ def _build_from_deployment(deployment):
     and capability providers arrive later. An unknown backend falls back
     to memory.
     """
-    from y5n.runtime.store.event.settings import StorageSettings
-
     backend = (
         deployment.backend if deployment.backend in ("memory", "postgres") else "memory"
     )

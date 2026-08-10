@@ -239,3 +239,32 @@ async def test_runtime_consumes_a_real_deployment_file(tmp_path: Path):
         assert crm_resolved is not adapter._resolver._default
     finally:
         set_bus(previous)
+
+
+def test_runtime_raises_without_installation(tmp_path: Path):
+    """ADR-19: no runtime without an installation — no silent memory fallback."""
+    import os
+
+    os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
+
+    from y5n.runtime.api.runtime.bus import _make_default_bus, get_bus, set_bus
+    from y5n.runtime.engine.settings import RuntimeSettings, Settings
+    from y5n.runtime.engine.wire.runtime import build_runtime
+    from y5n.runtime.store.event.settings import StorageSettings
+
+    previous = get_bus()
+    bus = _make_default_bus()
+    set_bus(bus)
+
+    try:
+        settings = Settings(
+            runtime=RuntimeSettings(
+                workspace_path=str(tmp_path),
+                installation_path=str(tmp_path / "missing" / "deployment.yml"),
+            ),
+            storage=StorageSettings(backend="memory", dsn=""),
+        )
+        with pytest.raises(RuntimeError, match="No installation found"):
+            build_runtime(settings=settings)
+    finally:
+        set_bus(previous)
