@@ -19,7 +19,7 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content)
 
 
-def test_node_reads_declared_store(tmp_path: Path):
+def test_node_reads_declared_stores(tmp_path: Path):
     _write(
         tmp_path / "crm" / "contact" / "add" / ".yak" / "yak.yml",
         "\n".join(
@@ -27,7 +27,8 @@ def test_node_reads_declared_store(tmp_path: Path):
                 "host: /boot/python/runtime",
                 "entry:",
                 "  run: pack:x:run",
-                "store: crm",
+                "stores:",
+                "  - crm",
             ]
         ),
     )
@@ -35,10 +36,28 @@ def test_node_reads_declared_store(tmp_path: Path):
 
     node = tree.find("/crm/contact/add")
     assert node is not None
-    assert node.store == "crm"
+    assert node.stores == ["crm"]
 
 
-def test_node_without_store_is_none(tmp_path: Path):
+def test_node_reads_multiple_stores(tmp_path: Path):
+    _write(
+        tmp_path / "crm" / "sync" / ".yak" / "yak.yml",
+        "\n".join(
+            [
+                "stores:",
+                "  - crm",
+                "  - telemetry",
+            ]
+        ),
+    )
+    tree = _build_tree(tmp_path)
+
+    node = tree.find("/crm/sync")
+    assert node is not None
+    assert node.stores == ["crm", "telemetry"]
+
+
+def test_node_without_stores_is_empty(tmp_path: Path):
     _write(
         tmp_path / "usr" / "bin" / "pwd" / ".yak" / "yak.yml",
         "\n".join(
@@ -53,19 +72,17 @@ def test_node_without_store_is_none(tmp_path: Path):
 
     node = tree.find("/usr/bin/pwd")
     assert node is not None
-    assert node.store is None
+    assert node.stores == []
 
 
-def test_non_string_store_is_ignored(tmp_path: Path):
+def test_non_string_store_entries_are_ignored(tmp_path: Path):
     _write(
         tmp_path / "opt" / "app" / ".yak" / "yak.yml",
         "\n".join(
             [
-                "host: /boot/python/runtime",
-                "entry:",
-                "  run: pack:x:run",
-                "store:",
-                "  profile: crm",
+                "stores:",
+                "  - crm",
+                "  - name: structured",
             ]
         ),
     )
@@ -73,4 +90,4 @@ def test_non_string_store_is_ignored(tmp_path: Path):
 
     node = tree.find("/opt/app")
     assert node is not None
-    assert node.store is None
+    assert node.stores == ["crm"]

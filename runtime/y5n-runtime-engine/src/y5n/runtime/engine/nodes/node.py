@@ -168,10 +168,11 @@ class Node:
     or a ``{ref, parameters}`` mapping; resolved lazily by the host
     (ADR-10)."""
 
-    store: str | None = None
-    """Declared store profile (ADR-18).  Read from ``store:`` in yak.yml;
-    a logical name (``crm``, ``security``), never infrastructure.  None
-    means "the default store".  Not yet bound — declaration only."""
+    stores: list[str] = field(default_factory=list)
+    """Declared store profiles (ADR-18).  Read from ``stores:`` in yak.yml;
+    the logical names (``crm``, ``security``) this node's commands work
+    against — never infrastructure.  Empty means "the default store".
+    Not yet bound — declaration only."""
 
     # ----------------------------------
     # RENDERING HINTS

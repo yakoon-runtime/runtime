@@ -140,10 +140,10 @@ class Tree:
         if isinstance(entry, dict):
             node.metadata["entry"] = entry
 
-        # Store profile (ADR-18): a logical name, never infrastructure.
-        store = meta.get("store")
-        if isinstance(store, str):
-            node.store = store
+        # Store profiles (ADR-18): logical names, never infrastructure.
+        stores = meta.get("stores")
+        if isinstance(stores, list):
+            node.stores = [name for name in stores if isinstance(name, str)]
 
         # Signatures
         signatures: list[CommandSignature] = []

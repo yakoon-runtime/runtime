@@ -31,15 +31,15 @@ def _write(path: Path, content: str) -> None:
 def test_collector_gets_declared_store_names(tmp_path: Path):
     _write(
         tmp_path / "crm" / "contact" / "add" / ".yak" / "yak.yml",
-        "store: crm\n",
+        "stores: [crm]\n",
     )
     _write(
         tmp_path / "ident" / "grant" / ".yak" / "yak.yml",
-        "store: security\n",
+        "stores: [security]\n",
     )
     _write(
         tmp_path / "luma" / "box" / ".yak" / "yak.yml",
-        "store: luma\n",
+        "stores: [luma]\n",
     )
     _write(
         tmp_path / "usr" / "bin" / "pwd" / ".yak" / "yak.yml",
@@ -54,11 +54,11 @@ def test_collector_gets_declared_store_names(tmp_path: Path):
 def test_collector_names_without_duplicates(tmp_path: Path):
     _write(
         tmp_path / "crm" / "contact" / "add" / ".yak" / "yak.yml",
-        "store: crm\n",
+        "stores: [crm]\n",
     )
     _write(
         tmp_path / "crm" / "contact" / "edit" / ".yak" / "yak.yml",
-        "store: crm\n",
+        "stores: [crm]\n",
     )
 
     tree = _build_tree(tmp_path)

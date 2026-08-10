@@ -44,6 +44,7 @@ def derive_invocation_context(
         "node": {
             "path": path,
             "name": name,
+            "stores": list(getattr(node, "stores", None) or []),
         },
         "cwd": session.cwd if session else "",
         "workspace": str(fs_root) if fs_root else "",

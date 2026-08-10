@@ -73,14 +73,20 @@ def _index_key(raw: str):
 
 
 class StoreResolver:
-    """Resolve the physical store for a call from the calling node's declaration.
+    """Resolve the physical store for a call.
 
-    Chain (ADR-18): ``call.caller_path`` → ``tree.find()`` → ``node.store``
-    → registry → the physical store. The SDK stays dumb — ``sdk.store()``
-    asks only for "a store"; the runtime derives which store from the
-    component's declaration. The identity is the node, never the host
-    language: a Python, Ruby, or .NET pack declaring ``store: crm`` all
-    resolve to the same logical store.
+    Two questions, two steps (ADR-18):
+
+    1. *Which pack am I?* — ``call.caller_path`` → ``tree.find()`` → the
+       node's declared stores.
+    2. *Which store do I want?* — ``call.store_name`` names the store the
+       code asked for (``sdk.store("crm")``); with no name, the node's
+       single declared store is used.
+
+    The mapping from logical name to physical store is the registry; an
+    unregistered name falls back to the default store (today the only one).
+    Ambiguity is never resolved implicitly: several declared stores without
+    a name raise.
     """
 
     def __init__(
@@ -97,9 +103,19 @@ class StoreResolver:
         if self._tree is None:
             return self._default
         node = self._tree.find(call.caller_path or "/") if call.caller_path else None
-        profile = node.store if node is not None else None
-        if profile and profile in self._stores:
-            return self._stores[profile]
+        if node is None:
+            return self._default
+        if call.store_name:
+            if call.store_name in self._stores:
+                return self._stores[call.store_name]
+            return self._default
+        if len(node.stores) > 1:
+            raise ValueError("Multiple stores declared. Please specify a store name.")
+        if node.stores:
+            first = node.stores[0]
+            if first in self._stores:
+                return self._stores[first]
+            return self._default
         return self._default
 
 

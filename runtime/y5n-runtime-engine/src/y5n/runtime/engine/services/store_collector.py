@@ -21,5 +21,5 @@ class StoreCollector:
     def collect(self) -> list[str]:
         """Return the sorted, de-duplicated logical store names."""
         return sorted(
-            {node.store for node in self._tree.iter_nodes() if node.store is not None}
+            {name for node in self._tree.iter_nodes() for name in node.stores}
         )
