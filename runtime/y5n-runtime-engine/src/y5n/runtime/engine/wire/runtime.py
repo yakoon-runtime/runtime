@@ -207,6 +207,7 @@ def build_runtime(
         "system:session",
         {
             "session": [
+                "list",
                 "attach",
                 "detach",
                 "update",

@@ -37,17 +37,27 @@ class SessionAdapter:
         self._manager = manager
         self._on_save = on_save
 
-    async def attach(self, call: Call, *, session_key: str, target_key: str) -> None:
+    async def attach(self, call: Call, *, target_key: str) -> None:
+        session_key = call.caller_session_key
+        if not session_key:
+            raise RuntimeError("caller_session_key is required")
         runner = self._manager._sessions.get(Key.from_str(session_key))
         if runner is None:
             raise RuntimeError(f"Session {session_key} not found")
         await self._manager.attach_session(runner.session, target_key)
 
-    async def detach(self, call: Call, *, session_key: str) -> None:
+    async def detach(self, call: Call) -> None:
+        session_key = call.caller_session_key
+        if not session_key:
+            raise RuntimeError("caller_session_key is required")
         runner = self._manager._sessions.get(Key.from_str(session_key))
         if runner is None:
             raise RuntimeError(f"Session {session_key} not found")
         await self._manager.detach_session(runner.session)
+
+    async def list(self, call: Call) -> list[dict]:
+        """Enumerate the live sessions of this runtime."""
+        return self._manager.list_sessions()
 
     async def logout(self, call: Call) -> None:
         session_key = call.caller_session_key
