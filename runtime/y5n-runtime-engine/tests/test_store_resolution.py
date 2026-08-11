@@ -1,9 +1,10 @@
-"""Store resolution (ADR-18): the runtime resolves the physical store.
+"""Store resolution (ADR-18/19): the runtime resolves the physical store.
 
 Two steps: ``call.caller_path`` → the node's declared stores (which pack am
 I?), then ``call.store_name`` → which store do I want (or the first
-declared store). The registry maps logical names to physical stores;
-unregistered names fall back to the default.
+declared store). The registry maps logical names to ``StoreRuntime``
+instances. There is no default store: a node without a declared store
+resolves to None.
 """
 
 from __future__ import annotations
@@ -17,10 +18,17 @@ from y5n.runtime.engine.executor import ExecutorKind, ExecutorRegistry, RuntimeE
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver, _KeyDict
 from y5n.runtime.store.event.backends.memory import MemoryBackend
+from y5n.runtime.store.event.runtime import StoreRuntime
 from y5n.runtime.store.event.store import create_entity_store
 from y5n.runtime.store.sequence.allocator import ShardAllocator
 from y5n.runtime.store.sequence.backends.memory import MemoryShardRepository
 from y5n.runtime.store.sequence.runtime import Sequencer
+
+
+def _runtime() -> StoreRuntime:
+    store = create_entity_store(MemoryBackend())
+    seq = Sequencer(ShardAllocator(MemoryShardRepository()))
+    return StoreRuntime(objects=store, sequencer=seq)
 
 
 def _build_tree(root: Path) -> Tree:
@@ -86,30 +94,22 @@ def _tree_with_declared_stores(tmp_path: Path) -> Tree:
 
 def test_resolver_binds_single_declared_store(tmp_path: Path):
     tree = _tree_with_declared_stores(tmp_path)
-    crm_store = create_entity_store(MemoryBackend())
-    telemetry_store = create_entity_store(MemoryBackend())
-    default_store = create_entity_store(MemoryBackend())
+    crm_rt = _runtime()
 
-    resolver = StoreResolver(
-        tree=tree,
-        stores={"crm": crm_store, "telemetry": telemetry_store},
-        default=default_store,
-    )
+    resolver = StoreResolver(tree=tree, stores={"crm": crm_rt})
 
-    assert resolver.resolve(_call("/crm/contact/add")) is crm_store
-    assert resolver.resolve(_call("/usr/bin/pwd")) is default_store
+    assert resolver.resolve(_call("/crm/contact/add")) is crm_rt
+    assert resolver.resolve(_call("/usr/bin/pwd")) is None
 
 
 def test_resolver_raises_on_multiple_stores_without_name(tmp_path: Path):
     tree = _tree_with_declared_stores(tmp_path)
-    crm_store = create_entity_store(MemoryBackend())
-    telemetry_store = create_entity_store(MemoryBackend())
-    default_store = create_entity_store(MemoryBackend())
+    crm_rt = _runtime()
+    telemetry_rt = _runtime()
 
     resolver = StoreResolver(
         tree=tree,
-        stores={"crm": crm_store, "telemetry": telemetry_store},
-        default=default_store,
+        stores={"crm": crm_rt, "telemetry": telemetry_rt},
     )
 
     with pytest.raises(ValueError, match="Multiple stores declared"):
@@ -118,47 +118,37 @@ def test_resolver_raises_on_multiple_stores_without_name(tmp_path: Path):
 
 def test_resolver_binds_named_store(tmp_path: Path):
     tree = _tree_with_declared_stores(tmp_path)
-    crm_store = create_entity_store(MemoryBackend())
-    telemetry_store = create_entity_store(MemoryBackend())
-    default_store = create_entity_store(MemoryBackend())
+    crm_rt = _runtime()
+    telemetry_rt = _runtime()
 
     resolver = StoreResolver(
         tree=tree,
-        stores={"crm": crm_store, "telemetry": telemetry_store},
-        default=default_store,
+        stores={"crm": crm_rt, "telemetry": telemetry_rt},
     )
 
-    assert (
-        resolver.resolve(_call("/crm/sync", store_name="telemetry")) is telemetry_store
-    )
-    assert resolver.resolve(_call("/crm/sync", store_name="crm")) is crm_store
+    assert resolver.resolve(_call("/crm/sync", store_name="telemetry")) is telemetry_rt
+    assert resolver.resolve(_call("/crm/sync", store_name="crm")) is crm_rt
 
 
-def test_resolver_falls_back_when_not_registered(tmp_path: Path):
+def test_resolver_declared_but_unregistered_is_none(tmp_path: Path):
     tree = _tree_with_declared_stores(tmp_path)
-    default_store = create_entity_store(MemoryBackend())
 
-    resolver = StoreResolver(tree=tree, default=default_store)
+    resolver = StoreResolver(tree=tree)
 
-    assert resolver.resolve(_call("/crm/contact/add")) is default_store
-    assert resolver.resolve(_call("/crm/sync", store_name="telemetry")) is default_store
+    assert resolver.resolve(_call("/crm/contact/add")) is None
+    assert resolver.resolve(_call("/crm/sync", store_name="telemetry")) is None
 
 
 @pytest.mark.asyncio
 async def test_adapter_writes_land_in_the_resolved_store(tmp_path: Path):
     tree = _tree_with_declared_stores(tmp_path)
-    crm_store = create_entity_store(MemoryBackend())
-    telemetry_store = create_entity_store(MemoryBackend())
-    default_store = create_entity_store(MemoryBackend())
-    seq = Sequencer(ShardAllocator(MemoryShardRepository()))
+    crm_rt = _runtime()
+    telemetry_rt = _runtime()
 
     adapter = StoreAdapter(
-        default_store,
-        seq,
         resolver=StoreResolver(
             tree=tree,
-            stores={"crm": crm_store, "telemetry": telemetry_store},
-            default=default_store,
+            stores={"crm": crm_rt, "telemetry": telemetry_rt},
         ),
     )
 
@@ -174,30 +164,29 @@ async def test_adapter_writes_land_in_the_resolved_store(tmp_path: Path):
         key=telemetry_key,
         doc={"kind": "event"},
     )
-    await adapter.replace(_call("/usr/bin/pwd"), key=other_key, doc={"name": "grace"})
+
+    # No default store: a node without declared stores cannot write.
+    with pytest.raises(RuntimeError, match="No store bound"):
+        await adapter.replace(
+            _call("/usr/bin/pwd"), key=other_key, doc={"name": "grace"}
+        )
 
     assert (
-        await crm_store.get(
+        await crm_rt.objects.get(
             key=Key(namespace=Namespace("crm", "contact", "global"), id="1")
         )
     ).data == {"name": "ada"}
     assert (
-        await telemetry_store.get(
+        await telemetry_rt.objects.get(
             key=Key(namespace=Namespace("telemetry", "event", "global"), id="2")
         )
     ).data == {"kind": "event"}
-    assert (
-        await default_store.get(
-            key=Key(namespace=Namespace("crm", "contact", "global"), id="3")
-        )
-    ).data == {"name": "grace"}
 
 
 def test_resolver_raises_on_undeclared_named_store(tmp_path: Path):
     tree = _tree_with_declared_stores(tmp_path)
-    default_store = create_entity_store(MemoryBackend())
 
-    resolver = StoreResolver(tree=tree, default=default_store)
+    resolver = StoreResolver(tree=tree)
 
     with pytest.raises(ValueError, match="Undeclared store 'nope'"):
         resolver.resolve(_call("/crm/contact/add", store_name="nope"))
@@ -205,10 +194,9 @@ def test_resolver_raises_on_undeclared_named_store(tmp_path: Path):
 
 def test_resolver_allows_any_declared_store_even_unregistered(tmp_path: Path):
     tree = _tree_with_declared_stores(tmp_path)
-    default_store = create_entity_store(MemoryBackend())
 
-    resolver = StoreResolver(tree=tree, default=default_store)
+    resolver = StoreResolver(tree=tree)
 
     # telemetry is declared by /crm/sync but has no physical store yet —
-    # it resolves to the default until the deployment provides it.
-    assert resolver.resolve(_call("/crm/sync", store_name="telemetry")) is default_store
+    # it resolves to None until the installation provides it (no default).
+    assert resolver.resolve(_call("/crm/sync", store_name="telemetry")) is None

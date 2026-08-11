@@ -22,18 +22,47 @@ from y5n.runtime.store.sequence.runtime import Sequencer
 
 
 @pytest.fixture
-def bus_store(monkeypatch):
+def bus_store(tmp_path, monkeypatch):
     import os
 
     os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
+
+    from y5n.runtime.api.runtime.context import set_context
+    from y5n.runtime.engine.executor import (
+        ExecutorKind,
+        ExecutorRegistry,
+        RuntimeExecutor,
+    )
+    from y5n.runtime.engine.nodes.tree import Tree
+    from y5n.runtime.engine.wire.adapter.store import StoreResolver
+    from y5n.runtime.store.event.runtime import StoreRuntime
+
+    # The events commands declare the `runtime` store and read activity
+    # directly (ADR-19: strict resolution, no default store).
+    (tmp_path / "usr" / "bin" / "events" / ".yak").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "usr" / "bin" / "events" / ".yak" / "yak.yml").write_text(
+        "stores:\n  - runtime\n"
+    )
+    executors = ExecutorRegistry()
+    executors.register(ExecutorKind.RUNTIME, RuntimeExecutor())
+    tree = Tree(root_path=tmp_path, executors=executors)
+    tree.build()
 
     previous = get_bus()
     bus = _make_default_bus()
     set_bus(bus)
 
     store = create_entity_store(MemoryBackend())
-    sequencer = Sequencer(ShardAllocator(MemoryShardRepository()))
-    bus.transport.register_adapter("store", StoreAdapter(store, sequencer))
+    runtime = StoreRuntime(
+        objects=store,
+        sequencer=Sequencer(ShardAllocator(MemoryShardRepository())),
+    )
+    bus.transport.register_adapter(
+        "store",
+        StoreAdapter(
+            resolver=StoreResolver(tree=tree, stores={"runtime": runtime}),
+        ),
+    )
     bus.resolver.register(
         "system:store",
         {
@@ -58,8 +87,12 @@ def bus_store(monkeypatch):
         on_record=store.record,
         on_ensure_indexes=store.ensure_indexes,
     )
-    yield activity
-    set_bus(previous)
+    set_context({"node": {"path": "/usr/bin/events", "stores": ["runtime"]}})
+    try:
+        yield activity
+    finally:
+        set_context({})
+        set_bus(previous)
 
 
 async def _record(activity: ActivityService, kind: str) -> None:
@@ -133,8 +166,16 @@ async def test_events_show_displays_context(bus_store, monkeypatch):
             store_adapter = adapter
             break
 
+    from y5n.runtime.api.runtime.invoke import Call
+
+    call = Call(
+        port="store",
+        method="",
+        caller_path="/usr/bin/events",
+        caller_session_key="test/session/runtime#s-1",
+    )
     page = await store_adapter.scan(
-        None, namespace="system/activity/global", index_key="all", value="1"
+        call, namespace="system/activity/global", index_key="all", value="1"
     )
     event_key = page["keys"][0]
     event_id = event_key["id"]

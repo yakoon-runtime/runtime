@@ -76,9 +76,9 @@ def test_dispatch_handler_has_no_host_knowledge():
     tree_src = _ENGINE_SRC / "nodes" / "tree.py"
     src = tree_src.read_text(encoding="utf-8")
 
-    assert "y5n.runtime.boot" not in src, (
-        "dispatch handler would reach into a concrete host implementation"
-    )
-    assert "_make_dispatch_handler" in src, (
-        "nodes/tree.py lost its dispatch handler — host routing broken"
-    )
+    assert (
+        "y5n.runtime.boot" not in src
+    ), "dispatch handler would reach into a concrete host implementation"
+    assert (
+        "_make_dispatch_handler" in src
+    ), "nodes/tree.py lost its dispatch handler — host routing broken"

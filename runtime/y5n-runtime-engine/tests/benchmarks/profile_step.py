@@ -26,8 +26,13 @@ for src in (
 from y5n.runtime.api.naming import Key  # noqa: E402,I001
 from y5n.runtime.engine.nodes import Node  # noqa: E402
 from y5n.runtime.api.runtime.context import set_context  # noqa: E402
-from y5n.runtime.engine.runtime.invocation import derive_invocation_context  # noqa: E402
-from y5n.runtime.engine.runtime.sessions.session import Session, SessionData  # noqa: E402
+from y5n.runtime.engine.runtime.invocation import (
+    derive_invocation_context,
+)  # noqa: E402
+from y5n.runtime.engine.runtime.sessions.session import (
+    Session,
+    SessionData,
+)  # noqa: E402
 
 N = 200_000
 

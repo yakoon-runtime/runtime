@@ -1,9 +1,10 @@
-"""Phase 3 (ADR-18): the runtime collects the store names from the packs.
+"""Phase 3 (ADR-18/19): the runtime materializes every store from the
+installation through its StoreFactory.
 
-The runtime knows the logical store names the installed packs declare
-(``store: crm`` → the name ``crm``) — nothing more. What each name means
-(backend, instance) is deployment knowledge, assembled later by ``yak``.
-The tree only *describes* the components; a collector evaluates them.
+The runtime knows no backend schemes. The installation binds each logical
+store — including the runtime's own `runtime` store — to a factory import
+path and an opaque config. A node without a declared store resolves to
+None: there is no default store.
 """
 
 from __future__ import annotations
@@ -39,6 +40,21 @@ def _make_call(caller_path: str, store_name: str | None = None):
         caller_session_key="test/session/runtime#s-1",
         store_name=store_name,
     )
+
+
+def _deployment(extra: str = "", *, runtime: str = "") -> str:
+    runtime_entry = (
+        "  runtime:\n"
+        "    factory: y5n.runtime.store.event.wire:EventStoreFactory\n"
+        "    config:\n"
+        "      backend: memory\n"
+        if runtime == "memory"
+        else ""
+    )
+    return "stores:\n" + runtime_entry + extra
+
+
+FACTORY = "y5n.runtime.store.event.wire:EventStoreFactory"
 
 
 def test_collector_gets_declared_store_names(tmp_path: Path):
@@ -90,31 +106,32 @@ def test_collector_without_stores_is_empty(tmp_path: Path):
     assert StoreCollector(tree).collect() == []
 
 
-def test_two_logical_stores_share_one_backend():
-    """ADR-19: stores with the same backend URI share one physical instance."""
+def test_two_logical_stores_share_one_factory_target():
+    """ADR-19: stores with the same factory and config share one instance."""
     from y5n.runtime.engine.installation import (
         Installation,
         StoreBinding,
         build_store_registry,
     )
-    from y5n.runtime.store.event.backends.memory import MemoryBackend
-    from y5n.runtime.store.event.store import create_entity_store
+    from y5n.runtime.store.event.runtime import StoreRuntime
 
     installation = Installation(
         stores={
-            "crm": StoreBinding(store="crm", backend="postgresql://db/crm"),
-            "ident": StoreBinding(store="ident", backend="postgresql://db/crm"),
+            "crm": StoreBinding(
+                store="crm", factory=FACTORY, config={"backend": "memory"}
+            ),
+            "ident": StoreBinding(
+                store="ident", factory=FACTORY, config={"backend": "memory"}
+            ),
         },
     )
-    default_objects = create_entity_store(MemoryBackend())
 
-    registry = build_store_registry(
-        installation,
-        lambda binding: create_entity_store(MemoryBackend()),
-    )
+    registry = build_store_registry(installation)
+    second = build_store_registry(installation)
 
     assert registry["crm"] is registry["ident"]
-    assert registry["crm"] is not default_objects
+    assert isinstance(registry["crm"], StoreRuntime)
+    assert registry["crm"] is not second["crm"]
 
 
 def test_load_installation_roundtrip(tmp_path: Path):
@@ -122,16 +139,24 @@ def test_load_installation_roundtrip(tmp_path: Path):
     from y5n.runtime.engine.installation import load_installation, to_dict
 
     deployment_file = tmp_path / "deployment.yml"
-    deployment_file.write_text("stores:\n" "  crm:\n" "    backend: memory://\n")
+    deployment_file.write_text(
+        "stores:\n"
+        "  crm:\n"
+        f"    factory: {FACTORY}\n"
+        "    config:\n"
+        "      backend: memory\n"
+    )
 
     installation = load_installation(deployment_file)
     assert installation is not None
     binding = installation.binding_for("crm")
     assert binding is not None
-    assert binding.backend == "memory://"
+    assert binding.factory == FACTORY
+    assert binding.config == {"backend": "memory"}
 
     data = to_dict(installation)
-    assert data["stores"]["crm"]["backend"] == "memory://"
+    assert data["stores"]["crm"]["factory"] == FACTORY
+    assert data["stores"]["crm"]["config"] == {"backend": "memory"}
 
 
 @pytest.mark.asyncio
@@ -139,7 +164,8 @@ async def test_runtime_consumes_a_real_deployment_file(tmp_path: Path):
     """ADR-19: the runtime builds its registry from the deployment file.
 
     The full chain: a real `deployment.yml` on disk → `build_runtime`
-    consumes it → the resolver serves the configured store.
+    consumes it → the resolver serves the configured store, and a node
+    without a declared store resolves to None — there is no default.
     """
     import os
 
@@ -154,17 +180,28 @@ async def test_runtime_consumes_a_real_deployment_file(tmp_path: Path):
         tmp_path / "crm" / "contact" / "add" / ".yak" / "yak.yml",
         "host: /boot/python/runtime\nentry:\n  run: pack:test:run\n",
     )
+    _write(
+        tmp_path / "usr" / "bin" / "pwd" / ".yak" / "yak.yml",
+        "host: /boot/python/runtime\n",
+    )
 
     # The deployment file the assembler would have written.
     deployment_file = tmp_path / ".yak" / "installation" / "deployment.yml"
     deployment_file.parent.mkdir(parents=True, exist_ok=True)
-    deployment_file.write_text("stores:\n" "  crm:\n" "    backend: memory://\n")
+    deployment_file.write_text(
+        _deployment(
+            "  crm:\n"
+            f"    factory: {FACTORY}\n"
+            "    config:\n"
+            "      backend: memory\n",
+            runtime="memory",
+        )
+    )
 
     from y5n.runtime.api.runtime.bus import _make_default_bus, get_bus, set_bus
     from y5n.runtime.engine.settings import RuntimeSettings, Settings
     from y5n.runtime.engine.wire.adapter.store import StoreAdapter
     from y5n.runtime.engine.wire.runtime import build_runtime
-    from y5n.runtime.store.event.settings import StorageSettings
 
     previous = get_bus()
     bus = _make_default_bus()
@@ -176,7 +213,6 @@ async def test_runtime_consumes_a_real_deployment_file(tmp_path: Path):
                 workspace_path=str(tmp_path),
                 installation_path=str(deployment_file),
             ),
-            storage=StorageSettings(backend="memory", dsn=""),
         )
         manager = build_runtime(settings=settings)
         await manager.setup()
@@ -190,13 +226,16 @@ async def test_runtime_consumes_a_real_deployment_file(tmp_path: Path):
 
         crm_resolved = adapter._resolver.resolve(_make_call("/crm/contact/add", "crm"))
         assert crm_resolved is not None
-        assert crm_resolved is not adapter._resolver._default
+        assert crm_resolved.sequencer is not None
+
+        # No default store: a node without declared stores resolves to None.
+        assert adapter._resolver.resolve(_make_call("/usr/bin/pwd")) is None
     finally:
         set_bus(previous)
 
 
 def test_runtime_raises_without_installation(tmp_path: Path):
-    """ADR-19: no runtime without an installation — no silent memory fallback."""
+    """ADR-19: no runtime without an installation."""
     import os
 
     os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
@@ -204,7 +243,6 @@ def test_runtime_raises_without_installation(tmp_path: Path):
     from y5n.runtime.api.runtime.bus import _make_default_bus, get_bus, set_bus
     from y5n.runtime.engine.settings import RuntimeSettings, Settings
     from y5n.runtime.engine.wire.runtime import build_runtime
-    from y5n.runtime.store.event.settings import StorageSettings
 
     previous = get_bus()
     bus = _make_default_bus()
@@ -216,9 +254,55 @@ def test_runtime_raises_without_installation(tmp_path: Path):
                 workspace_path=str(tmp_path),
                 installation_path=str(tmp_path / "missing" / "deployment.yml"),
             ),
-            storage=StorageSettings(backend="memory", dsn=""),
         )
         with pytest.raises(RuntimeError, match="No installation found"):
+            build_runtime(settings=settings)
+    finally:
+        set_bus(previous)
+
+
+def test_runtime_raises_without_runtime_store(tmp_path: Path):
+    """ADR-19: the runtime requires its own `runtime` store in the installation."""
+    import os
+
+    os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
+
+    _write(
+        tmp_path / "crm" / ".yak" / "yak.yml",
+        "stores:\n  - crm\n",
+    )
+    _write(
+        tmp_path / "crm" / "contact" / "add" / ".yak" / "yak.yml",
+        "host: /boot/python/runtime\nentry:\n  run: pack:test:run\n",
+    )
+
+    deployment_file = tmp_path / ".yak" / "installation" / "deployment.yml"
+    deployment_file.parent.mkdir(parents=True, exist_ok=True)
+    deployment_file.write_text(
+        _deployment(
+            "  crm:\n"
+            f"    factory: {FACTORY}\n"
+            "    config:\n"
+            "      backend: memory\n",
+        )
+    )
+
+    from y5n.runtime.api.runtime.bus import _make_default_bus, get_bus, set_bus
+    from y5n.runtime.engine.settings import RuntimeSettings, Settings
+    from y5n.runtime.engine.wire.runtime import build_runtime
+
+    previous = get_bus()
+    bus = _make_default_bus()
+    set_bus(bus)
+
+    try:
+        settings = Settings(
+            runtime=RuntimeSettings(
+                workspace_path=str(tmp_path),
+                installation_path=str(deployment_file),
+            ),
+        )
+        with pytest.raises(RuntimeError, match="binds no 'runtime' store"):
             build_runtime(settings=settings)
     finally:
         set_bus(previous)

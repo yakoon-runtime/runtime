@@ -21,6 +21,7 @@ from y5n.runtime.api.runtime.invoke import Call
 if TYPE_CHECKING:
     from y5n.runtime.engine.nodes.tree import Tree
     from y5n.runtime.store.event.models import JsonValue, RevisionRow
+    from y5n.runtime.store.event.runtime import StoreRuntime
     from y5n.runtime.store.event.store import EntityStore
 
 
@@ -86,71 +87,65 @@ class StoreResolver:
        stores. An undeclared dependency is an error, like an import whose
        module is not in the requirements (ADR-19).
 
-    The mapping from logical name to physical store is the registry; an
-    unregistered name falls back to the default store (today the only one).
-    Ambiguity is never resolved implicitly: several declared stores without
-    a name raise.
+    There is no default store (ADR-19). The registry maps every declared
+    logical name to its ``StoreRuntime``; a node without a declared store
+    resolves to None — the caller has not declared persistence.
+    Ambiguity is never resolved implicitly: several declared stores
+    without a name raise.
     """
 
     def __init__(
         self,
         tree: Tree | None,
-        stores: dict[str, EntityStore] | None = None,
-        default: EntityStore | None = None,
+        stores: dict[str, StoreRuntime] | None = None,
     ):
         self._tree = tree
         self._stores = stores or {}
-        self._default = default
 
-    def resolve(self, call: Call) -> EntityStore | None:
+    def resolve(self, call: Call) -> StoreRuntime | None:
         if self._tree is None:
-            return self._default
+            return None
         node = self._tree.find(call.caller_path or "/") if call.caller_path else None
         if node is None:
-            return self._default
+            return None
         if call.store_name:
             if call.store_name not in node.stores:
                 raise ValueError(
                     f"Undeclared store '{call.store_name}'. "
                     "Add it to the pack's stores: declaration."
                 )
-            if call.store_name in self._stores:
-                return self._stores[call.store_name]
-            return self._default
+            return self._stores.get(call.store_name)
         if len(node.stores) > 1:
             raise ValueError("Multiple stores declared. Please specify a store name.")
         if node.stores:
-            first = node.stores[0]
-            if first in self._stores:
-                return self._stores[first]
-            return self._default
-        return self._default
+            return self._stores.get(node.stores[0])
+        return None
 
 
 class StoreAdapter:
-    """SDK-facing ``store`` Port — the shared Event Store + sequencer.
+    """SDK-facing ``store`` Port — resolves objects + sequencer per call.
 
-    The adapter holds the *default* store and a resolver. Every call is
-    resolved against the calling node's declared store profile; a profile
-    without a registered physical store falls back to the default. Today
-    that is the only store — the registry is the future router boundary.
+    Every call is resolved against the calling node's declared store
+    (ADR-18, ADR-19). There is no default store: a call without a
+    declared store is an error — the pack has not declared persistence.
+    Each resolved ``StoreRuntime`` carries its own sequencer; sequencing
+    is part of the storage semantics, not a global sidecar.
     """
 
-    def __init__(
-        self,
-        objects: EntityStore,
-        sequencer,
-        resolver: StoreResolver | None = None,
-    ):
-        self._objects = objects
-        self._sequencer = sequencer
-        self._resolver = resolver or StoreResolver(tree=None, default=objects)
+    def __init__(self, resolver: StoreResolver):
+        self._resolver = resolver
 
-    def _objects_for(self, call: Call) -> EntityStore:
+    def _runtime_for(self, call: Call) -> StoreRuntime:
         resolved = self._resolver.resolve(call)
         if resolved is None:
-            return self._objects
+            raise RuntimeError(
+                f"No store bound for call at {call.caller_path!r}. "
+                "The calling pack has not declared a store."
+            )
         return resolved
+
+    def _objects_for(self, call: Call) -> EntityStore:
+        return self._runtime_for(call).objects
 
     # ------------------------
     # ENTITY API
@@ -326,9 +321,11 @@ class StoreAdapter:
     # SEQUENCER
     # ------------------------
 
-    async def next_id(self, call: Call, *, prefix: str) -> int:
-        shard = await self._sequencer.next_id(prefix)
-        return shard
+    async def next_id(self, call: Call, *, prefix: str) -> str:
+        sequencer = self._runtime_for(call).sequencer
+        if sequencer is None:
+            raise RuntimeError(f"Store at {call.caller_path!r} has no sequencer.")
+        return await sequencer.next_id(prefix)
 
 
 def _from_iso(at_time: str | None):

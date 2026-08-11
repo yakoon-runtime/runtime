@@ -97,7 +97,9 @@ def _engine(tree: Tree) -> CommandEngine:
     def on_get_node(parent: Node, key: str) -> Node | None:
         return parent.get(key)
 
-    def on_suggest(*, value: str, choices: list[str], limit: int = 3, cutoff: float = 0.5):
+    def on_suggest(
+        *, value: str, choices: list[str], limit: int = 3, cutoff: float = 0.5
+    ):
         return []
 
     resolver = InvocationResolver(

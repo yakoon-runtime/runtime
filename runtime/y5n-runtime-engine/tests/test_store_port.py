@@ -6,20 +6,37 @@ wire adapter maps RPC-safe structured keys (dicts) onto the EntityStore.
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 from y5n.runtime.api.runtime.invoke import Call
-from y5n.runtime.engine.wire.adapter.store import StoreAdapter, _KeyDict
+from y5n.runtime.engine.executor import ExecutorKind, ExecutorRegistry, RuntimeExecutor
+from y5n.runtime.engine.nodes.tree import Tree
+from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver, _KeyDict
 from y5n.runtime.store.event.backends.memory import MemoryBackend
+from y5n.runtime.store.event.runtime import StoreRuntime
 from y5n.runtime.store.event.store import create_entity_store
 from y5n.runtime.store.sequence.allocator import ShardAllocator
 from y5n.runtime.store.sequence.backends.memory import MemoryShardRepository
 from y5n.runtime.store.sequence.runtime import Sequencer
 
 
-def _adapter() -> StoreAdapter:
-    store = create_entity_store(MemoryBackend())
-    seq = Sequencer(ShardAllocator(MemoryShardRepository()))
-    return StoreAdapter(store, seq)
+def _adapter(tmp_path: Path) -> StoreAdapter:
+    (tmp_path / "usr" / "bin" / "ls" / ".yak").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "usr" / "bin" / "ls" / ".yak" / "yak.yml").write_text(
+        "stores:\n  - crm\n"
+    )
+    registry = ExecutorRegistry()
+    registry.register(ExecutorKind.RUNTIME, RuntimeExecutor())
+    tree = Tree(root_path=tmp_path, executors=registry)
+    tree.build()
+    runtime = StoreRuntime(
+        objects=create_entity_store(MemoryBackend()),
+        sequencer=Sequencer(ShardAllocator(MemoryShardRepository())),
+    )
+    return StoreAdapter(
+        resolver=StoreResolver(tree=tree, stores={"crm": runtime}),
+    )
 
 
 def _call(port="store") -> Call:
@@ -39,8 +56,8 @@ def _key(domain: str, kind: str, space: str, entity_id: str) -> _KeyDict:
 
 
 @pytest.mark.asyncio
-async def test_replace_and_get_roundtrip():
-    adapter = _adapter()
+async def test_replace_and_get_roundtrip(tmp_path):
+    adapter = _adapter(tmp_path)
     key = _key("luma", "box", "global", "1")
 
     result = await adapter.replace(_call(), key=key, doc={"name": "office"})
@@ -52,8 +69,8 @@ async def test_replace_and_get_roundtrip():
 
 
 @pytest.mark.asyncio
-async def test_record_is_write_only():
-    adapter = _adapter()
+async def test_record_is_write_only(tmp_path):
+    adapter = _adapter(tmp_path)
     key = _key("system", "activity", "global", "evt-1")
 
     result = await adapter.record(
@@ -67,8 +84,8 @@ async def test_record_is_write_only():
 
 
 @pytest.mark.asyncio
-async def test_history_returns_revisions_with_context():
-    adapter = _adapter()
+async def test_history_returns_revisions_with_context(tmp_path):
+    adapter = _adapter(tmp_path)
     key = _key("system", "activity", "global", "evt-1")
 
     await adapter.record(_call(), key=key, doc={"kind": "read", "path": "/opt"})
@@ -81,8 +98,8 @@ async def test_history_returns_revisions_with_context():
 
 
 @pytest.mark.asyncio
-async def test_append_and_next_id():
-    adapter = _adapter()
+async def test_append_and_next_id(tmp_path):
+    adapter = _adapter(tmp_path)
     key = _key("crm", "contact", "global", "1")
 
     result = await adapter.append(

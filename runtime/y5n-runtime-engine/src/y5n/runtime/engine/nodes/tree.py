@@ -8,6 +8,7 @@ from typing import Any, Iterator
 
 import yaml
 from y5n.runtime.api.ports.models import HealthLevel, HealthResult
+from y5n.runtime.api.runtime.context import set_context
 from y5n.runtime.api.runtime.invocation import CommandSignature, Param, ParamKind
 from y5n.runtime.engine.executor import (
     Executor,
@@ -313,13 +314,23 @@ class Tree:
             if executor is None:
                 continue
 
-            result = executor.run(node, Phase.SETUP)
-            if result is not None:
-                if hasattr(result, "__await__"):
-                    await result  # type: ignore
-                else:
-                    async for _ in result:  # type: ignore
-                        pass
+            # Setup runs as the pack root (ADR-19): the SDK resolves the
+            # pack's declared stores through this node's path — there is
+            # no default store to fall back to.
+            node_path = self._tree_path(node.fs_path) if node.fs_path else None
+            set_context(
+                {"node": {"path": node_path, "stores": node.stores}},
+            )
+            try:
+                result = executor.run(node, Phase.SETUP)
+                if result is not None:
+                    if hasattr(result, "__await__"):
+                        await result  # type: ignore
+                    else:
+                        async for _ in result:  # type: ignore
+                            pass
+            finally:
+                set_context({})
 
     def _tree_path(self, dir_path: Path) -> str:
         """Map a filesystem path under root_path to its tree path."""

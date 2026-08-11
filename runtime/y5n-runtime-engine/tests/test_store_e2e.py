@@ -30,7 +30,17 @@ from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.services.store_collector import StoreCollector
 from y5n.runtime.engine.wire.adapter.store import StoreResolver, _KeyDict
 from y5n.runtime.store.event.backends.memory import MemoryBackend
+from y5n.runtime.store.event.runtime import StoreRuntime
 from y5n.runtime.store.event.store import create_entity_store
+from y5n.runtime.store.sequence.allocator import ShardAllocator
+from y5n.runtime.store.sequence.backends.memory import MemoryShardRepository
+from y5n.runtime.store.sequence.runtime import Sequencer
+
+
+def _runtime() -> StoreRuntime:
+    store = create_entity_store(MemoryBackend())
+    seq = Sequencer(ShardAllocator(MemoryShardRepository()))
+    return StoreRuntime(objects=store, sequencer=seq)
 
 
 def _build_tree(root: Path) -> Tree:
@@ -94,21 +104,19 @@ def test_full_chain_declares_and_resolves(tmp_path: Path):
     assert StoreCollector(tree).collect() == ["crm", "ident", "luma"]
 
     # 2. The resolver binds a named store.
-    crm_store = create_entity_store(MemoryBackend())
-    luma_store = create_entity_store(MemoryBackend())
-    default_store = create_entity_store(MemoryBackend())
+    crm_rt = _runtime()
+    luma_rt = _runtime()
     resolver = StoreResolver(
         tree=tree,
-        stores={"crm": crm_store, "luma": luma_store},
-        default=default_store,
+        stores={"crm": crm_rt, "luma": luma_rt},
     )
 
-    assert resolver.resolve(_call("/crm/contact/add")) is crm_store
-    assert resolver.resolve(_call("/crm/contact/add", store_name="crm")) is crm_store
-    assert resolver.resolve(_call("/luma/box/add")) is luma_store
+    assert resolver.resolve(_call("/crm/contact/add")) is crm_rt
+    assert resolver.resolve(_call("/crm/contact/add", store_name="crm")) is crm_rt
+    assert resolver.resolve(_call("/luma/box/add")) is luma_rt
 
-    # 3. A declared but unregistered store resolves to the default.
-    assert resolver.resolve(_call("/luma/box/add", store_name="luma")) is luma_store
+    # 3. A declared but unregistered store resolves to None (no default).
+    assert resolver.resolve(_call("/luma/box/add", store_name="luma")) is luma_rt
 
     # 4. An undeclared store name is rejected (dependency check, ADR-19).
     with pytest.raises(ValueError, match="Undeclared store 'nope'"):
@@ -153,40 +161,34 @@ async def test_writes_land_in_the_declared_store(tmp_path: Path):
     from y5n.runtime.api.naming import Key, Namespace
     from y5n.runtime.api.runtime.bus import _make_default_bus, get_bus, set_bus
     from y5n.runtime.engine.wire.adapter.store import StoreAdapter
-    from y5n.runtime.store.sequence.allocator import ShardAllocator
-    from y5n.runtime.store.sequence.backends.memory import MemoryShardRepository
-    from y5n.runtime.store.sequence.runtime import Sequencer
 
     _pack(tmp_path, "crm", "crm")
     _command(tmp_path, "crm", "contact", "add")
 
-    crm_store = create_entity_store(MemoryBackend())
-    default_store = create_entity_store(MemoryBackend())
-    seq = Sequencer(ShardAllocator(MemoryShardRepository()))
+    crm_rt = _runtime()
+    other_rt = _runtime()
 
     previous = get_bus()
     bus = _make_default_bus()
     set_bus(bus)
     try:
         adapter = StoreAdapter(
-            default_store,
-            seq,
             resolver=StoreResolver(
                 tree=_build_tree(tmp_path),
-                stores={"crm": crm_store},
-                default=default_store,
+                stores={"crm": crm_rt},
             ),
         )
         key = _key("crm", "contact", "global", "1")
         await adapter.replace(_call("/crm/contact/add"), key=key, doc={"name": "ada"})
 
         assert (
-            await crm_store.get(
+            await crm_rt.objects.get(
                 key=Key(namespace=Namespace("crm", "contact", "global"), id="1")
             )
         ).data == {"name": "ada"}
+        # Another physical store does not see it.
         assert (
-            await default_store.get(
+            await other_rt.objects.get(
                 key=Key(namespace=Namespace("crm", "contact", "global"), id="1")
             )
         ).data is None

@@ -1,4 +1,3 @@
-import os
 from pathlib import Path
 
 from y5n.runtime.api.runtime import get_bus
@@ -8,6 +7,7 @@ from y5n.runtime.engine.executor import (
     RuntimeExecutor,
 )
 from y5n.runtime.engine.installation import (
+    RUNTIME_STORE,
     build_store_registry,
     load_installation,
 )
@@ -37,9 +37,6 @@ from y5n.runtime.engine.wire.adapter import (
 from y5n.runtime.engine.wire.document import build_document_stack
 from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
 from y5n.runtime.engine.wire.stream import build_stream
-from y5n.runtime.store.event.settings import StorageSettings
-from y5n.runtime.store.event.wire import build_store
-from y5n.runtime.store.sequence.wire import build_store as build_sequencer
 
 
 def build_runtime(
@@ -51,13 +48,11 @@ def build_runtime(
     # --- STORAGING ---
     # -----------------
 
-    store = build_store(settings.storage)
-    sequencer = build_sequencer(settings.sequencer)
-
-    # The installation (ADR-19): the deployment mapping materialized by
-    # `yak`. There is no runtime without an installation — the runtime
-    # never guesses missing deployment information. No installation means
-    # no store registry; `yak install` must be run first.
+    # The installation (ADR-19): every physical store — including the
+    # runtime's own `runtime` store — is materialized from
+    # `.yak/installation/deployment.yml` by its StoreFactory. There is
+    # no runtime without an installation; the runtime never guesses
+    # deployment information and knows no backend schemes.
     installation = load_installation(
         Path(settings.runtime.installation_path)
         if settings.runtime.installation_path
@@ -68,7 +63,14 @@ def build_runtime(
     )
     if installation is None:
         raise RuntimeError("No installation found. Run `yak install` to create one.")
-    registry = build_store_registry(installation, _build_from_binding)
+    registry = build_store_registry(installation)
+
+    runtime_store = registry.get(RUNTIME_STORE)
+    if runtime_store is None:
+        raise RuntimeError(
+            f"The installation binds no '{RUNTIME_STORE}' store. "
+            "The runtime requires it for its session and activity infrastructure."
+        )
 
     # ----------------
     # --- SERVICES ---
@@ -78,13 +80,13 @@ def build_runtime(
     audit_service = RuntimeLogService(settings.logging)
 
     activity_service = ActivityService(
-        on_record=store.objects.record,
-        on_ensure_indexes=store.objects.ensure_indexes,
+        on_record=runtime_store.objects.record,
+        on_ensure_indexes=runtime_store.objects.ensure_indexes,
     )
 
     session_manager = SessionService(
-        on_replace=store.objects.replace,
-        on_get=store.objects.get,
+        on_replace=runtime_store.objects.replace,
+        on_get=runtime_store.objects.get,
     )
 
     # -------------------
@@ -146,8 +148,7 @@ def build_runtime(
     # --------------------
 
     async def initialize():
-        await store.initialize()
-        await sequencer.initialize()
+        await runtime_store.initialize()
         await activity_service.ensure_index()
         await tree.setup()
 
@@ -256,12 +257,9 @@ def build_runtime(
     bus.transport.register_adapter(
         "store",
         StoreAdapter(
-            store.objects,
-            sequencer,
             resolver=StoreResolver(
                 tree=tree,
                 stores=registry,
-                default=store.objects,
             ),
         ),
     )
@@ -287,42 +285,3 @@ def build_runtime(
     )
 
     return manager
-
-
-def _build_from_binding(binding):
-    """Build a physical store from a store binding (ADR-19).
-
-    The backend URI's scheme selects the store adapter; the credentials
-    URI's scheme selects the credential resolver. Today only ``env://``
-    is supported for credentials and only memory/postgres backends exist;
-    other schemes raise explicitly — there is no fallback.
-    """
-    if binding.backend.startswith("memory://"):
-        return _build_memory()
-    if binding.backend.startswith("postgresql://"):
-        dsn = _resolve_credentials(binding.credentials)
-        settings = StorageSettings(backend="postgres", dsn=dsn)
-        return build_store(settings).objects
-    raise RuntimeError(f"Unsupported backend scheme: {binding.backend!r}")
-
-
-def _build_memory():
-    settings = StorageSettings(backend="memory", dsn="")
-    return build_store(settings).objects
-
-
-def _resolve_credentials(credentials: str | None) -> str:
-    """Resolve a credentials URI to a DSN (ADR-19).
-
-    Only ``env://NAME`` is supported today. The environment variable holds
-    the complete DSN. Any other scheme raises explicitly.
-    """
-    if not credentials:
-        raise RuntimeError("Backend postgresql:// requires credentials")
-    if credentials.startswith("env://"):
-        name = credentials[len("env://") :]
-        dsn = os.getenv(name)
-        if not dsn:
-            raise RuntimeError(f"Credentials environment variable not set: {name}")
-        return dsn
-    raise RuntimeError(f"Unsupported credentials scheme: {credentials!r}")

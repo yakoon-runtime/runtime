@@ -1,53 +1,60 @@
-"""Installation model (ADR-19): binding logical capabilities to physical backends.
+"""Installation model (ADR-19): every store is materialized by a StoreFactory.
 
 The installation is the machine-specific product of the assembler. It
-binds each logical store to a physical backend — the only place in the
-system that knows how to reach a database.
+binds each logical store — including the runtime's own infrastructure
+store ``runtime`` — to a ``StoreFactory`` import path and an opaque
+config:
 
 ```yaml
 # .yak/installation/deployment.yml
 stores:
-  crm:
-    backend: postgresql://db.internal:5432/crm
-    credentials: env://CRM_DATABASE
+  runtime:
+    factory: y5n.runtime.store.event.wire:EventStoreFactory
+    config:
+      backend: memory
 
-  telemetry:
-    backend: memory://
+  crm:
+    factory: y5n.runtime.store.event.wire:EventStoreFactory
+    config:
+      backend: memory
 ```
 
-Two URIs per store, both interpreted by their scheme:
+The runtime knows no backend schemes and no credential schemes. It loads
+the factory by import path and asks ``factory.build(config)`` for the
+complete ``StoreRuntime``. The factory owns its config language — where a
+DSN comes from (env, vault, ...) is storage knowledge, not runtime
+knowledge.
 
-- ``backend`` (required) — the non-secret physical binding. The scheme
-  selects the store adapter (`postgresql://`, `memory://`, `http://`).
-- ``credentials`` (optional) — the source of secret connection
-  information. The scheme selects the credential resolver (`env://`,
-  later `vault://`, `file://`, ...).
-
-There is no named registry: no `deployments:`, no `instance:` — a store
-is bound directly. Unsupported credential schemes raise explicitly; there
-is no fallback and no implicit default.
+``runtime`` is the reserved store of the runtime's own infrastructure
+(session, activity). It is never a *default*: the resolver never falls
+back to it, and no pack reaches it without declaring it — the
+declaration *is* the permission.
 """
 
 from __future__ import annotations
 
+import importlib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import yaml
 
+if TYPE_CHECKING:
+    from y5n.runtime.store.event.runtime import StoreRuntime
 
-class UnsupportedCredentialsScheme(RuntimeError):
-    """Raised when a credentials URI uses a scheme no resolver provides."""
+
+RUNTIME_STORE = "runtime"
+"""The reserved store name of the runtime's own infrastructure."""
 
 
 @dataclass(frozen=True, slots=True)
 class StoreBinding:
-    """The binding of one logical store to a physical backend."""
+    """The binding of one logical store to a store factory + config."""
 
     store: str
-    backend: str
-    credentials: str | None = None
+    factory: str
+    config: Any | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,54 +78,70 @@ def load_installation(path: Path) -> Installation | None:
     for store, raw in (data.get("stores") or {}).items():
         if not isinstance(raw, dict):
             continue
-        backend = raw.get("backend")
-        if not isinstance(backend, str):
+        factory = raw.get("factory")
+        if not isinstance(factory, str):
             continue
-        credentials = raw.get("credentials")
         stores[store] = StoreBinding(
             store=store,
-            backend=backend,
-            credentials=credentials if isinstance(credentials, str) else None,
+            factory=factory,
+            config=raw.get("config"),
         )
 
     return Installation(stores=stores)
 
 
 def to_dict(installation: Installation) -> dict[str, Any]:
-    """Serialize an installation back to a deployment dict."""
+    """Serialize an installation back to a deployment dict.
+
+    Insertion order is preserved: the assembler controls the order in the
+    file (the `runtime` store first, then the pack stores).
+    """
     return {
         "stores": {
             store: {
                 k: v
                 for k, v in {
-                    "backend": binding.backend,
-                    "credentials": binding.credentials,
+                    "factory": binding.factory,
+                    "config": binding.config,
                 }.items()
                 if v is not None
             }
-            for store, binding in sorted(installation.stores.items())
+            for store, binding in installation.stores.items()
         },
     }
 
 
+def load_store_factory(factory: str):
+    """Resolve a ``module:attr`` factory path to a callable/class."""
+    module_path, sep, attr = factory.partition(":")
+    if not sep or not module_path or not attr:
+        raise RuntimeError(f"Invalid store factory path: {factory!r}")
+    try:
+        module = importlib.import_module(module_path)
+        return getattr(module, attr)
+    except (ImportError, AttributeError) as exc:
+        raise RuntimeError(f"Cannot load store factory: {factory!r}") from exc
+
+
 def build_store_registry(
     installation: Installation | None,
-    build_store,
-) -> dict[str, Any]:
-    """Build the resolver's store registry from an installation.
+) -> dict[str, StoreRuntime]:
+    """Build the store registry from an installation.
 
-    Each logical store is bound to the physical store of its backend URI.
-    Two stores with the same backend URI share one physical instance.
+    Each logical store is materialized through its ``StoreFactory``. Two
+    stores with the same factory and config share one physical instance.
     """
     if installation is None:
         return {}
-    registry: dict[str, Any] = {}
-    per_backend: dict[str, Any] = {}
+    registry: dict[str, StoreRuntime] = {}
+    per_target: dict[tuple[str, str], StoreRuntime] = {}
     for store, binding in installation.stores.items():
-        if binding.backend in per_backend:
-            registry[store] = per_backend[binding.backend]
+        target = (binding.factory, repr(binding.config))
+        if target in per_target:
+            registry[store] = per_target[target]
             continue
-        built = build_store(binding)
-        per_backend[binding.backend] = built
+        factory = load_store_factory(binding.factory)
+        built = factory.build(binding.config)
+        per_target[target] = built
         registry[store] = built
     return registry
