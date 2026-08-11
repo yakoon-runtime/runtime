@@ -48,11 +48,6 @@ def build_runtime(
     # --- STORAGING ---
     # -----------------
 
-    # The installation (ADR-19): every physical store — including the
-    # runtime's own `runtime` store — is materialized from
-    # `.yak/installation/deployment.yml` by its StoreFactory. There is
-    # no runtime without an installation; the runtime never guesses
-    # deployment information and knows no backend schemes.
     installation = load_installation(
         Path(settings.runtime.installation_path)
         if settings.runtime.installation_path
@@ -61,10 +56,11 @@ def build_runtime(
         / "installation"
         / "deployment.yml"
     )
+
     if installation is None:
         raise RuntimeError("No installation found. Run `yak install` to create one.")
-    registry = build_store_registry(installation)
 
+    registry = build_store_registry(installation)
     runtime_store = registry.get(RUNTIME_STORE)
     if runtime_store is None:
         raise RuntimeError(
@@ -132,7 +128,6 @@ def build_runtime(
 
     ds.bind("system:nodes", NodeSource(tree))
     ds.bind("system:runtimes", RuntimeSource(settings.runtime.known))
-    # ds.bind("system:discovery", DiscoverySource(ds.read, perm_checker.can_read))
 
     root = tree.root()
     assert root
@@ -172,11 +167,15 @@ def build_runtime(
 
     ds.bind("system:sessions", SessionSource(manager))
 
-    # ---------------------------------------
-    # --- SDK ADAPTERS (on the Runtime Bus) ---
-    # ---------------------------------------
+    # ---------------
+    # --- SDK BUS ---
+    # ---------------
 
     bus = get_bus()
+
+    # --------------------
+    # --- SDK ADAPTERS ---
+    # --------------------
 
     bus.resolver.register("system:document", {"document": ["render"]}, path="/")
     bus.transport.register_adapter(
