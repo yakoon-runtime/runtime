@@ -1,15 +1,19 @@
 # ADR 19: Declarative Deployment
 
-**Status: Proposed**
+**Status: Accepted**
 
-The next experiment. ADR-18 proved that a pack can declaratively describe
-the logical stores it uses, without knowing infrastructure. This ADR asks
-the second half of the story: **how does a collection of declarative packs
-become a running installation?**
+ADR-18 proved that a pack can declaratively describe the logical stores it
+uses, without knowing infrastructure. This ADR answers the second half of
+the story: **how does a collection of declarative packs become a running
+installation?**
 
 The answer is the **deployment model** — the mapping between logical
-stores and physical resources. The `yak` tool becomes the assembler that
-materializes the deployment from the packs' declared needs.
+stores and physical resources. The `yak` tool is the assembler that
+materializes the deployment from the packs' declared needs. The core is
+implemented and proven end to end: the resolver enforces the dependency
+list, `yak install` assembles `deployment.yml`, and the runtime refuses to
+start without an installation — no silent fallback, no guessed deployment
+information.
 
 > **A pack declares what it depends on. `yak` assembles the deployment.
 > The runtime executes. The SDK stays minimal.**
