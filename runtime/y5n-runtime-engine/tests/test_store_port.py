@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 from y5n.runtime.api.runtime.invoke import Call
-from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver, _KeyDict
+from y5n.runtime.engine.wire.adapter.store import StoreAdapter, _KeyDict
 from y5n.runtime.store.event.backends.memory import MemoryBackend
 from y5n.runtime.store.event.runtime import StoreRuntime
 from y5n.runtime.store.event.store import create_entity_store
@@ -24,7 +24,7 @@ def _adapter(tmp_path: Path) -> StoreAdapter:
         objects=create_entity_store(MemoryBackend()),
         sequencer=Sequencer(ShardAllocator(MemoryShardRepository())),
     )
-    return StoreAdapter(resolver=StoreResolver(stores={"crm": runtime}))
+    return StoreAdapter(stores={"crm": runtime})
 
 
 def _call(port="store") -> Call:

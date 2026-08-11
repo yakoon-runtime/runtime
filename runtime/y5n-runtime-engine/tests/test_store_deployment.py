@@ -261,12 +261,12 @@ async def test_runtime_consumes_a_real_deployment_file(tmp_path: Path):
                 break
         assert adapter is not None
 
-        crm_resolved = adapter._resolver.resolve("crm")
+        crm_resolved = adapter._stores.get("crm")
         assert crm_resolved is not None
         assert crm_resolved.sequencer is not None
 
-        # The runtime store is bound; an unbound name resolves to None.
-        assert adapter._resolver.resolve("ident") is None
+        # The runtime store is bound; an unbound name is absent.
+        assert adapter._stores.get("ident") is None
     finally:
         set_bus(previous)
 

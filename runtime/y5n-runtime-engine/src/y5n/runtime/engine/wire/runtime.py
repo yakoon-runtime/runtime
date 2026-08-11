@@ -32,7 +32,6 @@ from y5n.runtime.engine.wire.adapter import (
     SessionAdapter,
     SourceReadAdapter,
     StoreAdapter,
-    StoreResolver,
 )
 from y5n.runtime.engine.wire.document import build_document_stack
 from y5n.runtime.engine.wire.machine import RuntimeManager, build_machine
@@ -255,9 +254,7 @@ def build_runtime(
     )
     bus.transport.register_adapter(
         "store",
-        StoreAdapter(
-            resolver=StoreResolver(stores=registry),
-        ),
+        StoreAdapter(stores=registry),
     )
 
     bus.resolver.register(

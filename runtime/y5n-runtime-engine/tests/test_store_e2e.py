@@ -14,7 +14,7 @@ The full chain:
     StoreCollector → {crm, luma, ident}
         │
         ▼
-    StoreResolver → sdk.store.get("crm") / sdk.store.get()
+    StoreAdapter → sdk.store.get("crm") / sdk.store.get()
 """
 
 from __future__ import annotations
@@ -28,7 +28,7 @@ from y5n.runtime.api.runtime.invoke import Call
 from y5n.runtime.engine.executor import ExecutorKind, ExecutorRegistry, RuntimeExecutor
 from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.services.store_collector import StoreCollector
-from y5n.runtime.engine.wire.adapter.store import StoreResolver, _KeyDict
+from y5n.runtime.engine.wire.adapter.store import _KeyDict
 from y5n.runtime.store.event.backends.memory import MemoryBackend
 from y5n.runtime.store.event.runtime import StoreRuntime
 from y5n.runtime.store.event.store import create_entity_store
@@ -103,15 +103,6 @@ def test_full_chain_declares_and_resolves(tmp_path: Path):
     # 1. The tree describes the installed packs.
     assert StoreCollector(tree).collect() == ["crm", "ident", "luma"]
 
-    # 2. The resolver routes a named store.
-    crm_rt = _runtime()
-    luma_rt = _runtime()
-    resolver = StoreResolver(stores={"crm": crm_rt, "luma": luma_rt})
-
-    assert resolver.resolve("crm") is crm_rt
-    assert resolver.resolve("luma") is luma_rt
-    assert resolver.resolve("ident") is None
-
 
 @pytest.mark.asyncio
 async def test_sdk_store_resolves_the_declared_store(tmp_path: Path):
@@ -162,9 +153,7 @@ async def test_writes_land_in_the_declared_store(tmp_path: Path):
     bus = _make_default_bus()
     set_bus(bus)
     try:
-        adapter = StoreAdapter(
-            resolver=StoreResolver(stores={"crm": crm_rt}),
-        )
+        adapter = StoreAdapter(stores={"crm": crm_rt})
         key = _key("crm", "contact", "global", "1")
         await adapter.replace(
             _call("/crm/contact/add", store_name="crm"), key=key, doc={"name": "ada"}

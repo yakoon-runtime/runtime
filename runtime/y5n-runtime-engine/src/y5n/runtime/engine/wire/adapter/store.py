@@ -19,7 +19,6 @@ from y5n.runtime.api.naming import Key, Namespace
 from y5n.runtime.api.runtime.invoke import Call
 
 if TYPE_CHECKING:
-    from y5n.runtime.engine.nodes.tree import Tree
     from y5n.runtime.store.event.models import JsonValue, RevisionRow
     from y5n.runtime.store.event.runtime import StoreRuntime
     from y5n.runtime.store.event.store import EntityStore
@@ -73,44 +72,26 @@ def _index_key(raw: str):
     return IndexKey(raw)
 
 
-class StoreResolver:
-    """Route a logical store name to its physical ``StoreRuntime``.
+class StoreAdapter:
+    """SDK-facing ``store`` Port — routes a name to its ``StoreRuntime``.
 
-    ``stores:`` is a dependency declaration for the installation — ``yak``
-    collects it and materializes the binding. At runtime the resolver only
-    routes: the name the client is bound to (``sdk.store("ident")``) leads
-    to the store the installation built. There is no per-call node check
-    and no default store (ADR-19): a name the installation did not bind
-    resolves to None.
+    The registry maps every bound logical name to a ``StoreRuntime``
+    (objects + sequencer). The adapter routes each call's store name to
+    its runtime and translates RPC-safe dicts onto the EntityStore API.
+    A name the installation did not bind is an error; there is no
+    default store (ADR-19).
     """
 
     def __init__(self, stores: dict[str, StoreRuntime] | None = None):
         self._stores = stores or {}
 
-    def resolve(self, name: str | None) -> StoreRuntime | None:
-        return self._stores.get(name) if name else None
-
-
-class StoreAdapter:
-    """SDK-facing ``store`` Port — resolves objects + sequencer per call.
-
-    Every call is resolved against the calling node's declared store
-    (ADR-18, ADR-19). There is no default store: a call without a
-    declared store is an error — the pack has not declared persistence.
-    Each resolved ``StoreRuntime`` carries its own sequencer; sequencing
-    is part of the storage semantics, not a global sidecar.
-    """
-
-    def __init__(self, resolver: StoreResolver):
-        self._resolver = resolver
-
     def _runtime_for(self, call: Call) -> StoreRuntime:
-        resolved = self._resolver.resolve(call.store_name)
-        if resolved is None:
+        runtime = self._stores.get(call.store_name) if call.store_name else None
+        if runtime is None:
             if call.store_name:
                 raise RuntimeError(f"Store {call.store_name!r} is not installed.")
             raise RuntimeError("No store specified for this call.")
-        return resolved
+        return runtime
 
     def _objects_for(self, call: Call) -> EntityStore:
         return self._runtime_for(call).objects
@@ -292,7 +273,7 @@ class StoreAdapter:
     async def next_id(self, call: Call, *, prefix: str) -> str:
         sequencer = self._runtime_for(call).sequencer
         if sequencer is None:
-            raise RuntimeError(f"Store at {call.caller_path!r} has no sequencer.")
+            raise RuntimeError(f"Store {call.store_name!r} has no sequencer.")
         return await sequencer.next_id(prefix)
 
 

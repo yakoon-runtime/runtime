@@ -1,9 +1,9 @@
-"""Store resolution (ADR-18/19): the resolver routes a logical name.
+"""Store resolution (ADR-18/19): the adapter routes a logical name.
 
 The installation binds every declared store to a ``StoreRuntime``. At
-runtime the resolver only routes: ``store("crm")`` leads to the crm store
-the installation built. There is no per-call node check and no default
-store — a name the installation did not bind resolves to None.
+runtime the adapter only routes: ``store.get("crm")`` leads to the crm
+store the installation built. There is no per-call node check and no
+default store — a name the installation did not bind is an error.
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ from __future__ import annotations
 import pytest
 from y5n.runtime.api.naming import Key, Namespace
 from y5n.runtime.api.runtime.invoke import Call
-from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver, _KeyDict
+from y5n.runtime.engine.wire.adapter.store import StoreAdapter, _KeyDict
 from y5n.runtime.store.event.backends.memory import MemoryBackend
 from y5n.runtime.store.event.runtime import StoreRuntime
 from y5n.runtime.store.event.store import create_entity_store
@@ -43,28 +43,12 @@ def _key(domain: str, kind: str, space: str, entity_id: str) -> _KeyDict:
     }
 
 
-def test_resolver_routes_a_named_store():
-    crm_rt = _runtime()
-    resolver = StoreResolver(stores={"crm": crm_rt})
-
-    assert resolver.resolve("crm") is crm_rt
-    assert resolver.resolve("ident") is None
-    assert resolver.resolve(None) is None
-
-
-def test_resolver_without_registry_resolves_nothing():
-    resolver = StoreResolver()
-    assert resolver.resolve("crm") is None
-
-
 @pytest.mark.asyncio
 async def test_adapter_writes_land_in_the_routed_store():
     crm_rt = _runtime()
     telemetry_rt = _runtime()
 
-    adapter = StoreAdapter(
-        resolver=StoreResolver(stores={"crm": crm_rt, "telemetry": telemetry_rt}),
-    )
+    adapter = StoreAdapter(stores={"crm": crm_rt, "telemetry": telemetry_rt})
 
     await adapter.replace(
         _call("crm"), key=_key("crm", "contact", "global", "1"), doc={"name": "ada"}
@@ -89,7 +73,7 @@ async def test_adapter_writes_land_in_the_routed_store():
 
 @pytest.mark.asyncio
 async def test_adapter_raises_for_uninstalled_store():
-    adapter = StoreAdapter(resolver=StoreResolver(stores={}))
+    adapter = StoreAdapter(stores={})
 
     with pytest.raises(RuntimeError, match="not installed"):
         await adapter.replace(
@@ -99,7 +83,7 @@ async def test_adapter_raises_for_uninstalled_store():
 
 @pytest.mark.asyncio
 async def test_adapter_raises_without_store_name():
-    adapter = StoreAdapter(resolver=StoreResolver(stores={"crm": _runtime()}))
+    adapter = StoreAdapter(stores={"crm": _runtime()})
 
     with pytest.raises(RuntimeError, match="No store specified"):
         await adapter.replace(
@@ -110,7 +94,7 @@ async def test_adapter_raises_without_store_name():
 @pytest.mark.asyncio
 async def test_next_id_uses_the_routed_stores_sequencer():
     crm_rt = _runtime()
-    adapter = StoreAdapter(resolver=StoreResolver(stores={"crm": crm_rt}))
+    adapter = StoreAdapter(stores={"crm": crm_rt})
 
     next_id = await adapter.next_id(_call("crm"), prefix="c")
     assert isinstance(next_id, str)

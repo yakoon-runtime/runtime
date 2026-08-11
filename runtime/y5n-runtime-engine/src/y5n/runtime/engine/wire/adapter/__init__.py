@@ -11,7 +11,7 @@ from .resource import ResourceAdapter
 from .runtime import RuntimeAdapter
 from .session import SessionAdapter
 from .source import SourceReadAdapter
-from .store import StoreAdapter, StoreResolver, _KeyDict
+from .store import StoreAdapter, _KeyDict
 
 __all__ = [
     "CallableAdapter",
@@ -22,6 +22,5 @@ __all__ = [
     "SessionAdapter",
     "SourceReadAdapter",
     "StoreAdapter",
-    "StoreResolver",
     "_KeyDict",
 ]

@@ -28,7 +28,6 @@ def bus_store(tmp_path, monkeypatch):
     os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
 
     from y5n.runtime.api.runtime.context import set_context
-    from y5n.runtime.engine.wire.adapter.store import StoreResolver
     from y5n.runtime.store.event.runtime import StoreRuntime
 
     previous = get_bus()
@@ -42,9 +41,7 @@ def bus_store(tmp_path, monkeypatch):
     )
     bus.transport.register_adapter(
         "store",
-        StoreAdapter(
-            resolver=StoreResolver(stores={"runtime": runtime}),
-        ),
+        StoreAdapter(stores={"runtime": runtime}),
     )
     bus.resolver.register(
         "system:store",
@@ -148,6 +145,7 @@ async def test_events_show_displays_context(bus_store, monkeypatch):
         if isinstance(adapter, StoreAdapter):
             store_adapter = adapter
             break
+    assert store_adapter is not None
 
     from y5n.runtime.api.runtime.invoke import Call
 
