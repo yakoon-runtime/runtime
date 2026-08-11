@@ -6,7 +6,7 @@ store ``runtime`` — to a ``StoreFactory`` import path and an opaque
 config:
 
 ```yaml
-# .yak/installation/deployment.yml
+# .yak/deployment.yml
 stores:
   runtime:
     factory: y5n.runtime.store.event.wire:EventStoreFactory
