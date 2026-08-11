@@ -128,8 +128,10 @@ def build_store_registry(
 ) -> dict[str, StoreRuntime]:
     """Build the store registry from an installation.
 
-    Each logical store is materialized through its ``StoreFactory``. Two
-    stores with the same factory and config share one physical instance.
+    Each logical store is materialized through its ``StoreFactory``. The
+    factory path names a class; the loader resolves it and the build
+    instantiates it before calling ``build(config)``. Two stores with the
+    same factory and config share one physical instance.
     """
     if installation is None:
         return {}
@@ -141,6 +143,8 @@ def build_store_registry(
             registry[store] = per_target[target]
             continue
         factory = load_store_factory(binding.factory)
+        if isinstance(factory, type):
+            factory = factory()
         built = factory.build(binding.config)
         per_target[target] = built
         registry[store] = built

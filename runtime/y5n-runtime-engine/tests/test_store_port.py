@@ -10,8 +10,6 @@ from pathlib import Path
 
 import pytest
 from y5n.runtime.api.runtime.invoke import Call
-from y5n.runtime.engine.executor import ExecutorKind, ExecutorRegistry, RuntimeExecutor
-from y5n.runtime.engine.nodes.tree import Tree
 from y5n.runtime.engine.wire.adapter.store import StoreAdapter, StoreResolver, _KeyDict
 from y5n.runtime.store.event.backends.memory import MemoryBackend
 from y5n.runtime.store.event.runtime import StoreRuntime
@@ -22,21 +20,11 @@ from y5n.runtime.store.sequence.runtime import Sequencer
 
 
 def _adapter(tmp_path: Path) -> StoreAdapter:
-    (tmp_path / "usr" / "bin" / "ls" / ".yak").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "usr" / "bin" / "ls" / ".yak" / "yak.yml").write_text(
-        "stores:\n  - crm\n"
-    )
-    registry = ExecutorRegistry()
-    registry.register(ExecutorKind.RUNTIME, RuntimeExecutor())
-    tree = Tree(root_path=tmp_path, executors=registry)
-    tree.build()
     runtime = StoreRuntime(
         objects=create_entity_store(MemoryBackend()),
         sequencer=Sequencer(ShardAllocator(MemoryShardRepository())),
     )
-    return StoreAdapter(
-        resolver=StoreResolver(tree=tree, stores={"crm": runtime}),
-    )
+    return StoreAdapter(resolver=StoreResolver(stores={"crm": runtime}))
 
 
 def _call(port="store") -> Call:
@@ -45,6 +33,7 @@ def _call(port="store") -> Call:
         method="",
         caller_path="/usr/bin/ls",
         caller_session_key="test/session/runtime#s-1",
+        store_name="crm",
     )
 
 

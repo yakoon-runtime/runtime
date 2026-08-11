@@ -74,52 +74,21 @@ def _index_key(raw: str):
 
 
 class StoreResolver:
-    """Resolve the physical store for a call.
+    """Route a logical store name to its physical ``StoreRuntime``.
 
-    Three questions, three steps (ADR-18, ADR-19):
-
-    1. *Which pack am I?* — ``call.caller_path`` → ``tree.find()`` → the
-       node's declared stores.
-    2. *Which store do I want?* — ``call.store_name`` names the store the
-       code asked for (``sdk.store("crm")``); with no name, the node's
-       single declared store is used.
-    3. *Is it declared?* — a named store must be in the node's declared
-       stores. An undeclared dependency is an error, like an import whose
-       module is not in the requirements (ADR-19).
-
-    There is no default store (ADR-19). The registry maps every declared
-    logical name to its ``StoreRuntime``; a node without a declared store
-    resolves to None — the caller has not declared persistence.
-    Ambiguity is never resolved implicitly: several declared stores
-    without a name raise.
+    ``stores:`` is a dependency declaration for the installation — ``yak``
+    collects it and materializes the binding. At runtime the resolver only
+    routes: the name the client is bound to (``sdk.store("ident")``) leads
+    to the store the installation built. There is no per-call node check
+    and no default store (ADR-19): a name the installation did not bind
+    resolves to None.
     """
 
-    def __init__(
-        self,
-        tree: Tree | None,
-        stores: dict[str, StoreRuntime] | None = None,
-    ):
-        self._tree = tree
+    def __init__(self, stores: dict[str, StoreRuntime] | None = None):
         self._stores = stores or {}
 
-    def resolve(self, call: Call) -> StoreRuntime | None:
-        if self._tree is None:
-            return None
-        node = self._tree.find(call.caller_path or "/") if call.caller_path else None
-        if node is None:
-            return None
-        if call.store_name:
-            if call.store_name not in node.stores:
-                raise ValueError(
-                    f"Undeclared store '{call.store_name}'. "
-                    "Add it to the pack's stores: declaration."
-                )
-            return self._stores.get(call.store_name)
-        if len(node.stores) > 1:
-            raise ValueError("Multiple stores declared. Please specify a store name.")
-        if node.stores:
-            return self._stores.get(node.stores[0])
-        return None
+    def resolve(self, name: str | None) -> StoreRuntime | None:
+        return self._stores.get(name) if name else None
 
 
 class StoreAdapter:
@@ -136,12 +105,11 @@ class StoreAdapter:
         self._resolver = resolver
 
     def _runtime_for(self, call: Call) -> StoreRuntime:
-        resolved = self._resolver.resolve(call)
+        resolved = self._resolver.resolve(call.store_name)
         if resolved is None:
-            raise RuntimeError(
-                f"No store bound for call at {call.caller_path!r}. "
-                "The calling pack has not declared a store."
-            )
+            if call.store_name:
+                raise RuntimeError(f"Store {call.store_name!r} is not installed.")
+            raise RuntimeError("No store specified for this call.")
         return resolved
 
     def _objects_for(self, call: Call) -> EntityStore:

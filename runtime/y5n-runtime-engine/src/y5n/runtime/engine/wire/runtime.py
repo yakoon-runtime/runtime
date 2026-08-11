@@ -257,10 +257,7 @@ def build_runtime(
     bus.transport.register_adapter(
         "store",
         StoreAdapter(
-            resolver=StoreResolver(
-                tree=tree,
-                stores=registry,
-            ),
+            resolver=StoreResolver(stores=registry),
         ),
     )
 

@@ -14,7 +14,7 @@ The full chain:
     StoreCollector → {crm, luma, ident}
         │
         ▼
-    StoreResolver → sdk.store("crm") / sdk.store()
+    StoreResolver → sdk.store.get("crm") / sdk.store.get()
 """
 
 from __future__ import annotations
@@ -103,24 +103,14 @@ def test_full_chain_declares_and_resolves(tmp_path: Path):
     # 1. The tree describes the installed packs.
     assert StoreCollector(tree).collect() == ["crm", "ident", "luma"]
 
-    # 2. The resolver binds a named store.
+    # 2. The resolver routes a named store.
     crm_rt = _runtime()
     luma_rt = _runtime()
-    resolver = StoreResolver(
-        tree=tree,
-        stores={"crm": crm_rt, "luma": luma_rt},
-    )
+    resolver = StoreResolver(stores={"crm": crm_rt, "luma": luma_rt})
 
-    assert resolver.resolve(_call("/crm/contact/add")) is crm_rt
-    assert resolver.resolve(_call("/crm/contact/add", store_name="crm")) is crm_rt
-    assert resolver.resolve(_call("/luma/box/add")) is luma_rt
-
-    # 3. A declared but unregistered store resolves to None (no default).
-    assert resolver.resolve(_call("/luma/box/add", store_name="luma")) is luma_rt
-
-    # 4. An undeclared store name is rejected (dependency check, ADR-19).
-    with pytest.raises(ValueError, match="Undeclared store 'nope'"):
-        resolver.resolve(_call("/crm/contact/add", store_name="nope"))
+    assert resolver.resolve("crm") is crm_rt
+    assert resolver.resolve("luma") is luma_rt
+    assert resolver.resolve("ident") is None
 
 
 @pytest.mark.asyncio
@@ -132,9 +122,9 @@ async def test_sdk_store_resolves_the_declared_store(tmp_path: Path):
 
     set_context({"node": {"path": "/crm/contact/add", "stores": ["crm"]}})
     try:
-        client = store()
+        client = store.get()
         assert client._name == "crm"
-        named = store("crm")
+        named = store.get("crm")
         assert named._name == "crm"
     finally:
         set_context({})
@@ -151,7 +141,7 @@ async def test_sdk_store_raises_with_multiple_declared(tmp_path: Path):
     set_context({"node": {"path": "/crm/sync", "stores": ["crm", "telemetry"]}})
     try:
         with pytest.raises(ValueError, match="Multiple stores declared"):
-            store()
+            store.get()
     finally:
         set_context({})
 
@@ -173,13 +163,12 @@ async def test_writes_land_in_the_declared_store(tmp_path: Path):
     set_bus(bus)
     try:
         adapter = StoreAdapter(
-            resolver=StoreResolver(
-                tree=_build_tree(tmp_path),
-                stores={"crm": crm_rt},
-            ),
+            resolver=StoreResolver(stores={"crm": crm_rt}),
         )
         key = _key("crm", "contact", "global", "1")
-        await adapter.replace(_call("/crm/contact/add"), key=key, doc={"name": "ada"})
+        await adapter.replace(
+            _call("/crm/contact/add", store_name="crm"), key=key, doc={"name": "ada"}
+        )
 
         assert (
             await crm_rt.objects.get(

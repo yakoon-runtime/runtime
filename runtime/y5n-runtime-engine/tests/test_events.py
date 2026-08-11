@@ -28,25 +28,8 @@ def bus_store(tmp_path, monkeypatch):
     os.environ.setdefault("YAK_ENDPOINT", "inprocess://")
 
     from y5n.runtime.api.runtime.context import set_context
-    from y5n.runtime.engine.executor import (
-        ExecutorKind,
-        ExecutorRegistry,
-        RuntimeExecutor,
-    )
-    from y5n.runtime.engine.nodes.tree import Tree
     from y5n.runtime.engine.wire.adapter.store import StoreResolver
     from y5n.runtime.store.event.runtime import StoreRuntime
-
-    # The events commands declare the `runtime` store and read activity
-    # directly (ADR-19: strict resolution, no default store).
-    (tmp_path / "usr" / "bin" / "events" / ".yak").mkdir(parents=True, exist_ok=True)
-    (tmp_path / "usr" / "bin" / "events" / ".yak" / "yak.yml").write_text(
-        "stores:\n  - runtime\n"
-    )
-    executors = ExecutorRegistry()
-    executors.register(ExecutorKind.RUNTIME, RuntimeExecutor())
-    tree = Tree(root_path=tmp_path, executors=executors)
-    tree.build()
 
     previous = get_bus()
     bus = _make_default_bus()
@@ -60,7 +43,7 @@ def bus_store(tmp_path, monkeypatch):
     bus.transport.register_adapter(
         "store",
         StoreAdapter(
-            resolver=StoreResolver(tree=tree, stores={"runtime": runtime}),
+            resolver=StoreResolver(stores={"runtime": runtime}),
         ),
     )
     bus.resolver.register(
@@ -173,6 +156,7 @@ async def test_events_show_displays_context(bus_store, monkeypatch):
         method="",
         caller_path="/usr/bin/events",
         caller_session_key="test/session/runtime#s-1",
+        store_name="runtime",
     )
     page = await store_adapter.scan(
         call, namespace="system/activity/global", index_key="all", value="1"

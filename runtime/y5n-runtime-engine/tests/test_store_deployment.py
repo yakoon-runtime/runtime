@@ -106,6 +106,43 @@ def test_collector_without_stores_is_empty(tmp_path: Path):
     assert StoreCollector(tree).collect() == []
 
 
+def test_registry_instantiates_class_factories(monkeypatch):
+    """ADR-19: a factory path names a class — the registry instantiates it
+    before calling ``build(config)``. The config must reach the build.
+
+    Regression: calling ``Class.build(config)`` without instantiating
+    binds ``config`` as ``self`` and silently builds with ``config=None``.
+    """
+    from y5n.runtime.engine import installation as inst_mod
+    from y5n.runtime.store.event.backends.memory import MemoryBackend
+    from y5n.runtime.store.event.runtime import StoreRuntime
+    from y5n.runtime.store.event.store import create_entity_store
+
+    received: list = []
+
+    class _RecordingFactory:
+        def build(self, config):
+            received.append(config)
+            return StoreRuntime(objects=create_entity_store(MemoryBackend()))
+
+    monkeypatch.setattr(inst_mod, "load_store_factory", lambda path: _RecordingFactory)
+
+    installation = inst_mod.Installation(
+        stores={
+            "crm": inst_mod.StoreBinding(
+                store="crm",
+                factory="x",
+                config={"backend": "postgres", "dsn": "env://CRM_DB"},
+            ),
+        },
+    )
+
+    registry = inst_mod.build_store_registry(installation)
+
+    assert received == [{"backend": "postgres", "dsn": "env://CRM_DB"}]
+    assert "crm" in registry
+
+
 def test_two_logical_stores_share_one_factory_target():
     """ADR-19: stores with the same factory and config share one instance."""
     from y5n.runtime.engine.installation import (
@@ -224,12 +261,12 @@ async def test_runtime_consumes_a_real_deployment_file(tmp_path: Path):
                 break
         assert adapter is not None
 
-        crm_resolved = adapter._resolver.resolve(_make_call("/crm/contact/add", "crm"))
+        crm_resolved = adapter._resolver.resolve("crm")
         assert crm_resolved is not None
         assert crm_resolved.sequencer is not None
 
-        # No default store: a node without declared stores resolves to None.
-        assert adapter._resolver.resolve(_make_call("/usr/bin/pwd")) is None
+        # The runtime store is bound; an unbound name resolves to None.
+        assert adapter._resolver.resolve("ident") is None
     finally:
         set_bus(previous)
 
