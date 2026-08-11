@@ -40,7 +40,7 @@ class OnAuthenticate(Protocol):
 
 
 class OnAfterVerify(Protocol):
-    async def __call__(self, *, user: object) -> dict | None: ...
+    async def __call__(self, *, account: object) -> dict | None: ...
 
 
 class OnBootstrapPermissions(Protocol):

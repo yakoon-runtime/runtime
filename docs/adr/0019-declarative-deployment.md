@@ -7,63 +7,61 @@ uses, without knowing infrastructure. This ADR answers the second half of
 the story: **how does a collection of declarative packs become a running
 installation?**
 
-The answer is the **deployment model** — the mapping between logical
-stores and physical resources. The `yak` tool is the assembler that
-materializes the deployment from the packs' declared needs. The core is
-implemented and proven end to end: the resolver enforces the dependency
-list, `yak install` assembles `deployment.yml`, and the runtime refuses to
-start without an installation — no silent fallback, no guessed deployment
-information.
+The answer is the **installation** — the machine-specific product of the
+assembler. `yak` collects the stores the installed packs declare and
+materializes an installation that binds each store to a **StoreFactory**
+(a Python import path) and an opaque config. The runtime reads the
+installation, materializes every store through its factory, and routes
+`store.get("crm")` to the store the installation built. There is no
+default store and no runtime without an installation.
 
-> **A pack declares what it depends on. `yak` assembles the deployment.
-> The runtime executes. The SDK stays minimal.**
+> **A pack declares the stores it uses. `yak` assembles the installation.
+> The runtime routes the bound name to the store the installation built.**
 
 ## Key sentence
 
-> **A store is always logical; a database is physical. The deployment maps
-> the one to the other.**
+> **`stores:` describes dependencies and their scope, not authorization.**
 >
-> Capability names are globally unique, but access is pack-local: a pack
-> can only use the stores it declares. `stores:` is a dependency list, not
-> a registry.
+> A pack declares the store capabilities it uses. `yak` assembles them
+> into an installation. At runtime a bound name routes to the store the
+> installation built — no more, no less.
 
 ## Vocabulary
 
-> **Store** — a logical, named capability (`crm`, `telemetry`). Global in
-> meaning, pack-local in access. Never a database.
+> **Store** — a logical, named capability (`crm`, `runtime`). The name is
+> the binding: the runtime routes `store.get("crm")` to the physical
+> store the installation built for `crm`.
 
-> **Deployment** — the physical reality a logical store is mapped to
-> (`postgres-main`, `analytics`). Owned by the installation, not by any
-> pack.
+> **StoreFactory** — the only component that knows how to build a
+> physical store. A factory is referenced by Python import path
+> (`y5n.runtime.store.event.wire:EventStoreFactory`) and owns its config
+> language: where a DSN comes from (a literal string, `env://NAME`, ...)
+> is storage knowledge, not runtime knowledge. `build(config)` returns a
+> complete **StoreRuntime**.
 
-> **Installation** — the machine-specific product of the assembler: the
-> mapping of logical stores to deployments, plus the references to
-> secrets. Not versioned. Consumed by the runtime — `yak` does not write
-> runtime configuration, it writes an installation.
->
-> An installation is an **artifact**, not a file. The YAML is only its
-> representation. In time the installation grows beyond the deployment:
-> installed packs, versions, migration state, certificates, queue and
-> search bindings. It is the assembled, machine-specific representation of
-> a Yakoon platform — the runtime tree describes the application, the
-> installation describes the platform.
+> **StoreRuntime** — one physical store: entity `objects` **and** its
+> `sequencer`, plus lifecycle. Sequencing is part of the storage
+> semantics; the runtime never marries a store to a sequencer itself.
 
-> **Assembler** — the role of `yak`: it collects the declared needs of all
-> installed packs and materializes the installation that satisfies them.
+> **Installation** — the machine-specific product of the assembler:
+> `.yak/deployment.yml`, owned by `yak` and the operator, not versioned.
+> Each store is bound directly to a factory and config — there is no
+> named deployment registry in between. Consumed by the runtime at
+> startup.
 
-The rule is the same as for ports: **capability names are globally unique,
-but every pack explicitly declares which capabilities it uses.**
+> **Assembler** — the role of `yak`: it collects the declared stores of
+> all installed packs and materializes the installation that satisfies
+> them.
 
 ## Context
 
 ### ADR-18 ended at the pack
 
 ADR-18 proved the chain from `stores:` to `sdk.store("crm")` with no
-infrastructure knowledge anywhere. The experiment is validated. What it did
-**not** answer is where the physical stores come from. Today persistence
-runs on engine defaults (`memory`); the space configs
-(`docs/config/spaces/*.yml`) are an unwired predecessor — hand-written,
-named per pack, never loaded.
+infrastructure knowledge in the packs. What it did **not** answer is where
+the physical stores come from. Today persistence ran on engine defaults
+(`settings.storage`, a silent memory fallback) — an implicit store owned
+by no one.
 
 ### Two axes, not one
 
@@ -72,40 +70,34 @@ two separate axes:
 
 | Axis | Answer |
 |---|---|
-| Meaning of the name | global — `crm` is `crm` everywhere (a port name) |
-| Permission to access | pack-local — a pack can only use declared stores |
+| Meaning of the name | global — `crm` is `crm` everywhere |
+| Permission to access | pack-local — a pack declares the stores it uses |
 
 A name collision is deliberate sharing (two packs declaring `crm` share
-the one store, ADR-17), but a pack can never reach an *undeclared* store.
+the one store, ADR-17). Access is granted by declaration — a pack can
+only *use* the stores it declares, and `sdk.store(name)` binds to the
+store the installation built.
 
-### The pack describes its dependencies
+### Runtime enforcement is not authorization
 
-`stores:` is a dependency list:
-
-```yaml
-# Reporting depends on CRM and telemetry
-stores:
-  - crm
-  - telemetry
-```
-
-```yaml
-# A migration orchestrates between CRM and legacy
-stores:
-  - crm
-  - legacy
-```
+`stores:` is not a security boundary against the pack author — the pack
+author controls their own YAML. Its runtime value is correctness and
+transparency (an unbound name is an error), not protection. There is no
+per-call node check: a bound `store.get("ident")` routes to `ident`
+regardless of who happens to call through a port. The declaration is the
+*assembler's* input, not a per-call gate.
 
 ## Problem
 
-1. **Persistence is configured, not deployed.** DSNs and backends are
-   hand-written, unloaded, and duplicated across packs.
-2. **No one answers "which database exists?"** The mapping from logical
-   store to physical resource has no owner.
-3. **Undeclared access is unenforced.** A command could reach any store;
-   `stores:` should be a dependency contract with enforcement.
-4. **Store and database are conflated.** The platform must keep them apart,
-   or the model collapses into "a store is a postgres".
+1. **Persistence was configured, not deployed.** DSNs and backends were
+   engine settings, and an implicit memory fallback hid their absence.
+2. **No one answered "which database exists?"** The mapping from logical
+   store to physical resource had no owner.
+3. **Store and database were conflated.** The platform must keep them
+   apart, or the model collapses into "a store is a postgres".
+4. **The runtime was a factory for all storage types.** Backend and
+   credential schemes lived in the runtime bootstrap; adding a database
+   meant changing the runtime.
 
 ## Decision
 
@@ -113,181 +105,156 @@ stores:
 
 A **store** is logical and globally meaningful; a **database** is physical
 and deployment-local. Multiple logical stores may map to one physical
-resource; one logical store maps to exactly one deployment.
+resource; one logical store maps to exactly one factory binding.
 
 ```
 crm ──────┐
-           ├──► postgres-main
+           ├──► EventStoreFactory + postgres DSN
 ident ────┘
 
-telemetry ──► analytics (clickhouse)
+runtime ────► EventStoreFactory + memory
 ```
 
-### 2. The deployment owns the mapping
+### 2. The installation binds directly — no deployment registry
 
-The pack declares names only. The deployment decides which physical
-resource each name is. The mapping is 1:n (logical → physical), owned
-entirely by the deployment:
+The pack declares names only. The installation decides, **per store**,
+which factory and config materialize it:
 
 ```yaml
-deployments:
-  postgres-main:
-    backend: postgres
-  analytics:
-    backend: clickhouse
+# .yak/deployment.yml
+stores:
+  runtime:
+    factory: y5n.runtime.store.event.wire:EventStoreFactory
+    config:
+      backend: memory
+
+  crm:
+    factory: y5n.runtime.store.event.wire:EventStoreFactory
+    config:
+      backend: postgres
+      dsn: env://CRM_DATABASE
 ```
 
-### 3. `stores:` is a dependency list
+There is no `deployments:` level and no named deployment registry: a store
+is bound directly to its factory. Two stores with the same factory and
+config share one physical instance.
 
-A pack may only use the stores it declares. `sdk.store("x")` from a pack
-without `x` in `stores:` is an error — an undeclared dependency, like an
-`import` whose module is not in the requirements.
+### 3. The factory owns the config language
 
-### 4. `yak` assembles, it does not guess
+The runtime does not know `memory://`, `postgresql://`, `env://` or any
+credential scheme. `build_store_registry` loads the factory by import
+path and calls `build(config)`. The factory decides what its config means
+— a `dsn` may be a literal connection string or a reference the factory
+resolves. New storage types mean a new factory, never a runtime change.
 
-`yak` collects the declared stores of all installed packs, then guides the
-administrator through the mapping: *new resource or existing? which one?*
-It never searches databases, knows no naming conventions, no `yakoon_crm`
-heuristics. The administrator knows more than the tool.
+### 4. `stores:` is a dependency declaration
 
-### 5. The product is an installation, not runtime configuration
+A pack declares the stores it uses, once, at the pack root:
+
+```yaml
+stores:
+  - crm
+```
+
+`yak` collects these declarations and assembles the installation. At
+runtime the SDK binds `store.get("crm")` and the runtime routes the name
+to the installed store. There is no default store and no per-call
+enforcement: an unbound name is an explicit "not installed" error.
+
+### 5. `runtime` is a normal store capability
+
+The runtime's own infrastructure — session, activity — needs persistence.
+It requires a store named `runtime`, declared by the system pack and
+materialized by the installation like any other. `runtime` is **not a
+default**: the resolver never falls back to it, and no pack reaches it
+without declaring it. Its peculiarity lies only in *who requires it*.
+
+### 6. The product is an installation, not runtime configuration
 
 `yak` writes **no configuration for the runtime.** It writes an
 **installation** — the machine-specific product of the assembler, kept
-outside Git (e.g. `.yak/installation/`):
-
-```yaml
-# .yak/installation/deployment.yml
-stores:
-  crm:
-    deployment: postgres-main
-  ident:
-    deployment: postgres-main
-  telemetry:
-    deployment: analytics
-
-deployments:
-  postgres-main:
-    backend: postgres
-    secret: postgres-main
-  analytics:
-    backend: clickhouse
-    secret: analytics
-```
-
-Secrets are not here — only references. The installation points at the
-secret store (`secret: postgres-main`); the secret itself (host, port,
-user, password, ssl) lives in the platform's secret store.
-
-The runtime **consumes** the installation at startup: it reads the
-mapping, asks the secret store for each referenced secret, and builds the
-store registry from it. The runtime never learns *why* crm and ident share
-postgres-main or *why* telemetry uses clickhouse — it receives a finished
-store registry.
-
-The same installation reads on any machine. A notebook maps `crm` to
-sqlite, a server maps it to a postgres cluster — same pack, same runtime,
-a different installation.
+outside Git at `.yak/deployment.yml`. The workspace owns its private
+state in `.yak/`; the assembled structure tree stays separate and
+regenerable. A notebook maps `crm` to memory, a server maps it to a
+postgres cluster — same pack, same runtime, a different installation.
 
 ## Consequences
 
 ### Benefits
 
-- **Packs are self-describing.** Every infrastructure dependency is
-  declared; nothing is assumed.
-- **The deployment is the only place that knows databases.** One mapping,
-  one owner.
-- **Enforcement for free.** Undeclared access fails loudly.
+- **The runtime knows no storage schemes.** Backend and credential
+  knowledge live in the factory; the engine holds none.
+- **The installation is the only place that binds stores.** One mapping,
+  one owner (the operator via `yak`).
+- **One materialization source.** `settings.storage`/`sequencer` are
+  gone; every physical store — including `runtime` — comes from the
+  installation.
+- **No default, no fallback.** An unbound name fails loudly.
 - **The platform grows.** The same model later covers queues, caches,
-  search, secrets — each a capability with a global name and pack-local
-  access.
+  search — each a capability with a global name, bound by the
+  installation.
 
 ### Trade-offs
 
-- **A new layer.** The deployment adds indirection between pack and
-  runtime — the price of a mapping owned by the installation.
-- **The pack must declare to share.** Sharing a store requires both packs
-  to name it — explicit, but slightly more words.
+- **The runtime still knows its own store by name.** `build_runtime`
+  resolves `registry["runtime"]` to wire its persistent services. That is
+  identity, not implementation: the runtime must find *its* store, but
+  knows nothing about its technology.
+- **A bound store needs a factory import path.** The installation
+  references Python; the store layer is Python-internal by design.
 
-### Simpler or more complex?
+### Strong test (direction)
 
-- **Pack: the same.** `stores:` already exists.
-- **Runtime: unchanged.** The resolver already reads `node.stores`; only
-  the *enforcement* of declared access is added.
-- **Operator: more structure.** A deployment file, owned by `yak`, holds
-  the mapping.
+The end state is:
+
+> `build_runtime()` materializes the store registry, but never consumes a
+> store itself.
+
+Today it still touches `registry["runtime"]` for `SessionService` and
+`ActivityService`. The follow-up is to let those services resolve their
+store dependency themselves (like any port provider), so even that
+coupling disappears.
 
 ## Open questions
 
 The open questions are not leftovers — they define the platform. Ordered
-by dependency: the migration questions first, because their answers unlock
-most others.
+by dependency:
 
-1. **Who owns migrations?** The pack — it knows its data model; `yak` and
-   the runtime do not. `yak` only *executes* migrations. The migration
-   status becomes part of the installation (see Q3).
-2. **When do migrations run?** Not at runtime start (the runtime changes
-   nothing), not on first access (too magical), but at the assembler:
-   `yak install` and `yak update` run migrations. Deployment changes
-   infrastructure; the runtime only executes.
-3. **Who knows the backend list?** Neither `yak` nor the deployment —
-   **capability providers do.** Backends are packs (`y5n-store-postgres`,
-   `y5n-store-sqlite`, `y5n-store-clickhouse`). `yak` asks only: *"which
-   store backends are installed?"* — the same chain one level deeper.
-   Which backends the platform supports is **not an architecture
-   decision** — it is defined separately by the platform (a list of
-   supported store backends), documentation rather than a decision this
-   ADR must make.
-4. **Where do credentials live?** Four Layers (ADR-18): a secret store,
-   never in pack or deployment. The installation never knows credentials —
-   only references (`secret: postgres-main`); the secret store resolves
-   host, port, username, password, ssl, certificate.
-5. **What happens on update?** `yak update` asks only for newly declared
-   stores (`analytics`); existing deployments stay untouched.
-6. **What happens on uninstall?** Data never belongs to the pack. The
-   physical database stays; at most a warning that a deployment is no
-   longer referenced (*Delete? [y/N]*). Never automatic.
-7. **Who owns the schema and migrations of a shared logical store?**
-   Access is settled (`stores:` grants it), but evolution is not. Two
-   packs sharing `crm` — who defines its tables, views, indices, schema
-   changes? The pack owning the schema outright (variante A) seems wrong;
-   a store carrying its own schema with packs contributing (variante B),
-   or packs owning migrations executed in a defined order by `yak`
-   (variante C, like Flyway/Liquibase), are the candidates. Likely the
-   seed of ADR-20.
+1. **How does `yak install` guide the mapping?** The assembler asks the
+   operator which factory and config each declared store gets — new or
+   existing, which database, where the DSN comes from. It never searches
+   databases and knows no naming conventions; the operator knows more
+   than the tool.
+2. **Where do credentials live?** A `dsn` reference (`env://NAME`, later
+   a secret store) is factory knowledge. The installation may carry
+   references; the secret itself lives outside the pack and the
+   installation.
+3. **Who owns migrations?** The pack — it knows its data model; `yak` and
+   the runtime do not. `yak` only *executes* migrations; migration status
+   becomes part of the installation.
+4. **What happens on update / uninstall?** `yak update` asks only for
+   newly declared stores; existing bindings stay untouched. Uninstalling
+   never deletes data — at most a warning that a store is no longer
+   referenced.
+5. **Who owns the schema of a shared logical store?** Access is settled
+   (`stores:` grants it), but evolution is not. Likely the seed of
+   ADR-20.
 
-## Capability Provider
+## Implementation sketch
 
-The platform gains a fifth actor. A **capability provider** is the
-entity that *provides* a capability for Yakoon — postgres, sqlite,
-clickhouse are not known to `yak` or the runtime; someone provides them.
-It is neither pack nor runtime nor installation — it is the answer to Q3:
+Implemented and proven end to end:
 
-> **Not `yak` knows backends — capability providers do.**
-
-A provider may itself be a pack (`y5n-store-postgres`). The chain becomes:
-
-```
-Pack (declares) → yak (assembles) → Installation (mapping)
-      → Capability Provider (provides) → Runtime (executes) → SDK (uses)
-```
-
-## Implementation sketch (for later)
-
-**Not built yet — this ADR fixes the direction, not the code.**
-
-1. **Enforce declared access.** `StoreResolver` raises when
-   `store_name` is not in the node's declared stores (dependency check).
-2. **Installation model.** `.yak/installation/deployment.yml` — the
-   mapping (logical store → deployment) plus deployment definitions
-   (backend, secret reference). Owned by `yak`, machine-specific, not
-   versioned.
-3. **Runtime consumption.** At startup the runtime reads the installation,
-   resolves secrets through the secret store, and builds the store
-   registry from it — it never configures itself.
-4. **`yak install`.** Collect declared stores, guide the mapping
-   (new/existing, which), write the installation.
-5. **Tests.** A pack cannot reach an undeclared store; two packs share one
-   declared store; the deployment maps several logical stores to one
-   physical resource; the same pack installs as sqlite on one machine and
-   postgres on another.
+1. **Store model.** `StoreBinding(factory, config)`; the installation
+   binds every store — including `runtime` — directly to a factory.
+2. **StoreFactory.** `EventStoreFactory.build(config) → StoreRuntime`
+   (objects + sequencer). New backends are factories, not runtime code.
+3. **Runtime consumption.** At startup the runtime loads the installation,
+   materializes the registry through the factories, and routes
+   `store.get(name)` to the installed store. No installation → no runtime.
+4. **Assembler.** `yak` collects declared stores and writes the
+   installation; the interactive mapping (which DB, which secret) is the
+   next step.
+5. **Tests.** A bound name routes to its store; the same factory and
+   config share one instance; a node without a declared store gets an
+   explicit "not installed" error; crm on postgres persists across
+   restarts.
