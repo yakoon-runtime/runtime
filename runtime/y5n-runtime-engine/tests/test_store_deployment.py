@@ -90,12 +90,11 @@ def test_collector_without_stores_is_empty(tmp_path: Path):
     assert StoreCollector(tree).collect() == []
 
 
-def test_two_logical_stores_share_one_physical_deployment():
-    """ADR-19: several logical stores on one deployment share one instance."""
+def test_two_logical_stores_share_one_backend():
+    """ADR-19: stores with the same backend URI share one physical instance."""
     from y5n.runtime.engine.installation import (
-        Deployment,
         Installation,
-        StoreMapping,
+        StoreBinding,
         build_store_registry,
     )
     from y5n.runtime.store.event.backends.memory import MemoryBackend
@@ -103,50 +102,19 @@ def test_two_logical_stores_share_one_physical_deployment():
 
     installation = Installation(
         stores={
-            "crm": StoreMapping(store="crm", deployment="postgres-main"),
-            "ident": StoreMapping(store="ident", deployment="postgres-main"),
-        },
-        deployments={
-            "postgres-main": Deployment(name="postgres-main", backend="memory"),
+            "crm": StoreBinding(store="crm", backend="postgresql://db/crm"),
+            "ident": StoreBinding(store="ident", backend="postgresql://db/crm"),
         },
     )
     default_objects = create_entity_store(MemoryBackend())
 
     registry = build_store_registry(
         installation,
-        default_objects,
-        lambda dep: create_entity_store(MemoryBackend()),
+        lambda binding: create_entity_store(MemoryBackend()),
     )
 
     assert registry["crm"] is registry["ident"]
     assert registry["crm"] is not default_objects
-
-
-def test_unmapped_store_resolves_to_default():
-    """ADR-19: a store without a deployment entry uses the default."""
-    from y5n.runtime.engine.installation import (
-        Installation,
-        StoreMapping,
-        build_store_registry,
-    )
-    from y5n.runtime.store.event.backends.memory import MemoryBackend
-    from y5n.runtime.store.event.store import create_entity_store
-
-    installation = Installation(
-        stores={
-            "crm": StoreMapping(store="crm", deployment="postgres-main"),
-        },
-        deployments={},
-    )
-    default_objects = create_entity_store(MemoryBackend())
-
-    registry = build_store_registry(
-        installation,
-        default_objects,
-        lambda dep: create_entity_store(MemoryBackend()),
-    )
-
-    assert registry["crm"] is default_objects
 
 
 def test_load_installation_roundtrip(tmp_path: Path):
@@ -154,23 +122,16 @@ def test_load_installation_roundtrip(tmp_path: Path):
     from y5n.runtime.engine.installation import load_installation, to_dict
 
     deployment_file = tmp_path / "deployment.yml"
-    deployment_file.write_text(
-        "stores:\n"
-        "  crm:\n"
-        "    deployment: postgres-main\n"
-        "deployments:\n"
-        "  postgres-main:\n"
-        "    backend: memory\n"
-    )
+    deployment_file.write_text("stores:\n" "  crm:\n" "    backend: memory://\n")
 
     installation = load_installation(deployment_file)
     assert installation is not None
-    deployment = installation.deployment_for("crm")
-    assert deployment is not None
-    assert deployment.backend == "memory"
+    binding = installation.binding_for("crm")
+    assert binding is not None
+    assert binding.backend == "memory://"
 
     data = to_dict(installation)
-    assert data["stores"]["crm"]["deployment"] == "postgres-main"
+    assert data["stores"]["crm"]["backend"] == "memory://"
 
 
 @pytest.mark.asyncio
@@ -197,14 +158,7 @@ async def test_runtime_consumes_a_real_deployment_file(tmp_path: Path):
     # The deployment file the assembler would have written.
     deployment_file = tmp_path / ".yak" / "installation" / "deployment.yml"
     deployment_file.parent.mkdir(parents=True, exist_ok=True)
-    deployment_file.write_text(
-        "stores:\n"
-        "  crm:\n"
-        "    deployment: crm-main\n"
-        "deployments:\n"
-        "  crm-main:\n"
-        "    backend: memory\n"
-    )
+    deployment_file.write_text("stores:\n" "  crm:\n" "    backend: memory://\n")
 
     from y5n.runtime.api.runtime.bus import _make_default_bus, get_bus, set_bus
     from y5n.runtime.engine.settings import RuntimeSettings, Settings

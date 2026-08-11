@@ -1,29 +1,31 @@
-"""Installation model (ADR-19): the deployment mapping materialized by `yak`.
+"""Installation model (ADR-19): binding logical capabilities to physical backends.
 
-The installation is the machine-specific product of the assembler. It maps
-logical stores to physical deployments — the only place in the system that
-knows databases. The runtime consumes it at startup to build its store
-registry.
-
-A logical store maps to exactly one deployment; several logical stores may
-map to the same deployment (they share the physical resource, ADR-19).
+The installation is the machine-specific product of the assembler. It
+binds each logical store to a physical backend — the only place in the
+system that knows how to reach a database.
 
 ```yaml
 # .yak/installation/deployment.yml
 stores:
   crm:
-    deployment: postgres-main
-  ident:
-    deployment: postgres-main
+    backend: postgresql://db.internal:5432/crm
+    credentials: env://CRM_DATABASE
 
-deployments:
-  postgres-main:
-    backend: postgres
-    dsn: postgresql://...
+  telemetry:
+    backend: memory://
 ```
 
-Secrets are never here — only references (`secret:`), resolved by the
-secret store.
+Two URIs per store, both interpreted by their scheme:
+
+- ``backend`` (required) — the non-secret physical binding. The scheme
+  selects the store adapter (`postgresql://`, `memory://`, `http://`).
+- ``credentials`` (optional) — the source of secret connection
+  information. The scheme selects the credential resolver (`env://`,
+  later `vault://`, `file://`, ...).
+
+There is no named registry: no `deployments:`, no `instance:` — a store
+is bound directly. Unsupported credential schemes raise explicitly; there
+is no fallback and no implicit default.
 """
 
 from __future__ import annotations
@@ -35,36 +37,27 @@ from typing import Any
 import yaml
 
 
-@dataclass(frozen=True, slots=True)
-class Deployment:
-    """A physical resource a logical store is mapped to."""
-
-    name: str
-    backend: str = "memory"
-    dsn: str = ""
-    secret: str | None = None
+class UnsupportedCredentialsScheme(RuntimeError):
+    """Raised when a credentials URI uses a scheme no resolver provides."""
 
 
 @dataclass(frozen=True, slots=True)
-class StoreMapping:
-    """The deployment a logical store is mapped to."""
+class StoreBinding:
+    """The binding of one logical store to a physical backend."""
 
     store: str
-    deployment: str
+    backend: str
+    credentials: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class Installation:
-    """The deployment mapping of one installation."""
+    """The bindings of one installation."""
 
-    stores: dict[str, StoreMapping] = field(default_factory=dict)
-    deployments: dict[str, Deployment] = field(default_factory=dict)
+    stores: dict[str, StoreBinding] = field(default_factory=dict)
 
-    def deployment_for(self, store: str) -> Deployment | None:
-        mapping = self.stores.get(store)
-        if mapping is None:
-            return None
-        return self.deployments.get(mapping.deployment)
+    def binding_for(self, store: str) -> StoreBinding | None:
+        return self.stores.get(store)
 
 
 def load_installation(path: Path) -> Installation | None:
@@ -74,75 +67,58 @@ def load_installation(path: Path) -> Installation | None:
     with open(path) as f:
         data = yaml.safe_load(f) or {}
 
-    deployments: dict[str, Deployment] = {}
-    for name, raw in (data.get("deployments") or {}).items():
-        if not isinstance(raw, dict):
-            continue
-        deployments[name] = Deployment(
-            name=name,
-            backend=raw.get("backend", "memory"),
-            dsn=raw.get("dsn", ""),
-            secret=raw.get("secret"),
-        )
-
-    stores: dict[str, StoreMapping] = {}
+    stores: dict[str, StoreBinding] = {}
     for store, raw in (data.get("stores") or {}).items():
         if not isinstance(raw, dict):
             continue
-        deployment = raw.get("deployment")
-        if isinstance(deployment, str):
-            stores[store] = StoreMapping(store=store, deployment=deployment)
+        backend = raw.get("backend")
+        if not isinstance(backend, str):
+            continue
+        credentials = raw.get("credentials")
+        stores[store] = StoreBinding(
+            store=store,
+            backend=backend,
+            credentials=credentials if isinstance(credentials, str) else None,
+        )
 
-    return Installation(stores=stores, deployments=deployments)
+    return Installation(stores=stores)
 
 
 def to_dict(installation: Installation) -> dict[str, Any]:
     """Serialize an installation back to a deployment dict."""
     return {
         "stores": {
-            store: {"deployment": mapping.deployment}
-            for store, mapping in sorted(installation.stores.items())
-        },
-        "deployments": {
-            name: {
+            store: {
                 k: v
                 for k, v in {
-                    "backend": dep.backend,
-                    "dsn": dep.dsn or None,
-                    "secret": dep.secret,
+                    "backend": binding.backend,
+                    "credentials": binding.credentials,
                 }.items()
                 if v is not None
             }
-            for name, dep in sorted(installation.deployments.items())
+            for store, binding in sorted(installation.stores.items())
         },
     }
 
 
 def build_store_registry(
     installation: Installation | None,
-    default_objects,
     build_store,
 ) -> dict[str, Any]:
     """Build the resolver's store registry from an installation.
 
-    Each logical store maps to the physical store of its deployment.
-    Several logical stores on the same deployment share one physical
-    instance. Logical stores without a deployment entry resolve to the
-    default object (the installation does not map everything yet).
+    Each logical store is bound to the physical store of its backend URI.
+    Two stores with the same backend URI share one physical instance.
     """
     if installation is None:
         return {}
     registry: dict[str, Any] = {}
-    per_deployment: dict[str, Any] = {}
-    for store, mapping in installation.stores.items():
-        if mapping.deployment in per_deployment:
-            registry[store] = per_deployment[mapping.deployment]
+    per_backend: dict[str, Any] = {}
+    for store, binding in installation.stores.items():
+        if binding.backend in per_backend:
+            registry[store] = per_backend[binding.backend]
             continue
-        deployment = installation.deployments.get(mapping.deployment)
-        if deployment is None:
-            registry[store] = default_objects
-            continue
-        built = build_store(deployment)
-        per_deployment[mapping.deployment] = built
+        built = build_store(binding)
+        per_backend[binding.backend] = built
         registry[store] = built
     return registry

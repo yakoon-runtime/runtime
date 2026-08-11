@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from y5n.runtime.api.runtime import get_bus
@@ -67,7 +68,7 @@ def build_runtime(
     )
     if installation is None:
         raise RuntimeError("No installation found. Run `yak install` to create one.")
-    registry = build_store_registry(installation, store.objects, _build_from_deployment)
+    registry = build_store_registry(installation, _build_from_binding)
 
     # ----------------
     # --- SERVICES ---
@@ -288,15 +289,40 @@ def build_runtime(
     return manager
 
 
-def _build_from_deployment(deployment):
-    """Build a physical store from a deployment definition (ADR-19).
+def _build_from_binding(binding):
+    """Build a physical store from a store binding (ADR-19).
 
-    Today the backend map is small (memory, postgres); the secret store
-    and capability providers arrive later. An unknown backend falls back
-    to memory.
+    The backend URI's scheme selects the store adapter; the credentials
+    URI's scheme selects the credential resolver. Today only ``env://``
+    is supported for credentials and only memory/postgres backends exist;
+    other schemes raise explicitly — there is no fallback.
     """
-    backend = (
-        deployment.backend if deployment.backend in ("memory", "postgres") else "memory"
-    )
-    settings = StorageSettings(backend=backend, dsn=deployment.dsn)
+    if binding.backend.startswith("memory://"):
+        return _build_memory()
+    if binding.backend.startswith("postgresql://"):
+        dsn = _resolve_credentials(binding.credentials)
+        settings = StorageSettings(backend="postgres", dsn=dsn)
+        return build_store(settings).objects
+    raise RuntimeError(f"Unsupported backend scheme: {binding.backend!r}")
+
+
+def _build_memory():
+    settings = StorageSettings(backend="memory", dsn="")
     return build_store(settings).objects
+
+
+def _resolve_credentials(credentials: str | None) -> str:
+    """Resolve a credentials URI to a DSN (ADR-19).
+
+    Only ``env://NAME`` is supported today. The environment variable holds
+    the complete DSN. Any other scheme raises explicitly.
+    """
+    if not credentials:
+        raise RuntimeError("Backend postgresql:// requires credentials")
+    if credentials.startswith("env://"):
+        name = credentials[len("env://") :]
+        dsn = os.getenv(name)
+        if not dsn:
+            raise RuntimeError(f"Credentials environment variable not set: {name}")
+        return dsn
+    raise RuntimeError(f"Unsupported credentials scheme: {credentials!r}")
