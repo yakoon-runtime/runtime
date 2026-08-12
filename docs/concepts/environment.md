@@ -32,7 +32,8 @@ mounts:
 
 ## Reconciler
 
-`yak sync` reconciles the environment:
-1. Install wheels
-2. Sync mounts
-3. Materialize workspace
+`yak update` reconciles the environment (SOLL) against the installation
+(IST):
+1. Install or refresh components
+2. Remove obsolete components
+3. Materialize the workspace from `.yak/components/`
