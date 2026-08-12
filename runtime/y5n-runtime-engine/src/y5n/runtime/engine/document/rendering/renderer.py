@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Protocol
 
-from typing_extensions import Protocol
 from y5n.runtime.api.resources import ResourceRef
 
 

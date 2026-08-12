@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Protocol
 
-from typing_extensions import Protocol
 from y5n.runtime.api.document.normalize import normalize as _normalize
 from y5n.runtime.api.runtime import InputContext
 
