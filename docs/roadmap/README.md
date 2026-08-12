@@ -12,7 +12,7 @@ conserved in [ADR-0000](../adr/0000-decisions.md).
 
 ### D.1 Repository auto-discovery ✅
 - `[repositories] sources` in context.toml
-- `install` and `sync` read them automatically
+- `install` and `add` read them automatically
 
 ### D.2 RepositoryResolver (planned)
 - Unified resolution: Context → CLI → Defaults
@@ -67,15 +67,15 @@ cd hello
 yak init
 yak create pack hello
 yak build
-yak publish --repository github:yakoon-runtime/hello --release
+yak publish
+yak deploy y5n-packs-hello --to github:yakoon-runtime/hello
 
 # Any user on any machine:
 mkdir test && cd test
 yak init
 echo '[repositories]
 sources = ["github:yakoon-runtime/hello"]' >> .yak/context.toml
-yak install y5n-packs-hello
-yak sync
+yak add y5n-packs-hello --from github:yakoon-runtime/hello
 yak shell
 # hello command available
 ```

@@ -2,6 +2,12 @@
 
 **Status:** Accepted (2026-07-26)
 
+**Update (2026-08-12):** Repositories are declared under `[repositories]` in
+`.yak/context.toml` (`sources` for the default read set, plus named entries
+like `[repositories.acme]`). A repository is both a read source (`add
+--from <repo>`) and a deploy target (`deploy --to <repo>`); `deploy` is the
+write side of the same model.
+
 ## Context
 
 Artifacts need to be shareable between developers. The local `~/.yak/artifacts/`

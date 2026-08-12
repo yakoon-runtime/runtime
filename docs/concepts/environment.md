@@ -22,11 +22,11 @@ Template → Environment → Workspace
 ```yaml
 schema: "1"
 name: dev
-dependencies: [y5n-packs-system]
+components: [y5n-packs-system]
 workspace:
   path: structure
 mounts:
-  - pack: system
+  - source: .yak/components/system/structure
     target: /usr/bin
 ```
 
