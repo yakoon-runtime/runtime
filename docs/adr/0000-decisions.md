@@ -5,6 +5,32 @@
 
 ---
 
+## 2026-08-13 — Component Source Resolution (ADR-8)
+
+**Status: Proposed.** Before the monorepo can be dissolved, the platform must
+be obtainable through the same repository mechanism as any pack. The answer
+is a two-document model: **the Environment says what should run (SOLL), the
+Context says where each component comes from (WO, local deviation).**
+
+**Key sentence:** *"A component's origin is a mapping, not a mechanism."* The
+model is six assertions: Environment declares WHAT, Context declares WHERE,
+`[sources]` maps a component explicitly to a development source, a source
+mapping overrides released resolution, without a mapping the Environment pin
+resolves as an artifact from repositories, and reconciliation turns
+Environment + Context into State. `[sources]` is a bare `component → path`
+mapping (the only decided type); `[repositories]` stays separate — a real
+cardinality boundary (1:1 vs N:1), not a stylistic one. There is **one
+pipeline** — Environment → Resolve → Reconcile → State; the verbs only
+manipulate the input (install = initial Environment, add = extend, update =
+re-resolve, bootstrap = dev setup). The Context decides origin, not the
+verb. Explicit configuration over clever discovery (manifests, recursive
+search, naming conventions are rejected). The mapping is language-neutral —
+Builder/Installer/Executor handle the payload, so debugging works because
+the executed payload *is* the checkout (no Yakoon debugger). Yakoon
+dogfoods its own mechanism: the official dev workspace (runtime/sdk/apps/crm
+as separate Git repos) uses the same context locations as an external pack
+developer's `acme-erp`.
+
 ## 2026-08-10 — Declarative Deployment (ADR-19)
 
 **Status: Proposed.** The second half of ADR-18: how does a collection of
