@@ -45,6 +45,26 @@ identity. Resolution is exact and repositories derive no name from another
 apps are ordinary components — no tool resolver, no hardcoded platform
 list.
 
+## 2026-08-13 — Source Catalogs (ADR-20)
+
+**Status: Proposed.** One step further toward a package manager: a source
+provides a catalog, catalogs merge into one local index, the Environment
+resolves against that index — the installer no longer searches anything.
+
+**Key sentence:** *"A component's origin is a source; a source's contents
+are a catalog; the merged catalogs are the index the Environment resolves
+against."* The Context lists sources flatly (`sources = ["/home/stefan/dev/
+crm", "github:acme/components", "yakoon:official"]`); a source is a
+recursive list (`sources:`, `components:`, `environments:`) walked into a
+flat index. The yak wheel carries only the root pointer — no runtime/apps/
+sdk names, so the official repository structure can change without a new
+yak. Resolution is an exact index lookup with source-order precedence,
+which subsumes the ADR-8 per-component override mapping. **A writable
+repository owns and maintains its catalog**: `deploy(resource)` is atomic
+(resource + catalog consistent and immediately resolvable); locations are
+source-relative and transport-agnostic. No caching architecture yet
+(in-memory index for 0.4). ADR-8 invariants survive unchanged.
+
 ## 2026-08-10 — Declarative Deployment (ADR-19)
 
 **Status: Proposed.** The second half of ADR-18: how does a collection of
