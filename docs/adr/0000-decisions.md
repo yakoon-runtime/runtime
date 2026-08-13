@@ -58,12 +58,15 @@ crm", "github:acme/components", "yakoon:official"]`); a source is a
 recursive list (`sources:`, `components:`, `environments:`) walked into a
 flat index. The yak wheel carries only the root pointer — no runtime/apps/
 sdk names, so the official repository structure can change without a new
-yak. Resolution is an exact index lookup with source-order precedence,
-which subsumes the ADR-8 per-component override mapping. **A writable
-repository owns and maintains its catalog**: `deploy(resource)` is atomic
-(resource + catalog consistent and immediately resolvable); locations are
-source-relative and transport-agnostic. No caching architecture yet
-(in-memory index for 0.4). ADR-8 invariants survive unchanged.
+yak. Resolution is an exact index lookup with **depth-first, declaration
+order** (earlier sources and their whole subtree win), which subsumes the
+ADR-8 per-component override mapping. **A source repository declares its
+own `catalog.yml`** (no recursive discovery; catalog identity must equal
+component identity). **A writable repository owns and maintains its
+catalog**: `deploy(resource)` is atomic (resource + catalog consistent and
+immediately resolvable); locations are source-relative and
+transport-agnostic. No caching architecture yet (in-memory index for 0.4).
+ADR-8 invariants survive unchanged.
 
 ## 2026-08-10 — Declarative Deployment (ADR-19)
 

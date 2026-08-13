@@ -90,6 +90,30 @@ Yak understands exactly one rule:
 The graph is walked and flattened into the index. No fixed hierarchy
 (`main → repo → component`) exists in code.
 
+### 2a. A source repo declares its own catalog
+
+Open question 1 is decided: **a source repository carries a declared
+`catalog.yml`** — never recursive discovery. No walking directories for
+`pack.toml`, `pyproject.toml`, or `.csproj` to guess what is a component.
+The catalog says "I offer `y5n-runtime-engine`; here it is", it does not
+derive the name from a folder:
+
+```yaml
+# runtime/catalog.yml
+components:
+  y5n-packs-root:
+    location: packs/y5n-packs-root
+  y5n-runtime-boot:
+    location: runtime/y5n-runtime-boot
+  y5n-runtime-api:
+    location: runtime/y5n-runtime-api
+```
+
+The component's own metadata stays authoritative for its identity. On load
+Yak verifies `catalog identity == component identity` and fails otherwise —
+the declared name and the component's own name must agree. No name
+derivation in either direction.
+
 ### 3. The yak wheel carries only the root pointer
 
 The shipped default is a single bootstrap source — the official source-list
@@ -111,16 +135,24 @@ in-memory merged index
 resolve(exact component identity) → location
 ```
 
-The first exact hit in source order wins:
+The first exact hit wins. **Source order is depth-first, declaration
+order** — a source's own resources and its entire subtree precede the next
+declared source:
 
-```toml
-sources = ["/home/stefan/dev/crm", "github:yakoon-runtime/apps"]
+```
+Context source 1
+├── its own resources
+├── child source 1 → recursively
+├── child source 2 → recursively
+Context source 2
+└── ...
 ```
 
-`y5n-packs-crm` resolves to the local checkout; removing that source line
-falls back to the released artifact. This **subsumes** the per-component
-override mapping of ADR-8 — a local directory first in the list is the
-development override, with no separate mechanism.
+This keeps the intuitive rule true: **what is declared earlier as a source
+has complete precedence.** For `sources = ["/home/stefan/dev",
+"yakoon:official"]` the whole local development graph wins over Official.
+The graph walk includes cycle detection (`A → B → C → A` is a load error) —
+necessary hygiene, not new architecture.
 
 ### 5. A writable repository owns its catalog
 
@@ -177,30 +209,28 @@ loading a few YAML files measurably matters.
 
 ## Open questions
 
-1. **Local source catalogs.** Is a local checkout's catalog a declared file,
-   or derived from component metadata (folder == name) at load time? A
-   derived catalog keeps the source minimal; a declared one is explicit.
-2. **Deploy targets.** The flat `sources` is the read side. Writable targets
+1. **Deploy targets.** The flat `sources` is the read side. Writable targets
    (`--to github:...`, named targets) stay separate — but the named
    `[repositories]` section may shrink or disappear.
-3. **Version semantics.** The catalog carries a version per component. For
+2. **Version semantics.** The catalog carries a version per component. For
    0.4 resolution is exact-by-name with first-match precedence; pinning and
    conflict resolution (multiple versions of one component) are future work.
-4. **Catalog freshness on the read side.** Re-fetch on every command (0.4)
+3. **Catalog freshness on the read side.** Re-fetch on every command (0.4)
    vs. a cached index; fingerprints could make refreshes cheap.
 
 ## Implementation sketch
 
-1. **Context** parses `sources` as a flat list (catalog aliases, github
-   specs, local paths); the named-repositories distinction dissolves.
-2. **Catalog** — a small loader that reads `sources:`, `components:`,
-   `environments:` and returns sub-sources plus resources.
-3. **Index** — walk the source graph, merge into `{name: {source, version,
-   location, fingerprint}}`; exact match, source-order precedence.
-4. **Resolver** — index lookup instead of per-name repository scanning;
-   `resolve_environment` becomes an index lookup for `environments:`.
-5. **Writable repository** — `deploy(resource)` updates the resource and its
-   catalog atomically; the catalog is the contract.
-6. **Tests** — a fake source graph (local dir + catalog files) proves that
-   `add cool-shell` and `add y5n-packs-ident` resolve from the index; source
-   order decides; removing a local source returns to the released artifact.
+Built in two isolated steps on a fresh branch — the read side first:
+
+1. **Read side (proves the model):** Context parses `sources` as a flat
+   list; the catalog loader reads `sources:`, `components:`,
+   `environments:` (declared, no discovery) and verifies catalog identity
+   against component identity; the index walks the graph depth-first with
+   cycle detection and merges into `{name: {source, version, location,
+   fingerprint}}`; resolution is an exact index lookup. Proof: `add
+   cool-shell`, `add y5n-packs-ident` and a local checkout all resolve
+   through the same index; source order decides; removing a local source
+   returns to the released artifact.
+2. **Write side:** a writable repository updates its resource and its
+   catalog atomically; `deploy(resource)` leaves the repository consistent
+   and immediately resolvable.
