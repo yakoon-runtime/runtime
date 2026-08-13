@@ -1,6 +1,6 @@
 # ADR 8: Component Source Resolution — Environment (WHAT), Context (WHERE), State (IST)
 
-**Status: Proposed**
+**Status: Accepted**
 
 The monorepo is a convenience, not an architecture. Before Yakoon can be
 split into independent repositories it needs a distribution model where the
@@ -248,31 +248,27 @@ source-overridden components were materialized from source.
 
 ## Implementation sketch
 
+Implemented and proven end to end (gold tests A–D in
+`apps/y5n-apps-yak/tests/test_source_resolution.py`):
+
 1. **Context** reads `[sources]` as a `component → location` map and
-   `[repositories]` as named repositories (`cwd.py`); `dirs` is dropped.
-2. **One pipeline.** Verify that `install`, `add`, `update`, `bootstrap`
-   already funnel through a single `resolve → reconcile` path
-   (`InstallationManager`); if they do not, unify them rather than growing a
-   fourth variation. This is the first implementation step — the ADR's
-   model depends on it.
-3. **Resolver** adds the mapping step at the top of `_resolve_component`
-   (`manager.py`): if the Context maps the name, return a source component.
-4. **Installer** reuses the existing editable-install and structure-symlink
-   path for `path` mappings (already proven).
+   `[repositories]` as named repositories (`cwd.py`). `dirs` stays as a
+   build-time transition shim.
+2. **One resolver.** `_resolve_component` (manager) consults the Context
+   mapping first, then the artifact repositories (defaulting to the
+   Context so `add` and `update` always agree). `_resolve_platform_component`
+   is gone — root/boot resolve like every component, through a mapped
+   development source or the artifact repositories (`naming=False` keeps
+   the name-based fallback out of the platform namespace).
+3. **Installer** reuses the existing editable-install and structure-symlink
+   path for `path` mappings.
+4. **`add`** passes only CLI overrides; the resolver owns the Context
+   default. **`update`** uses the same default — one source of truth.
 5. **Gold tests** prove the core of the ADR:
 
    ```
-   Environment: crm 0.8.0   Repository: crm 0.8.0   Context: crm → ../crm
-
-   yak update
-   → state: crm mode=source
-   → executed code = ../crm
-   ```
-
-   ```
-   # mapping removed
-   yak update
-   → state: crm mode=artifact
-   → crm 0.8.0 from repository
-   → source symlink / editable install gone
+   A — Released        no mapping            → crm artifact, staged copy
+   B — Dev override    crm → ../crm          → crm source, payload = checkout
+   C — Return          mapping removed       → crm artifact, symlink gone
+   D — Platform        root/boot as artifacts→ install without parents[8]
    ```

@@ -7,7 +7,7 @@
 
 ## 2026-08-13 — Component Source Resolution (ADR-8)
 
-**Status: Proposed.** Before the monorepo can be dissolved, the platform must
+**Status: Accepted.** Before the monorepo can be dissolved, the platform must
 be obtainable through the same repository mechanism as any pack. The answer
 is a two-document model: **the Environment says what should run (SOLL), the
 Context says where each component comes from (WO, local deviation).**
