@@ -31,6 +31,14 @@ dogfoods its own mechanism: the official dev workspace (runtime/sdk/apps/crm
 as separate Git repos) uses the same context locations as an external pack
 developer's `acme-erp`.
 
+**Invariant (three independent axes):** component type, repository
+ownership, and Environment membership are independent concerns. Type
+describes what a component *is*, the repository describes who *owns* it,
+the Environment describes *where* it is deployed. Repositories are cut by
+ownership and shared lifecycle, not by component type (`root` = pack +
+runtime repo + `yakoon:platform`). The installer operates only on
+Environment membership.
+
 ## 2026-08-10 — Declarative Deployment (ADR-19)
 
 **Status: Proposed.** The second half of ADR-18: how does a collection of

@@ -185,6 +185,43 @@ Enforced by the Installer (editable install / symlink), not by the runtime:
 `yak runtime start` launches from the installation's venv, where
 source-overridden components were materialized from source.
 
+### 8. Invariant — three independent axes
+
+> **Component type, repository ownership, and Environment membership are
+> independent concerns.**
+
+A component's technical type does not determine which repository owns it,
+and repository ownership does not determine which Environment contains it.
+The installer operates only on Environment membership and resolution.
+
+```
+root
+  type        = pack
+  repository  = runtime
+  environment = yakoon:platform
+
+system
+  type        = pack
+  repository  = system
+  environment = user-defined
+```
+
+This guards against the obvious fallacy during the repository split —
+"`root` is a pack, so it belongs in the packs repository." No: the *type*
+describes what a component is, the *repository* describes who owns it, and
+the *Environment* describes where it is deployed. The three answers are
+derived independently; if one starts to imply another, the split is wrong.
+
+The practical repo rule follows:
+
+> **Repositories are cut by ownership and shared lifecycle, not by component
+> type.**
+
+Two packs may be very different products with different release cycles and
+owners — they belong in different repositories. Repositories grouped by
+technical kind (`packs/`, `apps/`, `libraries/`) are the anti-pattern; the
+Environment may reach across all Git boundaries.
+
 ## Consequences
 
 ### Benefits
