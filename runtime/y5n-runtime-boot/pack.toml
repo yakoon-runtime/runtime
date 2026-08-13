@@ -1,4 +1,4 @@
-name = "boot"
+name = "y5n-runtime-boot"
 version = "0.1.0"
 mount = "/boot"
 description = "Python host namespace entry for Yakoon installations"

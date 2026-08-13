@@ -222,6 +222,27 @@ owners — they belong in different repositories. Repositories grouped by
 technical kind (`packs/`, `apps/`, `libraries/`) are the anti-pattern; the
 Environment may reach across all Git boundaries.
 
+### 9. Invariant — component identities are opaque
+
+> **Yakoon never interprets a component identity.**
+
+A component's name has no meaning to the resolver. `y5n-packs-system` and
+`cool-shell` resolve identically — exactly, by name, with no family prefix
+constructed from, or stripped from, a short form. Three consequences:
+
+1. **Identity is opaque.** `y5n-*` is a product convention of Yakoon's own
+   components, not part of the architecture.
+2. **Resolution is exact.** A name resolves to a component with that name or
+   to nothing. `add system` finds nothing when the component is named
+   `y5n-packs-system`.
+3. **Repositories do not interpret identities.** A source root may assume
+   `folder == name` (a component lives in `<root>/<name>`), but it never
+   derives one name from another.
+
+Host apps are ordinary components: `y5n-apps-shell` resolves as an artifact
+like any pack; there is no tool resolver and no hardcoded platform-name list
+in the installer.
+
 ## Consequences
 
 ### Benefits

@@ -39,6 +39,12 @@ ownership and shared lifecycle, not by component type (`root` = pack +
 runtime repo + `yakoon:platform`). The installer operates only on
 Environment membership.
 
+**Invariant (opaque identities):** Yakoon never interprets a component
+identity. Resolution is exact and repositories derive no name from another
+(folder == name, `y5n-*` is a product convention, not architecture). Host
+apps are ordinary components — no tool resolver, no hardcoded platform
+list.
+
 ## 2026-08-10 — Declarative Deployment (ADR-19)
 
 **Status: Proposed.** The second half of ADR-18: how does a collection of
