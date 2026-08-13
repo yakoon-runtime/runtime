@@ -1,0 +1,4 @@
+name = "boot"
+version = "0.1.0"
+mount = "/boot"
+description = "Python host namespace entry for Yakoon installations"
