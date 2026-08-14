@@ -9,5 +9,3 @@ components:
     location: y5n-packs-luma
   y5n-packs-root:
     location: y5n-packs-root
-  y5n-packs-system:
-    location: y5n-packs-system
