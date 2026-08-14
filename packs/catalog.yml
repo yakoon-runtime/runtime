@@ -1,0 +1,13 @@
+components:
+  y5n-packs-crm:
+    location: y5n-packs-crm
+  y5n-packs-ident:
+    location: y5n-packs-ident
+  y5n-packs-labs:
+    location: y5n-packs-labs
+  y5n-packs-luma:
+    location: y5n-packs-luma
+  y5n-packs-root:
+    location: y5n-packs-root
+  y5n-packs-system:
+    location: y5n-packs-system

@@ -1,6 +1,0 @@
-sources:
-  - github:yakoon-runtime/apps:catalogs/runtime.yml
-  - github:yakoon-runtime/apps:catalogs/sdk.yml
-  - github:yakoon-runtime/apps:catalogs/apps.yml
-  - github:yakoon-runtime/apps:catalogs/system.yml
-  - github:yakoon-runtime/apps:catalogs/ident.yml
