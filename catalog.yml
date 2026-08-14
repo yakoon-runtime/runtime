@@ -1,0 +1,15 @@
+components:
+  y5n-runtime-api:
+    location: packages/y5n-runtime-api
+  y5n-runtime-boot:
+    location: packages/y5n-runtime-boot
+  y5n-runtime-engine:
+    location: packages/y5n-runtime-engine
+  y5n-runtime-llm:
+    location: packages/y5n-runtime-llm
+  y5n-runtime-store:
+    location: packages/y5n-runtime-store
+  y5n-runtime-transport:
+    location: packages/y5n-runtime-transport
+  y5n-packs-root:
+    location: packs/y5n-packs-root

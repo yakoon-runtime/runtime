@@ -9,7 +9,7 @@ authors = [{ name = "Stefan Bergmann" }]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 norecursedirs = ["benchmarks", "workspace"]
-pythonpath = ["apps/y5n-apps-yak/src"]
+pythonpath = ["packages/y5n-runtime-api/src"]
 markers = [
     "benchmark: performance benchmarks (skipped by default)",
 ]

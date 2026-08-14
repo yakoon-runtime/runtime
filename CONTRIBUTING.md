@@ -4,11 +4,17 @@
 
 ```bash
 git clone <repo>
-cd yakoon
+cd runtime
 python -m venv .venv
 source .venv/bin/activate
-pip install -e apps/y5n-apps-runtime
-pip install -e apps/y5n-apps-shell
+pip install \
+  -e packages/y5n-runtime-api \
+  -e packages/y5n-runtime-engine \
+  -e packages/y5n-runtime-store \
+  -e packages/y5n-runtime-transport \
+  -e packages/y5n-runtime-llm \
+  -e packages/y5n-runtime-boot \
+  -e packs/y5n-packs-root
 pip install -r requirements-dev.txt
 ```
 
@@ -61,11 +67,9 @@ pytest
 ## Project Structure
 
 ```
-apps/           — Runnable applications (runtime, textual, web)
-runtime/        — Core runtime packages
-stores/         — Storage backends (event store)
-spaces/         — Domain spaces (shell, identity, runtime)
-transports/     — Transport layers
+packages/       — Core runtime packages (api, engine, store, transport, llm, boot)
+packs/          — Installable content packs (root)
+brand/          — Logos and social assets
 docs/           — Documentation (active)
 docs/archive/   — Historical documentation
 ```

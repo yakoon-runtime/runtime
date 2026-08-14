@@ -38,22 +38,19 @@ Always:
 8. Do not modify project structure or architecture unless the request explicitly requires it.
 9. The Executor ABI (`docs/EXECUTOR.md`) is the authority for all bundle entry points. Entry files are declared via `entry.run`/`entry.setup` in `.yak/yak.yml`. `.yak/` only contains `yak.yml` — no fixed subdirectory layout.
 
-## Naming convention — three product families
+## Naming convention
 
 Every Python artifact follows the pattern `y5n-<family>-<name>`:
 
 | Family | Directory | PyPI name | Python namespace | Purpose |
 |--------|-----------|-----------|------------------|---------|
-| **Runtime** | `runtime/y5n-runtime-*/` | `y5n-runtime-*` | `y5n.runtime.*` | Libraries (api, engine, store, transport, llm, boot) |
-| **Apps** | `apps/y5n-apps-*/` | `y5n-apps-*` | `y5n.apps.*` | Executable programs / processes (runtime, shell, web, console, yak) |
-| **Packs** | `packs/y5n-packs-*/` | `y5n-packs-*` | `y5n.packs.*` | Installable content / plugins (system, ident, crm, luma, labs, root) |
-| **SDK** | `sdk/y5n-sdk-python/` | `y5n-sdk-python` | `y5n.sdk` | Developer SDK (Python bindings, incl. codegen `gen/`) |
+| **Runtime** | `packages/y5n-runtime-*/` | `y5n-runtime-*` | `y5n.runtime.*` | Libraries (api, engine, store, transport, llm, boot) |
+| **Packs** | `packs/y5n-packs-*/` | `y5n-packs-*` | `y5n.packs.*` | Installable content / plugins (root) |
 
 Rules:
 - Directory name, PyPI name, and Python namespace MUST be consistent.
 - `y5napp-*` / `y5napp.*` or `y5n.apps.*` for packs are NEVER used.
 - Always `y5n.packs.*` for packs, never `y5n.apps.*`.
-- Always `y5n.apps.*` for apps, never `y5n.packs.*`.
 - The venv must be installed using `.venv/bin/pip`, not system pip.
 
 ## YakContext architecture

@@ -3,7 +3,7 @@
 Measures the per-step cost of the parts that changed in the ADR-12
 migration, with clean timing.
 
-Run: .venv/bin/python runtime/y5n-runtime-engine/tests/benchmarks/profile_step.py
+Run: .venv/bin/python packages/y5n-runtime-engine/tests/benchmarks/profile_step.py
 """
 
 from __future__ import annotations
@@ -15,11 +15,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
 for src in (
-    ROOT / "runtime" / "y5n-runtime-api" / "src",
-    ROOT / "runtime" / "y5n-runtime-engine" / "src",
-    ROOT / "runtime" / "y5n-runtime-store" / "src",
-    ROOT / "runtime" / "y5n-runtime-boot" / "src",
-    ROOT / "sdk" / "y5n-sdk-python" / "src",
+    ROOT / "packages" / "y5n-runtime-api" / "src",
+    ROOT / "packages" / "y5n-runtime-engine" / "src",
+    ROOT / "packages" / "y5n-runtime-store" / "src",
+    ROOT / "packages" / "y5n-runtime-boot" / "src",
 ):
     sys.path.insert(0, str(src))
 

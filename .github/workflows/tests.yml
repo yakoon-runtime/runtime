@@ -18,25 +18,20 @@ jobs:
       - name: Install dependencies
         run: |
           pip install \
-            -e runtime/y5n-runtime-api \
-            -e runtime/y5n-runtime-engine \
-            -e runtime/y5n-runtime-transport \
-            -e runtime/y5n-runtime-store \
-            -e runtime/y5n-runtime-llm \
-            -e runtime/y5n-runtime-boot \
-            -e sdk/y5n-sdk-python \
-            -e packs/y5n-packs-root \
-            -e packs/y5n-packs-system \
-            -e packs/y5n-packs-ident \
-            -e packs/y5n-packs-luma \
-            -e apps/y5n-apps-yak
+            -e packages/y5n-runtime-api \
+            -e packages/y5n-runtime-engine \
+            -e packages/y5n-runtime-transport \
+            -e packages/y5n-runtime-store \
+            -e packages/y5n-runtime-llm \
+            -e packages/y5n-runtime-boot \
+            -e packs/y5n-packs-root
+          pip install "git+https://github.com/yakoon-runtime/sdk.git#subdirectory=y5n-sdk-python"
+          pip install "git+https://github.com/yakoon-runtime/pack-system.git#subdirectory=y5n-packs-system"
           pip install -r requirements-dev.txt
 
       - name: Run tests
         run: |
-          pytest runtime/y5n-runtime-engine/tests \
-                runtime/y5n-runtime-store/tests/event \
-                runtime/y5n-runtime-store/tests/sequence \
-                packs/y5n-packs-luma/tests \
-                apps/y5n-apps-yak/tests \
+          pytest packages/y5n-runtime-engine/tests \
+                packages/y5n-runtime-store/tests/event \
+                packages/y5n-runtime-store/tests/sequence \
                 -x --tb=short
