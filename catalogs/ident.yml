@@ -1,0 +1,4 @@
+components:
+  y5n-packs-ident:
+    version: 0.8.0
+    location: y5n-packs-ident-v0.8.0/y5n-packs-ident.artifact.tar.gz

@@ -1,0 +1,4 @@
+components:
+  y5n-packs-system:
+    version: 0.8.0
+    location: y5n-packs-system-v0.8.0/y5n-packs-system.artifact.tar.gz
