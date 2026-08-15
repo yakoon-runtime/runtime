@@ -1,6 +1,7 @@
 components:
   y5n-runtime-api:
     location: packages/y5n-runtime-api
+    release: y5n-runtime-api-v0.1.0
   y5n-runtime-boot:
     location: packages/y5n-runtime-boot
     release: y5n-runtime-boot-v0.1.0
