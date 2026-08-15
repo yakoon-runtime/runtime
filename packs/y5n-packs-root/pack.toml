@@ -1,4 +1,0 @@
-name = "y5n-packs-root"
-version = "0.1.0"
-mount = "/"
-description = "Root namespace entry for Yakoon installations"
