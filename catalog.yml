@@ -7,6 +7,7 @@ components:
     release: y5n-runtime-boot-v0.1.0
   y5n-runtime-engine:
     location: packages/y5n-runtime-engine
+    release: y5n-runtime-engine-v0.8.0
   y5n-runtime-llm:
     location: packages/y5n-runtime-llm
   y5n-runtime-store:
