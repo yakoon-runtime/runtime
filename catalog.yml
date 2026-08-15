@@ -12,6 +12,7 @@ components:
     location: packages/y5n-runtime-llm
   y5n-runtime-store:
     location: packages/y5n-runtime-store
+    release: y5n-runtime-store-v0.5.0
   y5n-runtime-transport:
     location: packages/y5n-runtime-transport
   y5n-packs-root:
