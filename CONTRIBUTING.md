@@ -8,13 +8,13 @@ cd runtime
 python -m venv .venv
 source .venv/bin/activate
 pip install \
-  -e packages/y5n-runtime-api \
-  -e packages/y5n-runtime-engine \
-  -e packages/y5n-runtime-store \
-  -e packages/y5n-runtime-transport \
-  -e packages/y5n-runtime-llm \
-  -e packages/y5n-runtime-boot \
-  -e caps/y5n-caps-root
+  -e packages/runtime-api \
+  -e packages/runtime-engine \
+  -e packages/runtime-store \
+  -e packages/runtime-transport \
+  -e packages/runtime-llm \
+  -e packages/runtime-boot \
+  -e caps/caps-root
 pip install -r requirements-dev.txt
 ```
 

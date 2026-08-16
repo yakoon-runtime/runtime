@@ -18,20 +18,19 @@ jobs:
       - name: Install dependencies
         run: |
           pip install \
-            -e packages/y5n-runtime-api \
-            -e packages/y5n-runtime-engine \
-            -e packages/y5n-runtime-transport \
-            -e packages/y5n-runtime-store \
-            -e packages/y5n-runtime-llm \
-            -e packages/y5n-runtime-boot \
-            -e caps/y5n-caps-root
-          pip install "git+https://github.com/yakoon-runtime/sdk.git#subdirectory=y5n-sdk-python"
-          pip install "git+https://github.com/yakoon-runtime/pack-system.git#subdirectory=y5n-packs-system"
+            -e packages/runtime-api \
+            -e packages/runtime-engine \
+            -e packages/runtime-transport \
+            -e packages/runtime-store \
+            -e packages/runtime-llm \
+            -e packages/runtime-boot \
+            -e caps/caps-root
+          pip install "git+https://github.com/yakoon-runtime/sdk.git#subdirectory=sdk-python"
           pip install -r requirements-dev.txt
 
       - name: Run tests
         run: |
-          pytest packages/y5n-runtime-engine/tests \
-                packages/y5n-runtime-store/tests/event \
-                packages/y5n-runtime-store/tests/sequence \
+          pytest packages/runtime-engine/tests \
+                packages/runtime-store/tests/event \
+                packages/runtime-store/tests/sequence \
                 -x --tb=short
