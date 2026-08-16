@@ -14,7 +14,7 @@ pip install \
   -e packages/y5n-runtime-transport \
   -e packages/y5n-runtime-llm \
   -e packages/y5n-runtime-boot \
-  -e packs/y5n-packs-root
+  -e caps/y5n-caps-root
 pip install -r requirements-dev.txt
 ```
 
@@ -68,7 +68,7 @@ pytest
 
 ```
 packages/       — Core runtime packages (api, engine, store, transport, llm, boot)
-packs/          — Installable content packs (root)
+caps/           — Installable content capabilities (root)
 docs/           — Documentation (active)
 docs/archive/   — Historical documentation
 ```

@@ -17,12 +17,12 @@ components:
   y5n-runtime-transport:
     location: packages/y5n-runtime-transport
     release: y5n-runtime-transport-v0.2.0
-  y5n-packs-root:
-    location: packs/y5n-packs-root
-    release: y5n-packs-root-v0.1.0
+  y5n-caps-root:
+    location: caps/y5n-caps-root
+    release: y5n-caps-root-v0.1.0
 bundles:
   runtime:
-  - y5n-packs-root
+  - y5n-caps-root
   - y5n-runtime-boot
   - y5n-runtime-api
   - y5n-runtime-engine

@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "y5n-packs-root"
+name = "y5n-caps-root"
 version = "0.1.0"
-description = "Root namespace pack"
+description = "Root capabilities"
 requires-python = ">=3.13"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Stefan Bergmann" }]

@@ -24,7 +24,7 @@ jobs:
             -e packages/y5n-runtime-store \
             -e packages/y5n-runtime-llm \
             -e packages/y5n-runtime-boot \
-            -e packs/y5n-packs-root
+            -e caps/y5n-caps-root
           pip install "git+https://github.com/yakoon-runtime/sdk.git#subdirectory=y5n-sdk-python"
           pip install "git+https://github.com/yakoon-runtime/pack-system.git#subdirectory=y5n-packs-system"
           pip install -r requirements-dev.txt
