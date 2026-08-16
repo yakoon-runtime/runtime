@@ -69,10 +69,12 @@ pytest
 ```
 packages/       — Core runtime packages (api, engine, store, transport, llm, boot)
 packs/          — Installable content packs (root)
-brand/          — Logos and social assets
 docs/           — Documentation (active)
 docs/archive/   — Historical documentation
 ```
+
+Brand assets (logos) live in the organization repository
+`yakoon-runtime/.github` under `brand/`, not here.
 
 ## Pull Request Guidelines
 

@@ -1,5 +1,5 @@
 <p align="center">
-    <img src="brand/png/yakoon-dark.png" width="420">
+    <img src="https://raw.githubusercontent.com/yakoon-runtime/.github/main/brand/png/yakoon-dark.png" width="420">
 </p>
 
 A runtime for process-oriented software.
