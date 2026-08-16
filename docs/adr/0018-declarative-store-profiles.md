@@ -8,7 +8,7 @@ model holds from the pack declaration to the resolver with no special
 cases: `stores:` → parser → node → `BuildState` (inheritance) → tree →
 `StoreCollector` → `StoreResolver` → `sdk.store("crm")`. No backend, DSN,
 host, or password appears anywhere in the chain. The three packs (crm,
-luma, ident) run on the new contract; an architecture test proves the full
+worlds, ident) run on the new contract; an architecture test proves the full
 path.
 
 > **The pack describes what it needs. The platform decides how that need

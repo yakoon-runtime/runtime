@@ -18,7 +18,7 @@ und einer Runtime-Config (`yakoon-runtime.yml`):
 ```
 structure/
     crm/            → pack with structure/.yak/yak.yml
-    luma/
+    worlds/
     ident/
     system/
 yakoon-runtime.yml  → listen, workspace_path, known (no stores)
@@ -31,9 +31,9 @@ yakoon-runtime.yml  → listen, workspace_path, known (no stores)
 | Engine-Default | `StorageSettings` | `backend: memory`, DSN `yakoon_dev` | ja (Runtime-Bau) |
 | Engine-Default | `SequenceSettings` | `backend: memory`, DSN `yakoon_sequence` | ja (Runtime-Bau) |
 | Space-Config | `docs/config/spaces/contacts.yml` | `storage: postgres` → `yakoon_contacts` | **nein** |
-| Space-Config | `docs/config/spaces/luma.yml` | `storage: postgres` → `yakoon_contacts` | **nein** |
+| Space-Config | `docs/config/spaces/worlds.yml` | `storage: postgres` → `yakoon_contacts` | **nein** |
 | Space-Loader | `resolve_space_config(space)` | sucht `~/.config/yakoon/spaces/<space>.yml` | ja, als Funktion |
-| Pack-Settings | `contacts/settings`, `luma/settings` | `Settings.load()` liest Space-Config | **nein** (nie aufgerufen) |
+| Pack-Settings | `contacts/settings`, `worlds/settings` | `Settings.load()` liest Space-Config | **nein** (nie aufgerufen) |
 
 **Kernfakt:** Die Space-Configs sind der Vorläufer des Assemblers — aber sie
 sind **unverdrahtet**. Kein Pack lädt sie tatsächlich beim Lauf. Persistenz
@@ -49,7 +49,7 @@ Pack → docs/config/spaces/*.yml → Runtime
 
 aber die Mitte ist von Hand gepflegt, nach Pack benannt (nicht nach
 logischem Store), nicht versioniert/versioniert verwechselt, und nicht
-verdrahtet. Zwei Packs (contacts, luma) teilen sich zufällig dieselbe DB
+verdrahtet. Zwei Packs (contacts, worlds) teilen sich zufällig dieselbe DB
 (`yakoon_contacts`).
 
 ## 2. Zielbild

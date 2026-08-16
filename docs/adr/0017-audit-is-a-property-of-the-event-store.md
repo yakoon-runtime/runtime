@@ -104,7 +104,7 @@ addressed by the same four dimensions. There is no `AuditStore`, no
 `audit` namespace, no second write path.
 
 ```
-luma/connection/global#<id>     ← domain entities (today)
+worlds/connection/global#<id>     ← domain entities (today)
 system/session/global#<key>     ← domain entities (today)
 ```
 
@@ -240,7 +240,7 @@ is a normal Yakoon command like any other.
    `RevisionRow`.
 2. **Activity events as entities.** A new kind
    (`system/activity/global#<id>` or per-domain
-   `luma/activity/global#…`) written by an observer at the engine
+   `worlds/activity/global#…`) written by an observer at the engine
    boundary: dispatch (command executed/denied), permission check
    (`PermissionDenied`), auth (`LoginFailed`). A write-only append that
    never materializes current state.

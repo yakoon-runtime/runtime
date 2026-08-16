@@ -53,7 +53,7 @@ async def test_flow_writes_carry_full_context(harness):
     harness.session.set_identity(
         Key.from_parts("users", "user", "global", "u-1"), "stefan"
     )
-    harness.session.set_cwd("/opt/luma")
+    harness.session.set_cwd("/opt/worlds")
     harness.session.set_data("fs:root", "/workspace")
 
     flow = await harness.start(main)

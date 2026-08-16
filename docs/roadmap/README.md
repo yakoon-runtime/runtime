@@ -56,7 +56,7 @@ Candidate repositories (one per product):
 ```
 github.com/yakoon-runtime/hello     ← simple test
 github.com/yakoon-runtime/crm       ← real product
-github.com/yakoon-runtime/luma      ← real product
+github.com/yakoon-runtime/caps-worlds      ← real product
 ```
 
 Expected flow:

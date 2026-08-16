@@ -308,7 +308,7 @@ snapshot is behaviorally safe — but the contract is now explicit.
 
 The snapshot rule has exactly one exception — the **Session**. It is the
 single piece of invocation data that other flows mutate (logout, `cd`,
-`luma.current_box`, ...). Copying it into the snapshot would make it stale
+`worlds.current_box`, ...). Copying it into the snapshot would make it stale
 by definition: a long-running flow that started at 08:00 must see a logout
 at 09:00.
 
@@ -592,7 +592,7 @@ parameterless `main()`, engine derives once at dispatch). Remaining:
    `user`, `workspace`, `cwd` — those become live lookups (session/cwd
    through the SessionService, `user` from the session).
 3. **Migrate packs.** ~15 packs read `context.session().data` today
-   (luma, ident) and `ctx.cwd` (cd, ls, pwd, man). Switch them to the live
+   (worlds, ident) and `ctx.cwd` (cd, ls, pwd, man). Switch them to the live
    SDK surface (`session.current()`, `session.cwd()`).
 4. Expose `host.execute` and `host.resolve` ports on the boot host node
    (per ADR-10's resolve service).
