@@ -30,10 +30,10 @@ yakoon-runtime.yml  → listen, workspace_path, known (no stores)
 |---|---|---|---|
 | Engine-Default | `StorageSettings` | `backend: memory`, DSN `yakoon_dev` | ja (Runtime-Bau) |
 | Engine-Default | `SequenceSettings` | `backend: memory`, DSN `yakoon_sequence` | ja (Runtime-Bau) |
-| Space-Config | `docs/config/spaces/crm.yml` | `storage: postgres` → `yakoon_crm` | **nein** |
-| Space-Config | `docs/config/spaces/luma.yml` | `storage: postgres` → `yakoon_crm` | **nein** |
+| Space-Config | `docs/config/spaces/contacts.yml` | `storage: postgres` → `yakoon_contacts` | **nein** |
+| Space-Config | `docs/config/spaces/luma.yml` | `storage: postgres` → `yakoon_contacts` | **nein** |
 | Space-Loader | `resolve_space_config(space)` | sucht `~/.config/yakoon/spaces/<space>.yml` | ja, als Funktion |
-| Pack-Settings | `crm/settings`, `luma/settings` | `Settings.load()` liest Space-Config | **nein** (nie aufgerufen) |
+| Pack-Settings | `contacts/settings`, `luma/settings` | `Settings.load()` liest Space-Config | **nein** (nie aufgerufen) |
 
 **Kernfakt:** Die Space-Configs sind der Vorläufer des Assemblers — aber sie
 sind **unverdrahtet**. Kein Pack lädt sie tatsächlich beim Lauf. Persistenz
@@ -49,8 +49,8 @@ Pack → docs/config/spaces/*.yml → Runtime
 
 aber die Mitte ist von Hand gepflegt, nach Pack benannt (nicht nach
 logischem Store), nicht versioniert/versioniert verwechselt, und nicht
-verdrahtet. Zwei Packs (crm, luma) teilen sich zufällig dieselbe DB
-(`yakoon_crm`).
+verdrahtet. Zwei Packs (contacts, luma) teilen sich zufällig dieselbe DB
+(`yakoon_contacts`).
 
 ## 2. Zielbild
 
@@ -87,10 +87,10 @@ Runtime
 
 | Rolle | Was sie tut | Beispiel |
 |---|---|---|
-| **Pack** | beschreibt Bedarf | `stores: [crm]` |
+| **Pack** | beschreibt Bedarf | `stores: [contacts]` |
 | **yak** | assembliert den Bedarf zur Installation | fragt Backend/Instanz ab, erzeugt Deployment |
 | **Runtime** | führt aus, stellt Mechanismen bereit | baut Store-Service aus dem Deployment |
-| **SDK** | minimale API | `sdk.store("crm")` |
+| **SDK** | minimale API | `sdk.store("contacts")` |
 
 Das Muster in allgemeiner Form:
 
@@ -113,7 +113,7 @@ Pack        → yak         → Runtime  → SDK
 
 | Achse | Antwort |
 |---|---|
-| **Bedeutung des Namens** | global — `crm` = `crm` überall (wie ein Portname) |
+| **Bedeutung des Namens** | global — `contacts` = `contacts` überall (wie ein Portname) |
 | **Berechtigung des Zugriffs** | pack-lokal — ein Pack kann nur deklarierte Stores nutzen |
 
 **Schärfung der Regel:** Capability-Namen sind global eindeutig. **Aber jedes
@@ -121,8 +121,8 @@ Pack muss explizit deklarieren, welche Capabilities es nutzt.** `stores:`
 ist eine Dependency-Liste — "wovon hängt dieses Pack ab", nicht "was
 existiert".
 
-**Konsequenz (Durchsetzung):** `sdk.store("crm")` aus einem Pack, das
-`stores: [crm]` nicht deklariert, wirft eine Exception (nicht deklarierte
+**Konsequenz (Durchsetzung):** `sdk.store("contacts")` aus einem Pack, das
+`stores: [contacts]` nicht deklariert, wirft eine Exception (nicht deklarierte
 Abhängigkeit) — wie ein `import`, dessen Modul nicht in den Dependencies
 steht. Der Resolver prüft: *liegt der Name in den deklarierten Stores des
 Nodes?*
@@ -143,7 +143,7 @@ stores:
   - legacy
 ```
 
-Zwei Packs mit `stores: [crm]` teilen sich den globalen Store `crm`
+Zwei Packs mit `stores: [contacts]` teilen sich den globalen Store `contacts`
 (Kollision = bewusstes Teilen), aber keines kann auf einen **nicht
 deklarierten** Store zugreifen.
 
@@ -155,11 +155,11 @@ deklarierten** Store zugreifen.
   *"Neue Datenbank"* oder *"Bestehende verwenden"* — dann *"welche?"*.
 - **Q3.** Dürfen mehrere logische Stores auf dieselbe physische DB zeigen?
   → **Ja.** Das Zielmodell ist Hybrid (Modell C): das Deployment entscheidet,
-  welche logischen Stores auf welche physischen Ressourcen zeigen. `crm` +
+  welche logischen Stores auf welche physischen Ressourcen zeigen. `contacts` +
   `ident` → `postgres-main`, `telemetry` → `analytics`. Beliebig viele
   logische Stores pro physischer Ressource, beliebig viele Ressourcen.
 
-**Kernsatz:** **Store ≠ Datenbank.** Der logische Store bleibt `crm`; die
+**Kernsatz:** **Store ≠ Datenbank.** Der logische Store bleibt `contacts`; die
 physische Realität heißt `postgres-main` (eine *Deployment*/*Instance*).
 Die Zuordnung ist ausschließlich Aufgabe des Deployments.
 

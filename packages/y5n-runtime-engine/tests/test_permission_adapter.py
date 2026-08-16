@@ -25,7 +25,7 @@ def _write(path, content: str) -> None:
 
 def _build_tree(tmp_path) -> Tree:
     _write(
-        tmp_path / "opt" / "crm" / "contact" / ".yak" / "yak.yml",
+        tmp_path / "opt" / "contacts" / "contact" / ".yak" / "yak.yml",
         "\n".join(
             [
                 "title: Contact",
@@ -35,10 +35,10 @@ def _build_tree(tmp_path) -> Tree:
         ),
     )
     _write(
-        tmp_path / "opt" / "crm" / ".yak" / "yak.yml",
+        tmp_path / "opt" / "contacts" / ".yak" / "yak.yml",
         "\n".join(
             [
-                "title: CRM",
+                "title: Contacts",
                 "resolvable: false",
                 "navigable: true",
             ]
@@ -73,7 +73,7 @@ async def test_check_denies_runtime_node_without_grant(tmp_path):
     adapter = PermissionAdapter(_FakeManager(session), tree, PermissionChecker())
     call = type("Call", (), {"caller_session_key": str(session.key)})()
 
-    assert await adapter.check(call, path="/opt/crm", operation="read") is False
+    assert await adapter.check(call, path="/opt/contacts", operation="read") is False
 
 
 @pytest.mark.asyncio
@@ -90,7 +90,7 @@ async def test_check_allows_with_grant(tmp_path):
     adapter = PermissionAdapter(_FakeManager(session), tree, PermissionChecker())
     call = type("Call", (), {"caller_session_key": str(session.key)})()
 
-    assert await adapter.check(call, path="/opt/crm", operation="read") is True
+    assert await adapter.check(call, path="/opt/contacts", operation="read") is True
 
 
 @pytest.mark.asyncio

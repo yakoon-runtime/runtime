@@ -88,10 +88,10 @@ Grant keys are full node paths in the runtime tree:
 ```
 /usr/bin/ls
 /usr/sbin/ident/accounts
-/opt/crm/contact/edit
+/opt/contacts/contact/edit
 ```
 
-Optional action suffix: `/opt/crm/contact/edit.version`. The engine knows
+Optional action suffix: `/opt/contacts/contact/edit.version`. The engine knows
 only the runtime tree — no app/command scheme. The engine builds the check
 key from `node.path` (`InvocationResolver._ensure_invocation`).
 

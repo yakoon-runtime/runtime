@@ -216,7 +216,7 @@ vocabulary — the distinction is *account with profile* vs. *account without
 profile*, never *user vs. account*.
 
 **Key sentence:** *"Permissions are granted to Accounts on runtime paths."*
-Grants are full node paths (`/usr/bin/ls`, `/opt/crm/contact/edit`), the
+Grants are full node paths (`/usr/bin/ls`, `/opt/contacts/contact/edit`), the
 engine checks via `node.path`, and deny grants subtract bits. **Permissions
 are inherited along the runtime path hierarchy**: a grant on `/usr/bin`
 applies to all descendants — the mount structure *is* the security model,
