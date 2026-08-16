@@ -50,7 +50,7 @@ def build_runtime(
     installation = load_installation(
         Path(settings.runtime.installation_path)
         if settings.runtime.installation_path
-        else Path(settings.runtime.workspace_path).parent / ".yak" / "deployment.yml"
+        else Path(settings.runtime.workspace_path).parent / "deployment.yml"
     )
 
     if installation is None:
