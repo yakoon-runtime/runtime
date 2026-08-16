@@ -1,110 +1,68 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/yakoon-runtime/.github/main/brand/png/yakoon-dark.png" width="420">
-</p>
+# Yakoon Runtime
 
-A runtime for process-oriented software.
+The execution environment behind Yakoon capabilities.
 
 [![Version](https://img.shields.io/badge/Version-0.8.0-blue.svg)]()
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)]()
 [![Tests](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml/badge.svg)](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml)
 
-Most software systems are organized around applications, screens and users.
+The Yakoon Runtime executes commands provided by installed packs and
+provides the shared services they run against: identity, permissions,
+stores, resources, hosts, scheduling, resolution, audit and lifecycle.
 
-We rarely question this.
+**Packs contain domain capabilities. The runtime contains mechanisms.**
 
-A process starts in a client.
-A user owns the workflow.
-Closing the application often means interrupting the work.
-
-This model has become so familiar that it appears natural.
-
-But enterprises are not made of screens.
-
-They are made of decisions, responsibilities, information and processes.
-
-Processes exist whether a browser is open or not.
-
-They continue when employees change.
-They continue when clients disconnect.
-They continue when systems are replaced.
-
-If processes are real objects of an enterprise, software must be designed around them.
-
-Yakoon is an experiment to test that assumption.
-
-```
-┌─────────────┐  ┌─────────────┐  ┌─────────────┐
-│   Texture   │  │     Web     │  │   Console   │
-│   --------  │  │   -------   │  │   -------   │
-│    (TUI)    │  │  (Browser)  │  │  (Terminal) │
-└──────┬──────┘  └──────┬──────┘  └──────┬──────┘
-       │                │                │
-       └────────────────┼────────────────┘
-                        │
-                ┌───────▼────────┐
-                │    Runtime     │
-                │     Flows      │
-                │    Sessions    │
-                │     State      │
-                └────────────────┘
+```text
+              Commands / Capabilities
+                       │
+                       ▼
+        ┌─────────────────────────────┐
+        │       YAKOON RUNTIME        │
+        │                             │
+        │  Node Tree    Bus           │
+        │  Resolver     Hosts         │
+        │  Stores       Resources     │
+        │  Permissions  Sessions      │
+        │  Scheduler    Audit         │
+        │  Ports        Sources       │
+        └─────────────────────────────┘
+                       │
+                       ▼
+          Execution · Persistence
+          Resources · Integration
 ```
 
-Connect from any client. The runtime keeps working.
+## Runtime Model
 
-Clients and runtimes use the same connection model. A runtime can observe another runtime just like any other client.
+- **Node Tree** — the executable capability space, composed from mounted sources
+- **Bus** — how commands and events travel between nodes
+- **Resolver** — finds a capability by its address
+- **Hosts** — provide the runtime for a capability
+- **Stores** — persistence for capabilities
+- **Resources** — shared assets and services
+- **Permissions** — what an actor may do, enforced per call
+- **Sessions** — interaction state, kept alive while clients come and go
+- **Scheduler** — planned and deferred execution
+- **Audit** — traceable changes
+- **Ports** — the connection points capabilities expose
 
-## Core Architecture
+## Architecture
 
-```
-Flow → State → Projection → UI
-```
+For the detailed model, decision record and the executor contract:
 
-- **Flow** — Executable state machine (async generators)
-- **State** — Deterministic, captures decisions
-- **Projection** — Pure function: `projection = f(state)`
-- **Client** — Any UI (console, web, TUI, SSH); never owns state
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [DECISIONS.md](docs/DECISIONS.md)
+- [EXECUTOR.md](docs/EXECUTOR.md)
 
-## Current Status
+## Development
 
-Yakoon is under active development. Persistent storage, session lifecycle management and multi-client orchestration are still evolving toward the 1.0 release.
+For a ready-to-run Yakoon development environment (source checkouts,
+editor setup, debugging), see [`yakoon-runtime/developer`](https://github.com/yakoon-runtime/developer).
 
-## Example Session
+## Status
 
-The Texture client connected to a runtime — showing spaces, commands, and live projections.
-
-![Texture Client](docs/screenshots/texture-session.png)
-
-## Quick Start
-
-```bash
-pip install -e packages/y5n-runtime-api
-pip install -e packages/y5n-runtime-engine
-pip install -e packages/y5n-runtime-store
-pip install -e packages/y5n-runtime-boot
-```
-
-The runtime is a library; applications and the CLI ship from their own
-repositories (yakoon-runtime/apps) and consume it as a dependency.
-
-See [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) for full setup details.
-
-## AI Integration
-
-AI is a capability, not the product. Yakoon can connect different AI models per domain — small local models for sensitive data, large cloud models for creative work. The runtime decouples AI from infrastructure.
-
-See [docs/MANIFEST.md](docs/MANIFEST.md) for the full reasoning.
-
-## Documentation
-
-| Document | Purpose |
-|----------|---------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Core architecture & philosophy |
-| [DECISIONS.md](docs/DECISIONS.md) | Architecture decision record |
-| [MANIFEST.md](docs/MANIFEST.md) | Why Yakoon exists |
-| [TESTING.md](docs/TESTING.md) | Testing strategy |
-| [GETTING_STARTED.md](docs/GETTING_STARTED.md) | Setup & usage |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+Active development.
 
 ## License
 
