@@ -111,7 +111,7 @@ async def test_runtime_resource_dispatches_to_host(tmp_path: Path):
                 "title: App",
                 "host: /boot/python/runtime",
                 "man:",
-                "  default: resource:y5n.packs.system.app:man",
+                "  default: resource:y5n.caps.system.app:man",
             ]
         ),
     )
@@ -125,7 +125,7 @@ async def test_runtime_resource_dispatches_to_host(tmp_path: Path):
         caller_session_key="session-1",
     )
     resource = await adapter.resolve(call, node_path="/app", capability="man")
-    assert resource.read_text() == "resolved:man:resource:y5n.packs.system.app:man"
+    assert resource.read_text() == "resolved:man:resource:y5n.caps.system.app:man"
 
 
 @pytest.mark.asyncio
@@ -319,7 +319,7 @@ async def test_tree_stores_resources_strategy(tmp_path: Path):
                 "title: App",
                 "host: /boot/python/runtime",
                 "resources:",
-                "  ref: resource:y5n.packs.system.resources.loader:content",
+                "  ref: resource:y5n.caps.system.resources.loader:content",
                 "  man:",
                 "    default:",
                 "      path: info/man.ydf",
@@ -333,7 +333,7 @@ async def test_tree_stores_resources_strategy(tmp_path: Path):
     app = tree.find("/app")
     assert app is not None
     assert app.resources == {
-        "ref": "resource:y5n.packs.system.resources.loader:content",
+        "ref": "resource:y5n.caps.system.resources.loader:content",
         "man": {"default": {"path": "info/man.ydf"}},
         "document": {"de": {"path": "info/de.ydf"}},
     }

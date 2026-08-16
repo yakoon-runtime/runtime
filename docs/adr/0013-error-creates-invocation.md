@@ -131,9 +131,9 @@ title: Err
 host: /boot/python/runtime
 anonymous: true          # reachable even when the failure was PermissionDenied
 entry:
-  run: pack:y5n.packs.system.err:main
+  run: pack:y5n.caps.system.err:main
 resources:
-  ref: resource:y5n.packs.system.resources.loader:content
+  ref: resource:y5n.caps.system.resources.loader:content
   error:
     default:  { path: err/error.ydf }
     denied:   { path: err/denied.ydf }

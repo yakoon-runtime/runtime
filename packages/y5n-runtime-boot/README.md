@@ -156,7 +156,7 @@ running flow. The engine schedules the pulses; the host only bridges the node's
 code to the runtime.
 
 *Python Host example* — the entry reference is
-`pack:y5n.packs.system.info:main`. The host imports the module, installs the
+`pack:y5n.caps.system.info:main`. The host imports the module, installs the
 SDK context (node, session, cwd, user, flow), and runs `main()` as an async
 generator — the flow — stepping it directly and yielding every `Pulse`
 upstream.
@@ -168,7 +168,7 @@ A node declares its content under `resources:`:
 
 ```yaml
 resources:
-  ref: resource:y5n.packs.system.resources.loader:content
+  ref: resource:y5n.caps.system.resources.loader:content
   man:
     default:
       path: info/man.ydf
@@ -205,9 +205,9 @@ never **how** it is obtained.
 
 | Scheme | Meaning | Example |
 |--------|---------|---------|
-| `pack:<module>:<func>` | a capability in a component | `pack:y5n.packs.system.info:main` |
+| `pack:<module>:<func>` | a capability in a component | `pack:y5n.caps.system.info:main` |
 | `file:<path>` | a structure-relative file | `file:app.py` |
-| `resource:<module>:<func>` | a content capability | `resource:y5n.packs.system.resources.loader:content` |
+| `resource:<module>:<func>` | a content capability | `resource:y5n.caps.system.resources.loader:content` |
 
 Scheme names and values are **host-defined** (ADR-10). What a reference means
 is a contract between the pack author and the host — not the runtime's

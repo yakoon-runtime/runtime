@@ -21,7 +21,7 @@ mechanisms:
 
 ```yaml
 entry:
-  run: pack:y5n.packs.system.info:main
+  run: pack:y5n.caps.system.info:main
 
 man:
   default: file:resources/man.ydf
@@ -97,10 +97,10 @@ Resource; where it comes from is the host's business:
 
 ```yaml
 entry:
-  run: pack:y5n.packs.system.info:main        # run contract, unchanged
+  run: pack:y5n.caps.system.info:main        # run contract, unchanged
 
 man:
-  default: resource:y5n.packs.system.info:man
+  default: resource:y5n.caps.system.info:man
 
 document:
   default: resource:shared.projections:list
@@ -156,7 +156,7 @@ expression, not a resolved reference: the Python host reads it via
 expression; it does not know what it means.
 
 The same seam runs through `entry.run`: it too is a node-owned expression
-(`pack:y5n.packs.system.info:main`) that the host interprets. `execute` and
+(`pack:y5n.caps.system.info:main`) that the host interprets. `execute` and
 `resolve` are therefore the same pattern — the node declares, the host
 interprets, the runtime knows nothing.
 

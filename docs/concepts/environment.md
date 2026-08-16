@@ -22,7 +22,7 @@ Template → Environment → Workspace
 ```yaml
 schema: "1"
 name: dev
-components: [y5n-packs-system]
+components: [y5n-caps-system]
 workspace:
   path: structure
 mounts:
