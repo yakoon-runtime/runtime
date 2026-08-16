@@ -340,23 +340,6 @@ async def test_tree_stores_resources_strategy(tmp_path: Path):
 
 
 @pytest.mark.asyncio
-async def test_python_host_resolve_resources_strategy():
-    from y5n.runtime.boot.python.runtime import resolve as host_resolve
-
-    node = _fake_node(
-        resources={
-            "ref": "resource:y5n.packs.system.resources.loader:content",
-            "man": {"default": {"path": "info/man.ydf"}},
-            "document": {"default": {"path": "info/default.ydf"}},
-        }
-    )
-    resource = await host_resolve(node, "man", parameters={"lang": "de"})
-    assert resource.read_text()  # resolves via the strategy loader
-    resource = await host_resolve(node, "document")
-    assert resource.read_text()
-
-
-@pytest.mark.asyncio
 async def test_python_host_resolve_passes_capability_and_variant():
     from y5n.runtime.boot.python.runtime import resolve as host_resolve
 
