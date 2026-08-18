@@ -1,25 +1,11 @@
 components:
-  y5n-runtime-api:
-    location: packages/runtime-api
-    release: y5n-runtime-api-v0.1.0
-  y5n-runtime-boot:
-    location: packages/runtime-boot
-    release: y5n-runtime-boot-v0.1.0
-  y5n-runtime-engine:
-    location: packages/runtime-engine
-    release: y5n-runtime-engine-v0.8.0
-  y5n-runtime-llm:
-    location: packages/runtime-llm
-    release: y5n-runtime-llm-v0.2.0
-  y5n-runtime-store:
-    location: packages/runtime-store
-    release: y5n-runtime-store-v0.5.0
-  y5n-runtime-transport:
-    location: packages/runtime-transport
-    release: y5n-runtime-transport-v0.2.0
-  y5n-caps-root:
-    location: caps/caps-root
-    release: y5n-caps-root-v0.1.0
+  - location: packages/runtime-api
+  - location: packages/runtime-boot
+  - location: packages/runtime-engine
+  - location: packages/runtime-llm
+  - location: packages/runtime-store
+  - location: packages/runtime-transport
+  - location: caps/caps-root
 bundles:
   runtime:
   - y5n-caps-root
