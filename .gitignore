@@ -30,5 +30,10 @@ coverage/
 # Local evolution log
 evolution.log.yak/
 evolution.log
-.yak/
+
+# Yakoon component metadata is versioned; environment state is not.
+.yak/*
+!.yak/component.yml
+!.yak/mount.yml
 !**/structure/**/.yak/
+!.yak/
