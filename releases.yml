@@ -1,0 +1,5 @@
+components:
+  y5n-runtime-api:
+    version: 0.1.0
+    tag: y5n-runtime-api-v0.1.0
+    digest: sha256:ecba60dae4fadff85ba3b973b3d69f90b411b28322766caaabbd2bb890d613ce
