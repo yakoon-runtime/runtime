@@ -1,19 +1,26 @@
 components:
-  - location: packages/runtime-api
-  - location: packages/runtime-boot
-  - location: packages/runtime-engine
-  - location: packages/runtime-llm
-  - location: packages/runtime-store
-  - location: packages/runtime-transport
-  - location: caps/caps-root
+  y5n-runtime-api:
+    location: packages/runtime-api
+  y5n-runtime-boot:
+    location: packages/runtime-boot
+  y5n-runtime-engine:
+    location: packages/runtime-engine
+  y5n-runtime-llm:
+    location: packages/runtime-llm
+  y5n-runtime-store:
+    location: packages/runtime-store
+  y5n-runtime-transport:
+    location: packages/runtime-transport
+  y5n-caps-root:
+    location: caps/caps-root
 bundles:
   runtime:
-  - y5n-caps-root
-  - y5n-runtime-boot
-  - y5n-runtime-api
-  - y5n-runtime-engine
-  - y5n-runtime-store
-  - y5n-runtime-transport
-  - y5n-runtime-llm
-  - y5n-sdk-python
-  - y5n-apps-runtime
+    - y5n-caps-root
+    - y5n-runtime-boot
+    - y5n-runtime-api
+    - y5n-runtime-engine
+    - y5n-runtime-store
+    - y5n-runtime-transport
+    - y5n-runtime-llm
+    - y5n-sdk-python
+    - y5n-apps-runtime
