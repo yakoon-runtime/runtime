@@ -6,6 +6,12 @@ requires-python = ">=3.13"
 license = { text = "Apache-2.0" }
 authors = [{ name = "Stefan Bergmann" }]
 
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 norecursedirs = ["benchmarks", "workspace"]
