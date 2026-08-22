@@ -1,11 +1,13 @@
 # Yakoon Runtime
 
-The execution environment behind Yakoon capabilities.
-
 [![Version](https://img.shields.io/badge/Version-0.8.0-blue.svg)]()
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.13+-blue.svg)]()
-[![Tests](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml/badge.svg)](https://github.com/yakoon-runtime/yakoon/actions/workflows/tests.yml)
+[![Tests](https://github.com/yakoon-runtime/runtime/actions/workflows/tests.yml/badge.svg)](https://github.com/yakoon-runtime/runtime/actions/workflows/tests.yml)
+
+**Status: Active development**
+
+The execution environment behind Yakoon capabilities.
 
 The Yakoon Runtime executes commands provided by installed packs and
 provides the shared services they run against: identity, permissions,
@@ -51,18 +53,14 @@ stores, resources, hosts, scheduling, resolution, audit and lifecycle.
 
 For the detailed model, decision record and the executor contract:
 
-- [ARCHITECTURE.md](docs/ARCHITECTURE.md)
-- [DECISIONS.md](docs/DECISIONS.md)
-- [EXECUTOR.md](docs/EXECUTOR.md)
+- [ARCHITECTURE](docs/architecture/overview.md)
+- [DECISIONS](docs/adr/0000-decisions.md)
+- [EXECUTOR](docs/architecture/executor.md)
 
-## Development
+## Links
 
-For a ready-to-run Yakoon development environment (source checkouts,
-editor setup, debugging), see [`yakoon-runtime/developer`](https://github.com/yakoon-runtime/developer).
-
-## Status
-
-Active development.
+- Developer setup: [`yakoon-runtime/developer`](https://github.com/yakoon-runtime/developer)
+- SDK — write commands against the runtime: [`yakoon-runtime/sdk`](https://github.com/yakoon-runtime/sdk)
 
 ## License
 
