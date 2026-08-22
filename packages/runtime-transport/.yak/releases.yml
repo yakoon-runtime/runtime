@@ -1,0 +1,4 @@
+releases:
+  0.2.0:
+    tag: y5n-runtime-transport-v0.2.0
+    digest: sha256:a9253232a8bed3b43183b609bbd76a6474472b1376313e75edb7bd7a2add127a
