@@ -1,0 +1,4 @@
+releases:
+  0.1.0:
+    tag: y5n-runtime-api-v0.1.0
+    digest: sha256:61d60dd38c9ea4b50f0cf4ddcd241edb4e946c4c23abb8abdefa601b34ccd2ff
