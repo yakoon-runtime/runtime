@@ -1,0 +1,4 @@
+releases:
+  0.1.0:
+    tag: y5n-runtime-boot-v0.1.0
+    digest: sha256:fd324b6ed3aea49d77b1efac7c6728d4a705fb9ae241049574daceb0dfa7999b
