@@ -1,0 +1,4 @@
+releases:
+  0.5.0:
+    tag: y5n-runtime-store-v0.5.0
+    digest: sha256:026eb93940fd609ac4308b4aecc5b4edf2943480b29390d3629e0658015779b2
