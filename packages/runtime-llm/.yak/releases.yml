@@ -1,0 +1,4 @@
+releases:
+  0.2.0:
+    tag: y5n-runtime-llm-v0.2.0
+    digest: sha256:5bc7d9acaf56c80ded6f8c6e98b59674c4258267cb07549046adf04cfcdafad8
