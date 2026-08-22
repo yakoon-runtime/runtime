@@ -25,6 +25,3 @@ First proof that Yakoon is a language-neutral runtime platform:
 - **`.NET process host`** (`/boot/dotnet/process`) executes compiled
   .NET assemblies via `dotnet <dll>` — zero changes to the runtime core
 - **Python hosts** (`runtime`, `thread`, `process`) fully operational
-- **All ~100 commands** across `yakoon-root`, `yakoon-crm`, and
-   `yakoon-luma` migrated to the flat `.yak/` structure with `libs/`
-  pattern for shared infrastructure
