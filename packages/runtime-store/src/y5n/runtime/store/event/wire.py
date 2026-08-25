@@ -44,6 +44,22 @@ class EventStoreFactory:
             on_shutdown=store_runtime.on_shutdown,
         )
 
+    async def provision(self, config=None) -> None:
+        """Materialize the schema the configured backend requires.
+
+        Uses the same config language as ``build()``: ``memory`` is a
+        successful no-op; ``postgres`` applies the bundled DDL — event
+        store tables, their index and the sequencer's ``id_shards`` — to
+        the existing database. Neither databases nor roles are created.
+        ``build()`` and the runtime startup are unchanged.
+        """
+        backend, dsn = _parse_config(config)
+        if backend == "memory":
+            return
+        from .backends.postgres.provision import provision_postgres_schema
+
+        await provision_postgres_schema(dsn)
+
 
 def _parse_config(config):
     """Interpret an opaque factory config as (backend, dsn)."""

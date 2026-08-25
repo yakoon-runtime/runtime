@@ -13,9 +13,9 @@ import importlib.resources
 
 SCHEMA_PACKAGE = "y5n.runtime.store.sql.postgres"
 SCHEMA_FILES = {
-    "CREATE_TABLE.sql",
-    "CREATE_INDEX.sql",
-    "id_shards.sql",
+    "CREATE_STORE_TABLES.sql",
+    "CREATE_STORE_INDEXES.sql",
+    "CREATE_SEQUENCE_TABLES.sql",
 }
 
 
@@ -38,13 +38,15 @@ def test_every_schema_file_is_non_empty():
 
 
 def test_schema_files_carry_the_expected_ddl():
-    tables = _schema().joinpath("CREATE_TABLE.sql").read_text(encoding="utf-8")
+    tables = _schema().joinpath("CREATE_STORE_TABLES.sql").read_text(encoding="utf-8")
     assert "CREATE TABLE IF NOT EXISTS current" in tables
     assert "CREATE TABLE IF NOT EXISTS revisions" in tables
     assert "CREATE TABLE IF NOT EXISTS id_shards" not in tables
 
-    index = _schema().joinpath("CREATE_INDEX.sql").read_text(encoding="utf-8")
+    index = _schema().joinpath("CREATE_STORE_INDEXES.sql").read_text(encoding="utf-8")
     assert "CREATE INDEX IF NOT EXISTS idx_index_lookup" in index
 
-    shards = _schema().joinpath("id_shards.sql").read_text(encoding="utf-8")
+    shards = (
+        _schema().joinpath("CREATE_SEQUENCE_TABLES.sql").read_text(encoding="utf-8")
+    )
     assert "CREATE TABLE IF NOT EXISTS id_shards" in shards
