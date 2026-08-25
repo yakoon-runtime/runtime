@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import importlib.resources
 
+from .dsn import target_database
+
 SCHEMA_PACKAGE = "y5n.runtime.store.sql.postgres"
 SCHEMA_SCRIPTS = (
     "CREATE_STORE_TABLES.sql",
@@ -26,15 +28,34 @@ SCHEMA_SCRIPTS = (
 )
 
 
+class DatabaseDoesNotExist(RuntimeError):
+    """The configured target database cannot be reached.
+
+    A stable, machine-readable signal of the store: ``provision`` failed
+    because the target database is missing — not because of any other
+    storage problem. ``yak`` offers to create it (an admin operation
+    outside the store), then re-provisions.
+    """
+
+    def __init__(self, database: str):
+        super().__init__(f'database "{database}" does not exist')
+        self.database = database
+
+
 async def provision_postgres_schema(dsn: str) -> None:
     """Apply the bundled schema to the database at ``dsn`` (idempotent).
 
     Every statement is ``CREATE ... IF NOT EXISTS``, so repeated
     provisioning is safe. The scripts are applied inside one transaction.
+    A missing target database surfaces as ``DatabaseDoesNotExist`` — never
+    as a raw asyncpg error.
     """
     import asyncpg
 
-    conn = await asyncpg.connect(dsn)
+    try:
+        conn = await asyncpg.connect(dsn)
+    except asyncpg.InvalidCatalogNameError as exc:
+        raise DatabaseDoesNotExist(target_database(dsn)) from exc
     try:
         async with conn.transaction():
             for name in SCHEMA_SCRIPTS:
