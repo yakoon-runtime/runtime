@@ -145,7 +145,10 @@ def build_store_registry(
         factory = load_store_factory(binding.factory)
         if isinstance(factory, type):
             factory = factory()
-        built = factory.build(binding.config)
+        try:
+            built = factory.build(binding.config)
+        except Exception as exc:
+            raise RuntimeError(f"store {store!r} failed to build: {exc}") from exc
         per_target[target] = built
         registry[store] = built
     return registry

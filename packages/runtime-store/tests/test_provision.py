@@ -126,7 +126,7 @@ async def test_provision_resolves_env_dsn_like_build(fake_asyncpg, monkeypatch):
 async def test_provision_missing_env_dsn_raises_like_build():
     factory = _factory()
 
-    with pytest.raises(RuntimeError):
+    with pytest.raises(RuntimeError, match="IDENT_DATABASE_UNSET"):
         await factory.provision(
             {"backend": "postgres", "dsn": "env://IDENT_DATABASE_UNSET"}
         )

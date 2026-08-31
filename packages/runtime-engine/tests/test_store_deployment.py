@@ -143,6 +143,30 @@ def test_registry_instantiates_class_factories(monkeypatch):
     assert "crm" in registry
 
 
+def test_registry_build_failure_names_the_store(monkeypatch):
+    """A failing store build fails loudly and names the logical store."""
+    from y5n.runtime.engine import installation as inst_mod
+
+    class _FailingFactory:
+        def build(self, config):
+            raise RuntimeError("something broke")
+
+    monkeypatch.setattr(inst_mod, "load_store_factory", lambda path: _FailingFactory)
+
+    installation = inst_mod.Installation(
+        stores={
+            "ident": inst_mod.StoreBinding(
+                store="ident",
+                factory="x",
+                config={"backend": "postgres", "dsn": "env://IDENT_DATABASE"},
+            ),
+        },
+    )
+
+    with pytest.raises(RuntimeError, match="store 'ident'"):
+        inst_mod.build_store_registry(installation)
+
+
 def test_two_logical_stores_share_one_factory_target():
     """ADR-19: stores with the same factory and config share one instance."""
     from y5n.runtime.engine.installation import (

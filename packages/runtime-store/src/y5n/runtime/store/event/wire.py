@@ -86,7 +86,7 @@ def _resolve_dsn(dsn: str) -> str:
         resolved = os.getenv(name)
         if not resolved:
             raise RuntimeError(
-                f"EventStoreFactory: dsn environment variable not set: {name}"
+                f"environment variable {name} is not set " f"(configured as {dsn!r})"
             )
         return resolved
     return dsn
