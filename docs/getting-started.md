@@ -91,11 +91,12 @@ yak runtime start
 yak shell
 ```
 
-Inside the shell, log in as the built-in administrator and list the
-accounts this fresh `ident` seeded:
+Inside the shell, log in as the built-in administrator, move to the
+ident area, and list the accounts this fresh `ident` seeded:
 
 ```text
 su root --password master
+cd /usr/sbin/ident
 account/list
 ```
 
