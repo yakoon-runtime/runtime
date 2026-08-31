@@ -78,10 +78,6 @@ class IndexSpec:
     unique: bool = False
     retention_days: int | None = None  # optional: if index data has its own TTL
 
-    # TODO: consider index sharding — instead of 1 bucket of ~100000 records,
-    # use 16 buckets of ~6000 records each.
-    shard_count: int | None = 1
-
 
 @dataclass(frozen=True, slots=True)
 class IndexTerm:
