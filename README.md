@@ -59,6 +59,7 @@ For the detailed model, decision record and the executor contract:
 
 ## Links
 
+- First steps: [Getting Started](docs/getting-started.md)
 - Developer setup: [`yakoon-runtime/developer`](https://github.com/yakoon-runtime/developer)
 - SDK — write commands against the runtime: [`yakoon-runtime/sdk`](https://github.com/yakoon-runtime/sdk)
 
