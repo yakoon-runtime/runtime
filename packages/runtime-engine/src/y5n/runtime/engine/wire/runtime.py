@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import cast
 
+from y5n.runtime.api.clients import SessionNotFound
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.runtime import get_bus
 from y5n.runtime.engine.executor import (
@@ -161,7 +162,7 @@ def build_runtime(
         """
         session = await session_manager.get(key)
         if session is None:
-            raise RuntimeError(f"Session {key} not found")
+            raise SessionNotFound(f"Session {key} not found")
         psession = cast(Session, session)
         psession.bind_io(BusOutput(psession._bus))
         if not psession.get_data("fs:root"):

@@ -10,6 +10,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from y5n.runtime.api.clients import SessionNotFound
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.runtime import RuntimeInfo
 from y5n.runtime.engine.machine.manager import RuntimeManager
@@ -55,7 +56,7 @@ def _make_manager(store: MemorySessionStore) -> RuntimeManager:
 
         session = await svc.get(key)
         if session is None:
-            raise RuntimeError(f"Session {key} not found")
+            raise SessionNotFound(f"Session {key} not found")
         return session
 
     builder = SessionBuilder(on_get_session=on_get_session)

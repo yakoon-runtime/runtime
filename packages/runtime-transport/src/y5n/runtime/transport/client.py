@@ -2,7 +2,7 @@ import asyncio
 import json
 
 import websockets
-from y5n.runtime.api.clients import ClientConnection
+from y5n.runtime.api.clients import ClientConnection, SessionNotFound
 from y5n.runtime.api.document.wire import deserialize_event
 from y5n.runtime.api.flow.patterns.public import FormAction
 from y5n.runtime.api.runtime import Event, Routing
@@ -96,6 +96,10 @@ class WebSocketClientTransport:
             if data.get("type") == "error":
                 await self._websocket.close()
                 self._websocket = None
+                if data.get("code") == SessionNotFound.code:
+                    raise SessionNotFound(
+                        data.get("message", "session handshake failed")
+                    )
                 raise RuntimeError(
                     data.get("message", "session handshake failed")
                 )

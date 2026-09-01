@@ -1,6 +1,6 @@
 import json
 
-from y5n.runtime.api.clients import ClientConnection
+from y5n.runtime.api.clients import ClientConnection, SessionNotFound
 from y5n.runtime.api.document.wire import serialize_event
 from y5n.runtime.api.flow.patterns.public import FormAction
 from y5n.runtime.api.naming import Key
@@ -39,9 +39,16 @@ class WebSocketServerTransport:
 
         try:
             session = await self._host.connect(connection, session_key=session_key)
-        except RuntimeError as exc:
+        except SessionNotFound as exc:
             # Resume failed: report it before the connection dies so the
             # client does not have to infer failure from a missing frame.
+            await websocket.send(
+                json.dumps(
+                    {"type": "error", "code": exc.code, "message": str(exc)}
+                )
+            )
+            raise
+        except RuntimeError as exc:
             await websocket.send(
                 json.dumps({"type": "error", "message": str(exc)})
             )

@@ -16,7 +16,7 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from y5n.runtime.api.clients import ClientConnection
+from y5n.runtime.api.clients import ClientConnection, SessionNotFound
 from y5n.runtime.api.naming import Key
 from y5n.runtime.api.runtime import RuntimeInfo
 from y5n.runtime.engine.machine.manager import RuntimeManager
@@ -93,7 +93,7 @@ def _make_runtime(store: MemorySessionStore) -> tuple[RuntimeManager, SessionSer
     async def on_resume_session(key: Key) -> Session:
         session = await svc.get(key)
         if session is None:
-            raise RuntimeError(f"Session {key} not found")
+            raise SessionNotFound(f"Session {key} not found")
         return session
 
     builder = SessionBuilder(on_get_session=on_get_session)
@@ -221,8 +221,12 @@ async def test_resume_unknown_key_fails_without_creating_state():
 
     missing = Key.from_parts("system", "session", "runtime", "missing")
     conn = _fake_connection()
-    with pytest.raises(RuntimeError, match="not found"):
+    with pytest.raises(SessionNotFound, match="not found") as excinfo:
         await manager.connect(conn, session_key=missing)
+
+    # machine-readable, yet still caught by every existing RuntimeError handler
+    assert excinfo.value.code == "session_not_found"
+    assert isinstance(excinfo.value, RuntimeError)
 
     assert str(missing) not in store.docs
     assert missing not in manager._sessions

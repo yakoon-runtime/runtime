@@ -10,6 +10,7 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock
 
 import pytest
+from y5n.runtime.api.clients import SessionNotFound
 from y5n.runtime.api.naming import Key
 from y5n.runtime.transport.client import WebSocketClientTransport
 from y5n.runtime.transport.server import WebSocketServerTransport
@@ -29,6 +30,8 @@ class FakeClientWebsocket:
         self.headers: dict | None = None
 
     async def recv(self) -> str:
+        if not self._frames:
+            raise AssertionError("handshake consumed all scripted frames")
         return self._frames.pop(0)
 
     def __aiter__(self):
@@ -123,18 +126,45 @@ async def test_client_resume_failure_propagates_without_fallback(monkeypatch):
     holder = _install_client(
         monkeypatch,
         frames=[
-            json.dumps({"type": "error", "message": "Session test not found"})
+            json.dumps(
+                {
+                    "type": "error",
+                    "code": "session_not_found",
+                    "message": "Session test not found",
+                }
+            )
         ],
     )
     transport = WebSocketClientTransport("ws://localhost:9100")
 
-    with pytest.raises(RuntimeError, match="Session test not found"):
+    with pytest.raises(SessionNotFound, match="Session test not found") as excinfo:
         await transport.connect(AsyncMock(), session_key=KEY)
+
+    # machine-readable, still compatible with every RuntimeError handler
+    assert excinfo.value.code == "session_not_found"
+    assert isinstance(excinfo.value, RuntimeError)
 
     ws = holder["ws"]
     assert ws.closed is True
     assert transport._receive_task is None  # receive task never started
     # no connected frame was sent, no session was created server-side
+
+
+@pytest.mark.asyncio
+async def test_client_generic_error_stays_runtime_error(monkeypatch):
+    """An error frame without the session_not_found code must not be
+    misread as a lost session."""
+    holder = _install_client(
+        monkeypatch,
+        frames=[json.dumps({"type": "error", "message": "runtime is on fire"})],
+    )
+    transport = WebSocketClientTransport("ws://localhost:9100")
+
+    with pytest.raises(RuntimeError, match="runtime is on fire") as excinfo:
+        await transport.connect(AsyncMock(), session_key=KEY)
+
+    assert not isinstance(excinfo.value, SessionNotFound)
+    assert holder["ws"].closed is True
 
 
 class FakeServerWebsocket:
@@ -149,14 +179,16 @@ class FakeServerWebsocket:
 class FakeHost:
     """RuntimeManager stand-in for the handshake decision."""
 
-    def __init__(self, fail: bool = False):
+    def __init__(self, fail: str | None = None):
         self.received_session_key: Key | None = None
-        self.fail = fail
+        self.fail = fail  # None | "generic" | "session_not_found"
 
     async def connect(self, connection, session_key: Key | None = None):
         self.received_session_key = session_key
-        if self.fail:
-            raise RuntimeError("Session test not found")
+        if self.fail == "session_not_found":
+            raise SessionNotFound("Session test not found")
+        if self.fail == "generic":
+            raise RuntimeError("runtime is on fire")
         return SimpleNamespace(key=Key.from_str(KEY))
 
     def register_session_done(self, session_key, callback) -> None:
@@ -196,17 +228,36 @@ async def test_server_without_header_creates():
 
 
 @pytest.mark.asyncio
-async def test_server_reports_resume_failure():
-    host = FakeHost(fail=True)
+async def test_server_reports_resume_failure_with_code():
+    host = FakeHost(fail="session_not_found")
     ws = FakeServerWebsocket(headers={"X-Session-Key": KEY})
     transport = WebSocketServerTransport(host)
 
-    with pytest.raises(RuntimeError, match="Session test not found"):
+    with pytest.raises(SessionNotFound, match="Session test not found"):
         await transport.connect(ws)
 
-    # the failure is reported as a frame before the connection dies
+    # the failure is reported as a machine-readable frame before the
+    # connection dies
     error_frames = [json.loads(m) for m in ws.sent]
     assert error_frames[-1] == {
         "type": "error",
+        "code": "session_not_found",
         "message": "Session test not found",
     }
+
+
+@pytest.mark.asyncio
+async def test_server_reports_generic_failure_without_code():
+    host = FakeHost(fail="generic")
+    ws = FakeServerWebsocket(headers={"X-Session-Key": KEY})
+    transport = WebSocketServerTransport(host)
+
+    with pytest.raises(RuntimeError, match="runtime is on fire"):
+        await transport.connect(ws)
+
+    error_frames = [json.loads(m) for m in ws.sent]
+    assert error_frames[-1] == {
+        "type": "error",
+        "message": "runtime is on fire",
+    }
+    assert "code" not in error_frames[-1]
