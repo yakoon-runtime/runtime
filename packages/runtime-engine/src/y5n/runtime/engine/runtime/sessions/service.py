@@ -46,6 +46,13 @@ class SessionService:
             return None
 
         session = Session.from_row(row)
+        # The document was persisted by an earlier runtime process: the
+        # identity map missed, so this is a process boundary. Authentication
+        # and elevation die here; interaction state (lang, cwd, data) is
+        # kept. The reset is persisted immediately so the store matches
+        # the live session (idempotent across repeated resumes).
+        session.logout()
+        await self.save(session)
         self._map.put(session)
         return session
 

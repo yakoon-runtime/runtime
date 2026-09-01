@@ -51,6 +51,9 @@ async def adapter():
         on_get_session=AsyncMock(
             side_effect=lambda: Session(key=_unique_key(), data=SessionData())
         ),
+        on_resume_session=AsyncMock(
+            side_effect=RuntimeError("Session not found")
+        ),
         on_create_runner=MagicMock(
             side_effect=lambda *, session: Runner(
                 session=session,

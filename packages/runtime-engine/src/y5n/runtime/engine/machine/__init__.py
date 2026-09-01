@@ -5,7 +5,7 @@ from .parser import InputParser
 from .resolver import InvocationResolver, OnGetNode
 from .runner import Runner
 from .scheduler import Scheduler
-from .session import SessionBuilder
+from .session import OnResumeSession, SessionBuilder
 from .task import TaskRunner
 
 __all__ = [
@@ -24,6 +24,7 @@ __all__ = [
     "Scheduler",
     # .session
     "SessionBuilder",
+    "OnResumeSession",
     # .task_runner
     "TaskRunner",
     # .effects

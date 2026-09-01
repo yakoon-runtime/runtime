@@ -1,5 +1,7 @@
 from pathlib import Path
+from typing import cast
 
+from y5n.runtime.api.naming import Key
 from y5n.runtime.api.runtime import get_bus
 from y5n.runtime.engine.executor import (
     ExecutorKind,
@@ -12,7 +14,8 @@ from y5n.runtime.engine.installation import (
     load_installation,
 )
 from y5n.runtime.engine.nodes.tree import Tree
-from y5n.runtime.engine.runtime import SessionService
+from y5n.runtime.engine.runtime import Session, SessionService
+from y5n.runtime.engine.runtime.bus import BusOutput
 from y5n.runtime.engine.services import GuidanceService, RuntimeLogService
 from y5n.runtime.engine.services.activity import ActivityService
 from y5n.runtime.engine.services.permissions import PermissionChecker
@@ -147,10 +150,30 @@ def build_runtime(
     # --- MACHINE HANDLING ---
     # ------------------------
 
+    async def resume_session(key: Key) -> Session:
+        """Resume an existing session by key (explicit resume contract).
+
+        The session must already exist — live in this process or persisted
+        by an earlier one. An unknown key fails instead of creating a
+        session under it. A persisted document crosses the process
+        boundary in SessionService.get: authentication and elevation are
+        reset there and the reset is persisted immediately.
+        """
+        session = await session_manager.get(key)
+        if session is None:
+            raise RuntimeError(f"Session {key} not found")
+        psession = cast(Session, session)
+        psession.bind_io(BusOutput(psession._bus))
+        if not psession.get_data("fs:root"):
+            psession.set_data("fs:root", settings.runtime.workspace_path)
+            psession.set_cwd("/")
+        return psession
+
     manager = build_machine(
         platform=root,
         on_suggest=guidance_service.suggest,
         on_session=session_manager.get_or_create,
+        on_resume_session=resume_session,
         on_projection_send=output.send_document,
         on_has_permission=perm_checker.check,
         on_audit_warning=audit_service.warning,

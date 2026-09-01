@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from itertools import count
 from typing import Protocol
 
@@ -11,6 +12,9 @@ class SessionBuilder:
     """Factory for creating runtime Session objects.
 
     Generates unique session keys and delegates to the OnGetSession port.
+    Keys embed a per-boot random id, so a keyless connect can never
+    collide with a session document persisted by an earlier process —
+    creating is the only thing a keyless connect can do.
     """
 
     def __init__(
@@ -18,6 +22,7 @@ class SessionBuilder:
         on_get_session: OnGetSession,
     ):
         self.on_get_session = on_get_session
+        self._boot = uuid.uuid4().hex
         self._counter = count(0)
 
     async def create(self) -> Session:
@@ -31,7 +36,7 @@ class SessionBuilder:
             "system",
             "session",
             "runtime",
-            str(next(self._counter)),
+            f"{self._boot}-{next(self._counter)}",
         )
 
 
@@ -42,3 +47,7 @@ class SessionBuilder:
 
 class OnGetSession(Protocol):
     async def __call__(self, *, key: Key) -> Session: ...
+
+
+class OnResumeSession(Protocol):
+    async def __call__(self, key: Key) -> Session: ...

@@ -11,6 +11,7 @@ from y5n.runtime.engine.runtime import Session
 
 from .ports import OnCreateRunner
 from .runner import Runner
+from .session import OnResumeSession
 
 
 class RuntimeManager:
@@ -26,6 +27,7 @@ class RuntimeManager:
         *,
         on_schedule: OnSchedule,
         on_get_session: OnGetSession,
+        on_resume_session: OnResumeSession,
         on_create_runner: OnCreateRunner,
         on_setup: OnSetup,
         known_runtimes: dict[str, str] | None = None,
@@ -33,6 +35,7 @@ class RuntimeManager:
     ):
         self.on_flow_schedule = on_schedule
         self.on_get_session = on_get_session
+        self.on_resume_session = on_resume_session
         self.on_create_runner = on_create_runner
         self.on_setup = on_setup
         self.known_runtimes = known_runtimes or {}
@@ -76,7 +79,13 @@ class RuntimeManager:
         if session_key and session_key in self._sessions:
             runner = self._sessions[session_key]
         else:
-            session = await self.on_get_session()
+            if session_key:
+                # Explicit resume: the key must already exist (live or
+                # persisted). An unknown key fails instead of silently
+                # creating a session under it.
+                session = await self.on_resume_session(session_key)
+            else:
+                session = await self.on_get_session()
             runner = self.on_create_runner(session=session)
             self._sessions[session.key] = runner
 
