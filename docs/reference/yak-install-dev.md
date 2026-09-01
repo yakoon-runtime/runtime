@@ -33,7 +33,7 @@ After a successful `install dev`:
 | Workspace materialized | `<target>/structure/` with root, boot, system mounts |
 | Runtime config | `<target>/yakoon-runtime.yml` |
 
-The target directory is ready for `yak create`, `yak shell`, and pack development.
+The target directory is ready for `yak shell` and pack development.
 
 ---
 

@@ -65,7 +65,6 @@ Expected flow:
 git clone github.com/yakoon-runtime/hello
 cd hello
 yak init
-yak create pack hello
 yak build
 yak publish
 yak deploy y5n-packs-hello --to github:yakoon-runtime/hello
