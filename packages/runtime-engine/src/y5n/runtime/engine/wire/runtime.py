@@ -27,6 +27,7 @@ from y5n.runtime.engine.sources.data import (
     RuntimeSource,
     SessionSource,
 )
+from y5n.runtime.engine.startup import load_startup
 from y5n.runtime.engine.wire.adapter import (
     CallableAdapter,
     DocumentAdapter,
@@ -147,6 +148,12 @@ def build_runtime(
         await activity_service.ensure_index()
         await tree.setup()
 
+    # ---------------
+    # --- STARTUP ---
+    # ---------------
+
+    startup = load_startup(Path(settings.runtime.workspace_path).parent / "startup.yml")
+
     # ------------------------
     # --- MACHINE HANDLING ---
     # ------------------------
@@ -182,6 +189,7 @@ def build_runtime(
         on_initialize=initialize,
         known_runtimes=settings.runtime.known,
         settings=settings,
+        startup=startup,
         on_get_node=tree.resolve,
     )
 

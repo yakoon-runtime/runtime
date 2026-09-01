@@ -51,6 +51,7 @@ def build_machine(
     known_runtimes: dict[str, str],
     settings: Settings,
     on_get_node: OnGetNode,
+    startup: tuple[str, ...] = (),
 ) -> RuntimeManager:
 
     # ---------------
@@ -221,6 +222,7 @@ def build_machine(
         on_setup=setup_nodes,
         known_runtimes=known_runtimes,
         info=resolve_runtime_info(),
+        startup=startup,
     )
 
     return manager

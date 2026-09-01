@@ -32,6 +32,7 @@ class RuntimeManager:
         on_setup: OnSetup,
         known_runtimes: dict[str, str] | None = None,
         info: RuntimeInfo,
+        startup: tuple[str, ...] = (),
     ):
         self.on_flow_schedule = on_schedule
         self.on_get_session = on_get_session
@@ -40,6 +41,7 @@ class RuntimeManager:
         self.on_setup = on_setup
         self.known_runtimes = known_runtimes or {}
         self.info = info
+        self.startup = startup
 
         self._sessions: dict[Key, Runner] = {}
         self._subscriptions: dict[ClientConnection, set[Runner]] = {}
