@@ -199,31 +199,31 @@ def build_runtime(
 
     bus.resolver.register("system:document", {"document": ["render"]}, path="/")
     bus.transport.register_adapter(
-        "document",
+        "system:document",
         DocumentAdapter(projector=projector, tree=tree),
     )
 
     bus.resolver.register("system:validate", {"validate": ["__call__"]}, path="/")
     bus.transport.register_adapter(
-        "validate",
+        "system:validate",
         CallableAdapter(tree.validate),
     )
 
     bus.resolver.register("system:source", {"source": ["read"]}, path="/")
     bus.transport.register_adapter(
-        "source",
+        "system:source",
         SourceReadAdapter(ds),
     )
 
     bus.resolver.register("system:jinja", {"jinja": ["__call__"]}, path="/")
     bus.transport.register_adapter(
-        "jinja",
+        "system:jinja",
         CallableAdapter(doc.jinja.render_str),
     )
 
     bus.resolver.register("system:compile", {"compile": ["__call__"]}, path="/")
     bus.transport.register_adapter(
-        "compile",
+        "system:compile",
         CallableAdapter(doc.compiler.compile),
     )
 
@@ -243,7 +243,7 @@ def build_runtime(
         path="/",
     )
     bus.transport.register_adapter(
-        "session",
+        "system:session",
         SessionAdapter(manager, on_save=session_manager.save),
     )
 
@@ -251,7 +251,7 @@ def build_runtime(
         "system:runtime", {"runtime": ["flows", "background"]}, path="/"
     )
     bus.transport.register_adapter(
-        "runtime",
+        "system:runtime",
         RuntimeAdapter(manager),
     )
 
@@ -275,7 +275,7 @@ def build_runtime(
         path="/",
     )
     bus.transport.register_adapter(
-        "store",
+        "system:store",
         StoreAdapter(stores=registry),
     )
 
@@ -285,7 +285,7 @@ def build_runtime(
         path="/",
     )
     bus.transport.register_adapter(
-        "permissions",
+        "system:permissions",
         PermissionAdapter(manager, tree, perm_checker),
     )
 
@@ -295,7 +295,7 @@ def build_runtime(
         path="/",
     )
     bus.transport.register_adapter(
-        "runtime.resource",
+        "system:runtime.resource",
         ResourceAdapter(tree),
     )
 

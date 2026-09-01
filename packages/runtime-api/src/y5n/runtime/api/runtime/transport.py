@@ -36,12 +36,12 @@ class DirectTransport:
     def unregister_provider(self, provider_id: str) -> None:
         self._providers.pop(provider_id, None)
 
-    def register_adapter(self, port: str, adapter: object) -> None:
-        """Register a system adapter that receives the full Call."""
-        self._adapters[port] = adapter
+    def register_adapter(self, provider_id: str, adapter: object) -> None:
+        """Register a contextual provider that receives the full Call."""
+        self._adapters[provider_id] = adapter
 
     async def send(self, provider_id: str, call: Call) -> Response:
-        adapter = self._adapters.get(call.port)
+        adapter = self._adapters.get(provider_id)
         if adapter is not None:
             return await self._send_adapter(adapter, call)
         service = self._providers.get(provider_id)
