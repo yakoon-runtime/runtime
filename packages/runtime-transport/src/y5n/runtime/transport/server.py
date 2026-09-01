@@ -3,6 +3,7 @@ import json
 from y5n.runtime.api.clients import ClientConnection
 from y5n.runtime.api.document.wire import serialize_event
 from y5n.runtime.api.flow.patterns.public import FormAction
+from y5n.runtime.api.naming import Key
 from y5n.runtime.api.runtime import Event, Routing
 from y5n.runtime.api.runtime.input.context import InputContext, Origin
 
@@ -13,6 +14,11 @@ class WebSocketServerTransport:
         self._host = host
 
     async def connect(self, websocket):
+
+        # Optional resume request: connection-scoped handshake header.
+        # No header means CREATE.
+        raw_key = websocket.request.headers.get("X-Session-Key")
+        session_key = Key.from_str(raw_key) if raw_key else None
 
         # Runtime → Client
         async def send(event):
@@ -31,7 +37,21 @@ class WebSocketServerTransport:
             dispatch=send_input,
         )
 
-        session = await self._host.connect(connection)
+        try:
+            session = await self._host.connect(connection, session_key=session_key)
+        except RuntimeError as exc:
+            # Resume failed: report it before the connection dies so the
+            # client does not have to infer failure from a missing frame.
+            await websocket.send(
+                json.dumps({"type": "error", "message": str(exc)})
+            )
+            raise
+
+        # Tell the client which session it is bound to (actual key —
+        # assigned on CREATE, requested on RESUME).
+        await websocket.send(
+            json.dumps({"type": "connected", "session_key": str(session.key)})
+        )
 
         # Send "done" over WS when a flow on this host
         # completes.

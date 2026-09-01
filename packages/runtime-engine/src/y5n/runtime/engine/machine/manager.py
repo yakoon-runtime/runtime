@@ -89,6 +89,8 @@ class RuntimeManager:
             runner = self.on_create_runner(session=session)
             self._sessions[session.key] = runner
 
+        connection.session_key = str(runner.session.key)
+
         runner.session.join(connection)
         self._subscriptions.setdefault(connection, set()).add(runner)
         self._connection_home[connection] = runner

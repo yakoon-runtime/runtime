@@ -10,6 +10,10 @@ from y5n.runtime.api.runtime.input import Event
 class ClientConnection:
     runtime_info: RuntimeInfo | None = None
 
+    # The session this connection is bound to, assigned by the runtime
+    # during connect (CREATE or RESUME). None until the handshake decided.
+    session_key: str | None = None
+
     def __init__(
         self,
         emit: Callable[[object], Awaitable[None]],
