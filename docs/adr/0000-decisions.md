@@ -5,6 +5,37 @@
 
 ---
 
+## 2026-09-01 — Session Startup Sequence (ADR-25)
+
+**Status: Accepted.** A newly created Runtime Session may execute an
+ordered sequence of ordinary command invocations — the **Session
+Startup Sequence** — before normal operation begins. A single startup
+command is a sequence of length one; an installation may declare none.
+
+**Key sentence:** *"Startup determines execution and order. Structure
+determines authorization."* Startup is Session initialization, not
+client-connect and not authentication: it runs exactly once on CREATE,
+never on resume (same-process or process-boundary), on additional
+client connections, or on logout. Every startup item enters the
+ordinary invocation path (dispatch → resolve → validate → authorize →
+privileged gate → execute); `anonymous: true` keeps its exact meaning,
+a denied item is denied through the normal path, and Startup grants,
+bypasses, and modifies no rights. **Ownership:** the distribution may
+seed a default, the **Installation owns the effective policy** (under
+`.yak/`, operator-editable, surviving assemble/update — never inside
+the materialized structure, whose root metadata is pack-owned and
+regenerable, ADR-22/23), the **Runtime executes** it through the
+existing Flow/Scheduler machinery (runtime-initiated SCHEDULER-origin
+dispatch already exists), and **renderers only render** the ordinary
+resulting output. Sequence items chain on completion — a command may be
+interactive or asynchronous; failures use ordinary error semantics
+(ADR-13); continue-vs-stop stays an open implementation decision.
+`su` has no special Startup status — it is at most one item in
+somebody's list. No Guest, no `requires_login`, no authentication
+handshake state, no FORM activation; the exact filename, schema,
+seeding mechanism, and Runtime hook remain open implementation
+decisions.
+
 ## 2026-08-13 — Component Source Resolution (ADR-8)
 
 **Status: Accepted.** Before the monorepo can be dissolved, the platform must
