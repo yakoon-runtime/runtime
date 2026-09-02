@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import logging
 from typing import Protocol, cast
 
 from y5n.runtime.api.flow import Scope
@@ -32,6 +34,9 @@ from y5n.runtime.engine.runtime import Session
 from y5n.runtime.engine.runtime.bus import BusOutput
 from y5n.runtime.engine.settings import Settings
 from y5n.runtime.engine.settings.version import resolve_runtime_info
+
+logger = logging.getLogger(__name__)
+
 
 # ----------------------------------
 # ERRORS
@@ -147,6 +152,57 @@ def build_machine(
         on_apply_effects=effect_executor.execute,
     )
 
+    # -------------------------
+    # --- SESSION STARTUP ----
+    # -------------------------
+    # ADR-25: on CREATE, run the declared startup commands serially as
+    # ordinary Runtime invocations (Origin.SCHEDULER — normal resolver
+    # authorization). Startup serializes Flow completion, not command
+    # success: each item advances only when its Flow reaches the
+    # Scheduler's normal Stop (Scheduler.when_complete).
+    #
+    # dispatch() → None means no Flow exists (empty input, non-runnable
+    # node, failed error-node resolution) — the item advances. An
+    # exception escaping dispatch() is an unexpected infrastructure
+    # failure: it aborts the sequence and is reported by the task
+    # done-callback below. Ordinary command failures never escape — the
+    # engine converts them into error Flows.
+    #
+    # Startup Flows carry no out_channel, so their output takes the
+    # normal projection path and reaches the creating client (joined
+    # before the hook).
+
+    _startup_tasks: set[asyncio.Task] = set()
+
+    def _startup_task_done(task: asyncio.Task) -> None:
+        _startup_tasks.discard(task)
+        if task.cancelled():
+            # Cancellation is not an unexpected Runtime failure.
+            return
+        error = task.exception()
+        if error is not None:
+            logger.error("Session startup task failed", exc_info=error)
+
+    async def run_startup(session: Session) -> None:
+        for command in startup:
+            event = Event(
+                payload=command,
+                context=InputContext(origin=Origin.SCHEDULER),
+            )
+            flow = await engine.dispatch(session=session, event=event)
+            if flow is None:
+                continue
+            completion = scheduler.when_complete(flow, session)
+            scheduler.schedule_flow(flow, session)
+            await completion
+
+    def on_session_created(*, session: Session) -> None:
+        if not startup:
+            return
+        task = asyncio.create_task(run_startup(session))
+        _startup_tasks.add(task)
+        task.add_done_callback(_startup_task_done)
+
     # -----------------
     # --- SCHEDULER ---
     # -----------------
@@ -220,6 +276,7 @@ def build_machine(
         on_get_session=session_builder.create,
         on_resume_session=on_resume_session,
         on_setup=setup_nodes,
+        on_session_created=on_session_created,
         known_runtimes=known_runtimes,
         info=resolve_runtime_info(),
         startup=startup,

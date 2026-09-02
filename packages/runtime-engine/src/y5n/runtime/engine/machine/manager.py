@@ -30,6 +30,7 @@ class RuntimeManager:
         on_resume_session: OnResumeSession,
         on_create_runner: OnCreateRunner,
         on_setup: OnSetup,
+        on_session_created: OnSessionCreated | None = None,
         known_runtimes: dict[str, str] | None = None,
         info: RuntimeInfo,
         startup: tuple[str, ...] = (),
@@ -39,6 +40,7 @@ class RuntimeManager:
         self.on_resume_session = on_resume_session
         self.on_create_runner = on_create_runner
         self.on_setup = on_setup
+        self.on_session_created = on_session_created
         self.known_runtimes = known_runtimes or {}
         self.info = info
         self.startup = startup
@@ -77,6 +79,7 @@ class RuntimeManager:
         session_key: Key | None = None,
     ):
         connection.runtime_info = self.info
+        created = False
 
         if session_key and session_key in self._sessions:
             runner = self._sessions[session_key]
@@ -87,7 +90,10 @@ class RuntimeManager:
                 # creating a session under it.
                 session = await self.on_resume_session(session_key)
             else:
+                # Keyless connect: boot-unique keys make this the only
+                # CREATE path (see SessionBuilder).
                 session = await self.on_get_session()
+                created = True
             runner = self.on_create_runner(session=session)
             self._sessions[session.key] = runner
 
@@ -97,6 +103,12 @@ class RuntimeManager:
         self._subscriptions.setdefault(connection, set()).add(runner)
         self._connection_home[connection] = runner
         self._active[connection] = runner
+
+        # The creating client is joined before the hook fires, so
+        # anything the session emits from here on reaches it.
+        if created and self.on_session_created:
+            self.on_session_created(session=runner.session)
+
         return runner.session
 
     async def disconnect(self, connection: ClientConnection):
@@ -192,6 +204,17 @@ class OnSchedule(Protocol):
 
 class OnGetSession(Protocol):
     async def __call__(self) -> Session: ...
+
+
+class OnSessionCreated(Protocol):
+    """A keyless connect created a NEW session.
+
+    Internal composition port (machine wiring), fire-and-forget by
+    contract: the implementation owns any task lifetime, connect never
+    awaits it. Resume paths never reach it.
+    """
+
+    def __call__(self, *, session: Session) -> None: ...
 
 
 class OnSetup(Protocol):
