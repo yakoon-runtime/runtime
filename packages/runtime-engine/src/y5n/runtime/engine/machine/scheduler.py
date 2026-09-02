@@ -67,6 +67,12 @@ class Scheduler:
         self._event = asyncio.Event()
         self._running = False
 
+        # Per-Flow completion observation: (session key, flow id) →
+        # future resolved when that Flow reaches its normal Stop.
+        # Feature-agnostic — the Scheduler owns the definitive normal
+        # Stop transition, so it owns completion observation.
+        self._completions: dict[tuple[str, str], asyncio.Future] = {}
+
     # --------------------------------------------------------
     # Public API
     # --------------------------------------------------------
@@ -91,6 +97,36 @@ class Scheduler:
     def schedule_sleep(self, flow, session, wake_at):
         flow.wake_at = wake_at
         heapq.heappush(self._sleeping, (wake_at, session, flow))
+
+    def when_complete(self, flow, session) -> asyncio.Future:
+        """Observe the normal Stop completion of one specific Flow.
+
+        The returned future resolves exactly once, when the scheduler
+        handles that Flow's Stop lifecycle. It is independent of
+        out_channel and of all output routing.
+
+        The Flow must be active (added to the session). Register before
+        schedule_flow for strict ordering; asyncio does not preempt, so
+        scheduling first is equally safe as long as no await separates
+        the calls.
+
+        Contract: one waiter per Flow (a second registration raises).
+        Forcible removal (e.g. job stop) is not a normal Stop and
+        leaves the waiter pending.
+        """
+        if not session.get_flow(flow.id):
+            raise ValueError(f"Flow {flow.id} is not active in this session")
+        key = (str(session.key), flow.id)
+        if key in self._completions:
+            raise ValueError(f"Flow {flow.id} already has a completion waiter")
+        fut = asyncio.get_running_loop().create_future()
+        self._completions[key] = fut
+        return fut
+
+    def _resolve_completion(self, session, flow) -> None:
+        fut = self._completions.pop((str(session.key), flow.id), None)
+        if fut and not fut.done():
+            fut.set_result(None)
 
     # --------------------------------------------------------
     # MAIN LOOP
@@ -285,6 +321,11 @@ class Scheduler:
             #    in the channel)
             # ----------------------------------
             if isinstance(control, Stop):
+                # Completion observation resolves before any downstream
+                # callback: the waiter wakes even if on_flow_complete
+                # fails, and output/out_channel handling below is
+                # unaffected.
+                self._resolve_completion(session, flow)
                 if flow.out_channel:
                     session.push_event(
                         Scope.SESSION,
