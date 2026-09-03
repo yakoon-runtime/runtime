@@ -184,6 +184,8 @@ class Form:
                 "value": self.data.get(param.key),
                 "state": state,
             }
+            if getattr(param, "secret", False):
+                field["secret"] = True
             if param.key == active_key and self._error:
                 field["error"] = self._error
             fb_fields.append(field)

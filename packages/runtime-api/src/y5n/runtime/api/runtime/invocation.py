@@ -29,6 +29,7 @@ class Param:
     default: Any = None
     help: str = ""
     policy: Any = None
+    secret: bool = False
     required: bool = False
     positional: bool = False
     kind: ParamKind = ParamKind.VALUE
