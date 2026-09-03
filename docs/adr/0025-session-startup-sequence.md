@@ -1,9 +1,9 @@
 # ADR 25: Session Startup Sequence
 
-**Status:** Accepted — not yet implemented
+**Status:** Accepted — implemented
 
 > **Startup determines execution and order. Structure determines
-> authorization.**
+> authorization. Commands determine their own completion.**
 >
 > A newly created Runtime Session may begin with an ordered sequence of
 > ordinary command invocations — the **Session Startup Sequence**. The
@@ -90,10 +90,20 @@ installation's `.yak/` state — the same layer that owns deployment
 decisions ("what runs, and how", ADR-24) — not inside the materialized
 `structure/`.
 
-The exact filename and data schema are NOT frozen by this ADR. Working
-names such as `.yak/session.yml` or `.yak/startup.yml` remain
-implementation decisions. The distribution seeding mechanism is equally
-an implementation detail, while the ownership rule is fixed:
+The declaration is `.yak/startup.yml`:
+
+```yaml
+startup:
+  - welcome
+  - mem
+```
+
+An ordered sequence of ordinary command strings. A missing file, an
+empty document, a missing or empty `startup` key, or a non-sequence
+value all declare no startup; invalid entries are skipped, not raised
+(tolerant loading — an installation must not fail to boot over a
+malformed declaration). The distribution seeding mechanism remains an
+implementation decision, while the ownership rule is fixed:
 
 - **Distribution** may provide a default.
 - **Installation** owns the effective policy.
@@ -198,6 +208,12 @@ behavior.
 | additional client connection | do NOT execute |
 | logout | do NOT execute |
 
+Startup does not redefine connect/resume semantics. On CREATE, the
+creating client is joined and subscribed **before** the startup
+sequence begins, so ordinary startup output reaches that client through
+the normal Session output path. Startup introduces no handshake
+changes.
+
 The fact that authentication is deliberately cleared on a
 process-boundary resume does not redefine that resume as Session
 creation. If re-entry behavior after process restart is ever required,
@@ -221,27 +237,98 @@ C
 ```
 
 No new execution engine is introduced. The existing Runtime
-Flow/Scheduler machinery is reused. The architecture already contains
-runtime-initiated dispatch: internally constructed events with
+Flow/Scheduler machinery is reused. Internally constructed events with
 SCHEDULER origin enter the same `dispatch → resolve → authorize →
 execute` path as client input (the start-command effect, the form
-continuation). Startup reuses this pattern; the concrete hook and
-chaining mechanism remain implementation decisions.
+continuation) — startup items use exactly this ordinary dispatch.
+
+For each item:
+
+```
+dispatch ordinary command
+    ↓
+no Flow materializes?
+    ├── yes → advance to the next item
+    └── no  → observe Flow completion
+              → schedule Flow
+              → wait for normal Stop
+              → advance
+```
+
+**Startup serializes command completion, not command success.** A
+command may remain active across cooperative interaction:
+
+```
+command
+    → AwaitEvent
+    → input
+    → AwaitEvent
+    → ...
+    → Stop
+```
+
+Startup does not continue until that command's Flow reaches normal
+Stop. The Command owns its domain semantics and decides when its own
+Flow is complete; Startup knows neither whether a command
+authenticates, retries, prompts, succeeds, fails, is interactive, nor
+whether it is `su`. This is what allows a future interactive login
+command to remain one invocation and one Flow across multiple
+authentication attempts — without adding any interaction semantics to
+Startup (the concrete `su` behavior is not designed here and remains a
+`su` concern).
 
 FORM interaction is NOT activated by this ADR.
+
+## Flow Completion
+
+Completion sequencing uses a generic Flow lifecycle primitive:
+`Scheduler.when_complete(flow, session)`. The Scheduler owns the
+definitive normal Stop transition, so it owns completion observation;
+the primitive resolves exactly when that Flow reaches the Scheduler's
+normal Stop lifecycle. Startup registers completion observation before
+scheduling the Flow, then awaits it.
+
+The architectural distinction is explicit:
+
+**output destination ≠ completion notification**
+
+Startup Flows carry no `out_channel` for completion. Output takes the
+ordinary projection path; completion takes the Scheduler's generic
+observation. There is no startup-specific completion bookkeeping, no
+startup-specific `flow_complete` logic, no synthetic Startup Flow, and
+no autostart Command.
 
 ## Failure Semantics
 
 Startup introduces no error handling of its own. Each startup item uses
-ordinary Runtime error semantics — command not found, permission
-denied, invalid arguments, execution failure — and every error is
-represented through the normal Runtime output/error path (ADR-13: an
-error creates a new invocation).
+ordinary Runtime error semantics, and every ordinary command failure is
+represented through the normal Runtime path (ADR-13: an error creates a
+new invocation). The implemented boundary follows the dispatch
+semantics of the command engine exactly:
 
-The continue-vs-stop behavior of a multi-item sequence is NOT an
-architectural decision of this ADR. It is an open implementation
-decision; no sequence-level failure state is invented. The engine's
-per-invocation error isolation is the natural default.
+1. **dispatch returns no Flow** — the invocation cannot execute
+   (empty input, non-runnable node, failed error-node resolution). No
+   Flow exists; nothing can be awaited. The sequence advances.
+
+2. **dispatch produces an ordinary error Flow** — command not found,
+   permission denied, invalid arguments, execution failure routed to
+   the error node. This is a normal Runtime-visible command failure:
+   the Flow is scheduled and awaited like any other, and the sequence
+   advances at its normal Stop.
+
+3. **an unexpected exception escapes dispatch** — a Runtime or
+   infrastructure failure. Startup does not reinterpret it as "no
+   Flow": the sequence aborts, and the failure is retrieved and
+   reported by the detached startup task.
+
+Therefore:
+
+**Startup tolerates Command failures. Startup does not swallow Runtime
+failures.**
+
+No sequence-level failure state is invented: no continue/stop policy
+switches, no retry, no startup result or status type. The engine's
+per-invocation error isolation is the default.
 
 ## Renderer Independence
 
@@ -249,6 +336,11 @@ Startup output is ordinary Runtime output. Commands produce their
 normal Documents/Interactions; Renderers render them normally. No
 Renderer needs to know that an output originated from startup, and no
 startup-specific rendering is introduced.
+
+Startup does not capture, redirect, or re-emit output, and does not
+change view mode or persistence semantics. Renderer behavior remains
+ordinary Renderer behavior; Shell, Console, Web, and future clients
+observe the same Runtime behavior.
 
 ## Non-Goals
 
@@ -296,22 +388,48 @@ command/signature enumeration, the password verifier, rate limiting.
   materialization boundary between distribution default and operator
   ownership.
 - Ordered asynchronous/interacting commands require completion-aware
-  sequencing on top of the existing Flow/Scheduler machinery.
-- Startup output must be correctly ordered relative to Session/client
-  readiness during implementation. The existing Session bus already
-  delivers output to every subscribed client and drops output when none
-  is subscribed; the concrete handshake-ordering guarantee remains an
-  implementation decision and is not solved by this ADR.
+  sequencing on top of the existing Flow/Scheduler machinery
+  (`Scheduler.when_complete`).
+- Startup runs cooperatively outside `connect()` — an interactive
+  startup command may hold its Flow open indefinitely while the
+  creating client already operates the Session normally.
 
-## Open Implementation Decisions
+## Implementation
 
-These remain open and do not weaken any decision above:
+The accepted design is implemented as follows. These are consequences
+of the architecture above — composition seams, not public API
+contracts.
 
-- exact installation filename and data schema
-- distribution seeding implementation
-- exact Runtime hook/seam
-- continue-vs-stop after a failed startup item
-- output/handshake ordering implementation
-- which startup commands the standard distribution ships
-- whether `welcome` becomes `anonymous: true` in the pack source
-- future interactive behavior of `su`
+- `load_startup(...)` loads `.yak/startup.yml` at boot; the loaded
+  tuple is carried on the RuntimeManager.
+- `RuntimeManager.connect` identifies keyless connects as the only
+  CREATE path (SessionBuilder keys are boot-unique, so a keyless
+  connect cannot collide with a persisted session document).
+- An internal `OnSessionCreated` composition hook fires **only** for
+  CREATE, after the creating client has joined and subscribed.
+- The machine wiring owns a private serial startup driver: ordinary
+  dispatch (`Origin.SCHEDULER`), completion registration via
+  `Scheduler.when_complete`, then scheduling. Startup execution runs
+  cooperatively outside `connect()`, so connect never waits for an
+  interactive startup sequence; the detached task retrieves and reports
+  its own unexpected failures.
+- Startup Flows receive no `out_channel`; their output follows the
+  normal projection path to the joined client.
+
+## Open Questions
+
+Settled by the implementation and no longer open: filename and schema
+(`.yak/startup.yml`), the Runtime hook (keyless CREATE in `connect`
+plus the `OnSessionCreated` composition hook), CREATE-vs-resume
+behavior, serial completion semantics (`Scheduler.when_complete`),
+output routing (ordinary projection path, client joined before the hook
+fires), and error continuation semantics (three-way boundary above).
+
+Remaining open:
+
+- distribution seeding implementation (how a distribution provides its
+  default `.yak/startup.yml`)
+- which startup commands the standard distribution ships — including
+  whether `welcome` becomes `anonymous: true` in the pack source
+- future interactive behavior of `su` (an explicit login mode would be
+  a `su` concern, owned by `su` — not by Startup)
