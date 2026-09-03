@@ -46,15 +46,27 @@ is the engine, `system` the base command set, `ident` identity and
 permissions, `shell` the interactive shell:
 
 ```bash
-yak install runtime \
-  --distribution https://raw.githubusercontent.com/yakoon-runtime/dists/main/distribution.yml
+yak install runtime
 yak install system
 yak install ident
 yak install shell
 ```
 
-The distribution tells Yak where to obtain the published Yakoon
-components. The installation remembers it for subsequent installs.
+Yak resolves components through the official Yakoon distribution; the
+installation remembers it for subsequent installs.
+
+### Alternative distributions
+
+By default Yak installs from the official Yakoon distribution. To resolve
+from a different distribution — for development, staging or your own
+component set — pass its index URL explicitly:
+
+```bash
+yak install runtime \
+  --distribution https://raw.githubusercontent.com/yakoon-runtime/dists/main/distribution.yml
+```
+
+The flag overrides the default for this install (repeatable, later wins).
 
 ## 4. Connect identity to PostgreSQL
 
