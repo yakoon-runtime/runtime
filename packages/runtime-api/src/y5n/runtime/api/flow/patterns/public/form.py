@@ -32,6 +32,25 @@ class Form:
             yield form.ask("first_name", "First name")
             yield form.ask("last_name", "Last name")
 
+    Elements mode
+
+        Instead of a bare field list, a Form may be built from an ordered
+        mixture of interactive Field elements and existing YDS presentation
+        blocks (Heading, Rule, Text, …):
+
+            Form(elements=[
+                Heading("SIGN IN"),
+                Rule(),
+                Field("username"),
+                Field("password", secret=True),
+            ])
+
+        Presentation elements are rendered, carry no value, are not
+        focusable, and do not participate in navigation, validation or
+        values. Adjacent Field elements are grouped into one fields node;
+        presentation elements break groups. ``fields=``/``title``/``intro``
+        remain the compatibility mode and project exactly as before.
+
     Initial values
 
         `initial` provides pre-filled values. Existing values are
@@ -70,12 +89,26 @@ class Form:
         self,
         fields: list[Param] | None = None,
         *,
+        elements: list | None = None,
         title: str = "",
         intro: str = "",
         initial: dict[str, str] | None = None,
         focus: str | None = None,
     ):
-        self._dialog = Dialog(fields or [], focus_key=focus)
+        if elements is not None and fields is not None:
+            raise ValueError("Form accepts either 'fields' or 'elements', not both")
+        if elements is not None and (title or intro):
+            raise ValueError("'title'/'intro' are fields-mode compatibility properties")
+
+        self._elements_mode = elements is not None
+        if self._elements_mode:
+            self._elements = _validate_elements(elements)
+            interactive: list = [el for el in self._elements if _is_input(el)]
+        else:
+            self._elements = None
+            interactive = list(fields or [])
+
+        self._dialog = Dialog(interactive, focus_key=focus)
         self._fields: list[Param] = self._dialog.fields  # reference
         self._title = title
         self._intro = intro
@@ -137,14 +170,16 @@ class Form:
         if self._dialog.completed:
             missing = self._first_missing_required()
             if missing:
+                # Refocus without the navigation flag: the cursor move is
+                # bookkeeping, not a navigation action. After the refocused
+                # field is filled, the loop must advance normally — a stale
+                # flag here re-prompted the just-filled field.
                 self._dialog.focus(missing.key)
-                self._navigated = True
 
     def _submit(self) -> None:
         missing = self._first_missing_required()
         if missing:
             self._dialog.focus(missing.key)
-            self._navigated = True
         else:
             self._dialog.next()
 
@@ -165,30 +200,14 @@ class Form:
         return self._render_structured(active_key)
 
     def _render_structured(self, active_key: str) -> dict:
-        fb_fields: list[dict] = []
+        if self._elements_mode:
+            return self._render_elements(active_key)
+        return self._render_fields(active_key)
 
-        for param in self._fields:
-            if param.key == active_key:
-                state = "active"
-            elif self._is_filled(param.key):
-                state = "done"
-            else:
-                state = "idle"
-
-            field: dict = {
-                "type": "field",
-                "policy": str(param.policy) if param.policy else "string",
-                "title": param.title or param.key.title(),
-                "required": param.required,
-                "name": param.key,
-                "value": self.data.get(param.key),
-                "state": state,
-            }
-            if getattr(param, "secret", False):
-                field["secret"] = True
-            if param.key == active_key and self._error:
-                field["error"] = self._error
-            fb_fields.append(field)
+    def _render_fields(self, active_key: str) -> dict:
+        fb_fields: list[dict] = [
+            self._field_node(param, active_key) for param in self._fields
+        ]
 
         return {
             "kind": "document",
@@ -208,6 +227,63 @@ class Form:
                 }
             ],
         }
+
+    def _render_elements(self, active_key: str) -> dict:
+        blocks: list[dict] = []
+        group: list[dict] = []
+
+        def flush() -> None:
+            if group:
+                blocks.append(
+                    {
+                        "type": "fields",
+                        "fields": list(group),
+                        "state": "active",
+                    }
+                )
+                group.clear()
+
+        for element in self._elements:
+            if _is_input(element):
+                group.append(self._field_node(element, active_key))
+                continue
+            flush()
+            if hasattr(element, "to_dict"):
+                blocks.append(element.to_dict())
+            else:
+                blocks.append(dict(element))
+        flush()
+
+        # The transport contract requires a header (the dispatcher rejects
+        # None); elements-mode carries the minimal valid representation.
+        return {
+            "kind": "document",
+            "header": {"role": "info", "title": ""},
+            "blocks": blocks,
+        }
+
+    def _field_node(self, param, active_key: str) -> dict:
+        if param.key == active_key:
+            state = "active"
+        elif self._is_filled(param.key):
+            state = "done"
+        else:
+            state = "idle"
+
+        field: dict = {
+            "type": "field",
+            "policy": str(param.policy) if param.policy else "string",
+            "title": param.title or param.key.title(),
+            "required": param.required,
+            "name": param.key,
+            "value": self.data.get(param.key),
+            "state": state,
+        }
+        if getattr(param, "secret", False):
+            field["secret"] = True
+        if param.key == active_key and self._error:
+            field["error"] = self._error
+        return field
 
     # --------------------------------------------------------
     # Field lifecycle (used by both run() and standalone ask())
@@ -229,6 +305,8 @@ class Form:
             param = Param(key=key, title=title.rstrip(": "), policy=policy)
             self._fields.append(param)
             self._field_map[key] = param
+            if self._elements_mode:
+                self._elements.append(param)
 
         return self._ask_field(key, title, policy)
 
@@ -337,3 +415,43 @@ class Form:
             except ValidationError as e:
                 self._error = e.args[0]
                 yield prompt(self._render(key))
+
+
+def _is_input(element) -> bool:
+    """Interactive Field vs YDS presentation block.
+
+    Every YDS block carries a ``type`` discriminator (the wire dispatch
+    key); interactive elements (Field/Param) do not. A dict is always
+    presentation — input elements are objects with a ``key``.
+    """
+    if isinstance(element, dict):
+        return False
+    return not hasattr(element, "type") and hasattr(element, "key")
+
+
+def _validate_elements(elements: list) -> list:
+    validated: list = []
+    for element in elements:
+        if isinstance(element, dict):
+            if "type" not in element:
+                raise ValueError(
+                    f"presentation element dict requires a 'type': {element!r}"
+                )
+            if element["type"] == "fields":
+                raise ValueError(
+                    "Fields blocks are not valid Form elements; "
+                    "supply Field elements instead"
+                )
+            validated.append(dict(element))
+        elif hasattr(element, "type"):
+            if element.type == "fields":
+                raise ValueError(
+                    "Fields blocks are not valid Form elements; "
+                    "supply Field elements instead"
+                )
+            validated.append(element)
+        elif hasattr(element, "key"):
+            validated.append(element)
+        else:
+            raise ValueError(f"unsupported form element: {element!r}")
+    return validated
